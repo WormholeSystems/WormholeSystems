@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "b69c7a6419170e02b2a078b6c41fceee",
+    "content-hash": "8c80fcf7cc34ef982b8730d624e47eee",
     "packages": [
         {
             "name": "brick/math",
@@ -2431,6 +2431,164 @@
             "time": "2025-06-03T04:55:08+00:00"
         },
         {
+            "name": "nicolaskion/eve",
+            "version": "v0.1.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/NicolasKion/Esi.git",
+                "reference": "7b891cce491f3e38c465303b282f1d6b73b204e4"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/NicolasKion/Esi/zipball/7b891cce491f3e38c465303b282f1d6b73b204e4",
+                "reference": "7b891cce491f3e38c465303b282f1d6b73b204e4",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/contracts": "^10.0||^11.0 || ^12.0",
+                "php": "^8.2",
+                "spatie/laravel-package-tools": "^1.16"
+            },
+            "require-dev": {
+                "larastan/larastan": "^2.9",
+                "laravel/pint": "^1.14",
+                "nunomaduro/collision": "^8.1.1||^7.10.0",
+                "orchestra/testbench": "^9.0.0||^8.22.0",
+                "pestphp/pest": "^3.0",
+                "pestphp/pest-plugin-arch": "^3.0",
+                "pestphp/pest-plugin-laravel": "^3.0",
+                "phpstan/extension-installer": "^1.3",
+                "phpstan/phpstan-deprecation-rules": "^1.1",
+                "phpstan/phpstan-phpunit": "^1.3",
+                "rector/rector": "^1.2"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "Esi": "NicolasKion\\Esi\\Facades\\Esi"
+                    },
+                    "providers": [
+                        "NicolasKion\\Esi\\EsiServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "NicolasKion\\Esi\\": "src/",
+                    "NicolasKion\\Esi\\Database\\Factories\\": "database/factories/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Nicolas Kion",
+                    "email": "nicolaskion07@gmail.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Esi Integration for EVE Online",
+            "homepage": "https://github.com/nicolaskion/esi",
+            "keywords": [
+                "Nicolas Kion",
+                "esi",
+                "laravel"
+            ],
+            "support": {
+                "issues": "https://github.com/NicolasKion/Esi/issues",
+                "source": "https://github.com/NicolasKion/Esi/tree/v0.1.4"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/Nicolas Kion",
+                    "type": "github"
+                }
+            ],
+            "time": "2025-03-21T08:46:01+00:00"
+        },
+        {
+            "name": "nicolaskion/sde",
+            "version": "v0.1.5",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/NicolasKion/SDE.git",
+                "reference": "acf692d2ba7adbe9f06801490ee1d3778f0fc923"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/NicolasKion/SDE/zipball/acf692d2ba7adbe9f06801490ee1d3778f0fc923",
+                "reference": "acf692d2ba7adbe9f06801490ee1d3778f0fc923",
+                "shasum": ""
+            },
+            "require": {
+                "ext-zip": "*",
+                "illuminate/contracts": "^10||^11|^12",
+                "laravel/framework": "^11|^12",
+                "php": "^8.3.0",
+                "symfony/yaml": "^7.2"
+            },
+            "require-dev": {
+                "laravel/pint": "^v1.22.0",
+                "pestphp/pest": "^v3.8.1",
+                "phpstan/phpstan": "^2.1.12",
+                "rector/rector": "^2.0.11",
+                "symfony/var-dumper": "^6.4.0|^7.0.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "NicolasKion\\SDE\\SDEProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "NicolasKion\\SDE\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Nicolas Kion",
+                    "email": "nicolaskion07@gmail.com"
+                }
+            ],
+            "description": "SDE Parser for EVE Online and Laravel",
+            "keywords": [
+                "eve",
+                "laravel",
+                "package",
+                "php",
+                "sde"
+            ],
+            "support": {
+                "issues": "https://github.com/NicolasKion/SDE/issues",
+                "source": "https://github.com/NicolasKion/SDE/tree/v0.1.5"
+            },
+            "funding": [
+                {
+                    "url": "https://www.paypal.com/paypalme/enunomaduro",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/nunomaduro",
+                    "type": "github"
+                },
+                {
+                    "url": "https://www.patreon.com/nunomaduro",
+                    "type": "patreon"
+                }
+            ],
+            "time": "2025-05-05T18:17:16+00:00"
+        },
+        {
             "name": "nikic/php-parser",
             "version": "v5.5.0",
             "source": {
@@ -3338,6 +3496,67 @@
                 "source": "https://github.com/ramsey/uuid/tree/4.9.0"
             },
             "time": "2025-06-25T14:20:11+00:00"
+        },
+        {
+            "name": "spatie/laravel-package-tools",
+            "version": "1.92.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/spatie/laravel-package-tools.git",
+                "reference": "d20b1969f836d210459b78683d85c9cd5c5f508c"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/spatie/laravel-package-tools/zipball/d20b1969f836d210459b78683d85c9cd5c5f508c",
+                "reference": "d20b1969f836d210459b78683d85c9cd5c5f508c",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/contracts": "^9.28|^10.0|^11.0|^12.0",
+                "php": "^8.0"
+            },
+            "require-dev": {
+                "mockery/mockery": "^1.5",
+                "orchestra/testbench": "^7.7|^8.0|^9.0|^10.0",
+                "pestphp/pest": "^1.23|^2.1|^3.1",
+                "phpunit/php-code-coverage": "^9.0|^10.0|^11.0",
+                "phpunit/phpunit": "^9.5.24|^10.5|^11.5",
+                "spatie/pest-plugin-test-time": "^1.1|^2.2"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Spatie\\LaravelPackageTools\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Freek Van der Herten",
+                    "email": "freek@spatie.be",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Tools for creating Laravel packages",
+            "homepage": "https://github.com/spatie/laravel-package-tools",
+            "keywords": [
+                "laravel-package-tools",
+                "spatie"
+            ],
+            "support": {
+                "issues": "https://github.com/spatie/laravel-package-tools/issues",
+                "source": "https://github.com/spatie/laravel-package-tools/tree/1.92.4"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/spatie",
+                    "type": "github"
+                }
+            ],
+            "time": "2025-04-11T15:27:14+00:00"
         },
         {
             "name": "symfony/clock",
@@ -5573,6 +5792,78 @@
                 }
             ],
             "time": "2025-06-27T19:55:54+00:00"
+        },
+        {
+            "name": "symfony/yaml",
+            "version": "v7.3.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/yaml.git",
+                "reference": "0c3555045a46ab3cd4cc5a69d161225195230edb"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/yaml/zipball/0c3555045a46ab3cd4cc5a69d161225195230edb",
+                "reference": "0c3555045a46ab3cd4cc5a69d161225195230edb",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.2",
+                "symfony/deprecation-contracts": "^2.5|^3.0",
+                "symfony/polyfill-ctype": "^1.8"
+            },
+            "conflict": {
+                "symfony/console": "<6.4"
+            },
+            "require-dev": {
+                "symfony/console": "^6.4|^7.0"
+            },
+            "bin": [
+                "Resources/bin/yaml-lint"
+            ],
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Symfony\\Component\\Yaml\\": ""
+                },
+                "exclude-from-classmap": [
+                    "/Tests/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Fabien Potencier",
+                    "email": "fabien@symfony.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https://symfony.com/contributors"
+                }
+            ],
+            "description": "Loads and dumps YAML files",
+            "homepage": "https://symfony.com",
+            "support": {
+                "source": "https://github.com/symfony/yaml/tree/v7.3.1"
+            },
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2025-06-03T06:57:57+00:00"
         },
         {
             "name": "tightenco/ziggy",
@@ -8977,78 +9268,6 @@
                 }
             ],
             "time": "2024-10-20T05:08:20+00:00"
-        },
-        {
-            "name": "symfony/yaml",
-            "version": "v7.3.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/yaml.git",
-                "reference": "0c3555045a46ab3cd4cc5a69d161225195230edb"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/yaml/zipball/0c3555045a46ab3cd4cc5a69d161225195230edb",
-                "reference": "0c3555045a46ab3cd4cc5a69d161225195230edb",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=8.2",
-                "symfony/deprecation-contracts": "^2.5|^3.0",
-                "symfony/polyfill-ctype": "^1.8"
-            },
-            "conflict": {
-                "symfony/console": "<6.4"
-            },
-            "require-dev": {
-                "symfony/console": "^6.4|^7.0"
-            },
-            "bin": [
-                "Resources/bin/yaml-lint"
-            ],
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "Symfony\\Component\\Yaml\\": ""
-                },
-                "exclude-from-classmap": [
-                    "/Tests/"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Fabien Potencier",
-                    "email": "fabien@symfony.com"
-                },
-                {
-                    "name": "Symfony Community",
-                    "homepage": "https://symfony.com/contributors"
-                }
-            ],
-            "description": "Loads and dumps YAML files",
-            "homepage": "https://symfony.com",
-            "support": {
-                "source": "https://github.com/symfony/yaml/tree/v7.3.1"
-            },
-            "funding": [
-                {
-                    "url": "https://symfony.com/sponsor",
-                    "type": "custom"
-                },
-                {
-                    "url": "https://github.com/fabpot",
-                    "type": "github"
-                },
-                {
-                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
-                    "type": "tidelift"
-                }
-            ],
-            "time": "2025-06-03T06:57:57+00:00"
         },
         {
             "name": "ta-tikoma/phpunit-architecture-test",
