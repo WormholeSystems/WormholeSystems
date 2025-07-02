@@ -4,12 +4,25 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Traits\HasSlug;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use NicolasKion\SDE\ClassResolver;
 
+/**
+ * @property int $id
+ * @property string $name
+ * @property string $type
+ * @property-read Collection<Constellation> $constellations
+ * @property-read Collection<Solarsystem> $solarsystems
+ * @property-read Collection<Celestial> $celestials
+ * @property-read Collection<Station> $stations
+ */
 class Region extends Model
 {
+    use HasSlug;
+
     public $incrementing = false;
 
     protected $fillable = [

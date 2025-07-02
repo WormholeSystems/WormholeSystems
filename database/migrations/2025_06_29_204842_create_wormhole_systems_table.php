@@ -11,8 +11,9 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('wormhole_systems', function (Blueprint $table) {
-            $table->foreignId('id')->primary()->constrained()->references('id')->on('wormhole_effects')->cascadeOnDelete()->cascadeOnUpdate();
+            $table->foreignId('id')->primary()->constrained()->references('id')->on('solarsystems')->cascadeOnDelete()->cascadeOnUpdate();
             $table->foreignId('effect_id')->nullable()->constrained('wormhole_effects')->cascadeOnDelete()->cascadeOnUpdate();
+            $table->unsignedBigInteger('class')->nullable()->index();
             $table->timestamps();
         });
     }

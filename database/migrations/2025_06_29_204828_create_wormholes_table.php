@@ -18,6 +18,7 @@ return new class extends Migration {
             $table->string('ship_size')->nullable()->index();
             $table->unsignedBigInteger('maximum_lifetime')->nullable();
             $table->string('leads_to')->nullable()->index();
+            $table->foreignId('type_id')->nullable()->constrained()->cascadeOnDelete()->cascadeOnUpdate();
             $table->timestamps();
         });
     }

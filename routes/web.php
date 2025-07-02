@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\MapConnectionController;
+use App\Http\Controllers\MapController;
+use App\Http\Controllers\MapSolarsystemController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -13,3 +16,8 @@ Route::get('dashboard', function () {
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
+
+Route::resource('maps', MapController::class);
+
+Route::resource('map-solarsystems', MapSolarsystemController::class)->only(['store', 'update', 'destroy']);
+Route::resource('map-connections', MapConnectionController::class)->only(['store', 'update', 'destroy']);

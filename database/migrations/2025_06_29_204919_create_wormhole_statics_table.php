@@ -17,7 +17,7 @@ return new class extends Migration {
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
             $table->foreignId('wormhole_id')
-                ->constrained('wormhole_effects')
+                ->constrained('wormholes')
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
             $table->timestamps();
