@@ -2,7 +2,7 @@
 import MapConnections from '@/components/MapConnections.vue';
 import MapSolarsystem from '@/components/MapSolarsystem.vue';
 import { Combobox, ComboboxAnchor, ComboboxEmpty, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxList } from '@/components/ui/combobox';
-import { useMap as useNewMap, useMapSolarsystems } from '@/composables/useNewMap';
+import { useMap as useNewMap, useMapSolarsystems } from '@/composables/map';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { TMap, TSolarsystem } from '@/types/models';
 import { Head, Link, router } from '@inertiajs/vue3';

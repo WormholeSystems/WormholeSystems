@@ -20,9 +20,7 @@ export function useNewConnection(
      * Handles the drag start event for creating a new connection.
      */
     function handleDragStart() {
-        const value = toValue(map_solarsystem)!;
-
-        store.origin = value;
+        store.origin = toValue(map_solarsystem)!;
     }
 
     /**
