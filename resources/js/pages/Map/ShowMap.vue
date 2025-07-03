@@ -2,13 +2,12 @@
 import MapConnections from '@/components/MapConnections.vue';
 import MapSolarsystem from '@/components/MapSolarsystem.vue';
 import { Combobox, ComboboxAnchor, ComboboxEmpty, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxList } from '@/components/ui/combobox';
-import { useMap } from '@/composables/useMap';
-import { useSelectionArea } from '@/composables/useSelection';
+import { useMap as useNewMap, useMapSolarsystems } from '@/composables/useNewMap';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { TMap, TMapSolarSystem, TSolarsystem } from '@/types/models';
+import { TMap, TSolarsystem } from '@/types/models';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { useDebounceFn } from '@vueuse/core';
-import { computed, ref } from 'vue';
+import { useDebounceFn, useMagicKeys, whenever } from '@vueuse/core';
+import { computed, ref, useTemplateRef } from 'vue';
 
 const { map, solarsystems, search } = defineProps<{
     map: TMap;
@@ -16,15 +15,32 @@ const { map, solarsystems, search } = defineProps<{
     solarsystems: TSolarsystem[];
 }>();
 
-useMap(map);
+const container = useTemplateRef('map-container');
+
+useNewMap(
+    () => map,
+    () => container.value!,
+);
+
+const { map_solarsystems, map_solarsystems_selected } = useMapSolarsystems();
+
+const { Delete } = useMagicKeys();
+
+whenever(Delete, () => {
+    if (!map_solarsystems_selected.value.length) return;
+
+    router.delete(route('map-selection.destroy'), {
+        data: {
+            map_solarsystem_ids: map_solarsystems_selected.value.map((map_solarsystem) => map_solarsystem.id),
+        },
+    });
+});
 
 const debounced = useDebounceFn(handleSearch, 200, {
     maxWait() {
         return 100;
     },
 });
-
-const area = useSelectionArea();
 
 const new_solarsystems = computed(() => {
     return solarsystems.filter((solarsystem) => {
@@ -35,15 +51,6 @@ const new_solarsystems = computed(() => {
 const existing_solarsystems = computed(() => {
     return solarsystems.filter((solarsystem) => {
         return map.map_solarsystems.some((map_solarsystem) => map_solarsystem.solarsystem_id === solarsystem.id);
-    });
-});
-
-const solarsystem_list = computed(() => {
-    return map.map_solarsystems.map((map_solarsystem) => {
-        return {
-            ...map_solarsystem,
-            is_selected: checkIfSystemIsSelected(map_solarsystem),
-        };
     });
 });
 
@@ -65,18 +72,6 @@ function handleSolarsystemSelect(solarsystem: TSolarsystem) {
         position_y: 200,
     });
 }
-
-function checkIfSystemIsSelected(system: TMapSolarSystem): boolean {
-    if (!area.value) return false;
-
-    const { x1, y1, x2, y2 } = area.value;
-
-    const position = system.position;
-
-    if (!position) return false;
-
-    return position.x >= Math.min(x1, x2) && position.x <= Math.max(x1, x2) && position.y >= Math.min(y1, y2) && position.y <= Math.max(y1, y2);
-}
 </script>
 
 <template>
@@ -86,9 +81,9 @@ function checkIfSystemIsSelected(system: TMapSolarSystem): boolean {
         <div class="p-8">
             <div class="relative">
                 <div class="relative h-400 w-full overflow-scroll rounded-lg border bg-neutral-900/50">
-                    <div class="relative m-4 grid h-400 w-1000" @dragover.prevent ref="map-container">
-                        <MapConnections :map_connections="map.map_connections" :map_solarsystems="map.map_solarsystems" />
-                        <MapSolarsystem v-for="solarsystem in solarsystem_list" :key="solarsystem.id" :map_solarsystem="solarsystem" />
+                    <div class="relative grid h-400 w-1000" @dragover.prevent ref="map-container">
+                        <MapConnections />
+                        <MapSolarsystem v-for="solarsystem in map_solarsystems" :key="solarsystem.id" :map_solarsystem="solarsystem" />
                     </div>
                 </div>
                 <Combobox class="absolute top-4 left-1/2 -translate-x-1/2 rounded-lg border">

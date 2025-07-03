@@ -4,22 +4,25 @@ import SolarsystemEffect from '@/components/SolarsystemEffect.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useMap } from '@/composables/useMap';
 import { useNewConnection } from '@/composables/useNewConnection';
-import { useSystemDrag } from '@/composables/useSystemDrag';
+import { useMapSolarsystem } from '@/composables/useNewMap';
 import { TMapSolarSystem } from '@/types/models';
 import { router, useForm } from '@inertiajs/vue3';
-import { useDraggable } from '@vueuse/core';
 import { ref, useTemplateRef } from 'vue';
 
 const { map_solarsystem } = defineProps<{
     map_solarsystem: TMapSolarSystem & { is_selected?: boolean };
 }>();
 
-const map = useMap();
 const element = useTemplateRef('element');
 const handle = useTemplateRef('handle');
 const new_connection_handle = useTemplateRef('new_connection_handle');
+
+const drag = useMapSolarsystem(
+    () => map_solarsystem,
+    () => element.value!,
+    () => handle.value!,
+);
 
 const open = ref(false);
 
@@ -31,42 +34,6 @@ const form = useForm<{
     occupier_alias: map_solarsystem.occupier_alias ?? '',
 });
 
-const { style, x, y } = useDraggable(element, {
-    initialValue() {
-        return {
-            x: map_solarsystem.position?.x ?? 0,
-            y: map_solarsystem.position?.y ?? 0,
-        };
-    },
-    containerElement: () => map.value.container,
-    handle,
-    onEnd: handleDragEnd,
-    onMove: handleDrag,
-});
-
-const { updateDragPosition } = useSystemDrag();
-
-useNewConnection(
-    () => new_connection_handle.value!,
-    () => map_solarsystem,
-    () => element.value!,
-);
-
-function handleDragEnd() {
-    router.put(
-        route('map-solarsystems.update', map_solarsystem.id),
-        {
-            position_x: x.value,
-            position_y: y.value,
-        },
-        {
-            onSuccess: () => {
-                updateDragPosition(null, null);
-            },
-        },
-    );
-}
-
 function handleSubmit() {
     form.put(route('map-solarsystems.update', map_solarsystem.id), {
         onSuccess: () => {
@@ -75,20 +42,16 @@ function handleSubmit() {
     });
 }
 
-function handleDrag() {
-    updateDragPosition(
-        {
-            x: x.value,
-            y: y.value,
-        },
-        map_solarsystem,
-    );
-}
+useNewConnection(
+    () => new_connection_handle.value!,
+    () => map_solarsystem,
+    () => element.value!,
+);
 </script>
 
 <template>
-    <div ref="element" :style="style" class="absolute" @close="() => (open = false)">
-        <div class="group relative -translate-x-1/2 -translate-y-1/2">
+    <div ref="element" :style="drag.style.value" class="pointer-events-none absolute" @close="() => (open = false)">
+        <div class="group pointer-events-auto relative -translate-x-1/2 -translate-y-1/2">
             <Popover :open="open" @update:open="(value) => open && (open = value)">
                 <PopoverTrigger as-child>
                     <button
@@ -102,7 +65,7 @@ function handleDrag() {
                         "
                         @dblclick="() => (open = true)"
                         :data-selected="map_solarsystem.is_selected"
-                        class="grid h-[40px] grid-cols-[auto_1fr_auto] items-center justify-center gap-x-1 rounded border border-neutral-700 bg-neutral-800 px-2 text-xs select-none data-[selected=true]:bg-amber-900"
+                        class="grid h-[40px] grid-cols-[auto_1fr_auto] items-center justify-center gap-x-1 rounded border border-neutral-700 bg-neutral-800 px-2 text-left text-xs select-none data-[selected=true]:bg-amber-900"
                     >
                         <SolarsystemClass :security="map_solarsystem.solarsystem!.security" :wormhole_class="map_solarsystem.class" />
                         <p>

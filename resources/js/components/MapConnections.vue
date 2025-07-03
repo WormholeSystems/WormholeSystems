@@ -3,75 +3,51 @@ import MapConnection from '@/components/MapConnection.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';
-import { useMapMouse } from '@/composables/useMapMouse';
 import { useNewConnection } from '@/composables/useNewConnection';
-import { useSelection } from '@/composables/useSelection';
-import { useSystemDrag } from '@/composables/useSystemDrag';
-import { TMapConnection, TMapSolarSystem } from '@/types/models';
+import { TConnectionWithSourceAndTarget, useMapConnections, useMapMouse, useSelection } from '@/composables/useNewMap';
 import { router } from '@inertiajs/vue3';
+import { useEventListener } from '@vueuse/core';
 import { computed, ref, useTemplateRef } from 'vue';
 
-type TConnectionWithSourceAndTarget = TMapConnection & {
-    source: TMapSolarSystem;
-    target: TMapSolarSystem;
-};
-
-const { map_connections, map_solarsystems } = defineProps<{
-    map_connections: TMapConnection[];
-    map_solarsystems: TMapSolarSystem[];
-}>();
-
 const container = useTemplateRef('container');
+
+const connections = useMapConnections();
 
 const { origin } = useNewConnection();
 
 const mouse = useMapMouse();
 
-const { dragged_solarsystem, position } = useSystemDrag();
-
-const { start, handleDragStart, handleDragMove, handleDragEnd, area } = useSelection(() => container.value);
-
 const selected_connection = ref<TConnectionWithSourceAndTarget | null>(null);
+const center = computed(() => selection.value && getConnectionCenter(selected_connection.value!));
 
-const connections = computed(() => map_connections.map(getConnectionWithSourceAndTarget).map(updateConnectionForDraggedSystem));
+const { selection, setSelectionStart, setSelectionEnd } = useSelection();
 
-function getConnectionWithSourceAndTarget(connection: TMapConnection): TConnectionWithSourceAndTarget {
-    const source = map_solarsystems.find((s) => s.id === connection.from_map_solarsystem_id)!;
-    const target = map_solarsystems.find((s) => s.id === connection.to_map_solarsystem_id)!;
+const dragging = ref(false);
 
-    return {
-        ...connection,
-        source,
-        target,
-    };
+function handleDragStart(event: PointerEvent) {
+    dragging.value = true;
+    setSelectionStart(event.offsetX, event.offsetY);
 }
 
-function updateConnectionForDraggedSystem(connection: TConnectionWithSourceAndTarget): TConnectionWithSourceAndTarget {
-    if (!dragged_solarsystem.value) return connection;
-    if (connection.from_map_solarsystem_id !== dragged_solarsystem.value.id && connection.to_map_solarsystem_id !== dragged_solarsystem.value.id)
-        return connection;
+function handleDragMove() {
+    if (!dragging.value) return;
 
-    const other_system =
-        connection.from_map_solarsystem_id === dragged_solarsystem.value.id ? connection.to_map_solarsystem_id : connection.from_map_solarsystem_id;
-
-    const other_system_position = map_solarsystems.find((s) => s.id === other_system)!.position!;
-
-    if (!other_system_position) return connection;
-
-    return {
-        ...connection,
-        from_map_solarsystem_id: dragged_solarsystem.value.id,
-        to_map_solarsystem_id: other_system,
-        source: {
-            ...dragged_solarsystem.value,
-            position: position.value,
-        },
-        target: {
-            ...map_solarsystems.find((s) => s.id === other_system)!,
-            position: other_system_position,
-        },
-    };
+    setSelectionEnd(mouse.value.x, mouse.value.y);
 }
+
+function handleDragEnd(event: PointerEvent) {
+    if (!dragging.value) return;
+    dragging.value = false;
+    const bounds = container.value?.getBoundingClientRect();
+    if (!bounds) return;
+
+    const x = event.clientX - bounds.left;
+    const y = event.clientY - bounds.top;
+
+    setSelectionEnd(x, y);
+}
+
+useEventListener('pointerup', handleDragEnd);
 
 function handleConnectionClick(connection: TConnectionWithSourceAndTarget) {
     selected_connection.value = connection;
@@ -106,12 +82,12 @@ function handleConnectionDelete() {
         <PopoverAnchor
             v-if="selected_connection"
             :style="{
-                left: `${getConnectionCenter(selected_connection!).x}px`,
-                top: `${getConnectionCenter(selected_connection!).y}px`,
+                left: `${center?.x}px`,
+                top: `${center?.y}px`,
             }"
             class="absolute"
         />
-        <div class="" ref="container" @dragstart.prevent="handleDragStart" draggable="true">
+        <div class="" ref="container" @pointerdown="handleDragStart" @pointermove="handleDragMove">
             <svg
                 class="h-full w-full text-neutral-700"
                 xmlns="http://www.w3.org/2000/svg"
@@ -126,12 +102,15 @@ function handleConnectionDelete() {
                 />
                 <MapConnection v-if="origin" :from="origin.position!" :to="mouse" />
                 <rect
-                    v-if="start"
-                    :x="Math.min(start.x, mouse.x)"
-                    :y="Math.min(start.y, mouse.y)"
-                    :width="Math.abs(start.x - mouse.x)"
-                    :height="Math.abs(start.y - mouse.y)"
-                    class="fill-transparent stroke-amber-500 stroke-1"
+                    v-if="dragging && selection?.start"
+                    :x="Math.min(selection.start.x, mouse.x)"
+                    :y="Math.min(selection.start.y, mouse.y)"
+                    :width="Math.abs(selection.start.x - mouse.x)"
+                    :height="Math.abs(selection.start.y - mouse.y)"
+                    class="fill-amber-500/10 stroke-amber-500 stroke-1"
+                    :rx="4"
+                    :ry="4"
+                    stroke-dasharray="2,2"
                 />
             </svg>
         </div>
