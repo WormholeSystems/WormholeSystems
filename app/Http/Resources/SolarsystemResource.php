@@ -31,7 +31,39 @@ class SolarsystemResource extends JsonResource
             'security' => CCPRounding::roundSecurity($this->security),
             'class' => $this->wormholeSystem?->class,
             'effect' => $this->wormholeSystem?->effect?->name,
-            'effects' => $this->wormholeSystem?->effect?->effects->map(fn (array $effect): string => $effect[$this->wormholeSystem->class - 1]),
+            'effects' => $this->wormholeSystem?->effect?->getEffectArray($this->wormholeSystem->class),
         ];
+    }
+
+    public function getWormholeEffects(): ?array
+    {
+        $effects = $this->wormholeSystem?->effect?->effects;
+
+        if (! $effects) {
+            return null;
+        }
+
+        ['Buffs' => $buffs, 'Debuffs' => $debuffs] = $effects;
+
+        $this->dump($buffs, $debuffs, $effects);
+
+        // Map the effects into single array with 'name', 'strength', and 'type' keys
+
+        return collect($buffs)
+            ->map(fn (array $strengths, string $name) => [
+                'name' => $name,
+                'strength' => $strengths[$this->wormholeSystem->class - 1] ?? null,
+                'type' => 'Buff',
+            ])
+            ->merge(
+                collect($debuffs)
+                    ->map(fn (array $strengths, string $name) => [
+                        'name' => $name,
+                        'strength' => $strengths[$this->wormholeSystem->class - 1] ?? null,
+                        'type' => 'Debuff',
+                    ])
+            )
+            ->values()
+            ->all();
     }
 }

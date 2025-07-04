@@ -3,8 +3,10 @@
 namespace App\Http\Resources;
 
 use App\Models\MapSolarsystem;
+use App\Models\WormholeStatic;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Throwable;
 
 /**
  * @mixin MapSolarsystem
@@ -15,6 +17,8 @@ class MapSolarsystemResource extends JsonResource
      * Transform the resource into an array.
      *
      * @return array<string, mixed>
+     *
+     * @throws Throwable
      */
     public function toArray(Request $request): array
     {
@@ -33,9 +37,10 @@ class MapSolarsystemResource extends JsonResource
             'pinned' => $this->pinned,
             'class' => $this->wormholeSystem?->class,
             'effect' => $this->wormholeSystem?->effect?->name ?? null,
-            'effects' => $this->wormholeSystem?->effect?->effects->map(fn (array $effect): string => $effect[$this->wormholeSystem->class - 1]),
+            'effects' => $this->wormholeSystem?->effect?->getEffectArray($this->wormholeSystem->class),
             'map_connections' => $this->connections?->toResourceCollection(MapConnectionResource::class),
             'solarsystem' => $this->solarsystem->toResource(SolarsystemResource::class),
+            'statics' => $this->wormholeSystem?->wormholeStatics?->map(fn (WormholeStatic $static) => $static->wormhole->toResource(WormholeResource::class)),
         ];
     }
 }

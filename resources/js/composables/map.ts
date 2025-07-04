@@ -17,6 +17,7 @@ type TMapState = {
         start: Coordinates;
         end: Coordinates | null;
     } | null;
+    grid_size: number;
 };
 
 type WithIsSelected<T> = T & {
@@ -29,11 +30,13 @@ const mapState = reactive<TMapState>({
     map_solarsystems: [],
     map_connections: [],
     selection: null,
+    grid_size: 20,
 });
 
 const map_solarsystems = computed(() => mapState.map_solarsystems);
 const map_solarsystems_selected = computed(() => map_solarsystems.value.filter((s) => s.is_selected));
 const selection = computed(() => mapState.selection);
+const grid_size = computed(() => mapState.grid_size);
 
 export type TConnectionWithSourceAndTarget = TMapConnection & {
     source: TMapSolarSystem;
@@ -170,7 +173,6 @@ export function useMapSolarsystem(
 
     watchEffect(() => {
         if (draggable.isDragging.value) return;
-        console.log('Updating draggable position for system', current_map_solarsystem.value.id);
         draggable.x.value = current_map_solarsystem.value.position?.x ?? 0;
         draggable.y.value = current_map_solarsystem.value.position?.y ?? 0;
     });
@@ -180,6 +182,9 @@ export function useMapSolarsystem(
     }
 
     function handleDrag() {
+        const grid_size = 10; // Adjust grid size as needed
+        draggable.x.value = Math.round(draggable.x.value / grid_size) * grid_size;
+        draggable.y.value = Math.round(draggable.y.value / grid_size) * grid_size;
         setSystemPosition(current_map_solarsystem.value, draggable.x.value, draggable.y.value);
     }
 
@@ -225,4 +230,15 @@ export function useMapMouse() {
             y: mouse.y.value - rect.top,
         };
     });
+}
+
+export function useMapGrid() {
+    function setMapGridSize(size: number) {
+        mapState.grid_size = size;
+    }
+
+    return {
+        grid_size,
+        setMapGridSize,
+    };
 }

@@ -8,13 +8,8 @@ const { security = 0, wormhole_class } = defineProps<{
 <template>
     <span
         v-if="wormhole_class"
-        :data-c1="wormhole_class === 1"
-        :data-c2="wormhole_class === 2"
-        :data-c3="wormhole_class === 3"
-        :data-c4="wormhole_class === 4"
-        :data-c5="wormhole_class === 5"
-        :data-c6="wormhole_class === 6"
-        class="data-[c1=true]:text-cyan-400 data-[c2=true]:text-blue-500 data-[c3=true]:text-violet-500 data-[c4=true]:text-purple-500 data-[c5=true]:text-orange-300 data-[c6=true]:text-orange-600"
+        :data-class="wormhole_class"
+        class="data-[class=1]:text-c1 data-[class=2]:text-c2 data-[class=3]:text-c3 data-[class=4]:text-c4 data-[class=5]:text-c5 data-[class=6]:text-c6"
     >
         C{{ wormhole_class }}
     </span>

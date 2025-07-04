@@ -1,0 +1,94 @@
+<script setup lang="ts">
+import MapSolarsystemButton from '@/components/map/MapSolarsystemButton.vue';
+import MapSolarsystemContextMenu from '@/components/map/MapSolarsystemContextMenu.vue';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useMapSolarsystem } from '@/composables/map';
+import { useNewConnection } from '@/composables/useNewConnection';
+import { TMapSolarSystem } from '@/types/models';
+import { router, useForm } from '@inertiajs/vue3';
+import { ref, useTemplateRef } from 'vue';
+
+const { map_solarsystem } = defineProps<{
+    map_solarsystem: TMapSolarSystem & { is_selected?: boolean };
+}>();
+
+const element = useTemplateRef('element');
+const handle = useTemplateRef('handle');
+const new_connection_handle = useTemplateRef('new_connection_handle');
+
+const drag = useMapSolarsystem(
+    () => map_solarsystem,
+    () => element.value!,
+    () => handle.value!,
+);
+
+const open = ref(false);
+
+const form = useForm<{
+    alias: string;
+    occupier_alias: string;
+}>({
+    alias: map_solarsystem.alias ?? '',
+    occupier_alias: map_solarsystem.occupier_alias ?? '',
+});
+
+function handleSubmit() {
+    form.put(route('map-solarsystems.update', map_solarsystem.id), {
+        onSuccess: () => {
+            open.value = false;
+        },
+    });
+}
+
+useNewConnection(
+    () => new_connection_handle.value!,
+    () => map_solarsystem,
+    () => element.value!,
+);
+
+function handleBadgeClick() {
+    router.reload({
+        data: {
+            map_solarsystem_id: map_solarsystem.id,
+        },
+    });
+}
+
+function handleBadgeDblClick() {
+    open.value = true;
+}
+</script>
+
+<template>
+    <div ref="element" :style="drag.style.value" class="pointer-events-none absolute">
+        <MapSolarsystemContextMenu :map_solarsystem>
+            <div class="group relative -translate-x-12 -translate-y-1/2">
+                <Popover :open="open" @update:open="(value) => open && (open = value)">
+                    <PopoverTrigger as-child>
+                        <MapSolarsystemButton @click="handleBadgeClick" @dblclick="handleBadgeDblClick" :map_solarsystem />
+                    </PopoverTrigger>
+                    <PopoverContent>
+                        <form @submit.prevent="handleSubmit" class="grid gap-2">
+                            <Input v-model="form.alias" type="text" placeholder="Alias" class="w-full" />
+                            <Input v-model="form.occupier_alias" type="text" placeholder="Occupier Alias" class="w-full" />
+                            <Button type="submit"> Save</Button>
+                        </form>
+                    </PopoverContent>
+                </Popover>
+
+                <div
+                    ref="handle"
+                    class="absolute top-[1px] left-1/2 hidden h-2 w-12 -translate-x-1/2 -translate-y-1/2 cursor-move rounded border border-neutral-600 bg-neutral-700 group-hover:block"
+                ></div>
+                <div
+                    ref="new_connection_handle"
+                    class="absolute top-1/2 left-full hidden h-4 w-4 -translate-x-1/2 -translate-y-1/2 cursor-pointer rounded-full bg-neutral-700 group-hover:block"
+                ></div>
+            </div>
+        </MapSolarsystemContextMenu>
+    </div>
+</template>
+
+<style scoped></style>

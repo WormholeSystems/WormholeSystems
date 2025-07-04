@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\MassStatus;
+use App\Enums\ShipSize;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -26,7 +28,9 @@ return new class extends Migration
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
             $table->foreignId('wormhole_id')->nullable()->constrained('wormholes')->cascadeOnDelete()->cascadeOnUpdate();
-            $table->string('status')->nullable()->index();
+            $table->string('mass_status')->default(MassStatus::Fresh->value)->index();
+            $table->string('ship_size')->default(ShipSize::Large->value)->index();
+            $table->boolean('is_eol')->default(false)->index();
             $table->dateTime('connected_at')->nullable();
             $table->timestamps();
         });

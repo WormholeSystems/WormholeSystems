@@ -24,8 +24,10 @@ class MapConnectionResource extends JsonResource
             'from_map_solarsystem_id' => $this->from_map_solarsystem_id,
             'to_map_solarsystem_id' => $this->to_map_solarsystem_id,
             'wormhole_id' => $this->wormhole_id,
-            'status' => $this->status,
+            'mass_status' => $this->mass_status,
             'connected_at' => $this->connected_at,
+            'ship_size' => $this->ship_size,
+            'is_eol' => $this->is_eol,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

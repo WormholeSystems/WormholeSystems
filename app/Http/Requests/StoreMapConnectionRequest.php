@@ -2,9 +2,12 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\MassStatus;
+use App\Enums\ShipSize;
 use App\Models\MapSolarsystem;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreMapConnectionRequest extends FormRequest
 {
@@ -26,6 +29,10 @@ class StoreMapConnectionRequest extends FormRequest
         return [
             'from_map_solarsystem_id' => ['required', 'exists:map_solarsystems,id'],
             'to_map_solarsystem_id' => ['required', 'exists:map_solarsystems,id', 'different:from_map_solarsystem_id'],
+            'wormhole_id' => ['nullable', 'sometimes', 'integer', 'exists:wormholes,id'],
+            'mass_status' => ['nullable', 'sometimes', 'string', Rule::enum(MassStatus::class)],
+            'ship_size' => ['nullable', 'sometimes', 'string', Rule::enum(ShipSize::class)],
+            'is_eol' => ['nullable', 'sometimes', 'boolean'],
         ];
     }
 

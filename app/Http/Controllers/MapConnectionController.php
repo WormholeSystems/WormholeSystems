@@ -4,10 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Actions\MapConnections\CreateMapConnectionAction;
 use App\Actions\MapConnections\DeleteMapConnectionAction;
+use App\Actions\MapConnections\UpdateMapConnectionAction;
 use App\Http\Requests\StoreMapConnectionRequest;
+use App\Http\Requests\UpdateMapConnectionRequest;
 use App\Models\MapConnection;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 
 class MapConnectionController extends Controller
 {
@@ -19,9 +20,16 @@ class MapConnectionController extends Controller
         return back();
     }
 
-    public function destroy(Request $request, MapConnection $mapConnection, DeleteMapConnectionAction $action): RedirectResponse
+    public function destroy(MapConnection $mapConnection, DeleteMapConnectionAction $action): RedirectResponse
     {
         $action->handle($mapConnection);
+
+        return back();
+    }
+
+    public function update(UpdateMapConnectionRequest $request, MapConnection $mapConnection, UpdateMapConnectionAction $action): RedirectResponse
+    {
+        $action->handle($mapConnection, $request->validated());
 
         return back();
     }

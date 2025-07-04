@@ -1,0 +1,107 @@
+<script setup lang="ts">
+import { TMassStatus } from '@/types/models';
+import { computed } from 'vue';
+
+type Position = {
+    x: number;
+    y: number;
+};
+
+type Props = {
+    from: Position;
+    to: Position;
+    extra?: string;
+    mass_status?: TMassStatus;
+    is_eol?: boolean;
+};
+
+const { from, to, extra, mass_status, is_eol } = defineProps<Props>();
+
+const emit = defineEmits<{
+    (e: 'contextmenu', event: MouseEvent): void;
+}>();
+
+const curve = computed(() => bezierCurve(from, to));
+const center = computed(() => midPoint(from, to));
+
+function bezierCurve(from: Position, to: Position): string {
+    const cp1x = from.x + (to.x - from.x) / 1.5;
+    const cp1y = from.y;
+    const cp2x = to.x - (to.x - from.x) / 1.5;
+    const cp2y = to.y;
+
+    return `M ${from.x} ${from.y} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${to.x} ${to.y}`;
+}
+
+function midPoint(from: Position, to: Position): Position {
+    return {
+        x: (from.x + to.x) / 2,
+        y: (from.y + to.y) / 2,
+    };
+}
+
+function getDashArray() {
+    if (!mass_status) return '0';
+    if (is_eol) return '2,4';
+    switch (mass_status) {
+        case 'fresh':
+            return '0';
+        case 'reduced':
+            return '2,4';
+        case 'critical':
+            return '4,4';
+        default:
+            return '0';
+    }
+}
+</script>
+
+<template>
+    <g pointer-events="visiblePainted" class="group">
+        <path
+            :d="curve"
+            stroke="currentColor"
+            fill="none"
+            stroke-width="4"
+            :stroke-dasharray="getDashArray()"
+            :data-connection-status="mass_status"
+            :data-eol="is_eol"
+            class="cursor-pointer transition-colors duration-200 ease-in-out group-hover:text-neutral-600 data-[connection-status=critical]:text-red-500 data-[connection-status=reduced]:text-orange-500 data-[eol=true]:text-purple-500"
+        />
+        <rect
+            class="pointer-events-none"
+            :x="center.x - 12"
+            :y="center.y - 8"
+            width="24"
+            height="16"
+            rx="2"
+            ry="2"
+            fill="currentColor"
+            v-if="extra"
+        />
+        <text
+            :x="center.x"
+            :y="center.y + 4"
+            text-anchor="middle"
+            fill="white"
+            font-size="12"
+            font-weight="bold"
+            class="pointer-events-none select-none"
+            v-if="extra"
+        >
+            {{ extra }}
+        </text>
+        <path
+            :d="curve"
+            stroke="transparent"
+            fill="none"
+            stroke-width="24"
+            class="cursor-pointer transition-colors duration-200"
+            @contextmenu="(event) => emit('contextmenu', event)"
+        />
+        <circle :cx="from.x" :cy="from.y" r="8" fill="currentColor" />
+        <circle :cx="to.x" :cy="to.y" r="8" fill="currentColor" />
+    </g>
+</template>
+
+<style scoped></style>

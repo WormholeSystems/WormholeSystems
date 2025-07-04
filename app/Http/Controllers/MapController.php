@@ -6,6 +6,7 @@ use App\Http\Resources\MapResource;
 use App\Http\Resources\SolarsystemResource;
 use App\Models\Map;
 use App\Models\Solarsystem;
+use App\Scopes\WithVisibleSolarsystems;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -17,7 +18,9 @@ class MapController extends Controller
      */
     public function show(Request $request, Map $map): Response
     {
-        $map->load('mapSolarsystems', 'mapConnections');
+        $map = Map::query()
+            ->tap(new WithVisibleSolarsystems)
+            ->findOrFail($map->id);
 
         $search = $request->string('search');
 

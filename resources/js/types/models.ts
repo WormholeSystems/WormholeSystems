@@ -14,7 +14,7 @@ export type TMapSolarSystem = {
     occupier_alias: string;
     class: number;
     effect: TWormholeEffectName | null;
-    effects: Record<string, string> | null;
+    effects: TWormholeEffect[];
     map_id: number;
     position: {
         x: number;
@@ -22,6 +22,7 @@ export type TMapSolarSystem = {
     } | null;
     status: string | null;
     solarsystem: TSolarsystem | null;
+    statics: TWormhole[] | null;
 };
 
 export type TMapConnection = {
@@ -30,12 +31,22 @@ export type TMapConnection = {
     from_map_solarsystem_id: number;
     to_map_solarsystem_id: number;
     wormhole: TWormhole | null;
+    ship_size: TShipSize;
+    mass_status: TMassStatus;
+    is_eol: boolean;
 };
 
 export type TWormhole = {
     id: number;
     name: string;
     total_mass: number;
+    maximum_jump_mass: number;
+    ship_size: string;
+    maximum_lifetime: number;
+    leads_to: string;
+    type_id: number;
+    created_at: string;
+    updated_at: string;
 };
 
 export type TSolarsystem = {
@@ -61,3 +72,14 @@ export type TConstellation = {
 };
 
 export type TWormholeEffectName = 'Pulsar' | 'Cataclysmic Variable' | 'Magnetar' | 'Red Giant' | 'Wolf-Rayet Star' | 'Black Hole';
+
+export type TWormholeEffect = {
+    id: number;
+    name: TWormholeEffectName;
+    type: 'Buff' | 'Debuff';
+    strength: string;
+};
+
+export type TMassStatus = 'fresh' | 'reduced' | 'critical';
+
+export type TShipSize = 'frigate' | 'medium' | 'large';
