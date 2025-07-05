@@ -42,7 +42,7 @@ const mapState = reactive<TMapState>({
 });
 
 const map_solarsystems = computed(() => mapState.map_solarsystems);
-const map_solarsystems_selected = computed(() => map_solarsystems.value.filter((s) => s.is_selected));
+const map_solarsystems_selected = computed(() => map_solarsystems.value.filter((s) => s.is_selected && !s.pinned));
 const selection = computed(() => mapState.selection);
 const grid_size = computed(() => mapState.grid_size);
 
@@ -127,11 +127,10 @@ export function useSelection() {
 export function useMapSolarsystems() {
     function setSystemPosition(system: TMapSolarSystem, x: number, y: number) {
         const system_state = mapState.map_solarsystems.find((s) => s.id === system.id);
-        const selected_systems = mapState.map_solarsystems.filter((s) => s.is_selected);
         if (!system_state) return;
         const dx = x - system_state.position!.x;
         const dy = y - system_state.position!.y;
-        if (!selected_systems.length || !selected_systems.some((s) => s.id === system.id)) {
+        if (!map_solarsystems_selected.value.length || !map_solarsystems_selected.value.some((s) => s.id === system.id)) {
             if (system_state?.pinned) return;
             system_state.position = { x, y };
             mapState.selection = null;
@@ -282,12 +281,11 @@ export function useMapAction() {
     }
 
     function removeSelectedMapSolarsystems() {
-        const unpinned_selected = map_solarsystems_selected.value.filter((s) => !s.pinned);
-        if (unpinned_selected.length === 0) return;
+        if (map_solarsystems_selected.value.length === 0) return;
 
         return router.delete(route('map-selection.destroy'), {
             data: {
-                map_solarsystem_ids: unpinned_selected.map((s) => s.id),
+                map_solarsystem_ids: map_solarsystems_selected.value.map((s) => s.id),
             },
             preserveState: true,
             preserveScroll: true,
