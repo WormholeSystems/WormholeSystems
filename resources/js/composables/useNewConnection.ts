@@ -54,6 +54,7 @@ export function useNewConnection(
     useEventListener('pointerup', handleDragEnd);
 
     useEventListener(container, 'pointerup', handleConnectionCreation);
+    useEventListener(handle, 'drag', (e) => e.preventDefault());
 
     return {
         origin,

@@ -23,6 +23,7 @@ export type TMapSolarSystem = {
     status: string | null;
     solarsystem: TSolarsystem | null;
     statics: TWormhole[] | null;
+    pinned: boolean;
 };
 
 export type TMapConnection = {

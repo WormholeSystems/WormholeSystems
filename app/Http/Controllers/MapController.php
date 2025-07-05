@@ -31,6 +31,7 @@ class MapController extends Controller
             'map' => $map->toResource(MapResource::class),
             'solarsystems' => $solarsystems,
             'search' => $search,
+            'config' => config('map'),
         ]);
     }
 }

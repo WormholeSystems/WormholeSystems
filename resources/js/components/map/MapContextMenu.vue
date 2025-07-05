@@ -1,22 +1,18 @@
 <script setup lang="ts">
 import { ContextMenuContent, ContextMenuItem } from '@/components/ui/context-menu';
-import { useMapSolarsystems } from '@/composables/map';
-import { router } from '@inertiajs/vue3';
+import { useMapAction } from '@/composables/map';
 
-const { map_solarsystems } = useMapSolarsystems();
+const { removeAllMapSolarsystems, sortMapSolarsystemsByRegion } = useMapAction();
 
 function handleSystemDelete() {
-    router.delete(route('map-selection.destroy'), {
-        data: {
-            map_solarsystem_ids: map_solarsystems.value.map((map_solarsystem) => map_solarsystem.id),
-        },
-    });
+    removeAllMapSolarsystems();
 }
 </script>
 
 <template>
     <ContextMenuContent>
         <ContextMenuItem @select="handleSystemDelete"> Clear map</ContextMenuItem>
+        <ContextMenuItem @select="sortMapSolarsystemsByRegion"> Sort by region</ContextMenuItem>
     </ContextMenuContent>
 </template>
 

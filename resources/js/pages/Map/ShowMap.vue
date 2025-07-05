@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import MapComponentComponent from '@/components/map/MapComponent.vue';
+import MapComponent from '@/components/map/MapComponent.vue';
 import MapSearch from '@/components/map/MapSearch.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { TMapConfig } from '@/types/map';
 import { TMap, TSolarsystem } from '@/types/models';
 import { Head, Link } from '@inertiajs/vue3';
 
@@ -9,6 +10,7 @@ const { map } = defineProps<{
     map: TMap;
     search: string;
     solarsystems: TSolarsystem[];
+    config: TMapConfig;
 }>();
 </script>
 
@@ -18,7 +20,7 @@ const { map } = defineProps<{
 
         <div class="p-8">
             <div class="relative">
-                <MapComponentComponent :map="map" />
+                <MapComponent :map :config />
                 <MapSearch :map :search :solarsystems />
             </div>
         </div>

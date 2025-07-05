@@ -4,14 +4,15 @@ import MapConnections from '@/components/map/MapConnections.vue';
 import MapContextMenu from '@/components/map/MapContextMenu.vue';
 import MapSolarsystem from '@/components/map/MapSolarsystem.vue';
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu';
-import { useMap as useNewMap, useMapConnections, useMapGrid, useMapSolarsystems } from '@/composables/map';
+import { useMap as useNewMap, useMapAction, useMapConnections, useMapGrid, useMapSolarsystems } from '@/composables/map';
+import { TMapConfig } from '@/types/map';
 import { TMap } from '@/types/models';
-import { router } from '@inertiajs/vue3';
 import { useMagicKeys, whenever } from '@vueuse/core';
 import { computed, ref, useTemplateRef } from 'vue';
 
-const { map } = defineProps<{
+const { map, config } = defineProps<{
     map: TMap;
+    config?: TMapConfig;
 }>();
 
 const container = useTemplateRef('map-container');
@@ -19,9 +20,10 @@ const container = useTemplateRef('map-container');
 useNewMap(
     () => map,
     () => container.value!,
+    () => config,
 );
 
-const { map_solarsystems, map_solarsystems_selected } = useMapSolarsystems();
+const { map_solarsystems } = useMapSolarsystems();
 
 const connections = useMapConnections();
 
@@ -29,19 +31,13 @@ const { Delete } = useMagicKeys();
 
 const { grid_size } = useMapGrid();
 
+const { removeSelectedMapSolarsystems } = useMapAction();
+
 const selected_connection_id = ref<number | null>(null);
 const selected_connection = computed(() => connections.value.find((con) => con.id === selected_connection_id.value));
 const context_menu_type = computed(() => (selected_connection.value ? 'connection' : 'map'));
 
-whenever(Delete, () => {
-    if (!map_solarsystems_selected.value.length) return;
-
-    router.delete(route('map-selection.destroy'), {
-        data: {
-            map_solarsystem_ids: map_solarsystems_selected.value.map((map_solarsystem) => map_solarsystem.id),
-        },
-    });
-});
+whenever(Delete, () => removeSelectedMapSolarsystems());
 
 function onOpenChange(open: boolean) {
     if (!open) {
@@ -51,7 +47,7 @@ function onOpenChange(open: boolean) {
 </script>
 
 <template>
-    <div class="relative h-400 w-full overflow-scroll rounded-lg border bg-neutral-900/50">
+    <div class="relative h-300 w-full overflow-scroll rounded-lg border bg-neutral-900/50">
         <ContextMenu @update:open="onOpenChange">
             <ContextMenuTrigger>
                 <div

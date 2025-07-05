@@ -80,6 +80,7 @@ function handleBadgeDblClick() {
 
                 <div
                     ref="handle"
+                    v-if="!map_solarsystem.pinned"
                     class="absolute top-[1px] left-1/2 hidden h-2 w-12 -translate-x-1/2 -translate-y-1/2 cursor-move rounded border border-neutral-600 bg-neutral-700 group-hover:block"
                 ></div>
                 <div

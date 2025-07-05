@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import SolarsystemClass from '@/components/SolarsystemClass.vue';
+import LockIcon from '@/components/icons/LockIcon.vue';
 import SolarsystemEffect from '@/components/map/SolarsystemEffect.vue';
 import { TMapSolarSystem } from '@/types/models';
 
@@ -17,11 +18,14 @@ const { map_solarsystem } = defineProps<{
         <span class="pointer-events-none contents">
             <SolarsystemClass :security="map_solarsystem.solarsystem!.security" :wormhole_class="map_solarsystem.class" />
             <span class="pointer-events-none">
-                <span v-if="map_solarsystem.alias">{{ map_solarsystem.alias }} - </span>
+                <span class="mr-2 inline-block" v-if="map_solarsystem.alias">{{ map_solarsystem.alias }}</span>
                 <span>{{ map_solarsystem.solarsystem?.name }}</span>
                 <span v-if="map_solarsystem.occupier_alias"> ({{ map_solarsystem.occupier_alias }})</span>
             </span>
-            <SolarsystemEffect :effect="map_solarsystem.effect" :effects="map_solarsystem.effects" v-if="map_solarsystem.effect" />
+            <span class="flex gap-2">
+                <LockIcon v-if="map_solarsystem.pinned" class="text-muted-foreground" />
+                <SolarsystemEffect :effect="map_solarsystem.effect" :effects="map_solarsystem.effects" v-if="map_solarsystem.effect" />
+            </span>
             <span class="col-span-2 row-start-2 block text-xs text-muted-foreground" v-if="!map_solarsystem.class">{{
                 map_solarsystem.solarsystem?.region?.name
             }}</span>

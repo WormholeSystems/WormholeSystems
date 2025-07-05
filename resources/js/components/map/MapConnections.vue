@@ -76,7 +76,7 @@ function getConnectionExtra(connection: TMapConnection): string {
             />
             <MapConnection v-if="origin" :from="origin.position!" :to="mouse" />
             <rect
-                v-if="dragging && selection?.start"
+                v-if="dragging && selection?.start && mouse"
                 :x="Math.min(selection.start.x, mouse.x)"
                 :y="Math.min(selection.start.y, mouse.y)"
                 :width="Math.abs(selection.start.x - mouse.x)"

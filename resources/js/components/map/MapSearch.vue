@@ -2,6 +2,7 @@
 import SolarsystemEffect from '@/components/map/SolarsystemEffect.vue';
 import SolarsystemClass from '@/components/SolarsystemClass.vue';
 import { Combobox, ComboboxAnchor, ComboboxEmpty, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxList } from '@/components/ui/combobox';
+import { useMapAction } from '@/composables/map';
 import { TMap, TSolarsystem } from '@/types/models';
 import { router } from '@inertiajs/vue3';
 import { useDebounceFn } from '@vueuse/core';
@@ -12,6 +13,8 @@ const { map, search, solarsystems } = defineProps<{
     search: string;
     solarsystems: TSolarsystem[];
 }>();
+
+const { addMapSolarsystem } = useMapAction();
 
 function handleSearch() {
     router.reload({
@@ -24,12 +27,7 @@ function handleSearch() {
 const search_input = ref(search);
 
 function handleSolarsystemSelect(solarsystem: TSolarsystem) {
-    router.post(route('map-solarsystems.store'), {
-        map_id: map.id,
-        solarsystem_id: solarsystem.id,
-        position_x: 500,
-        position_y: 200,
-    });
+    addMapSolarsystem(solarsystem.id);
 }
 
 const debounced = useDebounceFn(handleSearch, 200, {
