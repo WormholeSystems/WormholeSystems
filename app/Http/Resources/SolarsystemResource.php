@@ -32,6 +32,7 @@ class SolarsystemResource extends JsonResource
             'class' => $this->wormholeSystem?->class,
             'effect' => $this->wormholeSystem?->effect?->name,
             'effects' => $this->wormholeSystem?->effect?->getEffectArray($this->wormholeSystem->class),
+            'sovereignty' => $this->sovereignty?->toResource(SovereigntyResource::class),
         ];
     }
 

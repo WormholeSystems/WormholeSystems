@@ -21,6 +21,7 @@ return new class extends Migration
             $table->bigInteger('position_y')->nullable();
             $table->string('status')->nullable()->index();
             $table->boolean('pinned')->default(false);
+            $table->text('notes')->nullable();
             $table->timestamps();
         });
     }

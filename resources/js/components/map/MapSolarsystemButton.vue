@@ -3,6 +3,7 @@ import SolarsystemClass from '@/components/SolarsystemClass.vue';
 import LockIcon from '@/components/icons/LockIcon.vue';
 import SolarsystemEffect from '@/components/map/SolarsystemEffect.vue';
 import { TMapSolarSystem } from '@/types/models';
+import SovereigntyIcon from '@/components/map/SovereigntyIcon.vue';
 
 const { map_solarsystem } = defineProps<{
     map_solarsystem: TMapSolarSystem & { is_selected?: boolean };
@@ -22,7 +23,8 @@ const { map_solarsystem } = defineProps<{
                 <span>{{ map_solarsystem.solarsystem?.name }}</span>
                 <span v-if="map_solarsystem.occupier_alias"> ({{ map_solarsystem.occupier_alias }})</span>
             </span>
-            <span class="flex gap-2">
+            <span class="flex items-center gap-2">
+                <SovereigntyIcon v-if="map_solarsystem.solarsystem?.sovereignty" :sovereignty="map_solarsystem.solarsystem.sovereignty" />
                 <LockIcon v-if="map_solarsystem.pinned" class="text-muted-foreground" />
                 <SolarsystemEffect :effect="map_solarsystem.effect" :effects="map_solarsystem.effects" v-if="map_solarsystem.effect" />
             </span>

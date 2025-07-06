@@ -243,8 +243,8 @@ export function useMapMouse() {
 
         const rect = container.getBoundingClientRect();
         return {
-            x: mouse.x.value - rect.left,
-            y: mouse.y.value - rect.top,
+            x: mouse.x.value - rect.left - window.scrollX + container.scrollLeft,
+            y: mouse.y.value - rect.top - window.scrollY + container.scrollTop,
         };
     });
 }
@@ -264,7 +264,7 @@ export function useMapAction() {
     function removeAllMapSolarsystems() {
         router.delete(route('map-selection.destroy'), {
             data: {
-                map_solarsystem_ids: map_solarsystems.value.map((s) => s.id),
+                map_solarsystem_ids: map_solarsystems.value.filter((s) => !s.pinned).map((s) => s.id),
             },
             preserveState: true,
             preserveScroll: true,

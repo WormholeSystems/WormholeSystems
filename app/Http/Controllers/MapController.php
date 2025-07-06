@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\MapResource;
+use App\Http\Resources\MapSolarsystemResource;
 use App\Http\Resources\SolarsystemResource;
 use App\Models\Map;
 use App\Models\Solarsystem;
@@ -27,11 +28,17 @@ class MapController extends Controller
         $solarsystems = Solarsystem::query()->whereLike('name', sprintf('%s%%', $search->value()))
             ->limit(10)->get()->toResourceCollection(SolarsystemResource::class);
 
+        $selected_map_solarsystem = $request->integer('map_solarsystem_id');
+
+        $selected_map_solarsystem = fn () => $selected_map_solarsystem ? $map->mapSolarsystems()->findOrFail($selected_map_solarsystem)
+            ->toResource(MapSolarsystemResource::class) : null;
+
         return Inertia::render('Map/ShowMap', [
             'map' => $map->toResource(MapResource::class),
             'solarsystems' => $solarsystems,
             'search' => $search,
             'config' => config('map'),
+            'selected_map_solarsystem' => $selected_map_solarsystem,
         ]);
     }
 }

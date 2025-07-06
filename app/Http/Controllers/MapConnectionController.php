@@ -14,8 +14,7 @@ class MapConnectionController extends Controller
 {
     public function store(StoreMapConnectionRequest $request, CreateMapConnectionAction $action): RedirectResponse
     {
-        $request->validated();
-        $action->handle($request->fromMapSolarsystem, $request->toMapSolarsystem);
+        $action->handle($request->validated());
 
         return back();
     }

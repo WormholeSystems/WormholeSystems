@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
 use NicolasKion\SDE\ClassResolver;
+use Throwable;
 
 class Character extends Model
 {
@@ -26,16 +27,18 @@ class Character extends Model
         'gender',
         'birthday',
         'title',
+        'user_id',
     ];
 
     /**
-     * @param int[] $ids
-     * @return void
+     * @param  int[]  $ids
+     *
+     * @throws Throwable
      */
     public static function createFromIds(array $ids): void
     {
-        DB::transaction(fn() => self::query()->upsert(
-            collect($ids)->map(fn($id) => ['id' => $id])->toArray(),
+        DB::transaction(fn () => self::query()->upsert(
+            collect($ids)->map(fn ($id) => ['id' => $id])->toArray(),
             ['id']
         ), 5);
     }

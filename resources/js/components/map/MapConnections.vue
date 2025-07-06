@@ -19,6 +19,7 @@ const { selection, setSelectionStart, setSelectionEnd } = useSelection();
 const dragging = ref(false);
 
 function handleDragStart(event: PointerEvent) {
+    document.body.classList.add('select-none');
     if (event.button !== 0) return;
     dragging.value = true;
     setSelectionStart(event.offsetX, event.offsetY);
@@ -26,11 +27,11 @@ function handleDragStart(event: PointerEvent) {
 
 function handleDragMove() {
     if (!dragging.value) return;
-
     setSelectionEnd(mouse.value.x, mouse.value.y);
 }
 
 function handleDragEnd(event: PointerEvent) {
+    document.body.classList.remove('select-none');
     if (!dragging.value) return;
     dragging.value = false;
     const bounds = container.value?.getBoundingClientRect();
@@ -48,9 +49,9 @@ function getConnectionExtra(connection: TMapConnection): string {
     if (!connection.ship_size) return '';
     switch (connection.ship_size) {
         case 'frigate':
-            return 'SM';
+            return 'S';
         case 'medium':
-            return 'MD';
+            return 'M';
         default:
             return '';
     }
@@ -76,7 +77,7 @@ function getConnectionExtra(connection: TMapConnection): string {
             />
             <MapConnection v-if="origin" :from="origin.position!" :to="mouse" />
             <rect
-                v-if="dragging && selection?.start && mouse"
+                v-if="dragging && selection?.start"
                 :x="Math.min(selection.start.x, mouse.x)"
                 :y="Math.min(selection.start.y, mouse.y)"
                 :width="Math.abs(selection.start.x - mouse.x)"

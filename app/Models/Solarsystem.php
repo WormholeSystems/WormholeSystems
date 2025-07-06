@@ -27,6 +27,7 @@ use NicolasKion\SDE\ClassResolver;
  * @property-read Collection<Celestial> $celestials
  * @property-read Collection<Station> $stations
  * @property-read WormholeSystem|null $wormholeSystem
+ * @property-read Sovereignty $sovereignty
  */
 class Solarsystem extends Model
 {
@@ -92,5 +93,10 @@ class Solarsystem extends Model
     public function mapSolarsystems(): HasMany
     {
         return $this->hasMany(MapSolarsystem::class, 'solarsystem_id');
+    }
+
+    public function sovereignty(): HasOne
+    {
+        return $this->hasOne(Sovereignty::class, 'solarsystem_id');
     }
 }

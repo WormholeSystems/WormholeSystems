@@ -59,6 +59,7 @@ export type TSolarsystem = {
     security: number;
     class: number;
     effect: TWormholeEffectName | null;
+    sovereignty: TSovereignty | null;
 };
 
 export type TRegion = {
@@ -84,3 +85,27 @@ export type TWormholeEffect = {
 export type TMassStatus = 'fresh' | 'reduced' | 'critical';
 
 export type TShipSize = 'frigate' | 'medium' | 'large';
+
+export type TSovereignty = {
+    id: number;
+    alliance: TAlliance | null;
+    corporation: TCorporation | null;
+    faction: TFaction | null;
+};
+
+export type TAlliance = {
+    id: number;
+    name: string;
+    ticker: string;
+};
+
+export type TCorporation = {
+    id: number;
+    name: string;
+    ticker: string;
+};
+
+export type TFaction = {
+    id: number;
+    name: string;
+};

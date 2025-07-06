@@ -18,10 +18,10 @@ readonly class CreateMapConnectionWithIDsAction
             ->where('solarsystem_id', $to_solarsystem_id)
             ->firstOrFail();
 
-        $this->connectMapSolarsystems->handle(
-            $from_solarsystem,
-            $to_solarsystem,
-            $wormhole_id
-        );
+        $this->connectMapSolarsystems->handle([
+            'from_map_solarsystem_id' => $from_solarsystem->id,
+            'to_map_solarsystem_id' => $to_solarsystem->id,
+            'wormhole_id' => $wormhole_id,
+        ]);
     }
 }

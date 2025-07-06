@@ -33,11 +33,13 @@ export function useNewConnection(
     function handleConnectionCreation() {
         const system = toValue(map_solarsystem);
         if (!system || !store.origin) return;
+
         router.post(
             route('map-connections.store'),
             {
                 from_map_solarsystem_id: store.origin.id,
                 to_map_solarsystem_id: system.id,
+                ship_size: getMaximumShipSizeForConnection(store.origin, system),
             },
             {
                 preserveState: true,
@@ -47,6 +49,22 @@ export function useNewConnection(
                 },
             },
         );
+    }
+
+    function getMaximumShipSizeForConnection(from: TMapSolarSystem, to: TMapSolarSystem): string | undefined {
+        const classes = [from.class, to.class].filter((c) => c !== null && c !== undefined);
+        if (classes.some((c) => c >= 13 && c <= 18)) return 'frigate';
+        if (classes.includes(1)) return 'medium';
+
+        // Check if Turnur connects to JSpace
+        const names = [from.name, to.name];
+        if (names.includes('Turnur') && classes.length) return 'medium';
+
+        // Check if Thera connects to Highsec
+        const highsec = [from.solarsystem?.security, to.solarsystem?.security].filter((s) => s && s >= 0.5);
+        if (names.includes('Thera') && highsec.length) return 'medium';
+
+        return undefined;
     }
 
     useEventListener(handle, 'pointerdown', handleDragStart);

@@ -4,7 +4,6 @@ namespace App\Http\Requests;
 
 use App\Enums\MassStatus;
 use App\Enums\ShipSize;
-use App\Models\MapSolarsystem;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -34,19 +33,5 @@ class StoreMapConnectionRequest extends FormRequest
             'ship_size' => ['nullable', 'sometimes', 'string', Rule::enum(ShipSize::class)],
             'is_eol' => ['nullable', 'sometimes', 'boolean'],
         ];
-    }
-
-    public MapSolarsystem $fromMapSolarsystem
-        {
-        get {
-            return MapSolarsystem::findOrFail($this->input('from_map_solarsystem_id'));
-        }
-    }
-
-    public MapSolarsystem $toMapSolarsystem
-        {
-        get {
-            return MapSolarsystem::findOrFail($this->input('to_map_solarsystem_id'));
-        }
     }
 }

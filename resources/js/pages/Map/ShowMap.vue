@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import MapComponent from '@/components/map/MapComponent.vue';
 import MapSearch from '@/components/map/MapSearch.vue';
+import SelectedSolarsystem from '@/components/solarsystem/SelectedSolarsystem.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { TMapConfig } from '@/types/map';
-import { TMap, TSolarsystem } from '@/types/models';
+import { TMap, TMapSolarSystem, TSolarsystem } from '@/types/models';
 import { Head, Link } from '@inertiajs/vue3';
 
-const { map } = defineProps<{
+const { map, selected_map_solarsystem } = defineProps<{
     map: TMap;
     search: string;
     solarsystems: TSolarsystem[];
     config: TMapConfig;
+    selected_map_solarsystem: TMapSolarSystem | null;
 }>();
 </script>
 
@@ -23,6 +25,7 @@ const { map } = defineProps<{
                 <MapComponent :map :config />
                 <MapSearch :map :search :solarsystems />
             </div>
+            <SelectedSolarsystem v-if="selected_map_solarsystem" :map_solarsystem="selected_map_solarsystem" />
         </div>
         <ul>
             <li :key="solarsystem.id" v-for="solarsystem in map.map_solarsystems">

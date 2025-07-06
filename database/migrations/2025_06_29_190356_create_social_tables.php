@@ -6,7 +6,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      */
@@ -43,6 +44,7 @@ return new class extends Migration {
             $table->float('tax_rate')->nullable();
             $table->boolean('war_eligible')->nullable()->index();
             $table->boolean('npc')->default(false)->index();
+            $table->dateTime('last_updated')->nullable()->index();
             $table->timestamps();
         });
 
@@ -84,6 +86,7 @@ return new class extends Migration {
             $table->foreignId('creator_corporation_id')->nullable()->constrained('corporations');
             $table->foreignId('faction_id')->nullable()->constrained();
             $table->dateTime('date_founded')->nullable();
+            $table->dateTime('last_updated')->nullable()->index();
             $table->timestamps();
         });
 
