@@ -39,29 +39,52 @@ class MapSolarsystem extends Model
         'pinned',
     ];
 
+    /**
+     * @return BelongsTo<Solarsystem,$this>
+     */
     public function solarsystem(): BelongsTo
     {
         return $this->belongsTo(Solarsystem::class);
     }
 
+    /**
+     * @return BelongsTo<Map,$this>
+     */
     public function map(): BelongsTo
     {
         return $this->belongsTo(Map::class);
     }
 
+    /**
+     * @return HasMany<MapConnection,$this>
+     */
     public function connectionsTo(): HasMany
     {
         return $this->hasMany(MapConnection::class, 'from_map_solarsystem_id');
     }
 
+    /**
+     * @return HasMany<MapConnection,$this>
+     */
     public function connectionsFrom(): HasMany
     {
         return $this->hasMany(MapConnection::class, 'to_map_solarsystem_id');
     }
 
+    /**
+     * @return HasOne<WormholeSystem,$this>
+     */
     public function wormholeSystem(): HasOne
     {
         return $this->hasOne(WormholeSystem::class, 'id', 'solarsystem_id');
+    }
+
+    /**
+     * @return HasMany<Signature,$this>
+     */
+    public function signatures(): HasMany
+    {
+        return $this->hasMany(Signature::class, 'map_solarsystem_id');
     }
 
     public ?Collection $connections {

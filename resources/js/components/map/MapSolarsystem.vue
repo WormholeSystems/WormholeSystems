@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useMapSolarsystem } from '@/composables/map';
 import { useNewConnection } from '@/composables/useNewConnection';
+import { AppPageProps } from '@/types';
 import { TMapSolarSystem } from '@/types/models';
-import { router, useForm } from '@inertiajs/vue3';
+import { router, useForm, usePage } from '@inertiajs/vue3';
 import { ref, useTemplateRef } from 'vue';
 
 const { map_solarsystem } = defineProps<{
@@ -26,6 +27,12 @@ const drag = useMapSolarsystem(
 
 const open = ref(false);
 
+const page = usePage<
+    AppPageProps<{
+        selected_map_solarsystem: TMapSolarSystem | null;
+    }>
+>();
+
 const form = useForm<{
     alias: string;
     occupier_alias: string;
@@ -39,6 +46,9 @@ function handleSubmit() {
         onSuccess: () => {
             open.value = false;
         },
+        preserveScroll: true,
+        preserveState: true,
+        only: ['map'],
     });
 }
 
@@ -49,10 +59,14 @@ useNewConnection(
 );
 
 function handleBadgeClick() {
+    if (page.props.selected_map_solarsystem?.id === map_solarsystem.id) {
+        return;
+    }
     router.reload({
         data: {
             map_solarsystem_id: map_solarsystem.id,
         },
+        only: ['selected_map_solarsystem'],
     });
 }
 

@@ -13,7 +13,7 @@ use Illuminate\Support\Str;
 trait HasSlug
 {
     public string $slug {
-        get => Str::slug(join('-', $this->getSlugParts()));
+        get => Str::slug(implode('-', $this->getSlugParts()));
     }
 
     public function getSlugParts(): array

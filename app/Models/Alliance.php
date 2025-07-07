@@ -66,7 +66,7 @@ class Alliance extends Model
     protected function casts(): array
     {
         return [
-            'date_founded' => 'datetime'
+            'date_founded' => 'datetime',
         ];
     }
 }

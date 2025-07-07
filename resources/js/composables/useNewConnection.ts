@@ -47,6 +47,7 @@ export function useNewConnection(
                 onSuccess: () => {
                     store.origin = null; // Reset origin after successful connection creation
                 },
+                only: ['map'],
             },
         );
     }

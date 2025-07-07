@@ -17,25 +17,53 @@ const { map_connection } = defineProps<{
 }>();
 
 function handleRemoveFromMap() {
-    router.delete(route('map-connections.destroy', map_connection.id));
+    router.delete(route('map-connections.destroy', map_connection.id), {
+        preserveScroll: true,
+        preserveState: true,
+        only: ['map'],
+    });
 }
 
 function handleStatusChange(mass_status: TMassStatus | string) {
-    router.put(route('map-connections.update', map_connection.id), { mass_status });
+    router.put(
+        route('map-connections.update', map_connection.id),
+        { mass_status },
+        {
+            preserveScroll: true,
+            preserveState: true,
+            only: ['map'],
+        },
+    );
 }
 
 function handleShipSizeChange(ship_size: TShipSize | string) {
-    router.put(route('map-connections.update', map_connection.id), { ship_size });
+    router.put(
+        route('map-connections.update', map_connection.id),
+        { ship_size },
+        {
+            preserveScroll: true,
+            preserveState: true,
+            only: ['map'],
+        },
+    );
 }
 
-function hndleToggleEol() {
-    router.put(route('map-connections.update', map_connection.id), { is_eol: !map_connection.is_eol });
+function handleToggleEol() {
+    router.put(
+        route('map-connections.update', map_connection.id),
+        { is_eol: !map_connection.is_eol },
+        {
+            preserveScroll: true,
+            preserveState: true,
+            only: ['map'],
+        },
+    );
 }
 </script>
 
 <template>
     <ContextMenuContent>
-        <ContextMenuItem @click="hndleToggleEol"> Toggle EOL </ContextMenuItem>
+        <ContextMenuItem @click="handleToggleEol"> Toggle EOL</ContextMenuItem>
         <ContextMenuSub>
             <ContextMenuSubTrigger>Ship Size</ContextMenuSubTrigger>
             <ContextMenuSubContent>

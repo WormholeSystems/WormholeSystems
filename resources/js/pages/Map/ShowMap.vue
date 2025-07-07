@@ -1,43 +1,44 @@
 <script setup lang="ts">
+import MapKillmails from '@/components/killmails/MapKillmails.vue';
 import MapComponent from '@/components/map/MapComponent.vue';
 import MapSearch from '@/components/map/MapSearch.vue';
 import SelectedSolarsystem from '@/components/solarsystem/SelectedSolarsystem.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { TMapConfig } from '@/types/map';
-import { TMap, TMapSolarSystem, TSolarsystem } from '@/types/models';
-import { Head, Link } from '@inertiajs/vue3';
+import { TKillmail, TMap, TMapSolarSystem, TSolarsystem } from '@/types/models';
+import { Head, router } from '@inertiajs/vue3';
+import { echo } from '@laravel/echo-vue';
 
-const { map, selected_map_solarsystem } = defineProps<{
+const { map, selected_map_solarsystem, map_killmails } = defineProps<{
     map: TMap;
     search: string;
     solarsystems: TSolarsystem[];
     config: TMapConfig;
     selected_map_solarsystem: TMapSolarSystem | null;
+    map_killmails?: TKillmail[];
 }>();
+
+router.on('before', (event) => {
+    event.detail.visit.headers['X-Socket-ID'] = echo().socketId() || '';
+});
 </script>
 
 <template>
     <AppLayout>
         <Head title="ShowMap" />
 
-        <div class="p-8">
+        <div>
             <div class="relative">
                 <MapComponent :map :config />
                 <MapSearch :map :search :solarsystems />
             </div>
-            <SelectedSolarsystem v-if="selected_map_solarsystem" :map_solarsystem="selected_map_solarsystem" />
+            <div class="grid grid-cols-3 gap-8 p-8">
+                <SelectedSolarsystem v-if="selected_map_solarsystem" :map_solarsystem="selected_map_solarsystem" :map />
+                <div class=""></div>
+
+                <MapKillmails :map_killmails="map_killmails" :map_id="map.id" />
+            </div>
         </div>
-        <ul>
-            <li :key="solarsystem.id" v-for="solarsystem in map.map_solarsystems">
-                <span>{{ solarsystem.name }}</span>
-                <Link :href="route('map-solarsystems.destroy', solarsystem.id)" method="delete" as="button"> Delete </Link>
-            </li>
-        </ul>
-        <ul>
-            <li v-for="map_connection in map.map_connections" :key="map_connection.id">
-                <span>{{ map_connection.from_map_solarsystem_id }} {{ '<-->' }} {{ map_connection.to_map_solarsystem_id }}</span>
-            </li>
-        </ul>
     </AppLayout>
 </template>
 <style>

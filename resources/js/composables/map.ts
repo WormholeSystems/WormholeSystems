@@ -12,7 +12,7 @@ type Coordinates = {
 type TMapState = {
     map: TMap | null;
     map_container: HTMLElement | null;
-    map_solarsystems: WithIsSelected<TMapSolarSystem>[];
+    map_solarsystems: TDataMapSolarSystem[];
     map_connections: TConnectionWithSourceAndTarget[];
     selection: {
         start: Coordinates;
@@ -20,11 +20,18 @@ type TMapState = {
     } | null;
     grid_size: number;
     config: TMapConfig;
+    hovered_solarsystem_id: number | null;
 };
 
 type WithIsSelected<T> = T & {
     is_selected: boolean;
 };
+
+type WithHovered<T> = T & {
+    is_hovered: boolean;
+};
+
+type TDataMapSolarSystem = WithIsSelected<WithHovered<TMapSolarSystem>>;
 
 const mapState = reactive<TMapState>({
     map: null,
@@ -39,6 +46,7 @@ const mapState = reactive<TMapState>({
             y: 2000,
         },
     },
+    hovered_solarsystem_id: null,
 });
 
 const map_solarsystems = computed(() => mapState.map_solarsystems);
@@ -61,7 +69,7 @@ export function useMap(map: MaybeRefOrGetter<TMap>, container: MaybeRefOrGetter<
 
         mapState.map = mapValue;
         mapState.map_container = containerValue || null;
-        mapState.map_solarsystems = mapValue.map_solarsystems.map(getSelectedState);
+        mapState.map_solarsystems = mapValue.map_solarsystems.map(getSelectedState).map(getHoveredState);
         mapState.config = configValue;
     });
 
@@ -84,6 +92,11 @@ export function useMap(map: MaybeRefOrGetter<TMap>, container: MaybeRefOrGetter<
             system.position!.y <= Math.max(start.y, end.y);
 
         return { ...system, is_selected };
+    }
+
+    function getHoveredState(system: WithIsSelected<TMapSolarSystem>): TDataMapSolarSystem {
+        const is_hovered = mapState.hovered_solarsystem_id === system.id;
+        return { ...system, is_hovered };
     }
 
     function getConnectionWithSourceAndTarget(connection: TMapConnection): TConnectionWithSourceAndTarget {
@@ -147,10 +160,19 @@ export function useMapSolarsystems() {
         });
     }
 
+    function setHoveredMapSolarsystem(map_solarsystem_id: number, is_hovered: boolean) {
+        if (is_hovered) {
+            mapState.hovered_solarsystem_id = map_solarsystem_id;
+        } else {
+            mapState.hovered_solarsystem_id = null;
+        }
+    }
+
     return {
         map_solarsystems,
         map_solarsystems_selected,
         setSystemPosition,
+        setHoveredMapSolarsystem,
     };
 }
 
@@ -205,10 +227,16 @@ export function useMapSolarsystem(
 
     function updateMapSolarsystem() {
         if (!map_solarsystems_selected.value?.length && !current_map_solarsystem.value?.pinned) {
-            return router.put(route('map-solarsystems.update', current_map_solarsystem.value.id), {
-                position_x: draggable.x.value,
-                position_y: draggable.y.value,
-            });
+            return router.put(
+                route('map-solarsystems.update', current_map_solarsystem.value.id),
+                {
+                    position_x: draggable.x.value,
+                    position_y: draggable.y.value,
+                },
+                {
+                    only: ['map'],
+                },
+            );
         }
 
         router.put(
@@ -228,6 +256,7 @@ export function useMapSolarsystem(
                 onSuccess: () => {
                     clearSelection();
                 },
+                only: ['map'],
             },
         );
     }
@@ -306,6 +335,7 @@ export function useMapAction() {
         return router.put(route('map-solarsystems.update', map_solarsystem.id), data, {
             preserveState: true,
             preserveScroll: true,
+            only: ['map'],
         });
     }
 
@@ -371,6 +401,7 @@ export function useMapAction() {
                 onSuccess: () => {
                     mapState.selection = null;
                 },
+                only: ['map'],
             },
         );
     }

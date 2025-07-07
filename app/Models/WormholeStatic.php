@@ -15,7 +15,7 @@ class WormholeStatic extends Model
 {
     protected $fillable = [
         'wormhole_id',
-        'wormhole_system_id'
+        'wormhole_system_id',
     ];
 
     /**

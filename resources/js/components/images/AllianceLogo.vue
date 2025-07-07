@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import QuestionIcon from '@/components/icons/QuestionIcon.vue';
-import { UseImage } from '@vueuse/components';
+import EsiImage from '@/components/images/EsiImage.vue';
+import { TImageSize } from '@/components/images/index';
 
 const {
     size = 64,
@@ -9,16 +9,12 @@ const {
 } = defineProps<{
     alliance_id: number;
     alliance_name: string;
-    size?: 64 | 128 | 256;
+    size?: TImageSize;
 }>();
 </script>
 
 <template>
-    <UseImage :src="`https://images.evetech.net/alliances/${alliance_id}/logo?size=${size}`" :alt="`Alliance logo for ${alliance_name}`">
-        <template #error>
-            <QuestionIcon />
-        </template>
-    </UseImage>
+    <EsiImage :path="`alliances/${alliance_id}/logo`" :alt="alliance_name" :size />
 </template>
 
 <style scoped></style>

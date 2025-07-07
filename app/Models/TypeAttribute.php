@@ -36,7 +36,7 @@ class TypeAttribute extends Model
     protected function casts(): array
     {
         return [
-            'value' => 'float'
+            'value' => 'float',
         ];
     }
 }

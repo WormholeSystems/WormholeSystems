@@ -2,6 +2,7 @@
 
 namespace App\Actions\MapConnections;
 
+use App\Events\MapConnections\MapConnectionCreatedEvent;
 use App\Models\MapConnection;
 use App\Models\MapSolarsystem;
 
@@ -13,9 +14,14 @@ class CreateMapConnectionAction
             ->where('id', $data['from_map_solarsystem_id'])
             ->value('map_id');
 
-        return MapConnection::create([
+        $map_connection = MapConnection::create([
             ...$data,
             'map_id' => $map_id,
         ]);
+
+        broadcast(new MapConnectionCreatedEvent($map_id))
+            ->toOthers();
+
+        return $map_connection;
     }
 }

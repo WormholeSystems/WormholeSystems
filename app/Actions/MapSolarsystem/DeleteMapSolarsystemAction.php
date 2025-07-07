@@ -3,6 +3,7 @@
 namespace App\Actions\MapSolarsystem;
 
 use App\Actions\MapConnections\DeleteMapConnectionsFromMapSolarsystemAction;
+use App\Events\MapSolarsystems\MapSolarsystemDeletedEvent;
 use App\Models\MapSolarsystem;
 use Illuminate\Support\Facades\DB;
 use Throwable;
@@ -18,6 +19,9 @@ readonly class DeleteMapSolarsystemAction
     {
         return DB::transaction(function () use ($mapSolarsystem) {
             $mapSolarsystem->update(['position_x' => null, 'position_y' => null, 'alias' => null]);
+
+            broadcast(new MapSolarsystemDeletedEvent($mapSolarsystem->map_id))
+                ->toOthers();
 
             return $this->action->handle($mapSolarsystem);
         });

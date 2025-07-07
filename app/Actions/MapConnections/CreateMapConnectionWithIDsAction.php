@@ -2,6 +2,7 @@
 
 namespace App\Actions\MapConnections;
 
+use App\Events\MapConnections\MapConnectionCreatedEvent;
 use App\Models\Map;
 
 readonly class CreateMapConnectionWithIDsAction
@@ -23,5 +24,8 @@ readonly class CreateMapConnectionWithIDsAction
             'to_map_solarsystem_id' => $to_solarsystem->id,
             'wormhole_id' => $wormhole_id,
         ]);
+
+        broadcast(new MapConnectionCreatedEvent($map->id))
+            ->toOthers();
     }
 }

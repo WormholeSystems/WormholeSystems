@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CardTitle } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { TWormholeEffect, TWormholeEffectName } from '@/types/models';
 
@@ -19,24 +19,18 @@ const { effects = [], effect } = defineProps<{
             <span v-else-if="effect === 'Cataclysmic Variable'" class="block size-2 rounded-full bg-catalysmic-variable" />
             <span v-else-if="effect === 'Wolf-Rayet Star'" class="block size-2 rounded-full bg-wolf-rayet-star" />
         </PopoverTrigger>
-        <PopoverContent as-child>
-            <Card>
-                <CardHeader>
-                    <CardTitle>{{ effect }}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <ul class="grid grid-cols-[auto_1fr] divide-y text-xs">
-                        <li class="col-span-full grid grid-cols-subgrid items-center gap-2 py-1" v-for="effect in effects" :key="effect.name">
-                            <span class="text-muted-foreground">{{ effect.name }}</span>
-                            <span
-                                :data-type="effect.type"
-                                class="text-right text-foreground data-[type=Buff]:text-green-500 data-[type=Debuff]:text-red-500"
-                                >{{ effect.strength }}</span
-                            >
-                        </li>
-                    </ul>
-                </CardContent>
-            </Card>
+        <PopoverContent>
+            <CardTitle>{{ effect }}</CardTitle>
+            <ul class="mt-4 grid grid-cols-[auto_1fr] divide-y text-xs">
+                <li class="col-span-full grid grid-cols-subgrid items-center gap-2 py-1" v-for="effect in effects" :key="effect.name">
+                    <span class="text-muted-foreground">{{ effect.name }}</span>
+                    <span
+                        :data-type="effect.type"
+                        class="text-right text-foreground data-[type=Buff]:text-green-500 data-[type=Debuff]:text-red-500"
+                        >{{ effect.strength! }}</span
+                    >
+                </li>
+            </ul>
         </PopoverContent>
     </Popover>
 </template>

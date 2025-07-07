@@ -2,6 +2,7 @@
 
 namespace App\Actions\Map;
 
+use App\Events\Maps\MapUpdatedEvent;
 use App\Models\Map;
 
 class UpdateMapAction
@@ -16,6 +17,10 @@ class UpdateMapAction
 
     public function handle(Map $map, array $data): Map
     {
-        return tap($map)->update($data);
+        $map->update($data);
+
+        broadcast(new MapUpdatedEvent($map))->toOthers();
+
+        return $map;
     }
 }

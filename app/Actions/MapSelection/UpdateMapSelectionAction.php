@@ -2,6 +2,8 @@
 
 namespace App\Actions\MapSelection;
 
+use App\Events\MapSolarsystems\MapSolarsystemsUpdatedEvent;
+use App\Models\Map;
 use App\Models\MapSolarsystem;
 use Illuminate\Support\Facades\DB;
 use Throwable;
@@ -14,11 +16,19 @@ class UpdateMapSelectionAction
     public function handle(array $data): void
     {
         DB::transaction(function () use ($data) {
-            collect($data['map_solarsystems'])
+
+            $collection = collect($data['map_solarsystems']);
+            $collection
                 ->each(function ($item) {
                     MapSolarsystem::where('id', $item['id'])
                         ->update(['position_x' => $item['position_x'], 'position_y' => $item['position_y']]);
                 });
+
+            Map::query()
+                ->whereHas('mapSolarsystems', function ($query) use ($data) {
+                    $query->whereIn('id', collect($data['map_solarsystems'])->pluck('id'));
+                })
+                ->each(fn (Map $map) => broadcast(new MapSolarsystemsUpdatedEvent($map->id))->toOthers());
         });
     }
 }

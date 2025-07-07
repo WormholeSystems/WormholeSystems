@@ -27,11 +27,12 @@ class Wormhole extends Model
         'ship_size',
         'maximum_lifetime',
         'leads_to',
-        'type_id'
+        'type_id',
     ];
 
     /**
      * The type of the wormhole.
+     *
      * @return BelongsTo<Type, $this>
      */
     public function type(): BelongsTo

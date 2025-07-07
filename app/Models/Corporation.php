@@ -28,7 +28,7 @@ class Corporation extends Model
         'tax_rate',
         'war_eligible',
         'npc',
-        'alliance_id'
+        'alliance_id',
     ];
 
     /**

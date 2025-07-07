@@ -21,6 +21,7 @@ function handleSearch() {
         data: {
             search: search_input.value,
         },
+        only: ['search', 'solarsystems'],
     });
 }
 

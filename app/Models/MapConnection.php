@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property CarbonImmutable $connected_at
  * @property-read MapSolarsystem $fromMapSolarsystem
  * @property-read MapSolarsystem $toMapSolarsystem
+ * @property-read Map $map
  */
 class MapConnection extends Model
 {
@@ -61,5 +62,15 @@ class MapConnection extends Model
     public function toMapSolarsystem(): BelongsTo
     {
         return $this->belongsTo(MapSolarsystem::class);
+    }
+
+    /**
+     * The map this connection belongs to.
+     *
+     * @return BelongsTo<Map, $this>
+     */
+    public function map(): BelongsTo
+    {
+        return $this->belongsTo(Map::class);
     }
 }

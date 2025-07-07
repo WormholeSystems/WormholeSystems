@@ -109,3 +109,67 @@ export type TFaction = {
     id: number;
     name: string;
 };
+
+export type TKillmail = {
+    id: number;
+    hash: string;
+    solarsystem: TSolarsystem;
+    ship_type: TType;
+    data: TRawKillmail;
+    zkb: TzKillboard;
+    time: string;
+};
+
+export type TRawKillmail = {
+    victim: {
+        character_id: number | null;
+        corporation_id: number | null;
+        alliance_id: number | null;
+        faction_id: number | null;
+        ship_type_id: number;
+        items: TRawKillmailItem[];
+    };
+    attackers: TRawKillmailAttacker[];
+};
+
+export type TRawKillmailItem = {
+    type_id: number;
+    flag: number;
+    quantity_destroyed: number;
+    quantity_dropped: number;
+};
+
+export type TRawKillmailAttacker = {
+    character_id: number | null;
+    corporation_id: number | null;
+    alliance_id: number | null;
+    faction_id: number | null;
+    ship_type_id: number;
+    damage_done: number;
+    final_blow: boolean;
+    weapons_type_id: number | null;
+};
+
+export type TType = {
+    id: number;
+    name: string;
+    group_id: number;
+    market_group_id: number | null;
+    description: string | null;
+    icon_id: number | null;
+    graphic_id: number | null;
+};
+
+export type TzKillboard = {
+    awox: boolean;
+    destroyedValue: number;
+    droppedValue: number;
+    fittedValue: number;
+    hash: string;
+    labels: string[];
+    locationID: number;
+    npc: boolean;
+    points: number;
+    solo: boolean;
+    totalValue: number;
+};

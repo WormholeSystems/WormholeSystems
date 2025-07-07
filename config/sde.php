@@ -47,5 +47,5 @@ return [
         'Bloodline' => Bloodline::class,
         'Faction' => Faction::class,
         'Flag' => Flag::class,
-    ]
+    ],
 ];

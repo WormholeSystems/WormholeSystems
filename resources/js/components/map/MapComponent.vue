@@ -5,14 +5,28 @@ import MapContextMenu from '@/components/map/MapContextMenu.vue';
 import MapSolarsystem from '@/components/map/MapSolarsystem.vue';
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { useMap as useNewMap, useMapAction, useMapConnections, useMapGrid, useMapSolarsystems } from '@/composables/map';
+import { getMapChannelName } from '@/const/channels';
+import {
+    MapConnectionCreatedEvent,
+    MapConnectionDeletedEvent,
+    MapConnectionUpdatedEvent,
+    MapSolarsystemCreatedEvent,
+    MapSolarsystemDeletedEvent,
+    MapSolarsystemsDeletedEvent,
+    MapSolarsystemsUpdatedEvent,
+    MapSolarsystemUpdatedEvent,
+    MapUpdatedEvent,
+} from '@/const/events';
 import { TMapConfig } from '@/types/map';
 import { TMap } from '@/types/models';
+import { router } from '@inertiajs/vue3';
+import { useEchoPublic } from '@laravel/echo-vue';
 import { useMagicKeys, whenever } from '@vueuse/core';
 import { computed, ref, useTemplateRef } from 'vue';
 
 const { map, config } = defineProps<{
     map: TMap;
-    config?: TMapConfig;
+    config: TMapConfig;
 }>();
 
 const container = useTemplateRef('map-container');
@@ -44,10 +58,33 @@ function onOpenChange(open: boolean) {
         selected_connection_id.value = null;
     }
 }
+
+useEchoPublic(
+    getMapChannelName(map.id),
+    [
+        MapUpdatedEvent,
+        MapSolarsystemUpdatedEvent,
+        MapSolarsystemsUpdatedEvent,
+        MapConnectionCreatedEvent,
+        MapConnectionUpdatedEvent,
+        MapConnectionDeletedEvent,
+    ],
+    () => {
+        router.reload({
+            only: ['map'],
+        });
+    },
+);
+
+useEchoPublic(getMapChannelName(map.id), [MapSolarsystemCreatedEvent, MapSolarsystemDeletedEvent, MapSolarsystemsDeletedEvent], () => {
+    router.reload({
+        only: ['map', 'map_killmails'],
+    });
+});
 </script>
 
 <template>
-    <div class="relative h-300 w-full overflow-scroll rounded-lg border bg-neutral-900/50">
+    <div class="relative h-250 w-full overflow-scroll border-b bg-neutral-900/50">
         <ContextMenu @update:open="onOpenChange">
             <ContextMenuTrigger>
                 <div

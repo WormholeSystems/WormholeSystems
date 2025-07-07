@@ -49,7 +49,7 @@ class MarketGroup extends Model
     protected function casts(): array
     {
         return [
-            'has_types' => 'bool'
+            'has_types' => 'bool',
         ];
     }
 }

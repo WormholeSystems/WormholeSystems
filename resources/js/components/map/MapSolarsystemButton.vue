@@ -6,22 +6,23 @@ import { TMapSolarSystem } from '@/types/models';
 import SovereigntyIcon from '@/components/map/SovereigntyIcon.vue';
 
 const { map_solarsystem } = defineProps<{
-    map_solarsystem: TMapSolarSystem & { is_selected?: boolean };
+    map_solarsystem: TMapSolarSystem & { is_selected?: boolean; is_hovered?: boolean };
 }>();
 </script>
 
 <template>
     <button
         :data-selected="map_solarsystem.is_selected"
-        class="grid h-[40px] grid-cols-[auto_1fr_auto] items-center justify-center gap-x-1 rounded border border-neutral-700 bg-neutral-800 px-2 text-left text-xs select-none data-[selected=true]:bg-amber-900"
+        :data-hovered="map_solarsystem.is_hovered"
+        class="grid h-[40px] grid-cols-[auto_1fr_auto] items-center justify-center gap-x-1 rounded border border-neutral-700 bg-neutral-900 px-2 text-left text-xs transition-colors duration-200 ease-in-out select-none hover:bg-neutral-800 focus:bg-neutral-800 data-[hovered=true]:bg-amber-900 data-[selected=true]:bg-amber-900"
         @drag.prevent
     >
         <span class="pointer-events-none contents">
             <SolarsystemClass :security="map_solarsystem.solarsystem!.security" :wormhole_class="map_solarsystem.class" />
             <span class="pointer-events-none">
-                <span class="mr-2 inline-block" v-if="map_solarsystem.alias">{{ map_solarsystem.alias }}</span>
+                <span class="mr-1 inline-block text-muted-foreground" v-if="map_solarsystem.alias">{{ map_solarsystem.alias }}</span>
                 <span>{{ map_solarsystem.solarsystem?.name }}</span>
-                <span v-if="map_solarsystem.occupier_alias"> ({{ map_solarsystem.occupier_alias }})</span>
+                <span v-if="map_solarsystem.occupier_alias" class="text-muted-foreground"> ({{ map_solarsystem.occupier_alias }})</span>
             </span>
             <span class="flex items-center gap-2">
                 <SovereigntyIcon v-if="map_solarsystem.solarsystem?.sovereignty" :sovereignty="map_solarsystem.solarsystem.sovereignty" />
