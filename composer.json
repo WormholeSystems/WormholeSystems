@@ -17,6 +17,7 @@
         "laravel/tinker": "^2.10.1",
         "nicolaskion/eve": "@dev",
         "nicolaskion/sde": "^0.1.5",
+        "nunomaduro/essentials": "^0.1",
         "staudenmeir/eloquent-json-relations": "^1.1",
         "tightenco/ziggy": "^2.4"
     },

@@ -30,17 +30,6 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  */
 class MapSolarsystem extends Model
 {
-    protected $fillable = [
-        'map_id',
-        'solarsystem_id',
-        'alias',
-        'occupier_alias',
-        'position_x',
-        'position_y',
-        'status',
-        'pinned',
-    ];
-
     /**
      * @return BelongsTo<Solarsystem,$this>
      */
