@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('character_id')->constrained()->onDelete('cascade');
             $table->text('character_owner_hash');
-            $table->text('access_token')->unique();
+            $table->text('access_token');
             $table->text('refresh_token')->nullable();
             $table->dateTime('expires_at')->nullable();
             $table->string('token_type')->default('Bearer');
