@@ -64,6 +64,8 @@ return new class extends Migration
 
         Schema::create('characters', function (Blueprint $table): void {
             $table->unsignedBigInteger('id')->primary();
+            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+            $table->text('character_owner_hash')->nullable()->index();
             $table->string('name')->nullable();
             $table->text('description')->nullable();
             $table->foreignId('race_id')->nullable();

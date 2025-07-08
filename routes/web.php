@@ -6,27 +6,30 @@ use App\Http\Controllers\MapSelectionController;
 use App\Http\Controllers\MapSolarsystemController;
 use App\Http\Controllers\SignatureController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
-
-Route::get('/', function () {
-    return Inertia::render('Welcome');
-})->name('home');
-
-Route::get('dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
 
-Route::resource('maps', MapController::class);
+Route::redirect('/', 'maps');
 
-Route::resource('map-solarsystems', MapSolarsystemController::class)->only(['store', 'update', 'destroy']);
-Route::resource('map-connections', MapConnectionController::class)->only(['store', 'update', 'destroy']);
-Route::put('map-selection', [MapSelectionController::class, 'update'])
-    ->name('map-selection.update');
-Route::delete('map-selection', [MapSelectionController::class, 'destroy'])
-    ->name('map-selection.destroy');
+Route::middleware('auth')->group(function () {
+    Route::resource('maps', MapController::class)->names([
+        'index' => 'home',
+    ]);
 
-Route::post('map-solarsystems/{mapSolarsystem}/signatures', [SignatureController::class, 'store'])
-    ->name('map-solarsystems.signatures.store');
+    Route::resource('map-solarsystems', MapSolarsystemController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('map-connections', MapConnectionController::class)->only(['store', 'update', 'destroy']);
+    Route::put('map-selection', [MapSelectionController::class, 'update'])
+        ->name('map-selection.update');
+    Route::delete('map-selection', [MapSelectionController::class, 'destroy'])
+        ->name('map-selection.destroy');
+
+    Route::post('map-solarsystems/{mapSolarsystem}/signatures', [SignatureController::class, 'store'])
+        ->name('map-solarsystems.signatures.store');
+});
+
+Route::get('eve', [\App\Http\Controllers\EveController::class, 'show'])->name('eve.show');
+Route::get('eve/callback', [\App\Http\Controllers\EveController::class, 'store'])
+    ->name('eve.store');
+
+Route::redirect('login', 'eve');

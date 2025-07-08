@@ -5,10 +5,13 @@ import HasSignatures from '@/components/map/HasSignatures.vue';
 import SolarsystemEffect from '@/components/map/SolarsystemEffect.vue';
 import SovereigntyIcon from '@/components/map/SovereigntyIcon.vue';
 import { TMapSolarSystem } from '@/types/models';
+import { usePilotsInMapSolarsystem } from '@/composables/usePilotsInMapSolarsystem';
 
 const { map_solarsystem } = defineProps<{
     map_solarsystem: TMapSolarSystem & { is_selected?: boolean; is_hovered?: boolean };
 }>();
+
+const pilots = usePilotsInMapSolarsystem(map_solarsystem);
 </script>
 
 <template>
@@ -16,10 +19,11 @@ const { map_solarsystem } = defineProps<{
         :data-selected="map_solarsystem.is_selected"
         :data-hovered="map_solarsystem.is_hovered"
         :data-status="map_solarsystem.status"
-        class="grid h-[40px] grid-cols-[auto_1fr_auto] items-center justify-center gap-x-1 rounded border border-neutral-700 bg-neutral-900 px-2 text-left text-xs transition-colors duration-200 ease-in-out select-none hover:bg-neutral-800 focus:bg-neutral-800 data-[hovered=true]:bg-amber-900 data-[selected=true]:bg-amber-900 data-[status=active]:border-active data-[status=empty]:border-empty data-[status=friendly]:border-friendly data-[status=hostile]:border-hostile data-[status=unknown]:border-unknown data-[status=unscanned]:border-unscanned"
+        :data-has-pilots="pilots?.length > 0"
+        class="h-[40px] rounded border border-neutral-700 bg-neutral-900 text-left text-xs transition-colors duration-200 ease-in-out select-none hover:bg-neutral-800 focus:bg-neutral-800 data-[has-pilots=true]:h-[60px] data-[hovered=true]:bg-amber-900 data-[selected=true]:bg-amber-900 data-[status=active]:border-active data-[status=empty]:border-empty data-[status=friendly]:border-friendly data-[status=hostile]:border-hostile data-[status=unknown]:border-unknown data-[status=unscanned]:border-unscanned"
         @drag.prevent
     >
-        <span class="pointer-events-none contents">
+        <span class="pointer-events-none block grid grid-cols-[auto_1fr_auto] items-center justify-center gap-x-1 px-2">
             <SolarsystemClass :security="map_solarsystem.solarsystem!.security" :wormhole_class="map_solarsystem.class" />
             <span class="pointer-events-none">
                 <span class="mr-1 inline-block text-muted-foreground" v-if="map_solarsystem.alias">{{ map_solarsystem.alias }}</span>
@@ -45,6 +49,9 @@ const { map_solarsystem } = defineProps<{
                     {{ wh.leads_to.replace('s', '') }}
                 </span>
             </span>
+        </span>
+        <span v-if="pilots?.length" class="flex h-[20px] items-center gap-1 truncate border-t border-neutral-500 px-2 pt-1 text-[10px] leading-0">
+            {{ pilots.at(0)?.name }} <span v-if="pilots.length > 1">and {{ pilots.length - 1 }} more</span>
         </span>
     </button>
 </template>

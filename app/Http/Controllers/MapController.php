@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Integrations\zKillboard\zKillboard;
+use App\Http\Resources\CharacterResource;
 use App\Http\Resources\KillmailResource;
 use App\Http\Resources\MapResource;
 use App\Http\Resources\MapSolarsystemResource;
 use App\Http\Resources\SolarsystemResource;
+use App\Models\Character;
 use App\Models\Killmail;
 use App\Models\Map;
 use App\Models\MapSolarsystem;
@@ -22,7 +23,7 @@ class MapController extends Controller
     /**
      * @throws Throwable
      */
-    public function show(Request $request, Map $map, zKillboard $zKillboard): Response
+    public function show(Request $request, Map $map): Response
     {
         $map = Map::query()
             ->tap(new WithVisibleSolarsystems)
@@ -41,13 +42,28 @@ class MapController extends Controller
             fn () => $this->getMapKills($map)
         );
 
-        return Inertia::render('Map/ShowMap', [
+        $map_characters = Inertia::defer(
+            fn () => $this->getMapCharacters($map)
+        );
+
+        return Inertia::render('Maps/ShowMap', [
             'map' => $map->toResource(MapResource::class),
             'solarsystems' => $solarsystems,
             'search' => $search,
             'config' => config('map'),
             'selected_map_solarsystem' => $selected_map_solarsystem?->toResource(MapSolarsystemResource::class),
             'map_killmails' => $map_killmails,
+            'map_characters' => $map_characters,
+        ]);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function index(): Response
+    {
+        return Inertia::render('Maps/ShowAllMaps', [
+            'maps' => Map::query()->get()->toResourceCollection(MapResource::class),
         ]);
     }
 
@@ -76,5 +92,17 @@ class MapController extends Controller
             ->limit(50)
             ->get()
             ->toResourceCollection(KillmailResource::class);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function getMapCharacters(Map $map): \Illuminate\Http\Resources\Json\ResourceCollection
+    {
+        return Character::query()
+            ->with('characterStatus')
+            ->whereRelation('characterStatus', 'is_online', true)
+            ->get()
+            ->toResourceCollection(CharacterResource::class);
     }
 }

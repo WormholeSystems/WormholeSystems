@@ -187,3 +187,24 @@ export type TSignature = {
 };
 
 export type TMapSolarsystemStatus = 'active' | 'unscanned' | 'unknown' | 'friendly' | 'hostile' | 'empty';
+
+export type TCharacter = {
+    id: number;
+    name: string;
+    corporation: TCorporation | null;
+    alliance: TAlliance | null;
+    faction: TFaction | null;
+    status: TCharacterStatus | null;
+};
+
+export type TCharacterStatus = {
+    solarsystem_id: number;
+    ship_type: TType | null;
+    ship_name: string | null;
+    is_online: boolean;
+    station_id: number | null;
+    structure_id: number | null;
+    last_online_at: string | null;
+    checked_last_online_at: string | null;
+    checked_location_at: string | null;
+};

@@ -2,17 +2,16 @@
 import AppLogo from '@/components/AppLogo.vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import Breadcrumbs from '@/components/Breadcrumbs.vue';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { CharacterImage } from '@/components/images';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { NavigationMenu, NavigationMenuItem, NavigationMenuList, navigationMenuTriggerStyle } from '@/components/ui/navigation-menu';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import UserMenuContent from '@/components/UserMenuContent.vue';
-import { getInitials } from '@/composables/useInitials';
 import type { BreadcrumbItem, NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, Menu, Search } from 'lucide-vue-next';
+import { LayoutGrid, Menu, Search } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 interface Props {
@@ -34,24 +33,13 @@ const activeItemStyles = computed(
 
 const mainNavItems: NavItem[] = [
     {
-        title: 'Dashboard',
-        href: '/dashboard',
+        title: 'Maps',
+        href: '/maps',
         icon: LayoutGrid,
     },
 ];
 
-const rightNavItems: NavItem[] = [
-    {
-        title: 'Repository',
-        href: 'https://github.com/laravel/vue-starter-kit',
-        icon: Folder,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#vue',
-        icon: BookOpen,
-    },
-];
+const rightNavItems: NavItem[] = [];
 </script>
 
 <template>
@@ -102,7 +90,7 @@ const rightNavItems: NavItem[] = [
                     </Sheet>
                 </div>
 
-                <Link :href="route('dashboard')" class="flex items-center gap-x-2">
+                <Link :href="route('home')" class="flex items-center gap-x-2">
                     <AppLogo />
                 </Link>
 
@@ -159,14 +147,13 @@ const rightNavItems: NavItem[] = [
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                class="relative size-10 w-auto rounded-full p-1 focus-within:ring-2 focus-within:ring-primary"
+                                class="relative size-10 w-auto rounded-lg p-1 focus-within:ring-2 focus-within:ring-primary"
                             >
-                                <Avatar class="size-8 overflow-hidden rounded-full">
-                                    <AvatarImage v-if="auth.user.avatar" :src="auth.user.avatar" :alt="auth.user.name" />
-                                    <AvatarFallback class="rounded-lg bg-neutral-200 font-semibold text-black dark:bg-neutral-700 dark:text-white">
-                                        {{ getInitials(auth.user?.name) }}
-                                    </AvatarFallback>
-                                </Avatar>
+                                <CharacterImage
+                                    :character_id="auth.user.active_character.id"
+                                    :character_name="auth.user.active_character.name"
+                                    class="size-8 rounded-lg"
+                                />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" class="w-56">

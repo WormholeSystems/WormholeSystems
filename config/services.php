@@ -37,4 +37,9 @@ return [
     'zkillboard' => [
         'identifier' => env('ZKILLBOARD_IDENTIFIER', 'nbrvecs7654vb68mnbv'),
     ],
+    'eveonline' => [
+        'client_id' => env('EVE_CLIENT_ID'),
+        'client_secret' => env('EVE_CLIENT_SECRET'),
+        'redirect' => env('EVE_CALLBACK', 'https://tunnelvision.test/eve/callback'),
+    ],
 ];

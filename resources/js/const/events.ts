@@ -20,3 +20,5 @@ export const MapSolarsystemsDeletedEvent = getEventName('MapSolarsystems', 'MapS
 export const MapConnectionCreatedEvent = getEventName('MapConnections', 'MapConnectionCreatedEvent');
 export const MapConnectionUpdatedEvent = getEventName('MapConnections', 'MapConnectionUpdatedEvent');
 export const MapConnectionDeletedEvent = getEventName('MapConnections', 'MapConnectionDeletedEvent');
+
+export const CharacterStatusUpdatedEvent = getEventName('Characters', 'CharacterStatusUpdatedEvent');

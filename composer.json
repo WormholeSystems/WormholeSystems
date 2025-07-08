@@ -14,10 +14,12 @@
         "inertiajs/inertia-laravel": "^2.0",
         "laravel/framework": "^12.0",
         "laravel/reverb": "^1.0",
+        "laravel/socialite": "^5.21",
         "laravel/tinker": "^2.10.1",
         "nicolaskion/eve": "@dev",
         "nicolaskion/sde": "^0.1.5",
         "nunomaduro/essentials": "^0.1",
+        "socialiteproviders/eveonline": "^4.3",
         "staudenmeir/eloquent-json-relations": "^1.1",
         "tightenco/ziggy": "^2.4"
     },

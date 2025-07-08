@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
+use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -9,6 +11,8 @@ use Tighten\Ziggy\Ziggy;
 
 class HandleInertiaRequests extends Middleware
 {
+    public function __construct(#[CurrentUser] protected ?User $user = null) {}
+
     /**
      * The root template that's loaded on the first page visit.
      *
@@ -44,7 +48,7 @@ class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'quote' => ['message' => trim((string) $message), 'author' => trim((string) $author)],
             'auth' => [
-                'user' => $request->user(),
+                'user' => $this->user?->toResource(),
             ],
             'ziggy' => [
                 ...(new Ziggy)->toArray(),

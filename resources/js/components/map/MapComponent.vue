@@ -84,7 +84,7 @@ useEchoPublic(getMapChannelName(map.id), [MapSolarsystemCreatedEvent, MapSolarsy
 </script>
 
 <template>
-    <div class="relative h-250 w-full overflow-scroll border-b bg-neutral-900/50">
+    <div class="relative h-240 w-full overflow-scroll border-b bg-neutral-900/50">
         <ContextMenu @update:open="onOpenChange">
             <ContextMenuTrigger>
                 <div

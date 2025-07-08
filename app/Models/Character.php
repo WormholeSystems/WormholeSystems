@@ -5,10 +5,14 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\DB;
-use NicolasKion\SDE\ClassResolver;
+use NicolasKion\Esi\Enums\EsiScope;
+use NicolasKion\Esi\Interfaces\EsiToken;
 use Throwable;
 
 /**
@@ -27,15 +31,21 @@ use Throwable;
  * @property string|CarbonImmutable $birthday
  * @property string|null $title
  * @property int|null $user_id
+ * @property string|null $character_owner_hash
  * @property-read string|CarbonImmutable $created_at
  * @property-read string|CarbonImmutable $updated_at
  * @property-read Race $race
  * @property-read Bloodline $bloodline
- * @property-read Corporation $corporation
+ * @property-read Corporation|null $corporation
  * @property-read Faction|null $faction
  * @property-read Alliance|null $alliance
+ * @property-read User|null $user
+ * @property-read Collection<int,EsiToken> $esiTokens
+ * @property-read Type|null $shipType
+ * @property-read Solarsystem|null $solarsystem
+ * @property-read CharacterStatus|null $characterStatus
  */
-class Character extends Model
+class Character extends Model implements \NicolasKion\Esi\Interfaces\Character
 {
     public $incrementing = false;
 
@@ -57,7 +67,7 @@ class Character extends Model
      */
     public function race(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::race());
+        return $this->belongsTo(Race::class);
     }
 
     /**
@@ -65,7 +75,7 @@ class Character extends Model
      */
     public function bloodline(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::bloodline());
+        return $this->belongsTo(Bloodline::class);
     }
 
     /**
@@ -73,7 +83,7 @@ class Character extends Model
      */
     public function corporation(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::corporation());
+        return $this->belongsTo(Corporation::class);
     }
 
     /**
@@ -81,7 +91,7 @@ class Character extends Model
      */
     public function faction(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::faction());
+        return $this->belongsTo(Faction::class);
     }
 
     /**
@@ -89,7 +99,33 @@ class Character extends Model
      */
     public function alliance(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::alliance());
+        return $this->belongsTo(Alliance::class);
+    }
+
+    /**
+     * @return BelongsTo<User,$this>
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the ESI tokens associated with the character.
+     *
+     * @return HasMany<\App\Models\EsiToken,$this>
+     */
+    public function esiTokens(): HasMany
+    {
+        return $this->hasMany(\App\Models\EsiToken::class, 'character_id');
+    }
+
+    /**
+     * @return HasOne<CharacterStatus,$this>
+     */
+    public function characterStatus(): HasOne
+    {
+        return $this->hasOne(CharacterStatus::class, 'character_id');
     }
 
     protected function casts(): array
@@ -97,5 +133,22 @@ class Character extends Model
         return [
             'birthday' => 'immutable_datetime',
         ];
+    }
+
+    public function getEsiTokenWithScope(EsiScope $scope): ?EsiToken
+    {
+        return $this->esiTokens()
+            ->whereRelation('esiScopes', 'name', $scope)
+            ->first();
+    }
+
+    public function getId(): int
+    {
+        return $this->id;
+    }
+
+    public function getCorporationId(): int
+    {
+        return $this->corporation_id;
     }
 }

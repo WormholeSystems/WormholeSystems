@@ -2,12 +2,10 @@
 
 namespace App\Providers;
 
-use Carbon\CarbonImmutable;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Date;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
-use Vite;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -24,13 +22,23 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Date::use(CarbonImmutable::class);
-
-        Model::shouldBeStrict();
-        Model::automaticallyEagerLoadRelationships();
-
-        Vite::useAggressivePrefetching();
-
         JsonResource::withoutWrapping();
+
+        $this->registerNotificationMacro();
+
+        Event::listen(function (\SocialiteProviders\Manager\SocialiteWasCalled $event) {
+            $event->extendSocialite('eveonline', \SocialiteProviders\Eveonline\Provider::class);
+        });
+    }
+
+    protected function registerNotificationMacro(): void
+    {
+        RedirectResponse::macro('notify', function (string $title, string $message = '', string $type = 'success') {
+            return $this->with('notification', [
+                'title' => $title,
+                'message' => $message,
+                'type' => $type,
+            ]);
+        });
     }
 }

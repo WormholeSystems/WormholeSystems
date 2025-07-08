@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-vue-next';
 import type { Config } from 'ziggy-js';
+import { TCharacter } from '@/types/models';
 
 export interface Auth {
     user: User;
@@ -28,9 +29,8 @@ export type AppPageProps<T extends Record<string, unknown> = Record<string, unkn
 export interface User {
     id: number;
     name: string;
-    email: string;
-    avatar?: string;
-    email_verified_at: string | null;
+    characters: TCharacter[];
+    active_character: TCharacter;
     created_at: string;
     updated_at: string;
 }
