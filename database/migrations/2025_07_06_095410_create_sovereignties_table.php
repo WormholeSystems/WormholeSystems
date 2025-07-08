@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('sovereignties', function (Blueprint $table) {
+        Schema::create('sovereignties', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('solarsystem_id')->constrained()->cascadeOnDelete();
             $table->foreignId('alliance_id')->nullable()->constrained()->nullOnDelete();

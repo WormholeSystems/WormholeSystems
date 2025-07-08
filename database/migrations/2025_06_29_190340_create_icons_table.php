@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('icons', function (Blueprint $table) {
+        Schema::create('icons', function (Blueprint $table): void {
             $table->unsignedBigInteger('id')->primary();
             $table->string('file');
             $table->string('description')->nullable();

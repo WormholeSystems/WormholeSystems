@@ -15,17 +15,17 @@ class UpdateMapSelectionAction
      */
     public function handle(array $data): void
     {
-        DB::transaction(function () use ($data) {
+        DB::transaction(function () use ($data): void {
 
             $collection = collect($data['map_solarsystems']);
             $collection
-                ->each(function ($item) {
+                ->each(function (array $item): void {
                     MapSolarsystem::where('id', $item['id'])
                         ->update(['position_x' => $item['position_x'], 'position_y' => $item['position_y']]);
                 });
 
             Map::query()
-                ->whereHas('mapSolarsystems', function ($query) use ($data) {
+                ->whereHas('mapSolarsystems', function ($query) use ($data): void {
                     $query->whereIn('id', collect($data['map_solarsystems'])->pluck('id'));
                 })
                 ->each(fn (Map $map) => broadcast(new MapSolarsystemsUpdatedEvent($map->id))->toOthers());

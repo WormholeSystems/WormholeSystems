@@ -17,7 +17,7 @@ readonly class DeleteMapSolarsystemAction
      */
     public function handle(MapSolarsystem $mapSolarsystem): bool
     {
-        return DB::transaction(function () use ($mapSolarsystem) {
+        return DB::transaction(function () use ($mapSolarsystem): bool {
             $mapSolarsystem->update(['position_x' => null, 'position_y' => null, 'alias' => null]);
 
             broadcast(new MapSolarsystemDeletedEvent($mapSolarsystem->map_id))

@@ -20,7 +20,7 @@ class DeleteMapSelectionAction
      */
     public function handle(array $map_solarsystem_ids): void
     {
-        DB::transaction(function () use ($map_solarsystem_ids) {
+        DB::transaction(function () use ($map_solarsystem_ids): void {
             MapSolarsystem::query()->whereIn('id', $map_solarsystem_ids)
                 ->update(['position_x' => null, 'position_y' => null, 'alias' => null]);
 
@@ -30,7 +30,7 @@ class DeleteMapSelectionAction
                 ->delete();
 
             Map::query()
-                ->whereHas('mapSolarsystems', function ($query) use ($map_solarsystem_ids) {
+                ->whereHas('mapSolarsystems', function ($query) use ($map_solarsystem_ids): void {
                     $query->whereIn('id', $map_solarsystem_ids);
                 })
                 ->each(fn (Map $map) => broadcast(new MapSolarsystemsDeletedEvent($map->id))->toOthers());

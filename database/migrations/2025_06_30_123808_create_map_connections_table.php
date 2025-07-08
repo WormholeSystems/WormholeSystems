@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('map_connections', function (Blueprint $table) {
+        Schema::create('map_connections', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('map_id')
                 ->constrained('maps')

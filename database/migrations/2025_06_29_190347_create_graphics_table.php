@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('graphics', function (Blueprint $table) {
+        Schema::create('graphics', function (Blueprint $table): void {
             $table->unsignedBigInteger('id')->primary();
             $table->string('sof_faction_name')->nullable()->index();
             $table->string('file')->nullable();

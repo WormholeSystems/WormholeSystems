@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Http;
 
 class zKillboardConnector
 {
-    public function handle(zKillboardRequest $zKillboardRequest)
+    public function handle(zKillboardRequest $zKillboardRequest): mixed
     {
         $method = $zKillboardRequest->method;
         $endpoint = $zKillboardRequest->getEndpoint();

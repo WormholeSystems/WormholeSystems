@@ -12,7 +12,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('map_solarsystems', function (Blueprint $table) {
+        Schema::create('map_solarsystems', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('map_id')->constrained()->cascadeOnDelete()->cascadeOnUpdate();
             $table->foreignId('solarsystem_id')->constrained('solarsystems')->cascadeOnDelete()->cascadeOnUpdate();

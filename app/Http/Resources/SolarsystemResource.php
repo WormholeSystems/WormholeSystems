@@ -51,14 +51,14 @@ class SolarsystemResource extends JsonResource
         // Map the effects into single array with 'name', 'strength', and 'type' keys
 
         return collect($buffs)
-            ->map(fn (array $strengths, string $name) => [
+            ->map(fn (array $strengths, string $name): array => [
                 'name' => $name,
                 'strength' => $strengths[$this->wormholeSystem->class - 1] ?? null,
                 'type' => 'Buff',
             ])
             ->merge(
                 collect($debuffs)
-                    ->map(fn (array $strengths, string $name) => [
+                    ->map(fn (array $strengths, string $name): array => [
                         'name' => $name,
                         'strength' => $strengths[$this->wormholeSystem->class - 1] ?? null,
                         'type' => 'Debuff',

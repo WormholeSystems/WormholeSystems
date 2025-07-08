@@ -36,12 +36,12 @@ class ListenForKillmails extends Command
     public function handle(#[Config('services.zkillboard.identifier')] string $identifier, zKillboard $zKillboard): void
     {
 
-        $this->trap([SIGTERM, SIGQUIT], fn () => $this->should_keep_running = false);
+        $this->trap([SIGTERM, SIGQUIT], fn (): false => $this->should_keep_running = false);
 
         while ($this->should_keep_running) {
             $killmail = $zKillboard->listenForKill($identifier);
 
-            if (! $killmail) {
+            if (! $killmail instanceof \App\Http\Integrations\zKillboard\DTO\RedisQKillmail) {
                 info('No killmail received, waiting for the next one...');
                 sleep(10);
 

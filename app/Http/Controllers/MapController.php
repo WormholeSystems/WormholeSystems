@@ -56,7 +56,7 @@ class MapController extends Controller
      */
     public function getSelectedSolarsystem(?int $solarsystem_id): ?MapSolarsystem
     {
-        if (! $solarsystem_id) {
+        if ($solarsystem_id === null || $solarsystem_id === 0) {
             return null;
         }
 
@@ -68,7 +68,7 @@ class MapController extends Controller
     /**
      * @throws Throwable
      */
-    public function getMapKills(Map $map)
+    public function getMapKills(Map $map): \Illuminate\Http\Resources\Json\ResourceCollection
     {
         return Killmail::query()->with('shipType')
             ->whereIn('solarsystem_id', $map->mapSolarsystems->pluck('solarsystem_id'))

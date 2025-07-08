@@ -31,7 +31,7 @@ class MapSeeder extends Seeder
         }
 
         foreach ($solarsystems as $solarsystemId) {
-            $randomSolarsystemId = $solarsystems->filter(fn ($solarsystem) => $solarsystem !== $solarsystemId)
+            $randomSolarsystemId = $solarsystems->filter(fn ($solarsystem): bool => $solarsystem !== $solarsystemId)
                 ->random();
 
             $connectMapSolarsystemsWithIDsAction->handle(

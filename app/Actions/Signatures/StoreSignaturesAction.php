@@ -24,7 +24,7 @@ class StoreSignaturesAction
         $missing = $existing->pluck('signature_id')
             ->diff($collection->pluck('signature_id'));
 
-        $collection->each(function (array $signature) use ($mapSolarsystem, $existing) {
+        $collection->each(function (array $signature) use ($mapSolarsystem, $existing): void {
             $signatureModel = $existing->firstWhere('signature_id', $signature['signature_id']);
 
             if ($signatureModel) {

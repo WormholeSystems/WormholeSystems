@@ -47,7 +47,7 @@ class Character extends Model
     public static function createFromIds(array $ids): void
     {
         DB::transaction(fn () => self::query()->upsert(
-            collect($ids)->map(fn ($id) => ['id' => $id])->toArray(),
+            collect($ids)->map(fn ($id): array => ['id' => $id])->toArray(),
             ['id']
         ), 5);
     }

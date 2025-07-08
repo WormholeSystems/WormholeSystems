@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('type_attributes', function (Blueprint $table) {
+        Schema::create('type_attributes', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('type_id')->constrained()->cascadeOnDelete()->cascadeOnUpdate();
             $table->foreignId('attribute_id')->constrained()->cascadeOnDelete()->cascadeOnUpdate();

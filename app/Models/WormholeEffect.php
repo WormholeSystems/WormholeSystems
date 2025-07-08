@@ -60,14 +60,14 @@ class WormholeEffect extends Model
         };
 
         return collect($buffs)
-            ->map(fn (array $strengths, string $name) => [
+            ->map(fn (array $strengths, string $name): array => [
                 'name' => $name,
                 'strength' => $strengths[$class_index] ?? null,
                 'type' => 'Buff',
             ])
             ->merge(
                 collect($debuffs)
-                    ->map(fn (array $strengths, string $name) => [
+                    ->map(fn (array $strengths, string $name): array => [
                         'name' => $name,
                         'strength' => $strengths[$class_index] ?? null,
                         'type' => 'Debuff',

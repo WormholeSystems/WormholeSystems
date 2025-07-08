@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('killmails', function (Blueprint $table) {
+        Schema::create('killmails', function (Blueprint $table): void {
             $table->unsignedBigInteger('id')->primary();
             $table->string('hash')->unique();
             $table->foreignId('solarsystem_id')->constrained()->cascadeOnDelete();

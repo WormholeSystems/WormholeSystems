@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('celestials', function (Blueprint $table) {
+        Schema::create('celestials', function (Blueprint $table): void {
             $table->unsignedBigInteger('id')->primary();
             $table->string('name')->index();
             $table->foreignId('solarsystem_id')->constrained()->cascadeOnDelete()->cascadeOnUpdate();

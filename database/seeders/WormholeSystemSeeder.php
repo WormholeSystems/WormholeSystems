@@ -24,7 +24,7 @@ class WormholeSystemSeeder extends Seeder
 
         $data = array_map('str_getcsv', file(self::csv));
 
-        if (empty($data)) {
+        if ($data === []) {
             throw new \RuntimeException('No data found in wormhole system CSV file: '.self::csv);
         }
 
@@ -51,9 +51,12 @@ class WormholeSystemSeeder extends Seeder
                 ]
             );
 
-            foreach (explode(',', $rowData['statics']) as $staticName) {
+            foreach (explode(',', (string) $rowData['statics']) as $staticName) {
                 $staticName = trim($staticName);
-                if (empty($staticName)) {
+                if ($staticName === '') {
+                    continue;
+                }
+                if ($staticName === '0') {
                     continue;
                 }
 

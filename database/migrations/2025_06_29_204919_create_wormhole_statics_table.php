@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('wormhole_statics', function (Blueprint $table) {
+        Schema::create('wormhole_statics', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('wormhole_system_id')
                 ->constrained('wormhole_systems')

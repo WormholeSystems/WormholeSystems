@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('signatures', function (Blueprint $table) {
+        Schema::create('signatures', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('map_solarsystem_id')
                 ->constrained('map_solarsystems')

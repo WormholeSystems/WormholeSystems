@@ -30,7 +30,7 @@ class GetKillmail implements ShouldQueue
     {
         $kill = $zKillboard->getKill($this->killmail_id);
 
-        if (empty($kill)) {
+        if ($kill === []) {
             return;
         }
 

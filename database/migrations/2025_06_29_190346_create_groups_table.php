@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('groups', function (Blueprint $table) {
+        Schema::create('groups', function (Blueprint $table): void {
             $table->unsignedBigInteger('id')->primary();
             $table->string('name')->index();
             $table->foreignId('category_id')->index()->constrained()->cascadeOnDelete()->cascadeOnUpdate();

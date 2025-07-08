@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('races', function (Blueprint $table) {
+        Schema::create('races', function (Blueprint $table): void {
             $table->unsignedBigInteger('id')->primary();
             $table->string('name')->index();
             $table->text('description')->nullable();

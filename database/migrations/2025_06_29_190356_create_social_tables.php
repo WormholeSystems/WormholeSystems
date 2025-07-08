@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('bloodlines', function (Blueprint $table) {
+        Schema::create('bloodlines', function (Blueprint $table): void {
             $table->unsignedBigInteger('id')->primary();
             $table->string('name');
             $table->text('description');
@@ -27,7 +27,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('corporations', function (Blueprint $table) {
+        Schema::create('corporations', function (Blueprint $table): void {
             $table->unsignedBigInteger('id')->primary();
             $table->string('name')->nullable()->index();
             $table->string('ticker')->nullable()->index();
@@ -48,7 +48,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('factions', function (Blueprint $table) {
+        Schema::create('factions', function (Blueprint $table): void {
             $table->unsignedBigInteger('id')->primary();
             $table->string('name');
             $table->text('description');
@@ -62,7 +62,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('characters', function (Blueprint $table) {
+        Schema::create('characters', function (Blueprint $table): void {
             $table->unsignedBigInteger('id')->primary();
             $table->string('name')->nullable();
             $table->text('description')->nullable();
@@ -78,7 +78,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('alliances', function (Blueprint $table) {
+        Schema::create('alliances', function (Blueprint $table): void {
             $table->unsignedBigInteger('id')->primary();
             $table->string('name')->nullable();
             $table->string('ticker')->nullable();
@@ -90,18 +90,18 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::table('corporations', function (Blueprint $table) {
+        Schema::table('corporations', function (Blueprint $table): void {
             $table->foreign('ceo_id')->references('id')->on('characters');
             $table->foreign('creator_id')->references('id')->on('characters');
             $table->foreign('faction_id')->references('id')->on('factions');
             $table->foreign('alliance_id')->references('id')->on('alliances');
         });
 
-        Schema::table('characters', function (Blueprint $table) {
+        Schema::table('characters', function (Blueprint $table): void {
             $table->foreign('alliance_id')->references('id')->on('alliances');
         });
 
-        Schema::table('bloodlines', function (Blueprint $table) {
+        Schema::table('bloodlines', function (Blueprint $table): void {
             $table->foreignId('corporation_id')->nullable()->constrained();
         });
     }

@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('wormholes', function (Blueprint $table) {
+        Schema::create('wormholes', function (Blueprint $table): void {
             $table->id();
             $table->string('name')->index();
             $table->unsignedBigInteger('total_mass');
