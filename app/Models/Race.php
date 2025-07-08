@@ -4,21 +4,29 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use NicolasKion\SDE\ClassResolver;
 
+/**
+ * Race model representing a race in the game.
+ *
+ * @property int $id
+ * @property string $name
+ * @property string|null $description
+ * @property string|null $short_description
+ * @property int|null $icon_id
+ * @property-read string|CarbonImmutable $created_at
+ * @property-read string|CarbonImmutable $updated_at
+ * @property-read Collection<int,Type> $types
+ * @property-read Collection<int,Character> $characters
+ * @property-read Collection<int,Bloodline> $bloodlines
+ */
 class Race extends Model
 {
     public $incrementing = false;
-
-    protected $fillable = [
-        'id',
-        'name',
-        'description',
-        'short_description',
-        'icon_id',
-    ];
 
     /**
      * @return HasMany<Type,$this>
@@ -34,5 +42,13 @@ class Race extends Model
     public function characters(): HasMany
     {
         return $this->hasMany(ClassResolver::character(), 'race_id');
+    }
+
+    /**
+     * @return HasMany<Bloodline,$this>
+     */
+    public function bloodlines(): HasMany
+    {
+        return $this->hasMany(ClassResolver::bloodline(), 'race_id');
     }
 }

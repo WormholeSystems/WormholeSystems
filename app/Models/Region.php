@@ -5,31 +5,30 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Traits\HasSlug;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use NicolasKion\SDE\ClassResolver;
 
 /**
+ * Region model representing a region in the game.
+ *
  * @property int $id
  * @property string $name
  * @property string $type
- * @property-read Collection<Constellation> $constellations
- * @property-read Collection<Solarsystem> $solarsystems
- * @property-read Collection<Celestial> $celestials
- * @property-read Collection<Station> $stations
+ * @property-read string|CarbonImmutable $created_at
+ * @property-read string|CarbonImmutable $updated_at
+ * @property-read Collection<int,Constellation> $constellations
+ * @property-read Collection<int,Solarsystem> $solarsystems
+ * @property-read Collection<int,Celestial> $celestials
+ * @property-read Collection<int,Station> $stations
  */
 class Region extends Model
 {
     use HasSlug;
 
     public $incrementing = false;
-
-    protected $fillable = [
-        'id',
-        'name',
-        'type',
-    ];
 
     /**
      * @return HasMany<Constellation,$this>

@@ -20,23 +20,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|ShipSize $ship_size
  * @property bool $is_eol
  * @property CarbonImmutable $connected_at
+ * @property-read string|CarbonImmutable $created_at
+ * @property-read string|CarbonImmutable $updated_at
  * @property-read MapSolarsystem $fromMapSolarsystem
  * @property-read MapSolarsystem $toMapSolarsystem
  * @property-read Map $map
  */
 class MapConnection extends Model
 {
-    protected $fillable = [
-        'map_id',
-        'from_map_solarsystem_id',
-        'to_map_solarsystem_id',
-        'wormhole_id',
-        'mass_status',
-        'ship_size',
-        'is_eol',
-        'connected_at',
-    ];
-
     protected $casts = [
         'connected_at' => 'immutable_datetime',
         'mass_status' => MassStatus::class,

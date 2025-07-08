@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -16,20 +17,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $maximum_lifetime
  * @property string $leads_to
  * @property int $type_id
+ * @property-read string|CarbonImmutable $created_at
+ * @property-read string|CarbonImmutable $updated_at
  * @property-read Type $type
  */
 class Wormhole extends Model
 {
-    protected $fillable = [
-        'name',
-        'total_mass',
-        'maximum_jump_mass',
-        'ship_size',
-        'maximum_lifetime',
-        'leads_to',
-        'type_id',
-    ];
-
     /**
      * The type of the wormhole.
      *

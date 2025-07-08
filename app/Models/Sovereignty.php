@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -13,24 +14,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int|null $alliance_id
  * @property int|null $corporation_id
  * @property int|null $faction_id
+ * @property-read string|CarbonImmutable $created_at
+ * @property-read string|CarbonImmutable $updated_at
  * @property-read Alliance|null $alliance
  * @property-read Corporation|null $corporation
  * @property-read Faction|null $faction
- * @property-read SolarSystem $solarsystem
+ * @property-read Solarsystem $solarsystem
  */
 class Sovereignty extends Model
 {
-    protected $fillable = [
-        'solarsystem_id',
-        'alliance_id',
-        'corporation_id',
-        'faction_id',
-    ];
-
     /**
      * The solarsystem that this sovereignty belongs to.
      *
-     * @return BelongsTo<Alliance,$this>
+     * @return BelongsTo<Solarsystem,$this>
      */
     public function solarsystem(): BelongsTo
     {

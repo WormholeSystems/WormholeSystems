@@ -2,9 +2,10 @@
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Collection;
 
 /**
  * Wormhole effect model representing the effects of a wormhole.
@@ -12,14 +13,12 @@ use Illuminate\Support\Collection;
  * @property int $id
  * @property string $name
  * @property Collection $effects
+ * @property-read string|CarbonImmutable $created_at
+ * @property-read string|CarbonImmutable $updated_at
+ * @property-read Collection<int,WormholeSystem> $wormholeSystems
  */
 class WormholeEffect extends Model
 {
-    protected $fillable = [
-        'name',
-        'effects',
-    ];
-
     protected function casts(): array
     {
         return [

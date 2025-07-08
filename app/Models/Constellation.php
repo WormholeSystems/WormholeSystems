@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Traits\HasSlug;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,27 +13,24 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use NicolasKion\SDE\ClassResolver;
 
 /**
+ * Constellation model representing a constellation in the game.
+ *
  * @property int $id
  * @property string $name
  * @property int $region_id
  * @property string $type
+ * @property-read string|CarbonImmutable $created_at
+ * @property-read string|CarbonImmutable $updated_at
  * @property-read Region $region
- * @property-read Collection<Solarsystem> $solarsystems
- * @property-read Collection<Station> $stations
- * @property-read Collection<Celestial> $celestials
+ * @property-read Collection<int,Solarsystem> $solarsystems
+ * @property-read Collection<int,Station> $stations
+ * @property-read Collection<int,Celestial> $celestials
  */
 class Constellation extends Model
 {
     use HasSlug;
 
     public $incrementing = false;
-
-    protected $fillable = [
-        'id',
-        'name',
-        'region_id',
-        'type',
-    ];
 
     /**
      * @return BelongsTo<Region,$this>

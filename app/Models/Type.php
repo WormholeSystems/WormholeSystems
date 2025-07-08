@@ -4,34 +4,46 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use NicolasKion\SDE\ClassResolver;
 
+/**
+ * Type model representing a type in the game.
+ *
+ * @property int $id
+ * @property string $name
+ * @property string|null $description
+ * @property int|null $graphic_id
+ * @property int $group_id
+ * @property int|null $icon_id
+ * @property int|null $market_group_id
+ * @property int|null $meta_group_id
+ * @property int|null $race_id
+ * @property bool $published
+ * @property float|null $capacity
+ * @property float|null $mass
+ * @property float|null $base_price
+ * @property float|null $volume
+ * @property float|null $packaged_volume
+ * @property float|null $radius
+ * @property int|null $portion_size
+ * @property-read string|CarbonImmutable $created_at
+ * @property-read string|CarbonImmutable $updated_at
+ * @property-read Collection<int,TypeAttribute> $typeAttributes
+ * @property-read Race|null $race
+ * @property-read Group $group
+ * @property-read Icon|null $icon
+ * @property-read MarketGroup|null $marketGroup
+ * @property-read MetaGroup|null $metaGroup
+ * @property-read Graphic|null $graphic
+ */
 class Type extends Model
 {
     public $incrementing = false;
-
-    protected $fillable = [
-        'id',
-        'name',
-        'description',
-        'graphic_id',
-        'group_id',
-        'icon_id',
-        'market_group_id',
-        'meta_group_id',
-        'race_id',
-        'published',
-        'capacity',
-        'mass',
-        'base_price',
-        'volume',
-        'packaged_volume',
-        'radius',
-        'portion_size',
-    ];
 
     /**
      * @return HasMany<TypeAttribute,$this>
@@ -87,5 +99,12 @@ class Type extends Model
     public function graphic(): BelongsTo
     {
         return $this->belongsTo(ClassResolver::graphic());
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'published' => 'boolean',
+        ];
     }
 }

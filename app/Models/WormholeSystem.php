@@ -2,25 +2,25 @@
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
+ * WormholeSystem model representing a wormhole system in the game.
+ *
  * @property int $id
  * @property int $effect_id
+ * @property-read string|CarbonImmutable $created_at
+ * @property-read string|CarbonImmutable $updated_at
  * @property-read WormholeEffect $effect
  * @property-read Solarsystem $solarsystem
- * @property-read Collection<WormholeStatic> $wormholeStatics
+ * @property-read Collection<int,WormholeStatic> $wormholeStatics
  */
 class WormholeSystem extends Model
 {
-    protected $fillable = [
-        'id',
-        'effect_id',
-    ];
-
     /**
      * The effect of the wormhole system.
      *

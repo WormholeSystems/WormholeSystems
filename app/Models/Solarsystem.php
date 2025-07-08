@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Traits\HasSlug;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,6 +14,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use NicolasKion\SDE\ClassResolver;
 
 /**
+ * Solarsystem model representing a solar system in the game.
+ *
  * @property int $id
  * @property string $name
  * @property int $constellation_id
@@ -22,30 +25,21 @@ use NicolasKion\SDE\ClassResolver;
  * @property float $pos_y
  * @property float $pos_z
  * @property string $type
+ * @property-read string|CarbonImmutable $created_at
+ * @property-read string|CarbonImmutable $updated_at
  * @property-read Constellation $constellation
  * @property-read Region $region
- * @property-read Collection<Celestial> $celestials
- * @property-read Collection<Station> $stations
+ * @property-read Collection<int,Celestial> $celestials
+ * @property-read Collection<int,Station> $stations
  * @property-read WormholeSystem|null $wormholeSystem
- * @property-read Sovereignty $sovereignty
+ * @property-read Sovereignty|null $sovereignty
+ * @property-read Collection<int,MapSolarsystem> $mapSolarsystems
  */
 class Solarsystem extends Model
 {
     use HasSlug;
 
     public $incrementing = false;
-
-    protected $fillable = [
-        'id',
-        'name',
-        'constellation_id',
-        'region_id',
-        'security',
-        'pos_x',
-        'pos_y',
-        'pos_z',
-        'type',
-    ];
 
     /**
      * @return BelongsTo<Region,$this>
@@ -89,12 +83,17 @@ class Solarsystem extends Model
 
     /**
      * MapSolarsystems related to this solarsystem.
+     *
+     * @return HasMany<MapSolarsystem,$this>
      */
     public function mapSolarsystems(): HasMany
     {
         return $this->hasMany(MapSolarsystem::class, 'solarsystem_id');
     }
 
+    /**
+     * @return HasOne<Sovereignty,$this>
+     */
     public function sovereignty(): HasOne
     {
         return $this->hasOne(Sovereignty::class, 'solarsystem_id');

@@ -2,22 +2,23 @@
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * The static wormholes of a system.
  *
+ * @property int $id
+ * @property int $wormhole_id
+ * @property int $wormhole_system_id
+ * @property-read string|CarbonImmutable $created_at
+ * @property-read string|CarbonImmutable $updated_at
  * @property-read WormholeSystem $wormholeSystem
  * @property-read Wormhole $wormhole
  */
 class WormholeStatic extends Model
 {
-    protected $fillable = [
-        'wormhole_id',
-        'wormhole_system_id',
-    ];
-
     /**
      * The system that this static wormhole belongs to.
      *

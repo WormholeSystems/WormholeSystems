@@ -2,16 +2,21 @@
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Fluent;
 use Staudenmeir\EloquentJsonRelations\HasJsonRelationships;
 
 /**
+ * Killmail model representing a killmail in the game.
+ *
  * @property int $id
  * @property string $hash
  * @property int $solarsystem_id
- * @property string $time
+ * @property string|CarbonImmutable $time
+ * @property-read string|CarbonImmutable $created_at
+ * @property-read string|CarbonImmutable $updated_at
  * @property-read Fluent $data
  * @property-read Fluent $zkb
  * @property-read Type $shipType
@@ -22,15 +27,6 @@ class Killmail extends Model
     use HasJsonRelationships;
 
     public $incrementing = false;
-
-    protected $fillable = [
-        'id',
-        'hash',
-        'solarsystem_id',
-        'data',
-        'time',
-        'zkb',
-    ];
 
     protected $casts = [
         'id' => 'integer',
@@ -50,6 +46,9 @@ class Killmail extends Model
         return $this->belongsTo(Solarsystem::class);
     }
 
+    /**
+     * @return BelongsTo<Type,$this>
+     */
     public function shipType(): BelongsTo
     {
         return $this->belongsTo(Type::class, 'data->victim->ship_type_id', 'id');
