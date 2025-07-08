@@ -27,8 +27,8 @@ const { map_solarsystem } = defineProps<{
                 <span v-if="map_solarsystem.occupier_alias" class="text-muted-foreground"> ({{ map_solarsystem.occupier_alias }})</span>
             </span>
             <span class="flex items-center gap-1">
+                <SovereigntyIcon v-if="map_solarsystem.solarsystem?.sovereignty" :sovereignty="map_solarsystem.solarsystem.sovereignty" />
                 <LockIcon v-if="map_solarsystem.pinned" class="w-4 text-muted-foreground" />
-                <SovereigntyIcon v-if="map_solarsystem.solarsystem?.sovereignty?.id" :sovereignty="map_solarsystem.solarsystem.sovereignty" />
                 <HasSignatures v-if="map_solarsystem.signatures_count" />
                 <SolarsystemEffect :effect="map_solarsystem.effect" :effects="map_solarsystem.effects" v-if="map_solarsystem.effect" />
             </span>

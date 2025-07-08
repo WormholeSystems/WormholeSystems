@@ -48,8 +48,12 @@ const time_ago = computed(() => {
         v-element-hover="onHover"
     >
         <div class="grid grid-cols-[auto_auto_auto] gap-0.5 gap-x-2">
-            <TypeImage class="size-8 rounded-lg" :type_id="killmail.ship_type.id" :type_name="killmail.ship_type.name" />
-            <VictimImage class="size-8" :victim="killmail.data.victim" />
+            <a :href="`https://zkillboard.com/kill/${killmail.id}/`" target="_blank" rel="noopener noreferrer">
+                <TypeImage class="size-8 rounded-lg" :type_id="killmail.ship_type.id" :type_name="killmail.ship_type.name" />
+            </a>
+            <a :href="`https://zkillboard.com/character/${killmail.data.victim.character_id}/`" target="_blank" rel="noopener noreferrer">
+                <VictimImage class="size-8" :victim="killmail.data.victim" />
+            </a>
             <Affiliation class="size-8" alt="Victim group" :affiliation="killmail.data.victim" />
         </div>
         <div class="">
@@ -66,7 +70,9 @@ const time_ago = computed(() => {
         </div>
         <div class="grid grid-cols-[auto_auto_auto_auto] gap-0.5 gap-x-2">
             <TypeImage class="size-8 rounded-lg" :type_id="final_blow.ship_type_id" type_name="Attacker Ship" variant="icon" />
-            <AttackerImage class="size-8" :attacker="final_blow" />
+            <a :href="`https://zkillboard.com/character/${final_blow.character_id}/`" target="_blank" rel="noopener noreferrer">
+                <AttackerImage class="size-8" :attacker="final_blow" />
+            </a>
             <Affiliation class="size-8" alt="Attacker group" :affiliation="final_blow" />
         </div>
         <div class="grid text-right text-muted-foreground">

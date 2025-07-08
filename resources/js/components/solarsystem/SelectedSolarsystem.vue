@@ -37,7 +37,7 @@ const { map_solarsystem } = defineProps<{
             </CardDescription>
         </CardHeader>
         <CardContent>
-            <SolarsystemSignatures :map_solarsystem="map_solarsystem" :map />
+            <SolarsystemSignatures :map_solarsystem="map_solarsystem" />
         </CardContent>
     </Card>
 </template>
