@@ -41,6 +41,8 @@ class MapSolarsystemResource extends JsonResource
             'map_connections' => $this->connections?->toResourceCollection(MapConnectionResource::class),
             'solarsystem' => $this->solarsystem->toResource(SolarsystemResource::class),
             'statics' => $this->wormholeSystem?->wormholeStatics?->map(fn (WormholeStatic $static) => $static->wormhole->toResource(WormholeResource::class)),
+            'signatures' => $this->whenLoaded('signatures', fn () => $this->signatures?->toResourceCollection(SignatureResource::class)),
+            'signatures_count' => $this->whenCounted('signatures', fn () => $this->signatures_count),
         ];
     }
 }

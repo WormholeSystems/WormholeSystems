@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import SolarsystemClass from '@/components/SolarsystemClass.vue';
 import LockIcon from '@/components/icons/LockIcon.vue';
+import HasSignatures from '@/components/map/HasSignatures.vue';
 import SolarsystemEffect from '@/components/map/SolarsystemEffect.vue';
-import { TMapSolarSystem } from '@/types/models';
 import SovereigntyIcon from '@/components/map/SovereigntyIcon.vue';
+import { TMapSolarSystem } from '@/types/models';
 
 const { map_solarsystem } = defineProps<{
     map_solarsystem: TMapSolarSystem & { is_selected?: boolean; is_hovered?: boolean };
@@ -14,7 +15,8 @@ const { map_solarsystem } = defineProps<{
     <button
         :data-selected="map_solarsystem.is_selected"
         :data-hovered="map_solarsystem.is_hovered"
-        class="grid h-[40px] grid-cols-[auto_1fr_auto] items-center justify-center gap-x-1 rounded border border-neutral-700 bg-neutral-900 px-2 text-left text-xs transition-colors duration-200 ease-in-out select-none hover:bg-neutral-800 focus:bg-neutral-800 data-[hovered=true]:bg-amber-900 data-[selected=true]:bg-amber-900"
+        :data-status="map_solarsystem.status"
+        class="grid h-[40px] grid-cols-[auto_1fr_auto] items-center justify-center gap-x-1 rounded border border-neutral-700 bg-neutral-900 px-2 text-left text-xs transition-colors duration-200 ease-in-out select-none hover:bg-neutral-800 focus:bg-neutral-800 data-[hovered=true]:bg-amber-900 data-[selected=true]:bg-amber-900 data-[status=active]:border-active data-[status=empty]:border-empty data-[status=friendly]:border-friendly data-[status=hostile]:border-hostile data-[status=unknown]:border-unknown data-[status=unscanned]:border-unscanned"
         @drag.prevent
     >
         <span class="pointer-events-none contents">
@@ -24,9 +26,10 @@ const { map_solarsystem } = defineProps<{
                 <span>{{ map_solarsystem.solarsystem?.name }}</span>
                 <span v-if="map_solarsystem.occupier_alias" class="text-muted-foreground"> ({{ map_solarsystem.occupier_alias }})</span>
             </span>
-            <span class="flex items-center gap-2">
-                <SovereigntyIcon v-if="map_solarsystem.solarsystem?.sovereignty" :sovereignty="map_solarsystem.solarsystem.sovereignty" />
-                <LockIcon v-if="map_solarsystem.pinned" class="text-muted-foreground" />
+            <span class="flex items-center gap-1">
+                <LockIcon v-if="map_solarsystem.pinned" class="w-4 text-muted-foreground" />
+                <SovereigntyIcon v-if="map_solarsystem.solarsystem?.sovereignty?.id" :sovereignty="map_solarsystem.solarsystem.sovereignty" />
+                <HasSignatures v-if="map_solarsystem.signatures_count" />
                 <SolarsystemEffect :effect="map_solarsystem.effect" :effects="map_solarsystem.effects" v-if="map_solarsystem.effect" />
             </span>
             <span class="col-span-2 row-start-2 block text-xs text-muted-foreground" v-if="!map_solarsystem.class">{{

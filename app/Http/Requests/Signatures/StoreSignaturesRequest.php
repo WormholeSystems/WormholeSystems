@@ -23,7 +23,7 @@ class StoreSignaturesRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'signatures' => 'required|array',
+            'signatures' => 'nullable|sometimes|array',
             'signatures.*.signature_id' => 'required|string',
             'signatures.*.type' => 'required|string',
             'signatures.*.category' => 'nullable|string',

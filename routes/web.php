@@ -4,6 +4,7 @@ use App\Http\Controllers\MapConnectionController;
 use App\Http\Controllers\MapController;
 use App\Http\Controllers\MapSelectionController;
 use App\Http\Controllers\MapSolarsystemController;
+use App\Http\Controllers\SignatureController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -26,3 +27,6 @@ Route::put('map-selection', [MapSelectionController::class, 'update'])
     ->name('map-selection.update');
 Route::delete('map-selection', [MapSelectionController::class, 'destroy'])
     ->name('map-selection.destroy');
+
+Route::post('map-solarsystems/{mapSolarsystem}/signatures', [SignatureController::class, 'store'])
+    ->name('map-solarsystems.signatures.store');

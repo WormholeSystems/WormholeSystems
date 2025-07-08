@@ -20,10 +20,12 @@ export type TMapSolarSystem = {
         x: number;
         y: number;
     } | null;
-    status: string | null;
+    status: TMapSolarsystemStatus | null;
     solarsystem: TSolarsystem | null;
     statics: TWormhole[] | null;
     pinned: boolean;
+    signatures: TSignature[] | null;
+    signatures_count?: number;
 };
 
 export type TMapConnection = {
@@ -173,3 +175,15 @@ export type TzKillboard = {
     solo: boolean;
     totalValue: number;
 };
+
+export type TSignature = {
+    id: string;
+    signature_id: string;
+    type: string;
+    category: string | null;
+    name: string | null;
+    created_at: string;
+    updated_at: string;
+};
+
+export type TMapSolarsystemStatus = 'active' | 'unscanned' | 'unknown' | 'friendly' | 'hostile' | 'empty';

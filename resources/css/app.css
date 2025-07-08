@@ -72,6 +72,12 @@
     --color-black-hole: var(--color-gray-500);
     --color-catalysmic-variable: var(--color-yellow-500);
     --color-red-giant: var(--color-red-500);
+    --color-friendly: var(--color-blue-500);
+    --color-unknown: var(--color-neutral-700);
+    --color-hostile: var(--color-red-500);
+    --color-unscanned: var(--color-cyan-500);
+    --color-active: var(--color-orange-500);
+    --color-empty: var(--color-emerald-400);
 }
 
 /*

@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\MapSolarsystemStatus;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -19,7 +20,7 @@ return new class extends Migration
             $table->string('occupier_alias')->nullable()->index();
             $table->bigInteger('position_x')->nullable();
             $table->bigInteger('position_y')->nullable();
-            $table->string('status')->nullable()->index();
+            $table->string('status')->default(MapSolarsystemStatus::Unknown)->index();
             $table->boolean('pinned')->default(false);
             $table->text('notes')->nullable();
             $table->timestamps();

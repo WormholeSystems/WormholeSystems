@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\MapSolarsystemStatus;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,13 +19,14 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property string $occupier_alias
  * @property float|null $position_x
  * @property float|null $position_y
- * @property string $status
+ * @property MapSolarsystemStatus $status
  * @property bool $pinned
  * @property-read Solarsystem $solarsystem
  * @property-read Map $map
  * @property-read Collection<MapConnection> $connectionsTo
  * @property-read Collection<MapConnection> $connectionsFrom
  * @property-read WormholeSystem $wormholeSystem
+ * @property-read Collection<Signature> $signatures
  */
 class MapSolarsystem extends Model
 {
@@ -95,5 +97,12 @@ class MapSolarsystem extends Model
 
             return $mergedConnections;
         }
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'status' => MapSolarsystemStatus::class,
+        ];
     }
 }

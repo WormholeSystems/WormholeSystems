@@ -15,7 +15,7 @@ class WithVisibleSolarsystems
     public function __invoke(Builder $query): Builder
     {
         return $query->with([
-            'mapSolarsystems' => fn (HasMany $query) => $query->whereNotNull('position_x'),
+            'mapSolarsystems' => fn (HasMany $query) => $query->whereNotNull('position_x')->withCount('signatures'),
             'mapConnections' => fn (HasMany $query) => $query->whereDoesntHave('fromMapSolarsystem', fn (Builder $query) => $query->whereNull('position_x'))
                 ->whereDoesntHave('toMapSolarsystem', fn (Builder $query) => $query->whereNull('position_x')),
         ]);

@@ -21,6 +21,8 @@ const { map, selected_map_solarsystem, map_killmails } = defineProps<{
 router.on('before', (event) => {
     event.detail.visit.headers['X-Socket-ID'] = echo().socketId() || '';
 });
+
+console.log(selected_map_solarsystem);
 </script>
 
 <template>

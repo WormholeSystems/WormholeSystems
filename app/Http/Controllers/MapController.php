@@ -61,6 +61,7 @@ class MapController extends Controller
         }
 
         return MapSolarsystem::query()
+            ->with('signatures')
             ->findOrFail($solarsystem_id);
     }
 
