@@ -23,22 +23,27 @@ const pilots = usePilotsInMapSolarsystem(map_solarsystem);
         class="h-[40px] rounded border border-neutral-700 bg-neutral-900 text-left text-xs transition-colors duration-200 ease-in-out select-none hover:bg-neutral-800 focus:bg-neutral-800 data-[has-pilots=true]:h-[60px] data-[hovered=true]:bg-amber-900 data-[selected=true]:bg-amber-900 data-[status=active]:border-active data-[status=empty]:border-empty data-[status=friendly]:border-friendly data-[status=hostile]:border-hostile data-[status=unknown]:border-unknown data-[status=unscanned]:border-unscanned"
         @drag.prevent
     >
-        <span class="pointer-events-none block grid grid-cols-[auto_1fr_auto] items-center justify-center gap-x-1 px-2">
-            <SolarsystemClass :security="map_solarsystem.solarsystem!.security" :wormhole_class="map_solarsystem.class" />
+        <span class="pointer-events-none grid grid-cols-[auto_1fr_auto] items-center justify-center gap-x-1 px-2">
+            <SolarsystemClass :security="map_solarsystem.solarsystem!.security"
+                              :wormhole_class="map_solarsystem.class" />
             <span class="pointer-events-none">
-                <span class="mr-1 inline-block text-muted-foreground" v-if="map_solarsystem.alias">{{ map_solarsystem.alias }}</span>
+                <span class="mr-1 inline-block text-muted-foreground"
+                      v-if="map_solarsystem.alias">{{ map_solarsystem.alias }}</span>
                 <span>{{ map_solarsystem.solarsystem?.name }}</span>
-                <span v-if="map_solarsystem.occupier_alias" class="text-muted-foreground"> ({{ map_solarsystem.occupier_alias }})</span>
+                <span v-if="map_solarsystem.occupier_alias"
+                      class="text-muted-foreground"> ({{ map_solarsystem.occupier_alias }})</span>
             </span>
             <span class="flex items-center gap-1">
-                <SovereigntyIcon v-if="map_solarsystem.solarsystem?.sovereignty" :sovereignty="map_solarsystem.solarsystem.sovereignty" />
+                <SovereigntyIcon v-if="map_solarsystem.solarsystem?.sovereignty"
+                                 :sovereignty="map_solarsystem.solarsystem.sovereignty" />
                 <LockIcon v-if="map_solarsystem.pinned" class="w-4 text-muted-foreground" />
                 <HasSignatures v-if="map_solarsystem.signatures_count" />
-                <SolarsystemEffect :effect="map_solarsystem.effect" :effects="map_solarsystem.effects" v-if="map_solarsystem.effect" />
+                <SolarsystemEffect :effect="map_solarsystem.effect" :effects="map_solarsystem.effects"
+                                   v-if="map_solarsystem.effect" />
             </span>
             <span class="col-span-2 row-start-2 block text-xs text-muted-foreground" v-if="!map_solarsystem.class">{{
-                map_solarsystem.solarsystem?.region?.name
-            }}</span>
+                    map_solarsystem.solarsystem?.region?.name
+                }}</span>
             <span class="col-span-3 row-start-2 flex justify-end gap-1 text-right text-xs" v-else>
                 <span
                     :data-leads-to="wh.leads_to"
@@ -50,8 +55,10 @@ const pilots = usePilotsInMapSolarsystem(map_solarsystem);
                 </span>
             </span>
         </span>
-        <span v-if="pilots?.length" class="flex h-[20px] items-center gap-1 truncate border-t border-neutral-500 px-2 pt-1 text-[10px] leading-0">
-            {{ pilots.at(0)?.name }} <span v-if="pilots.length > 1">and {{ pilots.length - 1 }} more</span>
+        <span v-if="pilots?.length"
+              class="flex h-[20px] items-center gap-1 truncate border-t border-neutral-500 px-2 pt-1 text-[10px] leading-0">
+            <span class="size-1 bg-green-500 animate-pulse rounded-full"></span>{{ pilots.at(0)?.name }} <span
+            v-if="pilots.length > 1">and {{ pilots.length - 1 }} more</span>
         </span>
     </button>
 </template>

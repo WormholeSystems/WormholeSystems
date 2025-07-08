@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('killmails', function (Blueprint $table): void {
             $table->unsignedBigInteger('id')->primary();
-            $table->string('hash')->unique();
+            $table->string('hash');
             $table->foreignId('solarsystem_id')->constrained()->cascadeOnDelete();
             $table->dateTime('time')->index();
             $table->json('data');
