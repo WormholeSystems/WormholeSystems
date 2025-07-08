@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "56e141b60e8ad1d3c0d59212b9ee6c3e",
+    "content-hash": "bf33bb709732c9d08759eff584f5d1a6",
     "packages": [
         {
             "name": "brick/math",
@@ -1364,16 +1364,16 @@
         },
         {
             "name": "laravel/framework",
-            "version": "v12.19.3",
+            "version": "v12.20.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/framework.git",
-                "reference": "4e6ec689ef704bb4bd282f29d9dd658dfb4fb262"
+                "reference": "1b9a00f8caf5503c92aa436279172beae1a484ff"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/framework/zipball/4e6ec689ef704bb4bd282f29d9dd658dfb4fb262",
-                "reference": "4e6ec689ef704bb4bd282f29d9dd658dfb4fb262",
+                "url": "https://api.github.com/repos/laravel/framework/zipball/1b9a00f8caf5503c92aa436279172beae1a484ff",
+                "reference": "1b9a00f8caf5503c92aa436279172beae1a484ff",
                 "shasum": ""
             },
             "require": {
@@ -1575,20 +1575,20 @@
                 "issues": "https://github.com/laravel/framework/issues",
                 "source": "https://github.com/laravel/framework"
             },
-            "time": "2025-06-18T12:56:23+00:00"
+            "time": "2025-07-08T15:02:21+00:00"
         },
         {
             "name": "laravel/prompts",
-            "version": "v0.3.5",
+            "version": "v0.3.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/prompts.git",
-                "reference": "57b8f7efe40333cdb925700891c7d7465325d3b1"
+                "reference": "86a8b692e8661d0fb308cec64f3d176821323077"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/prompts/zipball/57b8f7efe40333cdb925700891c7d7465325d3b1",
-                "reference": "57b8f7efe40333cdb925700891c7d7465325d3b1",
+                "url": "https://api.github.com/repos/laravel/prompts/zipball/86a8b692e8661d0fb308cec64f3d176821323077",
+                "reference": "86a8b692e8661d0fb308cec64f3d176821323077",
                 "shasum": ""
             },
             "require": {
@@ -1632,9 +1632,9 @@
             "description": "Add beautiful and user-friendly forms to your command-line applications.",
             "support": {
                 "issues": "https://github.com/laravel/prompts/issues",
-                "source": "https://github.com/laravel/prompts/tree/v0.3.5"
+                "source": "https://github.com/laravel/prompts/tree/v0.3.6"
             },
-            "time": "2025-02-11T13:34:40+00:00"
+            "time": "2025-07-07T14:17:42+00:00"
         },
         {
             "name": "laravel/reverb",
@@ -2902,11 +2902,17 @@
         },
         {
             "name": "nicolaskion/eve",
-            "version": "dev-main",
+            "version": "v0.1.5",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/NicolasKion/Esi.git",
+                "reference": "92f8abf83b0ebdb37cf73defcf5402bc698eff2f"
+            },
             "dist": {
-                "type": "path",
-                "url": "../esi",
-                "reference": "ac9a72ebcab86e2dd7ae2b53e0f99a6f7cf21af9"
+                "type": "zip",
+                "url": "https://api.github.com/repos/NicolasKion/Esi/zipball/92f8abf83b0ebdb37cf73defcf5402bc698eff2f",
+                "reference": "92f8abf83b0ebdb37cf73defcf5402bc698eff2f",
+                "shasum": ""
             },
             "require": {
                 "illuminate/contracts": "^11.0 || ^12.0",
@@ -2929,12 +2935,12 @@
             "type": "library",
             "extra": {
                 "laravel": {
-                    "providers": [
-                        "NicolasKion\\Esi\\EsiServiceProvider"
-                    ],
                     "aliases": {
                         "Esi": "NicolasKion\\Esi\\Facades\\Esi"
-                    }
+                    },
+                    "providers": [
+                        "NicolasKion\\Esi\\EsiServiceProvider"
+                    ]
                 }
             },
             "autoload": {
@@ -2943,31 +2949,7 @@
                     "NicolasKion\\Esi\\Database\\Factories\\": "database/factories/"
                 }
             },
-            "autoload-dev": {
-                "psr-4": {
-                    "NicolasKion\\Esi\\Tests\\": "tests/"
-                }
-            },
-            "scripts": {
-                "post-autoload-dump": [
-                    "@composer run prepare"
-                ],
-                "prepare": [
-                    "@php vendor/bin/testbench package:discover --ansi"
-                ],
-                "analyse": [
-                    "vendor/bin/phpstan analyse"
-                ],
-                "test": [
-                    "vendor/bin/pest"
-                ],
-                "test-coverage": [
-                    "vendor/bin/pest --coverage"
-                ],
-                "format": [
-                    "vendor/bin/pint"
-                ]
-            },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -2985,9 +2967,17 @@
                 "esi",
                 "laravel"
             ],
-            "transport-options": {
-                "relative": true
-            }
+            "support": {
+                "issues": "https://github.com/NicolasKion/Esi/issues",
+                "source": "https://github.com/NicolasKion/Esi/tree/v0.1.5"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/Nicolas Kion",
+                    "type": "github"
+                }
+            ],
+            "time": "2025-07-08T17:11:57+00:00"
         },
         {
             "name": "nicolaskion/sde",
@@ -11258,9 +11248,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "nicolaskion/eve": 20
-    },
+    "stability-flags": {},
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
