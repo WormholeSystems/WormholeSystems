@@ -6,11 +6,33 @@ import { CharacterStatusUpdatedEvent } from '@/const/events';
 import { TCharacter } from '@/types/models';
 import { router } from '@inertiajs/vue3';
 import { useEchoPublic } from '@laravel/echo-vue';
+import { computed } from 'vue';
 
 const { map_characters, map_id } = defineProps<{
     map_characters: TCharacter[];
     map_id: number;
 }>();
+
+const sorted_characters = computed(() => map_characters.toSorted(sortCharacters));
+
+function sortCharacters(a: TCharacter, b: TCharacter) {
+    if (a.status?.ship_type?.name === 'Capsule' && b.status?.ship_type?.name !== 'Capsule') {
+        return 1;
+    }
+    if (b.status?.ship_type?.name === 'Capsule' && a.status?.ship_type?.name !== 'Capsule') {
+        return -1;
+    }
+
+    if ((a.status?.station_id || a.status?.structure_id) && !(b.status?.station_id || b.status?.structure_id)) {
+        return 1;
+    }
+
+    if (!(a.status?.station_id || a.status?.structure_id) && (b.status?.station_id || b.status?.structure_id)) {
+        return -1;
+    }
+
+    return a.name.localeCompare(b.name);
+}
 
 useEchoPublic(getMapChannelName(map_id), CharacterStatusUpdatedEvent, () => {
     router.reload({
@@ -30,7 +52,7 @@ useEchoPublic(getMapChannelName(map_id), CharacterStatusUpdatedEvent, () => {
                 class="relative grid h-100 grid-cols-[auto_1fr_auto_auto_auto] content-start overflow-x-hidden overflow-y-scroll mask-b-from-90% mask-alpha pr-4 pb-8"
             >
                 <TransitionGroup name="list">
-                    <Character v-for="character in map_characters" :key="character.id" :character="character" />
+                    <Character v-for="character in sorted_characters" :key="character.id" :character="character" />
                 </TransitionGroup>
                 <div v-if="map_characters?.length === 0" class="text-center text-sm text-muted-foreground">
                     No characters found on the map. It might take a while for characters to appear after they have been logged in.
