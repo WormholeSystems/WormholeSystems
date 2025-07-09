@@ -84,15 +84,22 @@ useEchoPublic(getMapChannelName(map.id), [MapSolarsystemCreatedEvent, MapSolarsy
 </script>
 
 <template>
-    <div class="relative h-250 w-full overflow-scroll border-b bg-neutral-900/50">
+    <div
+        class="relative w-full overflow-y-scroll border-b bg-neutral-900/50"
+        :style="{
+            height: config.max_size.y > 1000 ? `${config.max_size.y}px` : 'auto',
+        }"
+    >
         <ContextMenu @update:open="onOpenChange">
             <ContextMenuTrigger>
                 <div
-                    class="bg-grid relative grid h-400 w-1000"
+                    class="bg-grid relative grid"
                     @dragover.prevent
                     ref="map-container"
                     :style="{
                         backgroundSize: `${grid_size}px ${grid_size}px`,
+                        width: `${config.max_size.x}px`,
+                        height: `${config.max_size.y}px`,
                     }"
                 >
                     <MapConnections @connection-contextmenu="(e, con) => (selected_connection_id = con.id)" />
