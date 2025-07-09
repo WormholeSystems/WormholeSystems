@@ -7,6 +7,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { TMapSolarSystem } from '@/types/models';
 import { router } from '@inertiajs/vue3';
 import { useMagicKeys, whenever } from '@vueuse/core';
+import { computed, nextTick, ref, useTemplateRef } from 'vue';
 
 type TRawSignature = {
     signature_id: string;
@@ -19,9 +20,16 @@ const { map_solarsystem } = defineProps<{
     map_solarsystem: TMapSolarSystem;
 }>();
 
-const { Ctrl_v } = useMagicKeys();
+const pasted_signatures = ref<TRawSignature[]>([]);
+
+const signature_difference = computed(showDifference);
+
+const { Ctrl_v, Cmd_V } = useMagicKeys();
+
+const confirmButton = useTemplateRef('confirm_button');
 
 whenever(Ctrl_v, handleClipboardPaste);
+whenever(Cmd_V, handleClipboardPaste);
 
 async function handleClipboardPaste() {
     // check permission to access clipboard
@@ -33,9 +41,13 @@ async function handleClipboardPaste() {
     }
     const text = (await clipboardData).trim();
 
-    let signatures = parseSignatures(text);
+    pasted_signatures.value = parseSignatures(text);
 
-    updateSignatures(signatures);
+    await nextTick();
+
+    if (pasted_signatures.value.length) {
+        confirmButton.value?.focus();
+    }
 }
 
 function handleClipbordCopy() {
@@ -81,8 +93,51 @@ function updateSignatures(signatures: TRawSignature[]) {
             preserveScroll: true,
             preserveState: true,
             only: ['map', 'selected_map_solarsystem'],
+            onSuccess: () => {
+                pasted_signatures.value = [];
+            },
         },
     );
+}
+
+function showDifference() {
+    if (!pasted_signatures.value.length)
+        return map_solarsystem.signatures!.map((sig) => ({
+            signature_id: sig.signature_id,
+            type: sig.type,
+            category: sig.category,
+            name: sig.name,
+            status: 'unchanged',
+        }));
+    const signatures = new Set(map_solarsystem.signatures!.map((sig) => sig.signature_id));
+    pasted_signatures.value.forEach((sig) => {
+        signatures.add(sig.signature_id);
+    });
+
+    return Array.from(signatures)
+        .map((signature_id) => {
+            const existingSignature = map_solarsystem.signatures!.find((sig) => sig.signature_id === signature_id);
+            const pastedSignature = pasted_signatures.value.find((sig) => sig.signature_id === signature_id);
+
+            const is_missing = existingSignature && !pastedSignature;
+            const is_new = pastedSignature && !existingSignature;
+            const is_modified = pastedSignature && existingSignature;
+
+            return {
+                signature_id,
+                type: pastedSignature?.type || existingSignature?.type || '',
+                category: pastedSignature?.category || existingSignature?.category || null,
+                name: pastedSignature?.name || existingSignature?.name || null,
+                status: is_missing ? 'missing' : is_new ? 'new' : is_modified ? 'modified' : 'unchanged',
+            };
+        })
+        .sort((a, b) => {
+            if (a.status === 'new' && b.status !== 'new') return -1;
+            if (b.status === 'new' && a.status !== 'new') return 1;
+            if (a.status === 'missing' && b.status !== 'missing') return -1;
+            if (b.status === 'missing' && a.status !== 'missing') return 1;
+            return a.signature_id.localeCompare(b.signature_id);
+        });
 }
 </script>
 
@@ -122,20 +177,38 @@ function updateSignatures(signatures: TRawSignature[]) {
                     <th class="p-1">Type</th>
                     <th class="p-1">Category</th>
                     <th class="p-1">Name</th>
+                    <th v-if="pasted_signatures.length" class="p-1">Status</th>
                 </tr>
             </thead>
             <tbody class="text-muted-foreground">
-                <tr v-for="signature in map_solarsystem.signatures" :key="signature.id" class="border-b last:border-b-0">
+                <tr
+                    v-for="signature in signature_difference"
+                    :key="signature.signature_id"
+                    :data-status="signature.status"
+                    class="border-b last:border-b-0 data-[status=missing]:bg-red-900 data-[status=modified]:bg-yellow-900 data-[status=new]:bg-green-900"
+                >
                     <td class="p-1">{{ signature.signature_id }}</td>
                     <td class="p-1">{{ signature.type }}</td>
                     <td class="p-1">{{ signature.category }}</td>
                     <td class="p-1">{{ signature.name }}</td>
+                    <td class="p-1" v-if="pasted_signatures.length">
+                        <span v-if="signature.status === 'missing'" class="text-red-500">Missing</span>
+                        <span v-if="signature.status === 'modified'" class="text-yellow-500">Modified</span>
+                        <span v-if="signature.status === 'new'" class="text-green-500">New</span>
+                        <span v-if="signature.status === 'unchanged'" class="text-muted-foreground">Unchanged</span>
+                    </td>
                 </tr>
                 <tr v-if="map_solarsystem.signatures?.length === 0" class="border-b last:border-b-0">
                     <td colspan="4" class="py-4 text-left text-muted-foreground">No signatures found</td>
                 </tr>
             </tbody>
         </table>
+    </div>
+    <div v-if="pasted_signatures.length" class="mt-4 flex justify-between">
+        <Button @click="pasted_signatures = []" class="" variant="secondary"> Cancel</Button>
+        <Button @click="updateSignatures(pasted_signatures)" :disabled="!pasted_signatures.length" as-child>
+            <button ref="confirm_button">Update Signatures</button>
+        </Button>
     </div>
 </template>
 
