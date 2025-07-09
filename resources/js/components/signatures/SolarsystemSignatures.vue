@@ -159,7 +159,7 @@ function sortSignatures(a: TRawSignature, b: TRawSignature) {
 
 useEchoPublic(getMapChannelName(map_solarsystem.map_id), SignaturesUpdatedEvent, () => {
     router.reload({
-        only: ['selected_map_solarsystem'],
+        only: ['selected_map_solarsystem', 'map'],
     });
 });
 </script>
