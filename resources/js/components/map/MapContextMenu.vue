@@ -5,6 +5,9 @@ import { useMapAction } from '@/composables/map';
 const { removeAllMapSolarsystems, sortMapSolarsystemsByRegion } = useMapAction();
 
 function handleSystemDelete() {
+    if (!confirm('Are you sure you want to clear the map? This will remove all solarsystems.')) {
+        return;
+    }
     removeAllMapSolarsystems();
 }
 </script>

@@ -4,8 +4,8 @@ import LockIcon from '@/components/icons/LockIcon.vue';
 import HasSignatures from '@/components/map/HasSignatures.vue';
 import SolarsystemEffect from '@/components/map/SolarsystemEffect.vue';
 import SovereigntyIcon from '@/components/map/SovereigntyIcon.vue';
-import { TMapSolarSystem } from '@/types/models';
 import { usePilotsInMapSolarsystem } from '@/composables/usePilotsInMapSolarsystem';
+import { TMapSolarSystem } from '@/types/models';
 
 const { map_solarsystem } = defineProps<{
     map_solarsystem: TMapSolarSystem & { is_selected?: boolean; is_hovered?: boolean };
@@ -27,9 +27,9 @@ const pilots = usePilotsInMapSolarsystem(map_solarsystem);
             <SolarsystemClass :security="map_solarsystem.solarsystem!.security"
                               :wormhole_class="map_solarsystem.class" />
             <span class="pointer-events-none">
-                <span class="mr-1 inline-block text-muted-foreground"
-                      v-if="map_solarsystem.alias">{{ map_solarsystem.alias }}</span>
-                <span>{{ map_solarsystem.solarsystem?.name }}</span>
+                <span class="mr-1 inline-block" v-if="map_solarsystem.alias">{{ map_solarsystem.alias }}</span>
+                <span :data-has-alias="map_solarsystem.alias !== null"
+                      class="data-[has-alias=true]:text-muted-foreground">{{ map_solarsystem.solarsystem?.name }}</span>
                 <span v-if="map_solarsystem.occupier_alias"
                       class="text-muted-foreground"> ({{ map_solarsystem.occupier_alias }})</span>
             </span>
@@ -57,8 +57,8 @@ const pilots = usePilotsInMapSolarsystem(map_solarsystem);
         </span>
         <span v-if="pilots?.length"
               class="flex h-[20px] items-center gap-1 truncate border-t border-neutral-500 px-2 pt-1 text-[10px] leading-0">
-            <span class="size-1 bg-green-500 animate-pulse rounded-full"></span>{{ pilots.at(0)?.name }} <span
-            v-if="pilots.length > 1">and {{ pilots.length - 1 }} more</span>
+            <span class="size-1 animate-pulse rounded-full bg-green-500"></span>{{ pilots.at(0)?.name }}
+            <span v-if="pilots.length > 1">and {{ pilots.length - 1 }} more</span>
         </span>
     </button>
 </template>
