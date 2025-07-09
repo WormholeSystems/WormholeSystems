@@ -19,7 +19,7 @@ const { map, selected_map_solarsystem, map_killmails } = defineProps<{
     config: TMapConfig;
     selected_map_solarsystem: TMapSolarSystem | null;
     map_killmails?: TKillmail[];
-    map_characters?: TCharacter[];
+    map_characters: TCharacter[];
 }>();
 
 router.on('before', (event) => {
@@ -31,20 +31,28 @@ router.on('before', (event) => {
     <AppLayout>
         <Head title="ShowMap" />
 
-        <div>
-            <div class="relative">
-                <MapComponent :map :config />
-                <MapSearch :map :search :solarsystems />
-                <Tracker :map_characters v-if="map_characters" />
-            </div>
-            <div class="grid grid-cols-3 gap-8 p-8">
-                <SelectedSolarsystem v-if="selected_map_solarsystem" :map_solarsystem="selected_map_solarsystem" :map />
-                <div class="flex flex-col items-center justify-center gap-8 rounded-lg border border-dashed text-neutral-700" v-else>
-                    <QuestionIcon class="text-4xl" />
-                    <p class="text-center">Select a solarsystem to see more details</p>
+        <div class="space-y-4 p-4">
+            <div class="">
+                <div class="relative">
+                    <MapComponent :map :config />
+                    <MapSearch :map :search :solarsystems />
+                    <Tracker :map_characters v-if="map_characters" />
                 </div>
-                <MapCharacters :map_id="map.id" :map_characters />
-                <MapKillmails :map_killmails="map_killmails" :map_id="map.id" />
+            </div>
+            <div class="grid grid-cols-12 gap-4">
+                <div class="col-span-6 2xl:col-span-5">
+                    <SelectedSolarsystem v-if="selected_map_solarsystem" :map_solarsystem="selected_map_solarsystem" :map />
+                    <div class="flex flex-col items-center justify-center gap-8 rounded-lg border border-dashed text-neutral-700" v-else>
+                        <QuestionIcon class="text-4xl" />
+                        <p class="text-center">Select a solarsystem to see more details</p>
+                    </div>
+                </div>
+                <div class="col-span-6 2xl:col-span-3">
+                    <MapCharacters :map_id="map.id" :map_characters />
+                </div>
+                <div class="col-span-6 2xl:col-span-4">
+                    <MapKillmails :map_killmails="map_killmails" :map_id="map.id" />
+                </div>
             </div>
         </div>
     </AppLayout>

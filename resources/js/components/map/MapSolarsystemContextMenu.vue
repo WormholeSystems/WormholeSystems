@@ -60,6 +60,25 @@ const options: TMapSolarsystemStatus[] = ['unknown', 'friendly', 'hostile', 'act
                     </ContextMenuRadioGroup>
                 </ContextMenuSubContent>
             </ContextMenuSub>
+            <ContextMenuSub>
+                <ContextMenuSubTrigger>External</ContextMenuSubTrigger>
+                <ContextMenuSubContent>
+                    <ContextMenuItem as-child>
+                        <a
+                            :href="`https://evemaps.dotlan.net/map/${map_solarsystem.solarsystem?.region?.name.replaceAll(' ', '_')}/${map_solarsystem.solarsystem?.name.replaceAll(' ', '_')}`"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            Dotlan
+                        </a>
+                    </ContextMenuItem>
+                    <ContextMenuItem as-child>
+                        <a :href="`https://zkillboard.com/system/${map_solarsystem.solarsystem?.id}/`" target="_blank" rel="noopener noreferrer">
+                            zKillboard
+                        </a>
+                    </ContextMenuItem>
+                </ContextMenuSubContent>
+            </ContextMenuSub>
             <ContextMenuSeparator />
             <template v-if="!map_solarsystem.pinned">
                 <ContextMenuSeparator />

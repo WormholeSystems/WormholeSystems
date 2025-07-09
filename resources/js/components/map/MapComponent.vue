@@ -85,7 +85,7 @@ useEchoPublic(getMapChannelName(map.id), [MapSolarsystemCreatedEvent, MapSolarsy
 
 <template>
     <div
-        class="relative w-full overflow-y-scroll border-b bg-neutral-900/50"
+        class="relative w-full overflow-y-scroll rounded-lg border bg-neutral-900/50"
         :style="{
             height: config.max_size.y > 1000 ? `${config.max_size.y}px` : 'auto',
         }"
