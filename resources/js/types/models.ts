@@ -207,4 +207,5 @@ export type TCharacterStatus = {
     last_online_at: string | null;
     checked_last_online_at: string | null;
     checked_location_at: string | null;
+    solarsystem: TSolarsystem | null;
 };
