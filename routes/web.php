@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EveController;
 use App\Http\Controllers\MapConnectionController;
 use App\Http\Controllers\MapController;
@@ -7,6 +8,7 @@ use App\Http\Controllers\MapSelectionController;
 use App\Http\Controllers\MapSolarsystemController;
 use App\Http\Controllers\SignatureController;
 use App\Http\Controllers\TrackingController;
+use App\Http\Controllers\UserCharacterController;
 use Illuminate\Support\Facades\Route;
 
 require __DIR__.'/settings.php';
@@ -28,12 +30,15 @@ Route::middleware('auth')->group(function () {
 
     Route::post('map-solarsystems/{mapSolarsystem}/signatures', [SignatureController::class, 'store'])
         ->name('map-solarsystems.signatures.store');
+
+    Route::put('user-characters/{character}', [UserCharacterController::class, 'update'])->name('user-characters.update');
+    Route::delete('user-characters/{character}', [UserCharacterController::class, 'delete'])->name('user-characters.delete');
 });
 
 Route::get('eve', [EveController::class, 'show'])->name('eve.show');
 Route::get('eve/callback', [EveController::class, 'store'])
     ->name('eve.store');
 
-Route::redirect('login', 'eve');
+Route::get('login', [AuthController::class, 'show'])->name('login');
 
 Route::post('tracking', [TrackingController::class, 'store'])->name('tracking.store');

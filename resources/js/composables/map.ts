@@ -303,6 +303,10 @@ export function useMapAction() {
     function removeMapSolarsystem(map_solarsystem: TMapSolarSystem) {
         if (map_solarsystem.pinned) return;
 
+        if (map_solarsystems_selected.value.length) {
+            return removeSelectedMapSolarsystems();
+        }
+
         return router.delete(route('map-solarsystems.destroy', map_solarsystem.id), {
             preserveState: true,
             preserveScroll: true,

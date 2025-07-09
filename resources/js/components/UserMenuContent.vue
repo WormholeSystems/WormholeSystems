@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import UserInfo from '@/components/UserInfo.vue';
+import MinusIcon from '@/components/icons/MinusIcon.vue';
+import PlusIcon from '@/components/icons/PlusIcon.vue';
+import { CharacterImage } from '@/components/images';
 import { DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import type { User } from '@/types';
 import { Link, router } from '@inertiajs/vue3';
@@ -24,6 +27,31 @@ defineProps<Props>();
     </DropdownMenuLabel>
     <DropdownMenuSeparator />
     <DropdownMenuGroup>
+        <DropdownMenuItem v-for="character in user.characters" :key="character.id" as-child>
+            <Link class="block w-full" :href="route('user-characters.update', character.id)" as="button" method="put">
+                <CharacterImage :character_id="character.id" :character_name="character.name" class="mr-2 h-4 w-4" />
+                {{ character.name }}
+            </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem as-child>
+            <a
+                class="block w-full"
+                :href="
+                    route('login', {
+                        add_to_account: true,
+                    })
+                "
+            >
+                <PlusIcon class="mr-2 h-4 w-4" />
+                Add Character
+            </a>
+        </DropdownMenuItem>
+        <DropdownMenuItem as-child v-if="user.characters.length > 1">
+            <Link class="block w-full" :href="route('user-characters.delete', user.active_character.id)" method="delete" as="button">
+                <MinusIcon class="mr-2 h-4 w-4" />
+                Remove Character
+            </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem :as-child="true">
             <Link class="block w-full" :href="route('profile.edit')" prefetch as="button">
                 <Settings class="mr-2 h-4 w-4" />

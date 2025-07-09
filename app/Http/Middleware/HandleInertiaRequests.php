@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Foundation\Inspiring;
@@ -48,7 +49,7 @@ class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'quote' => ['message' => trim((string) $message), 'author' => trim((string) $author)],
             'auth' => [
-                'user' => $this->user?->toResource(),
+                'user' => $this->user?->toResource(UserResource::class),
             ],
             'ziggy' => [
                 ...(new Ziggy)->toArray(),
