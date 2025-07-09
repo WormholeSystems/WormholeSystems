@@ -14,6 +14,7 @@ type TRawSignature = {
     type: string;
     category: string | null;
     name: string | null;
+    status?: 'new' | 'missing' | 'modified' | 'unchanged';
 };
 
 const { map_solarsystem } = defineProps<{
@@ -102,20 +103,24 @@ function updateSignatures(signatures: TRawSignature[]) {
 
 function showDifference() {
     if (!pasted_signatures.value.length)
-        return map_solarsystem.signatures!.map((sig) => ({
-            signature_id: sig.signature_id,
-            type: sig.type,
-            category: sig.category,
-            name: sig.name,
-            status: 'unchanged',
-        }));
+        return map_solarsystem
+            .signatures!.map(
+                (sig): TRawSignature => ({
+                    signature_id: sig.signature_id,
+                    type: sig.type,
+                    category: sig.category,
+                    name: sig.name,
+                    status: 'unchanged',
+                }),
+            )
+            .sort(sortSignatures);
     const signatures = new Set(map_solarsystem.signatures!.map((sig) => sig.signature_id));
     pasted_signatures.value.forEach((sig) => {
         signatures.add(sig.signature_id);
     });
 
     return Array.from(signatures)
-        .map((signature_id) => {
+        .map((signature_id): TRawSignature => {
             const existingSignature = map_solarsystem.signatures!.find((sig) => sig.signature_id === signature_id);
             const pastedSignature = pasted_signatures.value.find((sig) => sig.signature_id === signature_id);
 
@@ -131,13 +136,15 @@ function showDifference() {
                 status: is_missing ? 'missing' : is_new ? 'new' : is_modified ? 'modified' : 'unchanged',
             };
         })
-        .sort((a, b) => {
-            if (a.status === 'new' && b.status !== 'new') return -1;
-            if (b.status === 'new' && a.status !== 'new') return 1;
-            if (a.status === 'missing' && b.status !== 'missing') return -1;
-            if (b.status === 'missing' && a.status !== 'missing') return 1;
-            return a.signature_id.localeCompare(b.signature_id);
-        });
+        .sort(sortSignatures);
+}
+
+function sortSignatures(a: TRawSignature, b: TRawSignature) {
+    if (a.status === 'new' && b.status !== 'new') return -1;
+    if (b.status === 'new' && a.status !== 'new') return 1;
+    if (a.status === 'missing' && b.status !== 'missing') return -1;
+    if (b.status === 'missing' && a.status !== 'missing') return 1;
+    return a.signature_id.localeCompare(b.signature_id);
 }
 </script>
 
