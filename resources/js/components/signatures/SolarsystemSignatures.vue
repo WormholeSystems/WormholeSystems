@@ -205,7 +205,7 @@ function sortSignatures(a: TRawSignature, b: TRawSignature) {
                         <span v-if="signature.status === 'unchanged'" class="text-muted-foreground">Unchanged</span>
                     </td>
                 </tr>
-                <tr v-if="map_solarsystem.signatures?.length === 0" class="border-b last:border-b-0">
+                <tr v-if="signature_difference?.length === 0" class="border-b last:border-b-0">
                     <td colspan="4" class="py-4 text-left text-muted-foreground">No signatures found</td>
                 </tr>
             </tbody>
