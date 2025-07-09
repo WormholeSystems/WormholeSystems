@@ -1,17 +1,39 @@
 <script setup lang="ts">
 import Killmail from '@/components/killmails/Killmail.vue';
 import KillmailPlaceholder from '@/components/killmails/KillmailPlaceholder.vue';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getMapChannelName } from '@/const/channels';
 import { KillmailReceivedEvent } from '@/const/events';
 import { TKillmail } from '@/types/models';
 import { Deferred, router } from '@inertiajs/vue3';
 import { useEchoPublic } from '@laravel/echo-vue';
+import { useLocalStorage } from '@vueuse/core';
+import { computed } from 'vue';
 
 const { map_killmails, map_id } = defineProps<{
     map_killmails?: TKillmail[];
     map_id: number;
 }>();
+
+const filter = useLocalStorage<'all' | 'jspace' | 'kspace'>('killmail_filter', 'all');
+
+const filtered_killmails = computed(() => {
+    if (filter.value === 'all') {
+        return map_killmails;
+    }
+    return map_killmails?.filter((killmail) => {
+        if (filter.value === 'jspace') {
+            return !!killmail.solarsystem.class;
+        }
+
+        if (filter.value === 'kspace') {
+            return !killmail.solarsystem.class;
+        }
+
+        return true;
+    });
+});
 
 type KillmailReceivedEvent = {
     killmail: TKillmail;
@@ -26,9 +48,19 @@ useEchoPublic<KillmailReceivedEvent>(getMapChannelName(map_id), KillmailReceived
 
 <template>
     <Card>
-        <CardHeader>
-            <CardTitle>Map killmails</CardTitle>
-            <CardDescription>Recents killmails that happened in one of the map solarsystems</CardDescription>
+        <CardHeader class="flex justify-between">
+            <div class="">
+                <CardTitle>Map killmails</CardTitle>
+                <CardDescription>Recents killmails that happened in one of the map solarsystems</CardDescription>
+            </div>
+            <Button
+                variant="outline"
+                size="sm"
+                class="text-xs"
+                @click="filter = filter === 'all' ? 'jspace' : filter === 'jspace' ? 'kspace' : 'all'"
+            >
+                {{ filter === 'all' ? 'Show J-Space' : filter === 'jspace' ? 'Show K-Space' : 'Show All' }}
+            </Button>
         </CardHeader>
         <CardContent>
             <div
@@ -36,7 +68,7 @@ useEchoPublic<KillmailReceivedEvent>(getMapChannelName(map_id), KillmailReceived
             >
                 <Deferred data="map_killmails">
                     <TransitionGroup name="list">
-                        <Killmail v-for="killmail in map_killmails" :key="killmail.id" :killmail="killmail" />
+                        <Killmail v-for="killmail in filtered_killmails" :key="killmail.id" :killmail="killmail" />
                     </TransitionGroup>
                     <template #fallback>
                         <KillmailPlaceholder v-for="i in 20" :key="i" />
