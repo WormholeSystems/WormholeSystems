@@ -341,9 +341,6 @@ export function useMapAction() {
 
     function addMapSolarsystem(solarsystem_id: number) {
         const position = getFreePosition();
-
-        console.log(`Adding solar system with ID ${solarsystem_id} at position:`, position);
-
         return router.post(
             route('map-solarsystems.store'),
             {

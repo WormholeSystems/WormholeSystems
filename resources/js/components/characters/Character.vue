@@ -44,16 +44,12 @@ const map_solarsystem = computed(() => {
                 <span v-else>Unknown Ship</span>
             </p>
         </div>
-        <div class="text-right" v-if="map_solarsystem">
+        <div class="text-right">
             <span>{{ map_solarsystem?.alias }} {{ character.status?.solarsystem?.name }}</span>
             <p class="text-muted-foreground">
                 <span v-if="character.status?.station_id || character.status?.structure_id">Docked</span>
                 <span v-else>In Space</span>
             </p>
-        </div>
-        <div v-else class="text-right">
-            <span>Unknown</span>
-            <p class="text-muted-foreground">-</p>
         </div>
     </div>
 </template>

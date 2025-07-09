@@ -4,6 +4,7 @@ import QuestionIcon from '@/components/icons/QuestionIcon.vue';
 import MapKillmails from '@/components/killmails/MapKillmails.vue';
 import MapComponent from '@/components/map/MapComponent.vue';
 import MapSearch from '@/components/map/MapSearch.vue';
+import Tracker from '@/components/map/Tracker.vue';
 import SelectedSolarsystem from '@/components/solarsystem/SelectedSolarsystem.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { TMapConfig } from '@/types/map';
@@ -34,6 +35,7 @@ router.on('before', (event) => {
             <div class="relative">
                 <MapComponent :map :config />
                 <MapSearch :map :search :solarsystems />
+                <Tracker :map_characters v-if="map_characters" />
             </div>
             <div class="grid grid-cols-3 gap-8 p-8">
                 <SelectedSolarsystem v-if="selected_map_solarsystem" :map_solarsystem="selected_map_solarsystem" :map />

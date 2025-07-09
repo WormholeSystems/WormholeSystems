@@ -30,6 +30,8 @@ class MapConnection extends Model
 {
     protected $casts = [
         'connected_at' => 'immutable_datetime',
+        'created_at' => 'immutable_datetime',
+        'updated_at' => 'immutable_datetime',
         'mass_status' => MassStatus::class,
         'ship_size' => ShipSize::class,
         'is_eol' => 'boolean',

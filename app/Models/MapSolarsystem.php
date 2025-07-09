@@ -92,6 +92,8 @@ class MapSolarsystem extends Model
     {
         return [
             'status' => MapSolarsystemStatus::class,
+            'created_at' => 'immutable_datetime',
+            'updated_at' => 'immutable_datetime',
         ];
     }
 }
