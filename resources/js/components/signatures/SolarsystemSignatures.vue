@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import DataTable from '@/components/DataTable.vue';
 import CopyIcon from '@/components/icons/CopyIcon.vue';
 import PasteIcon from '@/components/icons/PasteIcon.vue';
 import TrashIcon from '@/components/icons/TrashIcon.vue';
+import columns, { TRawSignature } from '@/components/signatures/column';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { getMapChannelName } from '@/const/channels';
@@ -12,21 +14,13 @@ import { useEchoPublic } from '@laravel/echo-vue';
 import { useMagicKeys, whenever } from '@vueuse/core';
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue';
 
-type TRawSignature = {
-    signature_id: string;
-    type: string;
-    category: string | null;
-    name: string | null;
-    status?: 'new' | 'missing' | 'modified' | 'unchanged';
-};
-
 const { map_solarsystem } = defineProps<{
     map_solarsystem: TMapSolarSystem;
 }>();
 
 const pasted_signatures = ref<TRawSignature[]>([]);
 
-const signature_difference = computed(showDifference);
+const signature_difference = computed<TRawSignature[]>(showDifference);
 
 const { Ctrl_v, Cmd_V } = useMagicKeys();
 
@@ -91,6 +85,7 @@ function parseSignatures(text: string): TRawSignature[] {
             type: parts[1],
             category: parts[2] || null,
             name: parts[3] || null,
+            status: null,
         }));
 }
 
@@ -120,7 +115,7 @@ function showDifference() {
                     type: sig.type,
                     category: sig.category,
                     name: sig.name,
-                    status: 'unchanged',
+                    status: null,
                 }),
             )
             .sort(sortSignatures);
@@ -143,7 +138,7 @@ function showDifference() {
                 type: pastedSignature?.type || existingSignature?.type || '',
                 category: pastedSignature?.category || existingSignature?.category || null,
                 name: pastedSignature?.name || existingSignature?.name || null,
-                status: is_missing ? 'missing' : is_new ? 'new' : is_modified ? 'modified' : 'unchanged',
+                status: is_missing ? 'missing' : is_new ? 'new' : is_modified ? 'modified' : null, // null means no change
             };
         })
         .sort(sortSignatures);
@@ -192,47 +187,17 @@ useEchoPublic(getMapChannelName(map_solarsystem.map_id), SignaturesUpdatedEvent,
             <TooltipContent> Clear all signatures</TooltipContent>
         </Tooltip>
     </div>
-    <div class="overflow-x-auto">
-        <table class="w-full text-xs">
-            <thead>
-                <tr class="border-b text-left">
-                    <th class="p-1">ID</th>
-                    <th class="p-1">Type</th>
-                    <th class="p-1">Category</th>
-                    <th class="p-1">Name</th>
-                    <th v-if="pasted_signatures.length" class="p-1">Status</th>
-                </tr>
-            </thead>
-            <tbody class="text-muted-foreground">
-                <tr
-                    v-for="signature in signature_difference"
-                    :key="signature.signature_id"
-                    :data-status="signature.status"
-                    class="border-b last:border-b-0 data-[status=missing]:bg-red-900 data-[status=modified]:bg-yellow-900 data-[status=new]:bg-green-900"
-                >
-                    <td class="p-1">{{ signature.signature_id }}</td>
-                    <td class="p-1">{{ signature.type }}</td>
-                    <td class="p-1">{{ signature.category }}</td>
-                    <td class="p-1">{{ signature.name }}</td>
-                    <td class="p-1" v-if="pasted_signatures.length">
-                        <span v-if="signature.status === 'missing'" class="text-red-500">Missing</span>
-                        <span v-if="signature.status === 'modified'" class="text-yellow-500">Modified</span>
-                        <span v-if="signature.status === 'new'" class="text-green-500">New</span>
-                        <span v-if="signature.status === 'unchanged'" class="text-muted-foreground">Unchanged</span>
-                    </td>
-                </tr>
-                <tr v-if="signature_difference?.length === 0" class="border-b last:border-b-0">
-                    <td colspan="4" class="py-4 text-left text-muted-foreground">No signatures found</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+    <DataTable :columns="columns" :data="signature_difference" class="text-sm" />
     <div v-if="pasted_signatures.length" class="mt-4 flex justify-between">
         <Button @click="pasted_signatures = []" class="" variant="secondary"> Cancel</Button>
         <Button @click="updateSignatures(pasted_signatures)" :disabled="!pasted_signatures.length" as-child>
-            <button ref="confirm_button">Update Signatures</button>
+            <button ref="confirm_button">Save changes</button>
         </Button>
     </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+tr:has([data-status='new']) {
+    background-color: var(--color-red-100);
+}
+</style>
