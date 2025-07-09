@@ -36,7 +36,7 @@ class MapController extends Controller
 
         $selected_map_solarsystem_id = $request->integer('map_solarsystem_id');
 
-        $selected_map_solarsystem = fn () => $this->getSelectedSolarsystem($selected_map_solarsystem_id)->toResource(MapSolarsystemResource::class);
+        $selected_map_solarsystem = fn () => $this->getSelectedSolarsystem($selected_map_solarsystem_id)?->toResource(MapSolarsystemResource::class);
 
         $map_killmails = Inertia::defer(
             fn () => $this->getMapKills($map)
