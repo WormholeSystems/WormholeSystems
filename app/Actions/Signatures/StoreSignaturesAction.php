@@ -2,7 +2,7 @@
 
 namespace App\Actions\Signatures;
 
-use App\Events\MapSolarsystems\MapSolarsystemCreatedEvent;
+use App\Events\Signatures\SignaturesUpdatedEvent;
 use App\Models\MapSolarsystem;
 
 class StoreSignaturesAction
@@ -40,7 +40,7 @@ class StoreSignaturesAction
             ->whereIn('signature_id', $missing)
             ->delete();
 
-        broadcast(new MapSolarsystemCreatedEvent($mapSolarsystem->map_id))
+        broadcast(new SignaturesUpdatedEvent($mapSolarsystem->map_id))
             ->toOthers();
     }
 

@@ -4,10 +4,13 @@ import PasteIcon from '@/components/icons/PasteIcon.vue';
 import TrashIcon from '@/components/icons/TrashIcon.vue';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { getMapChannelName } from '@/const/channels';
+import { SignaturesUpdatedEvent } from '@/const/events';
 import { TMapSolarSystem } from '@/types/models';
 import { router } from '@inertiajs/vue3';
+import { useEchoPublic } from '@laravel/echo-vue';
 import { useMagicKeys, whenever } from '@vueuse/core';
-import { computed, nextTick, ref, useTemplateRef } from 'vue';
+import { computed, nextTick, ref, useTemplateRef, watch } from 'vue';
 
 type TRawSignature = {
     signature_id: string;
@@ -31,6 +34,13 @@ const confirmButton = useTemplateRef('confirm_button');
 
 whenever(Ctrl_v, handleClipboardPaste);
 whenever(Cmd_V, handleClipboardPaste);
+
+watch(
+    () => map_solarsystem.id,
+    () => {
+        pasted_signatures.value = [];
+    },
+);
 
 async function handleClipboardPaste() {
     // check permission to access clipboard
@@ -146,6 +156,12 @@ function sortSignatures(a: TRawSignature, b: TRawSignature) {
     if (b.status === 'missing' && a.status !== 'missing') return 1;
     return a.signature_id.localeCompare(b.signature_id);
 }
+
+useEchoPublic(getMapChannelName(map_solarsystem.map_id), SignaturesUpdatedEvent, () => {
+    router.reload({
+        only: ['selected_map_solarsystem'],
+    });
+});
 </script>
 
 <template>
