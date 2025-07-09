@@ -29,19 +29,19 @@ class MapSolarsystemResource extends JsonResource
             'solarsystem_id' => $this->solarsystem_id,
             'alias' => $this->alias,
             'occupier_alias' => $this->occupier_alias,
-            'position' => $this->position_x ? [
+            'position' => $this->position_x !== null ? [
                 'x' => $this->position_x,
                 'y' => $this->position_y,
             ] : null,
             'status' => $this->status,
             'pinned' => $this->pinned,
             'class' => $this->wormholeSystem?->class,
-            'effect' => $this->wormholeSystem?->effect?->name ?? null,
+            'effect' => $this->wormholeSystem?->effect?->name,
             'effects' => $this->wormholeSystem?->effect?->getEffectArray($this->wormholeSystem->class),
             'map_connections' => $this->connections?->toResourceCollection(MapConnectionResource::class),
             'solarsystem' => $this->solarsystem->toResource(SolarsystemResource::class),
             'statics' => $this->wormholeSystem?->wormholeStatics?->map(fn (WormholeStatic $static) => $static->wormhole->toResource(WormholeResource::class)),
-            'signatures' => $this->whenLoaded('signatures', fn () => $this->signatures?->toResourceCollection(SignatureResource::class)),
+            'signatures' => $this->whenLoaded('signatures', fn () => $this->signatures->toResourceCollection(SignatureResource::class)),
             'signatures_count' => $this->whenCounted('signatures', fn () => $this->signatures_count),
         ];
     }

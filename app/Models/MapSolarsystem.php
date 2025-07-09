@@ -21,11 +21,12 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property float|null $position_y
  * @property MapSolarsystemStatus $status
  * @property bool $pinned
+ * @property-read int|null $signatures_count
  * @property-read Solarsystem $solarsystem
  * @property-read Map $map
  * @property-read Collection<MapConnection> $connectionsTo
  * @property-read Collection<MapConnection> $connectionsFrom
- * @property-read WormholeSystem $wormholeSystem
+ * @property-read WormholeSystem|null $wormholeSystem
  * @property-read Collection<Signature> $signatures
  */
 class MapSolarsystem extends Model
