@@ -13,6 +13,6 @@ class SignatureController extends Controller
     {
         $storeSignaturesAction->handle($mapSolarsystem, $request->validated()['signatures']);
 
-        return back();
+        return back()->notify('Signatures updated!', message: 'The signatures have been successfully updated in the system.');
     }
 }

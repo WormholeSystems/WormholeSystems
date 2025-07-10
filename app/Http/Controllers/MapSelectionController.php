@@ -28,6 +28,9 @@ class MapSelectionController extends Controller
     {
         $action->handle($request->validated()['map_solarsystem_ids']);
 
-        return back();
+        return back()->notify(
+            'Selection deleted!',
+            'You successfully deleted the selected items!'
+        );
     }
 }

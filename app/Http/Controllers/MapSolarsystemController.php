@@ -16,20 +16,29 @@ class MapSolarsystemController extends Controller
     {
         $action->handle($request->map, $request->validated());
 
-        return back();
+        return back()->notify(
+            'Solarsystem created!',
+            'You have successfully created a new solarsystem on the map.'
+        );
     }
 
     public function update(UpdateMapSolarsystemRequest $request, MapSolarsystem $mapSolarsystem, UpdateMapSolarsystemAction $action): RedirectResponse
     {
         $action->handle($mapSolarsystem, $request->validated());
 
-        return back();
+        return back()->notify(
+            'Solarsystem updated!',
+            'You have successfully updated the solarsystem on the map.'
+        );
     }
 
     public function destroy(MapSolarsystem $mapSolarsystem, DeleteMapSolarsystemAction $action): RedirectResponse
     {
         $action->handle($mapSolarsystem);
 
-        return back();
+        return back()->notify(
+            'Solarsystem deleted!',
+            'You have successfully deleted the solarsystem from the map.'
+        );
     }
 }

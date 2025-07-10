@@ -12,7 +12,7 @@ import { TMapSolarSystem } from '@/types/models';
 import { router } from '@inertiajs/vue3';
 import { useEchoPublic } from '@laravel/echo-vue';
 import { useMagicKeys, whenever } from '@vueuse/core';
-import { computed, nextTick, ref, useTemplateRef, watch } from 'vue';
+import { computed, ref, useTemplateRef, watch, watchEffect } from 'vue';
 
 const { map_solarsystem } = defineProps<{
     map_solarsystem: TMapSolarSystem;
@@ -24,7 +24,7 @@ const signature_difference = computed<TRawSignature[]>(showDifference);
 
 const { Ctrl_v, Cmd_V } = useMagicKeys();
 
-const confirmButton = useTemplateRef('confirm_button');
+const confirm_button = useTemplateRef('confirm_button');
 
 whenever(Ctrl_v, handleClipboardPaste);
 whenever(Cmd_V, handleClipboardPaste);
@@ -35,6 +35,10 @@ watch(
         pasted_signatures.value = [];
     },
 );
+
+watchEffect(() => {
+    if (confirm_button.value) confirm_button.value.focus();
+});
 
 async function handleClipboardPaste() {
     // check permission to access clipboard
@@ -47,12 +51,6 @@ async function handleClipboardPaste() {
     const text = (await clipboardData).trim();
 
     pasted_signatures.value = parseSignatures(text);
-
-    await nextTick();
-
-    if (pasted_signatures.value.length) {
-        confirmButton.value?.focus();
-    }
 }
 
 function handleClipbordCopy() {
@@ -162,38 +160,42 @@ useEchoPublic(getMapChannelName(map_solarsystem.map_id), SignaturesUpdatedEvent,
 <template>
     <div class="mb-4 flex justify-between gap-2">
         <h3 class="mr-auto">Signatures</h3>
-        <Tooltip>
-            <TooltipTrigger>
-                <Button @click="handleClipboardPaste" variant="outline" size="icon" title="Paste signatures from clipboard">
-                    <PasteIcon />
-                </Button>
-            </TooltipTrigger>
-            <TooltipContent> Paste signatures from clipboard (Ctrl + V)</TooltipContent>
-        </Tooltip>
-        <Tooltip v-if="map_solarsystem.signatures?.length">
-            <TooltipTrigger>
-                <Button @click="handleClipbordCopy" variant="outline" size="icon" title="Copy signatures to clipboard">
-                    <CopyIcon />
-                </Button>
-            </TooltipTrigger>
-            <TooltipContent> Copy signatures to clipboard</TooltipContent>
-        </Tooltip>
-        <Tooltip>
-            <TooltipTrigger>
-                <Button @click="clearSignatures" variant="destructive" size="icon" title="Clear all signatures">
-                    <TrashIcon />
-                </Button>
-            </TooltipTrigger>
-            <TooltipContent> Clear all signatures</TooltipContent>
-        </Tooltip>
+        <div v-if="!pasted_signatures.length" class="flex gap-2">
+            <Tooltip>
+                <TooltipTrigger>
+                    <Button @click="handleClipboardPaste" variant="outline" size="icon" title="Paste signatures from clipboard">
+                        <PasteIcon />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent> Paste signatures from clipboard (Ctrl + V)</TooltipContent>
+            </Tooltip>
+            <Tooltip v-if="map_solarsystem.signatures?.length">
+                <TooltipTrigger>
+                    <Button @click="handleClipbordCopy" variant="outline" size="icon" title="Copy signatures to clipboard">
+                        <CopyIcon />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent> Copy signatures to clipboard</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+                <TooltipTrigger>
+                    <Button @click="clearSignatures" variant="destructive" size="icon" title="Clear all signatures">
+                        <TrashIcon />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent> Clear all signatures</TooltipContent>
+            </Tooltip>
+        </div>
+        <div v-else class="flex gap-2">
+            <Button @click="pasted_signatures = []" variant="outline" size="icon" title="Clear pasted signatures">
+                <TrashIcon />
+            </Button>
+            <Button as-child>
+                <button @click="updateSignatures(pasted_signatures)" ref="confirm_button">Save changes</button>
+            </Button>
+        </div>
     </div>
     <DataTable :columns="columns" :data="signature_difference" class="text-sm" />
-    <div v-if="pasted_signatures.length" class="mt-4 flex justify-between">
-        <Button @click="pasted_signatures = []" class="" variant="secondary"> Cancel</Button>
-        <Button @click="updateSignatures(pasted_signatures)" :disabled="!pasted_signatures.length" as-child>
-            <button ref="confirm_button">Save changes</button>
-        </Button>
-    </div>
 </template>
 
 <style scoped>

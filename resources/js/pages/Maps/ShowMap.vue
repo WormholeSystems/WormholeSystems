@@ -42,7 +42,7 @@ router.on('before', (event) => {
             <div class="grid grid-cols-12 gap-4">
                 <div class="col-span-6 2xl:col-span-5">
                     <SelectedSolarsystem v-if="selected_map_solarsystem" :map_solarsystem="selected_map_solarsystem" :map />
-                    <div class="flex flex-col items-center justify-center gap-8 rounded-lg border border-dashed text-neutral-700" v-else>
+                    <div class="flex flex-col items-center justify-center gap-8 rounded-lg border border-dashed p-16 text-neutral-700" v-else>
                         <QuestionIcon class="text-4xl" />
                         <p class="text-center">Select a solarsystem to see more details</p>
                     </div>

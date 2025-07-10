@@ -16,20 +16,29 @@ class MapConnectionController extends Controller
     {
         $action->handle($request->validated());
 
-        return back();
+        return back()->notify(
+            'Connection created!',
+            'You have successfully created a new map connection.'
+        );
     }
 
     public function destroy(MapConnection $mapConnection, DeleteMapConnectionAction $action): RedirectResponse
     {
         $action->handle($mapConnection);
 
-        return back();
+        return back()->notify(
+            'Connection deleted!',
+            'You have successfully deleted the map connection.'
+        );
     }
 
     public function update(UpdateMapConnectionRequest $request, MapConnection $mapConnection, UpdateMapConnectionAction $action): RedirectResponse
     {
         $action->handle($mapConnection, $request->validated());
 
-        return back();
+        return back()->notify(
+            'Connection updated!',
+            'You have successfully updated the map connection.'
+        );
     }
 }

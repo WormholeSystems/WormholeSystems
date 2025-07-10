@@ -34,6 +34,10 @@ class AppServiceProvider extends ServiceProvider
     protected function registerNotificationMacro(): void
     {
         RedirectResponse::macro('notify', function (string $title, string $message = '', string $type = 'success') {
+            if (request()->boolean('silent')) {
+                return $this;
+            }
+
             return $this->with('notification', [
                 'title' => $title,
                 'message' => $message,
