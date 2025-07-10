@@ -3,7 +3,7 @@ import { router, usePage } from '@inertiajs/vue3';
 import { useDebounceFn } from '@vueuse/core';
 import { ref, watch } from 'vue';
 
-export function useSearch(name = 'search', only: string[] | undefined = undefined) {
+export function useSearch(name = 'search', only: string[] = []) {
     const page = usePage<
         AppPageProps<{
             [name: string]: string;
