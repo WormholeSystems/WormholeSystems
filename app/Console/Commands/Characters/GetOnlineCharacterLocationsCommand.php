@@ -36,7 +36,7 @@ class GetOnlineCharacterLocationsCommand extends Command
             ->where('is_online', true)
             ->get();
 
-        $needs_update = false;
+        $updated_character_ids = [];
 
         foreach ($characters as $character) {
             $location_request = $esi->getLocation($character->character);
@@ -64,20 +64,21 @@ class GetOnlineCharacterLocationsCommand extends Command
             ]);
 
             if ($character->wasChanged()) {
-                $needs_update = true;
+                $updated_character_ids[] = $character->character_id;
                 $this->info(sprintf('Updated character %d location to system %d', $character->character_id, $location_request->data->solar_system_id));
             } else {
                 $this->info(sprintf('No changes for character %d', $character->character_id));
             }
         }
 
-        if (! $needs_update) {
+        if ($updated_character_ids === []) {
             $this->info('No characters were updated.');
 
             return;
         }
 
         Map::query()
+            ->whereHas('mapAccessors', fn ($query) => $query->whereIn('accessible_id', $updated_character_ids))
             ->each(fn (Map $map) => CharacterStatusUpdatedEvent::dispatch($map->id));
 
     }

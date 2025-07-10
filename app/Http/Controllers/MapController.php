@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Map\CreateMapAction;
+use App\Http\Requests\StoreMapRequest;
 use App\Http\Resources\CharacterResource;
 use App\Http\Resources\KillmailResource;
 use App\Http\Resources\MapResource;
@@ -12,19 +14,30 @@ use App\Models\Killmail;
 use App\Models\Map;
 use App\Models\MapSolarsystem;
 use App\Models\Solarsystem;
+use App\Models\User;
 use App\Scopes\WithVisibleSolarsystems;
+use Illuminate\Container\Attributes\CurrentUser;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 use Throwable;
 
 class MapController extends Controller
 {
+    public function __construct(
+        #[CurrentUser] private readonly User $user,
+    ) {}
+
     /**
      * @throws Throwable
      */
     public function show(Request $request, Map $map): Response
     {
+        Gate::authorize('view', $map);
+
         $map = Map::query()
             ->tap(new WithVisibleSolarsystems)
             ->findOrFail($map->id);
@@ -36,13 +49,13 @@ class MapController extends Controller
 
         $selected_map_solarsystem_id = $request->integer('map_solarsystem_id');
 
-        $selected_map_solarsystem = fn () => $this->getSelectedSolarsystem($selected_map_solarsystem_id)?->toResource(MapSolarsystemResource::class);
+        $selected_map_solarsystem = fn (): ?\Illuminate\Http\Resources\Json\JsonResource => $this->getSelectedSolarsystem($selected_map_solarsystem_id)?->toResource(MapSolarsystemResource::class);
 
         $map_killmails = Inertia::defer(
-            fn () => $this->getMapKills($map)
+            fn (): \Illuminate\Http\Resources\Json\ResourceCollection => $this->getMapKills($map)
         );
 
-        $map_characters = fn () => $this->getMapCharacters($map);
+        $map_characters = fn (): \Illuminate\Http\Resources\Json\ResourceCollection => $this->getMapCharacters();
 
         return Inertia::render('Maps/ShowMap', [
             'map' => $map->toResource(MapResource::class),
@@ -61,14 +74,38 @@ class MapController extends Controller
     public function index(): Response
     {
         return Inertia::render('Maps/ShowAllMaps', [
-            'maps' => Map::query()->get()->toResourceCollection(MapResource::class),
+            'maps' => Map::query()
+                ->whereHas('mapAccessors', fn (Builder $builder) => $builder->whereIn('accessible_id', [
+                    $this->user->active_character->id,
+                    $this->user->active_character->corporation_id,
+                    $this->user->active_character->alliance_id,
+                ]))
+                ->get()
+                ->toResourceCollection(MapResource::class),
         ]);
+    }
+
+    public function create(): Response
+    {
+        Gate::authorize('create', Map::class);
+
+        return Inertia::render('Maps/CreateMap');
     }
 
     /**
      * @throws Throwable
      */
-    public function getSelectedSolarsystem(?int $solarsystem_id): ?MapSolarsystem
+    public function store(StoreMapRequest $request, CreateMapAction $action): RedirectResponse
+    {
+        $map = $action->handle($this->user->active_character, $request->validated());
+
+        return to_route('maps.show', $map)->notify('Map created successfully.', 'You have successfully created a new map.');
+    }
+
+    /**
+     * @throws Throwable
+     */
+    private function getSelectedSolarsystem(?int $solarsystem_id): ?MapSolarsystem
     {
         if ($solarsystem_id === null || $solarsystem_id === 0) {
             return null;
@@ -82,7 +119,7 @@ class MapController extends Controller
     /**
      * @throws Throwable
      */
-    public function getMapKills(Map $map): \Illuminate\Http\Resources\Json\ResourceCollection
+    private function getMapKills(Map $map): \Illuminate\Http\Resources\Json\ResourceCollection
     {
         return Killmail::query()->with('shipType')
             ->whereIn('solarsystem_id', $map->mapSolarsystems->pluck('solarsystem_id'))
@@ -95,7 +132,7 @@ class MapController extends Controller
     /**
      * @throws Throwable
      */
-    public function getMapCharacters(Map $map): \Illuminate\Http\Resources\Json\ResourceCollection
+    private function getMapCharacters(): \Illuminate\Http\Resources\Json\ResourceCollection
     {
         return Character::query()
             ->with('characterStatus')

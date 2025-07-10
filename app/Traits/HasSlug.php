@@ -33,4 +33,11 @@ trait HasSlug
     {
         return $this->name;
     }
+
+    public function resolveRouteBinding($value, $field = null): ?Model
+    {
+        $id = last(explode('-', (string) $value));
+
+        return $this->findOrFail($id);
+    }
 }

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use NicolasKion\SDE\ClassResolver;
 
 /**
@@ -38,6 +39,7 @@ use NicolasKion\SDE\ClassResolver;
  * @property-read Station|null $homeStation
  * @property-read Alliance|null $alliance
  * @property-read Collection<int,Character> $characters
+ * @property-read Collection<int,MapAccess> $mapAccesses
  */
 class Corporation extends Model
 {
@@ -89,6 +91,14 @@ class Corporation extends Model
     public function characters(): HasMany
     {
         return $this->hasMany(ClassResolver::character(), 'corporation_id');
+    }
+
+    /**
+     * @return MorphMany<MapAccess,$this>
+     */
+    public function mapAccesses(): MorphMany
+    {
+        return $this->morphMany(MapAccess::class, 'accessible');
     }
 
     protected function casts(): array

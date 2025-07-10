@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read string|CarbonImmutable $updated_at
  * @property-read Collection<int,MapSolarsystem> $mapSolarsystems
  * @property-read Collection<int,MapConnection> $mapConnections
+ * @property-read Collection<int,MapAccess> $mapAccessors
  */
 class Map extends Model
 {
@@ -40,5 +41,15 @@ class Map extends Model
     public function mapSolarsystems(): HasMany
     {
         return $this->hasMany(MapSolarsystem::class, 'map_id');
+    }
+
+    /**
+     * The access control entries for this map.
+     *
+     * @return HasMany<MapAccess, $this>
+     */
+    public function mapAccessors(): HasMany
+    {
+        return $this->hasMany(MapAccess::class, 'map_id');
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\DTO\EveSocialiteUser;
+use App\Jobs\UpdateAffiliations;
 use App\Models\Character;
 use App\Models\Corporation;
 use App\Models\EsiScope;
@@ -46,11 +47,13 @@ class EsiAuthService
             ];
         }
 
+        UpdateAffiliations::dispatchSync($affiliations->data[0]);
+
         $character = $this->resolveCharacter($socialite_user, $affiliations->data[0]);
 
         $this->createEsiToken($socialite_user, $character);
 
-        if ($add_to_user_id) {
+        if ($add_to_user_id !== null && $add_to_user_id !== 0) {
             return [
                 $this->addToAccount($character, $add_to_user_id),
                 $character,
@@ -77,7 +80,7 @@ class EsiAuthService
     {
         try {
             $data = Socialite::driver('eveonline')->user();
-        } catch (Exception $e) {
+        } catch (Exception) {
             return false;
         }
 
@@ -144,13 +147,13 @@ class EsiAuthService
 
     public function enureSocialsExists(CharacterAffiliation $affiliation): void
     {
-        if ($affiliation->corporation_id) {
+        if ($affiliation->corporation_id !== 0) {
             Corporation::query()->updateOrCreate([
                 'id' => $affiliation->corporation_id,
             ]);
         }
 
-        if ($affiliation->alliance_id) {
+        if ($affiliation->alliance_id !== null && $affiliation->alliance_id !== 0) {
             \App\Models\Alliance::query()->updateOrCreate([
                 'id' => $affiliation->alliance_id,
             ]);

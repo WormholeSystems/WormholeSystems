@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\DB;
 use NicolasKion\Esi\Enums\EsiScope;
 use NicolasKion\Esi\Interfaces\EsiToken;
@@ -44,6 +45,7 @@ use Throwable;
  * @property-read Type|null $shipType
  * @property-read Solarsystem|null $solarsystem
  * @property-read CharacterStatus|null $characterStatus
+ * @property-read Collection<int,MapAccess> $mapAccesses
  */
 class Character extends Model implements \NicolasKion\Esi\Interfaces\Character
 {
@@ -126,6 +128,14 @@ class Character extends Model implements \NicolasKion\Esi\Interfaces\Character
     public function characterStatus(): HasOne
     {
         return $this->hasOne(CharacterStatus::class, 'character_id');
+    }
+
+    /**
+     * @return MorphMany<MapAccess,$this>
+     */
+    public function mapAccesses(): MorphMany
+    {
+        return $this->morphMany(MapAccess::class, 'accessible');
     }
 
     protected function casts(): array

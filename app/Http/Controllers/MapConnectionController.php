@@ -9,6 +9,7 @@ use App\Http\Requests\StoreMapConnectionRequest;
 use App\Http\Requests\UpdateMapConnectionRequest;
 use App\Models\MapConnection;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 
 class MapConnectionController extends Controller
 {
@@ -24,6 +25,8 @@ class MapConnectionController extends Controller
 
     public function destroy(MapConnection $mapConnection, DeleteMapConnectionAction $action): RedirectResponse
     {
+        Gate::authorize('delete', $mapConnection);
+
         $action->handle($mapConnection);
 
         return back()->notify(
@@ -34,6 +37,8 @@ class MapConnectionController extends Controller
 
     public function update(UpdateMapConnectionRequest $request, MapConnection $mapConnection, UpdateMapConnectionAction $action): RedirectResponse
     {
+        Gate::authorize('update', $mapConnection);
+
         $action->handle($mapConnection, $request->validated());
 
         return back()->notify(

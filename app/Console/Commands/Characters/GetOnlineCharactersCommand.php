@@ -35,7 +35,7 @@ class GetOnlineCharactersCommand extends Command
         $characters = CharacterStatus::query()
             ->get();
 
-        $needs_update = false;
+        $updated_character_ids = [];
 
         foreach ($characters as $character) {
             $request = $esi->getOnline($character->character);
@@ -57,17 +57,19 @@ class GetOnlineCharactersCommand extends Command
             ]);
 
             if ($online_status_changed) {
-                $needs_update = true;
+                $updated_character_ids[] = $character->character_id;
                 $this->info(sprintf('Character %d status changed to %s', $character->character_id, $request->data->online ? 'online' : 'offline'));
             }
         }
 
-        if (! $needs_update) {
+        if ($updated_character_ids === []) {
             $this->info('No character status changes detected.');
 
             return;
         }
 
-        Map::query()->each(fn ($map) => CharacterStatusUpdatedEvent::dispatch($map->id));
+        Map::query()
+            ->whereHas('mapAccessors', fn ($query) => $query->whereIn('accessible_id', $updated_character_ids))
+            ->each(fn ($map) => CharacterStatusUpdatedEvent::dispatch($map->id));
     }
 }

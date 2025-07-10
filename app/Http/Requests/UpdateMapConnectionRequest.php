@@ -4,6 +4,10 @@ namespace App\Http\Requests;
 
 use App\Enums\MassStatus;
 use App\Enums\ShipSize;
+use App\Models\MapConnection;
+use App\Models\User;
+use Illuminate\Container\Attributes\CurrentUser;
+use Illuminate\Container\Attributes\RouteParameter;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -13,9 +17,9 @@ class UpdateMapConnectionRequest extends FormRequest
     /**
      * Determine if the user is authorized to make this request.
      */
-    public function authorize(): bool
+    public function authorize(#[RouteParameter('map_connection')] MapConnection $connection, #[CurrentUser] User $user): bool
     {
-        return true;
+        return $user->can('update', $connection);
     }
 
     /**

@@ -6,11 +6,14 @@ use App\Actions\Signatures\StoreSignaturesAction;
 use App\Http\Requests\Signatures\StoreSignaturesRequest;
 use App\Models\MapSolarsystem;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 
 class SignatureController extends Controller
 {
     public function store(StoreSignaturesRequest $request, MapSolarsystem $mapSolarsystem, StoreSignaturesAction $storeSignaturesAction): RedirectResponse
     {
+        Gate::authorize('update', $mapSolarsystem);
+
         $storeSignaturesAction->handle($mapSolarsystem, $request->validated()['signatures']);
 
         return back()->notify('Signatures updated!', message: 'The signatures have been successfully updated in the system.');

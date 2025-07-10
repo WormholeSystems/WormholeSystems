@@ -3,39 +3,22 @@ import SolarsystemEffect from '@/components/map/SolarsystemEffect.vue';
 import SolarsystemClass from '@/components/SolarsystemClass.vue';
 import { Combobox, ComboboxAnchor, ComboboxEmpty, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxList } from '@/components/ui/combobox';
 import { useMapAction } from '@/composables/map';
+import { useSearch } from '@/composables/useSearch';
 import { TMap, TSolarsystem } from '@/types/models';
-import { router } from '@inertiajs/vue3';
-import { useDebounceFn } from '@vueuse/core';
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 
-const { map, search, solarsystems } = defineProps<{
+const { map, solarsystems } = defineProps<{
     map: TMap;
-    search: string;
     solarsystems: TSolarsystem[];
 }>();
 
 const { addMapSolarsystem } = useMapAction();
 
-function handleSearch() {
-    router.reload({
-        data: {
-            search: search_input.value,
-        },
-        only: ['search', 'solarsystems'],
-    });
-}
-
-const search_input = ref(search);
+const search = useSearch('search', ['solarsystems']);
 
 function handleSolarsystemSelect(solarsystem: TSolarsystem) {
     addMapSolarsystem(solarsystem.id);
 }
-
-const debounced = useDebounceFn(handleSearch, 200, {
-    maxWait() {
-        return 100;
-    },
-});
 
 const new_solarsystems = computed(() => {
     return solarsystems.filter((solarsystem) => {
@@ -53,7 +36,7 @@ const existing_solarsystems = computed(() => {
 <template>
     <Combobox class="absolute top-4 left-1/2 -translate-x-1/2 rounded-lg border bg-neutral-900">
         <ComboboxAnchor>
-            <ComboboxInput v-model:model-value="search_input" @update:modelValue="debounced" />
+            <ComboboxInput v-model="search" />
         </ComboboxAnchor>
         <ComboboxList>
             <ComboboxEmpty> No results found</ComboboxEmpty>
@@ -62,7 +45,7 @@ const existing_solarsystems = computed(() => {
                     v-for="solarsystem in new_solarsystems"
                     :key="solarsystem.id"
                     :value="solarsystem.name"
-                    @select="() => handleSolarsystemSelect(solarsystem)"
+                    @select.prevent="() => handleSolarsystemSelect(solarsystem)"
                     class="col-span-full grid grid-cols-subgrid"
                 >
                     <div class="justify-self-center">

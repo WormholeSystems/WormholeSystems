@@ -9,6 +9,7 @@ use App\Http\Requests\StoreMapSolarsystemRequest;
 use App\Http\Requests\UpdateMapSolarsystemRequest;
 use App\Models\MapSolarsystem;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 
 class MapSolarsystemController extends Controller
 {
@@ -34,6 +35,8 @@ class MapSolarsystemController extends Controller
 
     public function destroy(MapSolarsystem $mapSolarsystem, DeleteMapSolarsystemAction $action): RedirectResponse
     {
+        Gate::authorize('delete', $mapSolarsystem);
+
         $action->handle($mapSolarsystem);
 
         return back()->notify(
