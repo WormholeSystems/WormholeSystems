@@ -69,6 +69,12 @@ class UpdateAffiliations implements ShouldQueue
             'id' => $corp_data->creator_id,
         ]);
 
+        if ($corp_data->alliance_id !== null) {
+            Corporation::query()->firstOrCreate([
+                'id' => $corp_data->alliance_id,
+            ]);
+        }
+
         Corporation::query()->updateOrCreate(
             ['id' => $this->affiliation->corporation_id],
             [
