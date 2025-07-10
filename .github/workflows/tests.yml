@@ -27,7 +27,7 @@ jobs:
       - name: Use .npmrc
         uses: bduff9/use-npmrc@v1.2
         with:
-          dot-npmrc: ${{ secrets.DOT_NPMRC }}
+          dot-npmrc: ${{ secrets.NPMRC }}
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
