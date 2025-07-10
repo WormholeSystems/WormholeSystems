@@ -19,7 +19,7 @@ class MapAccessPolicy
 
     public function create(User $user, Map $map): bool
     {
-        return $map->mapAccessors()->whereIn('accessible_id', $user->characters()->pluck('id'))->where('permission', Permission::Write)->exists();
+        return $map->mapAccessors()->whereIn('accessible_id', $user->getAccessibleIds())->where('permission', Permission::Write)->exists();
     }
 
     public function update(User $user, Map $map, MapAccess $access): bool
@@ -28,7 +28,7 @@ class MapAccessPolicy
             return false;
         }
 
-        return $map->mapAccessors()->whereIn('accessible_id', $user->characters()->pluck('id'))->where('permission', Permission::Write)->exists();
+        return $map->mapAccessors()->whereIn('accessible_id', $user->getAccessibleIds())->where('permission', Permission::Write)->exists();
     }
 
     public function test(): bool

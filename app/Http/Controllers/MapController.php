@@ -75,11 +75,7 @@ class MapController extends Controller
     {
         return Inertia::render('Maps/ShowAllMaps', [
             'maps' => Map::query()
-                ->whereHas('mapAccessors', fn (Builder $builder) => $builder->whereIn('accessible_id', [
-                    $this->user->active_character->id,
-                    $this->user->active_character->corporation_id,
-                    $this->user->active_character->alliance_id,
-                ]))
+                ->whereHas('mapAccessors', fn (Builder $builder) => $builder->whereIn('accessible_id', $this->user->getAccessibleIds()))
                 ->get()
                 ->toResourceCollection(MapResource::class),
         ]);

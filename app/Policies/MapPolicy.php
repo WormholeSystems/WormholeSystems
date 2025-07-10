@@ -18,7 +18,7 @@ class MapPolicy
 
     public function view(User $user, Map $map): bool
     {
-        return $map->mapAccessors()->whereIn('accessible_id', $user->characters()->pluck('id'))->exists();
+        return $map->mapAccessors()->whereIn('accessible_id', $user->getAccessibleIds())->exists();
     }
 
     public function create(User $user): bool
@@ -28,11 +28,11 @@ class MapPolicy
 
     public function update(User $user, Map $map): bool
     {
-        return $map->mapAccessors()->whereIn('accessible_id', $user->characters()->pluck('id'))->where('permission', Permission::Write)->exists();
+        return $map->mapAccessors()->whereIn('accessible_id', $user->getAccessibleIds())->where('permission', Permission::Write)->exists();
     }
 
     public function delete(User $user, Map $map): bool
     {
-        return $map->mapAccessors()->whereIn('accessible_id', $user->characters()->pluck('id'))->where('is_owner', true)->exists();
+        return $map->mapAccessors()->whereIn('accessible_id', $user->getAccessibleIds())->where('is_owner', true)->exists();
     }
 }

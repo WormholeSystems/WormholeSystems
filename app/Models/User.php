@@ -112,6 +112,20 @@ class User extends Authenticatable
         return $active_character;
     }
 
+    public function getAccessibleIds(): array
+    {
+        return $this->characters->map(fn (Character $character) => [
+            $character->id,
+            $character->corporation_id,
+            $character->alliance_id,
+        ])
+            ->flatten()
+            ->whereNotNull()
+            ->unique()
+            ->values()
+            ->toArray();
+    }
+
     /**
      * Get the characters associated with the user.
      *
