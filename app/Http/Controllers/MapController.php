@@ -12,6 +12,7 @@ use App\Http\Resources\SolarsystemResource;
 use App\Models\Character;
 use App\Models\Killmail;
 use App\Models\Map;
+use App\Models\MapAccess;
 use App\Models\MapSolarsystem;
 use App\Models\Solarsystem;
 use App\Models\User;
@@ -20,6 +21,7 @@ use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -52,10 +54,10 @@ class MapController extends Controller
         $selected_map_solarsystem = fn (): ?\Illuminate\Http\Resources\Json\JsonResource => $this->getSelectedSolarsystem($selected_map_solarsystem_id)?->toResource(MapSolarsystemResource::class);
 
         $map_killmails = Inertia::defer(
-            fn (): \Illuminate\Http\Resources\Json\ResourceCollection => $this->getMapKills($map)
+            fn (): ResourceCollection => $this->getMapKills($map)
         );
 
-        $map_characters = fn (): \Illuminate\Http\Resources\Json\ResourceCollection => $this->getMapCharacters();
+        $map_characters = fn (): ResourceCollection => $this->getMapCharacters($map);
 
         return Inertia::render('Maps/ShowMap', [
             'map' => $map->toResource(MapResource::class),
@@ -115,7 +117,7 @@ class MapController extends Controller
     /**
      * @throws Throwable
      */
-    private function getMapKills(Map $map): \Illuminate\Http\Resources\Json\ResourceCollection
+    private function getMapKills(Map $map): ResourceCollection
     {
         return Killmail::query()->with('shipType')
             ->whereIn('solarsystem_id', $map->mapSolarsystems->pluck('solarsystem_id'))
@@ -128,10 +130,20 @@ class MapController extends Controller
     /**
      * @throws Throwable
      */
-    private function getMapCharacters(): \Illuminate\Http\Resources\Json\ResourceCollection
+    private function getMapCharacters(Map $map): ResourceCollection
     {
         return Character::query()
             ->with('characterStatus')
+            ->where(fn (Builder $query) => $query
+                ->whereExists(MapAccess::query()
+                    ->where('map_id', $map->id)
+                    ->where(fn (Builder $query) => $query->
+                        whereColumn('accessible_id', 'characters.id')
+                            ->orWhereColumn('accessible_id', 'characters.corporation_id')
+                            ->orWhereColumn('accessible_id', 'characters.alliance_id'
+                            )
+                    ))
+            )
             ->whereRelation('characterStatus', 'is_online', true)
             ->get()
             ->toResourceCollection(CharacterResource::class);

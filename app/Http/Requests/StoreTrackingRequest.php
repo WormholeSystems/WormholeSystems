@@ -18,8 +18,8 @@ class StoreTrackingRequest extends FormRequest
     {
         return Map::query()
             ->whereHas('mapSolarsystems', fn ($query) => $query->where('id', $this->integer('from_map_solarsystem_id')))
-            ->whereDoesntHave('mapAccessors', fn ($query) => $query->where('accessible_id', $user->getAccessibleIds())->where('permission', Permission::Write))
-            ->doesntExist();
+            ->whereHas('mapAccessors', fn ($query) => $query->where('accessible_id', $user->getAccessibleIds())->where('permission', Permission::Write))
+            ->exists();
     }
 
     /**
