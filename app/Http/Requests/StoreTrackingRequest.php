@@ -23,7 +23,7 @@ class StoreTrackingRequest extends FormRequest
     public function authorize(#[CurrentUser] User $user): bool
     {
         return $this->solarsystem->map->mapAccessors()
-            ->where('accessible_id', $user->getAccessibleIds())
+            ->whereIn('accessible_id', $user->getAccessibleIds())
             ->where('permission', Permission::Write)
             ->exists();
     }
