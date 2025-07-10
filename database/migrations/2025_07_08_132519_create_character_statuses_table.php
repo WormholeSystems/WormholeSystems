@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('character_statuses', function (Blueprint $table) {
+        Schema::create('character_statuses', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('character_id')->constrained()->onDelete('cascade');
             $table->foreignId('solarsystem_id')->nullable()->constrained()->nullOnDelete();

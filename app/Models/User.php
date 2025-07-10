@@ -56,7 +56,7 @@ class User extends Authenticatable
         }
         set {
             $this->active_character = $value;
-            if ($value) {
+            if ($value instanceof \App\Models\Character) {
                 Session::put(self::SESSION_ACTIVE_CHARACTER_ID, $value->id);
             } else {
                 Session::forget(self::SESSION_ACTIVE_CHARACTER_ID);
@@ -71,13 +71,13 @@ class User extends Authenticatable
 
     public function getActiveCharacter(?Character $character = null): ?Character
     {
-        if ($character) {
+        if ($character instanceof \App\Models\Character) {
             return $character;
         }
 
         $active_character_id = $this->getActiveCharacterId();
 
-        if (! $active_character_id) {
+        if ($active_character_id === null || $active_character_id === 0) {
             $character = $this->characters->first();
             if (! $character) {
                 auth()->logout();

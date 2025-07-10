@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('esi_token_scope', function (Blueprint $table) {
+        Schema::create('esi_token_scope', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('esi_token_id')->constrained()->cascadeOnDelete();
             $table->foreignId('esi_scope_id')->constrained()->cascadeOnDelete();

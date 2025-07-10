@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('esi_scopes', function (Blueprint $table) {
+        Schema::create('esi_scopes', function (Blueprint $table): void {
             $table->id();
             $table->string('name');
             $table->boolean('is_default')->default(false);

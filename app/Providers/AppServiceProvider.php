@@ -26,7 +26,7 @@ class AppServiceProvider extends ServiceProvider
 
         $this->registerNotificationMacro();
 
-        Event::listen(function (\SocialiteProviders\Manager\SocialiteWasCalled $event) {
+        Event::listen(function (\SocialiteProviders\Manager\SocialiteWasCalled $event): void {
             $event->extendSocialite('eveonline', \SocialiteProviders\Eveonline\Provider::class);
         });
     }

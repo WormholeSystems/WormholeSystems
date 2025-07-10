@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('esi_tokens', function (Blueprint $table) {
+        Schema::create('esi_tokens', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('character_id')->constrained()->onDelete('cascade');
             $table->text('character_owner_hash');
