@@ -82,7 +82,7 @@ class GetOnlineCharacterLocationsCommand extends Command
             ->whereIn('id', $updated_character_ids)
             ->get();
 
-        $accessible_ids = $characters->map(fn (Character $character) => [
+        $accessible_ids = $characters->map(fn (Character $character): array => [
             $character->id,
             $character->corporation_id,
             $character->alliance_id,

@@ -2,10 +2,11 @@
 
 namespace Database\Factories;
 
+use App\Models\Corporation;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Corporation>
+ * @extends Factory<Corporation>
  */
 class CorporationFactory extends Factory
 {
@@ -17,7 +18,7 @@ class CorporationFactory extends Factory
     public function definition(): array
     {
         return [
-            'id' => $this->faker->randomNumber(6),
+            'id' => $this->faker->unique()->randomFloat(0, 1, 10_000_000_000),
             'name' => $this->faker->company(),
         ];
     }

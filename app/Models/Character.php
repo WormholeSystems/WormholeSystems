@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Carbon\CarbonImmutable;
+use Database\Factories\CharacterFactory;
+use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -48,8 +50,10 @@ use Throwable;
  * @property-read CharacterStatus|null $characterStatus
  * @property-read Collection<int,MapAccess> $mapAccesses
  */
+#[UseFactory(CharacterFactory::class)]
 class Character extends Model implements \NicolasKion\Esi\Interfaces\Character
 {
+    /** @use HasFactory<CharacterFactory> */
     use HasFactory;
 
     public $incrementing = false;

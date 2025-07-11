@@ -12,26 +12,17 @@ use Illuminate\Support\Str;
  */
 trait HasSlug
 {
-    public string $slug {
-        get => Str::slug(implode('-', $this->getSlugParts()));
+    public function getSlugAttribute(): string
+    {
+        return Str::slug(implode('-', $this->getSlugParts()), '-');
     }
 
     public function getSlugParts(): array
     {
         return [
-            $this->getSlugName(),
-            $this->getSlugId(),
+            $this->name,
+            $this->id,
         ];
-    }
-
-    public function getSlugKey(): string
-    {
-        return $this->getKeyName();
-    }
-
-    public function getSlugName(): string
-    {
-        return $this->name;
     }
 
     public function resolveRouteBinding($value, $field = null): ?Model
@@ -41,8 +32,8 @@ trait HasSlug
         return $this->findOrFail($id);
     }
 
-    public function getSlugId(): string
+    public function getRouteKeyName(): string
     {
-        return (string) $this->getAttribute($this->getSlugKey());
+        return 'slug';
     }
 }

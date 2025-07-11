@@ -3,12 +3,13 @@
 namespace Database\Factories;
 
 use App\Models\Alliance;
+use App\Models\Character;
 use App\Models\Corporation;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Character>
+ * @extends Factory<Character>
  */
 class CharacterFactory extends Factory
 {
@@ -20,7 +21,7 @@ class CharacterFactory extends Factory
     public function definition(): array
     {
         return [
-            'id' => $this->faker->randomNumber(7),
+            'id' => $this->faker->unique()->randomFloat(0, 1, 10_000_000_000),
             'name' => $this->faker->name(),
             'corporation_id' => Corporation::factory(),
             'alliance_id' => Alliance::factory(),

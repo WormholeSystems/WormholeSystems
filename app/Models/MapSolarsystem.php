@@ -3,7 +3,10 @@
 namespace App\Models;
 
 use App\Enums\MapSolarsystemStatus;
+use Database\Factories\MapSolarsystemFactory;
+use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -29,8 +32,12 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property-read WormholeSystem|null $wormholeSystem
  * @property-read Collection<Signature> $signatures
  */
+#[UseFactory(MapSolarsystemFactory::class)]
 class MapSolarsystem extends Model
 {
+    /** @use HasFactory<MapSolarsystemFactory> */
+    use HasFactory;
+
     /**
      * @return BelongsTo<Solarsystem,$this>
      */

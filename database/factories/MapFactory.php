@@ -2,13 +2,13 @@
 
 namespace Database\Factories;
 
-use App\Models\Alliance;
+use App\Models\Map;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<Alliance>
+ * @extends Factory<Map>
  */
-class AllianceFactory extends Factory
+class MapFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -18,8 +18,7 @@ class AllianceFactory extends Factory
     public function definition(): array
     {
         return [
-            'id' => $this->faker->unique()->randomFloat(0, 1, 10_000_000_000),
-            'name' => $this->faker->company(),
+            'name' => $this->faker->name(),
         ];
     }
 }

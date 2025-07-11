@@ -33,7 +33,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         // Executed when a test database is created...
-        ParallelTesting::setUpTestDatabase(function (string $database, int $token) {
+        ParallelTesting::setUpTestDatabase(function (): void {
             Artisan::call('db:restore', [
                 '--database' => 'test_database',
             ]);

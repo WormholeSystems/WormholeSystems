@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\Permission;
+use App\Http\Requests\UpdateMapAccessRequest;
 use App\Http\Resources\MapResource;
 use App\Models\Alliance;
 use App\Models\Corporation;
@@ -13,7 +14,6 @@ use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -68,28 +68,18 @@ class MapAccessController extends Controller
         ]);
     }
 
-    public function store(Request $request, Map $map): RedirectResponse
+    public function store(UpdateMapAccessRequest $request, Map $map): RedirectResponse
     {
-        $request->validate([
-            'entity_id' => 'required|integer',
-            'entity_type' => 'required|string|in:character,corporation,alliance',
-            'permission' => ['nullable', 'sometimes', Rule::enum(Permission::class)],
-        ]);
-
-        $map_access = MapAccess::query()
-            ->where('map_id', $map->id)
-            ->where('accessible_type', sprintf('App\\Models\\%s', $request->string('entity_type')->ucfirst()))
-            ->where('accessible_id', $request->integer('entity_id'))
-            ->first();
 
         Gate::authorize('create', [MapAccess::class, $map]);
 
-        if ($map_access) {
-            if (! Gate::check('update', [MapAccess::class, $map, $map_access])) {
+        if ($request->map_access) {
+            if (! Gate::check('update', [MapAccess::class, $map, $request->map_access])) {
                 return back()->notify('Access denied.', 'You do not have permission to change this character access.');
             }
             $permission = $request->enum('permission', Permission::class);
 
+            $map_access = $request->map_access;
             if ($permission) {
                 $map_access->permission = $permission;
                 $map_access->save();

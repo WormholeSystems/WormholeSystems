@@ -35,7 +35,7 @@ class RestoreDatabase extends Command
         #[Config('database.connections.mysql.password')] string $password,
         #[Config('database.cache.path')] string $cachePath,
         #[Config('database.cache.file')] string $cacheFile,
-    ) {
+    ): void {
         if (! Storage::exists($cachePath)) {
             $this->error('Cache directory does not exist.');
 

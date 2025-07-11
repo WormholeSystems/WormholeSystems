@@ -3,6 +3,9 @@
 namespace App\Models;
 
 use App\Enums\Permission;
+use Database\Factories\MapAccessFactory;
+use Illuminate\Database\Eloquent\Attributes\UseFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -19,8 +22,12 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  * @property-read Alliance|Corporation|Character $accessible
  * @property-read Map $map
  */
+#[UseFactory(MapAccessFactory::class)]
 class MapAccess extends Model
 {
+    /** @use HasFactory<MapAccessFactory> */
+    use HasFactory;
+
     protected $table = 'map_access';
 
     public function accessible(): MorphTo
@@ -30,6 +37,6 @@ class MapAccess extends Model
 
     public function map(): BelongsTo
     {
-        return $this->morphTo();
+        return $this->belongsTo(Map::class);
     }
 }

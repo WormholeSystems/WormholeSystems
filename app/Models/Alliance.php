@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Carbon\CarbonImmutable;
+use Database\Factories\AllianceFactory;
+use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use NicolasKion\SDE\ClassResolver;
 
 /**
  * Represents an alliance in the game.
@@ -32,8 +33,10 @@ use NicolasKion\SDE\ClassResolver;
  * @property-read Collection<int,Character> $characters
  * @property-read Collection<int,MapAccess> $mapAccesses
  */
+#[UseFactory(AllianceFactory::class)]
 class Alliance extends Model
 {
+    /** @use HasFactory<AllianceFactory> */
     use HasFactory;
 
     public $incrementing = false;
@@ -43,7 +46,7 @@ class Alliance extends Model
      */
     public function creator(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::character());
+        return $this->belongsTo(Character::class);
     }
 
     /**
@@ -51,7 +54,7 @@ class Alliance extends Model
      */
     public function creatorCorporation(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::corporation());
+        return $this->belongsTo(Corporation::class, 'creator_corporation_id');
     }
 
     /**
@@ -59,7 +62,7 @@ class Alliance extends Model
      */
     public function faction(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::faction());
+        return $this->belongsTo(Faction::class);
     }
 
     /**
@@ -67,7 +70,7 @@ class Alliance extends Model
      */
     public function corporations(): HasMany
     {
-        return $this->hasMany(ClassResolver::corporation(), 'alliance_id');
+        return $this->hasMany(Corporation::class);
     }
 
     /**
@@ -75,7 +78,7 @@ class Alliance extends Model
      */
     public function characters(): HasMany
     {
-        return $this->hasMany(ClassResolver::character(), 'alliance_id');
+        return $this->hasMany(Character::class);
     }
 
     /**

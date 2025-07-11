@@ -34,7 +34,7 @@ class CacheDatabase extends Command
         #[Config('database.connections.mysql.password')] string $password,
         #[Config('database.cache.path')] string $cachePath,
         #[Config('database.cache.file')] string $cacheFile,
-    ) {
+    ): void {
         if (! Storage::exists($cachePath)) {
             Storage::makeDirectory($cachePath);
         }

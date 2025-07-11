@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Carbon\CarbonImmutable;
+use Database\Factories\CorporationFactory;
+use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use NicolasKion\SDE\ClassResolver;
 
 /**
  * Corporation model representing a corporation in the game.
@@ -42,8 +43,10 @@ use NicolasKion\SDE\ClassResolver;
  * @property-read Collection<int,Character> $characters
  * @property-read Collection<int,MapAccess> $mapAccesses
  */
+#[UseFactory(CorporationFactory::class)]
 class Corporation extends Model
 {
+    /** @use HasFactory<CorporationFactory> */
     use HasFactory;
 
     public $incrementing = false;
@@ -53,7 +56,7 @@ class Corporation extends Model
      */
     public function ceo(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::character());
+        return $this->belongsTo(Character::class);
     }
 
     /**
@@ -61,7 +64,7 @@ class Corporation extends Model
      */
     public function creator(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::character());
+        return $this->belongsTo(Character::class);
     }
 
     /**
@@ -69,7 +72,7 @@ class Corporation extends Model
      */
     public function faction(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::faction());
+        return $this->belongsTo(Faction::class);
     }
 
     /**
@@ -77,7 +80,7 @@ class Corporation extends Model
      */
     public function homeStation(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::station());
+        return $this->belongsTo(Station::class, 'home_station_id');
     }
 
     /**
@@ -85,7 +88,7 @@ class Corporation extends Model
      */
     public function alliance(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::alliance());
+        return $this->belongsTo(Alliance::class);
     }
 
     /**
@@ -93,7 +96,7 @@ class Corporation extends Model
      */
     public function characters(): HasMany
     {
-        return $this->hasMany(ClassResolver::character(), 'corporation_id');
+        return $this->hasMany(Character::class, 'corporation_id');
     }
 
     /**

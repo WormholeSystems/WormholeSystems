@@ -5,6 +5,9 @@ namespace App\Models;
 use App\Enums\MassStatus;
 use App\Enums\ShipSize;
 use Carbon\CarbonImmutable;
+use Database\Factories\MapConnectionFactory;
+use Illuminate\Database\Eloquent\Attributes\UseFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -26,8 +29,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read MapSolarsystem $toMapSolarsystem
  * @property-read Map $map
  */
+#[UseFactory(MapConnectionFactory::class)]
 class MapConnection extends Model
 {
+    /** @use HasFactory<MapConnectionFactory> */
+    use HasFactory;
+
     protected $casts = [
         'connected_at' => 'immutable_datetime',
         'created_at' => 'immutable_datetime',

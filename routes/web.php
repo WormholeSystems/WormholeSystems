@@ -23,6 +23,12 @@ Route::get('eve/callback', [EveController::class, 'store'])->name('eve.store');
 Route::middleware('auth')->group(function () {
     Route::resource('maps', MapController::class)->names([
         'index' => 'home',
+        'show' => 'maps.show',
+        'create' => 'maps.create',
+        'store' => 'maps.store',
+        'edit' => 'maps.edit',
+        'update' => 'maps.update',
+        'destroy' => 'maps.destroy',
     ]);
 
     Route::delete('logout', [AuthController::class, 'destroy'])->name('logout');
