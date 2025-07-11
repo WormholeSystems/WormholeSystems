@@ -3,11 +3,13 @@ import TelescopeIcon from '@/components/icons/TelescopeIcon.vue';
 import Notifications from '@/components/Notifications.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Head } from '@inertiajs/vue3';
+import useUser from '@/composables/useUser';
+import { Head, Link } from '@inertiajs/vue3';
 import { format } from 'date-fns';
 import { MapIcon, RouteIcon, ShieldCheckIcon, UsersIcon } from 'lucide-vue-next';
 
 const currentYear = format(new Date(), 'yyyy');
+const user = useUser();
 </script>
 
 <template>
@@ -34,8 +36,11 @@ const currentYear = format(new Date(), 'yyyy');
                         The premier mapping tool for EVE Online wormhole exploration and fleet coordination
                     </p>
                     <div class="flex flex-col gap-4 sm:flex-row sm:justify-center">
-                        <Button asChild size="lg" class="bg-primary text-primary-foreground hover:bg-primary/90">
+                        <Button asChild size="lg" v-if="!user">
                             <a :href="route('eve.show')" rel="noopener noreferrer">Get Started</a>
+                        </Button>
+                        <Button as-child size="lg" v-else>
+                            <Link :href="route('home')">Go to maps</Link>
                         </Button>
                         <Button asChild variant="outline" size="lg">
                             <a href="#features">Learn More</a>
@@ -101,7 +106,7 @@ const currentYear = format(new Date(), 'yyyy');
                 <div class="mx-auto max-w-4xl text-center">
                     <h2 class="mb-4 text-3xl font-bold text-foreground">Ready to explore the unknown?</h2>
                     <p class="mb-8 text-xl text-muted-foreground">Join all capsuleers who trust WormholeSystems for their wormhole operations</p>
-                    <Button asChild size="lg" class="bg-primary text-primary-foreground hover:bg-primary/90">
+                    <Button asChild size="lg">
                         <a :href="route('eve.show')" rel="noopener noreferrer"> Get Started Now</a>
                     </Button>
                 </div>
