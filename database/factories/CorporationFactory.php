@@ -5,15 +5,10 @@ namespace Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Corporation>
  */
-class UserFactory extends Factory
+class CorporationFactory extends Factory
 {
-    /**
-     * The current password being used by the factory.
-     */
-    protected static ?string $password = null;
-
     /**
      * Define the model's default state.
      *
@@ -22,7 +17,8 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->name(),
+            'id' => $this->faker->randomNumber(6),
+            'name' => $this->faker->company(),
         ];
     }
 }

@@ -48,7 +48,7 @@ class CacheDatabase extends Command
             '--user='.$username,
             '--password='.$password,
             '--no-create-info',
-            '--databases',
+            '--no-create-db',
             '--insert-ignore',
             $database,
             '--result-file='.$file,

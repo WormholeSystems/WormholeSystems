@@ -79,15 +79,12 @@ const getBadgeVariant = (count: number): 'default' | 'secondary' | 'destructive'
                 </Card>
             </div>
 
-            <!-- Empty State -->
-            <div v-else class="py-12 text-center">
-                <div class="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-muted">
-                    <TelescopeIcon class="h-12 w-12 text-muted-foreground" />
+            <div v-else class="grid justify-items-center gap-4">
+                <div class="grid size-24 place-items-center rounded-full bg-neutral-800 p-4">
+                    <TelescopeIcon class="text-4xl" />
                 </div>
-                <h3 class="mb-2 text-xl font-semibold">No maps yet</h3>
-                <p class="mx-auto mb-6 max-w-md text-muted-foreground">
-                    Get started by creating your first wormhole map to begin tracking connections and systems.
-                </p>
+                <h3 class="text-xl font-semibold">No maps yet</h3>
+                <p class="text-muted-foreground">Get started by creating your first wormhole map to begin tracking connections and systems.</p>
                 <Link :href="route('maps.create')">
                     <Button class="flex items-center gap-2">
                         <PlusIcon class="h-4 w-4" />

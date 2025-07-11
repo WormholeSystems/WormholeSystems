@@ -4,6 +4,7 @@ namespace App\Console\Commands\Database;
 
 use Illuminate\Console\Command;
 use Illuminate\Container\Attributes\Config;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 
@@ -14,7 +15,7 @@ class RestoreDatabase extends Command
      *
      * @var string
      */
-    protected $signature = 'db:restore';
+    protected $signature = 'db:restore {--database= : The database to write to}';
 
     /**
      * The console command description.
@@ -49,6 +50,8 @@ class RestoreDatabase extends Command
             return;
         }
 
+        $database = $this->option('database') ?: $database;
+
         $process = Process::run([
             'mysql',
             '--host='.$host,
@@ -64,6 +67,10 @@ class RestoreDatabase extends Command
         if ($process->successful()) {
             $this->info($process->output());
             $this->info('Database restored successfully.');
+            Log::info('Database restored successfully from cache file: '.$file, [
+                'database' => $database,
+                'cache_file' => $cacheFile,
+            ]);
         } else {
             $this->error('Failed to restore the database: '.$process->errorOutput());
         }

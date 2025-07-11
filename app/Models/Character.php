@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -47,8 +48,10 @@ use Throwable;
  * @property-read CharacterStatus|null $characterStatus
  * @property-read Collection<int,MapAccess> $mapAccesses
  */
-class Character extends Model implements \NicolasKion\Esi\Interfaces\Character
+class Character extends Model
 {
+    use HasFactory;
+
     public $incrementing = false;
 
     /**
