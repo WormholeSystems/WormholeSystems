@@ -170,5 +170,8 @@ return [
         ],
 
     ],
-
+    'cache' => [
+        'path' => 'database/cache',
+        'file' => 'database_cache.sql',
+    ],
 ];

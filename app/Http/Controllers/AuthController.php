@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
 class AuthController
@@ -21,5 +22,17 @@ class AuthController
         }
 
         return to_route('eve.show');
+    }
+
+    public function destroy(): RedirectResponse
+    {
+        Auth::logout();
+        Session::invalidate();
+        Session::regenerateToken();
+
+        return to_route('login')->notify(
+            'Logged out successfully.',
+            'You have been logged out of your account.'
+        );
     }
 }

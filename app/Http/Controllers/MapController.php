@@ -59,7 +59,7 @@ class MapController extends Controller
 
         $map_characters = fn (): ResourceCollection => $this->getMapCharacters($map);
 
-        return Inertia::render('Maps/ShowMap', [
+        return Inertia::render('maps/ShowMap', [
             'map' => $map->toResource(MapResource::class),
             'solarsystems' => $solarsystems,
             'search' => $search,
@@ -75,7 +75,7 @@ class MapController extends Controller
      */
     public function index(): Response
     {
-        return Inertia::render('Maps/ShowAllMaps', [
+        return Inertia::render('maps/ShowAllMaps', [
             'maps' => Map::query()
                 ->whereHas('mapAccessors', fn (Builder $builder) => $builder->whereIn('accessible_id', $this->user->getAccessibleIds()))
                 ->get()
@@ -87,7 +87,7 @@ class MapController extends Controller
     {
         Gate::authorize('create', Map::class);
 
-        return Inertia::render('Maps/CreateMap');
+        return Inertia::render('maps/CreateMap');
     }
 
     /**

@@ -61,7 +61,7 @@ class MapAccessController extends Controller
             ->select(['id', 'name', 'type', 'permission'])
             ->get();
 
-        return Inertia::render('Maps/ShowMapAccess', [
+        return Inertia::render('maps/ShowMapAccess', [
             'map' => $map->toResource(MapResource::class),
             'entities' => $entities,
             'search' => $search,
