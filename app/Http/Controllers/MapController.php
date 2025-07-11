@@ -78,6 +78,9 @@ class MapController extends Controller
         return Inertia::render('maps/ShowAllMaps', [
             'maps' => Map::query()
                 ->whereHas('mapAccessors', fn (Builder $builder) => $builder->whereIn('accessible_id', $this->user->getAccessibleIds()))
+                ->withCount([
+                    'mapSolarsystems' => fn (Builder $builder) => $builder->whereNotNull('position_x'),
+                ])
                 ->get()
                 ->toResourceCollection(MapResource::class),
         ]);

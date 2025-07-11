@@ -1,15 +1,18 @@
 <script setup lang="ts">
 import MapCharacters from '@/components/characters/MapCharacters.vue';
+import LockIcon from '@/components/icons/LockIcon.vue';
 import QuestionIcon from '@/components/icons/QuestionIcon.vue';
 import MapKillmails from '@/components/killmails/MapKillmails.vue';
 import MapComponent from '@/components/map/MapComponent.vue';
 import MapSearch from '@/components/map/MapSearch.vue';
 import Tracker from '@/components/map/Tracker.vue';
 import SelectedSolarsystem from '@/components/solarsystem/SelectedSolarsystem.vue';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { TMapConfig } from '@/types/map';
 import { TCharacter, TKillmail, TMap, TMapSolarSystem, TSolarsystem } from '@/types/models';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import { echo } from '@laravel/echo-vue';
 
 const { map, selected_map_solarsystem, map_killmails } = defineProps<{
@@ -29,14 +32,29 @@ router.on('before', (event) => {
 
 <template>
     <AppLayout>
-        <Head title="ShowMap" />
+        <Head :title="map.name" />
 
         <div class="space-y-4 p-4">
             <div class="">
                 <div class="relative">
                     <MapComponent :map :config />
                     <MapSearch :map :search :solarsystems />
-                    <Tracker :map_characters v-if="map_characters" />
+                    <div class="absolute top-4 right-4 flex gap-2">
+                        <Tracker :map_characters v-if="map_characters" />
+                        <Tooltip>
+                            <TooltipTrigger>
+                                <Button :variant="'outline'" as-child>
+                                    <Link :href="route('map-access.show', map.slug)">
+                                        <LockIcon />
+                                    </Link>
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom">
+                                <p class="text-sm">Map Access</p>
+                                <p class="text-xs text-muted-foreground">Manage who can view and edit this map</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </div>
                 </div>
             </div>
             <div class="grid grid-cols-12 gap-4">

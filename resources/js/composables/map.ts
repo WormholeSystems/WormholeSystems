@@ -69,14 +69,14 @@ export function useMap(map: MaybeRefOrGetter<TMap>, container: MaybeRefOrGetter<
 
         mapState.map = mapValue;
         mapState.map_container = containerValue || null;
-        mapState.map_solarsystems = mapValue.map_solarsystems.map(getSelectedState).map(getHoveredState);
+        mapState.map_solarsystems = mapValue.map_solarsystems!.map(getSelectedState).map(getHoveredState);
         mapState.config = configValue;
     });
 
     watchEffect(() => {
         if (!mapState.map) return;
         const mapValue = toValue(mapState.map);
-        mapState.map_connections = mapValue.map_connections.map(getConnectionWithSourceAndTarget);
+        mapState.map_connections = mapValue.map_connections!.map(getConnectionWithSourceAndTarget);
     });
 
     function getSelectedState(system: TMapSolarSystem): WithIsSelected<TMapSolarSystem> {

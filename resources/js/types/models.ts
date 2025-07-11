@@ -2,8 +2,9 @@ export type TMap = {
     id: number;
     name: string;
     slug: string;
-    map_solarsystems: TMapSolarSystem[];
-    map_connections: TMapConnection[];
+    map_solarsystems?: TMapSolarSystem[];
+    map_connections?: TMapConnection[];
+    map_solarsystems_count?: number;
 };
 
 export type TMapSolarSystem = {

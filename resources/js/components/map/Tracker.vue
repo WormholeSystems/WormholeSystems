@@ -44,20 +44,18 @@ function requestSolarsystemAdd(old_solarsystem_id: number | null, new_solarsyste
 </script>
 
 <template>
-    <div class="absolute top-4 right-4">
-        <Tooltip>
-            <TooltipTrigger>
-                <Button @click="enabled = !enabled" :variant="enabled ? 'default' : 'secondary'" size="icon">
-                    <TrackingIcon />
-                </Button>
-            </TooltipTrigger>
-            <TooltipContent side="left">
-                <p class="text-sm">Tracking</p>
-                <p class="text-xs text-muted-foreground">{{ enabled ? 'Enabled' : 'Disabled' }} - Automatically track solarsystem changes</p>
-                <p class="text-xs text-muted-foreground">Current Solarsystem: {{ active_map_character?.status?.solarsystem?.name || 'Unknown' }}</p>
-            </TooltipContent>
-        </Tooltip>
-    </div>
+    <Tooltip>
+        <TooltipTrigger>
+            <Button @click="enabled = !enabled" :variant="enabled ? 'default' : 'secondary'" size="icon">
+                <TrackingIcon />
+            </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+            <p class="text-sm">Tracking</p>
+            <p class="text-xs text-muted-foreground">{{ enabled ? 'Enabled' : 'Disabled' }} - Automatically track solarsystem changes</p>
+            <p class="text-xs text-muted-foreground">Current Solarsystem: {{ active_map_character?.status?.solarsystem?.name || 'Unknown' }}</p>
+        </TooltipContent>
+    </Tooltip>
 </template>
 
 <style scoped></style>

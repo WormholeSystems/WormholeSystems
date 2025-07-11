@@ -24,6 +24,7 @@ class MapResource extends JsonResource
             'slug' => $this->slug,
             'map_solarsystems' => $this->whenLoaded('mapSolarsystems', fn () => $this->mapSolarsystems->toResourceCollection(MapSolarsystemResource::class)),
             'map_connections' => $this->whenLoaded('mapConnections', fn () => $this->mapConnections->toResourceCollection(MapConnectionResource::class)),
+            'map_solarsystems_count' => $this->whenCounted('mapSolarsystems', fn () => $this->map_solarsystems_count),
         ];
     }
 }

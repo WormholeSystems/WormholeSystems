@@ -20,7 +20,7 @@ trait HasSlug
     {
         return [
             $this->getSlugName(),
-            $this->getSlugKey(),
+            $this->getSlugId(),
         ];
     }
 
@@ -39,5 +39,10 @@ trait HasSlug
         $id = last(explode('-', (string) $value));
 
         return $this->findOrFail($id);
+    }
+
+    public function getSlugId(): string
+    {
+        return (string) $this->getAttribute($this->getSlugKey());
     }
 }

@@ -22,13 +22,13 @@ function handleSolarsystemSelect(solarsystem: TSolarsystem) {
 
 const new_solarsystems = computed(() => {
     return solarsystems.filter((solarsystem) => {
-        return !map.map_solarsystems.some((map_solarsystem) => map_solarsystem.solarsystem_id === solarsystem.id);
+        return !map.map_solarsystems?.some((map_solarsystem) => map_solarsystem.solarsystem_id === solarsystem.id);
     });
 });
 
 const existing_solarsystems = computed(() => {
     return solarsystems.filter((solarsystem) => {
-        return map.map_solarsystems.some((map_solarsystem) => map_solarsystem.solarsystem_id === solarsystem.id);
+        return map.map_solarsystems?.some((map_solarsystem) => map_solarsystem.solarsystem_id === solarsystem.id);
     });
 });
 </script>
