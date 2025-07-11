@@ -48,7 +48,7 @@ use Throwable;
  * @property-read CharacterStatus|null $characterStatus
  * @property-read Collection<int,MapAccess> $mapAccesses
  */
-class Character extends Model
+class Character extends Model implements \NicolasKion\Esi\Interfaces\Character
 {
     use HasFactory;
 
