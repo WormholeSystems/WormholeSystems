@@ -52,5 +52,10 @@ jobs:
       - name: Build Assets
         run: npm run build
 
-      - name: Tests
+      - name: Setup mysql
+        uses: mirromutth/mysql-action@v1.1
+        with:
+          mysql database: 'test_database'
+          mysql root password: 'password'
+      - name: Run Tests
         run: ./vendor/bin/pest --parallel
