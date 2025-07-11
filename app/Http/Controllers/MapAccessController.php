@@ -73,7 +73,7 @@ class MapAccessController extends Controller
 
         Gate::authorize('create', [MapAccess::class, $map]);
 
-        if ($request->map_access) {
+        if ($request->map_access instanceof \App\Models\MapAccess) {
             if (! Gate::check('update', [MapAccess::class, $map, $request->map_access])) {
                 return back()->notify('Access denied.', 'You do not have permission to change this character access.');
             }

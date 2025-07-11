@@ -10,9 +10,9 @@ use Illuminate\Translation\PotentiallyTranslatedString;
 class SameParent implements ValidationRule
 {
     public function __construct(
-        private string $item_table,
-        private string $parent_column,
-        private string $value_column = 'id',
+        private readonly string $item_table,
+        private readonly string $parent_column,
+        private readonly string $value_column = 'id',
     ) {}
 
     /**
