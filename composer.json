@@ -13,6 +13,7 @@
         "ext-pcntl": "*",
         "inertiajs/inertia-laravel": "^2.0",
         "laravel/framework": "^12.0",
+        "laravel/nightwatch": "^1.10",
         "laravel/reverb": "^1.0",
         "laravel/socialite": "^5.21",
         "laravel/tinker": "^2.10.1",
