@@ -18,9 +18,9 @@ class CCPRounding
         }
 
         if ($number >= 0.0 && $number < 0.05) {
-            return ((int) ($number * 10 + 0.5)) / 10.0;
+            return round($number * 10 + 0.5) / 10.0;
         }
 
-        return ((int) ($number * 10)) / 10.0;
+        return round($number * 10) / 10.0;
     }
 }
