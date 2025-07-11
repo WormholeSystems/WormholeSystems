@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\HasSlug;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -21,7 +22,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Map extends Model
 {
-    use HasSlug;
+    use HasFactory, HasSlug;
 
     /**
      * The map solar systems that are part of this map.
