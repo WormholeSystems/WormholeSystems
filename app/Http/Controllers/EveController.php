@@ -30,7 +30,7 @@ class EveController extends Controller
         }
 
         Auth::login($user, remember: true);
-        $user->setActiveCharacter($character);
+        $user->active_character = $character;
 
         if ($account_id) {
             return to_route('home')->notify('Account Updated', message: 'Your character has been added to your account.');

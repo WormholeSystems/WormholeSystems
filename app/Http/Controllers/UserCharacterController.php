@@ -27,7 +27,7 @@ class UserCharacterController extends Controller
         $character->user()->disassociate();
         $character->save();
 
-        $this->user->setActiveCharacter($this->user->characters()->first());
+        $this->user->active_character = $this->user->characters()->first();
 
         return to_route('home')->notify('Character removed', message: 'You have successfully removed the character from your account.');
     }
@@ -36,7 +36,7 @@ class UserCharacterController extends Controller
     {
         abort_if($character->user()->isNot($request->user()), 403);
 
-        $request->user()->setActiveCharacter($character);
+        $request->user()->active_character = $character;
 
         return back()->notify('Character changed', message: sprintf('You are now acting as %s', $character->name));
     }
