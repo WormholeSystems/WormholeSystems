@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a644c866deaddc01a7ae01013c4a15bf",
+    "content-hash": "31a521d324828a453e9dfca741db7426",
     "packages": [
         {
             "name": "brick/math",
@@ -1361,6 +1361,64 @@
                 "source": "https://github.com/inertiajs/inertia-laravel/tree/v2.0.3"
             },
             "time": "2025-06-20T07:38:21+00:00"
+        },
+        {
+            "name": "jmgq/a-star",
+            "version": "v2.1.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/jmgq/php-a-star.git",
+                "reference": "7a6553e6ceafbcb35afdca5e274f99d021a03e3c"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/jmgq/php-a-star/zipball/7a6553e6ceafbcb35afdca5e274f99d021a03e3c",
+                "reference": "7a6553e6ceafbcb35afdca5e274f99d021a03e3c",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.0"
+            },
+            "require-dev": {
+                "phan/phan": "^5.0",
+                "php-coveralls/php-coveralls": "^2.0",
+                "phpstan/phpstan": "^1.0",
+                "phpunit/phpunit": "^9.0",
+                "psalm/plugin-phpunit": "^0.15.1",
+                "squizlabs/php_codesniffer": "^3.0",
+                "symfony/console": "^5.0",
+                "vimeo/psalm": "^4.5"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "JMGQ\\AStar\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Jose Gonzalez",
+                    "email": "jmgq@jmgq.es",
+                    "homepage": "https://www.jmgq.es"
+                }
+            ],
+            "description": "A* (A Star) algorithm for PHP",
+            "keywords": [
+                "Algorithm",
+                "a",
+                "a star",
+                "pathfinding",
+                "search"
+            ],
+            "support": {
+                "issues": "https://github.com/jmgq/php-a-star/issues",
+                "source": "https://github.com/jmgq/php-a-star/tree/v2.1.1"
+            },
+            "time": "2022-01-02T19:02:36+00:00"
         },
         {
             "name": "laravel/framework",
@@ -3067,16 +3125,16 @@
         },
         {
             "name": "nicolaskion/sde",
-            "version": "v0.1.5",
+            "version": "v0.1.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/NicolasKion/SDE.git",
-                "reference": "acf692d2ba7adbe9f06801490ee1d3778f0fc923"
+                "reference": "710c4cb5c68b0af58062e9b8aa4da36a2e493580"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/NicolasKion/SDE/zipball/acf692d2ba7adbe9f06801490ee1d3778f0fc923",
-                "reference": "acf692d2ba7adbe9f06801490ee1d3778f0fc923",
+                "url": "https://api.github.com/repos/NicolasKion/SDE/zipball/710c4cb5c68b0af58062e9b8aa4da36a2e493580",
+                "reference": "710c4cb5c68b0af58062e9b8aa4da36a2e493580",
                 "shasum": ""
             },
             "require": {
@@ -3126,7 +3184,7 @@
             ],
             "support": {
                 "issues": "https://github.com/NicolasKion/SDE/issues",
-                "source": "https://github.com/NicolasKion/SDE/tree/v0.1.5"
+                "source": "https://github.com/NicolasKion/SDE/tree/v0.1.6"
             },
             "funding": [
                 {
@@ -3142,7 +3200,7 @@
                     "type": "patreon"
                 }
             ],
-            "time": "2025-05-05T18:17:16+00:00"
+            "time": "2025-07-12T10:10:46+00:00"
         },
         {
             "name": "nikic/php-parser",
