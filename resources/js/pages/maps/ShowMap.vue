@@ -11,11 +11,11 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { TMapConfig } from '@/types/map';
-import { TCharacter, TKillmail, TMap, TMapSolarSystem, TSolarsystem } from '@/types/models';
+import { TCharacter, TDestination, TKillmail, TMap, TMapSolarSystem, TSolarsystem } from '@/types/models';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { echo } from '@laravel/echo-vue';
 
-const { map, selected_map_solarsystem, map_killmails } = defineProps<{
+const { map, selected_map_solarsystem, map_killmails, jumps } = defineProps<{
     map: TMap;
     search: string;
     solarsystems: TSolarsystem[];
@@ -23,6 +23,7 @@ const { map, selected_map_solarsystem, map_killmails } = defineProps<{
     selected_map_solarsystem: TMapSolarSystem | null;
     map_killmails?: TKillmail[];
     map_characters: TCharacter[];
+    jumps?: TDestination[];
 }>();
 
 router.on('before', (event) => {
@@ -59,7 +60,7 @@ router.on('before', (event) => {
             </div>
             <div class="grid grid-cols-12 gap-4">
                 <div class="col-span-6 2xl:col-span-5">
-                    <SelectedSolarsystem v-if="selected_map_solarsystem" :map_solarsystem="selected_map_solarsystem" :map />
+                    <SelectedSolarsystem v-if="selected_map_solarsystem" :map_solarsystem="selected_map_solarsystem" :map :jumps />
                     <div class="flex flex-col items-center justify-center gap-8 rounded-lg border border-dashed p-16 text-neutral-700" v-else>
                         <QuestionIcon class="text-4xl" />
                         <p class="text-center">Select a solarsystem to see more details</p>

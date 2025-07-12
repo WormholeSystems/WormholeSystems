@@ -73,6 +73,7 @@ function getConnectionExtra(connection: TMapConnection): string {
                 :extra="getConnectionExtra(map_connection)"
                 :mass_status="map_connection.mass_status"
                 :is_eol="map_connection.is_eol"
+                :is_highlighted="map_connection.is_on_route"
                 @contextmenu="$emit('connection-contextmenu', $event, map_connection)"
             />
             <MapConnection v-if="origin" :from="origin.position!" :to="mouse" />

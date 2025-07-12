@@ -210,3 +210,8 @@ export type TCharacterStatus = {
     checked_location_at: string | null;
     solarsystem: TSolarsystem | null;
 };
+
+export type TDestination = {
+    destination: TSolarsystem;
+    route: number[];
+};

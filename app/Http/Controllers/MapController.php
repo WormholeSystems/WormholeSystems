@@ -17,11 +17,14 @@ use App\Models\MapSolarsystem;
 use App\Models\Solarsystem;
 use App\Models\User;
 use App\Scopes\WithVisibleSolarsystems;
+use App\Services\RouteService;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -31,7 +34,9 @@ class MapController extends Controller
 {
     public function __construct(
         #[CurrentUser] private readonly User $user,
-    ) {}
+    )
+    {
+    }
 
     /**
      * @throws Throwable
@@ -51,13 +56,13 @@ class MapController extends Controller
 
         $selected_map_solarsystem_id = $request->integer('map_solarsystem_id');
 
-        $selected_map_solarsystem = fn (): ?\Illuminate\Http\Resources\Json\JsonResource => $this->getSelectedSolarsystem($selected_map_solarsystem_id)?->toResource(MapSolarsystemResource::class);
+        $selected_map_solarsystem = fn(): ?JsonResource => $this->getSelectedSolarsystem($selected_map_solarsystem_id)?->toResource(MapSolarsystemResource::class);
 
         $map_killmails = Inertia::defer(
-            fn (): ResourceCollection => $this->getMapKills($map)
+            fn(): ResourceCollection => $this->getMapKills($map)
         );
 
-        $map_characters = fn (): ResourceCollection => $this->getMapCharacters($map);
+        $map_characters = fn(): ResourceCollection => $this->getMapCharacters($map);
 
         return Inertia::render('maps/ShowMap', [
             'map' => $map->toResource(MapResource::class),
@@ -67,6 +72,7 @@ class MapController extends Controller
             'selected_map_solarsystem' => $selected_map_solarsystem,
             'map_killmails' => $map_killmails,
             'map_characters' => $map_characters,
+            'jumps' => Inertia::defer(fn() => $this->getJumpsFromMapSolarsystem($map, $selected_map_solarsystem_id)),
         ]);
     }
 
@@ -77,9 +83,9 @@ class MapController extends Controller
     {
         return Inertia::render('maps/ShowAllMaps', [
             'maps' => Map::query()
-                ->whereHas('mapAccessors', fn (Builder $builder) => $builder->whereIn('accessible_id', $this->user->getAccessibleIds()))
+                ->whereHas('mapAccessors', fn(Builder $builder) => $builder->whereIn('accessible_id', $this->user->getAccessibleIds()))
                 ->withCount([
-                    'mapSolarsystems' => fn (Builder $builder) => $builder->whereNotNull('position_x'),
+                    'mapSolarsystems' => fn(Builder $builder) => $builder->whereNotNull('position_x'),
                 ])
                 ->get()
                 ->toResourceCollection(MapResource::class),
@@ -137,18 +143,51 @@ class MapController extends Controller
     {
         return Character::query()
             ->with('characterStatus')
-            ->where(fn (Builder $query) => $query
+            ->where(fn(Builder $query) => $query
                 ->whereExists(MapAccess::query()
                     ->where('map_id', $map->id)
-                    ->where(fn (Builder $query) => $query->
-                        whereColumn('accessible_id', 'characters.id')
-                            ->orWhereColumn('accessible_id', 'characters.corporation_id')
-                            ->orWhereColumn('accessible_id', 'characters.alliance_id'
-                            )
+                    ->where(fn(Builder $query) => $query->
+                    whereColumn('accessible_id', 'characters.id')
+                        ->orWhereColumn('accessible_id', 'characters.corporation_id')
+                        ->orWhereColumn('accessible_id', 'characters.alliance_id'
+                        )
                     ))
             )
             ->whereRelation('characterStatus', 'is_online', true)
             ->get()
             ->toResourceCollection(CharacterResource::class);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    private function getJumpsFromMapSolarsystem(Map $map, ?int $map_solarsystem_id): array
+    {
+        $routeService = App::make(RouteService::class);
+        if ($map_solarsystem_id === null || $map_solarsystem_id === 0) {
+            return [];
+        }
+
+        $solarsystem_id = MapSolarsystem::query()
+            ->where('id', $map_solarsystem_id)
+            ->pluck('solarsystem_id');
+
+
+        $targets = [
+            'Jita',
+            'Amarr',
+            'Dodixie',
+            'Rens',
+            'Hek',
+        ];
+
+        $from = Solarsystem::query()->firstWhere('id', $solarsystem_id);
+        $to = Solarsystem::query()->whereIn('name', $targets)
+            ->get();
+
+        return $to->map(fn(Solarsystem $solarsystem) => [
+            'destination' => $solarsystem->toResource(SolarsystemResource::class),
+            'route' => $routeService->find($from->id, $solarsystem->id, $map),
+        ])->all();
     }
 }

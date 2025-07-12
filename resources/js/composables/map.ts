@@ -1,3 +1,4 @@
+import { usePath } from '@/composables/usePath';
 import { TMapConfig } from '@/types/map';
 import { TMap, TMapConnection, TMapSolarSystem } from '@/types/models';
 import { router } from '@inertiajs/vue3';
@@ -13,7 +14,7 @@ type TMapState = {
     map: TMap | null;
     map_container: HTMLElement | null;
     map_solarsystems: TDataMapSolarSystem[];
-    map_connections: TConnectionWithSourceAndTarget[];
+    map_connections: TProcessedConnection[];
     selection: {
         start: Coordinates;
         end: Coordinates | null;
@@ -54,12 +55,15 @@ const map_solarsystems_selected = computed(() => map_solarsystems.value.filter((
 const selection = computed(() => mapState.selection);
 const grid_size = computed(() => mapState.grid_size);
 
-export type TConnectionWithSourceAndTarget = TMapConnection & {
+export type TProcessedConnection = TMapConnection & {
     source: TMapSolarSystem;
     target: TMapSolarSystem;
+    is_on_route?: boolean;
 };
 
 export function useMap(map: MaybeRefOrGetter<TMap>, container: MaybeRefOrGetter<HTMLElement>, config: MaybeRefOrGetter<TMapConfig>) {
+    const { path } = usePath();
+
     watchEffect(() => {
         const mapValue = toValue(map);
         const containerValue = toValue(container);
@@ -99,14 +103,19 @@ export function useMap(map: MaybeRefOrGetter<TMap>, container: MaybeRefOrGetter<
         return { ...system, is_hovered };
     }
 
-    function getConnectionWithSourceAndTarget(connection: TMapConnection): TConnectionWithSourceAndTarget {
+    function getConnectionWithSourceAndTarget(connection: TMapConnection): TProcessedConnection {
         const source = mapState.map_solarsystems.find((s) => s.id === connection.from_map_solarsystem_id)!;
         const target = mapState.map_solarsystems.find((s) => s.id === connection.to_map_solarsystem_id)!;
+
+        const from_index = path.value?.indexOf(source.solarsystem_id) ?? -1;
+        const to_index = path.value?.indexOf(target.solarsystem_id) ?? -1;
+        const is_on_route = from_index !== -1 && to_index !== -1 && Math.abs(from_index - to_index) === 1;
 
         return {
             ...connection,
             source,
             target,
+            is_on_route,
         };
     }
 }

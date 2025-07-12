@@ -13,6 +13,7 @@ type Props = {
     extra?: string;
     mass_status?: TMassStatus;
     is_eol?: boolean;
+    is_highlighted?: boolean;
 };
 
 const { from, to, extra, mass_status, is_eol } = defineProps<Props>();
@@ -66,7 +67,8 @@ function getDashArray() {
             :stroke-dasharray="getDashArray()"
             :data-connection-status="mass_status"
             :data-eol="is_eol"
-            class="cursor-pointer transition-colors duration-200 ease-in-out group-hover:text-neutral-600 data-[connection-status=critical]:text-red-500 data-[connection-status=reduced]:text-orange-500 data-[eol=true]:text-purple-500"
+            :data-highlighted="is_highlighted"
+            class="cursor-pointer transition-colors duration-200 ease-in-out group-hover:text-neutral-600 data-[connection-status=critical]:text-red-500 data-[connection-status=reduced]:text-orange-500 data-[eol=true]:text-purple-500 data-[highlighted=true]:text-amber-500"
         />
         <rect
             class="pointer-events-none"
