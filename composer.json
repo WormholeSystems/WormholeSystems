@@ -17,7 +17,7 @@
         "laravel/reverb": "^1.0",
         "laravel/socialite": "^5.21",
         "laravel/tinker": "^2.10.1",
-        "nicolaskion/eve": "^0.1.5",
+        "nicolaskion/eve": "^0.1.6",
         "nicolaskion/sde": "^0.1.5",
         "nunomaduro/essentials": "^0.1",
         "socialiteproviders/eveonline": "^4.3",

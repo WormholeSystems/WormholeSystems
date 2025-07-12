@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         Artisan::call('sde:seed');
+        $this->call(EsiScopeSeeder::class);
         $this->call(WormholeEffectSeeder::class);
         $this->call(WormholeSeeder::class);
         $this->call(WormholeSystemSeeder::class);

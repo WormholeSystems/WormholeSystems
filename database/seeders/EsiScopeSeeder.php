@@ -16,6 +16,7 @@ class EsiScopeSeeder extends Seeder
             EsiScope::ReadLocations,
             EsiScope::ReadShip,
             EsiScope::ReadOnlineStatus,
+            EsiScope::WriteWaypoint,
         ];
         foreach (EsiScope::cases() as $scope) {
             \App\Models\EsiScope::query()->updateOrCreate(

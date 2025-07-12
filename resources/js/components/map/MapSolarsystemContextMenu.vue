@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { CharacterImage } from '@/components/images';
 import {
     ContextMenu,
     ContextMenuContent,
@@ -13,6 +14,8 @@ import {
     ContextMenuTrigger,
 } from '@/components/ui/context-menu';
 import { useMapAction } from '@/composables/map';
+import useUser from '@/composables/useUser';
+import { useWaypoint } from '@/composables/useWaypoint';
 import { TMapSolarSystem, TMapSolarsystemStatus } from '@/types/models';
 
 const { map_solarsystem } = defineProps<{
@@ -20,6 +23,10 @@ const { map_solarsystem } = defineProps<{
 }>();
 
 const { removeMapSolarsystem, updateMapSolarsystem } = useMapAction();
+
+const user = useUser();
+
+const setWaypoint = useWaypoint();
 
 function handleTogglePin() {
     updateMapSolarsystem(map_solarsystem, { pinned: !map_solarsystem.pinned });
@@ -44,7 +51,6 @@ const options: TMapSolarsystemStatus[] = ['unknown', 'friendly', 'hostile', 'act
         <ContextMenuContent>
             <ContextMenuItem @select="handleTogglePin">
                 {{ map_solarsystem.pinned ? 'Unpin' : 'Pin' }}
-                <ContextMenuShortcut>Ctrl+P</ContextMenuShortcut>
             </ContextMenuItem>
             <ContextMenuSub>
                 <ContextMenuSubTrigger> Status</ContextMenuSubTrigger>
@@ -76,6 +82,33 @@ const options: TMapSolarsystemStatus[] = ['unknown', 'friendly', 'hostile', 'act
                         <a :href="`https://zkillboard.com/system/${map_solarsystem.solarsystem?.id}/`" target="_blank" rel="noopener noreferrer">
                             zKillboard
                         </a>
+                    </ContextMenuItem>
+                </ContextMenuSubContent>
+            </ContextMenuSub>
+            <ContextMenuSub v-if="!map_solarsystem.class">
+                <ContextMenuSubTrigger>Set destination</ContextMenuSubTrigger>
+                <ContextMenuSubContent>
+                    <ContextMenuItem
+                        v-for="character in user.characters"
+                        :key="character.id"
+                        @select="setWaypoint(character.id, map_solarsystem.solarsystem_id)"
+                    >
+                        <CharacterImage :character_id="character.id" :character_name="character.name" class="size-5 rounded-lg" />
+                        {{ character.name }}
+                    </ContextMenuItem>
+                </ContextMenuSubContent>
+            </ContextMenuSub>
+
+            <ContextMenuSub v-if="!map_solarsystem.class">
+                <ContextMenuSubTrigger>Add waypoint</ContextMenuSubTrigger>
+                <ContextMenuSubContent>
+                    <ContextMenuItem
+                        v-for="character in user.characters"
+                        :key="character.id"
+                        @select="setWaypoint(character.id, map_solarsystem.solarsystem_id, false)"
+                    >
+                        <CharacterImage :character_id="character.id" :character_name="character.name" class="size-5 rounded-lg" />
+                        {{ character.name }}
                     </ContextMenuItem>
                 </ContextMenuSubContent>
             </ContextMenuSub>

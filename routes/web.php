@@ -12,6 +12,7 @@ use App\Http\Controllers\MapSolarsystemController;
 use App\Http\Controllers\SignatureController;
 use App\Http\Controllers\TrackingController;
 use App\Http\Controllers\UserCharacterController;
+use App\Http\Controllers\WaypointController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [LandingController::class, 'index'])->name('landing');
@@ -47,4 +48,6 @@ Route::middleware('auth')->group(function () {
     Route::post('map-access/{map}', [MapAccessController::class, 'store'])->name('map-access.store');
 
     Route::post('tracking', [TrackingController::class, 'store'])->name('tracking.store');
+
+    Route::post('waypoints', [WaypointController::class, 'store'])->name('waypoints.store');
 });
