@@ -7,12 +7,9 @@ use JMGQ\AStar\DomainLogicInterface;
 class DomainLogic implements DomainLogicInterface
 {
     /**
-     * @param array<int, int[]> $connections
+     * @param  array<int, int[]>  $connections
      */
-    function __construct(public array $connections)
-    {
-
-    }
+    public function __construct(public array $connections) {}
 
     public function getAdjacentNodes(mixed $node): iterable
     {

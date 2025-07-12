@@ -17,7 +17,7 @@ class WaypointController extends Controller
     {
         $validated = $request->validated();
 
-        if (!$request->character->esiTokens()->whereRelation('esiScopes', 'name', EsiScope::WriteWaypoint)->exists()) {
+        if (! $request->character->esiTokens()->whereRelation('esiScopes', 'name', EsiScope::WriteWaypoint)->exists()) {
             return back()->notify('Missing ESI scope', message: 'Please reauthenticate your character to set waypoints.', type: 'error');
         }
 

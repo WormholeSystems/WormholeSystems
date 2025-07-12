@@ -6,13 +6,14 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      */
     public function up(): void
     {
-        Schema::create('solarsystem_connections', function (Blueprint $table) {
+        Schema::create('solarsystem_connections', function (Blueprint $table): void {
             $table->foreignId('from_stargate_id')->primary()->constrained('stargates')->cascadeOnDelete()->cascadeOnUpdate();
             $table->foreignId('from_solarsystem_id')->constrained('solarsystems')->cascadeOnDelete()->cascadeOnUpdate();
             $table->foreignId('from_constellation_id')->constrained('constellations')->cascadeOnDelete()->cascadeOnUpdate();

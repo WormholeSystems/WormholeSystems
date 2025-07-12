@@ -10,13 +10,11 @@ use NicolasKion\Esi\Esi;
 
 final readonly class SetWaypointAction
 {
-    function __construct(private Esi $esi)
-    {
-
-    }
+    public function __construct(private Esi $esi) {}
 
     /**
      * Execute the action.
+     *
      * @throws ConnectionException
      */
     public function handle(Character $character, array $data): void

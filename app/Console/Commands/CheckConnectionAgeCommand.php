@@ -30,20 +30,47 @@ class CheckConnectionAgeCommand extends Command
     {
         $eol_connections = MapConnection::query()
             ->where(
-                fn(Builder $query) => $query
-                    ->whereHas('fromMapSolarsystem', fn(Builder $query) => $query->whereHas('wormholeSystem'))
-                    ->orWhereHas('toMapSolarsystem', fn(Builder $query) => $query->whereHas('wormholeSystem'))
+                fn (Builder $query) => $query
+                    ->whereHas('fromMapSolarsystem', fn (Builder $query) => $query->whereHas('wormholeSystem'))
+                    ->orWhereHas('toMapSolarsystem', fn (Builder $query) => $query->whereHas('wormholeSystem'))
             )
+            ->whereNot(fn (Builder $query) => $query
+                ->where(fn (Builder $query) => $query
+                    ->whereHas('fromMapSolarsystem', fn (Builder $query) => $query->whereHas('wormholeSystem', fn (Builder $query) => $query->where('class', 6)))
+                    ->whereHas('toMapSolarsystem', fn (Builder $query) => $query->whereDoesntHave('wormholeSystem'))
+                )
+                ->orWhere(fn (Builder $query) => $query
+                    ->whereHas('toMapSolarsystem', fn (Builder $query) => $query->whereHas('wormholeSystem', fn (Builder $query) => $query->where('class', 6)))
+                    ->whereHas('fromMapSolarsystem', fn (Builder $query) => $query->whereDoesntHave('wormholeSystem'))
+                ))
             ->where('created_at', '<=', now()->subHours(20))
             ->where('is_eol', false)
             ->get();
 
-        $eol_connections->each(fn(MapConnection $connection) => $updateMapConnectionAction->handle($connection, [
+        $eol_connections->each(fn (MapConnection $connection): \App\Models\MapConnection => $updateMapConnectionAction->handle($connection, [
             'is_eol' => true,
         ]));
 
+        $c6_connections = MapConnection::query()
+            ->where(
+                fn (Builder $query) => $query
+                    ->where(fn (Builder $query) => $query
+                        ->whereHas('fromMapSolarsystem', fn (Builder $query) => $query->whereHas('wormholeSystem', fn (Builder $query) => $query->where('class', 6)))
+                        ->whereHas('toMapSolarsystem', fn (Builder $query) => $query->whereDoesntHave('wormholeSystem'))
+                    )
+                    ->orWhere(fn (Builder $query) => $query
+                        ->whereHas('toMapSolarsystem', fn (Builder $query) => $query->whereHas('wormholeSystem', fn (Builder $query) => $query->where('class', 6)))
+                        ->whereHas('fromMapSolarsystem', fn (Builder $query) => $query->whereDoesntHave('wormholeSystem'))
+                    ))
+            ->where('created_at', '<=', now()->subHours(44))
+            ->where('is_eol', false)
+            ->get();
 
-        $this->info('Connections older than 20 hours have been marked as EOL.');
+        $c6_connections->each(fn (MapConnection $connection): \App\Models\MapConnection => $updateMapConnectionAction->handle($connection, [
+            'is_eol' => true,
+        ]));
+
+        $this->info('Old connections marked as EOL: '.($eol_connections->count() + $c6_connections->count()));
 
         return self::SUCCESS;
     }

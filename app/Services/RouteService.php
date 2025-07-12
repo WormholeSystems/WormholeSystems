@@ -15,24 +15,22 @@ use NicolasKion\SDE\Models\SolarsystemConnection;
 class RouteService
 {
     private array $connections = [];
+
     private array $extra_connections = [];
 
-    function __construct()
+    public function __construct()
     {
         $this->connections = SolarsystemConnection::query()
             ->select('from_solarsystem_id', 'to_solarsystem_id')
             ->get()
             ->groupBy('from_solarsystem_id')
-            ->map(function ($group) {
-                return $group->pluck('to_solarsystem_id')->toArray();
-            })
+            ->map(fn($group) => $group->pluck('to_solarsystem_id')->toArray())
             ->toArray();
     }
 
-
-    public function find(int $from_id, int $to_id, ?Map $map = null)
+    public function find(int $from_id, int $to_id, ?Map $map = null): iterable
     {
-        if ($map) {
+        if ($map instanceof \App\Models\Map) {
             $this->getExtraConnections($map);
         }
 
@@ -59,21 +57,17 @@ class RouteService
             ->where('map_connections.map_id', $map->id)
             ->select('from.solarsystem_id as from_solarsystem_id', 'to.solarsystem_id as to_solarsystem_id')
             ->get()
-            ->map(function ($connection) {
-                return [
-                    ['from_solarsystem_id' => $connection->from_solarsystem_id,
-                        'to_solarsystem_id' => $connection->to_solarsystem_id,
-                    ],
-                    ['from_solarsystem_id' => $connection->to_solarsystem_id,
-                        'to_solarsystem_id' => $connection->from_solarsystem_id,
-                    ],
-                ];
-            })
+            ->map(fn($connection): array => [
+                ['from_solarsystem_id' => $connection->from_solarsystem_id,
+                    'to_solarsystem_id' => $connection->to_solarsystem_id,
+                ],
+                ['from_solarsystem_id' => $connection->to_solarsystem_id,
+                    'to_solarsystem_id' => $connection->from_solarsystem_id,
+                ],
+            ])
             ->flatten(1)
             ->groupBy('from_solarsystem_id')
-            ->map(function ($group) {
-                return $group->pluck('to_solarsystem_id')->toArray();
-            })
+            ->map(fn($group) => $group->pluck('to_solarsystem_id')->toArray())
             ->toArray();
     }
 }
