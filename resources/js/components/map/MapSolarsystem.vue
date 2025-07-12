@@ -81,7 +81,12 @@ function handleBadgeDblClick() {
             <div class="group relative -translate-x-12 -translate-y-1/2">
                 <Popover :open="open" @update:open="(value) => open && (open = value)">
                     <PopoverTrigger as-child>
-                        <MapSolarsystemButton @click="handleBadgeClick" @dblclick="handleBadgeDblClick" :map_solarsystem />
+                        <MapSolarsystemButton
+                            @click="handleBadgeClick"
+                            @dblclick="handleBadgeDblClick"
+                            :map_solarsystem
+                            :is_active="page.props.selected_map_solarsystem?.id === map_solarsystem.id"
+                        />
                     </PopoverTrigger>
                     <PopoverContent>
                         <form @submit.prevent="handleSubmit" class="grid gap-2">

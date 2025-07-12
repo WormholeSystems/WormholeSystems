@@ -7,8 +7,9 @@ import SovereigntyIcon from '@/components/map/SovereigntyIcon.vue';
 import { usePilotsInMapSolarsystem } from '@/composables/usePilotsInMapSolarsystem';
 import { TMapSolarSystem } from '@/types/models';
 
-const { map_solarsystem } = defineProps<{
+const { map_solarsystem, is_active } = defineProps<{
     map_solarsystem: TMapSolarSystem & { is_selected?: boolean; is_hovered?: boolean };
+    is_active?: boolean;
 }>();
 
 const pilots = usePilotsInMapSolarsystem(map_solarsystem);
@@ -20,7 +21,8 @@ const pilots = usePilotsInMapSolarsystem(map_solarsystem);
         :data-hovered="map_solarsystem.is_hovered"
         :data-status="map_solarsystem.status"
         :data-has-pilots="pilots?.length > 0"
-        class="h-[40px] rounded border border-neutral-700 bg-neutral-900 text-left text-xs transition-colors duration-200 ease-in-out select-none hover:bg-neutral-800 focus:bg-neutral-800 data-[has-pilots=true]:h-[60px] data-[hovered=true]:bg-amber-900 data-[selected=true]:bg-amber-900 data-[status=active]:border-active data-[status=empty]:border-empty data-[status=friendly]:border-friendly data-[status=hostile]:border-hostile data-[status=unknown]:border-unknown data-[status=unscanned]:border-unscanned"
+        :data-is-active="is_active"
+        class="h-[40px] rounded border border-neutral-700 bg-neutral-900 text-left text-xs ring-offset-2 ring-offset-neutral-900 transition-colors duration-200 ease-in-out select-none hover:bg-neutral-800 focus:bg-neutral-800 data-[has-pilots=true]:h-[60px] data-[hovered=true]:bg-amber-900 data-[is-active=true]:ring-2 data-[is-active=true]:ring-amber-500 data-[selected=true]:bg-amber-900 data-[status=active]:border-active data-[status=empty]:border-empty data-[status=friendly]:border-friendly data-[status=hostile]:border-hostile data-[status=unknown]:border-unknown data-[status=unscanned]:border-unscanned"
         @drag.prevent
     >
         <span class="pointer-events-none grid grid-cols-[auto_1fr_auto] items-center justify-center gap-x-1 px-2">
