@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\RouteService;
 use Artisan;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -16,7 +17,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(RouteService::class);
     }
 
     /**
