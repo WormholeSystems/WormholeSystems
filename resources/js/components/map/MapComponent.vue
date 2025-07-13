@@ -10,6 +10,7 @@ import {
     MapConnectionCreatedEvent,
     MapConnectionDeletedEvent,
     MapConnectionUpdatedEvent,
+    MapRouteSolarsystemsUpdatedEvent,
     MapSolarsystemCreatedEvent,
     MapSolarsystemDeletedEvent,
     MapSolarsystemsDeletedEvent,
@@ -79,6 +80,12 @@ useEchoPublic(
 useEchoPublic(getMapChannelName(map.id), [MapSolarsystemCreatedEvent, MapSolarsystemDeletedEvent, MapSolarsystemsDeletedEvent], () => {
     router.reload({
         only: ['map', 'map_killmails'],
+    });
+});
+
+useEchoPublic(getMapChannelName(map.id), [MapRouteSolarsystemsUpdatedEvent], () => {
+    router.reload({
+        only: ['map_route_solarsystems'],
     });
 });
 </script>

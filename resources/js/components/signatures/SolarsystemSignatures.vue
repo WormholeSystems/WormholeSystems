@@ -5,6 +5,7 @@ import PasteIcon from '@/components/icons/PasteIcon.vue';
 import TrashIcon from '@/components/icons/TrashIcon.vue';
 import columns, { TRawSignature } from '@/components/signatures/column';
 import { Button } from '@/components/ui/button';
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { getMapChannelName } from '@/const/channels';
 import { SignaturesUpdatedEvent } from '@/const/events';
@@ -114,6 +115,7 @@ function showDifference() {
                     category: sig.category,
                     name: sig.name,
                     status: null,
+                    created_at: sig.created_at,
                 }),
             )
             .sort(sortSignatures);
@@ -158,44 +160,52 @@ useEchoPublic(getMapChannelName(map_solarsystem.map_id), SignaturesUpdatedEvent,
 </script>
 
 <template>
-    <div class="mb-4 flex justify-between gap-2">
-        <h3 class="mr-auto">Signatures</h3>
-        <div v-if="!pasted_signatures.length" class="flex gap-2">
-            <Tooltip>
-                <TooltipTrigger>
-                    <Button @click="handleClipboardPaste" variant="outline" size="icon" title="Paste signatures from clipboard">
-                        <PasteIcon />
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent> Paste signatures from clipboard (Ctrl + V)</TooltipContent>
-            </Tooltip>
-            <Tooltip v-if="map_solarsystem.signatures?.length">
-                <TooltipTrigger>
-                    <Button @click="handleClipbordCopy" variant="outline" size="icon" title="Copy signatures to clipboard">
-                        <CopyIcon />
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent> Copy signatures to clipboard</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-                <TooltipTrigger>
-                    <Button @click="clearSignatures" variant="destructive" size="icon" title="Clear all signatures">
+    <Card class="overflow-hidden pb-0">
+        <CardHeader>
+            <CardTitle> Signatures</CardTitle>
+            <CardDescription> All the signatures in this solarsystem. You can paste, copy and clear signatures here. </CardDescription>
+
+            <CardAction>
+                <div v-if="!pasted_signatures.length" class="flex gap-2">
+                    <Tooltip>
+                        <TooltipTrigger>
+                            <Button @click="handleClipboardPaste" variant="outline" size="icon" title="Paste signatures from clipboard">
+                                <PasteIcon />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent> Paste signatures from clipboard (Ctrl + V)</TooltipContent>
+                    </Tooltip>
+                    <Tooltip v-if="map_solarsystem.signatures?.length">
+                        <TooltipTrigger>
+                            <Button @click="handleClipbordCopy" variant="outline" size="icon" title="Copy signatures to clipboard">
+                                <CopyIcon />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent> Copy signatures to clipboard</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                        <TooltipTrigger>
+                            <Button @click="clearSignatures" variant="destructive" size="icon" title="Clear all signatures">
+                                <TrashIcon />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent> Clear all signatures</TooltipContent>
+                    </Tooltip>
+                </div>
+                <div v-else class="flex gap-2">
+                    <Button @click="pasted_signatures = []" variant="outline" size="icon" title="Clear pasted signatures">
                         <TrashIcon />
                     </Button>
-                </TooltipTrigger>
-                <TooltipContent> Clear all signatures</TooltipContent>
-            </Tooltip>
-        </div>
-        <div v-else class="flex gap-2">
-            <Button @click="pasted_signatures = []" variant="outline" size="icon" title="Clear pasted signatures">
-                <TrashIcon />
-            </Button>
-            <Button as-child>
-                <button @click="updateSignatures(pasted_signatures)" ref="confirm_button">Save changes</button>
-            </Button>
-        </div>
-    </div>
-    <DataTable :columns="columns" :data="signature_difference" class="text-sm" />
+                    <Button as-child>
+                        <button @click="updateSignatures(pasted_signatures)" ref="confirm_button">Save changes</button>
+                    </Button>
+                </div>
+            </CardAction>
+        </CardHeader>
+        <CardContent class="px-1 pb-1">
+            <DataTable :columns="columns" :data="signature_difference" class="bg-neutral-900/40 text-sm" />
+        </CardContent>
+    </Card>
 </template>
 
 <style scoped>

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Events\MapSolarsystems;
+namespace App\Events;
 
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
@@ -9,7 +9,7 @@ use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class MapSolarsystemsUpdatedEvent implements ShouldBroadcastNow, ShouldDispatchAfterCommit
+class MapRouteSolarsystemsUpdatedEvent implements ShouldBroadcastNow, ShouldDispatchAfterCommit
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 

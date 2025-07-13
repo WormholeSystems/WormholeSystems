@@ -34,6 +34,7 @@ use NicolasKion\SDE\ClassResolver;
  * @property-read WormholeSystem|null $wormholeSystem
  * @property-read Sovereignty|null $sovereignty
  * @property-read Collection<int,MapSolarsystem> $mapSolarsystems
+ * @property-read Collection<int,MapRouteSolarsystem> $mapRouteSolarsystems
  */
 class Solarsystem extends Model
 {
@@ -97,5 +98,15 @@ class Solarsystem extends Model
     public function sovereignty(): HasOne
     {
         return $this->hasOne(Sovereignty::class, 'solarsystem_id');
+    }
+
+    /**
+     * MapRouteSolarsystems related to this solarsystem.
+     *
+     * @return HasMany<MapRouteSolarsystem,$this>
+     */
+    public function mapRouteSolarsystems(): HasMany
+    {
+        return $this->hasMany(MapRouteSolarsystem::class, 'solarsystem_id');
     }
 }

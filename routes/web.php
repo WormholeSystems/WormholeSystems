@@ -7,6 +7,7 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MapAccessController;
 use App\Http\Controllers\MapConnectionController;
 use App\Http\Controllers\MapController;
+use App\Http\Controllers\MapRouteSolarsystemController;
 use App\Http\Controllers\MapSelectionController;
 use App\Http\Controllers\MapSolarsystemController;
 use App\Http\Controllers\SignatureController;
@@ -50,4 +51,6 @@ Route::middleware('auth')->group(function () {
     Route::post('tracking', [TrackingController::class, 'store'])->name('tracking.store');
 
     Route::post('waypoints', [WaypointController::class, 'store'])->name('waypoints.store');
+
+    Route::resource('map-route-solarsystems', MapRouteSolarsystemController::class)->only(['store', 'update', 'destroy']);
 });

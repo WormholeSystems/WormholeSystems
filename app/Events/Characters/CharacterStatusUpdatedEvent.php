@@ -7,8 +7,9 @@ use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
+use RectorPrefix202507\Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 
-class CharacterStatusUpdatedEvent implements ShouldBroadcastNow
+class CharacterStatusUpdatedEvent implements ShouldBroadcastNow, ShouldDispatchAfterCommit
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 

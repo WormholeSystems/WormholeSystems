@@ -13,6 +13,7 @@ use App\Models\Character;
 use App\Models\Killmail;
 use App\Models\Map;
 use App\Models\MapAccess;
+use App\Models\MapRouteSolarsystem;
 use App\Models\MapSolarsystem;
 use App\Models\Solarsystem;
 use App\Models\User;
@@ -34,9 +35,7 @@ class MapController extends Controller
 {
     public function __construct(
         #[CurrentUser] private readonly User $user,
-    )
-    {
-    }
+    ) {}
 
     /**
      * @throws Throwable
@@ -56,13 +55,13 @@ class MapController extends Controller
 
         $selected_map_solarsystem_id = $request->integer('map_solarsystem_id');
 
-        $selected_map_solarsystem = fn(): ?JsonResource => $this->getSelectedSolarsystem($selected_map_solarsystem_id)?->toResource(MapSolarsystemResource::class);
+        $selected_map_solarsystem = fn (): ?JsonResource => $this->getSelectedSolarsystem($selected_map_solarsystem_id)?->toResource(MapSolarsystemResource::class);
 
         $map_killmails = Inertia::defer(
-            fn(): ResourceCollection => $this->getMapKills($map)
+            fn (): ResourceCollection => $this->getMapKills($map)
         );
 
-        $map_characters = fn(): ResourceCollection => $this->getMapCharacters($map);
+        $map_characters = fn (): ResourceCollection => $this->getMapCharacters($map);
 
         return Inertia::render('maps/ShowMap', [
             'map' => $map->toResource(MapResource::class),
@@ -72,7 +71,7 @@ class MapController extends Controller
             'selected_map_solarsystem' => $selected_map_solarsystem,
             'map_killmails' => $map_killmails,
             'map_characters' => $map_characters,
-            'jumps' => Inertia::defer(fn(): array => $this->getJumpsFromMapSolarsystem($map, $selected_map_solarsystem_id)),
+            'map_route_solarsystems' => Inertia::defer(fn (): array => $this->getMapRouteSolarsystems($map, $selected_map_solarsystem_id)),
         ]);
     }
 
@@ -83,9 +82,9 @@ class MapController extends Controller
     {
         return Inertia::render('maps/ShowAllMaps', [
             'maps' => Map::query()
-                ->whereHas('mapAccessors', fn(Builder $builder) => $builder->whereIn('accessible_id', $this->user->getAccessibleIds()))
+                ->whereHas('mapAccessors', fn (Builder $builder) => $builder->whereIn('accessible_id', $this->user->getAccessibleIds()))
                 ->withCount([
-                    'mapSolarsystems' => fn(Builder $builder) => $builder->whereNotNull('position_x'),
+                    'mapSolarsystems' => fn (Builder $builder) => $builder->whereNotNull('position_x'),
                 ])
                 ->get()
                 ->toResourceCollection(MapResource::class),
@@ -143,10 +142,10 @@ class MapController extends Controller
     {
         return Character::query()
             ->with('characterStatus')
-            ->where(fn(Builder $query) => $query
+            ->where(fn (Builder $query) => $query
                 ->whereExists(MapAccess::query()
                     ->where('map_id', $map->id)
-                    ->where(fn(Builder $query) => $query->
+                    ->where(fn (Builder $query) => $query->
                     whereColumn('accessible_id', 'characters.id')
                         ->orWhereColumn('accessible_id', 'characters.corporation_id')
                         ->orWhereColumn('accessible_id', 'characters.alliance_id'
@@ -161,9 +160,9 @@ class MapController extends Controller
     /**
      * @throws Throwable
      */
-    private function getJumpsFromMapSolarsystem(Map $map, ?int $map_solarsystem_id): array
+    private function getMapRouteSolarsystems(Map $map, ?int $map_solarsystem_id): array
     {
-        $routeService = App::make(RouteService::class);
+        $route_service = App::make(RouteService::class);
         if ($map_solarsystem_id === null || $map_solarsystem_id === 0) {
             return [];
         }
@@ -172,22 +171,14 @@ class MapController extends Controller
             ->where('id', $map_solarsystem_id)
             ->pluck('solarsystem_id');
 
-        $targets = [
-            'J132052',
-            'Jita',
-            'Amarr',
-            'Dodixie',
-            'Rens',
-            'Hek',
-        ];
+        $current_solarsystem = Solarsystem::query()->firstWhere('id', $solarsystem_id);
+        $map_route_solarsystems = $map->mapRouteSolarsystems;
 
-        $from = Solarsystem::query()->firstWhere('id', $solarsystem_id);
-        $to = Solarsystem::query()->whereIn('name', $targets)
-            ->get();
-
-        return $to->map(fn(Solarsystem $solarsystem): array => [
-            'destination' => $solarsystem->toResource(SolarsystemResource::class),
-            'route' => $routeService->find($from->id, $solarsystem->id, $map),
+        return $map_route_solarsystems->map(fn (MapRouteSolarsystem $map_route_solarsystem): array => [
+            'id' => $map_route_solarsystem->id,
+            'solarsystem' => $map_route_solarsystem->solarsystem->toResource(SolarsystemResource::class),
+            'is_pinned' => $map_route_solarsystem->is_pinned,
+            'route' => $route_service->find($current_solarsystem->id, $map_route_solarsystem->solarsystem_id, $map),
         ])->all();
     }
 }

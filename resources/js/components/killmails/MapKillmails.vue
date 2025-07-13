@@ -2,7 +2,8 @@
 import Killmail from '@/components/killmails/Killmail.vue';
 import KillmailPlaceholder from '@/components/killmails/KillmailPlaceholder.vue';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { getMapChannelName } from '@/const/channels';
 import { KillmailReceivedEvent } from '@/const/events';
 import { TKillmail } from '@/types/models';
@@ -47,33 +48,45 @@ useEchoPublic<KillmailReceivedEvent>(getMapChannelName(map_id), KillmailReceived
 </script>
 
 <template>
-    <Card>
-        <CardHeader class="flex justify-between">
-            <div class="">
-                <CardTitle>Map killmails</CardTitle>
-                <CardDescription>Recents killmails that happened in one of the map solarsystems</CardDescription>
-            </div>
-            <Button
-                variant="outline"
-                size="sm"
-                class="text-xs"
-                @click="filter = filter === 'all' ? 'jspace' : filter === 'jspace' ? 'kspace' : 'all'"
-            >
-                {{ filter === 'all' ? 'Show J-Space' : filter === 'jspace' ? 'Show K-Space' : 'Show All' }}
-            </Button>
+    <Card class="pb-0">
+        <CardHeader>
+            <CardTitle>Map killmails</CardTitle>
+            <CardDescription>Recents killmails that happened in one of the map solarsystems</CardDescription>
+            <CardAction>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    class="text-xs"
+                    @click="filter = filter === 'all' ? 'jspace' : filter === 'jspace' ? 'kspace' : 'all'"
+                >
+                    {{ filter === 'all' ? 'Show J-Space' : filter === 'jspace' ? 'Show K-Space' : 'Show All' }}
+                </Button>
+            </CardAction>
         </CardHeader>
-        <CardContent>
-            <div
-                class="relative grid h-100 grid-cols-[auto_1fr_auto_auto_auto] content-start overflow-x-hidden overflow-y-scroll mask-b-from-90% mask-alpha pr-4 pb-8"
-            >
-                <Deferred data="map_killmails">
-                    <TransitionGroup name="list">
-                        <Killmail v-for="killmail in filtered_killmails" :key="killmail.id" :killmail="killmail" />
-                    </TransitionGroup>
-                    <template #fallback>
-                        <KillmailPlaceholder v-for="i in 20" :key="i" />
-                    </template>
-                </Deferred>
+        <CardContent class="px-1 pb-1">
+            <div class="relative max-h-100 overflow-x-hidden overflow-y-scroll mask-b-from-90% mask-alpha pr-1">
+                <div class="rounded-lg border bg-neutral-900/40">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Victim</TableHead>
+                                <TableHead>Attacker</TableHead>
+                                <TableHead>Details</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <Deferred data="map_killmails">
+                            <TransitionGroup name="list">
+                                <Killmail v-for="killmail in filtered_killmails" :key="killmail.id" :killmail="killmail" />
+                            </TransitionGroup>
+                            <TableRow v-if="!filtered_killmails?.length">
+                                <TableCell colspan="3" class="text-center text-muted-foreground"> No killmails found </TableCell>
+                            </TableRow>
+                            <template #fallback>
+                                <KillmailPlaceholder />
+                            </template>
+                        </Deferred>
+                    </Table>
+                </div>
             </div>
         </CardContent>
     </Card>

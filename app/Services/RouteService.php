@@ -24,7 +24,7 @@ class RouteService
             ->select('from_solarsystem_id', 'to_solarsystem_id')
             ->get()
             ->groupBy('from_solarsystem_id')
-            ->map(fn($group) => $group->pluck('to_solarsystem_id')->toArray())
+            ->map(fn ($group) => $group->pluck('to_solarsystem_id')->toArray())
             ->toArray();
     }
 
@@ -57,7 +57,7 @@ class RouteService
             ->where('map_connections.map_id', $map->id)
             ->select('from.solarsystem_id as from_solarsystem_id', 'to.solarsystem_id as to_solarsystem_id')
             ->get()
-            ->map(fn($connection): array => [
+            ->map(fn ($connection): array => [
                 ['from_solarsystem_id' => $connection->from_solarsystem_id,
                     'to_solarsystem_id' => $connection->to_solarsystem_id,
                 ],
@@ -67,7 +67,7 @@ class RouteService
             ])
             ->flatten(1)
             ->groupBy('from_solarsystem_id')
-            ->map(fn($group) => $group->pluck('to_solarsystem_id')->toArray())
+            ->map(fn ($group) => $group->pluck('to_solarsystem_id')->toArray())
             ->toArray();
     }
 }

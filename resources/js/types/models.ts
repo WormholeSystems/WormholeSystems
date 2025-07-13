@@ -211,7 +211,9 @@ export type TCharacterStatus = {
     solarsystem: TSolarsystem | null;
 };
 
-export type TDestination = {
-    destination: TSolarsystem;
+export type TMapRouteSolarsystem = {
+    id: number;
+    solarsystem: TSolarsystem;
+    is_pinned: boolean;
     route: number[];
 };

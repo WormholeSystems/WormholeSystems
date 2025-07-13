@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import Character from '@/components/characters/Character.vue';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { getMapChannelName } from '@/const/channels';
 import { CharacterStatusUpdatedEvent } from '@/const/events';
 import { TCharacter } from '@/types/models';
@@ -42,21 +43,28 @@ useEchoPublic(getMapChannelName(map_id), CharacterStatusUpdatedEvent, () => {
 </script>
 
 <template>
-    <Card>
+    <Card class="pb-0">
         <CardHeader>
             <CardTitle>Characters</CardTitle>
             <CardDescription> See what characters are flying and where they are located in the map solarsystems. </CardDescription>
         </CardHeader>
-        <CardContent>
-            <div
-                class="relative grid h-100 grid-cols-[auto_1fr_auto_auto_auto] content-start overflow-x-hidden overflow-y-scroll mask-b-from-90% mask-alpha pr-4 pb-8"
-            >
-                <TransitionGroup name="list">
-                    <Character v-for="character in sorted_characters" :key="character.id" :character="character" />
-                </TransitionGroup>
-                <div v-if="map_characters?.length === 0" class="text-center text-sm text-muted-foreground">
-                    No characters found on the map. It might take a while for characters to appear after they have been logged in.
-                </div>
+        <CardContent class="px-1 pb-1">
+            <div class="rounded-lg border bg-neutral-900/40">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead> Pilot</TableHead>
+                            <TableHead> Ship</TableHead>
+                            <TableHead> Location</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TransitionGroup name="list">
+                        <Character v-for="character in sorted_characters" :key="character.id" :character />
+                    </TransitionGroup>
+                    <TableRow v-if="!sorted_characters?.length">
+                        <TableCell colspan="3" class="text-center text-muted-foreground"> No characters found </TableCell>
+                    </TableRow>
+                </Table>
             </div>
         </CardContent>
     </Card>

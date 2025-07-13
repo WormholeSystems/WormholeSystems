@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read Collection<int,MapSolarsystem> $mapSolarsystems
  * @property-read Collection<int,MapConnection> $mapConnections
  * @property-read Collection<int,MapAccess> $mapAccessors
+ * @property-read Collection<int,MapRouteSolarsystem> $mapRouteSolarsystems
  */
 class Map extends Model
 {
@@ -54,5 +55,15 @@ class Map extends Model
     public function mapAccessors(): HasMany
     {
         return $this->hasMany(MapAccess::class, 'map_id');
+    }
+
+    /**
+     * The route solar systems for this map.
+     *
+     * @return HasMany<MapRouteSolarsystem, $this>
+     */
+    public function mapRouteSolarsystems(): HasMany
+    {
+        return $this->hasMany(MapRouteSolarsystem::class, 'map_id');
     }
 }

@@ -66,7 +66,7 @@ function handleBadgeClick() {
         data: {
             map_solarsystem_id: map_solarsystem.id,
         },
-        only: ['selected_map_solarsystem', 'jumps'],
+        only: ['selected_map_solarsystem', 'map_route_solarsystems'],
     });
 }
 

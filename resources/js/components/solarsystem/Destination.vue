@@ -13,12 +13,12 @@ import {
 import { usePath } from '@/composables/usePath';
 import useUser from '@/composables/useUser';
 import { useWaypoint } from '@/composables/useWaypoint';
-import { TDestination } from '@/types/models';
+import { TMapRouteSolarsystem } from '@/types/models';
 import { useElementHover } from '@vueuse/core';
 import { computed, useTemplateRef, watch } from 'vue';
 
 const { destination } = defineProps<{
-    destination: TDestination;
+    destination: TMapRouteSolarsystem;
 }>();
 
 const { setPath } = usePath();
@@ -49,7 +49,7 @@ const distance = computed(() => {
         <ContextMenuTrigger>
             <div class="flex items-center gap-1" ref="element">
                 <span class="text-xs text-muted-foreground">
-                    {{ destination.destination.name }}
+                    {{ destination.solarsystem.name }}
                 </span>
                 <span
                     v-if="destination.route.length"
@@ -67,7 +67,7 @@ const distance = computed(() => {
                     <ContextMenuItem
                         v-for="character in user.characters"
                         :key="character.id"
-                        @select="setWaypoint(character.id, destination.destination.id)"
+                        @select="setWaypoint(character.id, destination.solarsystem.id)"
                     >
                         <CharacterImage :character_id="character.id" :character_name="character.name" class="size-5 rounded-lg" />
                         {{ character.name }}
@@ -81,7 +81,7 @@ const distance = computed(() => {
                     <ContextMenuItem
                         v-for="character in user.characters"
                         :key="character.id"
-                        @select="setWaypoint(character.id, destination.destination.id, false)"
+                        @select="setWaypoint(character.id, destination.solarsystem.id, false)"
                     >
                         <CharacterImage :character_id="character.id" :character_name="character.name" class="size-5 rounded-lg" />
                         {{ character.name }}
