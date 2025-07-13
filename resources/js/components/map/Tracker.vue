@@ -2,7 +2,7 @@
 import TrackingIcon from '@/components/icons/TrackingIcon.vue';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useMapSolarsystems } from '@/composables/map';
+import { useMapAction, useMapSolarsystems } from '@/composables/map';
 import useUser from '@/composables/useUser';
 import { TCharacter, TMap } from '@/types/models';
 import { router } from '@inertiajs/vue3';
@@ -11,6 +11,8 @@ import { computed, onMounted, ref, watch } from 'vue';
 const { map_characters, map } = defineProps<{ map_characters: TCharacter[]; map: TMap }>();
 
 const user = useUser();
+
+const { addMapSolarsystem } = useMapAction();
 
 const active_map_character = computed(() => {
     return map_characters.find((character) => character.id === user.value.active_character.id);
@@ -40,7 +42,7 @@ onMounted(() => {
     const existing_solarsystem = map_solarsystems.value.find((s) => s.solarsystem_id === active_solarsystem.id);
     if (existing_solarsystem) return;
 
-    requestAddSolarsystem(active_solarsystem.id);
+    addMapSolarsystem(active_solarsystem.id);
 });
 
 function requestConnectSolarsystem(old_solarsystem_id: number | null, new_solarsystem_id: number) {
@@ -53,21 +55,6 @@ function requestConnectSolarsystem(old_solarsystem_id: number | null, new_solars
         {
             from_map_solarsystem_id: old_map_solarsystem.id,
             to_solarsystem_id: new_solarsystem_id,
-        },
-        {
-            preserveState: true,
-            preserveScroll: true,
-        },
-    );
-}
-
-function requestAddSolarsystem(solarsystem_id: number) {
-    if (map_solarsystems.value.some((s) => s.solarsystem_id === solarsystem_id)) return;
-    router.post(
-        route('map-solarsystems.store'),
-        {
-            map_id: map.id,
-            solarsystem_id,
         },
         {
             preserveState: true,
