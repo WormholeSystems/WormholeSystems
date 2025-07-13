@@ -70,6 +70,26 @@ function handleBadgeClick() {
     });
 }
 
+function handlePrefetch() {
+    if (page.props.selected_map_solarsystem?.id === map_solarsystem.id) {
+        return;
+    }
+
+    router.prefetch(
+        window.location.pathname,
+        {
+            method: 'get',
+            only: ['selected_map_solarsystem', 'map_route_solarsystems'],
+            data: {
+                map_solarsystem_id: map_solarsystem.id,
+            },
+        },
+        {
+            cacheFor: '15s',
+        },
+    );
+}
+
 function handleBadgeDblClick() {
     open.value = true;
 }
@@ -78,7 +98,7 @@ function handleBadgeDblClick() {
 <template>
     <div ref="element" :style="drag.style.value" class="pointer-events-none absolute">
         <MapSolarsystemContextMenu :map_solarsystem>
-            <div class="group relative -translate-x-12 -translate-y-1/2">
+            <div class="group relative -translate-x-12 -translate-y-1/2" @pointerenter="handlePrefetch">
                 <Popover :open="open" @update:open="(value) => open && (open = value)">
                     <PopoverTrigger as-child>
                         <MapSolarsystemButton
