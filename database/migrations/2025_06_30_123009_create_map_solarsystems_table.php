@@ -5,8 +5,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -23,6 +22,7 @@ return new class extends Migration
             $table->string('status')->default(MapSolarsystemStatus::Unknown)->index();
             $table->boolean('pinned')->default(false);
             $table->text('notes')->nullable();
+            $table->unique(['map_id', 'solarsystem_id']);
             $table->timestamps();
         });
     }

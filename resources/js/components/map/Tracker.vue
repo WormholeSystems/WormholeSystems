@@ -54,6 +54,7 @@ function requestConnectSolarsystem(old_solarsystem_id: number | null, new_solars
 }
 
 function requestAddSolarsystem(solarsystem_id: number) {
+    if (map_solarsystems.value.some((s) => s.solarsystem_id === solarsystem_id)) return;
     router.post(
         route('map-solarsystems.store'),
         {
