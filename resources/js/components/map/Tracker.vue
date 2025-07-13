@@ -30,6 +30,9 @@ watch(
 
         requestConnectSolarsystem(old_solarsystem_id, new_solarsystem_id);
     },
+    {
+        immediate: true,
+    },
 );
 
 function requestConnectSolarsystem(old_solarsystem_id: number | null, new_solarsystem_id: number) {
