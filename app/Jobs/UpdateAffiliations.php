@@ -43,10 +43,14 @@ class UpdateAffiliations implements ShouldQueue
         $corporation_doesnt_need_update = Corporation::query()
             ->where('id', $this->affiliation->corporation_id)
             ->where('last_updated', '>=', now()->subDays(1))
+            ->exists();
+
+        $corp_is_npc = Corporation::query()
+            ->where('id', $this->affiliation->corporation_id)
             ->where('npc', true)
             ->exists();
 
-        if ($corporation_doesnt_need_update) {
+        if ($corporation_doesnt_need_update || $corp_is_npc) {
             Log::info(sprintf('Corporation with ID %d is up-to-date, skipping update.', $this->affiliation->corporation_id));
 
             return;
