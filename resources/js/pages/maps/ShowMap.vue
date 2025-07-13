@@ -16,6 +16,7 @@ import { TMapConfig } from '@/types/map';
 import { TCharacter, TKillmail, TMap, TMapRouteSolarsystem, TMapSolarSystem, TSolarsystem } from '@/types/models';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { echo } from '@laravel/echo-vue';
+import useUser from '@/composables/useUser';
 
 const { map, selected_map_solarsystem, map_killmails, map_route_solarsystems } = defineProps<{
     map: TMap;
@@ -27,6 +28,8 @@ const { map, selected_map_solarsystem, map_killmails, map_route_solarsystems } =
     map_characters: TCharacter[];
     map_route_solarsystems?: TMapRouteSolarsystem[];
 }>();
+
+const user = useUser();
 
 router.on('before', (event) => {
     event.detail.visit.headers['X-Socket-ID'] = echo().socketId() || '';
@@ -43,7 +46,7 @@ router.on('before', (event) => {
                     <MapComponent :map :config />
                     <MapSearch :map :search :solarsystems />
                     <div class="absolute top-4 right-4 flex gap-2">
-                        <Tracker :map_characters v-if="map_characters" :map />
+                        <Tracker :map_characters v-if="map_characters" :map :key="user.active_character?.id" />
                         <Tooltip>
                             <TooltipTrigger>
                                 <Button :variant="'outline'" as-child>
