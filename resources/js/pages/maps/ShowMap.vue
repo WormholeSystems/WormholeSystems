@@ -11,12 +11,12 @@ import SolarsystemSignatures from '@/components/signatures/SolarsystemSignatures
 import SelectedSolarsystem from '@/components/solarsystem/SelectedSolarsystem.vue';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import useUser from '@/composables/useUser';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { TMapConfig } from '@/types/map';
 import { TCharacter, TKillmail, TMap, TMapRouteSolarsystem, TMapSolarSystem, TSolarsystem } from '@/types/models';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { echo } from '@laravel/echo-vue';
-import useUser from '@/composables/useUser';
 
 const { map, selected_map_solarsystem, map_killmails, map_route_solarsystems } = defineProps<{
     map: TMap;
@@ -32,7 +32,9 @@ const { map, selected_map_solarsystem, map_killmails, map_route_solarsystems } =
 const user = useUser();
 
 router.on('before', (event) => {
-    event.detail.visit.headers['X-Socket-ID'] = echo().socketId() || '';
+    const id = echo().socketId();
+    if (!id) return;
+    event.detail.visit.headers['X-Socket-ID'] = id;
 });
 </script>
 
