@@ -6,7 +6,7 @@ import { useMapSolarsystems } from '@/composables/map';
 import useUser from '@/composables/useUser';
 import { TCharacter, TMap } from '@/types/models';
 import { router } from '@inertiajs/vue3';
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 
 const { map_characters, map } = defineProps<{ map_characters: TCharacter[]; map: TMap }>();
 
@@ -24,16 +24,24 @@ watch(
     () => active_map_character.value?.status?.solarsystem_id,
     (new_solarsystem_id, old_solarsystem_id) => {
         if (!enabled.value) return;
-        if (!new_solarsystem_id) return;
-        if (!old_solarsystem_id) return requestAddSolarsystem(new_solarsystem_id);
+        if (!new_solarsystem_id || !old_solarsystem_id) return;
         if (new_solarsystem_id === old_solarsystem_id) return;
 
         requestConnectSolarsystem(old_solarsystem_id, new_solarsystem_id);
     },
-    {
-        immediate: true,
-    },
 );
+
+onMounted(() => {
+    if (!enabled.value) return;
+
+    const active_solarsystem = active_map_character.value?.status?.solarsystem;
+    if (!active_solarsystem) return;
+
+    const existing_solarsystem = map_solarsystems.value.find((s) => s.solarsystem_id === active_solarsystem.id);
+    if (existing_solarsystem) return;
+
+    requestAddSolarsystem(active_solarsystem.id);
+});
 
 function requestConnectSolarsystem(old_solarsystem_id: number | null, new_solarsystem_id: number) {
     const old_map_solarsystem = map_solarsystems.value.find((s) => s.solarsystem_id === old_solarsystem_id);
