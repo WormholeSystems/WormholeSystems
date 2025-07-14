@@ -16,7 +16,7 @@ class MapSolarsystemDeletedEvent implements ShouldBroadcastNow, ShouldDispatchAf
     /**
      * Create a new event instance.
      */
-    public function __construct(private readonly int $map_id)
+    public function __construct(public readonly int $map_id)
     {
         //
     }
