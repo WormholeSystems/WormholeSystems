@@ -21,7 +21,7 @@ import {
 import { TMapConfig } from '@/types/map';
 import { TMap } from '@/types/models';
 import { router } from '@inertiajs/vue3';
-import { useEcho } from '@laravel/echo-vue';
+import { useEchoPublic } from '@laravel/echo-vue';
 import { useMagicKeys, useMousePressed, whenever } from '@vueuse/core';
 import { computed, ref, useTemplateRef } from 'vue';
 
@@ -73,7 +73,7 @@ function onOpenChange(open: boolean) {
     }
 }
 
-useEcho(
+useEchoPublic(
     getMapChannelName(map.id),
     [
         MapUpdatedEvent,
@@ -90,13 +90,13 @@ useEcho(
     },
 );
 
-useEcho(getMapChannelName(map.id), [MapSolarsystemCreatedEvent, MapSolarsystemDeletedEvent, MapSolarsystemsDeletedEvent], () => {
+useEchoPublic(getMapChannelName(map.id), [MapSolarsystemCreatedEvent, MapSolarsystemDeletedEvent, MapSolarsystemsDeletedEvent], () => {
     router.reload({
         only: ['map', 'map_killmails'],
     });
 });
 
-useEcho(getMapChannelName(map.id), [MapRouteSolarsystemsUpdatedEvent], () => {
+useEchoPublic(getMapChannelName(map.id), [MapRouteSolarsystemsUpdatedEvent], () => {
     router.reload({
         only: ['map_route_solarsystems'],
     });

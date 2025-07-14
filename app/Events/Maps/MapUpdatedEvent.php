@@ -5,7 +5,6 @@ namespace App\Events\Maps;
 use App\Models\Map;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 use Illuminate\Foundation\Events\Dispatchable;
@@ -31,7 +30,7 @@ class MapUpdatedEvent implements ShouldBroadcastNow, ShouldDispatchAfterCommit
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel(sprintf('Map.%d', $this->map->id)),
+            new Channel(sprintf('Map.%d', $this->map->id)),
         ];
     }
 }

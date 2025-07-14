@@ -4,7 +4,6 @@ namespace App\Events\MapSolarsystems;
 
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 use Illuminate\Foundation\Events\Dispatchable;
@@ -30,7 +29,7 @@ class MapSolarsystemCreatedEvent implements ShouldBroadcastNow, ShouldDispatchAf
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel(sprintf('Map.%d', $this->map_id)),
+            new Channel(sprintf('Map.%d', $this->map_id)),
         ];
     }
 }

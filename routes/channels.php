@@ -1,9 +1,7 @@
 <?php
 
-use App\Models\Map;
-use App\Models\User;
 use Illuminate\Support\Facades\Broadcast;
 
-Broadcast::channel('Map.{map}', function (User $user, Map $map) {
-    return $user->can('view', $map);
+Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
+    return (int) $user->id === (int) $id;
 });
