@@ -79,6 +79,9 @@
     --color-unscanned: var(--color-cyan-500);
     --color-active: var(--color-orange-500);
     --color-empty: var(--color-emerald-400);
+
+    --text-2xs: 0.7rem;
+    --text-3xs: 0.625rem;
 }
 
 /*
