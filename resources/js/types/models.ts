@@ -27,6 +27,7 @@ export type TMapSolarSystem = {
     pinned: boolean;
     signatures: TSignature[] | null;
     signatures_count?: number;
+    notes: string | null;
 };
 
 export type TMapConnection = {

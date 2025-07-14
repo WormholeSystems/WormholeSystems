@@ -35,6 +35,7 @@ class UpdateMapSolarsystemRequest extends FormRequest
             'position_y' => ['nullable', 'numeric'],
             'status' => ['nullable', 'sometimes', Rule::enum(MapSolarsystemStatus::class)],
             'pinned' => ['boolean'],
+            'notes' => ['nullable', 'string', 'max:65535'],
         ];
     }
 }
