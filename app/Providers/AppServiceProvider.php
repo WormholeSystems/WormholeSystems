@@ -9,6 +9,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\ParallelTesting;
 use Illuminate\Support\ServiceProvider;
+use SocialiteProviders\Eveonline\Provider;
+use SocialiteProviders\Manager\SocialiteWasCalled;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -29,8 +31,8 @@ class AppServiceProvider extends ServiceProvider
 
         $this->registerNotificationMacro();
 
-        Event::listen(function (\SocialiteProviders\Manager\SocialiteWasCalled $event): void {
-            $event->extendSocialite('eveonline', \SocialiteProviders\Eveonline\Provider::class);
+        Event::listen(function (SocialiteWasCalled $event): void {
+            $event->extendSocialite('eveonline', Provider::class);
         });
 
         // Executed when a test database is created...
