@@ -22,7 +22,7 @@ import { TMapConfig } from '@/types/map';
 import { TMap } from '@/types/models';
 import { router } from '@inertiajs/vue3';
 import { useEchoPublic } from '@laravel/echo-vue';
-import { useMagicKeys, whenever } from '@vueuse/core';
+import { useMagicKeys, useMousePressed, whenever } from '@vueuse/core';
 import { computed, ref, useTemplateRef } from 'vue';
 
 const { map, config } = defineProps<{
@@ -31,6 +31,19 @@ const { map, config } = defineProps<{
 }>();
 
 const container = useTemplateRef('map-container');
+
+const scroll_locked = ref(true);
+
+useMousePressed({
+    onPressed(e) {
+        if ('button' in e && e.button === 1) {
+            scroll_locked.value = false;
+        }
+    },
+    onReleased() {
+        scroll_locked.value = true;
+    },
+});
 
 useNewMap(
     () => map,
@@ -92,10 +105,11 @@ useEchoPublic(getMapChannelName(map.id), [MapRouteSolarsystemsUpdatedEvent], () 
 
 <template>
     <div
-        class="relative w-full overflow-y-scroll rounded-lg border bg-neutral-900/50"
+        class="relative max-h-[1000px] w-full overflow-y-scroll rounded-lg border bg-neutral-900/50"
         :style="{
             height: config.max_size.y > 1000 ? `${config.max_size.y}px` : 'auto',
         }"
+        @wheel="(e) => (scroll_locked ? e.preventDefault() : null)"
     >
         <ContextMenu @update:open="onOpenChange">
             <ContextMenuTrigger>
