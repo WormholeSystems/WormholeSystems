@@ -101,6 +101,19 @@ useEcho(getMapChannelName(map.id), [MapRouteSolarsystemsUpdatedEvent], () => {
         only: ['map_route_solarsystems'],
     });
 });
+
+function handleWheel(event: WheelEvent) {
+    if (!scroll_locked.value) {
+        return;
+    }
+
+    event.preventDefault();
+
+    window.scrollBy({
+        top: event.deltaY,
+        left: event.deltaX,
+    });
+}
 </script>
 
 <template>
@@ -109,7 +122,7 @@ useEcho(getMapChannelName(map.id), [MapRouteSolarsystemsUpdatedEvent], () => {
         :style="{
             height: config.max_size.y > 1000 ? `${config.max_size.y}px` : 'auto',
         }"
-        @wheel="(e) => (scroll_locked ? e.preventDefault() : null)"
+        @wheel="handleWheel"
     >
         <ContextMenu @update:open="onOpenChange">
             <ContextMenuTrigger>
