@@ -32,6 +32,7 @@ class RouteService
     private function getConnections(): array
     {
         return SolarsystemConnection::query()
+            ->whereDoesntHaveRelation('fromSolarsystem', 'name', '=', 'Zarzakh')
             ->select('from_solarsystem_id', 'to_solarsystem_id')
             ->get(['from_solarsystem_id', 'to_solarsystem_id'])
             ->groupBy('from_solarsystem_id')
