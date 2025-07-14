@@ -23,6 +23,7 @@ return new class extends Migration
             $table->foreignId('market_group_id')->nullable()->constrained()->nullOnDelete()->cascadeOnUpdate();
             $table->foreignId('meta_group_id')->nullable()->constrained()->nullOnDelete()->cascadeOnUpdate();
             $table->foreignId('race_id')->nullable()->constrained()->nullOnDelete()->cascadeOnUpdate();
+            $table->foreignId('faction_id')->nullable();
             $table->boolean('published')->default(true)->index();
             $table->double('capacity')->nullable();
             $table->double('mass')->nullable();

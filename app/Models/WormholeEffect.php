@@ -38,7 +38,7 @@ class WormholeEffect extends Model
     {
         $effects = $this->effects;
 
-        if (! $effects) {
+        if ($effects->isEmpty()) {
             return null;
         }
 

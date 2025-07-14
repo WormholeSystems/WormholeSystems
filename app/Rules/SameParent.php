@@ -32,7 +32,6 @@ class SameParent implements ValidationRule
             ->whereIn($this->value_column, $items->pluck($this->value_column))
             ->select($this->parent_column)
             ->distinct()
-            ->pluck($this->parent_column)
             ->count();
 
         if ($parents_count > 1) {
