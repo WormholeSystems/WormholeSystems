@@ -97,7 +97,11 @@ function handleSubmit() {
                     <Button variant="outline" @click="editing = true" v-if="!editing"> Edit</Button>
                     <Button variant="outline" v-else type="submit"> Save</Button>
                 </div>
-                <div v-html="description" v-if="!editing && map_solarsystem.notes" class="prose-sm prose-neutral prose-invert" />
+                <div
+                    v-html="description"
+                    v-if="!editing && map_solarsystem.notes"
+                    class="prose-li:ml:0 prose-sm prose-neutral prose-invert prose-a:text-amber-500 prose-a:hover:underline prose-ul:list-disc"
+                />
                 <Textarea
                     v-else-if="editing"
                     v-model="form.notes"
