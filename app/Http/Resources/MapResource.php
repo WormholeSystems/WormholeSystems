@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\Map;
+use App\Models\MapUserSetting;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Throwable;
@@ -48,6 +49,11 @@ class MapResource extends JsonResource
             return $this->mapUserSetting->toResource(MapUserSettingResource::class);
         }
 
-        return tap($this->mapUserSetting)->save()->toResource(MapUserSettingResource::class);
+        return MapUserSetting::query()->updateOrCreate([
+            'user_id' => $this->mapUserSetting->user_id,
+            'map_id' => $this->id,
+        ], [
+            'tracking_allowed' => false,
+        ])->toResource(MapUserSettingResource::class);
     }
 }
