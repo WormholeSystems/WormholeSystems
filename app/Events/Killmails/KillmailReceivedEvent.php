@@ -6,6 +6,7 @@ use App\Models\Killmail;
 use App\Models\Map;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 use Illuminate\Foundation\Events\Dispatchable;
@@ -31,7 +32,7 @@ class KillmailReceivedEvent implements ShouldBroadcastNow, ShouldDispatchAfterCo
     public function broadcastOn(): array
     {
         return [
-            new Channel(sprintf('Map.%d', $this->map->id)),
+            new PrivateChannel(sprintf('Map.%d', $this->map->id)),
         ];
     }
 }

@@ -75,7 +75,7 @@ router.on('before', (event) => {
                     <SolarsystemSignatures :map_solarsystem="selected_map_solarsystem" v-if="selected_map_solarsystem" />
                 </div>
                 <div class="col-span-6 xl:col-span-4">
-                    <MapCharacters :map_id="map.id" :map_characters />
+                    <MapCharacters :map_characters />
                 </div>
                 <div class="col-span-6 xl:col-span-4">
                     <MapKillmails :map_killmails="map_killmails" :map_id="map.id" />

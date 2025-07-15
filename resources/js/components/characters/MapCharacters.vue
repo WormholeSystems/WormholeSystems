@@ -2,16 +2,11 @@
 import Character from '@/components/characters/Character.vue';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { getMapChannelName } from '@/const/channels';
-import { CharacterStatusUpdatedEvent } from '@/const/events';
 import { TCharacter } from '@/types/models';
-import { router } from '@inertiajs/vue3';
-import { useEchoPublic } from '@laravel/echo-vue';
 import { computed } from 'vue';
 
-const { map_characters, map_id } = defineProps<{
+const { map_characters } = defineProps<{
     map_characters: TCharacter[];
-    map_id: number;
 }>();
 
 const sorted_characters = computed(() => map_characters.toSorted(sortCharacters));
@@ -34,12 +29,6 @@ function sortCharacters(a: TCharacter, b: TCharacter) {
 
     return a.name.localeCompare(b.name);
 }
-
-useEchoPublic(getMapChannelName(map_id), CharacterStatusUpdatedEvent, () => {
-    router.reload({
-        only: ['map_characters'],
-    });
-});
 </script>
 
 <template>
