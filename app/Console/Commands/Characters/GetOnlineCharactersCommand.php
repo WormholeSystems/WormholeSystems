@@ -6,6 +6,7 @@ use App\Events\Characters\CharacterStatusUpdatedEvent;
 use App\Models\CharacterStatus;
 use App\Models\Map;
 use Illuminate\Console\Command;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Client\ConnectionException;
 use NicolasKion\Esi\Esi;
 
@@ -33,6 +34,7 @@ class GetOnlineCharactersCommand extends Command
     public function handle(Esi $esi): void
     {
         $characters = CharacterStatus::query()
+            ->whereHas('character.user', fn (Builder $query) => $query->where('last_active_at', '>=', now()->subMinutes(10)))
             ->get();
 
         $updated_character_ids = [];

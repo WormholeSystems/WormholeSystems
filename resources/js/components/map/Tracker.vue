@@ -6,6 +6,7 @@ import { useMapAction, useMapSolarsystems } from '@/composables/map';
 import useUser from '@/composables/useUser';
 import { TCharacter, TMap } from '@/types/models';
 import { router } from '@inertiajs/vue3';
+import { useFetch, useIntervalFn } from '@vueuse/core';
 import { computed, onMounted, ref, watch } from 'vue';
 
 const { map_characters, map } = defineProps<{ map_characters: TCharacter[]; map: TMap }>();
@@ -21,6 +22,15 @@ const active_map_character = computed(() => {
 const { map_solarsystems } = useMapSolarsystems();
 
 const enabled = ref(true);
+
+const ping_interval_seconds = 60 * 5 * 1000;
+
+const { execute } = useFetch(route('maps.ping', map.id), {
+    immediate: false,
+});
+useIntervalFn(execute, ping_interval_seconds, {
+    immediateCallback: true,
+});
 
 watch(
     () => active_map_character.value?.status?.solarsystem_id,

@@ -11,6 +11,7 @@ use App\Http\Controllers\MapRouteSolarsystemController;
 use App\Http\Controllers\MapSelectionController;
 use App\Http\Controllers\MapSolarsystemController;
 use App\Http\Controllers\MapUserSettingController;
+use App\Http\Controllers\PingController;
 use App\Http\Controllers\SignatureController;
 use App\Http\Controllers\TrackingController;
 use App\Http\Controllers\UserCharacterController;
@@ -24,6 +25,9 @@ Route::get('eve', [EveController::class, 'show'])->name('eve.show');
 Route::get('eve/callback', [EveController::class, 'store'])->name('eve.store');
 
 Route::middleware('auth')->group(function () {
+
+    Route::get('maps/{map}/ping', [PingController::class, 'show'])->name('maps.ping');
+
     Route::resource('maps', MapController::class)->names([
         'index' => 'home',
         'show' => 'maps.show',
