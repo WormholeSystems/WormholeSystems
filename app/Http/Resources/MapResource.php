@@ -41,10 +41,6 @@ class MapResource extends JsonResource
      */
     protected function handleUserSetting(): ?JsonResource
     {
-        if (! $this->relationLoaded('mapUserSetting')) {
-            return null;
-        }
-
         if ($this->mapUserSetting) {
             return $this->mapUserSetting->toResource(MapUserSettingResource::class);
         }
