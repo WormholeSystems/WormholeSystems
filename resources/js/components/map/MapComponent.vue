@@ -119,6 +119,7 @@ function handleWheel(event: WheelEvent) {
     window.scrollBy({
         top: event.deltaY,
         left: event.deltaX,
+        behavior: 'smooth',
     });
 }
 </script>
