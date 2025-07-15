@@ -39,7 +39,7 @@ class WormholeSystem extends Model
      */
     public function solarsystem(): BelongsTo
     {
-        return $this->belongsTo(Solarsystem::class);
+        return $this->belongsTo(Solarsystem::class, 'id');
     }
 
     /**

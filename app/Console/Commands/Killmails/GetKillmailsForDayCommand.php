@@ -1,0 +1,132 @@
+<?php
+
+namespace App\Console\Commands\Killmails;
+
+use App\Models\Killmail;
+use Carbon\CarbonImmutable;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Process;
+use Illuminate\Support\Facades\Storage;
+
+use function Laravel\Prompts\error;
+use function Laravel\Prompts\info;
+
+class GetKillmailsForDayCommand extends Command
+{
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
+    protected $signature = 'app:get-killmails-for-day {date}';
+
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'Download and process killmails for a specific day';
+
+    /**
+     * Execute the console command.
+     */
+    public function handle(): int
+    {
+        $date = CarbonImmutable::parse($this->argument('date'));
+
+        $remote_file = $this->getRemoteFileName($date);
+        $local_file = $this->getLocalFileName($date);
+
+        info(sprintf('Downloading %s to %s', $remote_file, $local_file));
+
+        $response = Http::retry(5)->get($remote_file);
+
+        if ($response->failed()) {
+            error(sprintf('Failed to download file from %s', $remote_file));
+
+            return self::FAILURE;
+        }
+
+        Storage::put($local_file, $response->body());
+
+        info(sprintf('Successfully downloaded %s', $local_file));
+
+        $this->extractKillmails($local_file);
+
+        $this->processKillmails($date);
+
+        Storage::delete($local_file);
+        Storage::deleteDirectory('killmails/killmails');
+
+        return self::SUCCESS;
+    }
+
+    private function getRemoteFileName(CarbonImmutable $date): string
+    {
+        return sprintf(
+            'https://data.everef.net/killmails/%s/killmails-%s-%s-%s.tar.bz2',
+            $date->year,
+            $date->year,
+            $date->format('m'),
+            $date->format('d')
+        );
+    }
+
+    private function getLocalFileName(CarbonImmutable $date): string
+    {
+        return sprintf(
+            '%s/%s.tar.bz2',
+            Storage::path('killmails'),
+            $date->format('Y-m-d')
+        );
+    }
+
+    private function extractKillmails(string $local_file): void
+    {
+
+        $this->info(sprintf('Extracting %s', $local_file));
+
+        $extracted_path = Storage::path('killmails/');
+        if (! Storage::exists($extracted_path)) {
+            Storage::makeDirectory('killmails/');
+        }
+
+        $command = sprintf('tar -xjf %s -C %s', Storage::path($local_file), $extracted_path);
+
+        $res = Process::run($command);
+
+        if ($res->successful()) {
+            info(sprintf('Successfully extracted %s', $local_file));
+        } else {
+            error(sprintf('Failed to extract %s: %s', $local_file, $res->errorOutput()));
+        }
+
+    }
+
+    private function processKillmails(CarbonImmutable $date): void
+    {
+        $files = Storage::files('killmails/killmails');
+
+        foreach ($files as $file) {
+            $this->info(sprintf('Processing %s', $file));
+            $content = Storage::json($file);
+            if (! $content) {
+                info(sprintf('Failed to read %s, skipping', $file));
+
+                continue;
+            }
+            Killmail::query()->firstOrCreate([
+                'id' => $content['killmail_id'],
+                'hash' => $content['killmail_hash'],
+            ],
+                [
+                    'time' => $content['killmail_time'],
+                    'solarsystem_id' => $content['solar_system_id'],
+                    'data' => $content,
+                    'zkb' => [],
+                ]
+            );
+        }
+    }
+}

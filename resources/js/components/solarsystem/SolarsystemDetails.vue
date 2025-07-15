@@ -8,11 +8,12 @@ import SecurityStatus from '@/components/solarsystem/SecurityStatus.vue';
 import SolarsystemClass from '@/components/SolarsystemClass.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { TMap, TMapRouteSolarsystem, TMapSolarSystem } from '@/types/models';
-import { Deferred, useForm } from '@inertiajs/vue3';
+import { Deferred, Link, useForm } from '@inertiajs/vue3';
 import markdownit from 'markdown-it';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 const { map_solarsystem, map_route_solarsystems } = defineProps<{
     map_solarsystem: TMapSolarSystem;
@@ -23,6 +24,7 @@ const { map_solarsystem, map_route_solarsystems } = defineProps<{
 const pinned = computed(() => map_route_solarsystems?.filter((m) => m.is_pinned));
 
 const editing = ref(false);
+const statistics = ref(false);
 
 const form = useForm({
     notes: map_solarsystem.notes || '',
@@ -52,6 +54,14 @@ function handleSubmit() {
         only: ['selected_map_solarsystem'],
     });
 }
+
+watch(
+    () => map_solarsystem,
+    (newValue) => {
+        editing.value = false;
+        form.notes = newValue.notes || '';
+    },
+);
 </script>
 
 <template>
@@ -92,10 +102,43 @@ function handleSubmit() {
         </CardHeader>
         <CardContent>
             <form @submit.prevent="handleSubmit" class="w-full">
-                <div class="mb-4 flex justify-between">
-                    <h3 class="text-lg font-semibold">Notes</h3>
+                <div class="mb-4 flex justify-between gap-4">
+                    <h3 class="mr-auto text-lg font-semibold">Notes</h3>
+                    <Dialog v-model:open="statistics">
+                        <DialogTrigger as-child>
+                            <Button variant="outline" role="button">Statistics</Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle> Collect system intel</DialogTitle>
+                                <DialogDescription>
+                                    Trigger the statistics collection to gather intel about all wormhole solarsystem and who might live there. It will
+                                    list the possible occupants, their kill and set the system status based on the amount of kills.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <DialogFooter>
+                                <Button variant="secondary" @click="statistics = false"> Cancel</Button>
+                                <Button as-child>
+                                    <Link
+                                        :href="route('statistics.store')"
+                                        :data="{ map_id: map_solarsystem.map_id }"
+                                        method="post"
+                                        @click="statistics = false"
+                                        preserve-state
+                                        preserve-scroll
+                                        :only="['selected_map_solarsystem']"
+                                    >
+                                        Add to queue
+                                    </Link>
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
                     <Button variant="outline" @click="editing = true" v-if="!editing"> Edit</Button>
-                    <Button variant="outline" v-else type="submit"> Save</Button>
+                    <div class="flex gap-4" v-else>
+                        <Button variant="destructive" @click="editing = false"> Cancel</Button>
+                        <Button variant="outline" type="submit"> Save</Button>
+                    </div>
                 </div>
                 <div
                     v-html="description"

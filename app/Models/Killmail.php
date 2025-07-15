@@ -31,7 +31,7 @@ class Killmail extends Model
     protected $casts = [
         'id' => 'integer',
         'solarsystem_id' => 'integer',
-        'data' => 'json',
+        'data' => 'object',
         'zkb' => 'json',
         'time' => 'datetime',
     ];
