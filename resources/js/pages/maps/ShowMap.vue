@@ -76,7 +76,7 @@ router.on('before', (event) => {
                 </div>
             </div>
         </div>
-        <MapUserSetting :map_user_setting />
+        <MapUserSetting :map_user_setting="map.map_user_setting" v-if="map.map_user_setting" />
     </AppLayout>
 </template>
 <style>

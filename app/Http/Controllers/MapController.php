@@ -8,7 +8,6 @@ use App\Http\Resources\CharacterResource;
 use App\Http\Resources\KillmailResource;
 use App\Http\Resources\MapResource;
 use App\Http\Resources\MapSolarsystemResource;
-use App\Http\Resources\MapUserSettingResource;
 use App\Http\Resources\SolarsystemResource;
 use App\Models\Character;
 use App\Models\Killmail;
@@ -75,7 +74,6 @@ class MapController extends Controller
             'map_killmails' => $map_killmails,
             'map_characters' => $map_characters,
             'map_route_solarsystems' => Inertia::defer(fn (): array => $this->getMapRouteSolarsystems($map, $selected_map_solarsystem_id)),
-            'map_user_setting' => $map->mapUserSetting->toResource(MapUserSettingResource::class),
         ]);
     }
 
