@@ -45,15 +45,15 @@ class MapResource extends JsonResource
             return null;
         }
 
-        if ($this->mapUserSetting->id) {
+        if ($this->mapUserSetting) {
             return $this->mapUserSetting->toResource(MapUserSettingResource::class);
         }
 
-        return MapUserSetting::query()->updateOrCreate([
-            'user_id' => $this->mapUserSetting->user_id,
+        $user_setting = MapUserSetting::query()->updateOrCreate([
+            'user_id' => auth()->id(),
             'map_id' => $this->id,
-        ], [
-            'tracking_allowed' => false,
-        ])->toResource(MapUserSettingResource::class);
+        ]);
+
+        return $user_setting->toResource(MapUserSettingResource::class);
     }
 }

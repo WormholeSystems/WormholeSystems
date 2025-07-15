@@ -78,10 +78,6 @@ class Map extends Model
     {
         return $this->hasOne(MapUserSetting::class, 'map_id')
             ->where('user_id', auth()->id())
-            ->withDefault([
-                'user_id' => auth()->id(),
-                'tracking_allowed' => false,
-            ])
             ->ofMany();
     }
 }
