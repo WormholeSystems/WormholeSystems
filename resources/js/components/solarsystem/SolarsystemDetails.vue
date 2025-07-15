@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { TMap, TMapRouteSolarsystem, TMapSolarSystem } from '@/types/models';
 import { Deferred, Link, useForm } from '@inertiajs/vue3';
 import markdownit from 'markdown-it';
+import attr from 'markdown-it-link-attributes';
 import { computed, ref, watch } from 'vue';
 
 const { map_solarsystem, map_route_solarsystems } = defineProps<{
@@ -35,6 +36,13 @@ const md = markdownit({
     linkify: true,
     typographer: true,
     breaks: true,
+});
+
+md.use(attr, {
+    attrs: {
+        target: '_blank',
+        rel: 'noopener',
+    },
 });
 
 const description = computed(() => {
