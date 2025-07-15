@@ -22,6 +22,18 @@ use function Laravel\Prompts\progress;
 
 class AnalyzeWormholeSystems extends Command
 {
+    private int $mapId;
+
+    private int $daysAgo;
+
+    private int $daysActive;
+
+    private int $top;
+
+    private int $activeThreshold;
+
+    private int $hostileThreshold;
+
     public function __construct(private readonly Esi $esi)
     {
         parent::__construct();
@@ -37,8 +49,8 @@ class AnalyzeWormholeSystems extends Command
         {--days-ago=90 : Number of days to look back for killmails}
         {--days-active=5 : Minimum number of days with kills to consider a group active}
         {--top=10 : Number of top groups to display}
-        {--active-threshold=75 : Minimum number of kills to consider a system active}
-        {--hostile-threshold=150 : Minimum number of kills to consider a system hostile}';
+        {--active-threshold=15 : Minimum number of kills to consider a system active}
+        {--hostile-threshold=50 : Minimum number of kills to consider a system hostile}';
 
     /**
      * The console command description.
@@ -52,112 +64,181 @@ class AnalyzeWormholeSystems extends Command
      */
     public function handle(): int
     {
+        $this->initializeOptions();
 
         progress('Analyzing wormhole systems', WormholeSystem::all(), fn (WormholeSystem $wormholeSystem) => $this->analyzeWormholeSystem($wormholeSystem));
 
-        MapSolarsystemsUpdatedEvent::dispatch($this->argument('map'));
+        MapSolarsystemsUpdatedEvent::dispatch($this->mapId);
 
         return self::SUCCESS;
     }
 
+    private function initializeOptions(): void
+    {
+
+        $this->mapId = (int) $this->argument('map');
+        $this->daysAgo = (int) $this->option('days-ago');
+        $this->daysActive = (int) $this->option('days-active');
+        $this->top = (int) $this->option('top');
+        $this->activeThreshold = (int) $this->option('active-threshold');
+        $this->hostileThreshold = (int) $this->option('hostile-threshold');
+    }
+
     private function analyzeWormholeSystem(WormholeSystem $wormholeSystem): void
     {
-        $map_id = (int) $this->argument('map');
-        $days_ago = (int) $this->option('days-ago');
-        $days_active = (int) $this->option('days-active');
-        $top = (int) $this->option('top');
-        +$active_threshold = (int) $this->option('active-threshold');
-        $hostile_threshold = (int) $this->option('hostile-threshold');
+        $killmails = $this->getKillmails($wormholeSystem);
 
-        $solarsystem = $wormholeSystem->solarsystem;
+        $organizationStats = $this->calculateOrganizationStats($killmails);
+        $topOrganizations = $this->getTopOrganizations($organizationStats);
 
-        $killmails = $solarsystem->killmails()->where('time', '>=', now()->subDays($days_ago))->get();
+        $this->ensureNamesExist($topOrganizations->keys());
 
-        $top_groups = [];
+        $systemStatus = $this->determineSystemStatus($topOrganizations);
+        $notesContent = $this->generateNotesContent($topOrganizations);
+
+        $this->updateMapSolarsystem($wormholeSystem, $systemStatus, $notesContent);
+    }
+
+    private function getKillmails(WormholeSystem $wormholeSystem): Collection
+    {
+        return $wormholeSystem->solarsystem
+            ->killmails()
+            ->where('time', '>=', now()->subDays($this->daysAgo))
+            ->get();
+    }
+
+    private function calculateOrganizationStats(Collection $killmails): Collection
+    {
+        $organizationStats = [];
 
         foreach ($killmails as $killmail) {
-            $day = $killmail->time->format('Y-m-d');
+            $killDate = $killmail->time->format('Y-m-d');
+            $participatingOrganizations = $this->getParticipatingOrganizations($killmail);
 
-            [$type, $id] = $this->getTypeAndIdFromGroup($killmail->data->victim);
-
-            if ($id !== 0) {
-                $this->addGroupToGroups($top_groups, $id, $type, $day);
-            }
-
-            foreach ($killmail->data->attackers as $attacker) {
-                [$type, $id] = $this->getTypeAndIdFromGroup($attacker);
-
-                if ($id !== 0) {
-                    $this->addGroupToGroups($top_groups, $id, $type, $day);
-                }
+            // Count each organization only once per killmail to avoid double counting
+            foreach ($participatingOrganizations as $organizationId => $organizationType) {
+                $this->addOrganizationActivity($organizationStats, $organizationId, $organizationType, $killDate);
             }
         }
 
-        $top_groups = collect($top_groups)
-            ->filter(fn (array $group) => count($group['days']) >= $days_active)
-            ->sortDesc()->take($top);
+        return collect($organizationStats)
+            ->filter(fn (array $stats) => count($stats['active_days']) >= $this->daysActive);
+    }
 
-        $top_10_ids = $top_groups->keys();
+    private function getParticipatingOrganizations(object $killmail): array
+    {
+        $organizations = [];
 
-        $this->ensureNamesExist($top_10_ids);
+        // Add victim's organization
+        [$type, $id] = $this->getOrganizationFromEntity($killmail->data->victim);
+        if ($id !== 0) {
+            $organizations[$id] = $type;
+        }
 
-        $markdown = $top_groups->map($this->getEntityDetails(...))->implode("\n");
+        // Add unique attacker organizations (deduplicates automatically using array keys)
+        foreach ($killmail->data->attackers as $attacker) {
+            [$type, $id] = $this->getOrganizationFromEntity($attacker);
+            if ($id !== 0) {
+                $organizations[$id] = $type;
+            }
+        }
 
-        $top_count = $top_groups->sum('kills');
+        return $organizations;
+    }
 
-        $status = match (true) {
-            $top_count >= $hostile_threshold => MapSolarsystemStatus::Hostile,
-            $top_count >= $active_threshold => MapSolarsystemStatus::Active,
+    private function addOrganizationActivity(array &$organizationStats, int $organizationId, string $type, string $date): void
+    {
+        if (! isset($organizationStats[$organizationId])) {
+            $organizationStats[$organizationId] = [
+                'type' => $type,
+                'kill_count' => 0,
+                'active_days' => [],
+            ];
+        }
+
+        $organizationStats[$organizationId]['kill_count']++;
+        $organizationStats[$organizationId]['active_days'][$date] = true;
+    }
+
+    private function getTopOrganizations(Collection $organizationStats): Collection
+    {
+        return $organizationStats
+            ->sortByDesc('kill_count')
+            ->take($this->top);
+    }
+
+    private function determineSystemStatus(Collection $topOrganizations): MapSolarsystemStatus
+    {
+        $totalKills = $topOrganizations->sum('kill_count');
+
+        return match (true) {
+            $totalKills >= $this->hostileThreshold => MapSolarsystemStatus::Hostile,
+            $totalKills >= $this->activeThreshold => MapSolarsystemStatus::Active,
             default => MapSolarsystemStatus::Unknown
         };
+    }
 
+    private function generateNotesContent(Collection $topOrganizations): string
+    {
         $start = '<!-- killmails:start -->';
         $end = '<!-- killmails:end -->';
 
-        $map_solarsystem = MapSolarsystem::query()
-            ->where('solarsystem_id', $solarsystem->id)
-            ->where('map_id', $map_id)
-            ->firstOrNew();
-
-        if (empty($markdown)) {
+        if ($topOrganizations->isEmpty()) {
             $markdown = 'We could not find any groups that meet the criteria.';
+        } else {
+            $markdown = $topOrganizations
+                ->map(fn (array $stats, int $id) => $this->getEntityDetails($stats, $id))
+                ->implode("\n");
         }
 
-        $new_note = sprintf(
+        return sprintf(
             "%s\nTop %d groups that were active for at least %d days within the last %d days:\n\n%s\n\n%s\n",
             $start,
-            $top,
-            $days_active,
-            $days_ago,
+            $this->top,
+            $this->daysActive,
+            $this->daysAgo,
             $markdown,
             $end
         );
+    }
 
-        $has_existing_note_block = preg_match('/<!-- killmails:start -->.*<!-- killmails:end -->/s', $map_solarsystem->notes ?? '');
+    private function updateMapSolarsystem(WormholeSystem $wormholeSystem, MapSolarsystemStatus $status, string $newNotesContent): void
+    {
+        $mapSolarsystem = MapSolarsystem::query()
+            ->where('solarsystem_id', $wormholeSystem->solarsystem->id)
+            ->where('map_id', $this->mapId)
+            ->firstOrNew();
 
-        if ($has_existing_note_block) {
-            $new_note = preg_replace(
-                '/<!-- killmails:start -->.*<!-- killmails:end -->/s',
-                $new_note,
-                $map_solarsystem->notes
-            );
-        } else {
-            $new_note = ($map_solarsystem->notes ?? '').$new_note;
-        }
+        $updatedNotes = $this->mergeNotesContent($mapSolarsystem->notes ?? '', $newNotesContent);
 
-        $map_solarsystem->fill([
-            'solarsystem_id' => $solarsystem->id,
-            'map_id' => $map_id,
-            'notes' => $new_note,
+        $mapSolarsystem->fill([
+            'solarsystem_id' => $wormholeSystem->solarsystem->id,
+            'map_id' => $this->mapId,
+            'notes' => $updatedNotes,
             'status' => $status,
         ]);
 
-        $map_solarsystem->save();
+        $mapSolarsystem->save();
     }
 
-    private function ensureNamesExist(Collection $top_ids): void
+    private function mergeNotesContent(string $existingNotes, string $newNotesContent): string
     {
-        $top_ids->each(/**
+        $hasExistingBlock = preg_match('/<!-- killmails:start -->.*<!-- killmails:end -->/s', $existingNotes);
+
+        if ($hasExistingBlock) {
+            return preg_replace(
+                '/<!-- killmails:start -->.*<!-- killmails:end -->/s',
+                $newNotesContent,
+                $existingNotes
+            );
+        }
+
+        return $existingNotes.$newNotesContent;
+    }
+
+    private function ensureNamesExist(Collection $organizationIds): void
+    {
+        $organizationIds->each(/**
          * @throws InvalidArgumentException
          * @throws ConnectionException
          */ fn (int $id) => $this->ensureNameExists($id));
@@ -185,9 +266,7 @@ class AnalyzeWormholeSystems extends Command
             return;
         }
 
-        $request = $this->esi->getNames([
-            $id,
-        ]);
+        $request = $this->esi->getNames([$id]);
 
         if ($request->failed()) {
             error(sprintf('Failed to get name for ID %d', $id));
@@ -221,50 +300,32 @@ class AnalyzeWormholeSystems extends Command
         error(sprintf('Unknown name category for ID %d: %s', $id, $data->category->value));
     }
 
-    private function addGroupToGroups(
-        array &$top_groups,
-        int $id,
-        string $type,
-        string $day
-    ): void {
-        if (! isset($top_groups[$id])) {
-            $top_groups[$id] = [
-                'type' => $type,
-                'kills' => 0,
-                'days' => [],
-            ];
-        }
-        $top_groups[$id]['kills']++;
-        $top_groups[$id]['days'][$day] = true;
-    }
-
-    private function getTypeAndIdFromGroup(object $group): array
+    private function getOrganizationFromEntity(object $entity): array
     {
-        if (isset($group->alliance_id) && $group->alliance_id > 0) {
-            return ['alliance', $group->alliance_id];
+        if (isset($entity->alliance_id) && $entity->alliance_id > 0) {
+            return ['alliance', $entity->alliance_id];
         }
 
-        if (isset($group->corporation_id) && $group->corporation_id > 0) {
-            return ['corporation', $group->corporation_id];
+        if (isset($entity->corporation_id) && $entity->corporation_id > 0) {
+            return ['corporation', $entity->corporation_id];
         }
 
         return ['unknown', 0];
     }
 
-    private function getEntityDetails(array $group, int $id): string
+    private function getEntityDetails(array $organizationStats, int $id): string
     {
         $alliance = Alliance::query()->find($id);
-
         if ($alliance) {
-            return $this->getAllianceDetails($alliance, $group['kills']);
+            return $this->getAllianceDetails($alliance, $organizationStats['kill_count']);
         }
 
         $corporation = Corporation::query()->find($id);
         if ($corporation) {
-            return $this->getCorporationDetails($corporation, $group['kills']);
+            return $this->getCorporationDetails($corporation, $organizationStats['kill_count']);
         }
 
-        return sprintf('Unknown entity with ID %d and %d kills', $id, $group['kills']);
+        return sprintf('Unknown entity with ID %d and %d kills', $id, $organizationStats['kill_count']);
     }
 
     private function getAllianceDetails(Alliance $alliance, int $kills): string
