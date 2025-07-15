@@ -18,7 +18,7 @@ import { TShowMapProps } from '@/pages/maps/index';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { echo } from '@laravel/echo-vue';
 
-const { map, selected_map_solarsystem, map_killmails, map_route_solarsystems, map_user_setting } = defineProps<TShowMapProps>();
+const { map, selected_map_solarsystem, map_killmails, map_route_solarsystems } = defineProps<TShowMapProps>();
 
 const user = useUser();
 
