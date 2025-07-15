@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * A player map with solar systems and their connections.
@@ -21,6 +22,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read Collection<int,MapConnection> $mapConnections
  * @property-read Collection<int,MapAccess> $mapAccessors
  * @property-read Collection<int,MapRouteSolarsystem> $mapRouteSolarsystems
+ * @property-read MapUserSetting $mapUserSetting
  */
 class Map extends Model
 {
@@ -65,5 +67,21 @@ class Map extends Model
     public function mapRouteSolarsystems(): HasMany
     {
         return $this->hasMany(MapRouteSolarsystem::class, 'map_id');
+    }
+
+    public function mapUserSettings(): HasMany
+    {
+        return $this->hasMany(MapUserSetting::class, 'map_id');
+    }
+
+    public function mapUserSetting(): HasOne
+    {
+        return $this->hasOne(MapUserSetting::class, 'map_id')
+            ->where('user_id', auth()->id())
+            ->withDefault([
+                'user_id' => auth()->id(),
+                'tracking_allowed' => false,
+            ])
+            ->ofMany();
     }
 }

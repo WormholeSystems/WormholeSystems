@@ -5,6 +5,7 @@ import QuestionIcon from '@/components/icons/QuestionIcon.vue';
 import MapKillmails from '@/components/killmails/MapKillmails.vue';
 import MapComponent from '@/components/map/MapComponent.vue';
 import MapSearch from '@/components/map/MapSearch.vue';
+import MapUserSetting from '@/components/map/MapUserSetting.vue';
 import Tracker from '@/components/map/Tracker.vue';
 import MapRouteSolarsystems from '@/components/routes/MapRouteSolarsystems.vue';
 import SolarsystemSignatures from '@/components/signatures/SolarsystemSignatures.vue';
@@ -13,21 +14,11 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import useUser from '@/composables/useUser';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { TMapConfig } from '@/types/map';
-import { TCharacter, TKillmail, TMap, TMapRouteSolarsystem, TMapSolarSystem, TSolarsystem } from '@/types/models';
+import { TShowMapProps } from '@/pages/maps/index';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { echo } from '@laravel/echo-vue';
 
-const { map, selected_map_solarsystem, map_killmails, map_route_solarsystems } = defineProps<{
-    map: TMap;
-    search: string;
-    solarsystems: TSolarsystem[];
-    config: TMapConfig;
-    selected_map_solarsystem: TMapSolarSystem | null;
-    map_killmails?: TKillmail[];
-    map_characters: TCharacter[];
-    map_route_solarsystems?: TMapRouteSolarsystem[];
-}>();
+const { map, selected_map_solarsystem, map_killmails, map_route_solarsystems, map_user_setting } = defineProps<TShowMapProps>();
 
 const user = useUser();
 
@@ -85,6 +76,7 @@ router.on('before', (event) => {
                 </div>
             </div>
         </div>
+        <MapUserSetting :map_user_setting />
     </AppLayout>
 </template>
 <style>

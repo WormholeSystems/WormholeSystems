@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $structure_id
  * @property string $ship_name
  * @property int $ship_type_id
+ * @property int $ship_item_id
  * @property bool $is_online
  * @property CarbonImmutable|null $last_online_at
  * @property CarbonImmutable|null $online_last_checked_at

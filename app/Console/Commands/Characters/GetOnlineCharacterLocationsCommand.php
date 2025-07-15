@@ -8,6 +8,8 @@ use App\Models\CharacterStatus;
 use App\Models\Map;
 use Illuminate\Console\Command;
 use Illuminate\Http\Client\ConnectionException;
+use NicolasKion\Esi\DTO\Location;
+use NicolasKion\Esi\DTO\Ship;
 use NicolasKion\Esi\Esi;
 
 class GetOnlineCharacterLocationsCommand extends Command
@@ -56,17 +58,24 @@ class GetOnlineCharacterLocationsCommand extends Command
                 continue;
             }
 
+            /** @var Location $location */
+            $location = $location_request->data;
+
+            /** @var Ship $ship */
+            $ship = $ship_request->data;
+
             $character->update([
-                'solarsystem_id' => $location_request->data->solar_system_id,
-                'station_id' => $location_request->data->station_id,
-                'structure_id' => $location_request->data->structure_id,
-                'ship_name' => $ship_request->data->ship_name,
-                'ship_type_id' => $ship_request->data->ship_type_id,
+                'solarsystem_id' => $location->solar_system_id,
+                'station_id' => $location->station_id,
+                'structure_id' => $location->structure_id,
+                'ship_name' => $ship->ship_name,
+                'ship_type_id' => $ship->ship_type_id,
+                'ship_item_id' => $ship->ship_item_id,
             ]);
 
             if ($character->wasChanged()) {
                 $updated_character_ids[] = $character->character_id;
-                $this->info(sprintf('Updated character %d location to system %d', $character->character_id, $location_request->data->solar_system_id));
+                $this->info(sprintf('Updated character %d location to system %d', $character->character_id, $location->solar_system_id));
             } else {
                 $this->info(sprintf('No changes for character %d', $character->character_id));
             }

@@ -18,6 +18,7 @@ return new class extends Migration
             $table->foreignId('station_id')->nullable()->constrained()->nullOnDelete();
             $table->unsignedBigInteger('structure_id')->nullable();
             $table->foreignId('ship_type_id')->nullable()->constrained('types')->nullOnDelete();
+            $table->unsignedBigInteger('ship_item_id')->nullable();
             $table->string('ship_name')->nullable();
             $table->boolean('is_online')->default(false);
             $table->dateTime('last_online_at')->nullable();

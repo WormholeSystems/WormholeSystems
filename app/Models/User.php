@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Session;
  * @property string $name
  * @property Character|null $active_character
  * @property-read Collection<int,Character> $characters
+ * @property-read Collection<int,MapUserSetting> $mapUserSettings
  * @property-read string|CarbonImmutable $created_at
  * @property-read string|CarbonImmutable $updated_at
  */
@@ -107,5 +108,15 @@ class User extends Authenticatable
     public function characters(): HasMany
     {
         return $this->hasMany(Character::class, 'user_id');
+    }
+
+    /**
+     * Get the user settings for the map.
+     *
+     * @return HasMany<MapUserSetting, $this>
+     */
+    public function mapUserSettings(): HasMany
+    {
+        return $this->hasMany(MapUserSetting::class, 'user_id');
     }
 }

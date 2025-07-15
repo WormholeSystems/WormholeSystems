@@ -8,15 +8,18 @@ use App\Http\Resources\CharacterResource;
 use App\Http\Resources\KillmailResource;
 use App\Http\Resources\MapResource;
 use App\Http\Resources\MapSolarsystemResource;
+use App\Http\Resources\MapUserSettingResource;
 use App\Http\Resources\SolarsystemResource;
 use App\Models\Character;
 use App\Models\Killmail;
 use App\Models\Map;
-use App\Models\MapAccess;
 use App\Models\MapRouteSolarsystem;
 use App\Models\MapSolarsystem;
 use App\Models\Solarsystem;
 use App\Models\User;
+use App\Scopes\CharacterHasMapAccess;
+use App\Scopes\CharacterIsOnline;
+use App\Scopes\UserAllowedMapTracking;
 use App\Scopes\WithVisibleSolarsystems;
 use App\Services\RouteService;
 use Illuminate\Container\Attributes\CurrentUser;
@@ -72,6 +75,7 @@ class MapController extends Controller
             'map_killmails' => $map_killmails,
             'map_characters' => $map_characters,
             'map_route_solarsystems' => Inertia::defer(fn (): array => $this->getMapRouteSolarsystems($map, $selected_map_solarsystem_id)),
+            'map_user_setting' => $map->mapUserSetting->toResource(MapUserSettingResource::class),
         ]);
     }
 
@@ -86,6 +90,7 @@ class MapController extends Controller
                 ->withCount([
                     'mapSolarsystems' => fn (Builder $builder) => $builder->whereNotNull('position_x'),
                 ])
+                ->with('mapUserSetting')
                 ->get()
                 ->toResourceCollection(MapResource::class),
         ]);
@@ -142,17 +147,9 @@ class MapController extends Controller
     {
         return Character::query()
             ->with('characterStatus')
-            ->where(fn (Builder $query) => $query
-                ->whereExists(MapAccess::query()
-                    ->where('map_id', $map->id)
-                    ->where(fn (Builder $query) => $query->
-                    whereColumn('accessible_id', 'characters.id')
-                        ->orWhereColumn('accessible_id', 'characters.corporation_id')
-                        ->orWhereColumn('accessible_id', 'characters.alliance_id'
-                        )
-                    ))
-            )
-            ->whereRelation('characterStatus', 'is_online', true)
+            ->tap(new UserAllowedMapTracking($map))
+            ->tap(new CharacterHasMapAccess($map))
+            ->tap(new CharacterIsOnline)
             ->get()
             ->toResourceCollection(CharacterResource::class);
     }
@@ -162,7 +159,7 @@ class MapController extends Controller
      */
     private function getMapRouteSolarsystems(Map $map, ?int $map_solarsystem_id): array
     {
-        $route_service = App::make(RouteService::class);
+        $route_service = App::get(RouteService::class);
         if ($map_solarsystem_id === null || $map_solarsystem_id === 0) {
             return [];
         }

@@ -5,6 +5,7 @@ export type TMap = {
     map_solarsystems?: TMapSolarSystem[];
     map_connections?: TMapConnection[];
     map_solarsystems_count?: number;
+    map_user_setting?: TMapUserSetting;
 };
 
 export type TMapSolarSystem = {
@@ -217,4 +218,11 @@ export type TMapRouteSolarsystem = {
     solarsystem: TSolarsystem;
     is_pinned: boolean;
     route: number[];
+};
+
+export type TMapUserSetting = {
+    id: number;
+    user_id: number;
+    map_id: number;
+    tracking_allowed: boolean;
 };
