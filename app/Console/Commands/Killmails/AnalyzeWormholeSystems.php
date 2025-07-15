@@ -124,7 +124,7 @@ class AnalyzeWormholeSystems extends Command
         }
 
         $new_note = sprintf(
-            "%s\nTop %d groups that were active for at least %d dys within the last %d days:\n\n%s\n\n%s\n",
+            "%s\nTop %d groups that were active for at least %d days within the last %d days:\n\n%s\n\n%s\n",
             $start,
             $top,
             $days_active,
