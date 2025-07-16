@@ -8,7 +8,7 @@ import { getMapChannelName } from '@/const/channels';
 import { KillmailReceivedEvent } from '@/const/events';
 import { TKillmail } from '@/types/models';
 import { Deferred, router } from '@inertiajs/vue3';
-import { useEchoPublic } from '@laravel/echo-vue';
+import { useEcho } from '@laravel/echo-vue';
 import { useLocalStorage } from '@vueuse/core';
 import { computed } from 'vue';
 
@@ -40,7 +40,7 @@ type KillmailReceivedEvent = {
     killmail: TKillmail;
 };
 
-useEchoPublic<KillmailReceivedEvent>(getMapChannelName(map_id), KillmailReceivedEvent, () => {
+useEcho<KillmailReceivedEvent>(getMapChannelName(map_id), KillmailReceivedEvent, () => {
     router.reload({
         only: ['map_killmails'],
     });
