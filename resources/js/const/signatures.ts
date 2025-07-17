@@ -450,61 +450,55 @@ export const signature_tree = {
     },
     wormhole_space: {
         1: {
-            combat: c1_combat,
-            relic: [...c1_relic, ...null_relic],
-            data: [...c1_data, ...null_data],
-            gas: c1_gas,
-            wormhole: c1_wh,
-            ore: c1_ore,
-            ghost: wh_gh,
+            'Combat Site': c1_combat,
+            'Relic Site': [...c1_relic, ...null_relic],
+            'Data Site': [...c1_data, ...null_data, ...wh_gh],
+            'Gas Site': c1_gas,
+            Wormhole: c1_wh,
+            'Ore Site': c1_ore,
         },
         2: {
-            combat: c2_combat,
-            relic: [...c2_relic, ...null_relic],
-            data: [...c2_data, ...null_data],
-            gas: c2_gas,
-            wormhole: c2_wh,
-            ore: c2_ore,
-            ghost: wh_gh,
+            'Combat Site': c2_combat,
+            'Relic Site': [...c2_relic, ...null_relic],
+            'Data Site': [...c2_data, ...null_data, ...wh_gh],
+            'Gas Site': c2_gas,
+            Wormhole: c2_wh,
+            'Ore Site': c2_ore,
         },
         3: {
-            combat: c3_combat,
-            relic: [...c3_relic, ...null_relic],
-            data: [...c3_data, ...null_data],
-            gas: c3_gas,
-            wormhole: c3_wh,
-            ore: c3_ore,
-            ghost: wh_gh,
+            'Combat Site': c3_combat,
+            'Relic Site': [...c3_relic, ...null_relic],
+            'Data Site': [...c3_data, ...null_data, ...wh_gh],
+            'Gas Site': c3_gas,
+            Wormhole: c3_wh,
+            'Ore Site': c3_ore,
         },
         4: {
-            combat: c4_combat,
-            relic: c4_relic,
-            data: c4_data,
-            gas: c4_gas,
-            wormhole: c4_wh,
-            ore: c4_ore,
-            ghost: wh_gh,
+            'Combat Site': c4_combat,
+            'Relic Site': c4_relic,
+            'Data Site': [...c4_data, ...wh_gh],
+            'Gas Site': c4_gas,
+            Wormhole: c4_wh,
+            'Ore Site': c4_ore,
         },
         5: {
-            combat: c5_combat,
-            relic: c5_relic,
-            data: c5_data,
-            gas: c5_gas,
-            wormhole: c5_wh,
-            ore: c5_ore,
-            ghost: wh_gh,
+            'Combat Site': c5_combat,
+            'Relic Site': c5_relic,
+            'Data Site': [...c5_data, ...wh_gh],
+            'Gas Site': c5_gas,
+            Wormhole: c5_wh,
+            'Ore Site': c5_ore,
         },
         6: {
-            combat: c6_combat,
-            relic: c6_relic,
-            data: c6_data,
-            gas: c6_gas,
-            wormhole: c6_wh,
-            ore: c6_ore,
-            ghost: wh_gh,
+            'Combat Site': c6_combat,
+            'Relic Site': c6_relic,
+            'Data Site': [...c6_data, ...wh_gh],
+            'Gas Site': c6_gas,
+            Wormhole: c6_wh,
+            'Ore Site': c6_ore,
         },
         12: {
-            combat: c12_combat,
+            'Combat Site': c12_combat,
         },
         13: {
             wormhole: c13_wh,
@@ -512,19 +506,19 @@ export const signature_tree = {
             ghost: wh_gh,
         },
         14: {
-            combat: c14_combat,
+            'Combat Site': c14_combat,
         },
         15: {
-            combat: c15_combat,
+            'Combat Site': c15_combat,
         },
         16: {
-            combat: c16_combat,
+            'Combat Site': c16_combat,
         },
         17: {
-            combat: c17_combat,
+            'Combat Site': c17_combat,
         },
         18: {
-            combat: c18_combat,
+            'Combat Site': c18_combat,
         },
     },
     known_space: {
@@ -547,3 +541,38 @@ export const signature_tree = {
 };
 
 export default signature_tree;
+
+export const combat_sites = [
+    ...c1_combat,
+    ...c2_combat,
+    ...c3_combat,
+    ...c4_combat,
+    ...c5_combat,
+    ...c6_combat,
+    ...c12_combat,
+    ...c14_combat,
+    ...c15_combat,
+    ...c16_combat,
+    ...c17_combat,
+    ...c18_combat,
+];
+
+export const relic_sites = [...c1_relic, ...c2_relic, ...c3_relic, ...c4_relic, ...c5_relic, ...c6_relic, ...null_relic];
+
+export const data_sites = [
+    ...c1_data,
+    ...c2_data,
+    ...c3_data,
+    ...c4_data,
+    ...c5_data,
+    ...c6_data,
+    ...null_data,
+    ...hs_gh,
+    ...ls_gh,
+    ...ns_gh,
+    ...wh_gh,
+];
+
+export const gas_sites = [...c1_gas, ...c2_gas, ...c3_gas, ...c4_gas, ...c5_gas, ...c6_gas];
+
+export const ore_sites = [...c1_ore, ...c2_ore, ...c3_ore, ...c4_ore, ...c5_ore, ...c6_ore];

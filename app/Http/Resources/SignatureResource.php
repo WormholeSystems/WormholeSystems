@@ -21,9 +21,9 @@ class SignatureResource extends JsonResource
             'id' => $this->id,
             'signature_id' => $this->signature_id,
             'map_solarsystem_id' => $this->map_solarsystem_id,
-            'name' => $this->name,
             'type' => $this->type,
             'category' => $this->category,
+            'map_connection_id' => $this->map_connection_id,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

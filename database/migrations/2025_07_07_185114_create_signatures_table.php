@@ -13,13 +13,11 @@ return new class extends Migration
     {
         Schema::create('signatures', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('map_solarsystem_id')
-                ->constrained('map_solarsystems')
-                ->onDelete('cascade');
-            $table->string('signature_id');
-            $table->string('type');
+            $table->foreignId('map_solarsystem_id')->constrained('map_solarsystems')->onDelete('cascade');
+            $table->string('signature_id')->nullable();
             $table->string('category')->nullable();
-            $table->string('name')->nullable();
+            $table->string('type')->nullable();
+            $table->foreignId('map_connection_id')->nullable()->constrained('map_connections')->onDelete('cascade');
             $table->timestamps();
         });
     }

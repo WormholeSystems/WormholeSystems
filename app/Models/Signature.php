@@ -13,10 +13,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $signature_id
  * @property string $type
  * @property string|null $category
- * @property string|null $name
+ * @property int $map_solarsystem_id
+ * @property int|null $map_connection_id
  * @property CarbonImmutable $created_at
  * @property CarbonImmutable $updated_at
  * @property-read MapSolarsystem $mapSolarsystem
+ * @property-read MapConnection|null $mapConnection
  */
 class Signature extends Model
 {
@@ -31,5 +33,13 @@ class Signature extends Model
     public function mapSolarsystem(): BelongsTo
     {
         return $this->belongsTo(MapSolarsystem::class);
+    }
+
+    /**
+     * @return BelongsTo<MapConnection,$this>
+     */
+    public function mapConnection(): BelongsTo
+    {
+        return $this->belongsTo(MapConnection::class, 'map_connection_id');
     }
 }

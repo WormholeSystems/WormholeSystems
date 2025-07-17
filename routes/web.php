@@ -46,7 +46,7 @@ Route::middleware('auth')->group(function () {
     Route::put('map-selection', [MapSelectionController::class, 'update'])->name('map-selection.update');
     Route::delete('map-selection', [MapSelectionController::class, 'destroy'])->name('map-selection.destroy');
 
-    Route::post('map-solarsystems/{mapSolarsystem}/signatures', [SignatureController::class, 'store'])->name('map-solarsystems.signatures.store');
+    Route::resource('signatures', SignatureController::class)->only(['store', 'update', 'destroy']);
 
     Route::put('user-characters/{character}', [UserCharacterController::class, 'update'])->name('user-characters.update');
     Route::delete('user-characters/{character}', [UserCharacterController::class, 'delete'])->name('user-characters.delete');

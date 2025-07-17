@@ -8,7 +8,7 @@ import MapSearch from '@/components/map/MapSearch.vue';
 import MapUserSetting from '@/components/map/MapUserSetting.vue';
 import Tracker from '@/components/map/Tracker.vue';
 import MapRouteSolarsystems from '@/components/routes/MapRouteSolarsystems.vue';
-import SolarsystemSignatures from '@/components/signatures/SolarsystemSignatures.vue';
+import Signatures from '@/components/signatures/Signatures.vue';
 import SolarsystemDetails from '@/components/solarsystem/SolarsystemDetails.vue';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -56,14 +56,14 @@ router.on('before', (event) => {
                     </div>
                 </div>
             </div>
-            <div class="grid grid-flow-row-dense grid-cols-12 gap-4">
+            <div class="grid grid-flow-row-dense grid-cols-12 items-start gap-4">
                 <div class="col-span-6 row-span-2 grid gap-4 xl:col-span-5">
                     <SolarsystemDetails v-if="selected_map_solarsystem" :map_solarsystem="selected_map_solarsystem" :map :map_route_solarsystems />
                     <div class="flex flex-col items-center justify-center gap-8 rounded-lg border border-dashed p-16 text-neutral-700" v-else>
                         <QuestionIcon class="text-4xl" />
                         <p class="text-center">Select a solarsystem to see more details</p>
                     </div>
-                    <SolarsystemSignatures :map_solarsystem="selected_map_solarsystem" v-if="selected_map_solarsystem" />
+                    <Signatures :map_solarsystem="selected_map_solarsystem" v-if="selected_map_solarsystem" />
                 </div>
                 <div class="col-span-6 xl:col-span-4">
                     <MapCharacters :map_characters />

@@ -18,6 +18,9 @@ import {
     MapSolarsystemsUpdatedEvent,
     MapSolarsystemUpdatedEvent,
     MapUpdatedEvent,
+    SignatureCreatedEvent,
+    SignatureDeletedEvent,
+    SignatureUpdatedEvent,
 } from '@/const/events';
 import { TMapConfig } from '@/types/map';
 import { TMap } from '@/types/models';
@@ -106,6 +109,12 @@ useEcho(getMapChannelName(map.id), [MapRouteSolarsystemsUpdatedEvent], () => {
 useEcho(getMapChannelName(map.id), CharacterStatusUpdatedEvent, () => {
     router.reload({
         only: ['map_characters'],
+    });
+});
+
+useEcho(getMapChannelName(map.id), [SignatureCreatedEvent, SignatureUpdatedEvent, SignatureDeletedEvent], () => {
+    router.reload({
+        only: ['selected_map_solarsystem'],
     });
 });
 

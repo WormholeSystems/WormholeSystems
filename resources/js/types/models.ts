@@ -1,3 +1,5 @@
+import { TSignatureCategory } from '@/lib/SignatureParser';
+
 export type TMap = {
     id: number;
     name: string;
@@ -181,10 +183,10 @@ export type TzKillboard = {
 
 export type TSignature = {
     id: string;
-    signature_id: string;
-    type: string;
-    category: string | null;
-    name: string | null;
+    map_solarsystem_id: number;
+    signature_id: string | null;
+    type: string | null;
+    category: TSignatureCategory;
     created_at: string;
     updated_at: string;
 };
