@@ -55,10 +55,9 @@ class StoreTrackingAction
             $minimum_distance_x = 120;
             $distance_x = random_int($minimum_distance_x, $minimum_distance_x * 2);
             $distance_y = random_int($minimum_distance_y, $minimum_distance_y * 2);
-            $direction_x = random_int(0, 1) !== 0 ? 1 : -1;
             $direction_y = random_int(0, 1) !== 0 ? 1 : -1;
 
-            $position_x = max(0, min($this->max_x, $map_solarsystem->position_x + ($distance_x * $direction_x)));
+            $position_x = max(0, min($this->max_x, $map_solarsystem->position_x + $distance_x));
             $position_y = max(0, min($this->max_y, $map_solarsystem->position_y + ($distance_y * $direction_y)));
 
             $new_map_solarsystem = $this->storeMapSolarsystemAction->handle(
