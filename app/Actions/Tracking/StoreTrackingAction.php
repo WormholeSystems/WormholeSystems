@@ -49,6 +49,11 @@ class StoreTrackingAction
                 return;
             }
 
+            if ($map_solarsystem->solarsystem->type === 'eve' && $to_solarsystem->type === 'eve') {
+                // If both systems are known space, we do not create a connection.
+                return;
+            }
+
             $ship_size = $this->connectionClassifier->getSize($map_solarsystem->solarsystem, $to_solarsystem);
 
             $minimum_distance_y = 40;
