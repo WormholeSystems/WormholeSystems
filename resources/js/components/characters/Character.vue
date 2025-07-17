@@ -36,7 +36,7 @@ function onHover(hovered: boolean) {
 </script>
 
 <template>
-    <TableRow ref="row" v-element-hover="onHover" :data-inactive="is_inactive" class="data-[inactive=true]:opacity-20">
+    <TableRow ref="row" v-element-hover="onHover" :data-inactive="is_inactive" class="data-[inactive=true]:opacity-50">
         <TableCell>
             <div class="flex gap-2">
                 <CharacterImage :character_id="character.id" :character_name="character.name" class="size-6 rounded-lg" />
