@@ -27,7 +27,19 @@ function sortCharacters(a: TCharacter, b: TCharacter) {
         return -1;
     }
 
+    if (isCovertOps(a) && !isCovertOps(b)) {
+        return 1;
+    }
+
+    if (!isCovertOps(a) && isCovertOps(b)) {
+        return -1;
+    }
+
     return a.name.localeCompare(b.name);
+}
+
+function isCovertOps(character: TCharacter) {
+    return character.status?.ship_type?.group_id === 830;
 }
 </script>
 

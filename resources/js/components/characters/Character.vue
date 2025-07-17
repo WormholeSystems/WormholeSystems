@@ -28,6 +28,10 @@ const is_inactive = computed(() => {
     return character.status?.ship_type?.name === 'Capsule';
 });
 
+const is_scanner = computed(() => {
+    return character.status?.ship_type?.group_id === 830;
+});
+
 function onHover(hovered: boolean) {
     if (map_solarsystem.value) {
         setHoveredMapSolarsystem(map_solarsystem.value.id, hovered);
@@ -65,14 +69,16 @@ function onHover(hovered: boolean) {
             </div>
         </TableCell>
         <TableCell>
-            <span v-if="map_solarsystem && map_solarsystem.alias" class="flex gap-2">
+            <span v-if="map_solarsystem && map_solarsystem.alias" class="flex items-center gap-2">
                 <span>{{ map_solarsystem.alias }}</span>
                 <span class="text-muted-foreground"> {{ map_solarsystem.name }}</span>
                 <span v-if="is_docked" class="text-xs text-muted-foreground">(Docked)</span>
+                <span v-else-if="is_scanner" class="text-xs text-amber-500">(Scanner)</span>
             </span>
-            <span v-else-if="character.status?.solarsystem">
+            <span v-else-if="character.status?.solarsystem" class="flex items-center gap-2">
                 <span>{{ character.status.solarsystem.name }}</span>
                 <span v-if="is_docked" class="text-xs text-muted-foreground">(Docked)</span>
+                <span v-else-if="is_scanner" class="text-xs text-amber-500">(Scanner)</span>
             </span>
             <span v-else>Unknown Location</span>
         </TableCell>
