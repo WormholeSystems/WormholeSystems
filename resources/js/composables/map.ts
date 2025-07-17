@@ -370,15 +370,29 @@ export function useMapAction() {
     }
 
     function sortMapSolarsystemsByRegion() {
-        return sortMapSolarsystems((a, b) => {
-            if (a.class && !b.class) return 1;
-            if (!a.class && b.class) return -1;
-
-            return a.solarsystem?.region?.name.localeCompare(b.solarsystem?.region?.name ?? '') ?? 0;
-        });
+        return sortMapSolarsystems(sortByClassAndRegion);
     }
 
     function sortMapSolarsystems(callback: (a: TMapSolarSystem, b: TMapSolarSystem) => number) {
+        const sorted_map_solarsystems = calculateSortedPositions(callback);
+
+        router.put(
+            route('map-selection.update'),
+            {
+                map_solarsystems: sorted_map_solarsystems,
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+                onSuccess: () => {
+                    mapState.selection = null;
+                },
+                only: ['map'],
+            },
+        );
+    }
+
+    function calculateSortedPositions(callback: (a: TMapSolarSystem, b: TMapSolarSystem) => number) {
         const sorted_positions = map_solarsystems_selected.value
             .sort((a, b) => {
                 if (a.position && b.position) {
@@ -387,23 +401,66 @@ export function useMapAction() {
                 return 0;
             })
             .map((s) => ({
+                ...s,
                 position_x: s.position?.x,
                 position_y: s.position?.y,
             }));
 
         const sorted_ids = map_solarsystems_selected.value.toSorted(callback).map((s) => s.id);
 
-        // Combine the sorted positions with their IDs
-        const sorted_map_solarsystems = sorted_ids.map((id, index) => ({
+        return sorted_ids.map((id, index) => ({
+            ...sorted_positions[index],
             id,
             position_x: sorted_positions[index].position_x,
             position_y: sorted_positions[index].position_y,
         }));
+    }
+
+    function sortMapSolarsystemsByAlias(a: TMapSolarSystem, b: TMapSolarSystem): number {
+        if (!a.alias && !b.alias) return sortByClassAndRegion(a, b);
+        if (a.alias && !b.alias) return -1;
+        if (!a.alias && b.alias) return 1;
+
+        return a.alias?.localeCompare(b.alias ?? '') ?? 0;
+    }
+
+    function sortByClassAndRegion(a: TMapSolarSystem, b: TMapSolarSystem): number {
+        if (a.class && !b.class) return 1;
+        if (!a.class && b.class) return -1;
+
+        const regionA = a.solarsystem?.region?.name ?? '';
+        const regionB = b.solarsystem?.region?.name ?? '';
+
+        return regionA.localeCompare(regionB);
+    }
+
+    function organizeMapSolarsystems() {
+        const first_position = map_solarsystems_selected.value.reduce(
+            (acc, system) => {
+                if (!system.position) return acc;
+                return {
+                    x: Math.min(acc.x, system.position.x),
+                    y: Math.min(acc.y, system.position.y),
+                };
+            },
+            { x: Infinity, y: Infinity },
+        );
+
+        const sorted_positions = calculateSortedPositions(sortMapSolarsystemsByAlias).map((s, index) => {
+            const position_x = first_position.x;
+            const position_y = first_position.y + index * mapState.grid_size * 3;
+
+            return {
+                ...s,
+                position_x,
+                position_y,
+            };
+        });
 
         router.put(
             route('map-selection.update'),
             {
-                map_solarsystems: sorted_map_solarsystems,
+                map_solarsystems: sorted_positions,
             },
             {
                 preserveState: true,
@@ -423,6 +480,7 @@ export function useMapAction() {
         updateMapSolarsystem,
         addMapSolarsystem,
         sortMapSolarsystemsByRegion,
+        organizeMapSolarsystems,
     };
 }
 
