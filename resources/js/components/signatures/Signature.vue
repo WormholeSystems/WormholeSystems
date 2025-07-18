@@ -4,7 +4,6 @@ import TrashIcon from '@/components/icons/TrashIcon.vue';
 import { Button } from '@/components/ui/button';
 import { PinInput, PinInputGroup, PinInputSeparator, PinInputSlot } from '@/components/ui/pin-input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { TableCell, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import signature_tree from '@/const/signatures';
 import { TShowMapProps } from '@/pages/maps';
@@ -12,7 +11,7 @@ import { AppPageProps } from '@/types';
 import { TSignature } from '@/types/models';
 import { useForm, usePage } from '@inertiajs/vue3';
 import { useNow } from '@vueuse/core';
-import { formatDistanceStrict } from 'date-fns';
+import { differenceInHours, differenceInSeconds, format } from 'date-fns';
 import { computed, watch } from 'vue';
 
 const { signature } = defineProps<{
@@ -38,11 +37,49 @@ const security = computed(() => {
     return page.props.selected_map_solarsystem?.solarsystem?.security || 0;
 });
 
+const created_at = computed(() => {
+    return new Date(signature.created_at);
+});
+
+const updated_at = computed(() => {
+    return signature.updated_at ? new Date(signature.updated_at) : null;
+});
+
+const modified_date = computed(() => {
+    if (signature.type === 'Wormhole') {
+        return created_at.value;
+    }
+
+    return updated_at.value || created_at.value;
+});
+
 const modified_at = computed(() => {
-    const modified = new Date(signature.updated_at || signature.created_at);
-    return formatDistanceStrict(modified, now.value, {
-        addSuffix: true,
-    });
+    const seconds = differenceInSeconds(now.value, modified_date.value);
+    if (seconds < 60) {
+        return 'now';
+    }
+
+    if (seconds < 3600) {
+        return `${Math.floor(seconds / 60)}m`;
+    }
+
+    if (seconds < 86400) {
+        return `${Math.floor(seconds / 3600)}h`;
+    }
+
+    return `${Math.floor(seconds / 86400)}d`;
+});
+
+const modified_class = computed(() => {
+    const hours = differenceInHours(now.value, modified_date.value);
+    if (hours < 8) {
+        return 'fresh';
+    }
+    if (hours < 24) {
+        return 'old';
+    }
+
+    return 'very-old';
 });
 
 const page = usePage<AppPageProps<TShowMapProps>>();
@@ -123,79 +160,84 @@ function handleDelete() {
 </script>
 
 <template>
-    <TableRow
-        class="data-[deleted=true]:bg-red-500/10 data-[new=true]:bg-green-500/10 data-[updated=true]:bg-amber-500/10"
+    <div
+        class="col-span-full grid grid-cols-subgrid items-center py-2 *:first:pl-2 *:last:pr-2 data-[deleted=true]:bg-red-500/10 data-[new=true]:bg-green-500/10 data-[updated=true]:bg-amber-500/10"
         :data-deleted="deleted"
         :data-new="$props.new"
         :data-updated="updated"
     >
-        <TableCell>
-            <div class="flex items-center gap-2">
-                <div
-                    class="inline-block size-2 rounded-full data-[scanned=false]:bg-red-500 data-[scanned=true]:bg-green-500"
-                    :data-scanned="Boolean(signature.signature_id && signature.type)"
-                />
-                <PinInput :model-value="form.signature_id?.replace('-', '').split('')" @update:modelValue="updateId">
-                    <PinInputGroup>
-                        <PinInputSlot :index="0" />
-                        <PinInputSlot :index="1" />
-                        <PinInputSlot :index="2" />
-                        <PinInputSeparator />
-                        <PinInputSlot :index="3" />
-                        <PinInputSlot :index="4" />
-                        <PinInputSlot :index="5" />
-                    </PinInputGroup>
-                </PinInput>
-            </div>
-        </TableCell>
-        <TableCell>
-            <Select v-model:model-value="form.category">
-                <SelectTrigger class="w-full">
-                    <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem v-for="option in options" :key="option" :value="option">
-                        {{ option }}
-                    </SelectItem>
-                </SelectContent>
-            </Select>
-        </TableCell>
-        <TableCell class="w-full">
-            <Select v-model:model-value="form.type">
-                <SelectTrigger class="w-full">
-                    <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem v-for="option in signature_options" :key="option" :value="option">
-                        {{ option }}
-                    </SelectItem>
-                </SelectContent>
-            </Select>
-        </TableCell>
-        <TableCell>
-            {{ modified_at }}
-        </TableCell>
-        <TableCell>
-            <div class="flex gap-2">
-                <Tooltip>
-                    <TooltipTrigger as-child>
-                        <Button variant="secondary" @click="handleDelete">
-                            <TrashIcon />
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent> Delete Signature</TooltipContent>
-                </Tooltip>
-                <Tooltip v-if="form.isDirty">
-                    <TooltipTrigger as-child>
-                        <Button variant="secondary" @click="handleSubmit">
-                            <CheckIcon />
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent> Save Signature</TooltipContent>
-                </Tooltip>
-            </div>
-        </TableCell>
-    </TableRow>
+        <div class="flex items-center gap-2">
+            <div
+                class="inline-block size-2 rounded-full data-[scanned=false]:bg-red-500 data-[scanned=true]:bg-green-500"
+                :data-scanned="Boolean(signature.signature_id && signature.type)"
+            />
+            <PinInput :model-value="form.signature_id?.replace('-', '').split('')" @update:modelValue="updateId">
+                <PinInputGroup>
+                    <PinInputSlot :index="0" />
+                    <PinInputSlot :index="1" />
+                    <PinInputSlot :index="2" />
+                    <PinInputSeparator />
+                    <PinInputSlot :index="3" />
+                    <PinInputSlot :index="4" />
+                    <PinInputSlot :index="5" />
+                </PinInputGroup>
+            </PinInput>
+        </div>
+        <Select v-model:model-value="form.category">
+            <SelectTrigger class="w-full">
+                <SelectValue placeholder="Select category" />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem v-for="option in options" :key="option" :value="option">
+                    {{ option }}
+                </SelectItem>
+            </SelectContent>
+        </Select>
+        <Select v-model:model-value="form.type">
+            <SelectTrigger class="w-full overflow-hidden">
+                <SelectValue as-child>
+                    <span class="truncate">{{ form.type || 'Select type' }}</span>
+                </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem v-for="option in signature_options" :key="option" :value="option">
+                    {{ option }}
+                </SelectItem>
+            </SelectContent>
+        </Select>
+        <Tooltip>
+            <TooltipTrigger
+                :data-modified-class="modified_class"
+                class="whitespace-nowrap data-[modified-class=fresh]:text-green-500 data-[modified-class=old]:text-yellow-500 data-[modified-class=very-old]:text-red-500"
+            >
+                {{ modified_at }}
+            </TooltipTrigger>
+            <TooltipContent class="grid grid-cols-[auto_auto] gap-2">
+                <span class="font-semibold">Created at</span>
+                <p class="">{{ format(created_at, 'MMM dd, HH:ii') }}</p>
+                <span class="font-semibold">Last modified at</span>
+                <p class="">{{ updated_at ? format(updated_at, 'MMM dd, HH:ii') : 'Never' }}</p>
+            </TooltipContent>
+        </Tooltip>
+        <div class="flex gap-2">
+            <Tooltip>
+                <TooltipTrigger as-child>
+                    <Button variant="secondary" @click="handleDelete">
+                        <TrashIcon />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent> Delete Signature</TooltipContent>
+            </Tooltip>
+            <Tooltip v-if="form.isDirty">
+                <TooltipTrigger as-child>
+                    <Button variant="secondary" @click="handleSubmit">
+                        <CheckIcon />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent> Save Signature</TooltipContent>
+            </Tooltip>
+        </div>
+    </div>
 </template>
 
 <style scoped></style>

@@ -4,7 +4,6 @@ import PlusIcon from '@/components/icons/PlusIcon.vue';
 import Signature from '@/components/signatures/Signature.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { signatureParser } from '@/lib/SignatureParser';
 import { TMapSolarSystem, TSignature } from '@/types/models';
@@ -198,18 +197,16 @@ function createNewSignature() {
             </CardAction>
         </CardHeader>
         <CardContent class="px-1 pb-1">
-            <Table>
-                <TableBody>
-                    <Signature
-                        v-for="signature in signatures"
-                        :signature="signature"
-                        :key="signature.id"
-                        :deleted="signature.deleted"
-                        :new="signature.new"
-                        :updated="signature.updated"
-                    />
-                </TableBody>
-            </Table>
+            <div class="grid grid-cols-[auto_auto_1fr_auto_auto] gap-x-2 divide-y">
+                <Signature
+                    v-for="signature in signatures"
+                    :signature="signature"
+                    :key="signature.id"
+                    :deleted="signature.deleted"
+                    :new="signature.new"
+                    :updated="signature.updated"
+                />
+            </div>
         </CardContent>
     </Card>
 </template>
