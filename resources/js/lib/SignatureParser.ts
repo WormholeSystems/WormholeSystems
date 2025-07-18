@@ -32,19 +32,21 @@ class SignatureParser {
 
         const [signature_id, _, category, type] = signature;
 
+        let app_category: string | null = category;
+
         if (!signature_id) {
             toast.error('Signature ID is missing');
             return null;
         }
 
         if (!signatureCategories.includes(category as TSignatureCategory)) {
-            toast.error(`Invalid signature category: ${category}`);
+            app_category = null;
             return null;
         }
 
         return {
             signature_id: signature_id.trim(),
-            category: category as TSignatureCategory,
+            category: app_category as TSignatureCategory,
             type: category === 'Wormhole' ? null : type.trim(),
             created_at: new Date().toISOString(), // Default to current time if not provided
         };
