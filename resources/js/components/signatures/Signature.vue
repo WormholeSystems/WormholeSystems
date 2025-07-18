@@ -2,10 +2,12 @@
 import CheckIcon from '@/components/icons/CheckIcon.vue';
 import TimesIcon from '@/components/icons/TimesIcon.vue';
 import TrashIcon from '@/components/icons/TrashIcon.vue';
+import SolarsystemClass from '@/components/SolarsystemClass.vue';
 import { Button } from '@/components/ui/button';
 import { PinInput, PinInputGroup, PinInputSeparator, PinInputSlot } from '@/components/ui/pin-input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useMapConnections } from '@/composables/map';
 import signature_tree from '@/const/signatures';
 import { TShowMapProps } from '@/pages/maps';
 import { AppPageProps } from '@/types';
@@ -25,8 +27,33 @@ const { signature } = defineProps<{
 const form = useForm(() => ({
     signature_id: signature.signature_id || '',
     category: signature.category,
+    map_connection_id: signature.map_connection_id,
     type: signature.type,
 }));
+
+const page = usePage<AppPageProps<TShowMapProps>>();
+
+const connections = useMapConnections();
+
+const solarsystem_connectins = computed(() => {
+    return connections.value
+        .filter(
+            (connection) =>
+                connection.from_map_solarsystem_id === page.props.selected_map_solarsystem?.id ||
+                connection.to_map_solarsystem_id === page.props.selected_map_solarsystem?.id,
+        )
+        .map((connection) => {
+            const target = connection.from_map_solarsystem_id !== page.props.selected_map_solarsystem?.id ? connection.source : connection.target;
+            return {
+                id: connection.id,
+                target,
+            };
+        });
+});
+
+const selected_connection = computed(() => {
+    return solarsystem_connectins.value.find((connection) => connection.id === form.map_connection_id) || null;
+});
 
 const now = useNow();
 
@@ -83,7 +110,6 @@ const modified_class = computed(() => {
     return 'very-old';
 });
 
-const page = usePage<AppPageProps<TShowMapProps>>();
 const options = ['Wormhole', 'Gas Site', 'Ore Site', 'Combat Site', 'Data Site', 'Relic Site', 'Unknown'];
 
 const signature_options = computed(() => {
@@ -199,7 +225,7 @@ function handleReset() {
             </SelectContent>
         </Select>
         <Select v-model:model-value="form.type">
-            <SelectTrigger class="w-full overflow-hidden">
+            <SelectTrigger class="w-full overflow-hidden data-[wormhole=false]:col-span-2" :data-wormhole="form.category === 'Wormhole'">
                 <SelectValue as-child>
                     <span class="truncate">{{ form.type || 'Select type' }}</span>
                 </SelectValue>
@@ -207,6 +233,28 @@ function handleReset() {
             <SelectContent>
                 <SelectItem v-for="option in signature_options" :key="option" :value="option">
                     {{ option }}
+                </SelectItem>
+            </SelectContent>
+        </Select>
+        <Select v-model:model-value="form.map_connection_id" v-if="form.category === 'Wormhole'">
+            <SelectTrigger class="w-full">
+                <SelectValue as-child>
+                    <template v-if="selected_connection">
+                        <SolarsystemClass
+                            :wormhole_class="selected_connection?.target.class"
+                            :security="selected_connection?.target.solarsystem?.security"
+                        />
+                        <span class="truncate">{{ selected_connection?.target.name }}</span>
+                    </template>
+                    <template v-else>
+                        <span class="truncate">Select connection</span>
+                    </template>
+                </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem v-for="connection in solarsystem_connectins" :key="connection.id" :value="connection.id">
+                    <SolarsystemClass :wormhole_class="connection.target.class" :security="connection.target.solarsystem?.security" />
+                    {{ connection.target.name }}
                 </SelectItem>
             </SelectContent>
         </Select>

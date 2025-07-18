@@ -197,7 +197,7 @@ function createNewSignature() {
             </CardAction>
         </CardHeader>
         <CardContent class="px-1 pb-1">
-            <div class="grid grid-cols-[auto_auto_1fr_auto_auto] gap-x-2 divide-y">
+            <div class="grid grid-cols-[auto_auto_1fr_auto_auto_auto] gap-x-2 divide-y">
                 <Signature
                     v-for="signature in signatures"
                     :signature="signature"

@@ -267,6 +267,7 @@ const c13_ore = ['Shattered Debris Field', 'Shattered Ice Field'];
 // Wormholes ======================================================================================================
 
 const c1_wh = [
+    'K162 - Unknown',
     'H121 - C1',
     'C125 - C2',
     'O883 - C3',
@@ -281,6 +282,7 @@ const c1_wh = [
 ];
 
 const c2_wh = [
+    'K162 - Unknown',
     'Z647 - C1',
     'D382 - C2',
     'O477 - C3',
@@ -296,6 +298,7 @@ const c2_wh = [
 ];
 
 const c3_wh = [
+    'K162 - Unknown',
     'V301 - C1',
     'I182 - C2',
     'N968 - C3',
@@ -311,6 +314,7 @@ const c3_wh = [
 ];
 
 const c4_wh = [
+    'K162 - Unknown',
     'P060 - C1',
     'N766 - C2',
     'C247 - C3',
@@ -325,6 +329,7 @@ const c4_wh = [
 ];
 
 const c5_wh = [
+    'K162 - Unknown',
     'Y790 - C1',
     'D364 - C2',
     'M267 - C3',
@@ -339,6 +344,7 @@ const c5_wh = [
 ];
 
 const c6_wh = [
+    'K162 - Unknown',
     'Q317 - C1',
     'G024 - C2',
     'L477 - C3',
@@ -357,6 +363,7 @@ const c6_wh = [
 
 // Shattered WH
 const c13_wh = [
+    'K162 - Unknown',
     'P060 - C1',
     'Z647 - C1',
     'D382 - C2',
@@ -392,6 +399,7 @@ const c13_wh = [
 ];
 
 const hs_wh = [
+    'K162 - Unknown',
     'Z971 - C1',
     'R943 - C2',
     'X702 - C3',
@@ -407,6 +415,7 @@ const hs_wh = [
 ];
 
 const ls_wh = [
+    'K162 - Unknown',
     'Z971 - C1',
     'R943 - C2',
     'X702 - C3',
@@ -422,6 +431,7 @@ const ls_wh = [
 ];
 
 const null_wh = [
+    'K162 - Unknown',
     'Z971 - C1',
     'R943 - C2',
     'X702 - C3',
@@ -437,7 +447,7 @@ const null_wh = [
     'U372 - T Pochven',
 ];
 
-const poch_wh = ['R081 - C4', 'X450 - 0.0'];
+const poch_wh = ['K162 - Unknown', 'R081 - C4', 'X450 - 0.0'];
 
 // ================================================================================================================
 //  Signature Tree Structure
