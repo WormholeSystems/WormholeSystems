@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import CheckIcon from '@/components/icons/CheckIcon.vue';
+import TimesIcon from '@/components/icons/TimesIcon.vue';
 import TrashIcon from '@/components/icons/TrashIcon.vue';
 import { Button } from '@/components/ui/button';
 import { PinInput, PinInputGroup, PinInputSeparator, PinInputSlot } from '@/components/ui/pin-input';
@@ -157,6 +158,10 @@ function handleDelete() {
         only: ['selected_map_solarsystem'],
     });
 }
+
+function handleReset() {
+    form.reset();
+}
 </script>
 
 <template>
@@ -220,21 +225,31 @@ function handleDelete() {
             </TooltipContent>
         </Tooltip>
         <div class="flex gap-2">
-            <Tooltip>
+            <template v-if="form.isDirty">
+                <Tooltip>
+                    <TooltipTrigger as-child>
+                        <Button variant="secondary" size="icon" @click="handleReset">
+                            <TimesIcon />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent> Reset Changes</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                    <TooltipTrigger as-child>
+                        <Button variant="secondary" @click="handleSubmit">
+                            <CheckIcon />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent> Save Signature</TooltipContent>
+                </Tooltip>
+            </template>
+            <Tooltip v-else>
                 <TooltipTrigger as-child>
                     <Button variant="secondary" @click="handleDelete">
                         <TrashIcon />
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent> Delete Signature</TooltipContent>
-            </Tooltip>
-            <Tooltip v-if="form.isDirty">
-                <TooltipTrigger as-child>
-                    <Button variant="secondary" @click="handleSubmit">
-                        <CheckIcon />
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent> Save Signature</TooltipContent>
             </Tooltip>
         </div>
     </div>
