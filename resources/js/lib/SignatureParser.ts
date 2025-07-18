@@ -42,24 +42,24 @@ class SignatureParser {
             app_category = null;
         }
 
+        function getType(category: string | null, type: string | null) {
+            if (category === 'Wormhole') {
+                return null;
+            }
+            const parsed_type = type?.trim();
+            if (!parsed_type) {
+                return null;
+            }
+
+            return parsed_type;
+        }
+
         return {
             signature_id: signature_id.trim(),
             category: app_category as TSignatureCategory,
-            type: this.getType(app_category, type),
+            type: getType(app_category, type),
             created_at: new Date().toISOString(),
         };
-    }
-
-    getType(category: string | null, type: string | null) {
-        if (category === 'Wormhole') {
-            return null;
-        }
-        const parsed_type = type?.trim();
-        if (!parsed_type) {
-            return null;
-        }
-
-        return parsed_type;
     }
 }
 
