@@ -8,6 +8,7 @@ import MapSearch from '@/components/map/MapSearch.vue';
 import MapUserSetting from '@/components/map/MapUserSetting.vue';
 import Tracker from '@/components/map/Tracker.vue';
 import MapRouteSolarsystems from '@/components/routes/MapRouteSolarsystems.vue';
+import ShipHistory from '@/components/ShipHistory.vue';
 import Signatures from '@/components/signatures/Signatures.vue';
 import SolarsystemDetails from '@/components/solarsystem/SolarsystemDetails.vue';
 import { Button } from '@/components/ui/button';
@@ -64,6 +65,7 @@ router.on('before', (event) => {
                         <p class="text-center">Select a solarsystem to see more details</p>
                     </div>
                     <Signatures :map_solarsystem="selected_map_solarsystem" v-if="selected_map_solarsystem" />
+                    <ShipHistory />
                 </div>
                 <div class="col-span-6 xl:col-span-4">
                     <MapCharacters :map_characters />

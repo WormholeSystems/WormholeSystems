@@ -8,12 +8,15 @@ use App\Http\Resources\CharacterResource;
 use App\Http\Resources\KillmailResource;
 use App\Http\Resources\MapResource;
 use App\Http\Resources\MapSolarsystemResource;
+use App\Http\Resources\ShipHistoryResource;
 use App\Http\Resources\SolarsystemResource;
 use App\Models\Character;
+use App\Models\CharacterStatus;
 use App\Models\Killmail;
 use App\Models\Map;
 use App\Models\MapRouteSolarsystem;
 use App\Models\MapSolarsystem;
+use App\Models\ShipHistory;
 use App\Models\Solarsystem;
 use App\Models\User;
 use App\Scopes\CharacterHasMapAccess;
@@ -65,6 +68,14 @@ class MapController extends Controller
 
         $map_characters = fn (): ResourceCollection => $this->getMapCharacters($map);
 
+        $ship_history = ShipHistory::query()
+            ->where('ship_id', '=', CharacterStatus::query()->where('character_id', '=', $this->user->active_character->id)
+                ->select('ship_item_id'))
+            ->latest()
+            ->limit(10)
+            ->get()
+            ->toResourceCollection(ShipHistoryResource::class);
+
         return Inertia::render('maps/ShowMap', [
             'map' => $map->toResource(MapResource::class),
             'solarsystems' => $solarsystems,
@@ -74,6 +85,7 @@ class MapController extends Controller
             'map_killmails' => $map_killmails,
             'map_characters' => $map_characters,
             'map_route_solarsystems' => Inertia::defer(fn (): array => $this->getMapRouteSolarsystems($map, $selected_map_solarsystem_id)),
+            'ship_history' => $ship_history,
         ]);
     }
 

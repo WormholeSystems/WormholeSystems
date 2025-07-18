@@ -108,7 +108,7 @@ useEcho(getMapChannelName(map.id), [MapRouteSolarsystemsUpdatedEvent], () => {
 
 useEcho(getMapChannelName(map.id), CharacterStatusUpdatedEvent, () => {
     router.reload({
-        only: ['map_characters'],
+        only: ['map_characters', 'ship_history'],
     });
 });
 

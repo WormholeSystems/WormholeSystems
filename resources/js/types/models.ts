@@ -229,3 +229,15 @@ export type TMapUserSetting = {
     map_id: number;
     tracking_allowed: boolean;
 };
+
+export type TShipHistory = {
+    id: number;
+    character_id: number;
+    ship_type_id: number;
+    name: string;
+    ship_id: number;
+    ship_type: TType | null;
+    character: TCharacter | null;
+    created_at: string;
+    updated_at: string;
+};
