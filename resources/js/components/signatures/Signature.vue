@@ -74,7 +74,7 @@ const updated_at = computed(() => {
 });
 
 const modified_date = computed(() => {
-    if (signature.type === 'Wormhole') {
+    if (signature.category === 'Wormhole') {
         return created_at.value;
     }
 
