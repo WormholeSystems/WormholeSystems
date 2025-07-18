@@ -197,7 +197,7 @@ function handleReset() {
 
 <template>
     <div
-        class="col-span-full grid grid-cols-subgrid items-center py-2 *:first:pl-2 *:last:pr-2 data-[deleted=true]:bg-red-500/10 data-[new=true]:bg-green-500/10 data-[updated=true]:bg-amber-500/10"
+        class="col-span-full grid grid-cols-subgrid items-center py-2 *:first:pl-2 *:last:pr-2 data-[deleted=true]:bg-red-500/10 data-[new=true]:bg-green-500/10 data-[updated=true]:bg-amber-500/15"
         :data-deleted="deleted"
         :data-new="$props.new"
         :data-updated="updated"
@@ -249,7 +249,11 @@ function handleReset() {
                             :wormhole_class="selected_connection?.target.class"
                             :security="selected_connection?.target.solarsystem?.security"
                         />
-                        <span class="truncate">{{ selected_connection?.target.name }}</span>
+                        <span class="mr-auto truncate" v-if="!selected_connection.target.alias">{{ selected_connection?.target.name }}</span>
+                        <span class="mr-auto truncate" v-else>
+                            <span class="mr-1">{{ selected_connection?.target.alias }}</span>
+                            <span class="text-muted-foreground">{{ selected_connection?.target.name }}</span>
+                        </span>
                     </template>
                     <template v-else>
                         <span class="truncate">Select connection</span>

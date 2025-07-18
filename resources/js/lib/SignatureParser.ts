@@ -25,23 +25,21 @@ class SignatureParser {
 
     parseSignature(signature: string[]): TRawSignature | null {
         if (signature.length < 4) {
+            toast.error('Invalid signature format. Expected at least 4 tab-separated values.');
             return null;
         }
-
-        console.log(`Parsing signature: ${signature.join(', ')}`);
 
         const [signature_id, _, category, type] = signature;
 
         let app_category: string | null = category;
 
         if (!signature_id) {
-            toast.error('Signature ID is missing');
+            toast.error('Invalid signature format. Signature ID is required.');
             return null;
         }
 
         if (!signatureCategories.includes(category as TSignatureCategory)) {
             app_category = null;
-            return null;
         }
 
         return {
