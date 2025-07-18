@@ -47,6 +47,7 @@ const solarsystem_connectins = computed(() => {
             return {
                 id: connection.id,
                 target,
+                is_eol: connection.is_eol,
             };
         });
 });
@@ -100,6 +101,10 @@ const modified_at = computed(() => {
 
 const modified_class = computed(() => {
     const hours = differenceInHours(now.value, modified_date.value);
+
+    if (selected_connection.value?.is_eol) {
+        return 'eol';
+    }
     if (hours < 8) {
         return 'fresh';
     }
@@ -261,7 +266,7 @@ function handleReset() {
         <Tooltip>
             <TooltipTrigger
                 :data-modified-class="modified_class"
-                class="whitespace-nowrap data-[modified-class=fresh]:text-green-500 data-[modified-class=old]:text-yellow-500 data-[modified-class=very-old]:text-red-500"
+                class="whitespace-nowrap data-[modified-class=eol]:text-purple-500 data-[modified-class=fresh]:text-green-500 data-[modified-class=old]:text-yellow-500 data-[modified-class=very-old]:text-red-500"
             >
                 {{ modified_at }}
             </TooltipTrigger>
