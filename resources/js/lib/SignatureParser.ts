@@ -45,9 +45,21 @@ class SignatureParser {
         return {
             signature_id: signature_id.trim(),
             category: app_category as TSignatureCategory,
-            type: category === 'Wormhole' ? null : type.trim(),
-            created_at: new Date().toISOString(), // Default to current time if not provided
+            type: this.getType(app_category, type),
+            created_at: new Date().toISOString(),
         };
+    }
+
+    getType(category: string | null, type: string | null) {
+        if (category === 'Wormhole') {
+            return null;
+        }
+        const parsed_type = type?.trim();
+        if (!parsed_type) {
+            return null;
+        }
+
+        return parsed_type;
     }
 }
 
