@@ -262,8 +262,12 @@ function handleReset() {
             </SelectTrigger>
             <SelectContent>
                 <SelectItem v-for="connection in solarsystem_connectins" :key="connection.id" :value="connection.id">
-                    <SolarsystemClass :wormhole_class="connection.target.class" :security="connection.target.solarsystem?.security" />
-                    {{ connection.target.name }}
+                    <SolarsystemClass :wormhole_class="connection?.target.class" :security="connection?.target.solarsystem?.security" />
+                    <span class="mr-auto truncate" v-if="!connection.target.alias">{{ connection?.target.name }}</span>
+                    <span class="mr-auto truncate" v-else>
+                        <span class="mr-1">{{ connection?.target.alias }}</span>
+                        <span class="text-muted-foreground">{{ connection?.target.name }}</span>
+                    </span>
                 </SelectItem>
             </SelectContent>
         </Select>
