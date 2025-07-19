@@ -177,7 +177,7 @@ function createNewSignature() {
             <CardTitle> Signatures</CardTitle>
             <CardDescription> All the signatures in this solarsystem. You can paste, copy and clear signatures here. </CardDescription>
 
-            <CardAction>
+            <CardAction class="flex gap-2">
                 <Tooltip>
                     <TooltipTrigger as-child>
                         <Button @click="handlePaste" variant="outline" size="icon">

@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import PlusIcon from '@/components/icons/PlusIcon.vue';
 import SolarsystemEffect from '@/components/map/SolarsystemEffect.vue';
 import SolarsystemClass from '@/components/SolarsystemClass.vue';
 import { Button } from '@/components/ui/button';
 import { Combobox, ComboboxAnchor, ComboboxEmpty, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxList } from '@/components/ui/combobox';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useSearch } from '@/composables/useSearch';
 import { TMap, TSolarsystem } from '@/types/models';
 import { router } from '@inertiajs/vue3';
@@ -48,7 +50,14 @@ function handleSolarsystemSelect(solarsystem: TSolarsystem) {
 <template>
     <Dialog v-model:open="adding">
         <DialogTrigger as-child>
-            <Button variant="outline"> Add</Button>
+            <Tooltip>
+                <TooltipTrigger as-child>
+                    <Button variant="outline" size="icon">
+                        <PlusIcon />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent> Add Solarsystem </TooltipContent>
+            </Tooltip>
         </DialogTrigger>
         <DialogContent>
             <DialogHeader>

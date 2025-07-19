@@ -7,7 +7,7 @@ import MapComponent from '@/components/map/MapComponent.vue';
 import MapSearch from '@/components/map/MapSearch.vue';
 import MapUserSetting from '@/components/map/MapUserSetting.vue';
 import Tracker from '@/components/map/Tracker.vue';
-import MapRouteSolarsystems from '@/components/routes/MapRouteSolarsystems.vue';
+import Watchlist from '@/components/routes/Watchlist.vue';
 import ShipHistory from '@/components/ShipHistory.vue';
 import Signatures from '@/components/signatures/Signatures.vue';
 import SolarsystemDetails from '@/components/solarsystem/SolarsystemDetails.vue';
@@ -74,7 +74,7 @@ router.on('before', (event) => {
                     <MapKillmails :map_killmails="map_killmails" :map_id="map.id" />
                 </div>
                 <div class="col-span-12 row-span-2 xl:col-span-3">
-                    <MapRouteSolarsystems :map_route_solarsystems v-if="selected_map_solarsystem" :map :solarsystems :selected_map_solarsystem />
+                    <Watchlist :map_route_solarsystems v-if="selected_map_solarsystem" :map :solarsystems :selected_map_solarsystem />
                 </div>
             </div>
         </div>
