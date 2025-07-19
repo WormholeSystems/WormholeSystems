@@ -42,6 +42,8 @@ export type TMapConnection = {
     ship_size: TShipSize;
     mass_status: TMassStatus;
     is_eol: boolean;
+    created_at: string;
+    updated_at: string;
 };
 
 export type TWormhole = {

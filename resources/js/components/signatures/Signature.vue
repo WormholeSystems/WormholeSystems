@@ -15,6 +15,7 @@ import { TSignature } from '@/types/models';
 import { useForm, usePage } from '@inertiajs/vue3';
 import { useNow } from '@vueuse/core';
 import { differenceInHours, differenceInSeconds, format } from 'date-fns';
+import { isBefore } from 'date-fns/fp';
 import { computed, watch } from 'vue';
 
 const { signature } = defineProps<{
@@ -35,7 +36,7 @@ const page = usePage<AppPageProps<TShowMapProps>>();
 
 const connections = useMapConnections();
 
-const solarsystem_connectins = computed(() => {
+const solarsystem_connections = computed(() => {
     return connections.value
         .filter(
             (connection) =>
@@ -48,12 +49,13 @@ const solarsystem_connectins = computed(() => {
                 id: connection.id,
                 target,
                 is_eol: connection.is_eol,
+                created_at: connection.created_at,
             };
         });
 });
 
 const selected_connection = computed(() => {
-    return solarsystem_connectins.value.find((connection) => connection.id === form.map_connection_id) || null;
+    return solarsystem_connections.value.find((connection) => connection.id === form.map_connection_id) || null;
 });
 
 const now = useNow();
@@ -67,6 +69,14 @@ const security = computed(() => {
 });
 
 const created_at = computed(() => {
+    if (form.category === 'Wormhole') {
+        if (selected_connection.value?.created_at) {
+            const connection_created_at = new Date(selected_connection.value.created_at);
+            const signature_created_at = new Date(signature.created_at);
+            return isBefore(connection_created_at, signature_created_at) ? connection_created_at : signature_created_at;
+        }
+    }
+
     return new Date(signature.created_at);
 });
 
@@ -261,7 +271,7 @@ function handleReset() {
                 </SelectValue>
             </SelectTrigger>
             <SelectContent>
-                <SelectItem v-for="connection in solarsystem_connectins" :key="connection.id" :value="connection.id">
+                <SelectItem v-for="connection in solarsystem_connections" :key="connection.id" :value="connection.id">
                     <SolarsystemClass :wormhole_class="connection?.target.class" :security="connection?.target.solarsystem?.security" />
                     <span class="mr-auto truncate" v-if="!connection.target.alias">{{ connection?.target.name }}</span>
                     <span class="mr-auto truncate" v-else>
