@@ -27,10 +27,10 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property-read int|null $signatures_count
  * @property-read Solarsystem $solarsystem
  * @property-read Map $map
- * @property-read Collection<MapConnection> $connectionsTo
- * @property-read Collection<MapConnection> $connectionsFrom
+ * @property-read Collection<int,MapConnection> $connectionsTo
+ * @property-read Collection<int,MapConnection> $connectionsFrom
  * @property-read WormholeSystem|null $wormholeSystem
- * @property-read Collection<Signature> $signatures
+ * @property-read Collection<int,Signature> $signatures
  */
 #[UseFactory(MapSolarsystemFactory::class)]
 class MapSolarsystem extends Model

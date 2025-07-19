@@ -71,8 +71,22 @@ async function handlePaste() {
     updated_signatures.value = getUpdatedSignatures(signatures);
     deleted_signatures.value = getDeletedSignatures(signatures);
     pasted_signatures.value = signatures;
-    createNewSignatures(new_signatures.value);
-    updateSignatures(updated_signatures.value);
+    router.post(
+        route('paste-signatures.store'),
+        {
+            map_solarsystem_id: map_solarsystem.id,
+            signatures: signatures.map((signature) => ({
+                signature_id: signature.signature_id,
+                type: signature.type,
+                category: signature.category,
+            })),
+        },
+        {
+            preserveScroll: true,
+            preserveState: true,
+            only: ['selected_map_solarsystem'],
+        },
+    );
 }
 
 async function getSignaturesFromClipboard() {
@@ -103,23 +117,6 @@ function isSignatureUpdated(signature: Partial<TSignature>) {
     return Boolean(updated_signatures.value.some((updated_signature) => updated_signature.signature_id === signature.signature_id));
 }
 
-function createNewSignatures(signatures: Partial<TSignature>[]) {
-    signatures.forEach((signature) => {
-        router.post(
-            route('signatures.store'),
-            {
-                map_solarsystem_id: map_solarsystem.id,
-                ...signature,
-            } satisfies Partial<TSignature>,
-            {
-                preserveScroll: true,
-                preserveState: true,
-                only: ['selected_map_solarsystem'],
-            },
-        );
-    });
-}
-
 function getUpdatedSignatures(parsed_signatures: Partial<TSignature>[]) {
     return parsed_signatures.filter((signature) => {
         return map_solarsystem.signatures!.some((existing_signature) => {
@@ -131,25 +128,6 @@ function getUpdatedSignatures(parsed_signatures: Partial<TSignature>[]) {
 function getDeletedSignatures(parsed_signatures: Partial<TSignature>[]) {
     return map_solarsystem.signatures!.filter((signature) => {
         return !parsed_signatures.some((parsed_signature) => parsed_signature.signature_id === signature.signature_id);
-    });
-}
-
-function updateSignatures(signatures: Partial<TSignature>[]) {
-    signatures.forEach((signature) => {
-        const existing_signature = map_solarsystem.signatures!.find((s) => s.signature_id === signature.signature_id);
-        router.put(
-            route('signatures.update', existing_signature?.id),
-            {
-                signature_id: signature.signature_id ?? existing_signature?.signature_id,
-                type: signature.type ?? existing_signature?.type,
-                category: signature.category ?? existing_signature?.category,
-            } satisfies Partial<TSignature>,
-            {
-                preserveScroll: true,
-                preserveState: true,
-                only: ['selected_map_solarsystem'],
-            },
-        );
     });
 }
 

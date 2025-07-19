@@ -14,8 +14,7 @@ import { AppPageProps } from '@/types';
 import { TSignature } from '@/types/models';
 import { useForm, usePage } from '@inertiajs/vue3';
 import { useNow } from '@vueuse/core';
-import { differenceInHours, differenceInSeconds, format } from 'date-fns';
-import { isBefore } from 'date-fns/fp';
+import { differenceInHours, differenceInSeconds, format, min } from 'date-fns';
 import { computed, watch } from 'vue';
 
 const { signature } = defineProps<{
@@ -73,7 +72,7 @@ const created_at = computed(() => {
         if (selected_connection.value?.created_at) {
             const connection_created_at = new Date(selected_connection.value.created_at);
             const signature_created_at = new Date(signature.created_at);
-            return isBefore(connection_created_at, signature_created_at) ? connection_created_at : signature_created_at;
+            return min([connection_created_at, signature_created_at]);
         }
     }
 

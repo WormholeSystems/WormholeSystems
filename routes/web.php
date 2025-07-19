@@ -1,3 +1,4 @@
+
 <?php
 
 use App\Http\Controllers\AuthController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\MapRouteSolarsystemController;
 use App\Http\Controllers\MapSelectionController;
 use App\Http\Controllers\MapSolarsystemController;
 use App\Http\Controllers\MapUserSettingController;
+use App\Http\Controllers\PasteSignatureController;
 use App\Http\Controllers\PingController;
 use App\Http\Controllers\SignatureController;
 use App\Http\Controllers\StatisticsController;
@@ -47,6 +49,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('map-selection', [MapSelectionController::class, 'destroy'])->name('map-selection.destroy');
 
     Route::resource('signatures', SignatureController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('paste-signatures', PasteSignatureController::class)->only(['store']);
 
     Route::put('user-characters/{character}', [UserCharacterController::class, 'update'])->name('user-characters.update');
     Route::delete('user-characters/{character}', [UserCharacterController::class, 'delete'])->name('user-characters.delete');
