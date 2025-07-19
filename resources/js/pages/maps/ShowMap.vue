@@ -57,7 +57,7 @@ router.on('before', (event) => {
                     </div>
                 </div>
             </div>
-            <div class="grid grid-flow-row-dense grid-cols-12 items-start gap-4">
+            <div class="grid grid-flow-row-dense grid-cols-12 gap-4">
                 <div class="col-span-6 row-span-2 grid gap-4 xl:col-span-5">
                     <SolarsystemDetails v-if="selected_map_solarsystem" :map_solarsystem="selected_map_solarsystem" :map :map_route_solarsystems />
                     <div class="flex flex-col items-center justify-center gap-8 rounded-lg border border-dashed p-16 text-neutral-700" v-else>

@@ -17,7 +17,7 @@ const page = usePage<AppPageProps<TShowMapProps>>();
             <CardDescription> See who has been using this ship and when.</CardDescription>
         </CardHeader>
         <CardContent class="px-1">
-            <div class="rounded-lg border">
+            <div class="rounded-lg border bg-neutral-900/40">
                 <Table>
                     <TableHeader>
                         <TableRow>
