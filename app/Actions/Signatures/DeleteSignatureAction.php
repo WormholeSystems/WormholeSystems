@@ -2,18 +2,20 @@
 
 namespace App\Actions\Signatures;
 
+use App\Actions\MapConnections\DeleteMapConnectionAction;
 use App\Events\Signatures\SignatureDeletedEvent;
 use App\Models\Signature;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
-class DeleteSignatureAction
+readonly class DeleteSignatureAction
 {
     /**
      * Create a new class instance.
      */
-    public function __construct()
-    {
+    public function __construct(
+        private DeleteMapConnectionAction $deleteMapConnectionAction,
+    ) {
         //
     }
 
@@ -23,10 +25,18 @@ class DeleteSignatureAction
     public function handle(Signature $signature): bool
     {
         return DB::transaction(function () use ($signature) {
-            $signature->delete();
             broadcast(new SignatureDeletedEvent($signature->mapSolarsystem->map_id))->toOthers();
+            $this->deleteMapConnection($signature);
+            $signature->delete();
 
             return true;
         });
+    }
+
+    private function deleteMapConnection(Signature $signature): void
+    {
+        if ($signature->map_connection_id) {
+            $this->deleteMapConnectionAction->handle($signature->mapConnection);
+        }
     }
 }

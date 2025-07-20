@@ -195,7 +195,7 @@ function handleDelete() {
     form.delete(route('signatures.destroy', signature.id), {
         preserveScroll: true,
         preserveState: true,
-        only: ['selected_map_solarsystem'],
+        only: ['selected_map_solarsystem', 'map'],
     });
 }
 
