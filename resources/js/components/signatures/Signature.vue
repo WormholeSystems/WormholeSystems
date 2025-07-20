@@ -50,6 +50,20 @@ const solarsystem_connections = computed(() => {
                 is_eol: connection.is_eol,
                 created_at: connection.created_at,
             };
+        })
+        .toSorted((a, b) => {
+            if (a.target.alias && b.target.alias) {
+                return a.target.alias.localeCompare(b.target.alias);
+            }
+
+            if (a.target.alias) {
+                return -1;
+            }
+
+            if (b.target.alias) {
+                return 1;
+            }
+            return a.target.name.localeCompare(b.target.name);
         });
 });
 
