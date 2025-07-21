@@ -49,16 +49,16 @@ function handleSolarsystemSelect(solarsystem: TSolarsystem) {
 
 <template>
     <Dialog v-model:open="adding">
-        <DialogTrigger as-child>
-            <Tooltip>
+        <Tooltip>
+            <DialogTrigger as-child>
                 <TooltipTrigger as-child>
                     <Button variant="outline" size="icon">
                         <PlusIcon />
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent> Add Solarsystem </TooltipContent>
-            </Tooltip>
-        </DialogTrigger>
+            </DialogTrigger>
+            <TooltipContent> Add Solarsystem</TooltipContent>
+        </Tooltip>
         <DialogContent>
             <DialogHeader>
                 <DialogTitle> Add Solarsystem</DialogTitle>
