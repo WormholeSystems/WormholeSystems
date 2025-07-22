@@ -21,7 +21,7 @@ readonly class CharacterDoesntHaveRequiredScopes
      */
     public function __invoke(Builder $query): Builder
     {
-        return $query->whereNot(function (Builder $query) {
+        return $query->whereNot(function (Builder $query): void {
             foreach ($this->scopes as $scope) {
                 $query->whereHas('esiTokens.esiScopes', fn (Builder $scopeQuery) => $scopeQuery->where('name', '=', $scope->value));
             }

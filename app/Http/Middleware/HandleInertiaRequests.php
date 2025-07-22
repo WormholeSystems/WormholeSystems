@@ -76,7 +76,7 @@ class HandleInertiaRequests extends Middleware
      */
     public function getMissingScopes(): JsonResource
     {
-        if (! $this->user) {
+        if (! $this->user instanceof \App\Models\User) {
             return new JsonResource([]);
         }
 
