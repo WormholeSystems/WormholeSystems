@@ -54,7 +54,7 @@ class GetKillmailsForDayCommand extends Command
 
         $this->extractKillmails($local_file);
 
-        $this->processKillmails($date);
+        $this->processKillmails();
 
         Storage::delete($local_file);
         Storage::deleteDirectory('killmails/killmails');
@@ -104,10 +104,9 @@ class GetKillmailsForDayCommand extends Command
 
     }
 
-    private function processKillmails(CarbonImmutable $date): void
+    private function processKillmails(): void
     {
         $files = Storage::files('killmails/killmails');
-
         foreach ($files as $file) {
             $this->info(sprintf('Processing %s', $file));
             $content = Storage::json($file);

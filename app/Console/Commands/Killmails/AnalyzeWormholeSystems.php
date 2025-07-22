@@ -122,7 +122,7 @@ class AnalyzeWormholeSystems extends Command
         }
 
         return collect($organizationStats)
-            ->filter(fn (array $stats) => count($stats['active_days']) >= $this->daysActive);
+            ->filter(fn (array $stats): bool => count($stats['active_days']) >= $this->daysActive);
     }
 
     private function getParticipatingOrganizations(object $killmail): array
@@ -187,7 +187,7 @@ class AnalyzeWormholeSystems extends Command
             $markdown = 'We could not find any groups that meet the criteria.';
         } else {
             $markdown = $topOrganizations
-                ->map(fn (array $stats, int $id) => $this->getEntityDetails($stats, $id))
+                ->map(fn (array $stats, int $id): string => $this->getEntityDetails($stats, $id))
                 ->implode("\n");
         }
 

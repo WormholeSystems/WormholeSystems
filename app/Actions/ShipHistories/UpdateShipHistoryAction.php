@@ -17,16 +17,12 @@ final readonly class UpdateShipHistoryAction
      */
     public function handle(int $character_id, int $ship_id, int $ship_type_id, ?string $name = ''): ShipHistory
     {
-        return DB::transaction(function () use ($ship_id, $ship_type_id, $name, $character_id) {
-            $history = $this->upsertShipHistory(
-                $ship_id,
-                $ship_type_id,
-                $character_id,
-                $name
-            );
-
-            return $history;
-        });
+        return DB::transaction(fn (): \App\Models\ShipHistory => $this->upsertShipHistory(
+            $ship_id,
+            $ship_type_id,
+            $character_id,
+            $name
+        ));
     }
 
     private function upsertShipHistory(

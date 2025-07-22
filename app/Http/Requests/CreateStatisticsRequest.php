@@ -30,7 +30,7 @@ class CreateStatisticsRequest extends FormRequest
      */
     public function authorize(#[CurrentUser] User $user): bool
     {
-        if ($this->mapSolarsystem) {
+        if ($this->mapSolarsystem instanceof \App\Models\MapSolarsystem) {
             return $user->can('update', $this->mapSolarsystem);
         }
 

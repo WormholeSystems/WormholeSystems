@@ -24,7 +24,7 @@ readonly class DeleteSignatureAction
      */
     public function handle(Signature $signature): bool
     {
-        return DB::transaction(function () use ($signature) {
+        return DB::transaction(function () use ($signature): true {
             broadcast(new SignatureDeletedEvent($signature->mapSolarsystem->map_id))->toOthers();
             $this->deleteMapConnection($signature);
             $signature->delete();

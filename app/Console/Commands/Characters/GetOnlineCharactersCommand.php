@@ -5,9 +5,11 @@ namespace App\Console\Commands\Characters;
 use App\Events\Characters\CharacterStatusUpdatedEvent;
 use App\Models\CharacterStatus;
 use App\Models\Map;
+use App\Scopes\CharacterHasRequiredScopes;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Client\ConnectionException;
+use NicolasKion\Esi\Enums\EsiScope;
 use NicolasKion\Esi\Esi;
 
 class GetOnlineCharactersCommand extends Command
@@ -35,6 +37,12 @@ class GetOnlineCharactersCommand extends Command
     {
         $characters = CharacterStatus::query()
             ->whereHas('character.user', fn (Builder $query) => $query->where('last_active_at', '>=', now()->subMinutes(10)))
+            ->whereHas('character', fn (Builder $query) => $query
+                ->tap(new CharacterHasRequiredScopes([
+                    EsiScope::ReadOnlineStatus,
+                    EsiScope::ReadLocations,
+                    EsiScope::ReadShip,
+                ])))
             ->get();
 
         $updated_character_ids = [];

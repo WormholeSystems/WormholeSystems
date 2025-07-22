@@ -27,10 +27,10 @@ final readonly class PasteSignaturesAction
             $signatures = collect($data['signatures']);
             $existing_signatures = $map_solarsystem->signatures;
 
-            $new_signatures = $signatures->filter(fn (array $signature) => $existing_signatures->firstWhere('signature_id', $signature['signature_id']) === null);
-            $updated_signatures = $signatures->filter(fn (array $signature) => $existing_signatures->firstWhere('signature_id', $signature['signature_id']) !== null);
+            $new_signatures = $signatures->filter(fn (array $signature): bool => $existing_signatures->firstWhere('signature_id', $signature['signature_id']) === null);
+            $updated_signatures = $signatures->filter(fn (array $signature): bool => $existing_signatures->firstWhere('signature_id', $signature['signature_id']) !== null);
 
-            $new_signatures->each(fn (array $signature) => $this->storeSignatureAction->handle([
+            $new_signatures->each(fn (array $signature): \App\Models\Signature => $this->storeSignatureAction->handle([
                 ...$signature,
                 'map_solarsystem_id' => $map_solarsystem->id,
             ]));

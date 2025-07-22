@@ -2,13 +2,18 @@
 
 namespace App\Http\Middleware;
 
+use App\Http\Resources\CharacterResource;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Scopes\CharacterDoesntHaveRequiredScopes;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Inertia\Inertia;
 use Inertia\Middleware;
+use NicolasKion\Esi\Enums\EsiScope;
+use Throwable;
 use Tighten\Ziggy\Ziggy;
 
 class HandleInertiaRequests extends Middleware
@@ -40,6 +45,8 @@ class HandleInertiaRequests extends Middleware
      * @see https://inertiajs.com/shared-data
      *
      * @return array<string, mixed>
+     *
+     * @throws Throwable
      */
     public function share(Request $request): array
     {
@@ -60,6 +67,27 @@ class HandleInertiaRequests extends Middleware
             'notification' => Inertia::always(
                 $request->session()->get('notification')
             ),
+            'missing_scopes' => $this->getMissingScopes(),
         ];
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function getMissingScopes(): JsonResource
+    {
+        if (! $this->user) {
+            return new JsonResource([]);
+        }
+
+        $characters_with_missing_scopes = $this->user->characters()
+            ->tap(new CharacterDoesntHaveRequiredScopes([
+                EsiScope::ReadOnlineStatus,
+                EsiScope::ReadLocations,
+                EsiScope::ReadShip,
+            ]))
+            ->get();
+
+        return $characters_with_missing_scopes->toResourceCollection(CharacterResource::class);
     }
 }

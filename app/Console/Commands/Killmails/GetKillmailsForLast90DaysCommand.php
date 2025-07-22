@@ -33,7 +33,7 @@ class GetKillmailsForLast90DaysCommand extends Command
         $days = CarbonImmutable::now()->diffInDays($date, true);
         progress('Downloading killmails for the last 90 days',
             $days,
-            function (int $step) use ($date) {
+            function (int $step) use ($date): void {
                 $this->callSilently('app:get-killmails-for-day', [
                     'date' => $date->addDays($step)->toDateString(),
                 ]);

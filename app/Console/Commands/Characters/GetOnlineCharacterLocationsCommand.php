@@ -7,11 +7,15 @@ use App\Events\Characters\CharacterStatusUpdatedEvent;
 use App\Models\Character;
 use App\Models\CharacterStatus;
 use App\Models\Map;
+use App\Scopes\CharacterDoesntHaveRequiredScopes;
+use App\Scopes\CharacterHasRequiredScopes;
 use Illuminate\Console\Command;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Log;
 use NicolasKion\Esi\DTO\Location;
 use NicolasKion\Esi\DTO\Ship;
+use NicolasKion\Esi\Enums\EsiScope;
 use NicolasKion\Esi\Esi;
 use Throwable;
 
@@ -41,7 +45,24 @@ class GetOnlineCharacterLocationsCommand extends Command
     {
         $characters = CharacterStatus::query()
             ->where('is_online', true)
+            ->whereHas('character', fn (Builder $query) => $query
+                ->tap(new CharacterHasRequiredScopes([
+                    EsiScope::ReadOnlineStatus,
+                    EsiScope::ReadLocations,
+                    EsiScope::ReadShip,
+                ])))
             ->get();
+
+        CharacterStatus::query()
+            ->whereHas('character', fn (Builder $query) => $query
+                ->tap(new CharacterDoesntHaveRequiredScopes([
+                    EsiScope::ReadOnlineStatus,
+                    EsiScope::ReadLocations,
+                    EsiScope::ReadShip,
+                ])))
+            ->update([
+                'is_online' => false,
+            ]);
 
         $updated_character_ids = [];
 

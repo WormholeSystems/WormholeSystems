@@ -7,8 +7,6 @@ use Illuminate\Database\Eloquent\Builder;
 
 readonly class CharacterIsOnline
 {
-    public function __construct() {}
-
     /**
      * @param  Builder<Character>  $query
      * @return Builder<Character>

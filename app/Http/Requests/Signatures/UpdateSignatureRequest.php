@@ -33,12 +33,14 @@ class UpdateSignatureRequest extends FormRequest
             return false;
         }
 
-        if (! $this->mapConnection) {
+        if (! $this->mapConnection instanceof \App\Models\MapConnection) {
+            return true;
+        }
+        if ($this->mapConnection->fromMapSolarsystem()->is($signature->mapSolarsystem)) {
             return true;
         }
 
-        return $this->mapConnection->fromMapSolarsystem()->is($signature->mapSolarsystem)
-            || $this->mapConnection->toMapSolarsystem()->is($signature->mapSolarsystem);
+        return $this->mapConnection->toMapSolarsystem()->is($signature->mapSolarsystem);
     }
 
     /**

@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('map_user_settings', function (Blueprint $table) {
+        Schema::create('map_user_settings', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('map_id')->constrained('maps')->cascadeOnDelete();

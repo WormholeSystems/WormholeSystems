@@ -38,12 +38,14 @@ class StoreSignatureRequest extends FormRequest
             return false;
         }
 
-        if (! $this->mapConnection) {
+        if (! $this->mapConnection instanceof \App\Models\MapConnection) {
+            return true;
+        }
+        if ($this->mapConnection->fromMapSolarsystem()->is($this->mapSolarsystem)) {
             return true;
         }
 
-        return $this->mapConnection->fromMapSolarsystem()->is($this->mapSolarsystem)
-            || $this->mapConnection->toMapSolarsystem()->is($this->mapSolarsystem);
+        return $this->mapConnection->toMapSolarsystem()->is($this->mapSolarsystem);
     }
 
     /**

@@ -9,7 +9,9 @@ import { NavigationMenu, NavigationMenuItem, NavigationMenuList, navigationMenuT
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import UserMenuContent from '@/components/UserMenuContent.vue';
-import type { BreadcrumbItem, NavItem } from '@/types';
+import useUser from '@/composables/useUser';
+import type { AppPageProps, BreadcrumbItem, NavItem } from '@/types';
+import { TCharacter } from '@/types/models';
 import { Link, usePage } from '@inertiajs/vue3';
 import { LayoutGrid, Menu } from 'lucide-vue-next';
 import { computed } from 'vue';
@@ -22,8 +24,12 @@ const props = withDefaults(defineProps<Props>(), {
     breadcrumbs: () => [],
 });
 
-const page = usePage();
-const auth = computed(() => page.props.auth);
+const page = usePage<
+    AppPageProps<{
+        missing_scopes: TCharacter[];
+    }>
+>();
+const user = useUser();
 
 const isCurrentRoute = computed(() => (url: string) => page.url === url);
 
@@ -40,6 +46,11 @@ const mainNavItems: NavItem[] = [
 ];
 
 const rightNavItems: NavItem[] = [];
+
+const and_intl = new Intl.ListFormat('en', {
+    style: 'long',
+    type: 'conjunction',
+});
 </script>
 
 <template>
@@ -137,25 +148,30 @@ const rightNavItems: NavItem[] = [];
                             </template>
                         </div>
                     </div>
-
-                    <DropdownMenu v-if="auth.user">
-                        <DropdownMenuTrigger :as-child="true">
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                class="relative size-10 w-auto rounded-lg p-1 focus-within:ring-2 focus-within:ring-primary"
-                            >
-                                <CharacterImage
-                                    :character_id="auth.user.active_character.id"
-                                    :character_name="auth.user.active_character.name"
-                                    class="size-8 rounded-lg"
-                                />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" class="w-56">
-                            <UserMenuContent :user="auth.user" />
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                    <template v-if="user">
+                        <span v-if="page.props.missing_scopes.length" class="text-red-500">
+                            Missing scopes for
+                            {{ and_intl.format(page.props.missing_scopes.map((c) => c.name)) }}. Please add them again!
+                        </span>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger :as-child="true">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    class="relative size-10 w-auto rounded-lg p-1 focus-within:ring-2 focus-within:ring-primary"
+                                >
+                                    <CharacterImage
+                                        :character_id="user.active_character.id"
+                                        :character_name="user.active_character.name"
+                                        class="size-8 rounded-lg"
+                                    />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" class="w-56">
+                                <UserMenuContent :user="user" />
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </template>
                 </div>
             </div>
         </div>
