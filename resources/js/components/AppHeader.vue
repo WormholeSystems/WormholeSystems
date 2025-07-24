@@ -2,6 +2,7 @@
 import AppLogo from '@/components/AppLogo.vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import Breadcrumbs from '@/components/Breadcrumbs.vue';
+import DiscordIcon from '@/components/icons/DiscordIcon.vue';
 import { CharacterImage } from '@/components/images';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -43,6 +44,12 @@ const mainNavItems: NavItem[] = [
         href: '/maps',
         icon: LayoutGrid,
     },
+    {
+        title: 'Discord',
+        href: 'https://discord.gg/QqrZFxht',
+        icon: DiscordIcon,
+        isExternal: true,
+    },
 ];
 
 const rightNavItems: NavItem[] = [];
@@ -72,16 +79,27 @@ const and_intl = new Intl.ListFormat('en', {
                             </SheetHeader>
                             <div class="flex h-full flex-1 flex-col justify-between space-y-4 py-6">
                                 <nav class="-mx-3 space-y-1">
-                                    <Link
-                                        v-for="item in mainNavItems"
-                                        :key="item.title"
-                                        :href="item.href"
-                                        class="flex items-center gap-x-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent"
-                                        :class="activeItemStyles(item.href)"
-                                    >
-                                        <component v-if="item.icon" :is="item.icon" class="h-5 w-5" />
-                                        {{ item.title }}
-                                    </Link>
+                                    <template v-for="item in mainNavItems" :key="item.title">
+                                        <Link
+                                            v-if="!item.isExternal"
+                                            :href="item.href"
+                                            class="flex items-center gap-x-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent"
+                                            :class="activeItemStyles(item.href)"
+                                        >
+                                            <component v-if="item.icon" :is="item.icon" class="h-5 w-5" />
+                                            {{ item.title }}
+                                        </Link>
+                                        <a
+                                            v-else
+                                            :href="item.href"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            class="flex items-center gap-x-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent"
+                                        >
+                                            <component v-if="item.icon" :is="item.icon" class="h-5 w-5" />
+                                            {{ item.title }}
+                                        </a>
+                                    </template>
                                 </nav>
                                 <div class="flex flex-col space-y-4">
                                     <a
@@ -111,12 +129,23 @@ const and_intl = new Intl.ListFormat('en', {
                         <NavigationMenuList class="flex h-full items-stretch space-x-2">
                             <NavigationMenuItem v-for="(item, index) in mainNavItems" :key="index" class="relative flex h-full items-center">
                                 <Link
+                                    v-if="!item.isExternal"
                                     :class="[navigationMenuTriggerStyle(), activeItemStyles(item.href), 'h-9 cursor-pointer px-3']"
                                     :href="item.href"
                                 >
                                     <component v-if="item.icon" :is="item.icon" class="mr-2 h-4 w-4" />
                                     {{ item.title }}
                                 </Link>
+                                <a
+                                    v-else
+                                    :class="[navigationMenuTriggerStyle(), activeItemStyles(item.href), 'h-9 cursor-pointer px-3']"
+                                    :href="item.href"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    <component v-if="item.icon" :is="item.icon" class="mr-2 h-4 w-4" />
+                                    {{ item.title }}
+                                </a>
                                 <div
                                     v-if="isCurrentRoute(item.href)"
                                     class="absolute bottom-0 left-0 h-0.5 w-full translate-y-px bg-black dark:bg-white"
