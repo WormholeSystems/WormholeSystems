@@ -8,6 +8,7 @@ import { PinInput, PinInputGroup, PinInputSeparator, PinInputSlot } from '@/comp
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMapConnections } from '@/composables/map';
+import { useHasWritePermission } from '@/composables/useHasPermission';
 import signature_tree from '@/const/signatures';
 import { TShowMapProps } from '@/pages/maps';
 import { AppPageProps } from '@/types';
@@ -32,6 +33,8 @@ const form = useForm(() => ({
 }));
 
 const page = usePage<AppPageProps<TShowMapProps>>();
+
+const can_write = useHasWritePermission();
 
 const connections = useMapConnections();
 
@@ -230,7 +233,7 @@ function handleReset() {
                 class="inline-block size-2 rounded-full data-[scanned=false]:bg-red-500 data-[scanned=true]:bg-green-500"
                 :data-scanned="Boolean(signature.signature_id && signature.type)"
             />
-            <PinInput :model-value="form.signature_id?.replace('-', '').split('')" @update:modelValue="updateId">
+            <PinInput :model-value="form.signature_id?.replace('-', '').split('')" @update:modelValue="updateId" :disabled="!can_write">
                 <PinInputGroup>
                     <PinInputSlot :index="0" />
                     <PinInputSlot :index="1" />
@@ -242,7 +245,7 @@ function handleReset() {
                 </PinInputGroup>
             </PinInput>
         </div>
-        <Select v-model:model-value="form.category">
+        <Select v-model:model-value="form.category" :disabled="!can_write">
             <SelectTrigger class="w-full">
                 <SelectValue placeholder="Select category" />
             </SelectTrigger>
@@ -252,7 +255,7 @@ function handleReset() {
                 </SelectItem>
             </SelectContent>
         </Select>
-        <Select v-model:model-value="form.type">
+        <Select v-model:model-value="form.type" :disabled="!can_write">
             <SelectTrigger class="w-full overflow-hidden data-[wormhole=false]:col-span-2" :data-wormhole="form.category === 'Wormhole'">
                 <SelectValue as-child>
                     <span class="truncate">{{ form.type || 'Select type' }}</span>
@@ -308,7 +311,7 @@ function handleReset() {
                 <p class="">{{ updated_at ? format(updated_at, 'MMM dd, HH:ii') : 'Never' }}</p>
             </TooltipContent>
         </Tooltip>
-        <div class="flex gap-2">
+        <div class="flex gap-2" v-if="can_write">
             <template v-if="form.isDirty">
                 <Tooltip>
                     <TooltipTrigger as-child>

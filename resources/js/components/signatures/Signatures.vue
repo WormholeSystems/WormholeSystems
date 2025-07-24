@@ -5,6 +5,7 @@ import Signature from '@/components/signatures/Signature.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useHasWritePermission } from '@/composables/useHasPermission';
 import { signatureParser } from '@/lib/SignatureParser';
 import { TMapSolarSystem, TSignature } from '@/types/models';
 import { router } from '@inertiajs/vue3';
@@ -15,6 +16,8 @@ import { computed, ref, watch } from 'vue';
 const { map_solarsystem } = defineProps<{
     map_solarsystem: TMapSolarSystem;
 }>();
+
+const can_write = useHasWritePermission();
 
 const pasted_signatures = ref<Partial<TSignature>[] | null>();
 const new_signatures = ref<Partial<TSignature>[]>([]);
@@ -155,7 +158,7 @@ function createNewSignature() {
             <CardTitle> Signatures</CardTitle>
             <CardDescription> All the signatures in this solarsystem. You can paste, copy and clear signatures here. </CardDescription>
 
-            <CardAction class="flex gap-2">
+            <CardAction class="flex gap-2" v-if="can_write">
                 <Tooltip>
                     <TooltipTrigger as-child>
                         <Button @click="handlePaste" variant="outline" size="icon">

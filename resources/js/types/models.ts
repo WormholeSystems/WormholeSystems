@@ -8,6 +8,7 @@ export type TMap = {
     map_connections?: TMapConnection[];
     map_solarsystems_count?: number;
     map_user_setting?: TMapUserSetting;
+    owner: TCharacter;
 };
 
 export type TMapSolarSystem = {

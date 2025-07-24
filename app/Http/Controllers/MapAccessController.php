@@ -30,6 +30,8 @@ class MapAccessController extends Controller
      */
     public function show(Request $request, Map $map): Response
     {
+        Gate::authorize('update', $map);
+
         $search = $request->string('search');
         $entities = DB::query()->fromSub(DB::table('characters')
             ->selectRaw('id, name, "character" as type, (

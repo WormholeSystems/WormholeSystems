@@ -23,6 +23,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property-read Collection<int,MapAccess> $mapAccessors
  * @property-read Collection<int,MapRouteSolarsystem> $mapRouteSolarsystems
  * @property-read MapUserSetting $mapUserSetting
+ * @property-read MapAccess $mapOwner
  */
 class Map extends Model
 {
@@ -57,6 +58,12 @@ class Map extends Model
     public function mapAccessors(): HasMany
     {
         return $this->hasMany(MapAccess::class, 'map_id');
+    }
+
+    public function mapOwner(): HasOne
+    {
+        return $this->hasOne(MapAccess::class, 'map_id')
+            ->where('is_owner', true);
     }
 
     /**

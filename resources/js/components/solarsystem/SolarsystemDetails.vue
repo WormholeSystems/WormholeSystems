@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { useHasWritePermission } from '@/composables/useHasPermission';
 import { TMap, TMapRouteSolarsystem, TMapSolarSystem } from '@/types/models';
 import { Deferred, Link, useForm } from '@inertiajs/vue3';
 import markdownit from 'markdown-it';
@@ -21,6 +22,8 @@ const { map_solarsystem, map_route_solarsystems } = defineProps<{
     map_route_solarsystems?: TMapRouteSolarsystem[];
     map: TMap;
 }>();
+
+const can_write = useHasWritePermission();
 
 const pinned = computed(() => map_route_solarsystems?.filter((m) => m.is_pinned));
 
@@ -112,7 +115,7 @@ watch(
             <form @submit.prevent="handleSubmit" class="w-full">
                 <div class="mb-4 flex justify-between gap-4">
                     <h3 class="mr-auto text-lg font-semibold">Notes</h3>
-                    <Dialog v-model:open="statistics">
+                    <Dialog v-model:open="statistics" v-if="can_write">
                         <DialogTrigger as-child>
                             <Button variant="outline" role="button">Statistics</Button>
                         </DialogTrigger>
@@ -142,8 +145,8 @@ watch(
                             </DialogFooter>
                         </DialogContent>
                     </Dialog>
-                    <Button variant="outline" @click="editing = true" v-if="!editing"> Edit</Button>
-                    <div class="flex gap-4" v-else>
+                    <Button variant="outline" @click="editing = true" v-if="!editing && can_write"> Edit</Button>
+                    <div class="flex gap-4" v-else-if="can_write">
                         <Button variant="destructive" @click="editing = false"> Cancel</Button>
                         <Button variant="outline" type="submit"> Save</Button>
                     </div>

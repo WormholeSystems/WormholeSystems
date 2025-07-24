@@ -5,6 +5,7 @@ import MapContextMenu from '@/components/map/MapContextMenu.vue';
 import MapSolarsystem from '@/components/map/MapSolarsystem.vue';
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { useMap as useNewMap, useMapAction, useMapConnections, useMapGrid, useMapSolarsystems } from '@/composables/map';
+import { useHasWritePermission } from '@/composables/useHasPermission';
 import { getMapChannelName } from '@/const/channels';
 import {
     CharacterStatusUpdatedEvent,
@@ -64,6 +65,8 @@ const { Delete } = useMagicKeys();
 const { grid_size } = useMapGrid();
 
 const { removeSelectedMapSolarsystems } = useMapAction();
+
+const can_write = useHasWritePermission();
 
 const selected_connection_id = ref<number | null>(null);
 const selected_connection = computed(() => connections.value.find((con) => con.id === selected_connection_id.value));
@@ -157,8 +160,11 @@ function handleWheel(event: WheelEvent) {
                     <MapSolarsystem v-for="solarsystem in map_solarsystems" :key="solarsystem.id" :map_solarsystem="solarsystem" />
                 </div>
             </ContextMenuTrigger>
-            <MapContextMenu v-if="context_menu_type === 'map'" />
-            <MapConnectionContextMenu v-else-if="context_menu_type === 'connection' && selected_connection" :map_connection="selected_connection" />
+            <MapContextMenu v-if="context_menu_type === 'map' && can_write" />
+            <MapConnectionContextMenu
+                v-else-if="context_menu_type === 'connection' && selected_connection && can_write"
+                :map_connection="selected_connection"
+            />
         </ContextMenu>
     </div>
 </template>

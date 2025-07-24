@@ -14,6 +14,7 @@ import {
     ContextMenuTrigger,
 } from '@/components/ui/context-menu';
 import { useMapAction } from '@/composables/map';
+import { useHasWritePermission } from '@/composables/useHasPermission';
 import useUser from '@/composables/useUser';
 import { useWaypoint } from '@/composables/useWaypoint';
 import { TMapSolarSystem, TMapSolarsystemStatus } from '@/types/models';
@@ -25,6 +26,8 @@ const { map_solarsystem } = defineProps<{
 const { removeMapSolarsystem, updateMapSolarsystem } = useMapAction();
 
 const user = useUser();
+
+const can_write = useHasWritePermission();
 
 const setWaypoint = useWaypoint();
 
@@ -49,10 +52,10 @@ const options: TMapSolarsystemStatus[] = ['unknown', 'friendly', 'hostile', 'act
             <slot />
         </ContextMenuTrigger>
         <ContextMenuContent>
-            <ContextMenuItem @select="handleTogglePin">
+            <ContextMenuItem @select="handleTogglePin" v-if="can_write">
                 {{ map_solarsystem.pinned ? 'Unpin' : 'Pin' }}
             </ContextMenuItem>
-            <ContextMenuSub>
+            <ContextMenuSub v-if="can_write">
                 <ContextMenuSubTrigger> Status</ContextMenuSubTrigger>
                 <ContextMenuSubContent>
                     <ContextMenuRadioGroup :model-value="map_solarsystem.status ?? undefined" @update:model-value="handleStatusChange">
@@ -112,8 +115,7 @@ const options: TMapSolarsystemStatus[] = ['unknown', 'friendly', 'hostile', 'act
                     </ContextMenuItem>
                 </ContextMenuSubContent>
             </ContextMenuSub>
-            <ContextMenuSeparator />
-            <template v-if="!map_solarsystem.pinned">
+            <template v-if="!map_solarsystem.pinned && can_write">
                 <ContextMenuSeparator />
                 <ContextMenuItem @select="handleRemoveFromMap">
                     Remove

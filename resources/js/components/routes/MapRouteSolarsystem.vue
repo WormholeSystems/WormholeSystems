@@ -15,6 +15,7 @@ import {
     ContextMenuTrigger,
 } from '@/components/ui/context-menu';
 import { TableCell, TableRow } from '@/components/ui/table';
+import { useHasWritePermission } from '@/composables/useHasPermission';
 import { usePath } from '@/composables/usePath';
 import useUser from '@/composables/useUser';
 import { useWaypoint } from '@/composables/useWaypoint';
@@ -31,6 +32,8 @@ const { setPath } = usePath();
 const setWaypoint = useWaypoint();
 
 const user = useUser();
+
+const can_write = useHasWritePermission();
 
 function onHover(route: TMapRouteSolarsystem, hovered: boolean) {
     if (hovered) {
@@ -76,7 +79,7 @@ function removeRoute() {
                         {{ map_route.route.length ? map_route.route.length - 1 : 'N/A' }}
                     </span>
                 </TableCell>
-                <TableCell>
+                <TableCell v-if="can_write">
                     <Button
                         variant="ghost"
                         size="icon"

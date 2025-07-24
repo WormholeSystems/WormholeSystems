@@ -11,4 +11,5 @@ export type TShowMapProps = {
     map_characters: TCharacter[];
     map_route_solarsystems?: TMapRouteSolarsystem[];
     ship_history: TShipHistory[];
+    has_write_access: boolean;
 };

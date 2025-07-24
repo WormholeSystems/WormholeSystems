@@ -4,6 +4,7 @@ import MapRouteSolarsystem from '@/components/routes/MapRouteSolarsystem.vue';
 import MapRouteSolarsystemAdd from '@/components/routes/MapRouteSolarsystemAdd.vue';
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useHasWritePermission } from '@/composables/useHasPermission';
 import { TMap, TMapRouteSolarsystem, TMapSolarSystem, TSolarsystem } from '@/types/models';
 import { Deferred } from '@inertiajs/vue3';
 import { computed } from 'vue';
@@ -22,14 +23,16 @@ const sorted = computed(() => {
         return a.solarsystem.name.localeCompare(b.solarsystem.name);
     });
 });
+
+const can_write = useHasWritePermission();
 </script>
 
 <template>
     <Card class="pb-0">
         <CardHeader>
             <CardTitle>Watchlist</CardTitle>
-            <CardDescription> Lists the number of jumps from {{ selected_map_solarsystem?.name }} </CardDescription>
-            <CardAction>
+            <CardDescription> Lists the number of jumps from {{ selected_map_solarsystem?.name }}</CardDescription>
+            <CardAction v-if="can_write">
                 <MapRouteSolarsystemAdd :map :solarsystems :map_route_solarsystems />
             </CardAction>
         </CardHeader>

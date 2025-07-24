@@ -86,6 +86,7 @@ class MapController extends Controller
             'map_characters' => $map_characters,
             'map_route_solarsystems' => Inertia::defer(fn (): array => $this->getMapRouteSolarsystems($map, $selected_map_solarsystem_id)),
             'ship_history' => $ship_history,
+            'has_write_access' => Gate::allows('update', $map),
         ]);
     }
 
@@ -121,6 +122,15 @@ class MapController extends Controller
         $map = $action->handle($this->user->active_character, $request->validated());
 
         return to_route('maps.show', $map)->notify('Map created successfully.', 'You have successfully created a new map.');
+    }
+
+    public function destroy(Map $map): RedirectResponse
+    {
+        Gate::authorize('delete', $map);
+
+        $map->delete();
+
+        return to_route('home')->notify('Map deleted successfully.', 'You have successfully deleted the map.');
     }
 
     /**
