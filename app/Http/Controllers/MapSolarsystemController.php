@@ -27,10 +27,15 @@ class MapSolarsystemController extends Controller
     {
         $action->handle($mapSolarsystem, $request->validated());
 
-        return back()->notify(
-            'Solarsystem updated!',
-            'You have successfully updated the solarsystem on the map.'
-        );
+        if ($request->boolean('suppress_notification')) {
+            return back();
+        }
+
+        return back()
+            ->notify(
+                'Solarsystem updated!',
+                'You have successfully updated the solarsystem on the map.'
+            );
     }
 
     public function destroy(MapSolarsystem $mapSolarsystem, DeleteMapSolarsystemAction $action): RedirectResponse

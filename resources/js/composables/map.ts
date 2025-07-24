@@ -224,7 +224,7 @@ export function useMapSolarsystem(
     });
 
     function handleDragEnd() {
-        updateMapSolarsystem();
+        updateMapSolarsystem(true);
     }
 
     function handleDrag() {
@@ -234,13 +234,14 @@ export function useMapSolarsystem(
         setSystemPosition(current_map_solarsystem.value, draggable.x.value, draggable.y.value);
     }
 
-    function updateMapSolarsystem() {
+    function updateMapSolarsystem(suppress_notification: boolean = false) {
         if (!map_solarsystems_selected.value?.length && !current_map_solarsystem.value?.pinned) {
             return router.put(
                 route('map-solarsystems.update', current_map_solarsystem.value.id),
                 {
                     position_x: draggable.x.value,
                     position_y: draggable.y.value,
+                    suppress_notification,
                 },
                 {
                     only: ['map'],

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import TelescopeIcon from '@/components/icons/TelescopeIcon.vue';
+import { Badge } from '@/components/ui/badge';
 </script>
 
 <template>
@@ -7,6 +8,6 @@ import TelescopeIcon from '@/components/icons/TelescopeIcon.vue';
         <TelescopeIcon class="size-5 fill-current text-white dark:text-black" />
     </div>
     <div class="ml-1 grid flex-1 text-left text-sm">
-        <span class="mb-0.5 truncate leading-tight font-semibold"> WormholeSystems </span>
+        <span class="mb-0.5 truncate leading-tight font-semibold"> WormholeSystems <badge variant="outline" class="ml-2">alpha</badge></span>
     </div>
 </template>
