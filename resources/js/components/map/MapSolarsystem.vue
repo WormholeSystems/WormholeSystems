@@ -76,7 +76,7 @@ function handleBadgeDblClick() {
 <template>
     <div ref="element" :style="drag.style.value" class="pointer-events-none absolute">
         <MapSolarsystemContextMenu :map_solarsystem>
-            <div class="group relative -translate-x-12 -translate-y-1/2">
+            <div class="group relative -translate-x-12 -translate-y-[20px]">
                 <Popover :open="open" @update:open="(value) => open && (open = value)">
                     <PopoverTrigger as-child>
                         <MapSolarsystemButton

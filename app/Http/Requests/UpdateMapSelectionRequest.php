@@ -38,8 +38,8 @@ class UpdateMapSelectionRequest extends FormRequest
             'map_solarsystems' => ['required', 'array', new SameParent('map_solarsystems', 'map_id', 'id')],
             'map_solarsystems.*' => ['required', 'array'],
             'map_solarsystems.*.id' => ['required', 'integer', 'exists:map_solarsystems,id'],
-            'map_solarsystems.*.position_x' => ['required', 'numeric', 'min:0', 'max:4000'],
-            'map_solarsystems.*.position_y' => ['required', 'numeric', 'min:0', 'max:1600'],
+            'map_solarsystems.*.position_x' => ['required', 'numeric', 'min:40', 'max:4000'],
+            'map_solarsystems.*.position_y' => ['required', 'numeric', 'min:20', 'max:1600'],
         ];
     }
 }

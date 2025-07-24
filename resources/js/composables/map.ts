@@ -229,8 +229,16 @@ export function useMapSolarsystem(
 
     function handleDrag() {
         const grid_size = 10; // Adjust grid size as needed
-        draggable.x.value = Math.round(draggable.x.value / grid_size) * grid_size;
-        draggable.y.value = Math.round(draggable.y.value / grid_size) * grid_size;
+        let x = Math.round(draggable.x.value / grid_size) * grid_size;
+        let y = Math.round(draggable.y.value / grid_size) * grid_size;
+        // Ensure the position is within the map boundaries
+        const map_width = mapState.config.max_size.x;
+        const map_height = mapState.config.max_size.y;
+        x = Math.max(40, Math.min(x, map_width - grid_size));
+        y = Math.max(20, Math.min(y, map_height - grid_size));
+        draggable.x.value = x;
+        draggable.y.value = y;
+
         setSystemPosition(current_map_solarsystem.value, draggable.x.value, draggable.y.value);
     }
 
