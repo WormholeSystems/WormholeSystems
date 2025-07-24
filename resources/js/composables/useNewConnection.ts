@@ -54,7 +54,6 @@ export function useNewConnection(
 
     function getMaximumShipSizeForConnection(from: TMapSolarSystem, to: TMapSolarSystem): string | undefined {
         const classes = [from.class, to.class].filter((c) => c !== null && c !== undefined);
-        if (classes.some((c) => c >= 13 && c <= 18)) return 'frigate';
         if (classes.includes(1)) return 'medium';
 
         // Check if Turnur connects to JSpace
