@@ -68,7 +68,7 @@ function getDashArray() {
             :data-connection-status="mass_status"
             :data-eol="is_eol"
             :data-highlighted="is_highlighted"
-            class="cursor-pointer text-neutral-300 transition-colors duration-200 ease-in-out data-[connection-status=critical]:text-red-500 data-[connection-status=reduced]:text-orange-500 data-[eol=true]:text-purple-500 data-[highlighted=true]:text-amber-500 dark:text-neutral-700 dark:group-hover:text-neutral-200 dark:group-hover:text-neutral-600"
+            class="cursor-pointer text-neutral-300 transition-colors duration-200 ease-in-out data-[connection-status=critical]:text-red-500 data-[connection-status=reduced]:text-orange-500 data-[eol=true]:text-purple-500 data-[highlighted=true]:text-amber-500 dark:text-neutral-700 dark:group-hover:text-neutral-200 dark:group-hover:text-neutral-600 dark:data-[connection-status=critical]:text-red-500 dark:data-[connection-status=reduced]:text-orange-500 dark:data-[eol=true]:text-purple-500 dark:data-[highlighted=true]:text-amber-500"
         />
         <rect
             class="pointer-events-none fill-white stroke-neutral-300 dark:fill-neutral-900 dark:stroke-neutral-700"
