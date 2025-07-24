@@ -22,7 +22,7 @@ const pilots = usePilotsInMapSolarsystem(map_solarsystem);
         :data-status="map_solarsystem.status"
         :data-has-pilots="pilots?.length > 0"
         :data-is-active="is_active"
-        class="h-[40px] rounded border border-neutral-700 bg-neutral-900 text-left text-xs ring-offset-2 ring-offset-neutral-900 transition-colors duration-200 ease-in-out select-none hover:bg-neutral-800 focus:bg-neutral-800 data-[has-pilots=true]:h-[60px] data-[hovered=true]:bg-amber-900 data-[is-active=true]:ring-2 data-[is-active=true]:ring-amber-500 data-[selected=true]:bg-amber-900 data-[status=active]:border-active data-[status=empty]:border-empty data-[status=friendly]:border-friendly data-[status=hostile]:border-hostile data-[status=unknown]:border-unknown data-[status=unscanned]:border-unscanned"
+        class="h-[40px] rounded border border-neutral-300 bg-white text-left text-xs ring-offset-2 ring-offset-neutral-50 transition-colors duration-200 ease-in-out select-none hover:bg-neutral-800 hover:bg-white focus:bg-white data-[has-pilots=true]:h-[60px] data-[hovered=true]:bg-amber-900 data-[is-active=true]:ring-2 data-[is-active=true]:ring-amber-500 data-[selected=true]:bg-amber-900 data-[status=active]:border-active data-[status=empty]:border-empty data-[status=friendly]:border-friendly data-[status=hostile]:border-hostile data-[status=unknown]:border-unknown data-[status=unscanned]:border-unscanned dark:border-neutral-700 dark:bg-neutral-900 dark:ring-offset-neutral-900 dark:focus:bg-neutral-800"
         @drag.prevent
     >
         <span class="pointer-events-none grid grid-cols-[auto_1fr_auto] items-center justify-center gap-x-1 px-2">

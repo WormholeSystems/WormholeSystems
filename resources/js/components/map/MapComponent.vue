@@ -138,7 +138,7 @@ function handleWheel(event: WheelEvent) {
 
 <template>
     <div
-        class="relative max-h-[1000px] w-full overflow-y-scroll rounded-lg border bg-neutral-900/50"
+        class="relative max-h-[1000px] w-full overflow-y-scroll rounded-lg border bg-neutral-50 dark:bg-neutral-900/50"
         :style="{
             height: config.max_size.y > 1000 ? `${config.max_size.y}px` : 'auto',
         }"
@@ -171,8 +171,10 @@ function handleWheel(event: WheelEvent) {
 
 <style scoped>
 .bg-grid {
-    background-image:
-        linear-gradient(to right, var(--color-neutral-900) 1px, transparent 1px),
-        linear-gradient(to bottom, var(--color-neutral-900) 1px, transparent 1px);
+    background-image: linear-gradient(to right, var(--grid) 1px, transparent 1px), linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
+}
+
+html.dark .bg-grid {
+    background-image: linear-gradient(to right, var(-grid) 1px, transparent 1px), linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
 }
 </style>

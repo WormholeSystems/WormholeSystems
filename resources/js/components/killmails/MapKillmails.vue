@@ -49,7 +49,7 @@ useEcho<KillmailReceivedEvent>(getMapChannelName(map_id), KillmailReceivedEvent,
 </script>
 
 <template>
-    <Card class="pb-0">
+    <Card class="bg-neutral-50 pb-0 dark:bg-transparent">
         <CardHeader>
             <CardTitle>Map killmails</CardTitle>
             <CardDescription>Recents killmails that happened in one of the map solarsystems</CardDescription>
@@ -78,7 +78,7 @@ useEcho<KillmailReceivedEvent>(getMapChannelName(map_id), KillmailReceivedEvent,
         </CardHeader>
         <CardContent class="px-1 pb-1">
             <div class="relative max-h-100 overflow-x-hidden overflow-y-scroll mask-b-from-90% mask-alpha pr-1">
-                <div class="rounded-lg border bg-neutral-900/40">
+                <div class="rounded-lg border bg-white dark:bg-neutral-900/40">
                     <Table>
                         <TableHeader>
                             <TableRow>

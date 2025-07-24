@@ -11,8 +11,8 @@ const props = defineProps<ToasterProps>();
         :toastOptions="{
             unstyled: true,
             classes: {
-                'toast': 'bg-neutral-950 text-neutral-500 border text-sm border-border p-4 rounded-lg shadow-lg',
-                title: 'text-base font-semibold text-neutral-100',
+                'toast': 'dark:bg-neutral-950 bg-white text-neutral-500 border text-sm border-border p-4 rounded-lg shadow-lg',
+                title: 'text-base font-semibold dark text-neutral-100 text-neutral-800',
                 description: 'text-sm mt-2',
                 icon: 'hidden',
                 closeButton: 'hidden',

@@ -58,7 +58,7 @@ function getDashArray() {
 </script>
 
 <template>
-    <g pointer-events="visiblePainted" class="group">
+    <g pointer-events="visiblePainted" class="group text-neutral-300 dark:text-neutral-700">
         <path
             :d="curve"
             stroke="currentColor"
@@ -68,27 +68,26 @@ function getDashArray() {
             :data-connection-status="mass_status"
             :data-eol="is_eol"
             :data-highlighted="is_highlighted"
-            class="cursor-pointer transition-colors duration-200 ease-in-out group-hover:text-neutral-600 data-[connection-status=critical]:text-red-500 data-[connection-status=reduced]:text-orange-500 data-[eol=true]:text-purple-500 data-[highlighted=true]:text-amber-500"
+            class="cursor-pointer text-neutral-300 transition-colors duration-200 ease-in-out data-[connection-status=critical]:text-red-500 data-[connection-status=reduced]:text-orange-500 data-[eol=true]:text-purple-500 data-[highlighted=true]:text-amber-500 dark:text-neutral-700 dark:group-hover:text-neutral-200 dark:group-hover:text-neutral-600"
         />
         <rect
-            class="pointer-events-none"
+            class="pointer-events-none fill-white stroke-neutral-300 dark:fill-neutral-900 dark:stroke-neutral-700"
             :x="center.x - 12"
             :y="center.y - 8"
             width="24"
             height="16"
             rx="2"
             ry="2"
-            fill="currentColor"
             v-if="extra"
         />
         <text
             :x="center.x"
             :y="center.y + 4"
             text-anchor="middle"
-            fill="white"
+            fill="currentColor"
             font-size="12"
             font-weight="bold"
-            class="pointer-events-none select-none"
+            class="pointer-events-none text-neutral-700 select-none dark:text-neutral-300"
             v-if="extra"
         >
             {{ extra }}

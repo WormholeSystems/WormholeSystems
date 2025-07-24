@@ -116,6 +116,11 @@ router.on('before', (event) => {
 }
 
 ::-webkit-scrollbar-thumb {
+    background-color: var(--color-neutral-300);
+    border-radius: 4px;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
     background-color: var(--color-neutral-700);
     border-radius: 4px;
 }

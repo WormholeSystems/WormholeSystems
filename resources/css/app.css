@@ -75,7 +75,7 @@
     --color-catalysmic-variable: var(--color-yellow-300);
     --color-red-giant: var(--color-red-500);
     --color-friendly: var(--color-blue-500);
-    --color-unknown: var(--color-neutral-700);
+    --color-unknown: var(--color-neutral-300);
     --color-hostile: var(--color-red-500);
     --color-unscanned: var(--color-cyan-500);
     --color-active: var(--color-orange-500);
@@ -83,6 +83,13 @@
 
     --text-2xs: 0.7rem;
     --text-3xs: 0.625rem;
+
+}
+
+html.dark {
+    @theme inline {
+        --border-unknown: var(--color-neutral-700)
+    }
 }
 
 /*
@@ -145,6 +152,7 @@
     --sidebar-border: hsl(0 0% 91%);
     --sidebar-ring: hsl(217.2 91.2% 59.8%);
     --sidebar: hsl(0 0% 98%);
+    --grid: hsl(0 0% 90%);
 }
 
 .dark {
@@ -181,6 +189,7 @@
     --sidebar-border: hsl(0 0% 15.9%);
     --sidebar-ring: hsl(217.2 91.2% 59.8%);
     --sidebar: hsl(240 5.9% 10%);
+    --grid: hsl(0 0% 12%);
 }
 
 @layer base {

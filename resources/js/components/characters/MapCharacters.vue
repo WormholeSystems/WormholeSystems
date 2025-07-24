@@ -44,13 +44,13 @@ function isCovertOps(character: TCharacter) {
 </script>
 
 <template>
-    <Card class="pb-0">
+    <Card class="bg-neutral-50 pb-0 dark:bg-transparent">
         <CardHeader>
             <CardTitle>Characters</CardTitle>
             <CardDescription> See what characters are flying and where they are located in the map solarsystems. </CardDescription>
         </CardHeader>
         <CardContent class="px-1 pb-1">
-            <div class="rounded-lg border bg-neutral-900/40">
+            <div class="rounded-lg border bg-white dark:bg-neutral-900/40">
                 <Table>
                     <TableHeader>
                         <TableRow>

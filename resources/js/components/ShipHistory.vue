@@ -11,13 +11,13 @@ const page = usePage<AppPageProps<TShowMapProps>>();
 </script>
 
 <template>
-    <Card class="pb-1">
+    <Card class="bg-neutral-50 pb-1 dark:bg-transparent">
         <CardHeader>
             <CardTitle> Ship History</CardTitle>
             <CardDescription> See who has been using this ship and when.</CardDescription>
         </CardHeader>
         <CardContent class="px-1">
-            <div class="rounded-lg border bg-neutral-900/40">
+            <div class="rounded-lg border bg-white dark:bg-neutral-900/40">
                 <Table>
                     <TableHeader>
                         <TableRow>

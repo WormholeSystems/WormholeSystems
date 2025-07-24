@@ -98,12 +98,12 @@ function handleBadgeDblClick() {
                 <div
                     ref="handle"
                     v-if="!map_solarsystem.pinned && can_write"
-                    class="absolute top-[1px] left-1/2 hidden h-2 w-12 -translate-x-1/2 -translate-y-1/2 cursor-move rounded border border-neutral-600 bg-neutral-700 group-hover:block"
+                    class="absolute top-[1px] left-1/2 hidden h-2 w-12 -translate-x-1/2 -translate-y-1/2 cursor-move rounded border border-neutral-300 bg-white group-hover:block dark:border-neutral-600 dark:bg-neutral-700"
                 ></div>
                 <div
                     ref="new_connection_handle"
                     v-if="can_write"
-                    class="absolute top-1/2 left-full hidden h-4 w-4 -translate-x-1/2 -translate-y-1/2 cursor-pointer rounded-full bg-neutral-700 group-hover:block"
+                    class="absolute top-1/2 left-full hidden h-4 w-4 -translate-x-1/2 -translate-y-1/2 cursor-pointer rounded-full border border-neutral-300 bg-white group-hover:block dark:border-neutral-600 dark:bg-neutral-700"
                 ></div>
             </div>
         </MapSolarsystemContextMenu>

@@ -3,6 +3,8 @@ import AppLogo from '@/components/AppLogo.vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import Breadcrumbs from '@/components/Breadcrumbs.vue';
 import DiscordIcon from '@/components/icons/DiscordIcon.vue';
+import MoonIcon from '@/components/icons/MoonIcon.vue';
+import SunIcon from '@/components/icons/SunIcon.vue';
 import { CharacterImage } from '@/components/images';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -10,6 +12,7 @@ import { NavigationMenu, NavigationMenuItem, NavigationMenuList, navigationMenuT
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import UserMenuContent from '@/components/UserMenuContent.vue';
+import { useAppearance } from '@/composables/useAppearance';
 import useUser from '@/composables/useUser';
 import type { AppPageProps, BreadcrumbItem, NavItem } from '@/types';
 import { TCharacter } from '@/types/models';
@@ -58,6 +61,8 @@ const and_intl = new Intl.ListFormat('en', {
     style: 'long',
     type: 'conjunction',
 });
+
+const { appearance, updateAppearance } = useAppearance();
 </script>
 
 <template>
@@ -177,6 +182,11 @@ const and_intl = new Intl.ListFormat('en', {
                             </template>
                         </div>
                     </div>
+                    <Button @click="updateAppearance(appearance === 'dark' ? 'light' : 'dark')" variant="outline" size="icon">
+                        <span class="sr-only">Toggle Dark Mode</span>
+                        <SunIcon v-if="appearance === 'dark'" />
+                        <MoonIcon v-else />
+                    </Button>
                     <template v-if="user">
                         <span v-if="page.props.missing_scopes.length" class="text-red-500">
                             Missing scopes for

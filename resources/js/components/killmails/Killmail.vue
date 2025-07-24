@@ -47,7 +47,7 @@ const time_ago = computed(() => {
                     <TypeImage class="size-8 rounded-lg" :type_id="killmail.ship_type.id" :type_name="killmail.ship_type.name" />
                 </a>
                 <a :href="`https://zkillboard.com/character/${killmail.data.victim.character_id}/`" target="_blank" rel="noopener noreferrer">
-                    <VictimImage class="size-8" :victim="killmail.data.victim" />
+                    <VictimImage class="size-8 overflow-hidden rounded-lg" :victim="killmail.data.victim" />
                 </a>
                 <Affiliation class="size-8 overflow-hidden rounded-lg" alt="Victim group" :affiliation="killmail.data.victim" />
             </div>
@@ -56,7 +56,7 @@ const time_ago = computed(() => {
             <div class="flex gap-x-2">
                 <TypeImage class="size-8 rounded-lg" :type_id="final_blow.ship_type_id" type_name="Attacker Ship" variant="icon" />
                 <a :href="`https://zkillboard.com/character/${final_blow.character_id}/`" target="_blank" rel="noopener noreferrer">
-                    <AttackerImage class="size-8" :attacker="final_blow" />
+                    <AttackerImage class="size-8 overflow-hidden rounded-lg" :attacker="final_blow" />
                 </a>
                 <Affiliation class="size-8 overflow-hidden rounded-lg" alt="Attacker group" :affiliation="final_blow" />
             </div>

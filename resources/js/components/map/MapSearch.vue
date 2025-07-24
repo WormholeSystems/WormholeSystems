@@ -34,7 +34,7 @@ const existing_solarsystems = computed(() => {
 </script>
 
 <template>
-    <Combobox class="absolute top-4 left-1/2 -translate-x-1/2 rounded-lg border bg-neutral-900">
+    <Combobox class="absolute top-4 left-1/2 -translate-x-1/2 rounded-lg border bg-white dark:bg-neutral-900">
         <ComboboxAnchor>
             <ComboboxInput v-model="search" />
         </ComboboxAnchor>

@@ -28,7 +28,7 @@ const can_write = useHasWritePermission();
 </script>
 
 <template>
-    <Card class="pb-0">
+    <Card class="bg-neutral-50 pb-0 dark:bg-transparent">
         <CardHeader>
             <CardTitle>Watchlist</CardTitle>
             <CardDescription> Lists the number of jumps from {{ selected_map_solarsystem?.name }}</CardDescription>
@@ -44,7 +44,7 @@ const can_write = useHasWritePermission();
                         <span class="animate-pulse"> Loading route distances </span>
                     </span>
                 </template>
-                <div class="rounded-lg border bg-neutral-900/40">
+                <div class="rounded-lg border bg-white dark:bg-neutral-900/40">
                     <Table>
                         <TableHeader>
                             <TableRow>
