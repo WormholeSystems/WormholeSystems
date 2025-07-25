@@ -20,7 +20,6 @@ export function useSignatures() {
     const map_solarsystems = computed(() => {
         return map.value.map_solarsystems?.reduce(
             (acc, system) => {
-                // key by id
                 acc[system.id] = system;
                 return acc;
             },
@@ -36,6 +35,10 @@ export function useSignatures() {
                         ? connection.to_map_solarsystem_id
                         : connection.from_map_solarsystem_id;
                 const other_system = map_solarsystems.value![other_id];
+
+                if (!other_system) {
+                    throw new Error(`Connection to unknown system with ID ${other_id}`);
+                }
 
                 return {
                     ...connection,

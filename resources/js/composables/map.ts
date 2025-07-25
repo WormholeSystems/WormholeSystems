@@ -19,7 +19,6 @@ type TMapState = {
         start: Coordinates;
         end: Coordinates | null;
     } | null;
-    grid_size: number;
     config: TMapConfig;
     hovered_solarsystem_id: number | null;
 };
@@ -40,20 +39,21 @@ const mapState = reactive<TMapState>({
     map_solarsystems: [],
     map_connections: [],
     selection: null,
-    grid_size: 20,
     config: {
         max_size: {
             x: 4000,
             y: 2000,
         },
+        grid_size: 20,
     },
     hovered_solarsystem_id: null,
 });
 
+const item_height = 40;
 const map_solarsystems = computed(() => mapState.map_solarsystems);
 const map_solarsystems_selected = computed(() => map_solarsystems.value.filter((s) => s.is_selected && !s.pinned));
 const selection = computed(() => mapState.selection);
-const grid_size = computed(() => mapState.grid_size);
+const grid_size = computed(() => mapState.config.grid_size);
 
 export type TProcessedConnection = TMapConnection & {
     source: TMapSolarSystem;
@@ -228,7 +228,7 @@ export function useMapSolarsystem(
     }
 
     function handleDrag() {
-        const grid_size = 10; // Adjust grid size as needed
+        const grid_size = toValue(mapState.config.grid_size);
         let x = Math.round(draggable.x.value / grid_size) * grid_size;
         let y = Math.round(draggable.y.value / grid_size) * grid_size;
         // Ensure the position is within the map boundaries
@@ -298,7 +298,7 @@ export function useMapMouse() {
 
 export function useMapGrid() {
     function setMapGridSize(size: number) {
-        mapState.grid_size = size;
+        mapState.config.grid_size = size;
     }
 
     return {
@@ -377,30 +377,7 @@ export function useMapAction() {
             },
         );
     }
-
-    function sortMapSolarsystemsByRegion() {
-        return sortMapSolarsystems(sortByClassAndRegion);
-    }
-
-    function sortMapSolarsystems(callback: (a: TMapSolarSystem, b: TMapSolarSystem) => number) {
-        const sorted_map_solarsystems = calculateSortedPositions(callback);
-
-        router.put(
-            route('map-selection.update'),
-            {
-                map_solarsystems: sorted_map_solarsystems,
-            },
-            {
-                preserveState: true,
-                preserveScroll: true,
-                onSuccess: () => {
-                    mapState.selection = null;
-                },
-                only: ['map'],
-            },
-        );
-    }
-
+    
     function calculateSortedPositions(callback: (a: TMapSolarSystem, b: TMapSolarSystem) => number) {
         const sorted_positions = map_solarsystems_selected.value
             .sort((a, b) => {
@@ -437,10 +414,23 @@ export function useMapAction() {
         if (a.class && !b.class) return 1;
         if (!a.class && b.class) return -1;
 
-        const regionA = a.solarsystem?.region?.name ?? '';
-        const regionB = b.solarsystem?.region?.name ?? '';
+        const a_security = getSecurityClass(a.solarsystem?.security ?? 0);
+        const b_security = getSecurityClass(b.solarsystem?.security ?? 0);
 
-        return regionA.localeCompare(regionB);
+        if (a_security === b_security) {
+            const regionA = a.solarsystem?.region?.name ?? '';
+            const regionB = b.solarsystem?.region?.name ?? '';
+
+            return regionA.localeCompare(regionB);
+        }
+
+        return a_security.localeCompare(b_security);
+    }
+
+    function getSecurityClass(security: number): string {
+        if (security >= 0.5) return 'high';
+        if (security >= 0.1) return 'low';
+        return 'null';
     }
 
     function organizeMapSolarsystems() {
@@ -457,7 +447,7 @@ export function useMapAction() {
 
         const sorted_positions = calculateSortedPositions(sortMapSolarsystemsByAlias).map((s, index) => {
             const position_x = first_position.x;
-            const position_y = first_position.y + index * mapState.grid_size * 3;
+            const position_y = first_position.y + index * (mapState.config.grid_size + item_height);
 
             return {
                 ...s,
@@ -488,7 +478,6 @@ export function useMapAction() {
         removeSelectedMapSolarsystems,
         updateMapSolarsystem,
         addMapSolarsystem,
-        sortMapSolarsystemsByRegion,
         organizeMapSolarsystems,
     };
 }
@@ -497,7 +486,7 @@ function getFreePosition(): Coordinates {
     const map_width = mapState.config.max_size.x;
     const map_height = mapState.config.max_size.y;
     const padding = 100; // Padding to avoid edges
-    const grid_size = mapState.grid_size;
+    const grid_size = mapState.config.grid_size;
     const boundary_box = {
         x1: -30,
         y1: -30,

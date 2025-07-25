@@ -3,4 +3,5 @@ export type TMapConfig = {
         x: number;
         y: number;
     };
+    grid_size: number;
 };

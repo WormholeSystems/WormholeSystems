@@ -13,7 +13,7 @@ import { TSolarsystem } from '@/types/models';
 import { usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
-const { removeAllMapSolarsystems, sortMapSolarsystemsByRegion, organizeMapSolarsystems, removeSelectedMapSolarsystems } = useMapAction();
+const { removeAllMapSolarsystems, organizeMapSolarsystems, removeSelectedMapSolarsystems } = useMapAction();
 
 const { map_solarsystems_selected } = useMapSolarsystems();
 
@@ -62,9 +62,9 @@ function handeCancelDelete() {
     <ContextMenuContent>
         <ContextMenuItem @select="adding = true"> Add Solarsystem</ContextMenuItem>
         <template v-if="map_solarsystems_selected.length">
-            <ContextMenuItem @select="removeSelectedMapSolarsystems"> Remove solarsystems</ContextMenuItem>
-            <ContextMenuItem @select="sortMapSolarsystemsByRegion"> Sort by region</ContextMenuItem>
-            <ContextMenuItem @select="organizeMapSolarsystems"> Organize solarsystems</ContextMenuItem>
+            <ContextMenuSeparator />
+            <ContextMenuItem @select="removeSelectedMapSolarsystems"> Delete selection</ContextMenuItem>
+            <ContextMenuItem @select="organizeMapSolarsystems"> Organize selection</ContextMenuItem>
             <ContextMenuSeparator />
         </template>
         <ContextMenuItem @select="handleDelete"> Clear map</ContextMenuItem>
