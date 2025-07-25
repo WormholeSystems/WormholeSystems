@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useHasWritePermission } from '@/composables/useHasPermission';
+import { useSignatures } from '@/composables/useSignatures';
 import { signatureParser } from '@/lib/SignatureParser';
 import { TMapSolarSystem, TSignature } from '@/types/models';
 import { router } from '@inertiajs/vue3';
@@ -16,6 +17,8 @@ import { computed, ref, watch } from 'vue';
 const { map_solarsystem } = defineProps<{
     map_solarsystem: TMapSolarSystem;
 }>();
+
+const { relevant_signatures, connections } = useSignatures();
 
 const can_write = useHasWritePermission();
 
@@ -186,6 +189,9 @@ function createNewSignature() {
                     :deleted="signature.deleted"
                     :new="signature.new"
                     :updated="signature.updated"
+                    :outgoing_connections="connections"
+                    :selected_map_solarsystem="map_solarsystem"
+                    :possible_signatures="relevant_signatures"
                 />
             </div>
         </CardContent>

@@ -32,6 +32,7 @@ export type TMapSolarSystem = {
     signatures: TSignature[] | null;
     signatures_count?: number;
     notes: string | null;
+    map_connections: TMapConnection[] | null;
 };
 
 export type TMapConnection = {

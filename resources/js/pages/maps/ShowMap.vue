@@ -94,7 +94,7 @@ router.on('before', (event) => {
                         <QuestionIcon class="text-4xl" />
                         <p class="text-center">Select a solarsystem to see more details</p>
                     </div>
-                    <Signatures :map_solarsystem="selected_map_solarsystem" v-if="selected_map_solarsystem" />
+                    <Signatures :map :map_solarsystem="selected_map_solarsystem" v-if="selected_map_solarsystem" />
                     <ShipHistory />
                 </div>
                 <div class="col-span-12 grid gap-4 lg:col-span-6 xl:col-span-4">
