@@ -12,11 +12,7 @@ class WormholeConnectionClassifier
         // @see /resources/js/hooks/useNewConnection.ts
 
         $classes = collect([$from->wormholeSystem?->class, $to->wormholeSystem?->class])
-            ->filter(fn ($c): bool => $c !== null);
-
-        if ($classes->contains(fn ($c): bool => $c >= 13 && $c <= 18)) {
-            return ShipSize::Frigate;
-        }
+            ->filter(fn($c): bool => $c !== null);
 
         if ($classes->contains(1)) {
             return ShipSize::Medium;
@@ -30,7 +26,7 @@ class WormholeConnectionClassifier
 
         // Check if Thera connects to Highsec
         $highsec = collect([$from->security, $to->security])
-            ->filter(fn ($s): bool => $s >= 0.5);
+            ->filter(fn($s): bool => $s >= 0.5);
         if ($names->contains('Thera') && $highsec->isNotEmpty()) {
             return ShipSize::Medium;
         }
