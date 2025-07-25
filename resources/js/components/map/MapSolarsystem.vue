@@ -74,7 +74,12 @@ function handleBadgeDblClick() {
 </script>
 
 <template>
-    <div ref="element" :style="drag.style.value" class="pointer-events-none absolute">
+    <div
+        ref="element"
+        :style="drag.style.value"
+        class="pointer-events-none absolute hover:z-20 data-[active=true]:z-10"
+        :data-active="page.props.selected_map_solarsystem?.id === map_solarsystem.id"
+    >
         <MapSolarsystemContextMenu :map_solarsystem>
             <div class="group relative -translate-x-[40px] -translate-y-[20px]">
                 <Popover :open="open" @update:open="(value) => open && (open = value)">
@@ -98,7 +103,7 @@ function handleBadgeDblClick() {
                 <div
                     ref="handle"
                     v-if="!map_solarsystem.pinned && can_write"
-                    class="absolute top-[1px] left-1/2 hidden h-2 w-12 -translate-x-1/2 -translate-y-1/2 cursor-move rounded border border-neutral-300 bg-white group-hover:block dark:border-neutral-600 dark:bg-neutral-700"
+                    class="absolute top-[1px] left-1/2 hidden h-2 w-12 -translate-x-1/2 -translate-y-1/2 cursor-move rounded border border-neutral-300 bg-white group-hover:z-50 group-hover:block dark:border-neutral-600 dark:bg-neutral-700"
                 ></div>
                 <div
                     ref="new_connection_handle"
