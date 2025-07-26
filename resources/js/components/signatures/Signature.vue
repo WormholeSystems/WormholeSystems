@@ -16,12 +16,13 @@ import { useForm } from '@inertiajs/vue3';
 import { AcceptableValue } from 'reka-ui';
 import { computed, watch } from 'vue';
 
-const { signature, outgoing_connections, possible_signatures } = defineProps<{
+const { signature, unconnected_connections, possible_signatures, connected_connections } = defineProps<{
     signature: TSignature;
     deleted?: boolean;
     new?: boolean;
     updated?: boolean;
-    outgoing_connections: TProcessedConnection[];
+    unconnected_connections: TProcessedConnection[];
+    connected_connections: TProcessedConnection[];
     selected_map_solarsystem: TMapSolarSystem;
     possible_signatures: any;
 }>();
@@ -43,7 +44,11 @@ const signatures_options = computed(() => {
 const can_write = useHasWritePermission();
 
 const selected_connection = computed(() => {
-    return outgoing_connections.find((c) => c.id === form.map_connection_id) || null;
+    return (
+        unconnected_connections.find((c) => c.id === form.map_connection_id) ??
+        connected_connections.find((c) => c.id === form.map_connection_id) ??
+        null
+    );
 });
 
 const options = ['Wormhole', 'Gas Site', 'Ore Site', 'Combat Site', 'Data Site', 'Relic Site', 'Unknown'];
@@ -143,7 +148,8 @@ function handleReset() {
         <MapConnectionSelection
             v-if="form.category === 'Wormhole'"
             :selected="selected_connection"
-            :outgoing_connections="outgoing_connections"
+            :unconnected_connections="unconnected_connections"
+            :connected_connections="connected_connections"
             v-model="form.map_connection_id"
         />
         <SignatureTimeDetails :category="form.category" :selected_connection="selected_connection" :signature="signature" />

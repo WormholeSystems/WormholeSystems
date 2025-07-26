@@ -10,7 +10,7 @@ const model = defineModel<string>({
 });
 
 function handleUpdate(value: string[]) {
-    model.value = [...value.slice(0, 3), '-', ...value.slice(3, 6)].join('');
+    model.value = [...value.slice(0, 3), '-', ...value.slice(3, 6)].join('').toUpperCase();
 }
 </script>
 

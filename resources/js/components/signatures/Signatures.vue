@@ -28,8 +28,8 @@ const updated_signatures = ref<Partial<TSignature>[]>([]);
 const deleted_signatures = ref<Partial<TSignature>[]>([]);
 
 const signatures = computed(() => {
-    return map_solarsystem.signatures
-        ?.map((sig) => ({
+    return map_solarsystem
+        .signatures!.map((sig) => ({
             ...sig,
             deleted: isSignatureDeleted(sig),
             new: isSignatureNew(sig),
@@ -49,6 +49,22 @@ const signatures = computed(() => {
 
             return 0;
         });
+});
+
+const connected_connections = computed(() => {
+    return connections.value.filter((connection) => {
+        return signatures.value.some((signature) => {
+            return signature.map_connection_id === connection.id;
+        });
+    });
+});
+
+const unconnected_connections = computed(() => {
+    return connections.value.filter((connection) => {
+        return !signatures.value.some((signature) => {
+            return signature.map_connection_id === connection.id;
+        });
+    });
 });
 
 const activeElement = useActiveElement();
@@ -189,7 +205,8 @@ function createNewSignature() {
                     :deleted="signature.deleted"
                     :new="signature.new"
                     :updated="signature.updated"
-                    :outgoing_connections="connections"
+                    :unconnected_connections="unconnected_connections"
+                    :connected_connections="connected_connections"
                     :selected_map_solarsystem="map_solarsystem"
                     :possible_signatures="relevant_signatures"
                 />

@@ -449,6 +449,8 @@ const null_wh = [
 
 const poch_wh = ['K162 - Unknown', 'R081 - C4', 'X450 - 0.0'];
 
+const drifter_wh = ['K162 - Unknown', 'Z647 - C1', 'D382 - C2', 'O477 - C3', 'Y683 - C4', 'N062 - C5', 'R474 - C6'];
+
 // ================================================================================================================
 //  Signature Tree Structure
 // ================================================================================================================
@@ -511,41 +513,46 @@ export const signature_tree = {
             'Combat Site': c12_combat,
         },
         13: {
-            wormhole: c13_wh,
-            ore: c13_ore,
-            ghost: wh_gh,
+            Wormhole: c13_wh,
+            'Ore Site': c13_ore,
+            'Data Site': wh_gh,
         },
         14: {
             'Combat Site': c14_combat,
+            Wormhole: drifter_wh,
         },
         15: {
             'Combat Site': c15_combat,
+            Wormhole: drifter_wh,
         },
         16: {
             'Combat Site': c16_combat,
+            Wormhole: drifter_wh,
         },
         17: {
             'Combat Site': c17_combat,
+            Wormhole: drifter_wh,
         },
         18: {
             'Combat Site': c18_combat,
+            Wormhole: drifter_wh,
         },
     },
     known_space: {
         hs: {
-            wormhole: hs_wh,
-            ghost: hs_gh,
+            Wormhole: hs_wh,
+            'Data Site': hs_gh,
         },
         ls: {
-            wormhole: ls_wh,
-            ghost: ls_gh,
+            Wormhole: ls_wh,
+            'Data Site': ls_gh,
         },
         ns: {
-            wormhole: null_wh,
-            ghost: ns_gh,
+            Wormhole: null_wh,
+            'Data Site': ns_gh,
         },
         pv: {
-            wormhole: poch_wh,
+            Wormhole: poch_wh,
         },
     },
 };

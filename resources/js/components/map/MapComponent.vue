@@ -115,11 +115,22 @@ useEcho(getMapChannelName(map.id), CharacterStatusUpdatedEvent, () => {
     });
 });
 
-useEcho(getMapChannelName(map.id), [SignatureCreatedEvent, SignatureUpdatedEvent, SignatureDeletedEvent], () => {
-    router.reload({
-        only: ['selected_map_solarsystem'],
-    });
-});
+useEcho(
+    getMapChannelName(map.id),
+    [
+        SignatureCreatedEvent,
+        SignatureUpdatedEvent,
+        SignatureDeletedEvent,
+        MapConnectionCreatedEvent,
+        MapConnectionDeletedEvent,
+        MapConnectionUpdatedEvent,
+    ],
+    () => {
+        router.reload({
+            only: ['selected_map_solarsystem'],
+        });
+    },
+);
 
 function handleWheel(event: WheelEvent) {
     if (!scroll_locked.value) {
