@@ -7,4 +7,4 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
     <FontAwesomeIcon :icon="faNetworkWired" />
 </template>
 
-<style scoped></style> 
+<style scoped></style>

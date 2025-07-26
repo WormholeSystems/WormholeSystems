@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import CheckIcon from '@/components/icons/CheckIcon.vue';
-import TimesIcon from '@/components/icons/TimesIcon.vue';
 import TrashIcon from '@/components/icons/TrashIcon.vue';
 import MapConnectionSelection from '@/components/signatures/MapConnectionSelection.vue';
 import SignatureID from '@/components/signatures/SignatureID.vue';
@@ -12,9 +10,10 @@ import { TProcessedConnection } from '@/composables/map';
 import { useHasWritePermission } from '@/composables/useHasPermission';
 import { TSignatureCategory } from '@/lib/SignatureParser';
 import { TMapSolarSystem, TSignature } from '@/types/models';
-import { useForm } from '@inertiajs/vue3';
+import { router } from '@inertiajs/vue3';
+import { syncRefs } from '@vueuse/core';
 import { AcceptableValue } from 'reka-ui';
-import { computed, watch } from 'vue';
+import { computed, ref, toRef } from 'vue';
 
 const { signature, unconnected_connections, possible_signatures, connected_connections } = defineProps<{
     signature: TSignature;
@@ -27,71 +26,39 @@ const { signature, unconnected_connections, possible_signatures, connected_conne
     possible_signatures: any;
 }>();
 
-const form = useForm(() => ({
-    signature_id: signature.signature_id || '',
-    category: signature.category,
-    map_connection_id: signature.map_connection_id,
-    type: signature.type,
-}));
-
 const signatures_options = computed(() => {
-    if (!form.category) {
+    if (!signature.category) {
         return [];
     }
-    return possible_signatures[form.category] || [];
+    return possible_signatures[signature.category] || [];
 });
+const original = toRef(() => signature.signature_id || '');
+const signature_id = ref('');
+
+syncRefs(original, signature_id);
 
 const can_write = useHasWritePermission();
 
 const selected_connection = computed(() => {
     return (
-        unconnected_connections.find((c) => c.id === form.map_connection_id) ??
-        connected_connections.find((c) => c.id === form.map_connection_id) ??
+        unconnected_connections.find((c) => c.id === signature.map_connection_id) ??
+        connected_connections.find((c) => c.id === signature.map_connection_id) ??
         null
     );
 });
 
 const options = ['Wormhole', 'Gas Site', 'Ore Site', 'Combat Site', 'Data Site', 'Relic Site', 'Unknown'];
 
-watch(
-    () => signature.signature_id,
-    () => {
-        form.signature_id = signature.signature_id || '';
-    },
-);
-watch(
-    () => signature.category,
-    () => {
-        form.category = signature.category;
-    },
-);
-watch(
-    () => signature.type,
-    () => {
-        form.type = signature.type;
-    },
-);
-
-watch(
-    () => signature.map_connection_id,
-    () => {
-        form.map_connection_id = signature.map_connection_id;
-    },
-);
-
-function handleSubmit() {
-    form.put(route('signatures.update', signature.id), {
+function handleChange(data: Record<any, any>) {
+    router.put(route('signatures.update', signature.id), data, {
         preserveScroll: true,
         preserveState: true,
         only: ['selected_map_solarsystem'],
-        onSuccess: () => {
-            form.reset();
-        },
     });
 }
 
 function handleDelete() {
-    form.delete(route('signatures.destroy', signature.id), {
+    router.delete(route('signatures.destroy', signature.id), {
         preserveScroll: true,
         preserveState: true,
         only: ['selected_map_solarsystem', 'map'],
@@ -99,13 +66,34 @@ function handleDelete() {
 }
 
 function handleCategoryChange(value: AcceptableValue) {
-    form.type = form.category !== value ? null : form.type;
-    form.category = value as TSignatureCategory;
-    form.map_connection_id = null;
+    const type = signature.category !== value ? null : signature.type;
+    const category = value as TSignatureCategory;
+    const map_connection_id = null;
+    handleChange({
+        category,
+        type,
+        map_connection_id,
+    });
 }
 
-function handleReset() {
-    form.reset();
+function handleTypeChange(value: AcceptableValue) {
+    const type = value as string;
+    handleChange({
+        type,
+    });
+}
+
+function handleMapConnectionChange(value: AcceptableValue) {
+    const map_connection_id = value as number | null;
+    handleChange({
+        map_connection_id,
+    });
+}
+
+function handleIDSubmit() {
+    handleChange({
+        signature_id: signature_id.value.toString().trim() || null,
+    });
 }
 </script>
 
@@ -121,9 +109,9 @@ function handleReset() {
                 class="inline-block size-2 rounded-full data-[scanned=false]:bg-red-500 data-[scanned=true]:bg-green-500"
                 :data-scanned="Boolean(signature.signature_id && signature.type)"
             />
-            <SignatureID v-model="form.signature_id" :disabled="!can_write" />
+            <SignatureID v-model="signature_id" :disabled="!can_write" @submit="handleIDSubmit" :current-value="signature.signature_id" />
         </div>
-        <Select :model-value="form.category" @update:modelValue="handleCategoryChange" :disabled="!can_write">
+        <Select :model-value="signature.category" @update:modelValue="handleCategoryChange" :disabled="!can_write">
             <SelectTrigger class="w-full">
                 <SelectValue placeholder="Select category" />
             </SelectTrigger>
@@ -133,10 +121,10 @@ function handleReset() {
                 </SelectItem>
             </SelectContent>
         </Select>
-        <Select v-model:model-value="form.type" :disabled="!can_write">
-            <SelectTrigger class="w-full overflow-hidden data-[wormhole=false]:col-span-2" :data-wormhole="form.category === 'Wormhole'">
+        <Select :model-value="signature.type" @update:model-value="handleTypeChange" :disabled="!can_write">
+            <SelectTrigger class="w-full overflow-hidden data-[wormhole=false]:col-span-2" :data-wormhole="signature.category === 'Wormhole'">
                 <SelectValue as-child>
-                    <span class="truncate">{{ form.type || 'Select type' }}</span>
+                    <span class="truncate">{{ signature.type || 'Select type' }}</span>
                 </SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -146,33 +134,16 @@ function handleReset() {
             </SelectContent>
         </Select>
         <MapConnectionSelection
-            v-if="form.category === 'Wormhole'"
+            v-if="signature.category === 'Wormhole'"
             :selected="selected_connection"
             :unconnected_connections="unconnected_connections"
             :connected_connections="connected_connections"
-            v-model="form.map_connection_id"
+            :model-value="signature.map_connection_id"
+            @update:model-value="handleMapConnectionChange"
         />
-        <SignatureTimeDetails :category="form.category" :selected_connection="selected_connection" :signature="signature" />
+        <SignatureTimeDetails :category="signature.category" :selected_connection="selected_connection" :signature="signature" />
         <div class="flex gap-2" v-if="can_write">
-            <template v-if="form.isDirty">
-                <Tooltip>
-                    <TooltipTrigger as-child>
-                        <Button variant="secondary" size="icon" @click="handleReset">
-                            <TimesIcon />
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent> Reset Changes</TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                    <TooltipTrigger as-child>
-                        <Button variant="secondary" @click="handleSubmit">
-                            <CheckIcon />
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent> Save Signature</TooltipContent>
-                </Tooltip>
-            </template>
-            <Tooltip v-else>
+            <Tooltip>
                 <TooltipTrigger as-child>
                     <Button variant="secondary" @click="handleDelete">
                         <TrashIcon />

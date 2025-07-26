@@ -7,7 +7,6 @@ use App\Http\Resources\SolarsystemResource;
 use App\Models\Map;
 use App\Models\MapConnection;
 use App\Models\Solarsystem;
-use App\Services\EveScoutService;
 use App\Utilities\DomainLogic;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Resources\Json\JsonResource;
