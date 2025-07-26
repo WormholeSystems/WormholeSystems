@@ -107,8 +107,10 @@ export function useMap(map: MaybeRefOrGetter<TMap>, container: MaybeRefOrGetter<
         const source = mapState.map_solarsystems.find((s) => s.id === connection.from_map_solarsystem_id)!;
         const target = mapState.map_solarsystems.find((s) => s.id === connection.to_map_solarsystem_id)!;
 
-        const from_index = path.value?.indexOf(source.solarsystem_id) ?? -1;
-        const to_index = path.value?.indexOf(target.solarsystem_id) ?? -1;
+        const from_map_solarsystem = mapState.map_solarsystems.find((s) => s.id === connection.from_map_solarsystem_id);
+        const to_map_solarsystem = mapState.map_solarsystems.find((s) => s.id === connection.to_map_solarsystem_id);
+        const from_index = path.value?.findIndex((s) => s.id === from_map_solarsystem?.solarsystem_id) ?? -1;
+        const to_index = path.value?.findIndex((s) => s.id === to_map_solarsystem?.solarsystem_id) ?? -1;
         const is_on_route = from_index !== -1 && to_index !== -1 && Math.abs(from_index - to_index) === 1;
 
         return {
@@ -377,7 +379,7 @@ export function useMapAction() {
             },
         );
     }
-    
+
     function calculateSortedPositions(callback: (a: TMapSolarSystem, b: TMapSolarSystem) => number) {
         const sorted_positions = map_solarsystems_selected.value
             .sort((a, b) => {

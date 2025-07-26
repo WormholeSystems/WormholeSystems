@@ -115,22 +115,16 @@ useEcho(getMapChannelName(map.id), CharacterStatusUpdatedEvent, () => {
     });
 });
 
-useEcho(
-    getMapChannelName(map.id),
-    [
-        SignatureCreatedEvent,
-        SignatureUpdatedEvent,
-        SignatureDeletedEvent,
-        MapConnectionCreatedEvent,
-        MapConnectionDeletedEvent,
-        MapConnectionUpdatedEvent,
-    ],
-    () => {
-        router.reload({
-            only: ['selected_map_solarsystem'],
-        });
-    },
-);
+useEcho(getMapChannelName(map.id), [SignatureCreatedEvent, SignatureUpdatedEvent, SignatureDeletedEvent], () => {
+    router.reload({
+        only: ['selected_map_solarsystem'],
+    });
+});
+useEcho(getMapChannelName(map.id), [MapConnectionCreatedEvent, MapConnectionDeletedEvent, MapConnectionUpdatedEvent], () => {
+    router.reload({
+        only: ['selected_map_solarsystem', 'map_route_solarsystems'],
+    });
+});
 
 function handleWheel(event: WheelEvent) {
     if (!scroll_locked.value) {
@@ -186,6 +180,6 @@ function handleWheel(event: WheelEvent) {
 }
 
 html.dark .bg-grid {
-    background-image: linear-gradient(to right, var(-grid) 1px, transparent 1px), linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
+    background-image: linear-gradient(to right, var(--grid) 1px, transparent 1px), linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
 }
 </style>

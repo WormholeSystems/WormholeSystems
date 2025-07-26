@@ -32,6 +32,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Session;
 use Inertia\Inertia;
 use Inertia\Response;
 use Throwable;
@@ -87,6 +88,8 @@ class MapController extends Controller
             'map_route_solarsystems' => Inertia::defer(fn (): array => $this->getMapRouteSolarsystems($map, $selected_map_solarsystem_id)),
             'ship_history' => $ship_history,
             'has_write_access' => Gate::allows('update', $map),
+            'allow_eol' => Session::get('allow_eol', true),
+            'allow_crit' => Session::get('allow_crit', true),
         ]);
     }
 
@@ -188,14 +191,18 @@ class MapController extends Controller
             ->where('id', $map_solarsystem_id)
             ->pluck('solarsystem_id');
 
-        $current_solarsystem = Solarsystem::query()->firstWhere('id', $solarsystem_id);
+        $current_solarsystem = Solarsystem::query()
+            ->firstWhere('id', $solarsystem_id);
         $map_route_solarsystems = $map->mapRouteSolarsystems;
+
+        $allow_eol = Session::get('allow_eol', true);
+        $allow_crit = Session::get('allow_crit', true);
 
         return $map_route_solarsystems->map(fn (MapRouteSolarsystem $map_route_solarsystem): array => [
             'id' => $map_route_solarsystem->id,
             'solarsystem' => $map_route_solarsystem->solarsystem->toResource(SolarsystemResource::class),
             'is_pinned' => $map_route_solarsystem->is_pinned,
-            'route' => $route_service->find($current_solarsystem->id, $map_route_solarsystem->solarsystem_id, $map),
+            'route' => $route_service->find($current_solarsystem->id, $map_route_solarsystem->solarsystem_id, $map, $allow_eol, $allow_crit),
         ])->all();
     }
 }

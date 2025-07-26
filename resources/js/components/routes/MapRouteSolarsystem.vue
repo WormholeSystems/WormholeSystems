@@ -1,24 +1,14 @@
 <script setup lang="ts">
+import DestinationContextMenu from '@/components/DestinationContextMenu.vue';
 import LockIcon from '@/components/icons/LockIcon.vue';
 import TrashIcon from '@/components/icons/TrashIcon.vue';
-import { CharacterImage } from '@/components/images';
+import SovereigntyIcon from '@/components/map/SovereigntyIcon.vue';
 import SolarsystemClass from '@/components/SolarsystemClass.vue';
 import { Button } from '@/components/ui/button';
-import {
-    ContextMenu,
-    ContextMenuContent,
-    ContextMenuItem,
-    ContextMenuSeparator,
-    ContextMenuSub,
-    ContextMenuSubContent,
-    ContextMenuSubTrigger,
-    ContextMenuTrigger,
-} from '@/components/ui/context-menu';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { useHasWritePermission } from '@/composables/useHasPermission';
 import { usePath } from '@/composables/usePath';
-import useUser from '@/composables/useUser';
-import { useWaypoint } from '@/composables/useWaypoint';
 import { TMapRouteSolarsystem } from '@/types/models';
 import { router } from '@inertiajs/vue3';
 import { vElementHover } from '@vueuse/components';
@@ -28,10 +18,6 @@ const { map_route } = defineProps<{
 }>();
 
 const { setPath } = usePath();
-
-const setWaypoint = useWaypoint();
-
-const user = useUser();
 
 const can_write = useHasWritePermission();
 
@@ -67,67 +53,60 @@ function removeRoute() {
 </script>
 
 <template>
-    <ContextMenu>
-        <ContextMenuTrigger as-child>
-            <TableRow v-element-hover="(hovered) => onHover(map_route, hovered)" class="group">
-                <TableCell>
-                    <SolarsystemClass :wormhole_class="map_route.solarsystem.class" :security="map_route.solarsystem.security" />
-                    {{ map_route.solarsystem.name }}
-                </TableCell>
-                <TableCell>
-                    <span class="text-xs text-muted-foreground">
-                        {{ map_route.route.length ? map_route.route.length - 1 : 'N/A' }}
-                    </span>
-                </TableCell>
-                <TableCell v-if="can_write">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        @click="togglePinned"
-                        :data-pinned="map_route.is_pinned"
-                        class="data-[pinned=false]:opacity-0 group-hover:data-[pinned=false]:opacity-100"
-                    >
-                        <span class="sr-only">Toggle Pin</span>
-                        <LockIcon />
-                    </Button>
-                    <Button variant="ghost" size="icon" @click="removeRoute" class="opacity-0 group-hover:opacity-100">
-                        <span class="sr-only">Remove Route</span>
-                        <TrashIcon />
-                    </Button>
-                </TableCell>
-            </TableRow>
-        </ContextMenuTrigger>
-        <ContextMenuContent>
-            <ContextMenuSub>
-                <ContextMenuSubTrigger>Set destination</ContextMenuSubTrigger>
-                <ContextMenuSubContent>
-                    <ContextMenuItem
-                        v-for="character in user.characters"
-                        :key="character.id"
-                        @select="setWaypoint(character.id, map_route.solarsystem.id)"
-                    >
-                        <CharacterImage :character_id="character.id" :character_name="character.name" class="size-5 rounded-lg" />
-                        {{ character.name }}
-                    </ContextMenuItem>
-                </ContextMenuSubContent>
-            </ContextMenuSub>
-
-            <ContextMenuSub>
-                <ContextMenuSubTrigger>Add waypoint</ContextMenuSubTrigger>
-                <ContextMenuSubContent>
-                    <ContextMenuItem
-                        v-for="character in user.characters"
-                        :key="character.id"
-                        @select="setWaypoint(character.id, map_route.solarsystem.id, false)"
-                    >
-                        <CharacterImage :character_id="character.id" :character_name="character.name" class="size-5 rounded-lg" />
-                        {{ character.name }}
-                    </ContextMenuItem>
-                </ContextMenuSubContent>
-            </ContextMenuSub>
-            <ContextMenuSeparator />
-        </ContextMenuContent>
-    </ContextMenu>
+    <DestinationContextMenu :solarsystem_id="map_route.solarsystem.id">
+        <TableRow v-element-hover="(hovered) => onHover(map_route, hovered)" class="group">
+            <TableCell>
+                <SolarsystemClass :wormhole_class="map_route.solarsystem.class" :security="map_route.solarsystem.security" />
+                {{ map_route.solarsystem.name }}
+            </TableCell>
+            <TableCell>
+                <Popover>
+                    <PopoverTrigger as-child>
+                        <Button variant="ghost">
+                            {{ map_route.route.length ? map_route.route.length - 1 : 'N/A' }}
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent>
+                        <div class="flex flex-col gap-2">
+                            <span class="text-sm text-muted-foreground">Route</span>
+                            <ul class="grid divide-y text-xs">
+                                <DestinationContextMenu v-for="(solarsystem, index) in map_route.route" :key="index" :solarsystem_id="solarsystem.id">
+                                    <li class="col-span-4 grid grid-cols-subgrid gap-x-2 py-1 hover:bg-accent">
+                                        <div class="flex justify-center">
+                                            <SolarsystemClass :wormhole_class="solarsystem.class" :security="solarsystem.security" />
+                                        </div>
+                                        <span class="truncate">
+                                            {{ solarsystem.name }}
+                                        </span>
+                                        <span class="truncate text-muted-foreground">
+                                            {{ solarsystem.region?.name }}
+                                        </span>
+                                        <SovereigntyIcon v-if="solarsystem.sovereignty" :sovereignty="solarsystem.sovereignty" />
+                                    </li>
+                                </DestinationContextMenu>
+                            </ul>
+                        </div>
+                    </PopoverContent>
+                </Popover>
+            </TableCell>
+            <TableCell v-if="can_write">
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    @click="togglePinned"
+                    :data-pinned="map_route.is_pinned"
+                    class="data-[pinned=false]:opacity-0 group-hover:data-[pinned=false]:opacity-100"
+                >
+                    <span class="sr-only">Toggle Pin</span>
+                    <LockIcon />
+                </Button>
+                <Button variant="ghost" size="icon" @click="removeRoute" class="opacity-0 group-hover:opacity-100">
+                    <span class="sr-only">Remove Route</span>
+                    <TrashIcon />
+                </Button>
+            </TableCell>
+        </TableRow>
+    </DestinationContextMenu>
 </template>
 
 <style scoped></style>

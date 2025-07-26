@@ -20,7 +20,7 @@ function handleRemoveFromMap() {
     router.delete(route('map-connections.destroy', map_connection.id), {
         preserveScroll: true,
         preserveState: true,
-        only: ['map'],
+        only: ['map', 'map_route_solarsystems'],
     });
 }
 
@@ -31,7 +31,7 @@ function handleStatusChange(mass_status: TMassStatus | string) {
         {
             preserveScroll: true,
             preserveState: true,
-            only: ['map'],
+            only: ['map', 'map_route_solarsystems'],
         },
     );
 }
@@ -43,7 +43,7 @@ function handleShipSizeChange(ship_size: TShipSize | string) {
         {
             preserveScroll: true,
             preserveState: true,
-            only: ['map'],
+            only: ['map', 'map_route_solarsystems'],
         },
     );
 }
@@ -55,7 +55,7 @@ function handleToggleEol() {
         {
             preserveScroll: true,
             preserveState: true,
-            only: ['map'],
+            only: ['map', 'map_route_solarsystems'],
         },
     );
 }

@@ -23,7 +23,8 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { echo } from '@laravel/echo-vue';
 import { ref } from 'vue';
 
-const { map, selected_map_solarsystem, map_killmails, map_route_solarsystems, has_write_access } = defineProps<TShowMapProps>();
+const { map, selected_map_solarsystem, map_killmails, map_route_solarsystems, has_write_access, allow_crit, allow_eol } =
+    defineProps<TShowMapProps>();
 
 const user = useUser();
 
@@ -102,7 +103,15 @@ router.on('before', (event) => {
                     <MapKillmails :map_killmails="map_killmails" :map_id="map.id" />
                 </div>
                 <div class="col-span-12 xl:col-span-3">
-                    <Watchlist :map_route_solarsystems v-if="selected_map_solarsystem" :map :solarsystems :selected_map_solarsystem />
+                    <Watchlist
+                        :map_route_solarsystems
+                        v-if="selected_map_solarsystem"
+                        :map
+                        :solarsystems
+                        :selected_map_solarsystem
+                        :allow_crit
+                        :allow_eol
+                    />
                 </div>
             </div>
         </div>

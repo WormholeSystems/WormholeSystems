@@ -2,12 +2,18 @@
 
 namespace App\Services;
 
+use App\Enums\MassStatus;
+use App\Http\Resources\SolarsystemResource;
 use App\Models\Map;
 use App\Models\MapConnection;
+use App\Models\Solarsystem;
 use App\Utilities\DomainLogic;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Cache;
 use JMGQ\AStar\AStar;
 use NicolasKion\SDE\Models\SolarsystemConnection;
+use Throwable;
 
 /**
  * @property array<int, int[]> $connections
@@ -20,9 +26,9 @@ class RouteService
 
     public const string MAP_CACHE_PATTERN = 'map_%d';
 
-    public const string MAP_ROUTE_CACHE_PATTERN = 'route_%d_%d_map_%d';
+    public const string MAP_ROUTE_CACHE_PATTERN = 'route_%d_%d_map_%d_eol_%d_crit_%d';
 
-    public const string ROUTE_CACHE_PATTERN = 'route_%d_%d';
+    public const string ROUTE_CACHE_PATTERN = 'route_%d_%d_eol_%d_crit_%d';
 
     public function __construct()
     {
@@ -42,16 +48,18 @@ class RouteService
 
     /**
      * @return int[]
+     *
+     * @throws Throwable
      */
-    public function find(int $from_id, int $to_id, ?Map $map = null): array
+    public function find(int $from_id, int $to_id, ?Map $map = null, ?bool $allow_eol = true, ?bool $allow_crit = false): array
     {
-        if (($cached_route = $this->getCachedRoute($from_id, $to_id, $map)) !== null) {
+        if (($cached_route = $this->getCachedRoute($from_id, $to_id, $map, $allow_eol, $allow_crit)) !== null) {
             return $cached_route;
         }
 
         $connections = $this->connections;
         if ($map instanceof Map) {
-            $connections = $this->mergeMapConnections($map, $connections);
+            $connections = $this->mergeMapConnections($map, $connections, $allow_eol, $allow_crit);
         }
 
         $domain_logic = new DomainLogic($connections);
@@ -59,14 +67,29 @@ class RouteService
 
         $route = $star->run($from_id, $to_id);
 
-        $this->setCachedRoute($from_id, $to_id, $route, $map);
+        $solarsystems = Solarsystem::query()
+            ->with([
+                'sovereignty' => [
+                    'alliance',
+                    'corporation',
+                    'faction',
+                ],
+                'wormholeSystem.effect',
+                'constellation',
+                'region',
+            ])
+            ->whereIn('id', array_values($route))->get()->keyBy('id');
+
+        $route = array_map(static fn (int $id): JsonResource => $solarsystems->get($id)->toResource(SolarsystemResource::class), $route);
+
+        $this->setCachedRoute($from_id, $to_id, $route, $map, $allow_eol, $allow_crit);
 
         return $route;
     }
 
-    private function mergeMapConnections(Map $map, array $connections): array
+    private function mergeMapConnections(Map $map, array $connections, bool $allow_eol, bool $allow_crit): array
     {
-        $map_connections = $this->getMapConnections($map);
+        $map_connections = $this->getMapConnections($map, $allow_eol, $allow_crit);
 
         foreach ($map_connections as $from => $to) {
             $connections[$from] = isset($connections[$from]) ? array_merge($connections[$from], $to) : $to;
@@ -75,12 +98,14 @@ class RouteService
         return $connections;
     }
 
-    private function getMapConnections(Map $map): array
+    private function getMapConnections(Map $map, bool $allow_eol, bool $allow_crit): array
     {
         return MapConnection::query()
             ->join('map_solarsystems as from', 'map_connections.from_map_solarsystem_id', '=', 'from.id')
             ->join('map_solarsystems as to', 'map_connections.to_map_solarsystem_id', '=', 'to.id')
             ->where('map_connections.map_id', $map->id)
+            ->when(! $allow_eol, fn (Builder $query) => $query->where('is_eol', false))
+            ->when(! $allow_crit, fn (Builder $query) => $query->where('mass_status', '!=', MassStatus::Critical))
             ->select('from.solarsystem_id as from_solarsystem_id', 'to.solarsystem_id as to_solarsystem_id')
             ->get()
             ->map(static function (MapConnection $connection): array {
@@ -100,45 +125,45 @@ class RouteService
             ->map(static fn ($group) => $group->pluck('to_solarsystem_id')->toArray())->all();
     }
 
-    private function getCachedRoute(int $from_id, int $to_id, ?Map $map = null): ?array
+    private function getCachedRoute(int $from_id, int $to_id, ?Map $map = null, ?bool $allow_eol = true, ?bool $allow_crit = false): ?array
     {
         if ($map instanceof Map) {
-            return $this->getCachedRouteForMap($from_id, $to_id, $map);
+            return $this->getCachedRouteForMap($from_id, $to_id, $map, $allow_eol, $allow_crit);
         }
 
-        $key = $this->getRouteCacheKey($from_id, $to_id);
+        $key = $this->getRouteCacheKey($from_id, $to_id, $allow_eol, $allow_crit);
 
         return Cache::get($key);
     }
 
-    private function getCachedRouteForMap(int $from_id, int $to_id, Map $map): ?array
+    private function getCachedRouteForMap(int $from_id, int $to_id, Map $map, ?bool $allow_eol = true, ?bool $allow_crit = false): ?array
     {
-        $key = $this->getMapRouteCacheKey($from_id, $to_id, $map);
+        $key = $this->getMapRouteCacheKey($from_id, $to_id, $map, $allow_eol, $allow_crit);
 
         $tag = $this->getMapCacheKey($map);
 
         return Cache::tags($tag)->get($key);
     }
 
-    private function setCachedRoute(int $from_id, int $to_id, array $route, ?Map $map = null): void
+    private function setCachedRoute(int $from_id, int $to_id, array $route, ?Map $map = null, ?bool $allow_eol = true, ?bool $allow_crit = false): void
     {
         if ($map instanceof Map) {
-            $this->setCachedRouteForMap($from_id, $to_id, $route, $map);
+            $this->setCachedRouteForMap($from_id, $to_id, $route, $map, $allow_eol, $allow_crit);
 
             return;
         }
 
-        $key_1 = $this->getRouteCacheKey($from_id, $to_id);
-        $key_2 = $this->getRouteCacheKey($to_id, $from_id);
+        $key_1 = $this->getRouteCacheKey($from_id, $to_id, $allow_eol, $allow_crit);
+        $key_2 = $this->getRouteCacheKey($to_id, $from_id, $allow_eol, $allow_crit);
 
         Cache::put($key_1, $route, self::CACHE_EXPIRATION_SECONDS);
         Cache::put($key_2, array_reverse($route), self::CACHE_EXPIRATION_SECONDS);
     }
 
-    private function setCachedRouteForMap(int $from_id, int $to_id, array $route, Map $map): void
+    private function setCachedRouteForMap(int $from_id, int $to_id, array $route, Map $map, ?bool $allow_eol = true, ?bool $allow_crit = false): void
     {
-        $key_1 = $this->getMapRouteCacheKey($from_id, $to_id, $map);
-        $key_2 = $this->getMapRouteCacheKey($to_id, $from_id, $map);
+        $key_1 = $this->getMapRouteCacheKey($from_id, $to_id, $map, $allow_eol, $allow_crit);
+        $key_2 = $this->getMapRouteCacheKey($to_id, $from_id, $map, $allow_eol, $allow_crit);
 
         $tag = $this->getMapCacheKey($map);
 
@@ -151,13 +176,13 @@ class RouteService
         return sprintf(self::MAP_CACHE_PATTERN, $map->id);
     }
 
-    private function getMapRouteCacheKey(int $from_id, int $to_id, Map $map): string
+    private function getMapRouteCacheKey(int $from_id, int $to_id, Map $map, ?bool $allow_eol = true, ?bool $allow_crit = false): string
     {
-        return sprintf(self::MAP_ROUTE_CACHE_PATTERN, $from_id, $to_id, $map->id);
+        return sprintf(self::MAP_ROUTE_CACHE_PATTERN, $from_id, $to_id, $map->id, (int) $allow_eol, (int) $allow_crit);
     }
 
-    private function getRouteCacheKey(int $from_id, int $to_id): string
+    private function getRouteCacheKey(int $from_id, int $to_id, ?bool $allow_eol = true, ?bool $allow_crit = false): string
     {
-        return sprintf(self::ROUTE_CACHE_PATTERN, $from_id, $to_id);
+        return sprintf(self::ROUTE_CACHE_PATTERN, $from_id, $to_id, (int) $allow_eol, (int) $allow_crit);
     }
 }

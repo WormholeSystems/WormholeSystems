@@ -12,4 +12,6 @@ export type TShowMapProps = {
     map_route_solarsystems?: TMapRouteSolarsystem[];
     ship_history: TShipHistory[];
     has_write_access: boolean;
+    allow_eol: boolean;
+    allow_crit: boolean;
 };

@@ -224,7 +224,7 @@ export type TMapRouteSolarsystem = {
     id: number;
     solarsystem: TSolarsystem;
     is_pinned: boolean;
-    route: number[];
+    route: TSolarsystem[];
 };
 
 export type TMapUserSetting = {

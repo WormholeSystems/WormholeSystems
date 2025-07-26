@@ -1,9 +1,10 @@
+import { TSolarsystem } from '@/types/models';
 import { readonly, ref } from 'vue';
 
-const path = ref<number[] | null>(null);
+const path = ref<TSolarsystem[] | null>(null);
 
 export function usePath() {
-    function setPath(newPath: number[] | null) {
+    function setPath(newPath: TSolarsystem[] | null) {
         path.value = newPath;
     }
 

@@ -5,6 +5,7 @@ namespace App\Listeners;
 use App\Events\MapConnections\MapConnectionCreatedEvent;
 use App\Events\MapConnections\MapConnectionDeletedEvent;
 use App\Events\MapConnections\MapConnectionsDeletedEvent;
+use App\Events\MapConnections\MapConnectionUpdatedEvent;
 use App\Events\MapSolarsystems\MapSolarsystemCreatedEvent;
 use App\Events\MapSolarsystems\MapSolarsystemDeletedEvent;
 use App\Events\MapSolarsystems\MapSolarsystemsDeletedEvent;
@@ -30,6 +31,7 @@ class MapRoutesBecameOutdated
         MapSolarsystemsDeletedEvent|
         MapConnectionCreatedEvent|
         MapConnectionDeletedEvent|
+        MapConnectionUpdatedEvent|
         MapConnectionsDeletedEvent $event): void
     {
         $map_id = $event->map_id;

@@ -18,6 +18,7 @@ use App\Http\Controllers\SignatureController;
 use App\Http\Controllers\StatisticsController;
 use App\Http\Controllers\TrackingController;
 use App\Http\Controllers\UserCharacterController;
+use App\Http\Controllers\WatchlistController;
 use App\Http\Controllers\WaypointController;
 use Illuminate\Support\Facades\Route;
 
@@ -63,6 +64,7 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('map-route-solarsystems', MapRouteSolarsystemController::class)->only(['store', 'update', 'destroy']);
     Route::resource('map-user-settings', MapUserSettingController::class)->only(['update']);
+    Route::put('watchlist', [WatchlistController::class, 'update'])->name('watchlist.update');
 
     Route::post('statistics', [StatisticsController::class, 'store'])->name('statistics.store');
 });

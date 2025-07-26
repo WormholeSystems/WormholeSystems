@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Services\RouteService;
 use Artisan;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Event;
@@ -30,6 +31,8 @@ class AppServiceProvider extends ServiceProvider
         JsonResource::withoutWrapping();
 
         $this->registerNotificationMacro();
+
+        Model::automaticallyEagerLoadRelationships();
 
         Event::listen(function (SocialiteWasCalled $event): void {
             $event->extendSocialite('eveonline', Provider::class);
