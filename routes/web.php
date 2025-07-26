@@ -2,6 +2,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BulkSignatureController;
 use App\Http\Controllers\EveController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\LoginController;
@@ -67,4 +68,7 @@ Route::middleware('auth')->group(function () {
     Route::put('watchlist', [WatchlistController::class, 'update'])->name('watchlist.update');
 
     Route::post('statistics', [StatisticsController::class, 'store'])->name('statistics.store');
+
+    Route::delete('map-solarsystems/{mapSolarsystem}/signatures', [BulkSignatureController::class, 'destroy'])
+        ->name('map-solarsystems.signatures.destroy');
 });

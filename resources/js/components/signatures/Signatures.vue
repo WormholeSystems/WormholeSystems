@@ -23,9 +23,25 @@ const { relevant_signatures, connections } = useSignatures();
 const can_write = useHasWritePermission();
 
 const pasted_signatures = ref<Partial<TSignature>[] | null>();
-const new_signatures = ref<Partial<TSignature>[]>([]);
-const updated_signatures = ref<Partial<TSignature>[]>([]);
-const deleted_signatures = ref<Partial<TSignature>[]>([]);
+const new_signatures = computed(() => {
+    if (!pasted_signatures.value) {
+        return [];
+    }
+    return getNewSignatures(pasted_signatures.value);
+});
+const updated_signatures = computed(() => {
+    if (!pasted_signatures.value) {
+        return [];
+    }
+    return getUpdatedSignatures(pasted_signatures.value);
+});
+
+const deleted_signatures = computed(() => {
+    if (!pasted_signatures.value) {
+        return [];
+    }
+    return getDeletedSignatures(pasted_signatures.value);
+});
 
 const signatures = computed(() => {
     return map_solarsystem
@@ -81,17 +97,11 @@ watch(
     () => map_solarsystem.solarsystem_id,
     () => {
         pasted_signatures.value = null;
-        new_signatures.value = [];
-        updated_signatures.value = [];
-        deleted_signatures.value = [];
     },
 );
 
 async function handlePaste() {
     const signatures = await getSignaturesFromClipboard();
-    new_signatures.value = getNewSignatures(signatures);
-    updated_signatures.value = getUpdatedSignatures(signatures);
-    deleted_signatures.value = getDeletedSignatures(signatures);
     pasted_signatures.value = signatures;
     router.post(
         route('paste-signatures.store'),
@@ -169,6 +179,17 @@ function createNewSignature() {
         },
     );
 }
+
+function deleteMissingSignatures() {
+    router.delete(route('map-solarsystems.signatures.destroy', map_solarsystem.id), {
+        preserveScroll: true,
+        preserveState: true,
+        only: ['selected_map_solarsystem'],
+        data: {
+            signature_ids: deleted_signatures.value.map((signature) => signature.id),
+        },
+    });
+}
 </script>
 
 <template>
@@ -178,6 +199,7 @@ function createNewSignature() {
             <CardDescription> All the signatures in this solarsystem. You can paste, copy and clear signatures here. </CardDescription>
 
             <CardAction class="flex gap-2" v-if="can_write">
+                <Button v-if="deleted_signatures.length > 0" @click="deleteMissingSignatures" variant="destructive"> Delete Missing </Button>
                 <Tooltip>
                     <TooltipTrigger as-child>
                         <Button @click="handlePaste" variant="outline" size="icon">
