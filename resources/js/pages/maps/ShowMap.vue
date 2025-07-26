@@ -23,7 +23,7 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { echo } from '@laravel/echo-vue';
 import { ref } from 'vue';
 
-const { map, selected_map_solarsystem, map_killmails, map_route_solarsystems, has_write_access, allow_crit, allow_eol } =
+const { map, selected_map_solarsystem, map_killmails, map_route_solarsystems, has_write_access, allow_crit, allow_eol, allow_eve_scout } =
     defineProps<TShowMapProps>();
 
 const user = useUser();
@@ -111,6 +111,7 @@ router.on('before', (event) => {
                         :selected_map_solarsystem
                         :allow_crit
                         :allow_eol
+                        :allow_eve_scout
                     />
                 </div>
             </div>

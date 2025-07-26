@@ -13,6 +13,7 @@ class WatchlistController extends Controller
         $request->validate([
             'allow_eol' => ['nullable', 'sometimes', 'boolean'],
             'allow_crit' => ['nullable', 'sometimes', 'boolean'],
+            'allow_eve_scout' => ['nullable', 'sometimes', 'boolean'],
         ]);
 
         if ($request->has('allow_eol')) {
@@ -20,6 +21,9 @@ class WatchlistController extends Controller
         }
         if ($request->has('allow_crit')) {
             Session::put('allow_crit', $request->boolean('allow_crit'));
+        }
+        if ($request->has('allow_eve_scout')) {
+            Session::put('allow_eve_scout', $request->boolean('allow_eve_scout'));
         }
 
         return back()->notify('Settings updated!', 'Your watchlist settings have been successfully updated.');

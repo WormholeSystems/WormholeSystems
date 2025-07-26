@@ -90,6 +90,7 @@ class MapController extends Controller
             'has_write_access' => Gate::allows('update', $map),
             'allow_eol' => Session::get('allow_eol', true),
             'allow_crit' => Session::get('allow_crit', true),
+            'allow_eve_scout' => Session::get('allow_eve_scout', false),
         ]);
     }
 
@@ -197,12 +198,13 @@ class MapController extends Controller
 
         $allow_eol = Session::get('allow_eol', true);
         $allow_crit = Session::get('allow_crit', true);
+        $allow_eve_scout = Session::get('allow_eve_scout', false);
 
         return $map_route_solarsystems->map(fn (MapRouteSolarsystem $map_route_solarsystem): array => [
             'id' => $map_route_solarsystem->id,
             'solarsystem' => $map_route_solarsystem->solarsystem->toResource(SolarsystemResource::class),
             'is_pinned' => $map_route_solarsystem->is_pinned,
-            'route' => $route_service->find($current_solarsystem->id, $map_route_solarsystem->solarsystem_id, $map, $allow_eol, $allow_crit),
+            'route' => $route_service->find($current_solarsystem->id, $map_route_solarsystem->solarsystem_id, $map, $allow_eol, $allow_crit, $allow_eve_scout),
         ])->all();
     }
 }

@@ -25,7 +25,7 @@ final readonly class DeleteSignaturesAction
         DB::transaction(function () use ($mapSolarsystem, $signature_ids): void {
             $mapSolarsystem->signatures()
                 ->whereIn('signatures.id', $signature_ids)
-                ->each(fn ($signature) => $this->action->handle($signature, without_events: true));
+                ->each(fn ($signature): bool => $this->action->handle($signature, without_events: true));
 
             broadcast(new MapConnectionsDeletedEvent(
                 map_id: $mapSolarsystem->map_id,

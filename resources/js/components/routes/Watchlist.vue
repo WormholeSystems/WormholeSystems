@@ -11,13 +11,14 @@ import { TMap, TMapRouteSolarsystem, TMapSolarSystem, TSolarsystem } from '@/typ
 import { Deferred, router } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
-const { map_route_solarsystems, map, solarsystems, selected_map_solarsystem, allow_eol, allow_crit } = defineProps<{
+const { map_route_solarsystems, map, solarsystems, selected_map_solarsystem, allow_eol, allow_crit, allow_eve_scout } = defineProps<{
     map: TMap;
     solarsystems: TSolarsystem[];
     map_route_solarsystems?: TMapRouteSolarsystem[];
     selected_map_solarsystem?: TMapSolarSystem;
     allow_eol: boolean;
     allow_crit: boolean;
+    allow_eve_scout: boolean;
 }>();
 
 const sorted = computed(() => {
@@ -38,7 +39,7 @@ function handleToggleEol() {
         },
         {
             preserveScroll: true,
-            only: ['map_route_solarsystems', 'allow_eol', 'allow_crit'],
+            only: ['map_route_solarsystems', 'allow_eol', 'allow_crit', 'allow_eve_scout'],
             preserveState: true,
         },
     );
@@ -52,7 +53,21 @@ function handleToggleCrit() {
         },
         {
             preserveScroll: true,
-            only: ['map_route_solarsystems', 'allow_eol', 'allow_crit'],
+            only: ['map_route_solarsystems', 'allow_eol', 'allow_crit', 'allow_eve_scout'],
+            preserveState: true,
+        },
+    );
+}
+
+function handleToggleEveScout() {
+    router.put(
+        route('watchlist.update'),
+        {
+            allow_eve_scout: !allow_eve_scout,
+        },
+        {
+            preserveScroll: true,
+            only: ['map_route_solarsystems', 'allow_eol', 'allow_crit', 'allow_eve_scout'],
             preserveState: true,
         },
     );
@@ -76,6 +91,12 @@ function handleToggleCrit() {
                         <Toggle :modelValue="allow_crit" @update:model-value="handleToggleCrit">C</Toggle>
                     </TooltipTrigger>
                     <TooltipContent> Allow critical connections</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                    <TooltipTrigger>
+                        <Toggle :modelValue="allow_eve_scout" @update:model-value="handleToggleEveScout">S</Toggle>
+                    </TooltipTrigger>
+                    <TooltipContent> Use EVE Scout (Thera/Turnur connections)</TooltipContent>
                 </Tooltip>
 
                 <MapRouteSolarsystemAdd :map :solarsystems :map_route_solarsystems v-if="can_write" />

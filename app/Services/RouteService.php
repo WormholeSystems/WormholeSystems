@@ -7,6 +7,7 @@ use App\Http\Resources\SolarsystemResource;
 use App\Models\Map;
 use App\Models\MapConnection;
 use App\Models\Solarsystem;
+use App\Services\EveScoutService;
 use App\Utilities\DomainLogic;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -26,9 +27,9 @@ class RouteService
 
     public const string MAP_CACHE_PATTERN = 'map_%d';
 
-    public const string MAP_ROUTE_CACHE_PATTERN = 'route_%d_%d_map_%d_eol_%d_crit_%d';
+    public const string MAP_ROUTE_CACHE_PATTERN = 'route_%d_%d_map_%d_eol_%d_crit_%d_scouts_%d';
 
-    public const string ROUTE_CACHE_PATTERN = 'route_%d_%d_eol_%d_crit_%d';
+    public const string ROUTE_CACHE_PATTERN = 'route_%d_%d_eol_%d_crit_%d_scouts_%d';
 
     public function __construct()
     {
@@ -51,15 +52,20 @@ class RouteService
      *
      * @throws Throwable
      */
-    public function find(int $from_id, int $to_id, ?Map $map = null, ?bool $allow_eol = true, ?bool $allow_crit = false): array
+    public function find(int $from_id, int $to_id, ?Map $map = null, ?bool $allow_eol = true, ?bool $allow_crit = false, ?bool $allow_eve_scout = false): array
     {
-        if (($cached_route = $this->getCachedRoute($from_id, $to_id, $map, $allow_eol, $allow_crit)) !== null) {
+        if (($cached_route = $this->getCachedRoute($from_id, $to_id, $map, $allow_eol, $allow_crit, $allow_eve_scout)) !== null) {
             return $cached_route;
         }
 
         $connections = $this->connections;
         if ($map instanceof Map) {
             $connections = $this->mergeMapConnections($map, $connections, $allow_eol, $allow_crit);
+        }
+
+        // Add EVE Scout connections if enabled
+        if ($allow_eve_scout === true) {
+            $connections = $this->mergeEveScoutConnections($connections, $allow_eol);
         }
 
         $domain_logic = new DomainLogic($connections);
@@ -82,7 +88,7 @@ class RouteService
 
         $route = array_map(static fn (int $id): JsonResource => $solarsystems->get($id)->toResource(SolarsystemResource::class), $route);
 
-        $this->setCachedRoute($from_id, $to_id, $route, $map, $allow_eol, $allow_crit);
+        $this->setCachedRoute($from_id, $to_id, $route, $map, $allow_eol, $allow_crit, $allow_eve_scout);
 
         return $route;
     }
@@ -125,45 +131,57 @@ class RouteService
             ->map(static fn ($group) => $group->pluck('to_solarsystem_id')->toArray())->all();
     }
 
-    private function getCachedRoute(int $from_id, int $to_id, ?Map $map = null, ?bool $allow_eol = true, ?bool $allow_crit = false): ?array
+    private function mergeEveScoutConnections(array $connections, bool $allow_eol = true): array
     {
-        if ($map instanceof Map) {
-            return $this->getCachedRouteForMap($from_id, $to_id, $map, $allow_eol, $allow_crit);
+        $eve_scout_service = app(EveScoutService::class);
+        $eve_scout_connections = $eve_scout_service->getConnectionsForRouting($allow_eol);
+
+        foreach ($eve_scout_connections as $from => $to) {
+            $connections[$from] = isset($connections[$from]) ? array_merge($connections[$from], $to) : $to;
         }
 
-        $key = $this->getRouteCacheKey($from_id, $to_id, $allow_eol, $allow_crit);
+        return $connections;
+    }
+
+    private function getCachedRoute(int $from_id, int $to_id, ?Map $map = null, ?bool $allow_eol = true, ?bool $allow_crit = false, ?bool $allow_eve_scout = false): ?array
+    {
+        if ($map instanceof Map) {
+            return $this->getCachedRouteForMap($from_id, $to_id, $map, $allow_eol, $allow_crit, $allow_eve_scout);
+        }
+
+        $key = $this->getRouteCacheKey($from_id, $to_id, $allow_eol, $allow_crit, $allow_eve_scout);
 
         return Cache::get($key);
     }
 
-    private function getCachedRouteForMap(int $from_id, int $to_id, Map $map, ?bool $allow_eol = true, ?bool $allow_crit = false): ?array
+    private function getCachedRouteForMap(int $from_id, int $to_id, Map $map, ?bool $allow_eol = true, ?bool $allow_crit = false, ?bool $allow_eve_scout = false): ?array
     {
-        $key = $this->getMapRouteCacheKey($from_id, $to_id, $map, $allow_eol, $allow_crit);
+        $key = $this->getMapRouteCacheKey($from_id, $to_id, $map, $allow_eol, $allow_crit, $allow_eve_scout);
 
         $tag = $this->getMapCacheKey($map);
 
         return Cache::tags($tag)->get($key);
     }
 
-    private function setCachedRoute(int $from_id, int $to_id, array $route, ?Map $map = null, ?bool $allow_eol = true, ?bool $allow_crit = false): void
+    private function setCachedRoute(int $from_id, int $to_id, array $route, ?Map $map = null, ?bool $allow_eol = true, ?bool $allow_crit = false, ?bool $allow_eve_scout = false): void
     {
         if ($map instanceof Map) {
-            $this->setCachedRouteForMap($from_id, $to_id, $route, $map, $allow_eol, $allow_crit);
+            $this->setCachedRouteForMap($from_id, $to_id, $route, $map, $allow_eol, $allow_crit, $allow_eve_scout);
 
             return;
         }
 
-        $key_1 = $this->getRouteCacheKey($from_id, $to_id, $allow_eol, $allow_crit);
-        $key_2 = $this->getRouteCacheKey($to_id, $from_id, $allow_eol, $allow_crit);
+        $key_1 = $this->getRouteCacheKey($from_id, $to_id, $allow_eol, $allow_crit, $allow_eve_scout);
+        $key_2 = $this->getRouteCacheKey($to_id, $from_id, $allow_eol, $allow_crit, $allow_eve_scout);
 
         Cache::put($key_1, $route, self::CACHE_EXPIRATION_SECONDS);
         Cache::put($key_2, array_reverse($route), self::CACHE_EXPIRATION_SECONDS);
     }
 
-    private function setCachedRouteForMap(int $from_id, int $to_id, array $route, Map $map, ?bool $allow_eol = true, ?bool $allow_crit = false): void
+    private function setCachedRouteForMap(int $from_id, int $to_id, array $route, Map $map, ?bool $allow_eol = true, ?bool $allow_crit = false, ?bool $allow_eve_scout = false): void
     {
-        $key_1 = $this->getMapRouteCacheKey($from_id, $to_id, $map, $allow_eol, $allow_crit);
-        $key_2 = $this->getMapRouteCacheKey($to_id, $from_id, $map, $allow_eol, $allow_crit);
+        $key_1 = $this->getMapRouteCacheKey($from_id, $to_id, $map, $allow_eol, $allow_crit, $allow_eve_scout);
+        $key_2 = $this->getMapRouteCacheKey($to_id, $from_id, $map, $allow_eol, $allow_crit, $allow_eve_scout);
 
         $tag = $this->getMapCacheKey($map);
 
@@ -176,13 +194,13 @@ class RouteService
         return sprintf(self::MAP_CACHE_PATTERN, $map->id);
     }
 
-    private function getMapRouteCacheKey(int $from_id, int $to_id, Map $map, ?bool $allow_eol = true, ?bool $allow_crit = false): string
+    private function getMapRouteCacheKey(int $from_id, int $to_id, Map $map, ?bool $allow_eol = true, ?bool $allow_crit = false, ?bool $allow_eve_scout = false): string
     {
-        return sprintf(self::MAP_ROUTE_CACHE_PATTERN, $from_id, $to_id, $map->id, (int) $allow_eol, (int) $allow_crit);
+        return sprintf(self::MAP_ROUTE_CACHE_PATTERN, $from_id, $to_id, $map->id, (int) $allow_eol, (int) $allow_crit, (int) $allow_eve_scout);
     }
 
-    private function getRouteCacheKey(int $from_id, int $to_id, ?bool $allow_eol = true, ?bool $allow_crit = false): string
+    private function getRouteCacheKey(int $from_id, int $to_id, ?bool $allow_eol = true, ?bool $allow_crit = false, ?bool $allow_eve_scout = false): string
     {
-        return sprintf(self::ROUTE_CACHE_PATTERN, $from_id, $to_id, (int) $allow_eol, (int) $allow_crit);
+        return sprintf(self::ROUTE_CACHE_PATTERN, $from_id, $to_id, (int) $allow_eol, (int) $allow_crit, (int) $allow_eve_scout);
     }
 }

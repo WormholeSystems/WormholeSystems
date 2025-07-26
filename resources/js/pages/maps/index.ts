@@ -14,4 +14,5 @@ export type TShowMapProps = {
     has_write_access: boolean;
     allow_eol: boolean;
     allow_crit: boolean;
+    allow_eve_scout: boolean;
 };
