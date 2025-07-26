@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/app/AppHeaderLayout.vue';
+import Notifications from '@/components/Notifications.vue';
+import AppContent from '@/layouts/AppContent.vue';
+import AppHeader from '@/layouts/AppHeader.vue';
+import AppShell from '@/layouts/AppShell.vue';
 import type { BreadcrumbItemType } from '@/types';
 
 interface Props {
@@ -12,7 +15,11 @@ withDefaults(defineProps<Props>(), {
 </script>
 
 <template>
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <slot />
-    </AppLayout>
+    <AppShell class="flex-col">
+        <AppHeader :breadcrumbs="breadcrumbs" />
+        <AppContent>
+            <slot />
+        </AppContent>
+        <Notifications />
+    </AppShell>
 </template>
