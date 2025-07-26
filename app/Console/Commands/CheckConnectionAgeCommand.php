@@ -47,7 +47,7 @@ class CheckConnectionAgeCommand extends Command
             ->where('is_eol', false)
             ->get();
 
-        $eol_connections->each(fn (MapConnection $connection): \App\Models\MapConnection => $updateMapConnectionAction->handle($connection, [
+        $eol_connections->each(fn (MapConnection $connection): MapConnection => $updateMapConnectionAction->handle($connection, [
             'is_eol' => true,
         ]));
 
@@ -66,11 +66,29 @@ class CheckConnectionAgeCommand extends Command
             ->where('is_eol', false)
             ->get();
 
-        $c6_connections->each(fn (MapConnection $connection): \App\Models\MapConnection => $updateMapConnectionAction->handle($connection, [
+        $c6_connections->each(fn (MapConnection $connection): MapConnection => $updateMapConnectionAction->handle($connection, [
             'is_eol' => true,
         ]));
 
-        $this->info('Old connections marked as EOL: '.($eol_connections->count() + $c6_connections->count()));
+        $drifter_connections = MapConnection::query()
+            ->where(fn (Builder $query) => $query
+                ->where(fn (Builder $query) => $query
+                    ->whereHas('fromMapSolarsystem', fn (Builder $query) => $query->whereHas('wormholeSystem', fn (Builder $query) => $query->whereIn('class', [14, 15, 16, 17, 18])))
+                    ->whereHas('toMapSolarsystem', fn (Builder $query) => $query->whereDoesntHave('wormholeSystem'))
+                )
+                ->orWhere(fn (Builder $query) => $query
+                    ->whereHas('toMapSolarsystem', fn (Builder $query) => $query->whereHas('wormholeSystem', fn (Builder $query) => $query->whereIn('class', [14, 15, 16, 17, 18])))
+                    ->whereHas('fromMapSolarsystem', fn (Builder $query) => $query->whereDoesntHave('wormholeSystem'))
+                ))
+            ->where('created_at', '<=', now()->subHours(12))
+            ->where('is_eol', false)
+            ->get();
+
+        $drifter_connections->each(fn (MapConnection $connection): MapConnection => $updateMapConnectionAction->handle($connection, [
+            'is_eol' => true,
+        ]));
+
+        $this->info('Old connections marked as EOL: '.($eol_connections->count() + $c6_connections->count() + $drifter_connections->count()));
 
         return self::SUCCESS;
     }

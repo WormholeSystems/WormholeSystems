@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Actions\Signatures\DeleteSignatureAction;
 use App\Events\MapConnections\MapConnectionsDeletedEvent;
 use App\Models\MapSolarsystem;
 use Illuminate\Support\Facades\DB;
@@ -11,6 +12,8 @@ use Throwable;
 
 final readonly class DeleteSignaturesAction
 {
+    public function __construct(private DeleteSignatureAction $action) {}
+
     /**
      * Execute the action.
      *
@@ -21,7 +24,7 @@ final readonly class DeleteSignaturesAction
         DB::transaction(function () use ($mapSolarsystem, $signature_ids): void {
             $mapSolarsystem->signatures()
                 ->whereIn('signatures.id', $signature_ids)
-                ->delete();
+                ->each(fn ($signature) => $this->action->handle($signature));
 
             broadcast(new MapConnectionsDeletedEvent(
                 map_id: $mapSolarsystem->map_id,
