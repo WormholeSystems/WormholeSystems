@@ -4,7 +4,7 @@ import MapConnections from '@/components/map/MapConnections.vue';
 import MapContextMenu from '@/components/map/MapContextMenu.vue';
 import MapSolarsystem from '@/components/map/MapSolarsystem.vue';
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu';
-import { useMapAction, useMapConnections, useMapGrid, useMapSolarsystems, useMap as useNewMap } from '@/composables/map';
+import { useMap as useNewMap, useMapAction, useMapConnections, useMapGrid, useMapSolarsystems } from '@/composables/map';
 import { useHasWritePermission } from '@/composables/useHasPermission';
 import { getMapChannelName } from '@/const/channels';
 import {
@@ -27,7 +27,7 @@ import { TMapConfig } from '@/types/map';
 import { TMap } from '@/types/models';
 import { router } from '@inertiajs/vue3';
 import { useEcho } from '@laravel/echo-vue';
-import { useMagicKeys, useMousePressed, whenever } from '@vueuse/core';
+import { useMagicKeys, whenever } from '@vueuse/core';
 import { computed, ref, useTemplateRef } from 'vue';
 
 const { map, config } = defineProps<{
@@ -37,18 +37,7 @@ const { map, config } = defineProps<{
 
 const container = useTemplateRef('map-container');
 
-const scroll_locked = ref(true);
-
-useMousePressed({
-    onPressed(e) {
-        if ('button' in e && e.button === 1) {
-            scroll_locked.value = false;
-        }
-    },
-    onReleased() {
-        scroll_locked.value = true;
-    },
-});
+const scroll_locked = ref(false);
 
 useNewMap(
     () => map,
@@ -126,28 +115,31 @@ useEcho(getMapChannelName(map.id), [MapConnectionCreatedEvent, MapConnectionDele
     });
 });
 
-function handleWheel(event: WheelEvent) {
-    if (!scroll_locked.value) {
+let timeout: ReturnType<typeof setTimeout> | null = null;
+
+function onScroll(event: WheelEvent) {
+    if (event.ctrlKey || event.metaKey) {
         return;
     }
-
-    event.preventDefault();
-
-    window.scrollBy({
-        top: event.deltaY,
-        left: event.deltaX,
-        behavior: 'smooth',
-    });
+    scroll_locked.value = true;
+    if (timeout) {
+        clearTimeout(timeout);
+    }
+    timeout = setTimeout(() => {
+        scroll_locked.value = false;
+        timeout = null;
+    }, 500);
 }
 </script>
 
 <template>
     <div
-        class="relative max-h-[1000px] w-full overflow-y-scroll rounded-lg border bg-neutral-50 dark:bg-neutral-900/50"
+        :data-scroll-locked="scroll_locked"
+        class="relative max-h-[1000px] w-full overflow-y-scroll rounded-lg border bg-neutral-50 data-[scroll-locked=true]:overflow-hidden dark:bg-neutral-900/50"
         :style="{
             height: config.max_size.y > 1000 ? `${config.max_size.y}px` : 'auto',
         }"
-        @wheel="handleWheel"
+        @wheel="onScroll"
     >
         <ContextMenu @update:open="onOpenChange">
             <ContextMenuTrigger>
