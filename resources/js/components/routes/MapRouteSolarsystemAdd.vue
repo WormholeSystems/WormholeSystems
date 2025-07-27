@@ -70,7 +70,7 @@ function handleSolarsystemSelect(solarsystem: TSolarsystem) {
                 <ComboboxAnchor>
                     <ComboboxInput v-model="search" auto-focus />
                 </ComboboxAnchor>
-                <ComboboxList>
+                <ComboboxList class="w-115" align="start">
                     <ComboboxEmpty> No results found</ComboboxEmpty>
                     <ComboboxGroup heading="Search Results" v-if="new_solarsystems.length > 0" class="grid grid-cols-[auto_1fr_auto]">
                         <ComboboxItem
@@ -90,7 +90,7 @@ function handleSolarsystemSelect(solarsystem: TSolarsystem) {
                             </div>
                         </ComboboxItem>
                     </ComboboxGroup>
-                    <ComboboxGroup heading="Already in Map" v-if="existing_solarsystems.length > 0" class="grid grid-cols-[auto_1fr_auto]">
+                    <ComboboxGroup heading="Already in Watchlist" v-if="existing_solarsystems.length > 0" class="grid grid-cols-[auto_1fr_auto]">
                         <ComboboxItem
                             v-for="solarsystem in existing_solarsystems"
                             :key="solarsystem.id"
