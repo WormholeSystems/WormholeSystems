@@ -17,7 +17,7 @@ final readonly class CreateMapRouteSolarsystemAction
     public function handle(array $data): MapRouteSolarsystem
     {
         return DB::transaction(function () use ($data): MapRouteSolarsystem {
-            $data = MapRouteSolarsystem::query()->create($data);
+            $data = MapRouteSolarsystem::query()->updateOrCreate($data);
             broadcast(new MapRouteSolarsystemsUpdatedEvent($data['map_id']))->toOthers();
 
             return $data;
