@@ -1,18 +1,23 @@
 <script setup lang="ts">
 import { CharacterImage } from '@/components/images';
 import TypeImage from '@/components/images/TypeImage.vue';
+import RoutePopover from '@/components/routes/RoutePopover.vue';
+import { Button } from '@/components/ui/button';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMapSolarsystems } from '@/composables/map';
 import { TCharacter } from '@/types/models';
 import { vElementHover } from '@vueuse/components';
 import { computed } from 'vue';
+import { usePath } from '@/composables/usePath';
 
 const { character } = defineProps<{
     character: TCharacter;
 }>();
 
 const { map_solarsystems, setHoveredMapSolarsystem } = useMapSolarsystems();
+
+const { setPath } = usePath();
 
 const map_solarsystem = computed(() => {
     return map_solarsystems.value.find((solarsystem) => solarsystem.solarsystem_id === character.status?.solarsystem_id);
@@ -35,6 +40,14 @@ const is_scanner = computed(() => {
 function onHover(hovered: boolean) {
     if (map_solarsystem.value) {
         setHoveredMapSolarsystem(map_solarsystem.value.id, hovered);
+    }
+}
+
+function onRouteHover(hovered: boolean) {
+    if (hovered) {
+        setPath(character.route ?? []);
+    } else {
+        setPath(null);
     }
 }
 </script>
@@ -69,18 +82,22 @@ function onHover(hovered: boolean) {
             </div>
         </TableCell>
         <TableCell>
-            <span v-if="map_solarsystem && map_solarsystem.alias" class="flex items-center gap-2">
-                <span>{{ map_solarsystem.alias }}</span>
-                <span class="text-muted-foreground"> {{ map_solarsystem.name }}</span>
-                <span v-if="is_docked" class="text-xs text-muted-foreground">(Docked)</span>
-                <span v-else-if="is_scanner" class="text-xs text-amber-500">(Scanner)</span>
-            </span>
-            <span v-else-if="character.status?.solarsystem" class="flex items-center gap-2">
-                <span>{{ character.status.solarsystem.name }}</span>
-                <span v-if="is_docked" class="text-xs text-muted-foreground">(Docked)</span>
-                <span v-else-if="is_scanner" class="text-xs text-amber-500">(Scanner)</span>
-            </span>
-            <span v-else>Unknown Location</span>
+            <RoutePopover :route="character.route ?? []">
+                <Button variant="outline" v-element-hover="onRouteHover">
+                    <span v-if="map_solarsystem && map_solarsystem.alias" class="flex items-center gap-2">
+                        <span>{{ map_solarsystem.alias }}</span>
+                        <span class="text-muted-foreground"> {{ map_solarsystem.name }}</span>
+                        <span v-if="is_docked" class="text-xs text-muted-foreground">(Docked)</span>
+                        <span v-else-if="is_scanner" class="text-xs text-amber-500">(Scanner)</span>
+                    </span>
+                    <span v-else-if="character.status?.solarsystem" class="flex items-center gap-2">
+                        <span>{{ character.status.solarsystem.name }}</span>
+                        <span v-if="is_docked" class="text-xs text-muted-foreground">(Docked)</span>
+                        <span v-else-if="is_scanner" class="text-xs text-amber-500">(Scanner)</span>
+                    </span>
+                </Button>
+            </RoutePopover>
+            <span v-if="!map_solarsystem && !character.status?.solarsystem">Unknown Location</span>
         </TableCell>
     </TableRow>
 </template>

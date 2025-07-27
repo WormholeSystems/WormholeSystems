@@ -2,10 +2,9 @@
 import DestinationContextMenu from '@/components/DestinationContextMenu.vue';
 import LockIcon from '@/components/icons/LockIcon.vue';
 import TrashIcon from '@/components/icons/TrashIcon.vue';
-import SovereigntyIcon from '@/components/map/SovereigntyIcon.vue';
+import RoutePopover from '@/components/routes/RoutePopover.vue';
 import SolarsystemClass from '@/components/SolarsystemClass.vue';
 import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { useHasWritePermission } from '@/composables/useHasPermission';
 import { usePath } from '@/composables/usePath';
@@ -60,34 +59,11 @@ function removeRoute() {
                 {{ map_route.solarsystem.name }}
             </TableCell>
             <TableCell>
-                <Popover>
-                    <PopoverTrigger as-child>
-                        <Button variant="ghost">
-                            {{ map_route.route.length ? map_route.route.length - 1 : 'N/A' }}
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent>
-                        <div class="flex flex-col gap-2">
-                            <span class="text-sm text-muted-foreground">Route</span>
-                            <ul class="grid divide-y text-xs">
-                                <DestinationContextMenu v-for="(solarsystem, index) in map_route.route" :key="index" :solarsystem_id="solarsystem.id">
-                                    <li class="col-span-4 grid grid-cols-subgrid gap-x-2 py-1 hover:bg-accent">
-                                        <div class="flex justify-center">
-                                            <SolarsystemClass :wormhole_class="solarsystem.class" :security="solarsystem.security" />
-                                        </div>
-                                        <span class="truncate">
-                                            {{ solarsystem.name }}
-                                        </span>
-                                        <span class="truncate text-muted-foreground">
-                                            {{ solarsystem.region?.name }}
-                                        </span>
-                                        <SovereigntyIcon v-if="solarsystem.sovereignty" :sovereignty="solarsystem.sovereignty" />
-                                    </li>
-                                </DestinationContextMenu>
-                            </ul>
-                        </div>
-                    </PopoverContent>
-                </Popover>
+                <RoutePopover :route="map_route.route">
+                    <Button variant="ghost">
+                        {{ map_route.route.length ? map_route.route.length - 1 : 'N/A' }}
+                    </Button>
+                </RoutePopover>
             </TableCell>
             <TableCell v-if="can_write">
                 <Button

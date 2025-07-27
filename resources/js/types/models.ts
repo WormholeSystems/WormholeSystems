@@ -205,6 +205,7 @@ export type TCharacter = {
     alliance: TAlliance | null;
     faction: TFaction | null;
     status: TCharacterStatus | null;
+    route?: TSolarsystem[];
 };
 
 export type TCharacterStatus = {

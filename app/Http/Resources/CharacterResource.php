@@ -28,6 +28,7 @@ class CharacterResource extends JsonResource
             'faction' => $this->faction?->toResource(FactionResource::class),
             'security_status' => $this->security_status,
             'status' => $this->whenLoaded('characterStatus', fn () => $this->characterStatus?->toResource(CharacterStatusResource::class)),
+            'route' => $this->whenHas('route', fn () => $this->route),
         ];
     }
 }

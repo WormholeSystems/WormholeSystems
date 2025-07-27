@@ -36,6 +36,7 @@ use Throwable;
  * @property string|null $title
  * @property int|null $user_id
  * @property string|null $character_owner_hash
+ * @property array|null $route
  * @property-read string|CarbonImmutable $created_at
  * @property-read string|CarbonImmutable $updated_at
  * @property-read Race $race
