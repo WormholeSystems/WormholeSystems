@@ -6,8 +6,8 @@ import { useMapAction, useMapSolarsystems } from '@/composables/map';
 import useUser from '@/composables/useUser';
 import { TCharacter, TMap } from '@/types/models';
 import { router } from '@inertiajs/vue3';
-import { useFetch, useIntervalFn } from '@vueuse/core';
-import { computed, onMounted, ref, watch } from 'vue';
+import { useFetch, useIntervalFn, useLocalStorage } from '@vueuse/core';
+import { computed, onMounted, watch } from 'vue';
 
 const { map_characters, map } = defineProps<{ map_characters: TCharacter[]; map: TMap }>();
 
@@ -21,7 +21,9 @@ const active_map_character = computed(() => {
 
 const { map_solarsystems } = useMapSolarsystems();
 
-const enabled = ref(true);
+const enabled = useLocalStorage(`map-tracking-${map.id}`, true, {
+    listenToStorageChanges: true,
+});
 
 const ping_interval_seconds = 60 * 5 * 1000;
 
