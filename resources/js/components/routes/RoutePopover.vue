@@ -36,10 +36,6 @@ const handleIgnoreSystem = (systemId: number) => {
             <slot />
         </PopoverTrigger>
         <PopoverContent class="w-96 p-0">
-            <div v-if="!hasRoute" class="flex flex-col gap-2 p-3">
-                <span class="text-sm text-muted-foreground">Route</span>
-                <span class="text-xs text-muted-foreground">No route available</span>
-            </div>
             <div class="grid gap-2 p-3">
                 <span class="">Route</span>
 
@@ -55,7 +51,7 @@ const handleIgnoreSystem = (systemId: number) => {
             </div>
 
             <!-- Route Table -->
-            <div class="m-2 max-h-96 overflow-y-auto rounded-md border bg-muted/20">
+            <div class="m-2 max-h-96 overflow-y-auto rounded-md border bg-muted/20" v-if="hasRoute">
                 <Table>
                     <TableHeader>
                         <TableRow class="text-xs">
@@ -67,70 +63,70 @@ const handleIgnoreSystem = (systemId: number) => {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        <TableRow
-                            v-for="(solarsystem, index) in route"
-                            :key="index"
-                            class="text-xs"
-                            :class="{ 'opacity-50': isIgnored(solarsystem.id) }"
-                        >
-                            <!-- Security/Class Column -->
-                            <TableCell class="h-auto p-1">
-                                <div class="flex justify-center">
-                                    <SolarsystemClass :wormhole_class="solarsystem.class" :security="solarsystem.security" />
-                                </div>
-                            </TableCell>
+                        <DestinationContextMenu v-for="(solarsystem, index) in route" :key="index" :solarsystem_id="solarsystem.id">
+                            <TableRow class="text-xs" :class="{ 'opacity-50': isIgnored(solarsystem.id) }">
+                                <!-- Security/Class Column -->
+                                <TableCell class="h-auto p-1">
+                                    <div class="flex justify-center">
+                                        <SolarsystemClass :wormhole_class="solarsystem.class" :security="solarsystem.security" />
+                                    </div>
+                                </TableCell>
 
-                            <!-- Name Column -->
-                            <TableCell class="h-auto p-1">
-                                <DestinationContextMenu :solarsystem_id="solarsystem.id">
-                                    <span class="cursor-pointer font-medium hover:text-accent-foreground">
-                                        {{ solarsystem.name }}
-                                    </span>
-                                </DestinationContextMenu>
-                            </TableCell>
+                                <!-- Name Column -->
+                                <TableCell class="h-auto p-1">
+                                    <DestinationContextMenu :solarsystem_id="solarsystem.id">
+                                        <span class="cursor-pointer font-medium hover:text-accent-foreground">
+                                            {{ solarsystem.name }}
+                                        </span>
+                                    </DestinationContextMenu>
+                                </TableCell>
 
-                            <!-- Region Column -->
-                            <TableCell class="h-auto p-1 text-muted-foreground">
-                                {{ solarsystem.region?.name }}
-                            </TableCell>
+                                <!-- Region Column -->
+                                <TableCell class="h-auto p-1 text-muted-foreground">
+                                    {{ solarsystem.region?.name }}
+                                </TableCell>
 
-                            <!-- Sovereignty/Effect Column -->
-                            <TableCell class="h-auto p-1">
-                                <div class="flex justify-center">
-                                    <SovereigntyIcon v-if="solarsystem.sovereignty" :sovereignty="solarsystem.sovereignty" />
-                                    <span
-                                        v-else-if="solarsystem.effect"
-                                        class="rounded bg-muted px-1 py-0.5 text-xs text-muted-foreground"
-                                        :title="solarsystem.effect"
-                                    >
-                                        {{ solarsystem.effect.charAt(0) }}
-                                    </span>
-                                </div>
-                            </TableCell>
-
-                            <!-- Option Column -->
-                            <TableCell class="h-auto p-1">
-                                <Tooltip v-if="index > 0 && index < route!.length - 1">
-                                    <TooltipTrigger>
-                                        <Button
-                                            variant="outline"
-                                            size="icon"
-                                            class="h-6 w-6"
-                                            @click="handleIgnoreSystem(solarsystem.id)"
-                                            :title="isIgnored(solarsystem.id) ? 'Stop ignoring this system' : 'Ignore this system'"
+                                <!-- Sovereignty/Effect Column -->
+                                <TableCell class="h-auto p-1">
+                                    <div class="flex justify-center">
+                                        <SovereigntyIcon v-if="solarsystem.sovereignty" :sovereignty="solarsystem.sovereignty" />
+                                        <span
+                                            v-else-if="solarsystem.effect"
+                                            class="rounded bg-muted px-1 py-0.5 text-xs text-muted-foreground"
+                                            :title="solarsystem.effect"
                                         >
-                                            <TimesIcon v-if="!isIgnored(solarsystem.id)" class="h-2.5 w-2.5" />
-                                            <span v-else class="text-xs">↺</span>
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        {{ isIgnored(solarsystem.id) ? 'Stop ignoring this system' : 'Ignore this system' }}
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TableCell>
-                        </TableRow>
+                                            {{ solarsystem.effect.charAt(0) }}
+                                        </span>
+                                    </div>
+                                </TableCell>
+
+                                <!-- Option Column -->
+                                <TableCell class="h-auto p-1">
+                                    <Tooltip v-if="index > 0 && index < route!.length - 1">
+                                        <TooltipTrigger>
+                                            <Button
+                                                variant="outline"
+                                                size="icon"
+                                                class="h-6 w-6"
+                                                @click="handleIgnoreSystem(solarsystem.id)"
+                                                :title="isIgnored(solarsystem.id) ? 'Stop ignoring this system' : 'Ignore this system'"
+                                            >
+                                                <TimesIcon v-if="!isIgnored(solarsystem.id)" class="h-2.5 w-2.5" />
+                                                <span v-else class="text-xs">↺</span>
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            {{ isIgnored(solarsystem.id) ? 'Stop ignoring this system' : 'Ignore this system' }}
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TableCell>
+                            </TableRow>
+                        </DestinationContextMenu>
                     </TableBody>
                 </Table>
+            </div>
+            <div v-else class="p-3 text-sm text-muted-foreground">
+                <span class="text-xs">No route available</span>
             </div>
         </PopoverContent>
     </Popover>
