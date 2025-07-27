@@ -205,7 +205,7 @@ export type TCharacter = {
     alliance: TAlliance | null;
     faction: TFaction | null;
     status: TCharacterStatus | null;
-    route?: TSolarsystem[];
+    route?: TSolarsystem[]; // Fastest route
 };
 
 export type TCharacterStatus = {
@@ -225,7 +225,7 @@ export type TMapRouteSolarsystem = {
     id: number;
     solarsystem: TSolarsystem;
     is_pinned: boolean;
-    route: TSolarsystem[];
+    route: TSolarsystem[]; // Fastest route
 };
 
 export type TMapUserSetting = {

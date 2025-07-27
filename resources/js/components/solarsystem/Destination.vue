@@ -32,11 +32,17 @@ const user = useUser();
 const setWaypoint = useWaypoint();
 
 watch(hovered, (isHovered) => {
-    setPath(isHovered ? destination.route : null);
+    if (isHovered) {
+        const routeToShow = destination.route ?? [];
+        setPath(routeToShow);
+    } else {
+        setPath(null);
+    }
 });
 
 const distance = computed(() => {
-    const jumps = destination.route.length - 1;
+    const jumps = destination.route && destination.route.length > 0 ? destination.route.length - 1 : -1;
+
     if (jumps < 0) return 'none';
     if (jumps > 10) return 'far';
     if (jumps > 5) return 'near';
@@ -52,11 +58,12 @@ const distance = computed(() => {
                     {{ destination.solarsystem.name }}
                 </span>
                 <span
-                    v-if="destination.route.length"
+                    v-if="destination.route && destination.route.length > 0"
                     :data-distance="distance"
                     class="text-xs text-muted-foreground data-[distance=far]:text-red-500 data-[distance=near]:text-yellow-500 data-[distance=none]:text-neutral-500 data-[distance=short]:text-green-500"
-                    >{{ destination.route.length - 1 }}</span
                 >
+                    {{ destination.route.length - 1 }}
+                </span>
                 <span v-else class="text-xs text-muted-foreground">N/A</span>
             </div>
         </ContextMenuTrigger>

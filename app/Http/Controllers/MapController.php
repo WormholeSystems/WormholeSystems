@@ -23,6 +23,7 @@ use App\Scopes\CharacterHasMapAccess;
 use App\Scopes\CharacterIsOnline;
 use App\Scopes\UserAllowedMapTracking;
 use App\Scopes\WithVisibleSolarsystems;
+use App\Services\RouteOptions;
 use App\Services\RouteService;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Database\Eloquent\Builder;
@@ -91,6 +92,7 @@ class MapController extends Controller
             'allow_eol' => Session::get('allow_eol', true),
             'allow_crit' => Session::get('allow_crit', true),
             'allow_eve_scout' => Session::get('allow_eve_scout', false),
+            'ignored_systems' => Session::get('ignored_systems', []),
         ]);
     }
 
@@ -176,10 +178,10 @@ class MapController extends Controller
             ->tap(new CharacterIsOnline)
             ->get()
             ->map(function (Character $character) use ($mapSolarsystem, $map): Character {
-                if (! $mapSolarsystem) {
+                if (! $mapSolarsystem instanceof \App\Models\MapSolarsystem) {
                     return $character;
                 }
-                $character->route = $this->getRoute(
+                $character->route = $this->getFastestRoute(
                     $mapSolarsystem->solarsystem_id ?? 0,
                     $character->characterStatus?->solarsystem_id ?? 0,
                     $map
@@ -211,19 +213,28 @@ class MapController extends Controller
             'id' => $map_route_solarsystem->id,
             'solarsystem' => $map_route_solarsystem->solarsystem->toResource(SolarsystemResource::class),
             'is_pinned' => $map_route_solarsystem->is_pinned,
-            'route' => $this->getRoute($current_solarsystem->id, $map_route_solarsystem->solarsystem_id, $map),
+            'route' => $this->getFastestRoute($current_solarsystem->id, $map_route_solarsystem->solarsystem_id, $map),
         ])->all();
     }
 
     /**
-     * @throws Throwable
+     * Get the fastest route while respecting session-based ignored systems
      */
-    private function getRoute(int $start_solarsystem_id, int $destination_solarsystem_id, ?Map $map = null): array
+    private function getFastestRoute(int $start_solarsystem_id, int $destination_solarsystem_id, ?Map $map = null): array
     {
         $allow_eol = Session::get('allow_eol', true);
         $allow_crit = Session::get('allow_crit', true);
         $allow_eve_scout = Session::get('allow_eve_scout', false);
+        $ignored_systems = Session::get('ignored_systems', []);
 
-        return $this->route_service->find($start_solarsystem_id, $destination_solarsystem_id, $map, $allow_eol, $allow_crit, $allow_eve_scout);
+        $options = new RouteOptions(
+            allowEol: $allow_eol,
+            allowCrit: $allow_crit,
+            allowEveScout: $allow_eve_scout,
+            map: $map,
+            ignoredSystems: $ignored_systems
+        );
+
+        return $this->route_service->findRoute($start_solarsystem_id, $destination_solarsystem_id, $options);
     }
 }

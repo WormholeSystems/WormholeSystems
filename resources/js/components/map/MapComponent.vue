@@ -4,7 +4,7 @@ import MapConnections from '@/components/map/MapConnections.vue';
 import MapContextMenu from '@/components/map/MapContextMenu.vue';
 import MapSolarsystem from '@/components/map/MapSolarsystem.vue';
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu';
-import { useMap as useNewMap, useMapAction, useMapConnections, useMapGrid, useMapSolarsystems } from '@/composables/map';
+import { useMapAction, useMapConnections, useMapGrid, useMapSolarsystems, useMap as useNewMap } from '@/composables/map';
 import { useHasWritePermission } from '@/composables/useHasPermission';
 import { getMapChannelName } from '@/const/channels';
 import {

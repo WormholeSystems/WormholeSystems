@@ -4,6 +4,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BulkSignatureController;
 use App\Http\Controllers\EveController;
+use App\Http\Controllers\IgnoreListController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MapAccessController;
@@ -68,6 +69,10 @@ Route::middleware('auth')->group(function () {
     Route::put('watchlist', [WatchlistController::class, 'update'])->name('watchlist.update');
 
     Route::post('statistics', [StatisticsController::class, 'store'])->name('statistics.store');
+
+    Route::post('ignore-system', [IgnoreListController::class, 'store'])->name('ignore-system.store');
+    Route::delete('ignore-system/{solarsystem_id}', [IgnoreListController::class, 'destroy'])->name('ignore-system.destroy');
+    Route::delete('ignore-systems', [IgnoreListController::class, 'destroyAll'])->name('ignore-systems.destroy-all');
 
     Route::delete('map-solarsystems/{mapSolarsystem}/signatures', [BulkSignatureController::class, 'destroy'])
         ->name('map-solarsystems.signatures.destroy');

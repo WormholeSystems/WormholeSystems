@@ -6,10 +6,10 @@ import { Button } from '@/components/ui/button';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMapSolarsystems } from '@/composables/map';
+import { usePath } from '@/composables/usePath';
 import { TCharacter } from '@/types/models';
 import { vElementHover } from '@vueuse/components';
 import { computed } from 'vue';
-import { usePath } from '@/composables/usePath';
 
 const { character } = defineProps<{
     character: TCharacter;
@@ -45,7 +45,8 @@ function onHover(hovered: boolean) {
 
 function onRouteHover(hovered: boolean) {
     if (hovered) {
-        setPath(character.route ?? []);
+        const routeToShow = character.route ?? [];
+        setPath(routeToShow);
     } else {
         setPath(null);
     }
@@ -82,7 +83,7 @@ function onRouteHover(hovered: boolean) {
             </div>
         </TableCell>
         <TableCell>
-            <RoutePopover :route="character.route ?? []">
+            <RoutePopover :route="character.route">
                 <Button variant="outline" v-element-hover="onRouteHover">
                     <span v-if="map_solarsystem && map_solarsystem.alias" class="flex items-center gap-2">
                         <span>{{ map_solarsystem.alias }}</span>

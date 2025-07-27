@@ -7,28 +7,15 @@ use App\Http\Resources\SolarsystemResource;
 use App\Models\Map;
 use App\Models\MapConnection;
 use App\Models\Solarsystem;
-use App\Utilities\DomainLogic;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Cache;
-use JMGQ\AStar\AStar;
 use NicolasKion\SDE\Models\SolarsystemConnection;
-use Throwable;
+use SplPriorityQueue;
 
-/**
- * @property array<int, int[]> $connections
- */
 class RouteService
 {
     private readonly array $connections;
 
-    private const int CACHE_EXPIRATION_SECONDS = 60 * 60 * 24;
-
-    public const string MAP_CACHE_PATTERN = 'map_%d';
-
-    public const string MAP_ROUTE_CACHE_PATTERN = 'route_%d_%d_map_%d_eol_%d_crit_%d_scouts_%d';
-
-    public const string ROUTE_CACHE_PATTERN = 'route_%d_%d_eol_%d_crit_%d_scouts_%d';
+    public const string MAP_CACHE_PATTERN = 'map_%d'; // Keep public for MapRoutesBecameOutdated listener
 
     public function __construct()
     {
@@ -47,159 +34,211 @@ class RouteService
     }
 
     /**
-     * @return int[]
-     *
-     * @throws Throwable
+     * Find the fastest route with session-based system exclusions
      */
-    public function find(int $from_id, int $to_id, ?Map $map = null, ?bool $allow_eol = true, ?bool $allow_crit = false, ?bool $allow_eve_scout = false): array
+    public function findRoute(int $fromId, int $toId, RouteOptions $options = new RouteOptions): array
     {
-        if (($cached_route = $this->getCachedRoute($from_id, $to_id, $map, $allow_eol, $allow_crit, $allow_eve_scout)) !== null) {
-            return $cached_route;
+        $connections = $this->prepareConnections($options);
+        $ignoredSystems = $options->ignoredSystems ?? [];
+
+        // Find the fastest route avoiding ignored systems
+        $path = $this->findFastestPath($fromId, $toId, $connections, $ignoredSystems);
+
+        if ($path === []) {
+            return [];
         }
 
-        $connections = $this->connections;
-        if ($map instanceof Map) {
-            $connections = $this->mergeMapConnections($map, $connections, $allow_eol, $allow_crit);
+        // Enrich with solarsystem data
+        return $this->enrichRouteWithSolarsystemData($path);
+    }
+
+    /**
+     * Find the fastest path while excluding specific systems
+     */
+    private function findFastestPath(int $start, int $end, array $connections, array $ignoredSystems): array
+    {
+        if ($ignoredSystems === []) {
+            return $this->findShortestPath($start, $end, $connections);
         }
 
-        // Add EVE Scout connections if enabled
-        if ($allow_eve_scout === true) {
-            $connections = $this->mergeEveScoutConnections($connections, $allow_eol);
+        // Remove ignored systems from connections (they can't be used as intermediate nodes)
+        $filteredConnections = $this->filterConnectionsExcludingSystems($connections, $ignoredSystems);
+
+        return $this->findShortestPath($start, $end, $filteredConnections);
+    }
+
+    /**
+     * Remove ignored systems from connection graph
+     */
+    private function filterConnectionsExcludingSystems(array $connections, array $ignoredSystems): array
+    {
+        if ($ignoredSystems === []) {
+            return $connections;
         }
 
-        $domain_logic = new DomainLogic($connections);
-        $star = new AStar($domain_logic);
+        $filtered = [];
 
-        $route = $star->run($from_id, $to_id);
+        foreach ($connections as $fromSystem => $targets) {
+            // Skip if the source system is ignored
+            if (in_array($fromSystem, $ignoredSystems)) {
+                continue;
+            }
+
+            // Filter out ignored target systems
+            $filteredTargets = array_filter($targets, fn ($target): bool => ! in_array($target, $ignoredSystems));
+
+            if ($filteredTargets !== []) {
+                $filtered[$fromSystem] = array_values($filteredTargets);
+            }
+        }
+
+        return $filtered;
+    }
+
+    /**
+     * Enrich route path with solarsystem data
+     */
+    private function enrichRouteWithSolarsystemData(array $path): array
+    {
+        if ($path === []) {
+            return [];
+        }
 
         $solarsystems = Solarsystem::query()
             ->with([
-                'sovereignty' => [
-                    'alliance',
-                    'corporation',
-                    'faction',
-                ],
+                'sovereignty' => ['alliance', 'corporation', 'faction'],
                 'wormholeSystem.effect',
                 'constellation',
                 'region',
             ])
-            ->whereIn('id', array_values($route))->get()->keyBy('id');
+            ->whereIn('id', $path)
+            ->get()
+            ->keyBy('id');
 
-        $route = array_map(static fn (int $id): JsonResource => $solarsystems->get($id)->toResource(SolarsystemResource::class), $route);
-
-        $this->setCachedRoute($from_id, $to_id, $route, $map, $allow_eol, $allow_crit, $allow_eve_scout);
-
-        return $route;
+        return collect($path)
+            ->map(fn (int $id) => $solarsystems->get($id)?->toResource(SolarsystemResource::class))
+            ->filter()
+            ->values()
+            ->toArray();
     }
 
-    private function mergeMapConnections(Map $map, array $connections, bool $allow_eol, bool $allow_crit): array
+    private function findShortestPath(int $start, int $end, array $connections): array
     {
-        $map_connections = $this->getMapConnections($map, $allow_eol, $allow_crit);
+        if ($start === $end) {
+            return [$start];
+        }
 
-        foreach ($map_connections as $from => $to) {
+        $queue = new SplPriorityQueue;
+        $visited = [];
+        $distances = [$start => 0];
+        $previous = [];
+
+        $queue->insert(new RouteNode($start, 0, [$start]), 0);
+
+        while (! $queue->isEmpty()) {
+            $current = $queue->extract();
+
+            if (isset($visited[$current->solarsystemId])) {
+                continue;
+            }
+
+            $visited[$current->solarsystemId] = true;
+
+            if ($current->solarsystemId === $end) {
+                return $current->path;
+            }
+
+            $neighbors = $connections[$current->solarsystemId] ?? [];
+
+            foreach ($neighbors as $neighbor) {
+                if (isset($visited[$neighbor])) {
+                    continue;
+                }
+
+                $newDistance = $current->distance + 1;
+
+                if (! isset($distances[$neighbor]) || $newDistance < $distances[$neighbor]) {
+                    $distances[$neighbor] = $newDistance;
+                    $previous[$neighbor] = $current->solarsystemId;
+
+                    $newPath = [...$current->path, $neighbor];
+                    $heuristic = $this->calculateHeuristic($neighbor, $end);
+
+                    $queue->insert(
+                        new RouteNode($neighbor, $newDistance, $newPath, $heuristic),
+                        -($newDistance + $heuristic)
+                    );
+                }
+            }
+        }
+
+        return [];
+    }
+
+    private function calculateHeuristic(int $from, int $to): float
+    {
+        // Simple heuristic - could be enhanced with actual distance calculation
+        return $from === $to ? 0 : 1;
+    }
+
+    private function prepareConnections(RouteOptions $options): array
+    {
+        $connections = $this->connections;
+
+        if ($options->map instanceof Map) {
+            $connections = $this->mergeMapConnections($options->map, $connections, $options->allowEol, $options->allowCrit);
+        }
+
+        if ($options->allowEveScout) {
+            return $this->mergeEveScoutConnections($connections, $options->allowEol);
+        }
+
+        return $connections;
+    }
+
+    private function mergeMapConnections(Map $map, array $connections, bool $allowEol, bool $allowCrit): array
+    {
+        $mapConnections = $this->getMapConnections($map, $allowEol, $allowCrit);
+
+        foreach ($mapConnections as $from => $to) {
             $connections[$from] = isset($connections[$from]) ? array_merge($connections[$from], $to) : $to;
         }
 
         return $connections;
     }
 
-    private function getMapConnections(Map $map, bool $allow_eol, bool $allow_crit): array
+    private function getMapConnections(Map $map, bool $allowEol, bool $allowCrit): array
     {
         return MapConnection::query()
             ->join('map_solarsystems as from', 'map_connections.from_map_solarsystem_id', '=', 'from.id')
             ->join('map_solarsystems as to', 'map_connections.to_map_solarsystem_id', '=', 'to.id')
             ->where('map_connections.map_id', $map->id)
-            ->when(! $allow_eol, fn (Builder $query) => $query->where('is_eol', false))
-            ->when(! $allow_crit, fn (Builder $query) => $query->where('mass_status', '!=', MassStatus::Critical))
+            ->when(! $allowEol, fn (Builder $query) => $query->where('is_eol', false))
+            ->when(! $allowCrit, fn (Builder $query) => $query->where('mass_status', '!=', MassStatus::Critical))
             ->select('from.solarsystem_id as from_solarsystem_id', 'to.solarsystem_id as to_solarsystem_id')
             ->get()
             ->map(static function (MapConnection $connection): array {
                 /** @var MapConnection|object{from_solarsystem_id: int, to_solarsystem_id: int} $connection */
                 return [
-                    ['from_solarsystem_id' => $connection->from_solarsystem_id,
-                        'to_solarsystem_id' => $connection->to_solarsystem_id,
-                    ],
-                    ['from_solarsystem_id' => $connection->to_solarsystem_id,
-                        'to_solarsystem_id' => $connection->from_solarsystem_id,
-                    ],
+                    ['from_solarsystem_id' => $connection->from_solarsystem_id, 'to_solarsystem_id' => $connection->to_solarsystem_id],
+                    ['from_solarsystem_id' => $connection->to_solarsystem_id, 'to_solarsystem_id' => $connection->from_solarsystem_id],
                 ];
-            }
-            )
+            })
             ->flatten(1)
             ->groupBy('from_solarsystem_id')
-            ->map(static fn ($group) => $group->pluck('to_solarsystem_id')->toArray())->all();
+            ->map(static fn ($group) => $group->pluck('to_solarsystem_id')->toArray())
+            ->all();
     }
 
-    private function mergeEveScoutConnections(array $connections, bool $allow_eol = true): array
+    private function mergeEveScoutConnections(array $connections, bool $allowEol = true): array
     {
-        $eve_scout_service = app(EveScoutService::class);
-        $eve_scout_connections = $eve_scout_service->getConnectionsForRouting($allow_eol);
+        $eveScoutService = app(EveScoutService::class);
+        $eveScoutConnections = $eveScoutService->getConnectionsForRouting($allowEol);
 
-        foreach ($eve_scout_connections as $from => $to) {
+        foreach ($eveScoutConnections as $from => $to) {
             $connections[$from] = isset($connections[$from]) ? array_merge($connections[$from], $to) : $to;
         }
 
         return $connections;
-    }
-
-    private function getCachedRoute(int $from_id, int $to_id, ?Map $map = null, ?bool $allow_eol = true, ?bool $allow_crit = false, ?bool $allow_eve_scout = false): ?array
-    {
-        if ($map instanceof Map) {
-            return $this->getCachedRouteForMap($from_id, $to_id, $map, $allow_eol, $allow_crit, $allow_eve_scout);
-        }
-
-        $key = $this->getRouteCacheKey($from_id, $to_id, $allow_eol, $allow_crit, $allow_eve_scout);
-
-        return Cache::get($key);
-    }
-
-    private function getCachedRouteForMap(int $from_id, int $to_id, Map $map, ?bool $allow_eol = true, ?bool $allow_crit = false, ?bool $allow_eve_scout = false): ?array
-    {
-        $key = $this->getMapRouteCacheKey($from_id, $to_id, $map, $allow_eol, $allow_crit, $allow_eve_scout);
-
-        $tag = $this->getMapCacheKey($map);
-
-        return Cache::tags($tag)->get($key);
-    }
-
-    private function setCachedRoute(int $from_id, int $to_id, array $route, ?Map $map = null, ?bool $allow_eol = true, ?bool $allow_crit = false, ?bool $allow_eve_scout = false): void
-    {
-        if ($map instanceof Map) {
-            $this->setCachedRouteForMap($from_id, $to_id, $route, $map, $allow_eol, $allow_crit, $allow_eve_scout);
-
-            return;
-        }
-
-        $key_1 = $this->getRouteCacheKey($from_id, $to_id, $allow_eol, $allow_crit, $allow_eve_scout);
-        $key_2 = $this->getRouteCacheKey($to_id, $from_id, $allow_eol, $allow_crit, $allow_eve_scout);
-
-        Cache::put($key_1, $route, self::CACHE_EXPIRATION_SECONDS);
-        Cache::put($key_2, array_reverse($route), self::CACHE_EXPIRATION_SECONDS);
-    }
-
-    private function setCachedRouteForMap(int $from_id, int $to_id, array $route, Map $map, ?bool $allow_eol = true, ?bool $allow_crit = false, ?bool $allow_eve_scout = false): void
-    {
-        $key_1 = $this->getMapRouteCacheKey($from_id, $to_id, $map, $allow_eol, $allow_crit, $allow_eve_scout);
-        $key_2 = $this->getMapRouteCacheKey($to_id, $from_id, $map, $allow_eol, $allow_crit, $allow_eve_scout);
-
-        $tag = $this->getMapCacheKey($map);
-
-        Cache::tags($tag)->put($key_1, $route, self::CACHE_EXPIRATION_SECONDS);
-        Cache::tags($tag)->put($key_2, array_reverse($route), self::CACHE_EXPIRATION_SECONDS);
-    }
-
-    private function getMapCacheKey(Map $map): string
-    {
-        return sprintf(self::MAP_CACHE_PATTERN, $map->id);
-    }
-
-    private function getMapRouteCacheKey(int $from_id, int $to_id, Map $map, ?bool $allow_eol = true, ?bool $allow_crit = false, ?bool $allow_eve_scout = false): string
-    {
-        return sprintf(self::MAP_ROUTE_CACHE_PATTERN, $from_id, $to_id, $map->id, (int) $allow_eol, (int) $allow_crit, (int) $allow_eve_scout);
-    }
-
-    private function getRouteCacheKey(int $from_id, int $to_id, ?bool $allow_eol = true, ?bool $allow_crit = false, ?bool $allow_eve_scout = false): string
-    {
-        return sprintf(self::ROUTE_CACHE_PATTERN, $from_id, $to_id, (int) $allow_eol, (int) $allow_crit, (int) $allow_eve_scout);
     }
 }

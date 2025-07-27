@@ -22,7 +22,8 @@ const can_write = useHasWritePermission();
 
 function onHover(route: TMapRouteSolarsystem, hovered: boolean) {
     if (hovered) {
-        setPath(route.route);
+        const routeToShow = route.route ?? [];
+        setPath(routeToShow);
     } else {
         setPath(null);
     }
@@ -61,7 +62,10 @@ function removeRoute() {
             <TableCell>
                 <RoutePopover :route="map_route.route">
                     <Button variant="ghost">
-                        {{ map_route.route.length ? map_route.route.length - 1 : 'N/A' }}
+                        <span v-if="map_route.route && map_route.route.length > 0">
+                            {{ map_route.route.length - 1 }}
+                        </span>
+                        <span v-else>N/A</span>
                     </Button>
                 </RoutePopover>
             </TableCell>
