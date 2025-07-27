@@ -104,13 +104,7 @@ const handleIgnoreSystem = (systemId: number) => {
                                 <TableCell class="h-auto p-1">
                                     <Tooltip v-if="index > 0 && index < route!.length - 1">
                                         <TooltipTrigger>
-                                            <Button
-                                                variant="outline"
-                                                size="icon"
-                                                class="h-6 w-6"
-                                                @click="handleIgnoreSystem(solarsystem.id)"
-                                                :title="isIgnored(solarsystem.id) ? 'Stop ignoring this system' : 'Ignore this system'"
-                                            >
+                                            <Button variant="outline" size="icon" class="h-6 w-6" @click="handleIgnoreSystem(solarsystem.id)">
                                                 <TimesIcon v-if="!isIgnored(solarsystem.id)" class="h-2.5 w-2.5" />
                                                 <span v-else class="text-xs">↺</span>
                                             </Button>
