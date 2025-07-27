@@ -380,7 +380,7 @@ export function useMapAction() {
         );
     }
 
-    function calculateSortedPositions(callback: (a: TMapSolarSystem, b: TMapSolarSystem) => number) {
+    function calculateSortedPositions(sorted_ids: number[]) {
         const sorted_positions = map_solarsystems_selected.value
             .sort((a, b) => {
                 if (a.position && b.position) {
@@ -394,8 +394,6 @@ export function useMapAction() {
                 position_y: s.position?.y,
             }));
 
-        const sorted_ids = map_solarsystems_selected.value.toSorted(callback).map((s) => s.id);
-
         return sorted_ids.map((id, index) => ({
             ...sorted_positions[index],
             id,
@@ -404,29 +402,29 @@ export function useMapAction() {
         }));
     }
 
-    function sortMapSolarsystemsByAlias(a: TMapSolarSystem, b: TMapSolarSystem): number {
-        if (!a.alias && !b.alias) return sortByClassAndRegion(a, b);
-        if (a.alias && !b.alias) return -1;
-        if (!a.alias && b.alias) return 1;
+    function sortByAlias(a: TMapSolarSystem, b: TMapSolarSystem): number {
+        if (a.alias && !b.alias) return 1;
+        if (!a.alias && b.alias) return -1;
 
-        return a.alias?.localeCompare(b.alias ?? '') ?? 0;
+        return a.alias?.localeCompare(b.alias ?? '') || 0;
     }
 
-    function sortByClassAndRegion(a: TMapSolarSystem, b: TMapSolarSystem): number {
+    function sortByClass(a: TMapSolarSystem, b: TMapSolarSystem): number {
         if (a.class && !b.class) return 1;
         if (!a.class && b.class) return -1;
 
         const a_security = getSecurityClass(a.solarsystem?.security ?? 0);
         const b_security = getSecurityClass(b.solarsystem?.security ?? 0);
 
-        if (a_security === b_security) {
-            const regionA = a.solarsystem?.region?.name ?? '';
-            const regionB = b.solarsystem?.region?.name ?? '';
-
-            return regionA.localeCompare(regionB);
-        }
-
         return a_security.localeCompare(b_security);
+    }
+
+    function sortByRegion(a: TMapSolarSystem, b: TMapSolarSystem): number {
+        return a.solarsystem?.region?.name.localeCompare(b.solarsystem?.region?.name ?? '') || 0;
+    }
+
+    function sortByName(a: TMapSolarSystem, b: TMapSolarSystem): number {
+        return a.solarsystem?.name.localeCompare(b.solarsystem?.name ?? '') || 0;
     }
 
     function getSecurityClass(security: number): string {
@@ -435,7 +433,7 @@ export function useMapAction() {
         return 'null';
     }
 
-    function organizeMapSolarsystems() {
+    function organizeMapSolarsystems(spacing: number = 1) {
         const first_position = map_solarsystems_selected.value.reduce(
             (acc, system) => {
                 if (!system.position) return acc;
@@ -447,14 +445,21 @@ export function useMapAction() {
             { x: Infinity, y: Infinity },
         );
 
-        const sorted_positions = calculateSortedPositions(sortMapSolarsystemsByAlias).map((s, index) => {
+        const sorted_ids = map_solarsystems_selected.value
+            .toSorted(sortByName)
+            .toSorted(sortByRegion)
+            .toSorted(sortByClass)
+            .toSorted(sortByAlias)
+            .map((s) => s.id);
+
+        const sorted_positions = calculateSortedPositions(sorted_ids).map((s, index) => {
             const position_x = first_position.x;
-            const position_y = first_position.y + index * (mapState.config.grid_size + item_height);
+            const position_y = first_position.y + index * (spacing * mapState.config.grid_size + item_height);
 
             return {
                 ...s,
-                position_x,
-                position_y,
+                position_x: Math.max(40, Math.min(position_x, mapState.config.max_size.x - mapState.config.grid_size)),
+                position_y: Math.max(20, Math.min(position_y, mapState.config.max_size.y - mapState.config.grid_size)),
             };
         });
 

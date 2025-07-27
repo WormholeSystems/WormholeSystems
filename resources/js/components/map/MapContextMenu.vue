@@ -3,8 +3,17 @@ import SolarsystemClass from '@/components/SolarsystemClass.vue';
 import SolarsystemEffect from '@/components/map/SolarsystemEffect.vue';
 import { Button } from '@/components/ui/button';
 import { Combobox, ComboboxAnchor, ComboboxEmpty, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxList } from '@/components/ui/combobox';
-import { ContextMenuContent, ContextMenuItem, ContextMenuSeparator } from '@/components/ui/context-menu';
+import {
+    ContextMenuContent,
+    ContextMenuItem,
+    ContextMenuSeparator,
+    ContextMenuSub,
+    ContextMenuSubContent,
+    ContextMenuSubTrigger,
+} from '@/components/ui/context-menu';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { NumberField, NumberFieldContent, NumberFieldDecrement, NumberFieldIncrement, NumberFieldInput } from '@/components/ui/number-field';
 import { useMapAction, useMapSolarsystems } from '@/composables/map';
 import { useSearch } from '@/composables/useSearch';
 import { TShowMapProps } from '@/pages/maps';
@@ -26,6 +35,8 @@ const search = useSearch('search', ['solarsystems']);
 const page = usePage<AppPageProps<TShowMapProps>>();
 
 const adding = ref(false);
+
+const spacing = ref(0);
 
 const new_solarsystems = computed(() => {
     return page.props.solarsystems.filter(
@@ -64,7 +75,24 @@ function handeCancelDelete() {
         <template v-if="map_solarsystems_selected.length">
             <ContextMenuSeparator />
             <ContextMenuItem @select="removeSelectedMapSolarsystems"> Delete selection</ContextMenuItem>
-            <ContextMenuItem @select="organizeMapSolarsystems"> Organize selection</ContextMenuItem>
+            <ContextMenuSub>
+                <ContextMenuSubTrigger> Organize selection</ContextMenuSubTrigger>
+                <ContextMenuSubContent>
+                    <div class="grid gap-2 p-1">
+                        <NumberField v-model:model-value="spacing" :min="0" :max="4">
+                            <Label for="spacing">Spacing</Label>
+                            <NumberFieldContent>
+                                <NumberFieldDecrement />
+                                <NumberFieldInput />
+                                <NumberFieldIncrement />
+                            </NumberFieldContent>
+                        </NumberField>
+                        <Button as-child class="w-full">
+                            <ContextMenuItem @select="() => organizeMapSolarsystems(spacing)"> Organize </ContextMenuItem>
+                        </Button>
+                    </div>
+                </ContextMenuSubContent>
+            </ContextMenuSub>
             <ContextMenuSeparator />
         </template>
         <ContextMenuItem @select="handleDelete"> Clear map</ContextMenuItem>
