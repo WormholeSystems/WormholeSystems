@@ -61,7 +61,7 @@ class MapController extends Controller
 
         $selected_map_solarsystem_id = $request->integer('map_solarsystem_id');
 
-        $selected_map_solarsystem = fn (): ?JsonResource => $this->getSelectedSolarsystem($selected_map_solarsystem_id)?->toResource(MapSolarsystemResource::class);
+        $selected_map_solarsystem = fn (): ?JsonResource => $this->getSelectedSolarsystem($map, $selected_map_solarsystem_id)?->toResource(MapSolarsystemResource::class);
 
         $map_killmails = Inertia::defer(
             fn (): ResourceCollection => $this->getMapKills($map)
@@ -140,13 +140,13 @@ class MapController extends Controller
     /**
      * @throws Throwable
      */
-    private function getSelectedSolarsystem(?int $solarsystem_id): ?MapSolarsystem
+    private function getSelectedSolarsystem(Map $map, ?int $solarsystem_id): ?MapSolarsystem
     {
         if ($solarsystem_id === null || $solarsystem_id === 0) {
             return null;
         }
 
-        return MapSolarsystem::query()
+        return $map->mapSolarsystems()
             ->with('signatures')
             ->findOrFail($solarsystem_id);
     }

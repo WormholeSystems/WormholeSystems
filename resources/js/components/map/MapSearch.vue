@@ -64,6 +64,7 @@ const existing_solarsystems = computed(() => {
                     :key="solarsystem.id"
                     :value="solarsystem.name"
                     class="col-span-full grid grid-cols-subgrid"
+                    disabled
                 >
                     <div class="justify-self-center">
                         <SolarsystemClass :wormhole_class="solarsystem.class" :security="solarsystem.security" :name="solarsystem.name" />
