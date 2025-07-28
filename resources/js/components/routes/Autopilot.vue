@@ -1,19 +1,15 @@
 <script setup lang="ts">
-import PinIcon from '@/components/icons/PinIcon.vue';
 import SettingsIcon from '@/components/icons/SettingsIcon.vue';
 import Spinner from '@/components/icons/Spinner.vue';
-import TrashIcon from '@/components/icons/TrashIcon.vue';
 import { CharacterImage } from '@/components/images';
 import TypeImage from '@/components/images/TypeImage.vue';
-import SovereigntyIcon from '@/components/map/SovereigntyIcon.vue';
+import MapRouteSolarsystem from '@/components/routes/MapRouteSolarsystem.vue';
 import MapRouteSolarsystemAdd from '@/components/routes/MapRouteSolarsystemAdd.vue';
 import RoutePopover from '@/components/routes/RoutePopover.vue';
-import SolarsystemClass from '@/components/SolarsystemClass.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useHasWritePermission } from '@/composables/useHasPermission';
 import { usePath } from '@/composables/usePath';
 import useUser from '@/composables/useUser';
@@ -92,28 +88,6 @@ function handleToggleEveScout(value: boolean | 'indeterminate') {
             preserveState: true,
         },
     );
-}
-
-function togglePinned(routeItem: TMapRouteSolarsystem) {
-    router.put(
-        route('map-route-solarsystems.update', routeItem.id),
-        {
-            is_pinned: !routeItem.is_pinned,
-        },
-        {
-            preserveScroll: true,
-            preserveState: true,
-            only: ['map_route_solarsystems'],
-        },
-    );
-}
-
-function removeRoute(routeItem: TMapRouteSolarsystem) {
-    router.delete(route('map-route-solarsystems.destroy', routeItem.id), {
-        preserveScroll: true,
-        preserveState: true,
-        only: ['map_route_solarsystems'],
-    });
 }
 
 function handleHover(hovered: boolean, route: TSolarsystem[] | null) {
@@ -226,77 +200,7 @@ function handleHover(hovered: boolean, route: TSolarsystem[] | null) {
                     </div>
 
                     <!-- Grid Rows -->
-                    <div
-                        v-for="route in sorted"
-                        :key="route.solarsystem.id"
-                        class="group col-span-full grid grid-cols-subgrid items-center border-b px-3 py-1 last:border-b-0 hover:bg-neutral-50 dark:hover:bg-neutral-800/30"
-                        v-element-hover="(e) => handleHover(e, route.route)"
-                    >
-                        <!-- Class Column -->
-                        <div class="flex justify-center">
-                            <SolarsystemClass :wormhole_class="route.solarsystem.class" :security="route.solarsystem.security" />
-                        </div>
-
-                        <!-- Name Column -->
-                        <div class="min-w-0 truncate font-medium">
-                            {{ route.solarsystem.name }}
-                        </div>
-
-                        <!-- Jumps Column -->
-                        <div class="flex justify-center">
-                            <RoutePopover :route="route.route">
-                                <Button variant="outline" size="sm" class="h-5 w-8 px-0 font-mono text-[10px] font-medium">
-                                    <span v-if="route.route && route.route.length > 0">
-                                        {{ route.route.length - 1 }}
-                                    </span>
-                                    <span v-else>∞</span>
-                                </Button>
-                            </RoutePopover>
-                        </div>
-
-                        <!-- Region Column -->
-                        <div class="min-w-0 truncate text-[10px] text-muted-foreground">
-                            {{ route.solarsystem.region?.name || '' }}
-                        </div>
-
-                        <!-- Sovereignty Column -->
-                        <div class="flex justify-center">
-                            <SovereigntyIcon v-if="route.solarsystem.sovereignty" :sovereignty="route.solarsystem.sovereignty" />
-                            <div v-else class="size-4"></div>
-                        </div>
-
-                        <!-- Actions Column -->
-                        <div v-if="can_write" class="flex justify-center">
-                            <Tooltip>
-                                <TooltipTrigger>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        @click="togglePinned(route)"
-                                        :class="route.is_pinned ? 'text-yellow-600' : 'text-muted-foreground'"
-                                        class="h-5 w-5 p-0"
-                                    >
-                                        <PinIcon class="size-3" />
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>{{ route.is_pinned ? 'Unpin' : 'Pin' }}</TooltipContent>
-                            </Tooltip>
-
-                            <Tooltip>
-                                <TooltipTrigger>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        @click="removeRoute(route)"
-                                        class="h-5 w-5 p-0 text-muted-foreground hover:text-red-600"
-                                    >
-                                        <TrashIcon class="size-3" />
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Remove</TooltipContent>
-                            </Tooltip>
-                        </div>
-                    </div>
+                    <MapRouteSolarsystem v-for="route in sorted" :key="route.solarsystem.id" :map_route="route" />
 
                     <!-- Empty State -->
                     <div v-if="!sorted?.length" class="col-span-full py-4 text-center text-xs text-muted-foreground">
