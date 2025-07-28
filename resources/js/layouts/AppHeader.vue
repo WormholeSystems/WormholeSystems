@@ -181,11 +181,6 @@ const { appearance, updateAppearance } = useAppearance();
                             </template>
                         </div>
                     </div>
-                    <Button @click="updateAppearance(appearance === 'dark' ? 'light' : 'dark')" variant="outline" size="icon">
-                        <span class="sr-only">Toggle Dark Mode</span>
-                        <SunIcon v-if="appearance === 'dark'" />
-                        <MoonIcon v-else />
-                    </Button>
                     <template v-if="user">
                         <span v-if="page.props.missing_scopes.length" class="text-red-500">
                             Missing scopes for
@@ -210,6 +205,11 @@ const { appearance, updateAppearance } = useAppearance();
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </template>
+                    <Button @click="updateAppearance(appearance === 'dark' ? 'light' : 'dark')" variant="outline" size="icon">
+                        <span class="sr-only">Toggle Dark Mode</span>
+                        <SunIcon v-if="appearance === 'dark'" />
+                        <MoonIcon v-else />
+                    </Button>
                 </div>
             </div>
         </div>
