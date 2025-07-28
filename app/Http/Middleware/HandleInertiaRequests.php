@@ -7,7 +7,6 @@ use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Scopes\CharacterDoesntHaveRequiredScopes;
 use Illuminate\Container\Attributes\CurrentUser;
-use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Inertia\Inertia;
@@ -50,12 +49,9 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
-
         return [
             ...parent::share($request),
             'name' => config('app.name'),
-            'quote' => ['message' => trim((string) $message), 'author' => trim((string) $author)],
             'auth' => [
                 'user' => $this->user?->toResource(UserResource::class),
             ],
@@ -63,11 +59,13 @@ class HandleInertiaRequests extends Middleware
                 ...(new Ziggy)->toArray(),
                 'location' => $request->url(),
             ],
-            'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'notification' => Inertia::always(
                 $request->session()->get('notification')
             ),
             'missing_scopes' => $this->getMissingScopes(),
+            'discord' => fn () => [
+                'invite' => config('services.discord.invite'),
+            ],
         ];
     }
 
@@ -76,7 +74,7 @@ class HandleInertiaRequests extends Middleware
      */
     public function getMissingScopes(): JsonResource
     {
-        if (! $this->user instanceof \App\Models\User) {
+        if (! $this->user instanceof User) {
             return new JsonResource([]);
         }
 

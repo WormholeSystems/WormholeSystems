@@ -48,7 +48,7 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Discord',
-        href: 'https://discord.gg/QqrZFxht',
+        href: page.props.discord.invite,
         icon: DiscordIcon,
         isExternal: true,
     },

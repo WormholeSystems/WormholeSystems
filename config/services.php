@@ -42,4 +42,7 @@ return [
         'client_secret' => env('EVE_CLIENT_SECRET'),
         'redirect' => env('EVE_CALLBACK', 'https://tunnelvision.test/eve/callback'),
     ],
+    'discord' => [
+        'invite' => env('DISCORD_INVITE', ''),
+    ],
 ];
