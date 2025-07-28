@@ -63,7 +63,7 @@ class HandleInertiaRequests extends Middleware
                 $request->session()->get('notification')
             ),
             'missing_scopes' => $this->getMissingScopes(),
-            'discord' => fn () => [
+            'discord' => fn (): array => [
                 'invite' => config('services.discord.invite'),
             ],
         ];

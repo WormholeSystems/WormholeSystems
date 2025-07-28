@@ -178,7 +178,7 @@ class MapController extends Controller
             ->tap(new CharacterIsOnline)
             ->get()
             ->map(function (Character $character) use ($mapSolarsystem, $map): Character {
-                if (! $mapSolarsystem instanceof \App\Models\MapSolarsystem) {
+                if (! $mapSolarsystem instanceof MapSolarsystem) {
                     return $character;
                 }
                 $character->route = $this->getFastestRoute(

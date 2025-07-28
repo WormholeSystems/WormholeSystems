@@ -8,10 +8,10 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useIgnoreList } from '@/composables/useIgnoreList';
-import { TSolarsystem } from '@/types/models';
-import { computed } from 'vue';
-import { vElementHover } from '@vueuse/components';
 import { usePath } from '@/composables/usePath';
+import { TSolarsystem } from '@/types/models';
+import { vElementHover } from '@vueuse/components';
+import { computed } from 'vue';
 
 interface Props {
     route?: TSolarsystem[];
