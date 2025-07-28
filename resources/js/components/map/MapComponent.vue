@@ -118,7 +118,7 @@ useEcho(getMapChannelName(map.id), [MapConnectionCreatedEvent, MapConnectionDele
 let timeout: ReturnType<typeof setTimeout> | null = null;
 
 function onScroll(event: WheelEvent) {
-    if (event.ctrlKey || event.metaKey || event.altKey) {
+    if (event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) {
         return;
     }
     scroll_locked.value = true;
