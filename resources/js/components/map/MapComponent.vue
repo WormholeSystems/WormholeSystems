@@ -4,7 +4,7 @@ import MapConnections from '@/components/map/MapConnections.vue';
 import MapContextMenu from '@/components/map/MapContextMenu.vue';
 import MapSolarsystem from '@/components/map/MapSolarsystem.vue';
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu';
-import { useMapAction, useMapConnections, useMapGrid, useMapSolarsystems, useMap as useNewMap } from '@/composables/map';
+import { useMap as useNewMap, useMapAction, useMapConnections, useMapGrid, useMapSolarsystems } from '@/composables/map';
 import { useHasWritePermission } from '@/composables/useHasPermission';
 import { getMapChannelName } from '@/const/channels';
 import {
@@ -118,7 +118,7 @@ useEcho(getMapChannelName(map.id), [MapConnectionCreatedEvent, MapConnectionDele
 let timeout: ReturnType<typeof setTimeout> | null = null;
 
 function onScroll(event: WheelEvent) {
-    if (event.ctrlKey || event.metaKey) {
+    if (event.ctrlKey || event.metaKey || event.altKey) {
         return;
     }
     scroll_locked.value = true;
