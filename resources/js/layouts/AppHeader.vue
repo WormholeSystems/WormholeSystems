@@ -186,6 +186,13 @@ const { appearance, updateAppearance } = useAppearance();
                             Missing scopes for
                             {{ and_intl.format(page.props.missing_scopes.map((c) => c.name)) }}. Please add them again!
                         </span>
+                    </template>
+                    <Button @click="updateAppearance(appearance === 'dark' ? 'light' : 'dark')" variant="outline" size="icon">
+                        <span class="sr-only">Toggle Dark Mode</span>
+                        <SunIcon v-if="appearance === 'dark'" />
+                        <MoonIcon v-else />
+                    </Button>
+                    <template v-if="user">
                         <DropdownMenu>
                             <DropdownMenuTrigger :as-child="true">
                                 <Button
@@ -205,11 +212,6 @@ const { appearance, updateAppearance } = useAppearance();
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </template>
-                    <Button @click="updateAppearance(appearance === 'dark' ? 'light' : 'dark')" variant="outline" size="icon">
-                        <span class="sr-only">Toggle Dark Mode</span>
-                        <SunIcon v-if="appearance === 'dark'" />
-                        <MoonIcon v-else />
-                    </Button>
                 </div>
             </div>
         </div>
