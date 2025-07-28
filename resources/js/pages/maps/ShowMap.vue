@@ -8,7 +8,7 @@ import MapComponent from '@/components/map/MapComponent.vue';
 import MapSearch from '@/components/map/MapSearch.vue';
 import MapUserSetting from '@/components/map/MapUserSetting.vue';
 import Tracker from '@/components/map/Tracker.vue';
-import Watchlist from '@/components/routes/Watchlist.vue';
+import Autopilot from '@/components/routes/Autopilot.vue';
 import ShipHistory from '@/components/ShipHistory.vue';
 import Signatures from '@/components/signatures/Signatures.vue';
 import SolarsystemDetails from '@/components/solarsystem/SolarsystemDetails.vue';
@@ -103,7 +103,7 @@ router.on('before', (event) => {
                     <MapKillmails :map_killmails="map_killmails" :map_id="map.id" />
                 </div>
                 <div class="col-span-12 xl:col-span-3">
-                    <Watchlist
+                    <Autopilot
                         :map_route_solarsystems
                         v-if="selected_map_solarsystem"
                         :map
@@ -112,7 +112,12 @@ router.on('before', (event) => {
                         :allow_crit
                         :allow_eol
                         :allow_eve_scout
+                        :map_characters
                     />
+                    <div class="flex flex-col items-center justify-center gap-8 rounded-lg border border-dashed p-16 text-neutral-700" v-else>
+                        <QuestionIcon class="text-4xl" />
+                        <p class="text-center">Select a solarsystem to see autopilot</p>
+                    </div>
                 </div>
             </div>
         </div>
