@@ -186,7 +186,7 @@ export type TzKillboard = {
 };
 
 export type TSignature = {
-    id: string;
+    id: number;
     map_solarsystem_id: number;
     map_connection_id: number | null;
     signature_id: string | null;

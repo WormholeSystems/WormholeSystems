@@ -13,6 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useHasWritePermission } from '@/composables/useHasPermission';
 import { usePath } from '@/composables/usePath';
 import useUser from '@/composables/useUser';
+import Watchlist from '@/routes/watchlist';
 import { TCharacter, TMap, TMapRouteSolarsystem, TMapSolarSystem, TSolarsystem } from '@/types/models';
 import { Deferred, router } from '@inertiajs/vue3';
 import { vElementHover } from '@vueuse/components';
@@ -50,7 +51,7 @@ const { setPath } = usePath();
 
 function handleToggleEol(value: boolean | 'indeterminate') {
     router.put(
-        route('watchlist.update'),
+        Watchlist.update().url,
         {
             allow_eol: value === true,
         },
@@ -64,7 +65,7 @@ function handleToggleEol(value: boolean | 'indeterminate') {
 
 function handleToggleCrit(value: boolean | 'indeterminate') {
     router.put(
-        route('watchlist.update'),
+        Watchlist.update().url,
         {
             allow_crit: value === true,
         },
@@ -78,7 +79,7 @@ function handleToggleCrit(value: boolean | 'indeterminate') {
 
 function handleToggleEveScout(value: boolean | 'indeterminate') {
     router.put(
-        route('watchlist.update'),
+        Watchlist.update().url,
         {
             allow_eve_scout: value === true,
         },

@@ -4,6 +4,8 @@ import Notifications from '@/components/Notifications.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import useUser from '@/composables/useUser';
+import { home } from '@/routes';
+import Eve from '@/routes/eve';
 import { Head, Link } from '@inertiajs/vue3';
 import { format } from 'date-fns';
 import { MapIcon, RouteIcon, ShieldCheckIcon, UsersIcon } from 'lucide-vue-next';
@@ -37,10 +39,10 @@ const user = useUser();
                     </p>
                     <div class="flex flex-col gap-4 sm:flex-row sm:justify-center">
                         <Button asChild size="lg" v-if="!user">
-                            <a :href="route('eve.show')" rel="noopener noreferrer">Get Started</a>
+                            <a :href="Eve.show().url" rel="noopener noreferrer">Get Started</a>
                         </Button>
                         <Button as-child size="lg" v-else>
-                            <Link :href="route('home')">Go to maps</Link>
+                            <Link :href="home()">Go to maps</Link>
                         </Button>
                         <Button asChild variant="outline" size="lg">
                             <a href="#features">Learn More</a>
@@ -107,7 +109,7 @@ const user = useUser();
                     <h2 class="mb-4 text-3xl font-bold text-foreground">Ready to explore the unknown?</h2>
                     <p class="mb-8 text-xl text-muted-foreground">Join all capsuleers who trust WormholeSystems for their wormhole operations</p>
                     <Button asChild size="lg">
-                        <a :href="route('eve.show')" rel="noopener noreferrer"> Get Started Now</a>
+                        <a :href="Eve.show().url" rel="noopener noreferrer"> Get Started Now</a>
                     </Button>
                 </div>
             </section>

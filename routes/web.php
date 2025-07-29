@@ -70,8 +70,8 @@ Route::middleware('auth')->group(function () {
 
     Route::post('statistics', [StatisticsController::class, 'store'])->name('statistics.store');
 
-    Route::post('ignore-system', [IgnoreListController::class, 'store'])->name('ignore-system.store');
-    Route::delete('ignore-system/{solarsystem_id}', [IgnoreListController::class, 'destroy'])->name('ignore-system.destroy');
+    Route::post('ignore-systems', [IgnoreListController::class, 'store'])->name('ignore-systems.store');
+    Route::delete('ignore-system/{solarsystem_id}', [IgnoreListController::class, 'destroy'])->name('ignore-systems.destroy');
     Route::delete('ignore-systems', [IgnoreListController::class, 'destroyAll'])->name('ignore-systems.destroy-all');
 
     Route::delete('map-solarsystems/{mapSolarsystem}/signatures', [BulkSignatureController::class, 'destroy'])

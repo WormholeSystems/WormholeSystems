@@ -9,6 +9,7 @@ import {
     ContextMenuSubContent,
     ContextMenuSubTrigger,
 } from '@/components/ui/context-menu';
+import MapConnections from '@/routes/map-connections';
 import { TMapConnection, TMassStatus, TShipSize } from '@/types/models';
 import { router } from '@inertiajs/vue3';
 
@@ -17,7 +18,7 @@ const { map_connection } = defineProps<{
 }>();
 
 function handleRemoveFromMap() {
-    router.delete(route('map-connections.destroy', map_connection.id), {
+    router.delete(MapConnections.destroy(map_connection.id).url, {
         preserveScroll: true,
         preserveState: true,
         only: ['map', 'map_route_solarsystems'],
@@ -26,7 +27,7 @@ function handleRemoveFromMap() {
 
 function handleStatusChange(mass_status: TMassStatus | string) {
     router.put(
-        route('map-connections.update', map_connection.id),
+        MapConnections.update(map_connection.id).url,
         { mass_status },
         {
             preserveScroll: true,
@@ -38,7 +39,7 @@ function handleStatusChange(mass_status: TMassStatus | string) {
 
 function handleShipSizeChange(ship_size: TShipSize | string) {
     router.put(
-        route('map-connections.update', map_connection.id),
+        MapConnections.update(map_connection.id).url,
         { ship_size },
         {
             preserveScroll: true,
@@ -50,7 +51,7 @@ function handleShipSizeChange(ship_size: TShipSize | string) {
 
 function handleToggleEol() {
     router.put(
-        route('map-connections.update', map_connection.id),
+        MapConnections.update(map_connection.id).url,
         { is_eol: !map_connection.is_eol },
         {
             preserveScroll: true,

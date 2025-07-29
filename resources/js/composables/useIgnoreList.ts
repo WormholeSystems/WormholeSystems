@@ -1,3 +1,4 @@
+import IgnoreSystems from '@/routes/ignore-systems';
 import { router, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
@@ -10,7 +11,7 @@ export function useIgnoreList() {
 
     const ignoreSystem = (systemId: number): void => {
         router.post(
-            route('ignore-system.store'),
+            IgnoreSystems.store().url,
             { solarsystem_id: systemId },
             {
                 preserveScroll: true,
@@ -20,16 +21,8 @@ export function useIgnoreList() {
         );
     };
 
-    const unignoreSystem = (systemId: number): void => {
-        router.delete(route('ignore-system.destroy', systemId), {
-            preserveScroll: true,
-            preserveState: true,
-            only: ['map_characters', 'map_route_solarsystems', 'ignored_systems'],
-        });
-    };
-
     const clearIgnoreList = (): void => {
-        router.delete(route('ignore-systems.destroy-all'), {
+        router.delete(IgnoreSystems.destroyAll().url, {
             preserveScroll: true,
             preserveState: true,
             only: ['map_characters', 'map_route_solarsystems', 'ignored_systems'],
@@ -40,7 +33,6 @@ export function useIgnoreList() {
         ignoredSystems,
         isIgnored,
         ignoreSystem,
-        unignoreSystem,
         clearIgnoreList,
     };
 }

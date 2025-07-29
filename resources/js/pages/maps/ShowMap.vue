@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import MapController from '@/actions/App/Http/Controllers/MapController';
 import MapCharacters from '@/components/characters/MapCharacters.vue';
 import LockIcon from '@/components/icons/LockIcon.vue';
 import QuestionIcon from '@/components/icons/QuestionIcon.vue';
@@ -19,6 +20,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import useUser from '@/composables/useUser';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { TShowMapProps } from '@/pages/maps/index';
+import MapAccess from '@/routes/map-access';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { echo } from '@laravel/echo-vue';
 import { ref } from 'vue';
@@ -51,7 +53,7 @@ router.on('before', (event) => {
                         <Tooltip>
                             <TooltipTrigger>
                                 <Button :variant="'outline'" as-child>
-                                    <Link :href="route('map-access.show', map.slug)">
+                                    <Link :href="MapAccess.show(map.slug)">
                                         <LockIcon />
                                     </Link>
                                 </Button>
@@ -78,7 +80,7 @@ router.on('before', (event) => {
                                 <DialogFooter>
                                     <Input v-model="confirmation" />
                                     <Button as-child variant="destructive" :disabled="confirmation !== map.name">
-                                        <Link :href="route('maps.destroy', map.slug)" method="delete" data-confirm="Are you sure?">
+                                        <Link :href="MapController.destroy(map.slug)" method="delete" data-confirm="Are you sure?">
                                             Permanently Delete Map
                                         </Link>
                                     </Button>

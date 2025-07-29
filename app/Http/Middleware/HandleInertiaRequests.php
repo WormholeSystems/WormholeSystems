@@ -13,7 +13,6 @@ use Inertia\Inertia;
 use Inertia\Middleware;
 use NicolasKion\Esi\Enums\EsiScope;
 use Throwable;
-use Tighten\Ziggy\Ziggy;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -54,10 +53,6 @@ class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'auth' => [
                 'user' => $this->user?->toResource(UserResource::class),
-            ],
-            'ziggy' => [
-                ...(new Ziggy)->toArray(),
-                'location' => $request->url(),
             ],
             'notification' => Inertia::always(
                 $request->session()->get('notification')

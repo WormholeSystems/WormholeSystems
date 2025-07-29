@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useSearch } from '@/composables/useSearch';
 import AppLayout from '@/layouts/AppLayout.vue';
+import MapAccess from '@/routes/map-access';
 import { TMap } from '@/types/models';
 import { Head, router } from '@inertiajs/vue3';
 
@@ -25,7 +26,7 @@ const search = useSearch();
 
 function toggleAccess(entity: TEntity, permission: 'read' | 'write' | null) {
     router.post(
-        route('map-access.store', map.id),
+        MapAccess.store(map.slug).url,
         {
             entity_id: entity.id,
             entity_type: entity.type,

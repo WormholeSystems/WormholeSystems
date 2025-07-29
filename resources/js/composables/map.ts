@@ -1,4 +1,6 @@
 import { usePath } from '@/composables/usePath';
+import MapSelection from '@/routes/map-selection';
+import MapSolarsystems from '@/routes/map-solarsystems';
 import { TMapConfig } from '@/types/map';
 import { TMap, TMapConnection, TMapSolarSystem } from '@/types/models';
 import { router } from '@inertiajs/vue3';
@@ -247,7 +249,7 @@ export function useMapSolarsystem(
     function updateMapSolarsystem(suppress_notification: boolean = false) {
         if (!map_solarsystems_selected.value?.length && !current_map_solarsystem.value?.pinned) {
             return router.put(
-                route('map-solarsystems.update', current_map_solarsystem.value.id),
+                MapSolarsystems.update(current_map_solarsystem.value.solarsystem_id).url,
                 {
                     position_x: draggable.x.value,
                     position_y: draggable.y.value,
@@ -260,7 +262,7 @@ export function useMapSolarsystem(
         }
 
         router.put(
-            route('map-selection.update'),
+            MapSelection.update().url,
             {
                 map_solarsystems: map_solarsystems_selected.value
                     .filter((s) => !s.pinned)
@@ -311,7 +313,7 @@ export function useMapGrid() {
 
 export function useMapAction() {
     function removeAllMapSolarsystems() {
-        router.delete(route('map-selection.destroy'), {
+        router.delete(MapSelection.destroy().url, {
             data: {
                 map_solarsystem_ids: map_solarsystems.value.filter((s) => !s.pinned).map((s) => s.id),
             },
@@ -327,7 +329,7 @@ export function useMapAction() {
             return removeSelectedMapSolarsystems();
         }
 
-        return router.delete(route('map-solarsystems.destroy', map_solarsystem.id), {
+        return router.delete(MapSolarsystems.destroy(map_solarsystem.id).url, {
             preserveState: true,
             preserveScroll: true,
         });
@@ -336,7 +338,7 @@ export function useMapAction() {
     function removeSelectedMapSolarsystems() {
         if (map_solarsystems_selected.value.length === 0) return;
 
-        return router.delete(route('map-selection.destroy'), {
+        return router.delete(MapSelection.destroy().url, {
             data: {
                 map_solarsystem_ids: map_solarsystems_selected.value.map((s) => s.id),
             },
@@ -356,7 +358,7 @@ export function useMapAction() {
             pinned?: boolean;
         },
     ) {
-        return router.put(route('map-solarsystems.update', map_solarsystem.id), data, {
+        return router.put(MapSolarsystems.update(map_solarsystem.id).url, data, {
             preserveState: true,
             preserveScroll: true,
             only: ['map'],
@@ -366,7 +368,7 @@ export function useMapAction() {
     function addMapSolarsystem(solarsystem_id: number) {
         const position = getFreePosition();
         return router.post(
-            route('map-solarsystems.store'),
+            MapSolarsystems.store().url,
             {
                 map_id: mapState.map!.id,
                 solarsystem_id,
@@ -464,7 +466,7 @@ export function useMapAction() {
         });
 
         router.put(
-            route('map-selection.update'),
+            MapSelection.update().url,
             {
                 map_solarsystems: sorted_positions,
             },

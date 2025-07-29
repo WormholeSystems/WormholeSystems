@@ -11,6 +11,8 @@ import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle }
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { useHasWritePermission } from '@/composables/useHasPermission';
+import MapSolarsystems from '@/routes/map-solarsystems';
+import Statistics from '@/routes/statistics';
 import { TMap, TMapRouteSolarsystem, TMapSolarSystem } from '@/types/models';
 import { Deferred, Link, useForm } from '@inertiajs/vue3';
 import markdownit from 'markdown-it';
@@ -56,7 +58,7 @@ const description = computed(() => {
 });
 
 function handleSubmit() {
-    form.put(route('map-solarsystems.update', map_solarsystem.id), {
+    form.submit(MapSolarsystems.update(map_solarsystem.id), {
         onSuccess: () => {
             editing.value = false;
         },
@@ -131,7 +133,7 @@ watch(
                                 <Button variant="secondary" @click="statistics = false"> Cancel</Button>
                                 <Button as-child>
                                     <Link
-                                        :href="route('statistics.store')"
+                                        :href="Statistics.store()"
                                         :data="{ map_id: map_solarsystem.map_id }"
                                         method="post"
                                         @click="statistics = false"

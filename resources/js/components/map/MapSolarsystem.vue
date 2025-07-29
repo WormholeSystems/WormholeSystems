@@ -8,6 +8,7 @@ import { useMapSolarsystem } from '@/composables/map';
 import { useHasWritePermission } from '@/composables/useHasPermission';
 import { useNewConnection } from '@/composables/useNewConnection';
 import { TShowMapProps } from '@/pages/maps';
+import MapSolarsystems from '@/routes/map-solarsystems';
 import { AppPageProps } from '@/types';
 import { TMapSolarSystem } from '@/types/models';
 import { router, useForm, usePage } from '@inertiajs/vue3';
@@ -40,7 +41,7 @@ const form = useForm<{
 });
 
 function handleSubmit() {
-    form.put(route('map-solarsystems.update', map_solarsystem.id), {
+    form.put(MapSolarsystems.update(map_solarsystem.id).url, {
         onSuccess: () => {
             open.value = false;
         },

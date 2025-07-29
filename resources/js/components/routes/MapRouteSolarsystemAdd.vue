@@ -7,6 +7,7 @@ import { Combobox, ComboboxAnchor, ComboboxEmpty, ComboboxGroup, ComboboxInput, 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useSearch } from '@/composables/useSearch';
+import MapRouteSolarsystems from '@/routes/map-route-solarsystems';
 import { TMap, TSolarsystem } from '@/types/models';
 import { router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
@@ -31,7 +32,7 @@ const existing_solarsystems = computed(() => {
 
 function handleSolarsystemSelect(solarsystem: TSolarsystem) {
     router.post(
-        route('map-route-solarsystems.store'),
+        MapRouteSolarsystems.store().url,
         {
             map_id: map.id,
             solarsystem_id: solarsystem.id,

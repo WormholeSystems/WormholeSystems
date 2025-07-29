@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import PingController from '@/actions/App/Http/Controllers/PingController';
 import TrackingIcon from '@/components/icons/TrackingIcon.vue';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMapAction, useMapSolarsystems } from '@/composables/map';
 import useUser from '@/composables/useUser';
+import Tracking from '@/routes/tracking';
 import { TCharacter, TMap } from '@/types/models';
 import { router } from '@inertiajs/vue3';
 import { useFetch, useIntervalFn, useLocalStorage } from '@vueuse/core';
@@ -27,7 +29,7 @@ const enabled = useLocalStorage(`map-tracking-${map.id}`, true, {
 
 const ping_interval_seconds = 60 * 5 * 1000;
 
-const { execute } = useFetch(route('maps.ping', map.id), {
+const { execute } = useFetch(PingController.show(map.slug).url, {
     immediate: false,
 });
 useIntervalFn(execute, ping_interval_seconds, {
@@ -63,7 +65,7 @@ function requestConnectSolarsystem(old_solarsystem_id: number | null, new_solars
     if (old_map_solarsystem.solarsystem_id === new_solarsystem_id) return;
 
     router.post(
-        route('tracking.store'),
+        Tracking.store().url,
         {
             from_map_solarsystem_id: old_map_solarsystem.id,
             to_solarsystem_id: new_solarsystem_id,

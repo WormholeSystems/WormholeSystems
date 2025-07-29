@@ -1,3 +1,4 @@
+import MapConnections from '@/routes/map-connections';
 import { TMapSolarSystem } from '@/types/models';
 import { router } from '@inertiajs/vue3';
 import { MaybeRefOrGetter, useEventListener } from '@vueuse/core';
@@ -35,7 +36,7 @@ export function useNewConnection(
         if (!system || !store.origin) return;
 
         router.post(
-            route('map-connections.store'),
+            MapConnections.store().url,
             {
                 from_map_solarsystem_id: store.origin.id,
                 to_map_solarsystem_id: system.id,

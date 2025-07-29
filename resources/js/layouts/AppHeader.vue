@@ -13,6 +13,7 @@ import UserMenuContent from '@/components/UserMenuContent.vue';
 import { useAppearance } from '@/composables/useAppearance';
 import useUser from '@/composables/useUser';
 import AppLogo from '@/layouts/AppLogo.vue';
+import { home } from '@/routes';
 import type { AppPageProps, BreadcrumbItem, NavItem } from '@/types';
 import { TCharacter } from '@/types/models';
 import { Link, usePage } from '@inertiajs/vue3';
@@ -123,7 +124,7 @@ const { appearance, updateAppearance } = useAppearance();
                     </Sheet>
                 </div>
 
-                <Link :href="route('home')" class="flex items-center gap-x-2">
+                <Link :href="home()" class="flex items-center gap-x-2">
                     <AppLogo />
                 </Link>
 

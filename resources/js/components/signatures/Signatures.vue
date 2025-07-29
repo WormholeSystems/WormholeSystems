@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import SignatureController from '@/actions/App/Http/Controllers/SignatureController';
 import PasteIcon from '@/components/icons/PasteIcon.vue';
 import PlusIcon from '@/components/icons/PlusIcon.vue';
 import Signature from '@/components/signatures/Signature.vue';
@@ -8,6 +9,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useHasWritePermission } from '@/composables/useHasPermission';
 import { useSignatures } from '@/composables/useSignatures';
 import { signatureParser } from '@/lib/SignatureParser';
+import Signatures from '@/routes/map-solarsystems/signatures';
+import PasteSignatures from '@/routes/paste-signatures';
 import { TMapSolarSystem, TSignature } from '@/types/models';
 import { router } from '@inertiajs/vue3';
 import { useActiveElement, useMagicKeys, whenever } from '@vueuse/core';
@@ -104,7 +107,7 @@ async function handlePaste() {
     const signatures = await getSignaturesFromClipboard();
     pasted_signatures.value = signatures;
     router.post(
-        route('paste-signatures.store'),
+        PasteSignatures.store().url,
         {
             map_solarsystem_id: map_solarsystem.id,
             signatures: signatures.map((signature) => ({
@@ -165,7 +168,7 @@ function getDeletedSignatures(parsed_signatures: Partial<TSignature>[]) {
 
 function createNewSignature() {
     router.post(
-        route('signatures.store'),
+        SignatureController.store().url,
         {
             map_solarsystem_id: map_solarsystem.id,
             signature_id: '',
@@ -181,7 +184,7 @@ function createNewSignature() {
 }
 
 function deleteMissingSignatures() {
-    router.delete(route('map-solarsystems.signatures.destroy', map_solarsystem.id), {
+    router.delete(Signatures.destroy(map_solarsystem.id).url, {
         preserveScroll: true,
         preserveState: true,
         only: ['selected_map_solarsystem'],

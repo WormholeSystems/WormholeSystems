@@ -9,6 +9,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { TProcessedConnection } from '@/composables/map';
 import { useHasWritePermission } from '@/composables/useHasPermission';
 import { TSignatureCategory } from '@/lib/SignatureParser';
+import Signatures from '@/routes/signatures';
 import { TMapSolarSystem, TSignature } from '@/types/models';
 import { router } from '@inertiajs/vue3';
 import { syncRefs } from '@vueuse/core';
@@ -50,7 +51,7 @@ const selected_connection = computed(() => {
 const options = ['Wormhole', 'Gas Site', 'Ore Site', 'Combat Site', 'Data Site', 'Relic Site', 'Unknown'];
 
 function handleChange(data: Record<any, any>) {
-    router.put(route('signatures.update', signature.id), data, {
+    router.put(Signatures.update(signature.id).url, data, {
         preserveScroll: true,
         preserveState: true,
         only: ['selected_map_solarsystem'],
@@ -58,7 +59,7 @@ function handleChange(data: Record<any, any>) {
 }
 
 function handleDelete() {
-    router.delete(route('signatures.destroy', signature.id), {
+    router.delete(Signatures.destroy(signature.id).url, {
         preserveScroll: true,
         preserveState: true,
         only: ['selected_map_solarsystem', 'map'],

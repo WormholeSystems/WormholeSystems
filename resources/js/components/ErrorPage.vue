@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import TelescopeIcon from '@/components/icons/TelescopeIcon.vue';
 import { Button } from '@/components/ui/button';
+import { home } from '@/routes';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { HomeIcon, MessageCircleIcon } from 'lucide-vue-next';
 
@@ -36,7 +37,7 @@ const discordInvite = page.props.discord_invite as string | undefined;
 
             <div class="flex flex-col gap-3">
                 <Button as-child>
-                    <Link :href="route('home')" class="flex items-center justify-center gap-2">
+                    <Link :href="home()" class="flex items-center justify-center gap-2">
                         <HomeIcon class="h-4 w-4" />
                         Home
                     </Link>

@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import MapController from '@/actions/App/Http/Controllers/MapController';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { home } from '@/routes';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 
 const form = useForm({
@@ -12,7 +14,7 @@ const form = useForm({
 });
 
 function handleSubmit() {
-    form.post(route('maps.store'));
+    form.submit(MapController.store());
 }
 </script>
 
@@ -31,7 +33,7 @@ function handleSubmit() {
                     <InputError :message="form.errors.name" class="mt-2" />
                     <CardFooter class="flex justify-between">
                         <Button as-child variant="outline">
-                            <Link :href="route('home')"> Cancel</Link>
+                            <Link :href="home()"> Cancel</Link>
                         </Button>
                         <Button type="submit" class="btn btn-primary"> Create Map</Button>
                     </CardFooter>

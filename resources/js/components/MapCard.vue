@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import MapController from '@/actions/App/Http/Controllers/MapController';
 import SatelliteDish from '@/components/icons/SatelliteDish.vue';
 import TelescopeIcon from '@/components/icons/TelescopeIcon.vue';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +15,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
+import MapUserSettings from '@/routes/map-user-settings';
 import { TMap } from '@/types/models';
 import { Link } from '@inertiajs/vue3';
 import { ref } from 'vue';
@@ -28,7 +30,7 @@ const open = ref(false);
 <template>
     <Card>
         <CardHeader>
-            <Link class="group flex items-center gap-3" :href="route('maps.show', map.slug)">
+            <Link class="group flex items-center gap-3" :href="MapController.show(map.slug)">
                 <div class="rounded-lg bg-primary/10 p-2">
                     <TelescopeIcon class="h-5 w-5 text-primary" />
                 </div>
@@ -84,7 +86,7 @@ const open = ref(false);
                         </DialogClose>
                         <Button as-child>
                             <Link
-                                :href="route('map-user-settings.update', map.map_user_setting!.id)"
+                                :href="MapUserSettings.update(map.map_user_setting!.id)"
                                 :data="{ tracking_allowed: !map.map_user_setting?.tracking_allowed }"
                                 method="put"
                                 @click="open = false"
@@ -96,7 +98,7 @@ const open = ref(false);
                 </DialogContent>
             </Dialog>
             <Button variant="ghost" as-child>
-                <Link :href="route('maps.show', map.slug)">View Map →</Link>
+                <Link :href="MapController.show(map.slug)">View Map →</Link>
             </Button>
         </CardFooter>
     </Card>

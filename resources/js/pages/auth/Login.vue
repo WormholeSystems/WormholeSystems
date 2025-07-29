@@ -4,6 +4,7 @@ import TelescopeIcon from '@/components/icons/TelescopeIcon.vue';
 import Notifications from '@/components/Notifications.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import Eve from '@/routes/eve';
 import { Head } from '@inertiajs/vue3';
 import { format } from 'date-fns';
 
@@ -35,7 +36,7 @@ const currentYear = format(new Date(), 'yyyy');
                 <CardContent class="space-y-6">
                     <!-- EVE Online SSO Button -->
                     <Button asChild class="w-full" size="lg">
-                        <a :href="route('eve.show')" class="flex items-center justify-center gap-3">
+                        <a :href="Eve.show().url" class="flex items-center justify-center gap-3">
                             <LockIcon />
                             Sign in with EVE Online
                         </a>

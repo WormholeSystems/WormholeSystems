@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useHasWritePermission } from '@/composables/useHasPermission';
 import { usePath } from '@/composables/usePath';
+import MapRouteSolarsystems from '@/routes/map-route-solarsystems';
 import { TMapRouteSolarsystem } from '@/types/models';
 import { router } from '@inertiajs/vue3';
 import { vElementHover } from '@vueuse/components';
@@ -31,7 +32,7 @@ function onHover(hovered: boolean) {
 
 function togglePinned() {
     router.put(
-        route('map-route-solarsystems.update', map_route.id),
+        MapRouteSolarsystems.update(map_route.id).url,
         {
             is_pinned: !map_route.is_pinned,
         },
@@ -44,7 +45,7 @@ function togglePinned() {
 }
 
 function removeRoute() {
-    router.delete(route('map-route-solarsystems.destroy', map_route.id), {
+    router.delete(MapRouteSolarsystems.destroy(map_route.id).url, {
         preserveScroll: true,
         preserveState: true,
         only: ['map_route_solarsystems'],

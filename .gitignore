@@ -31,3 +31,8 @@ yarn-error.log
 **/caddy
 frankenphp
 frankenphp-worker.php
+
+/resources/js/wayfinder
+/resources/js/actions
+/resources/js/routes
+'

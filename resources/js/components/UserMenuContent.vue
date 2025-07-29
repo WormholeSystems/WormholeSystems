@@ -4,6 +4,8 @@ import MinusIcon from '@/components/icons/MinusIcon.vue';
 import PlusIcon from '@/components/icons/PlusIcon.vue';
 import { CharacterImage } from '@/components/images';
 import { DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { auth, logout } from '@/routes';
+import UserCharacters from '@/routes/user-characters';
 import type { User } from '@/types';
 import { Link, router } from '@inertiajs/vue3';
 import { LogOut } from 'lucide-vue-next';
@@ -28,7 +30,7 @@ defineProps<Props>();
     <DropdownMenuSeparator />
     <DropdownMenuGroup>
         <DropdownMenuItem v-for="character in user.characters" :key="character.id" as-child>
-            <Link class="block w-full" :href="route('user-characters.update', character.id)" as="button" method="put">
+            <Link class="block w-full" :href="UserCharacters.update(character.id)" as="button" method="put">
                 <CharacterImage :character_id="character.id" :character_name="character.name" class="mr-2 h-4 w-4" />
                 {{ character.name }}
             </Link>
@@ -37,9 +39,11 @@ defineProps<Props>();
             <a
                 class="block w-full"
                 :href="
-                    route('auth', {
-                        add_to_account: true,
-                    })
+                    auth({
+                        query: {
+                            add_to_account: true,
+                        },
+                    }).url
                 "
             >
                 <PlusIcon class="mr-2 h-4 w-4" />
@@ -47,7 +51,7 @@ defineProps<Props>();
             </a>
         </DropdownMenuItem>
         <DropdownMenuItem as-child v-if="user.characters.length > 1">
-            <Link class="block w-full" :href="route('user-characters.delete', user.active_character.id)" method="delete" as="button">
+            <Link class="block w-full" :href="UserCharacters.delete(user.active_character.id)" method="delete" as="button">
                 <MinusIcon class="mr-2 h-4 w-4" />
                 Remove Character
             </Link>
@@ -55,7 +59,7 @@ defineProps<Props>();
     </DropdownMenuGroup>
     <DropdownMenuSeparator />
     <DropdownMenuItem :as-child="true">
-        <Link class="block w-full" method="delete" :href="route('logout')" @click="handleLogout" as="button">
+        <Link class="block w-full" method="delete" :href="logout()" @click="handleLogout" as="button">
             <LogOut class="mr-2 h-4 w-4" />
             Log out
         </Link>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import MapController from '@/actions/App/Http/Controllers/MapController';
 import PlusIcon from '@/components/icons/PlusIcon.vue';
 import TelescopeIcon from '@/components/icons/TelescopeIcon.vue';
 import MapCard from '@/components/MapCard.vue';
@@ -23,7 +24,7 @@ defineProps<{
                         <h1 class="text-3xl font-bold tracking-tight text-foreground">Maps</h1>
                         <p class="mt-2 text-muted-foreground">Manage and explore your wormhole mapping networks</p>
                     </div>
-                    <Link :href="route('maps.create')">
+                    <Link :href="MapController.create()">
                         <Button class="flex items-center gap-2">
                             <PlusIcon class="h-4 w-4" />
                             Create New Map
@@ -43,7 +44,7 @@ defineProps<{
                 </div>
                 <h3 class="text-xl font-semibold">No maps yet</h3>
                 <p class="text-muted-foreground">Get started by creating your first wormhole map to begin tracking connections and systems.</p>
-                <Link :href="route('maps.create')">
+                <Link :href="MapController.create()">
                     <Button class="flex items-center gap-2">
                         <PlusIcon class="h-4 w-4" />
                         Create Your First Map

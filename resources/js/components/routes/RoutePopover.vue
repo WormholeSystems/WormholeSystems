@@ -19,18 +19,14 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const { isIgnored, ignoreSystem, unignoreSystem, clearIgnoreList, ignoredSystems } = useIgnoreList();
+const { isIgnored, ignoreSystem, clearIgnoreList, ignoredSystems } = useIgnoreList();
 
 const { setPath } = usePath();
 
 const hasRoute = computed(() => props.route && props.route.length > 0);
 
 const handleIgnoreSystem = (systemId: number) => {
-    if (isIgnored(systemId)) {
-        unignoreSystem(systemId);
-    } else {
-        ignoreSystem(systemId);
-    }
+    ignoreSystem(systemId);
 };
 
 function onHover(hovered: boolean) {
@@ -48,7 +44,7 @@ function onHover(hovered: boolean) {
             <slot />
         </PopoverTrigger>
         <PopoverContent class="w-96 p-0">
-            <div class="" v-element-hover="onHover" :key="route">
+            <div class="" v-element-hover="onHover">
                 <div class="grid gap-2 p-3">
                     <span class="">Route</span>
 
@@ -124,9 +120,7 @@ function onHover(hovered: boolean) {
                                                     <span v-else class="text-xs">↺</span>
                                                 </Button>
                                             </TooltipTrigger>
-                                            <TooltipContent>
-                                                {{ isIgnored(solarsystem.id) ? 'Stop ignoring this system' : 'Ignore this system' }}
-                                            </TooltipContent>
+                                            <TooltipContent> Ignore this system</TooltipContent>
                                         </Tooltip>
                                     </TableCell>
                                 </TableRow>
