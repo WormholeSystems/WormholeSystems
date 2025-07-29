@@ -249,7 +249,7 @@ export function useMapSolarsystem(
     function updateMapSolarsystem(suppress_notification: boolean = false) {
         if (!map_solarsystems_selected.value?.length && !current_map_solarsystem.value?.pinned) {
             return router.put(
-                MapSolarsystems.update(current_map_solarsystem.value.solarsystem_id).url,
+                MapSolarsystems.update(current_map_solarsystem.value.id).url,
                 {
                     position_x: draggable.x.value,
                     position_y: draggable.y.value,
