@@ -229,7 +229,12 @@ useEventListener('paste', (event) => {
             <CardDescription> All the signatures in this solarsystem. You can paste, copy and clear signatures here. </CardDescription>
 
             <CardAction class="flex gap-2" v-if="can_write">
-                <Button v-if="pasted_signatures" @click="pasted_signatures = null" variant="outline"> Reset</Button>
+                <Tooltip v-if="pasted_signatures">
+                    <TooltipTrigger as-child>
+                        <Button v-if="pasted_signatures" @click="pasted_signatures = null" variant="outline"> Reset </Button>
+                    </TooltipTrigger>
+                    <TooltipContent> Reset pasted signatures</TooltipContent>
+                </Tooltip>
                 <Button v-if="deleted_signatures.length > 0" @click="deleteMissingSignatures" variant="destructive"> Delete Missing </Button>
                 <Tooltip>
                     <TooltipTrigger as-child>
