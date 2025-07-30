@@ -160,7 +160,7 @@ class MapController extends Controller
     {
         return Killmail::query()->with('shipType')
             ->whereIn('solarsystem_id', $map->mapSolarsystems->pluck('solarsystem_id'))
-            ->orderBy('time', 'desc')
+            ->orderByDesc('id')
             ->limit(50)
             ->get()
             ->toResourceCollection(KillmailResource::class);
