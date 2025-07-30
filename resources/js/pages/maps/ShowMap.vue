@@ -126,31 +126,4 @@ router.on('before', (event) => {
         <MapUserSetting :map_user_setting="map.map_user_setting" v-if="map.map_user_setting" />
     </AppLayout>
 </template>
-<style>
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-
-::-webkit-scrollbar-thumb {
-    background-color: var(--color-neutral-300);
-    border-radius: 4px;
-}
-
-html.dark ::-webkit-scrollbar-thumb {
-    background-color: var(--color-neutral-700);
-    border-radius: 4px;
-}
-
-::-webkit-scrollbar-track {
-    background-color: transparent;
-}
-
-::-webkit-scrollbar-corner {
-    background-color: transparent;
-}
-
-::-webkit-scrollbar-button {
-    display: none;
-}
-</style>
+<style></style>

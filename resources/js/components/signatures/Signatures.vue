@@ -8,14 +8,14 @@ import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle }
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useHasWritePermission } from '@/composables/useHasPermission';
 import { useSignatures } from '@/composables/useSignatures';
-import { signatureParser } from '@/lib/SignatureParser';
+import { signatureParser, TRawSignature } from '@/lib/SignatureParser';
 import Signatures from '@/routes/map-solarsystems/signatures';
 import PasteSignatures from '@/routes/paste-signatures';
 import { TMapSolarSystem, TSignature } from '@/types/models';
 import { router } from '@inertiajs/vue3';
-import { useActiveElement, useMagicKeys, whenever } from '@vueuse/core';
-import { logicAnd, logicOr } from '@vueuse/math';
+import { useActiveElement, useEventListener } from '@vueuse/core';
 import { computed, ref, watch } from 'vue';
+import { toast } from 'vue-sonner';
 
 const { map_solarsystem } = defineProps<{
     map_solarsystem: TMapSolarSystem;
@@ -87,13 +87,8 @@ const unconnected_connections = computed(() => {
 });
 
 const activeElement = useActiveElement();
-const { ctrl_v, cmd_v } = useMagicKeys();
-const not_using_input = computed(() => {
-    return !activeElement.value || !['INPUT', 'TEXTAREA'].includes(activeElement.value.tagName);
-});
-
-whenever(logicAnd(logicOr(ctrl_v, cmd_v), not_using_input), () => {
-    handlePaste();
+const using_input = computed(() => {
+    return activeElement.value && ['INPUT', 'TEXTAREA'].includes(activeElement.value.tagName);
 });
 
 watch(
@@ -105,6 +100,14 @@ watch(
 
 async function handlePaste() {
     const signatures = await getSignaturesFromClipboard();
+    if (!signatures) {
+        return;
+    }
+
+    processSignatures(signatures);
+}
+
+function processSignatures(signatures: TRawSignature[]) {
     pasted_signatures.value = signatures;
     router.post(
         PasteSignatures.store().url,
@@ -125,6 +128,11 @@ async function handlePaste() {
 }
 
 async function getSignaturesFromClipboard() {
+    // ask for permission to read clipboard
+    if (!navigator.clipboard || !navigator.clipboard.readText) {
+        toast.error('Clipboard access is not supported in this browser or permission is denied.');
+        return false;
+    }
     const clipboardText = await navigator.clipboard.readText();
     return signatureParser.parseSignatures(clipboardText);
 }
@@ -193,6 +201,25 @@ function deleteMissingSignatures() {
         },
     });
 }
+
+useEventListener('paste', (event) => {
+    event.preventDefault();
+    if (using_input.value) {
+        return;
+    }
+    const clipboardData = event.clipboardData?.getData('text/plain');
+
+    if (!clipboardData) {
+        toast.error('No text found in clipboard.');
+        return;
+    }
+    const signatures = signatureParser.parseSignatures(clipboardData);
+    if (!signatures) {
+        toast.error('Failed to parse signatures from clipboard.');
+        return;
+    }
+    processSignatures(signatures);
+});
 </script>
 
 <template>
@@ -202,6 +229,7 @@ function deleteMissingSignatures() {
             <CardDescription> All the signatures in this solarsystem. You can paste, copy and clear signatures here. </CardDescription>
 
             <CardAction class="flex gap-2" v-if="can_write">
+                <Button v-if="pasted_signatures" @click="pasted_signatures = null" variant="outline"> Reset</Button>
                 <Button v-if="deleted_signatures.length > 0" @click="deleteMissingSignatures" variant="destructive"> Delete Missing </Button>
                 <Tooltip>
                     <TooltipTrigger as-child>
@@ -209,7 +237,7 @@ function deleteMissingSignatures() {
                             <PasteIcon />
                         </Button>
                     </TooltipTrigger>
-                    <TooltipContent> Paste signatures from clipboard</TooltipContent>
+                    <TooltipContent> Paste signatures from clipboard (Ctrl/Cmd + V)</TooltipContent>
                 </Tooltip>
                 <Tooltip>
                     <TooltipTrigger as-child>
