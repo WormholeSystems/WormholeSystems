@@ -257,6 +257,8 @@ export function useMapSolarsystem(
                 },
                 {
                     only: ['map'],
+                    preserveState: true,
+                    preserveScroll: true,
                 },
             );
         }
