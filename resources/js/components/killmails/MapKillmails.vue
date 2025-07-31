@@ -1,10 +1,11 @@
 <script setup lang="ts">
+import SettingsIcon from '@/components/icons/SettingsIcon.vue';
 import Killmail from '@/components/killmails/Killmail.vue';
 import KillmailPlaceholder from '@/components/killmails/KillmailPlaceholder.vue';
+import { Button } from '@/components/ui/button';
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Table, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { getMapChannelName } from '@/const/channels';
 import { KillmailReceivedEvent } from '@/const/events';
 import { TKillmail } from '@/types/models';
@@ -54,26 +55,20 @@ useEcho<KillmailReceivedEvent>(getMapChannelName(map_id), KillmailReceivedEvent,
             <CardTitle>Map killmails</CardTitle>
             <CardDescription>Recents killmails that happened in one of the map solarsystems</CardDescription>
             <CardAction>
-                <ToggleGroup v-model="filter" variant="secondary">
-                    <ToggleGroupItem value="all">
-                        <Tooltip>
-                            <TooltipTrigger> A</TooltipTrigger>
-                            <TooltipContent> All space</TooltipContent>
-                        </Tooltip>
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="jspace">
-                        <Tooltip>
-                            <TooltipTrigger> J</TooltipTrigger>
-                            <TooltipContent> J-Space</TooltipContent>
-                        </Tooltip>
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="kspace">
-                        <Tooltip>
-                            <TooltipTrigger> K</TooltipTrigger>
-                            <TooltipContent> K-Space</TooltipContent>
-                        </Tooltip>
-                    </ToggleGroupItem>
-                </ToggleGroup>
+                <DropdownMenu>
+                    <DropdownMenuTrigger as-child>
+                        <Button variant="secondary" size="icon">
+                            <SettingsIcon />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                        <DropdownMenuRadioGroup v-model="filter">
+                            <DropdownMenuRadioItem value="all"> All killmails</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="jspace"> J-Space killmails</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="kspace"> K-Space killmails</DropdownMenuRadioItem>
+                        </DropdownMenuRadioGroup>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </CardAction>
         </CardHeader>
         <CardContent class="px-1 pb-1">
