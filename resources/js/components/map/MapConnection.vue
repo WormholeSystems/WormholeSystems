@@ -43,32 +43,34 @@ function midPoint(from: Position, to: Position): Position {
 
 function getDashArray() {
     if (!mass_status) return '0';
-    if (is_eol) return '2,4';
-    switch (mass_status) {
-        case 'fresh':
-            return '0';
-        case 'reduced':
-            return '2,4';
-        case 'critical':
-            return '4,4';
-        default:
-            return '0';
-    }
+    if (is_eol) return '2,6';
 }
 </script>
 
 <template>
     <g pointer-events="visiblePainted" class="group text-neutral-300 dark:text-neutral-700">
         <path
+            v-if="mass_status === 'fresh' || is_eol"
             :d="curve"
             stroke="currentColor"
             fill="none"
             stroke-width="4"
             :stroke-dasharray="getDashArray()"
-            :data-connection-status="mass_status"
             :data-eol="is_eol"
             :data-highlighted="is_highlighted"
-            class="cursor-pointer text-neutral-300 transition-colors duration-200 ease-in-out data-[connection-status=critical]:text-red-500 data-[connection-status=reduced]:text-orange-500 data-[eol=true]:text-purple-500 data-[highlighted=true]:text-amber-500 dark:text-neutral-700 dark:group-hover:text-neutral-200 dark:group-hover:text-neutral-600 dark:data-[connection-status=critical]:text-red-500 dark:data-[connection-status=reduced]:text-orange-500 dark:data-[eol=true]:text-purple-500 dark:data-[highlighted=true]:text-amber-500"
+            class="cursor-pointer text-neutral-300 transition-colors duration-200 ease-in-out group-hover:text-neutral-200 data-[eol=true]:text-purple-500 data-[highlighted=true]:text-amber-500 dark:text-neutral-700 dark:group-hover:text-neutral-600 dark:data-[eol=true]:text-purple-500 dark:data-[highlighted=true]:text-amber-500"
+        />
+        <path
+            v-if="mass_status !== 'fresh'"
+            :d="curve"
+            stroke="currentColor"
+            fill="none"
+            stroke-width="4"
+            stroke-dasharray="2,6"
+            stroke-dashoffset="4"
+            :data-connection-status="mass_status"
+            :data-highlighted="is_highlighted"
+            class="cursor-pointer transition-colors duration-200 ease-in-out data-[connection-status=critical]:text-red-500 data-[connection-status=reduced]:text-orange-500 data-[highlighted=true]:text-amber-500 dark:data-[connection-status=critical]:text-red-500 dark:data-[connection-status=reduced]:text-orange-500 dark:data-[highlighted=true]:text-amber-500"
         />
         <rect
             class="pointer-events-none fill-white stroke-neutral-300 dark:fill-neutral-900 dark:stroke-neutral-700"
