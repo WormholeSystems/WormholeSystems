@@ -1,3 +1,4 @@
+import { TLayout } from '@/composables/useLayout';
 import { TCharacter } from '@/types/models';
 import type { LucideIcon } from 'lucide-vue-next';
 import { Component } from 'vue';
@@ -29,6 +30,7 @@ export type AppPageProps<T extends Record<string, unknown> = Record<string, unkn
     discord: {
         invite: string;
     };
+    layout: TLayout;
 };
 
 export interface User {

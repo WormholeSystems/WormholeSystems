@@ -1,3 +1,4 @@
+import { setCookie } from '@/lib/utils';
 import { onMounted, ref } from 'vue';
 
 type Appearance = 'light' | 'dark' | 'system';
@@ -16,16 +17,6 @@ export function updateTheme(value: Appearance) {
         document.documentElement.classList.toggle('dark', value === 'dark');
     }
 }
-
-const setCookie = (name: string, value: string, days = 365) => {
-    if (typeof document === 'undefined') {
-        return;
-    }
-
-    const maxAge = days * 24 * 60 * 60;
-
-    document.cookie = `${name}=${value};path=/;max-age=${maxAge};SameSite=Lax`;
-};
 
 const mediaQuery = () => {
     if (typeof window === 'undefined') {

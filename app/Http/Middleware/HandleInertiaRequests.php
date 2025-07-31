@@ -9,6 +9,7 @@ use App\Scopes\CharacterDoesntHaveRequiredScopes;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Cookie;
 use Inertia\Inertia;
 use Inertia\Middleware;
 use NicolasKion\Esi\Enums\EsiScope;
@@ -61,6 +62,7 @@ class HandleInertiaRequests extends Middleware
             'discord' => fn (): array => [
                 'invite' => config('services.discord.invite'),
             ],
+            'layout' => $this->getLayout($request),
         ];
     }
 
@@ -82,5 +84,22 @@ class HandleInertiaRequests extends Middleware
             ->get();
 
         return $characters_with_missing_scopes->toResourceCollection(CharacterResource::class);
+    }
+
+    private function getLayout(Request $request)
+    {
+        $cookie = $request->cookie('layout');
+
+        if ($cookie) {
+            return json_decode($cookie, true);
+        }
+
+        $layout = [
+            'map_height' => 1_000,
+        ];
+
+        Cookie::make('layout', json_encode($layout), 60 * 24 * 365); // 1 year
+
+        return $layout;
     }
 }
