@@ -19,15 +19,27 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const { isIgnored, ignoreSystem, clearIgnoreList, ignoredSystems } = useIgnoreList();
+const { ignoreSolarsystem, clearIgnoreList, ignored_systems } = useIgnoreList();
 
 const { setPath } = usePath();
 
 const hasRoute = computed(() => props.route && props.route.length > 0);
 
-const handleIgnoreSystem = (systemId: number) => {
-    ignoreSystem(systemId);
-};
+function handleIgnoreSolarsystem(solarsystem_id: number) {
+    ignoreSolarsystem(solarsystem_id, {
+        onSuccess() {
+            setPath(props.route!);
+        },
+    });
+}
+
+function handleClearIgnoreList() {
+    clearIgnoreList({
+        onSuccess() {
+            setPath(props.route!);
+        },
+    });
+}
 
 function onHover(hovered: boolean) {
     if (hovered && hasRoute.value) {
@@ -47,21 +59,18 @@ function onHover(hovered: boolean) {
             <div class="" v-element-hover="onHover">
                 <div class="grid gap-2 p-3">
                     <span class="">Route</span>
-
                     <div class="text-xs text-muted-foreground">
                         This route is calculated based on the shortest path through the available systems.
                     </div>
-                    <template v-if="ignoredSystems.length">
+                    <template v-if="ignored_systems.length">
                         <div class="text-xs text-muted-foreground">
                             You are ignoring
-                            <span class="font-medium">{{ ignoredSystems.length }}</span>
+                            <span class="font-medium">{{ ignored_systems.length }}</span>
                             systems in this route.
                         </div>
-                        <Button variant="secondary" size="sm" @click="clearIgnoreList">Clear ignored systems</Button>
+                        <Button variant="secondary" size="sm" @click="handleClearIgnoreList">Clear ignored systems </Button>
                     </template>
                 </div>
-
-                <!-- Route Table -->
                 <div class="m-2 max-h-96 overflow-y-auto rounded-md border bg-muted/20" v-if="hasRoute">
                     <Table>
                         <TableHeader>
@@ -75,15 +84,13 @@ function onHover(hovered: boolean) {
                         </TableHeader>
                         <TableBody>
                             <DestinationContextMenu v-for="(solarsystem, index) in route" :key="index" :solarsystem_id="solarsystem.id">
-                                <TableRow class="text-xs" :class="{ 'opacity-50': isIgnored(solarsystem.id) }">
-                                    <!-- Security/Class Column -->
+                                <TableRow class="text-xs">
                                     <TableCell class="h-auto p-1">
                                         <div class="flex justify-center">
                                             <SolarsystemClass :wormhole_class="solarsystem.class" :security="solarsystem.security" />
                                         </div>
                                     </TableCell>
 
-                                    <!-- Name Column -->
                                     <TableCell class="h-auto p-1">
                                         <DestinationContextMenu :solarsystem_id="solarsystem.id">
                                             <span class="cursor-pointer font-medium hover:text-accent-foreground">
@@ -91,13 +98,9 @@ function onHover(hovered: boolean) {
                                             </span>
                                         </DestinationContextMenu>
                                     </TableCell>
-
-                                    <!-- Region Column -->
                                     <TableCell class="h-auto p-1 text-muted-foreground">
                                         {{ solarsystem.region?.name }}
                                     </TableCell>
-
-                                    <!-- Sovereignty/Effect Column -->
                                     <TableCell class="h-auto p-1">
                                         <div class="flex justify-center">
                                             <SovereigntyIcon v-if="solarsystem.sovereignty" :sovereignty="solarsystem.sovereignty" />
@@ -110,14 +113,16 @@ function onHover(hovered: boolean) {
                                             </span>
                                         </div>
                                     </TableCell>
-
-                                    <!-- Option Column -->
                                     <TableCell class="h-auto p-1">
                                         <Tooltip v-if="index > 0 && index < route!.length - 1">
                                             <TooltipTrigger>
-                                                <Button variant="secondary" size="icon" class="h-6 w-6" @click="handleIgnoreSystem(solarsystem.id)">
-                                                    <TimesIcon v-if="!isIgnored(solarsystem.id)" class="h-2.5 w-2.5" />
-                                                    <span v-else class="text-xs">↺</span>
+                                                <Button
+                                                    variant="secondary"
+                                                    size="icon"
+                                                    class="h-6 w-6"
+                                                    @click="handleIgnoreSolarsystem(solarsystem.id)"
+                                                >
+                                                    <TimesIcon class="h-2.5 w-2.5" />
                                                 </Button>
                                             </TooltipTrigger>
                                             <TooltipContent> Ignore this system</TooltipContent>

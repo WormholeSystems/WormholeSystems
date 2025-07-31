@@ -45,6 +45,9 @@ function toggleAccess(entity: TEntity, permission: 'read' | 'write' | null) {
         <Head title="Manage Map Access" />
         <div class="mx-auto mt-8 grid max-w-4xl gap-4">
             <Input v-model="search" placeholder="Search..." />
+            <p class="border-l-2 border-l-orange-500 bg-orange-950 p-4 text-orange-500">
+                <strong>Note:</strong> Only characters, corporations, and alliances that registered at least once will be shown here.
+            </p>
             <div class="rounded-lg border">
                 <Table>
                     <TableHeader>

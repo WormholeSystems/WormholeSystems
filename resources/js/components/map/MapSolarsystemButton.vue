@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import SolarsystemClass from '@/components/SolarsystemClass.vue';
 import LockIcon from '@/components/icons/LockIcon.vue';
+import SatelliteDish from '@/components/icons/SatelliteDish.vue';
 import SolarsystemEffect from '@/components/map/SolarsystemEffect.vue';
 import SovereigntyIcon from '@/components/map/SovereigntyIcon.vue';
 import { usePilotsInMapSolarsystem } from '@/composables/usePilotsInMapSolarsystem';
 import { TMapSolarSystem } from '@/types/models';
-import SatelliteDish from '@/components/icons/SatelliteDish.vue';
 
 const { map_solarsystem, is_active } = defineProps<{
     map_solarsystem: TMapSolarSystem & { is_selected?: boolean; is_hovered?: boolean };

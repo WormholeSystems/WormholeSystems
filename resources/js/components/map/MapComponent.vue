@@ -135,7 +135,7 @@ function onScroll(event: WheelEvent) {
 <template>
     <div
         :data-scroll-locked="scroll_locked"
-        class="relative max-h-[1000px] w-full overflow-y-scroll rounded-lg border bg-neutral-50 data-[scroll-locked=true]:overflow-hidden dark:bg-neutral-900/50"
+        class="relative max-h-[1000px] w-full resize-y overflow-y-scroll rounded-lg border bg-neutral-50 data-[scroll-locked=true]:overflow-hidden dark:bg-neutral-900/50"
         :style="{
             height: config.max_size.y > 1000 ? `${config.max_size.y}px` : 'auto',
         }"

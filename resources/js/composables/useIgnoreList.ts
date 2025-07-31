@@ -1,4 +1,5 @@
 import IgnoreSystems from '@/routes/ignore-systems';
+import { VisitHelperOptions } from '@inertiajs/core';
 import { router, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
@@ -6,33 +7,33 @@ export function useIgnoreList() {
     const page = usePage();
 
     // Get ignored systems reactively from page props
-    const ignoredSystems = computed(() => (page.props.ignored_systems as number[]) || []);
-    const isIgnored = (systemId: number): boolean => ignoredSystems.value.includes(systemId);
+    const ignored_systems = computed(() => (page.props.ignored_systems as number[]) || []);
 
-    const ignoreSystem = (systemId: number): void => {
+    function ignoreSolarsystem(solarsystem_id: number, options: VisitHelperOptions = {}): void {
         router.post(
             IgnoreSystems.store().url,
-            { solarsystem_id: systemId },
+            { solarsystem_id: solarsystem_id },
             {
+                ...options,
                 preserveScroll: true,
                 preserveState: true,
                 only: ['map_characters', 'map_route_solarsystems', 'ignored_systems'],
             },
         );
-    };
+    }
 
-    const clearIgnoreList = (): void => {
+    function clearIgnoreList(options: VisitHelperOptions = {}): void {
         router.delete(IgnoreSystems.destroyAll().url, {
+            ...options,
             preserveScroll: true,
             preserveState: true,
             only: ['map_characters', 'map_route_solarsystems', 'ignored_systems'],
         });
-    };
+    }
 
     return {
-        ignoredSystems,
-        isIgnored,
-        ignoreSystem,
+        ignored_systems,
+        ignoreSolarsystem,
         clearIgnoreList,
     };
 }
