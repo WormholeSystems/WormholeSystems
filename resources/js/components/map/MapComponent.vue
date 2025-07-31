@@ -8,7 +8,7 @@ import MapContextMenu from '@/components/map/MapContextMenu.vue';
 import MapSolarsystem from '@/components/map/MapSolarsystem.vue';
 import { Button } from '@/components/ui/button';
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu';
-import { useMapAction, useMapConnections, useMapGrid, useMapScale, useMapSolarsystems, useMap as useNewMap } from '@/composables/map';
+import { useMap as useNewMap, useMapAction, useMapConnections, useMapGrid, useMapScale, useMapSolarsystems } from '@/composables/map';
 import { useHasWritePermission } from '@/composables/useHasPermission';
 import { useLayout } from '@/composables/useLayout';
 import { getMapChannelName } from '@/const/channels';
@@ -198,8 +198,8 @@ useEventListener('pointerup', () => {
                         ref="map-container"
                         :style="{
                             backgroundSize: `${grid_size * scale}px ${grid_size * scale}px`,
-                            minHeight: `${config.max_size.y}px`,
-                            minWidth: `${config.max_size.x}px`,
+                            minHeight: `${config.max_size.y * scale}px`,
+                            minWidth: `${config.max_size.x * scale}px`,
                         }"
                     >
                         <MapConnections @connection-contextmenu="(e, con) => (selected_connection_id = con.id)" />
