@@ -7,7 +7,10 @@ export type TLayout = {
     scale: number;
 };
 
-const layout = ref<TLayout>();
+const layout = ref<TLayout>({
+    map_height: 1000,
+    scale: 1,
+});
 
 export function useLayout() {
     const page = usePage();
