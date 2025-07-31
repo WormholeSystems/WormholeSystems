@@ -1,3 +1,4 @@
+import { TLayout } from '@/composables/useLayout';
 import { TMapConfig } from '@/types/map';
 import { TCharacter, TKillmail, TMap, TMapRouteSolarsystem, TMapSolarSystem, TShipHistory, TSolarsystem } from '@/types/models';
 
@@ -15,4 +16,5 @@ export type TShowMapProps = {
     allow_eol: boolean;
     allow_crit: boolean;
     allow_eve_scout: boolean;
+    layout: TLayout;
 };

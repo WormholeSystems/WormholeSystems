@@ -86,16 +86,43 @@ class HandleInertiaRequests extends Middleware
         return $characters_with_missing_scopes->toResourceCollection(CharacterResource::class);
     }
 
-    private function getLayout(Request $request)
+    private function getLayout(Request $request): array
     {
         $cookie = $request->cookie('layout');
 
         if ($cookie) {
-            return json_decode($cookie, true);
+            return $this->parseLayoutCookie($cookie);
         }
 
         $layout = [
             'map_height' => 1_000,
+            'scale' => 1.0,
+        ];
+
+        Cookie::make('layout', json_encode($layout), 60 * 24 * 365); // 1 year
+
+        return $layout;
+    }
+
+    private function parseLayoutCookie(string $cookie): array
+    {
+        try {
+            $layout = json_decode($cookie, true, 512, JSON_THROW_ON_ERROR);
+        } catch (Throwable) {
+            return $this->createLayoutCookie();
+        }
+
+        return [
+            'map_height' => $layout['map_height'] ?? 1_000,
+            'scale' => $layout['scale'] ?? 1.0,
+        ];
+    }
+
+    private function createLayoutCookie(): array
+    {
+        $layout = [
+            'map_height' => 1_000,
+            'scale' => 1.0,
         ];
 
         Cookie::make('layout', json_encode($layout), 60 * 24 * 365); // 1 year

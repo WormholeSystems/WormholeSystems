@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import GripLines from '@/components/icons/GripLines.vue';
+import MinusIcon from '@/components/icons/MinusIcon.vue';
+import PlusIcon from '@/components/icons/PlusIcon.vue';
 import MapConnectionContextMenu from '@/components/map/MapConnectionContextMenu.vue';
 import MapConnections from '@/components/map/MapConnections.vue';
 import MapContextMenu from '@/components/map/MapContextMenu.vue';
 import MapSolarsystem from '@/components/map/MapSolarsystem.vue';
+import { Button } from '@/components/ui/button';
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu';
-import { useMapAction, useMapConnections, useMapGrid, useMapSolarsystems, useMap as useNewMap } from '@/composables/map';
+import { useMapAction, useMapConnections, useMapGrid, useMapScale, useMapSolarsystems, useMap as useNewMap } from '@/composables/map';
 import { useHasWritePermission } from '@/composables/useHasPermission';
 import { useLayout } from '@/composables/useLayout';
 import { getMapChannelName } from '@/const/channels';
@@ -41,10 +44,13 @@ const container = useTemplateRef('map-container');
 
 const scroll_locked = ref(false);
 
+const { layout, setLayout } = useLayout();
+
 useNewMap(
     () => map,
     () => container.value!,
     () => config,
+    layout,
 );
 
 const { map_solarsystems } = useMapSolarsystems();
@@ -59,13 +65,13 @@ const { removeSelectedMapSolarsystems } = useMapAction();
 
 const can_write = useHasWritePermission();
 
-const { layout, setLayout } = useLayout();
-
 const selected_connection_id = ref<number | null>(null);
 const selected_connection = computed(() => connections.value.find((con) => con.id === selected_connection_id.value));
 const context_menu_type = computed(() => (selected_connection.value ? 'connection' : 'map'));
 
 const resizing = ref(false);
+
+const { scale, setScale } = useMapScale();
 
 whenever(Delete, () => removeSelectedMapSolarsystems());
 
@@ -187,13 +193,13 @@ useEventListener('pointerup', () => {
             <ContextMenu @update:open="onOpenChange">
                 <ContextMenuTrigger>
                     <div
-                        class="bg-grid relative grid"
+                        class="bg-grid relative grid h-full w-full"
                         @dragover.prevent
                         ref="map-container"
                         :style="{
-                            backgroundSize: `${grid_size}px ${grid_size}px`,
-                            width: `${config.max_size.x}px`,
-                            height: `${config.max_size.y}px`,
+                            backgroundSize: `${grid_size * scale}px ${grid_size * scale}px`,
+                            minHeight: `${config.max_size.y}px`,
+                            minWidth: `${config.max_size.x}px`,
                         }"
                     >
                         <MapConnections @connection-contextmenu="(e, con) => (selected_connection_id = con.id)" />
@@ -207,12 +213,17 @@ useEventListener('pointerup', () => {
                 />
             </ContextMenu>
         </div>
-        <div
-            @pointerdown="onResizeStart"
-            id="map-resize-handle"
-            class="absolute right-0 bottom-0 flex size-8 cursor-ns-resize items-center justify-center overflow-hidden rounded-tl-lg bg-muted"
-        >
-            <GripLines class="text-muted-foreground" />
+        <div class="absolute right-0 bottom-0 z-30 flex overflow-hidden rounded-tl-lg border bg-neutral-900">
+            <span class="flex h-8 items-center px-2 text-muted-foreground">{{ (scale * 100).toFixed(0) + '%' }}</span>
+            <Button variant="ghost" size="icon" class="h-8 w-8" @click="setScale(scale - 0.1)">
+                <MinusIcon />
+            </Button>
+            <Button variant="ghost" size="icon" class="h-8 w-8" @click="setScale(scale + 0.1)">
+                <PlusIcon />
+            </Button>
+            <div @pointerdown="onResizeStart" id="map-resize-handle" class="flex size-8 cursor-ns-resize items-center justify-center">
+                <GripLines class="text-muted-foreground" />
+            </div>
         </div>
     </div>
 </template>

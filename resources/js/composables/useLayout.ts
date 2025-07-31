@@ -4,6 +4,7 @@ import { ref } from 'vue';
 
 export type TLayout = {
     map_height: number;
+    scale: number;
 };
 
 export function useLayout() {

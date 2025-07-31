@@ -1,3 +1,4 @@
+import { TLayout, useLayout } from '@/composables/useLayout';
 import { usePath } from '@/composables/usePath';
 import MapSelection from '@/routes/map-selection';
 import MapSolarsystems from '@/routes/map-solarsystems';
@@ -23,6 +24,7 @@ type TMapState = {
     } | null;
     config: TMapConfig;
     hovered_solarsystem_id: number | null;
+    scale: number;
 };
 
 type WithIsSelected<T> = T & {
@@ -48,6 +50,7 @@ const mapState = reactive<TMapState>({
         },
         grid_size: 20,
     },
+    scale: 0.5,
     hovered_solarsystem_id: null,
 });
 
@@ -63,7 +66,12 @@ export type TProcessedConnection = TMapConnection & {
     is_on_route?: boolean;
 };
 
-export function useMap(map: MaybeRefOrGetter<TMap>, container: MaybeRefOrGetter<HTMLElement>, config: MaybeRefOrGetter<TMapConfig>) {
+export function useMap(
+    map: MaybeRefOrGetter<TMap>,
+    container: MaybeRefOrGetter<HTMLElement>,
+    config: MaybeRefOrGetter<TMapConfig>,
+    layout?: MaybeRefOrGetter<TLayout>,
+) {
     const { path } = usePath();
 
     watchEffect(() => {
@@ -75,8 +83,17 @@ export function useMap(map: MaybeRefOrGetter<TMap>, container: MaybeRefOrGetter<
 
         mapState.map = mapValue;
         mapState.map_container = containerValue || null;
-        mapState.map_solarsystems = mapValue.map_solarsystems!.map(getSelectedState).map(getHoveredState);
+        mapState.map_solarsystems = mapValue.map_solarsystems!.map(getSelectedState).map(getHoveredState).map(applyScale);
         mapState.config = configValue;
+    });
+
+    watchEffect(() => {
+        const layoutValue = toValue(layout);
+        if (layoutValue) {
+            mapState.scale = layoutValue.scale;
+        } else {
+            mapState.scale = 1;
+        }
     });
 
     watchEffect(() => {
@@ -89,7 +106,17 @@ export function useMap(map: MaybeRefOrGetter<TMap>, container: MaybeRefOrGetter<
         if (!mapState.selection) return { ...system, is_selected: false };
         if (!mapState.selection.end) return { ...system, is_selected: false };
 
-        const { start, end } = mapState.selection;
+        const { start: raw_start, end: raw_end } = mapState.selection;
+
+        const start = {
+            x: raw_start.x / mapState.scale,
+            y: raw_start.y / mapState.scale,
+        };
+
+        const end = {
+            x: raw_end.x / mapState.scale,
+            y: raw_end.y / mapState.scale,
+        };
 
         const is_selected =
             system.position!.x >= Math.min(start.x, end.x) &&
@@ -103,6 +130,18 @@ export function useMap(map: MaybeRefOrGetter<TMap>, container: MaybeRefOrGetter<
     function getHoveredState(system: WithIsSelected<TMapSolarSystem>): TDataMapSolarSystem {
         const is_hovered = mapState.hovered_solarsystem_id === system.id;
         return { ...system, is_hovered };
+    }
+
+    function applyScale(system: TDataMapSolarSystem): TDataMapSolarSystem {
+        if (!system.position) return system;
+        const scale = mapState.scale;
+        return {
+            ...system,
+            position: {
+                x: scale * system.position.x,
+                y: scale * system.position.y,
+            },
+        };
     }
 
     function getConnectionWithSourceAndTarget(connection: TMapConnection): TProcessedConnection {
@@ -151,9 +190,11 @@ export function useSelection() {
 }
 
 export function useMapSolarsystems() {
-    function setSystemPosition(system: TMapSolarSystem, x: number, y: number) {
+    function setSystemPosition(system: TMapSolarSystem, raw_x: number, raw_y: number) {
         const system_state = mapState.map_solarsystems.find((s) => s.id === system.id);
         if (!system_state) return;
+        const x = raw_x;
+        const y = raw_y;
         const dx = x - system_state.position!.x;
         const dy = y - system_state.position!.y;
         if (!map_solarsystems_selected.value.length || !map_solarsystems_selected.value.some((s) => s.id === system.id)) {
@@ -232,7 +273,8 @@ export function useMapSolarsystem(
     }
 
     function handleDrag() {
-        const grid_size = toValue(mapState.config.grid_size);
+        const grid_size_map = toValue(mapState.config.grid_size);
+        const grid_size = grid_size_map * mapState.scale;
         let x = Math.round(draggable.x.value / grid_size) * grid_size;
         let y = Math.round(draggable.y.value / grid_size) * grid_size;
         // Ensure the position is within the map boundaries
@@ -251,8 +293,8 @@ export function useMapSolarsystem(
             return router.put(
                 MapSolarsystems.update(current_map_solarsystem.value.id).url,
                 {
-                    position_x: draggable.x.value,
-                    position_y: draggable.y.value,
+                    position_x: draggable.x.value / mapState.scale,
+                    position_y: draggable.y.value / mapState.scale,
                     suppress_notification,
                 },
                 {
@@ -270,8 +312,8 @@ export function useMapSolarsystem(
                     .filter((s) => !s.pinned)
                     .map((s) => ({
                         id: s.id,
-                        position_x: s.position?.x,
-                        position_y: s.position?.y,
+                        position_x: s.position?.x ? s.position.x / mapState.scale : s.position?.x,
+                        position_y: s.position?.y ? s.position.y / mapState.scale : s.position?.y,
                     })),
             },
             {
@@ -360,11 +402,19 @@ export function useMapAction() {
             pinned?: boolean;
         },
     ) {
-        return router.put(MapSolarsystems.update(map_solarsystem.id).url, data, {
-            preserveState: true,
-            preserveScroll: true,
-            only: ['map'],
-        });
+        return router.put(
+            MapSolarsystems.update(map_solarsystem.id).url,
+            {
+                ...data,
+                position_x: data.position_x ? data.position_x * (1 / mapState.scale) : map_solarsystem.position?.x,
+                position_y: data.position_y ? data.position_y * (1 / mapState.scale) : map_solarsystem.position?.y,
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+                only: ['map'],
+            },
+        );
     }
 
     function addMapSolarsystem(solarsystem_id: number) {
@@ -458,12 +508,12 @@ export function useMapAction() {
 
         const sorted_positions = calculateSortedPositions(sorted_ids).map((s, index) => {
             const position_x = first_position.x;
-            const position_y = first_position.y + index * (spacing * mapState.config.grid_size + item_height);
+            const position_y = first_position.y + index * (spacing * mapState.config.grid_size + item_height) * mapState.scale;
 
             return {
                 ...s,
-                position_x: Math.max(40, Math.min(position_x, mapState.config.max_size.x - mapState.config.grid_size)),
-                position_y: Math.max(20, Math.min(position_y, mapState.config.max_size.y - mapState.config.grid_size)),
+                position_x: Math.max(40, Math.min(position_x, mapState.config.max_size.x - mapState.config.grid_size)) / mapState.scale,
+                position_y: Math.max(20, Math.min(position_y, mapState.config.max_size.y - mapState.config.grid_size)) / mapState.scale,
             };
         });
 
@@ -540,4 +590,24 @@ function getFreePosition(): Coordinates {
     }
 
     throw new Error('No free position found on the map');
+}
+
+export function useMapScale() {
+    const scale = computed(() => mapState.scale);
+    const { layout, setLayout } = useLayout();
+
+    function setScale(scale: number) {
+        const newScale = Math.round(scale * 10) / 10;
+        if (newScale < 0.5 || newScale > 2) return;
+        mapState.scale = newScale;
+        setLayout({
+            ...layout.value,
+            scale: newScale,
+        });
+    }
+
+    return {
+        scale,
+        setScale,
+    };
 }
