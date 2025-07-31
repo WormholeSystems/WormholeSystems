@@ -56,11 +56,11 @@ const open = ref(false);
         <CardFooter class="justify-between px-4">
             <Dialog v-model:open="open">
                 <DialogTrigger>
-                    <Button variant="outline" v-if="map.map_user_setting?.tracking_allowed" class="flex items-center gap-2">
+                    <Button variant="secondary" v-if="map.map_user_setting?.tracking_allowed" class="flex items-center gap-2">
                         <div class="h-2 w-2 rounded-full bg-green-500"></div>
                         <span class="text-sm text-muted-foreground">Active</span>
                     </Button>
-                    <Button variant="outline" v-else class="flex items-center gap-2">
+                    <Button variant="secondary" v-else class="flex items-center gap-2">
                         <div class="h-2 w-2 rounded-full bg-red-500"></div>
                         <span class="text-sm text-muted-foreground">Inactive</span>
                     </Button>

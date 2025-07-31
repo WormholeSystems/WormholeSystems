@@ -71,7 +71,7 @@ function removeRoute() {
         <!-- Jumps Column -->
         <div class="flex justify-center">
             <RoutePopover :route="map_route.route">
-                <Button variant="outline" size="sm" class="h-5 w-8 px-0 font-mono text-[10px] font-medium">
+                <Button variant="secondary" size="sm" class="h-5 w-8 px-0 font-mono text-[10px] font-medium">
                     <span v-if="map_route.route && map_route.route.length > 0">
                         {{ map_route.route.length - 1 }}
                     </span>

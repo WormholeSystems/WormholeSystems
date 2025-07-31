@@ -106,7 +106,7 @@ function handeCancelDelete() {
                 </DialogDescription>
             </DialogHeader>
             <DialogFooter>
-                <Button variant="outline" @click="handeCancelDelete"> Cancel</Button>
+                <Button variant="secondary" @click="handeCancelDelete"> Cancel</Button>
                 <Button variant="destructive" @click="handleConfirmDelete"> Clear map</Button>
             </DialogFooter>
         </DialogContent>

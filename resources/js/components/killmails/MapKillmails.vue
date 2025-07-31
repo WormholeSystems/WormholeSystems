@@ -54,7 +54,7 @@ useEcho<KillmailReceivedEvent>(getMapChannelName(map_id), KillmailReceivedEvent,
             <CardTitle>Map killmails</CardTitle>
             <CardDescription>Recents killmails that happened in one of the map solarsystems</CardDescription>
             <CardAction>
-                <ToggleGroup v-model="filter" variant="outline">
+                <ToggleGroup v-model="filter" variant="secondary">
                     <ToggleGroupItem value="all">
                         <Tooltip>
                             <TooltipTrigger> A</TooltipTrigger>

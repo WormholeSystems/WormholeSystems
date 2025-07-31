@@ -231,14 +231,14 @@ useEventListener('paste', (event) => {
             <CardAction class="flex gap-2" v-if="can_write">
                 <Tooltip v-if="pasted_signatures">
                     <TooltipTrigger as-child>
-                        <Button v-if="pasted_signatures" @click="pasted_signatures = null" variant="outline"> Reset </Button>
+                        <Button v-if="pasted_signatures" @click="pasted_signatures = null" variant="secondary"> Reset </Button>
                     </TooltipTrigger>
                     <TooltipContent> Reset pasted signatures</TooltipContent>
                 </Tooltip>
                 <Button v-if="deleted_signatures.length > 0" @click="deleteMissingSignatures" variant="destructive"> Delete Missing </Button>
                 <Tooltip>
                     <TooltipTrigger as-child>
-                        <Button @click="handlePaste" variant="outline" size="icon">
+                        <Button @click="handlePaste" variant="secondary" size="icon">
                             <PasteIcon />
                         </Button>
                     </TooltipTrigger>
@@ -246,7 +246,7 @@ useEventListener('paste', (event) => {
                 </Tooltip>
                 <Tooltip>
                     <TooltipTrigger as-child>
-                        <Button @click="createNewSignature" variant="outline" size="icon">
+                        <Button @click="createNewSignature" variant="secondary" size="icon">
                             <PlusIcon />
                         </Button>
                     </TooltipTrigger>

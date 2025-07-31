@@ -42,7 +42,7 @@ const discordInvite = page.props.discord_invite as string | undefined;
                         Home
                     </Link>
                 </Button>
-                <Button as-child variant="outline" v-if="discordInvite">
+                <Button as-child variant="secondary" v-if="discordInvite">
                     <a :href="discordInvite" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-2">
                         <MessageCircleIcon class="h-4 w-4" />
                         Discord

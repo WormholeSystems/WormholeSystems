@@ -108,7 +108,7 @@ function handleHover(hovered: boolean, route: TSolarsystem[] | null) {
             <CardAction class="flex gap-2">
                 <Popover>
                     <PopoverTrigger>
-                        <Button variant="outline" size="icon">
+                        <Button variant="secondary" size="icon">
                             <SettingsIcon />
                         </Button>
                     </PopoverTrigger>
@@ -168,7 +168,7 @@ function handleHover(hovered: boolean, route: TSolarsystem[] | null) {
                 </div>
                 <div v-if="activeCharacter?.route" class="flex-shrink-0">
                     <RoutePopover :route="activeCharacter.route">
-                        <Button variant="outline" size="sm" class="font-mono text-xs">
+                        <Button variant="secondary" size="sm" class="font-mono text-xs">
                             {{ activeCharacter.route.length > 0 ? activeCharacter.route.length - 1 : '0' }}
                         </Button>
                     </RoutePopover>

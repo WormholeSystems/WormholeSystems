@@ -119,7 +119,7 @@ watch(
                     <h3 class="mr-auto text-lg font-semibold">Notes</h3>
                     <Dialog v-model:open="statistics" v-if="can_write">
                         <DialogTrigger as-child>
-                            <Button variant="outline" role="button">Statistics</Button>
+                            <Button variant="secondary" role="button">Statistics</Button>
                         </DialogTrigger>
                         <DialogContent>
                             <DialogHeader>
@@ -147,10 +147,10 @@ watch(
                             </DialogFooter>
                         </DialogContent>
                     </Dialog>
-                    <Button variant="outline" @click="editing = true" v-if="!editing && can_write"> Edit</Button>
+                    <Button variant="secondary" @click="editing = true" v-if="!editing && can_write"> Edit</Button>
                     <div class="flex gap-4" v-else-if="can_write">
                         <Button variant="destructive" @click="editing = false"> Cancel</Button>
-                        <Button variant="outline" type="submit"> Save</Button>
+                        <Button variant="secondary" type="submit"> Save</Button>
                     </div>
                 </div>
                 <div

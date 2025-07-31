@@ -44,7 +44,7 @@ const user = useUser();
                         <Button as-child size="lg" v-else>
                             <Link :href="home()">Go to maps</Link>
                         </Button>
-                        <Button asChild variant="outline" size="lg">
+                        <Button asChild variant="secondary" size="lg">
                             <a href="#features">Learn More</a>
                         </Button>
                     </div>

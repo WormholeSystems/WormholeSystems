@@ -53,7 +53,7 @@ function handleSolarsystemSelect(solarsystem: TSolarsystem) {
         <Tooltip>
             <DialogTrigger as-child>
                 <TooltipTrigger as-child>
-                    <Button variant="outline" size="icon">
+                    <Button variant="secondary" size="icon">
                         <PlusIcon />
                     </Button>
                 </TooltipTrigger>

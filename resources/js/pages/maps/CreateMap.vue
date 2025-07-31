@@ -32,7 +32,7 @@ function handleSubmit() {
                     <Input id="name" v-model="form.name" type="text" placeholder="Enter map name" required />
                     <InputError :message="form.errors.name" class="mt-2" />
                     <CardFooter class="flex justify-between">
-                        <Button as-child variant="outline">
+                        <Button as-child variant="secondary">
                             <Link :href="home()"> Cancel</Link>
                         </Button>
                         <Button type="submit" class="btn btn-primary"> Create Map</Button>

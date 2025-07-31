@@ -57,7 +57,7 @@ function onHover(hovered: boolean) {
                             <span class="font-medium">{{ ignoredSystems.length }}</span>
                             systems in this route.
                         </div>
-                        <Button variant="outline" size="sm" @click="clearIgnoreList">Clear ignored systems</Button>
+                        <Button variant="secondary" size="sm" @click="clearIgnoreList">Clear ignored systems</Button>
                     </template>
                 </div>
 
@@ -115,7 +115,7 @@ function onHover(hovered: boolean) {
                                     <TableCell class="h-auto p-1">
                                         <Tooltip v-if="index > 0 && index < route!.length - 1">
                                             <TooltipTrigger>
-                                                <Button variant="outline" size="icon" class="h-6 w-6" @click="handleIgnoreSystem(solarsystem.id)">
+                                                <Button variant="secondary" size="icon" class="h-6 w-6" @click="handleIgnoreSystem(solarsystem.id)">
                                                     <TimesIcon v-if="!isIgnored(solarsystem.id)" class="h-2.5 w-2.5" />
                                                     <span v-else class="text-xs">↺</span>
                                                 </Button>

@@ -84,7 +84,7 @@ function onRouteHover(hovered: boolean) {
         </TableCell>
         <TableCell>
             <RoutePopover :route="character.route">
-                <Button variant="outline" v-element-hover="onRouteHover">
+                <Button variant="secondary" v-element-hover="onRouteHover">
                     <span v-if="map_solarsystem && map_solarsystem.alias" class="flex items-center gap-2">
                         <span>{{ map_solarsystem.alias }}</span>
                         <span class="text-muted-foreground"> {{ map_solarsystem.name }}</span>
