@@ -2,7 +2,7 @@
 import ExternalIcon from '@/components/icons/ExternalIcon.vue';
 import Spinner from '@/components/icons/Spinner.vue';
 import SolarsystemEffect from '@/components/map/SolarsystemEffect.vue';
-import SovereigntyIcon from '@/components/map/SovereigntyIcon.vue';
+import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue';
 import Destination from '@/components/solarsystem/Destination.vue';
 import SecurityStatus from '@/components/solarsystem/SecurityStatus.vue';
 import SolarsystemClass from '@/components/SolarsystemClass.vue';
@@ -85,7 +85,7 @@ watch(
                 <SecurityStatus :security="map_solarsystem.solarsystem?.security" v-else-if="map_solarsystem.solarsystem?.security !== undefined" />
                 {{ map_solarsystem.name }}
                 <SolarsystemEffect :effect="map_solarsystem.effect" :effects="map_solarsystem.effects" v-if="map_solarsystem.effect" />
-                <SovereigntyIcon v-if="map_solarsystem.solarsystem?.sovereignty" :sovereignty="map_solarsystem.solarsystem.sovereignty" />
+                <SolarsystemSovereignty v-if="map_solarsystem.solarsystem?.sovereignty" :sovereignty="map_solarsystem.solarsystem.sovereignty" />
                 <a
                     :href="`https://zkillboard.com/system/${map_solarsystem.solarsystem?.id}/`"
                     target="_blank"

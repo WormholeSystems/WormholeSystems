@@ -11,7 +11,7 @@ const store = reactive<{
 });
 
 export function useNewConnection(
-    handle?: MaybeRefOrGetter<HTMLElement>,
+    handle?: MaybeRefOrGetter<HTMLElement | null>,
     map_solarsystem?: MaybeRefOrGetter<TMapSolarSystem>,
     container?: MaybeRefOrGetter<HTMLElement>,
 ) {

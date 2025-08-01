@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useOnClient } from '@/composables/useOnClient';
 import useUser from '@/composables/useUser';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { TShowMapProps } from '@/pages/maps/index';
@@ -32,11 +33,13 @@ const user = useUser();
 
 const confirmation = ref('');
 
-router.on('before', (event) => {
-    const id = echo().socketId();
-    if (!id) return;
-    event.detail.visit.headers['X-Socket-ID'] = id;
-});
+useOnClient(() =>
+    router.on('before', (event) => {
+        const id = echo().socketId();
+        if (!id) return;
+        event.detail.visit.headers['X-Socket-ID'] = id;
+    }),
+);
 </script>
 
 <template>

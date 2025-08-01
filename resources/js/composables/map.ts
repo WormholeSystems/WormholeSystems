@@ -5,8 +5,8 @@ import MapSolarsystems from '@/routes/map-solarsystems';
 import { TMapConfig } from '@/types/map';
 import { TMap, TMapConnection, TMapSolarSystem } from '@/types/models';
 import { router } from '@inertiajs/vue3';
-import { MaybeRefOrGetter, useDraggable, useMouse } from '@vueuse/core';
-import { computed, reactive, toValue, watchEffect } from 'vue';
+import { MaybeRefOrGetter, useDraggable, useEventListener, useMouse } from '@vueuse/core';
+import { computed, reactive, shallowRef, toValue, watchEffect } from 'vue';
 
 type Coordinates = {
     x: number;
@@ -50,7 +50,7 @@ const mapState = reactive<TMapState>({
         },
         grid_size: 20,
     },
-    scale: 0.5,
+    scale: 1,
     hovered_solarsystem_id: null,
 });
 
@@ -74,7 +74,11 @@ export function useMap(
 ) {
     const { path } = usePath();
 
-    watchEffect(() => {
+    watchEffect(createLayout);
+    watchEffect(createMap);
+    watchEffect(createConnections);
+
+    function createMap() {
         const mapValue = toValue(map);
         const containerValue = toValue(container);
         if (!mapValue) return;
@@ -85,22 +89,16 @@ export function useMap(
         mapState.map_container = containerValue || null;
         mapState.map_solarsystems = mapValue.map_solarsystems!.map(getSelectedState).map(getHoveredState).map(applyScale);
         mapState.config = configValue;
-    });
+    }
 
-    watchEffect(() => {
+    function createLayout() {
         const layoutValue = toValue(layout);
-        if (layoutValue) {
-            mapState.scale = layoutValue.scale;
-        } else {
-            mapState.scale = 1;
-        }
-    });
+        mapState.scale = layoutValue?.scale ?? 1;
+    }
 
-    watchEffect(() => {
-        if (!mapState.map) return;
-        const mapValue = toValue(mapState.map);
-        mapState.map_connections = mapValue.map_connections!.map(getConnectionWithSourceAndTarget);
-    });
+    function createConnections() {
+        mapState.map_connections = mapState.map!.map_connections!.map(getConnectionWithSourceAndTarget);
+    }
 
     function getSelectedState(system: TMapSolarSystem): WithIsSelected<TMapSolarSystem> {
         if (!mapState.selection) return { ...system, is_selected: false };
@@ -236,11 +234,13 @@ export function useMapConnections() {
 
 export function useMapSolarsystem(
     system: MaybeRefOrGetter<TMapSolarSystem>,
-    element: MaybeRefOrGetter<HTMLElement>,
-    handle?: MaybeRefOrGetter<HTMLElement>,
+    element: MaybeRefOrGetter<HTMLElement | null>,
+    handle?: MaybeRefOrGetter<HTMLElement | null>,
 ) {
     const { setSystemPosition } = useMapSolarsystems();
     const { clearSelection } = useSelection();
+
+    const is_dragging = shallowRef(false);
 
     const current_map_solarsystem = computed(() => map_solarsystems.value.find((s) => s.id === toValue(system)?.id)!);
 
@@ -259,6 +259,9 @@ export function useMapSolarsystem(
         disabled() {
             return current_map_solarsystem.value?.pinned;
         },
+        onStart() {
+            is_dragging.value = true;
+        },
     });
 
     watchEffect(() => {
@@ -269,6 +272,7 @@ export function useMapSolarsystem(
     });
 
     function handleDragEnd() {
+        is_dragging.value = false;
         updateMapSolarsystem(true);
     }
 
@@ -326,6 +330,14 @@ export function useMapSolarsystem(
             },
         );
     }
+
+    useEventListener('pointerdown', (event) => {
+        if (!is_dragging.value) {
+            return;
+        }
+
+        event.preventDefault();
+    });
 
     return draggable;
 }

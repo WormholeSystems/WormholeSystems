@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Table, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useOnClient } from '@/composables/useOnClient';
 import { getMapChannelName } from '@/const/channels';
 import { KillmailReceivedEvent } from '@/const/events';
 import { TKillmail } from '@/types/models';
@@ -42,11 +43,13 @@ type KillmailReceivedEvent = {
     killmail: TKillmail;
 };
 
-useEcho<KillmailReceivedEvent>(getMapChannelName(map_id), KillmailReceivedEvent, () => {
-    router.reload({
-        only: ['map_killmails'],
-    });
-});
+useOnClient(() =>
+    useEcho<KillmailReceivedEvent>(getMapChannelName(map_id), KillmailReceivedEvent, () => {
+        router.reload({
+            only: ['map_killmails'],
+        });
+    }),
+);
 </script>
 
 <template>

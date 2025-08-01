@@ -48,7 +48,7 @@ const options: TMapSolarsystemStatus[] = ['unknown', 'friendly', 'hostile', 'act
 
 <template>
     <ContextMenu>
-        <ContextMenuTrigger as-child>
+        <ContextMenuTrigger>
             <slot />
         </ContextMenuTrigger>
         <ContextMenuContent>

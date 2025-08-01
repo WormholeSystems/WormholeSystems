@@ -10,29 +10,34 @@ const { effects = [], effect } = defineProps<{
 </script>
 
 <template>
-    <Popover>
-        <PopoverTrigger class="pointer-events-auto" @drag.prevent>
-            <span v-if="effect === 'Pulsar'" class="block size-2 rounded-full bg-pulsar" />
-            <span v-else-if="effect === 'Magnetar'" class="block size-2 rounded-full bg-magnetar" />
-            <span v-else-if="effect === 'Black Hole'" class="block size-2 rounded-full bg-black-hole" />
-            <span v-else-if="effect === 'Red Giant'" class="block size-2 rounded-full bg-red-giant" />
-            <span v-else-if="effect === 'Cataclysmic Variable'" class="block size-2 rounded-full bg-catalysmic-variable" />
-            <span v-else-if="effect === 'Wolf-Rayet Star'" class="block size-2 rounded-full bg-wolf-rayet-star" />
-        </PopoverTrigger>
-        <PopoverContent>
-            <CardTitle>{{ effect }}</CardTitle>
-            <ul class="mt-4 grid grid-cols-[auto_1fr] divide-y text-xs">
-                <li class="col-span-full grid grid-cols-subgrid items-center gap-2 py-1" v-for="effect in effects" :key="effect.name">
-                    <span class="text-muted-foreground">{{ effect.name }}</span>
-                    <span
-                        :data-type="effect.type"
-                        class="text-right text-foreground data-[type=Buff]:text-green-500 data-[type=Debuff]:text-red-500"
-                        >{{ effect.strength! }}</span
-                    >
-                </li>
-            </ul>
-        </PopoverContent>
-    </Popover>
+    <span>
+        <Popover>
+            <PopoverTrigger class="pointer-events-auto" @drag.prevent>
+                <div class="relative">
+                    <span v-if="effect === 'Pulsar'" class="block size-2 rounded-full bg-pulsar" />
+                    <span v-else-if="effect === 'Magnetar'" class="block size-2 rounded-full bg-magnetar" />
+                    <span v-else-if="effect === 'Black Hole'" class="block size-2 rounded-full bg-black-hole" />
+                    <span v-else-if="effect === 'Red Giant'" class="block size-2 rounded-full bg-red-giant" />
+                    <span v-else-if="effect === 'Cataclysmic Variable'" class="block size-2 rounded-full bg-catalysmic-variable" />
+                    <span v-else-if="effect === 'Wolf-Rayet Star'" class="block size-2 rounded-full bg-wolf-rayet-star" />
+                    <span class="absolute -inset-4" />
+                </div>
+            </PopoverTrigger>
+            <PopoverContent>
+                <CardTitle>{{ effect }}</CardTitle>
+                <ul class="mt-4 grid grid-cols-[auto_1fr] divide-y text-xs">
+                    <li class="col-span-full grid grid-cols-subgrid items-center gap-2 py-1" v-for="effect in effects" :key="effect.name">
+                        <span class="text-muted-foreground">{{ effect.name }}</span>
+                        <span
+                            :data-type="effect.type"
+                            class="text-right text-foreground data-[type=Buff]:text-green-500 data-[type=Debuff]:text-red-500"
+                            >{{ effect.strength! }}</span
+                        >
+                    </li>
+                </ul>
+            </PopoverContent>
+        </Popover>
+    </span>
 </template>
 
 <style scoped></style>

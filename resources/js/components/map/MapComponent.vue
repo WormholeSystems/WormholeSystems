@@ -8,9 +8,10 @@ import MapContextMenu from '@/components/map/MapContextMenu.vue';
 import MapSolarsystem from '@/components/map/MapSolarsystem.vue';
 import { Button } from '@/components/ui/button';
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu';
-import { useMap as useNewMap, useMapAction, useMapConnections, useMapGrid, useMapScale, useMapSolarsystems } from '@/composables/map';
+import { useMapAction, useMapConnections, useMapGrid, useMapScale, useMapSolarsystems, useMap as useNewMap } from '@/composables/map';
 import { useHasWritePermission } from '@/composables/useHasPermission';
 import { useLayout } from '@/composables/useLayout';
+import { useOnClient } from '@/composables/useOnClient';
 import { getMapChannelName } from '@/const/channels';
 import {
     CharacterStatusUpdatedEvent,
@@ -81,51 +82,63 @@ function onOpenChange(open: boolean) {
     }
 }
 
-useEcho(
-    getMapChannelName(map.id),
-    [
-        MapUpdatedEvent,
-        MapSolarsystemUpdatedEvent,
-        MapSolarsystemsUpdatedEvent,
-        MapConnectionCreatedEvent,
-        MapConnectionUpdatedEvent,
-        MapConnectionDeletedEvent,
-    ],
-    () => {
-        router.reload({
-            only: ['map'],
-        });
-    },
+useOnClient(() =>
+    useEcho(
+        getMapChannelName(map.id),
+        [
+            MapUpdatedEvent,
+            MapSolarsystemUpdatedEvent,
+            MapSolarsystemsUpdatedEvent,
+            MapConnectionCreatedEvent,
+            MapConnectionUpdatedEvent,
+            MapConnectionDeletedEvent,
+        ],
+        () => {
+            router.reload({
+                only: ['map'],
+            });
+        },
+    ),
 );
 
-useEcho(getMapChannelName(map.id), [MapSolarsystemCreatedEvent, MapSolarsystemDeletedEvent, MapSolarsystemsDeletedEvent], () => {
-    router.reload({
-        only: ['map', 'map_killmails'],
-    });
-});
+useOnClient(() =>
+    useEcho(getMapChannelName(map.id), [MapSolarsystemCreatedEvent, MapSolarsystemDeletedEvent, MapSolarsystemsDeletedEvent], () => {
+        router.reload({
+            only: ['map', 'map_killmails'],
+        });
+    }),
+);
 
-useEcho(getMapChannelName(map.id), [MapRouteSolarsystemsUpdatedEvent], () => {
-    router.reload({
-        only: ['map_route_solarsystems'],
-    });
-});
+useOnClient(() =>
+    useEcho(getMapChannelName(map.id), [MapRouteSolarsystemsUpdatedEvent], () => {
+        router.reload({
+            only: ['map_route_solarsystems'],
+        });
+    }),
+);
 
-useEcho(getMapChannelName(map.id), CharacterStatusUpdatedEvent, () => {
-    router.reload({
-        only: ['map_characters', 'ship_history'],
-    });
-});
+useOnClient(() =>
+    useEcho(getMapChannelName(map.id), CharacterStatusUpdatedEvent, () => {
+        router.reload({
+            only: ['map_characters', 'ship_history'],
+        });
+    }),
+);
 
-useEcho(getMapChannelName(map.id), [SignatureCreatedEvent, SignatureUpdatedEvent, SignatureDeletedEvent], () => {
-    router.reload({
-        only: ['selected_map_solarsystem'],
-    });
-});
-useEcho(getMapChannelName(map.id), [MapConnectionCreatedEvent, MapConnectionDeletedEvent, MapConnectionUpdatedEvent], () => {
-    router.reload({
-        only: ['selected_map_solarsystem', 'map_route_solarsystems'],
-    });
-});
+useOnClient(() =>
+    useEcho(getMapChannelName(map.id), [SignatureCreatedEvent, SignatureUpdatedEvent, SignatureDeletedEvent], () => {
+        router.reload({
+            only: ['selected_map_solarsystem'],
+        });
+    }),
+);
+useOnClient(() =>
+    useEcho(getMapChannelName(map.id), [MapConnectionCreatedEvent, MapConnectionDeletedEvent, MapConnectionUpdatedEvent], () => {
+        router.reload({
+            only: ['selected_map_solarsystem', 'map_route_solarsystems'],
+        });
+    }),
+);
 
 let timeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -213,7 +226,7 @@ useEventListener('pointerup', () => {
                 />
             </ContextMenu>
         </div>
-        <div class="absolute right-0 bottom-0 z-30 flex overflow-hidden rounded-tl-lg border bg-neutral-900">
+        <div class="absolute right-0 bottom-0 z-30 flex overflow-hidden rounded-tl-lg border bg-neutral-100 dark:bg-neutral-900">
             <span class="flex h-8 items-center px-2 text-muted-foreground">{{ (scale * 100).toFixed(0) + '%' }}</span>
             <Button variant="ghost" size="icon" class="h-8 w-8" @click="setScale(scale - 0.1)">
                 <MinusIcon />

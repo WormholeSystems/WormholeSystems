@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import PinIcon from '@/components/icons/PinIcon.vue';
 import TrashIcon from '@/components/icons/TrashIcon.vue';
-import SovereigntyIcon from '@/components/map/SovereigntyIcon.vue';
+import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue';
 import RoutePopover from '@/components/routes/RoutePopover.vue';
 import SolarsystemClass from '@/components/SolarsystemClass.vue';
 import { Button } from '@/components/ui/button';
@@ -87,7 +87,7 @@ function removeRoute() {
 
         <!-- Sovereignty Column -->
         <div class="flex justify-center">
-            <SovereigntyIcon v-if="map_route.solarsystem.sovereignty" :sovereignty="map_route.solarsystem.sovereignty" />
+            <SolarsystemSovereignty v-if="map_route.solarsystem.sovereignty" :sovereignty="map_route.solarsystem.sovereignty" />
             <div v-else class="size-4"></div>
         </div>
 

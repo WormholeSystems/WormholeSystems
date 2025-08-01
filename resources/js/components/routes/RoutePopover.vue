@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import DestinationContextMenu from '@/components/DestinationContextMenu.vue';
 import TimesIcon from '@/components/icons/TimesIcon.vue';
-import SovereigntyIcon from '@/components/map/SovereigntyIcon.vue';
+import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue';
 import SolarsystemClass from '@/components/SolarsystemClass.vue';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -103,7 +103,7 @@ function onHover(hovered: boolean) {
                                     </TableCell>
                                     <TableCell class="h-auto p-1">
                                         <div class="flex justify-center">
-                                            <SovereigntyIcon v-if="solarsystem.sovereignty" :sovereignty="solarsystem.sovereignty" />
+                                            <SolarsystemSovereignty v-if="solarsystem.sovereignty" :sovereignty="solarsystem.sovereignty" />
                                             <span
                                                 v-else-if="solarsystem.effect"
                                                 class="rounded bg-muted px-1 py-0.5 text-xs text-muted-foreground"
