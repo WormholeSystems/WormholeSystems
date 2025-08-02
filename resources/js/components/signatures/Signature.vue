@@ -108,7 +108,7 @@ function handleIDSubmit() {
         <div class="flex items-center gap-2">
             <div
                 class="inline-block size-2 rounded-full data-[scanned=false]:bg-red-500 data-[scanned=true]:bg-green-500"
-                :data-scanned="Boolean(signature.signature_id && signature.type)"
+                :data-scanned="Boolean(signature.signature_id && signature.category)"
             />
             <SignatureID v-model="signature_id" :disabled="!can_write" @submit="handleIDSubmit" :current-value="signature.signature_id" />
         </div>
