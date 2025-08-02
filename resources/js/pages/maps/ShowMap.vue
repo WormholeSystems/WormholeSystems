@@ -26,8 +26,17 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { echo } from '@laravel/echo-vue';
 import { ref } from 'vue';
 
-const { map, selected_map_solarsystem, map_killmails, map_route_solarsystems, has_write_access, allow_crit, allow_eol, allow_eve_scout } =
-    defineProps<TShowMapProps>();
+const {
+    map,
+    selected_map_solarsystem,
+    map_killmails,
+    map_route_solarsystems,
+    has_write_access,
+    allow_crit,
+    allow_eol,
+    allow_eve_scout,
+    killmail_filter,
+} = defineProps<TShowMapProps>();
 
 const user = useUser();
 
@@ -105,7 +114,7 @@ useOnClient(() =>
                 </div>
                 <div class="col-span-10 grid gap-4 lg:col-span-5 2xl:col-span-3">
                     <MapCharacters :map_characters />
-                    <MapKillmails :map_killmails="map_killmails" :map_id="map.id" />
+                    <MapKillmails :map_killmails="map_killmails" :map_id="map.id" :filter="killmail_filter" />
                 </div>
                 <div class="col-span-10 2xl:col-span-3">
                     <Autopilot

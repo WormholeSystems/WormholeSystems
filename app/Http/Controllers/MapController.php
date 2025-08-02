@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Map\CreateMapAction;
+use App\Enums\KillmailFilter;
 use App\Http\Requests\StoreMapRequest;
 use App\Http\Resources\CharacterResource;
 use App\Http\Resources\KillmailResource;
@@ -64,8 +65,10 @@ class MapController extends Controller
 
         $selected_map_solarsystem = $this->getSelectedSolarsystem($map, $selected_map_solarsystem_id);
 
+        $killmail_filter = KillmailFilter::tryFrom(Session::get('killmail_filter', 'all')) ?? KillmailFilter::All;
+
         $map_killmails = Inertia::defer(
-            fn (): ResourceCollection => $this->getMapKills($map)
+            fn (): ResourceCollection => $this->getMapKills($map, $killmail_filter)
         );
 
         $map_characters = fn (): ResourceCollection => $this->getMapCharacters($map, $selected_map_solarsystem);
@@ -93,6 +96,7 @@ class MapController extends Controller
             'allow_crit' => Session::get('allow_crit', true),
             'allow_eve_scout' => Session::get('allow_eve_scout', false),
             'ignored_systems' => Session::get('ignored_systems', []),
+            'killmail_filter' => $killmail_filter,
         ]);
     }
 
@@ -156,10 +160,12 @@ class MapController extends Controller
     /**
      * @throws Throwable
      */
-    private function getMapKills(Map $map): ResourceCollection
+    private function getMapKills(Map $map, KillmailFilter $filter): ResourceCollection
     {
         return Killmail::query()->with('shipType')
             ->whereIn('solarsystem_id', $map->mapSolarsystems->pluck('solarsystem_id'))
+            ->when($filter === KillmailFilter::KSpace, fn (Builder $query) => $query->whereRelation('solarsystem', 'type', 'eve'))
+            ->when($filter === KillmailFilter::JSpace, fn (Builder $query) => $query->whereRelation('solarsystem', 'type', 'wormhole'))
             ->orderByDesc('id')
             ->limit(50)
             ->get()

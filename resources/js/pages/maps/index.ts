@@ -17,4 +17,5 @@ export type TShowMapProps = {
     allow_crit: boolean;
     allow_eve_scout: boolean;
     layout: TLayout;
+    killmail_filter: 'all' | 'jspace' | 'kspace';
 };

@@ -9,39 +9,34 @@ import { Table, TableCell, TableHead, TableHeader, TableRow } from '@/components
 import { useOnClient } from '@/composables/useOnClient';
 import { getMapChannelName } from '@/const/channels';
 import { KillmailReceivedEvent } from '@/const/events';
+import killmailFilters from '@/routes/killmail-filters';
 import { TKillmail } from '@/types/models';
 import { Deferred, router } from '@inertiajs/vue3';
 import { useEcho } from '@laravel/echo-vue';
-import { useLocalStorage } from '@vueuse/core';
-import { computed } from 'vue';
 
 const { map_killmails, map_id } = defineProps<{
     map_killmails?: TKillmail[];
     map_id: number;
+    filter: 'all' | 'jspace' | 'kspace';
 }>();
-
-const filter = useLocalStorage<'all' | 'jspace' | 'kspace'>('killmail_filter', 'all');
-
-const filtered_killmails = computed(() => {
-    if (filter.value === 'all') {
-        return map_killmails;
-    }
-    return map_killmails?.filter((killmail) => {
-        if (filter.value === 'jspace') {
-            return !!killmail.solarsystem.class;
-        }
-
-        if (filter.value === 'kspace') {
-            return !killmail.solarsystem.class;
-        }
-
-        return true;
-    });
-});
 
 type KillmailReceivedEvent = {
     killmail: TKillmail;
 };
+
+function handleFilterChange(value: 'all' | 'jspace' | 'kspace' | string) {
+    router.put(
+        killmailFilters.update().url,
+        {
+            killmail_filter: value,
+        },
+        {
+            only: ['map_killmails', 'killmail_filter'],
+            preserveState: true,
+            preserveScroll: true,
+        },
+    );
+}
 
 useOnClient(() =>
     useEcho<KillmailReceivedEvent>(getMapChannelName(map_id), KillmailReceivedEvent, () => {
@@ -65,7 +60,7 @@ useOnClient(() =>
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                        <DropdownMenuRadioGroup v-model="filter">
+                        <DropdownMenuRadioGroup :model-value="filter" @update:model-value="handleFilterChange">
                             <DropdownMenuRadioItem value="all"> All killmails</DropdownMenuRadioItem>
                             <DropdownMenuRadioItem value="jspace"> J-Space killmails</DropdownMenuRadioItem>
                             <DropdownMenuRadioItem value="kspace"> K-Space killmails</DropdownMenuRadioItem>
@@ -87,9 +82,9 @@ useOnClient(() =>
                         </TableHeader>
                         <Deferred data="map_killmails">
                             <TransitionGroup name="list">
-                                <Killmail v-for="killmail in filtered_killmails" :key="killmail.id" :killmail="killmail" />
+                                <Killmail v-for="killmail in map_killmails" :key="killmail.id" :killmail="killmail" />
                             </TransitionGroup>
-                            <TableRow v-if="!filtered_killmails?.length">
+                            <TableRow v-if="!map_killmails?.length">
                                 <TableCell colspan="3" class="text-center text-muted-foreground"> No killmails found </TableCell>
                             </TableRow>
                             <template #fallback>
