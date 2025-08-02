@@ -11,6 +11,7 @@ import { useIgnoreList } from '@/composables/useIgnoreList';
 import { usePath } from '@/composables/usePath';
 import { TSolarsystem } from '@/types/models';
 import { vElementHover } from '@vueuse/components';
+import { PopoverClose } from 'reka-ui';
 import { computed } from 'vue';
 
 interface Props {
@@ -55,10 +56,18 @@ function onHover(hovered: boolean) {
         <PopoverTrigger as-child>
             <slot />
         </PopoverTrigger>
-        <PopoverContent class="w-96 p-0">
+        <PopoverContent class="w-96 p-1">
             <div class="" v-element-hover="onHover">
                 <div class="grid gap-2 p-3">
-                    <span class="">Route</span>
+                    <div class="flex justify-between">
+                        <span class="">Route</span>
+
+                        <PopoverClose as-child>
+                            <Button variant="ghost">
+                                <TimesIcon />
+                            </Button>
+                        </PopoverClose>
+                    </div>
                     <div class="text-xs text-muted-foreground">
                         This route is calculated based on the shortest path through the available systems.
                     </div>
@@ -114,19 +123,21 @@ function onHover(hovered: boolean) {
                                         </div>
                                     </TableCell>
                                     <TableCell class="h-auto p-1">
-                                        <Tooltip v-if="index > 0 && index < route!.length - 1">
-                                            <TooltipTrigger>
-                                                <Button
-                                                    variant="secondary"
-                                                    size="icon"
-                                                    class="h-6 w-6"
-                                                    @click="handleIgnoreSolarsystem(solarsystem.id)"
-                                                >
-                                                    <TimesIcon class="h-2.5 w-2.5" />
-                                                </Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent> Ignore this system</TooltipContent>
-                                        </Tooltip>
+                                        <template v-if="route && index !== 0 && index !== route.length - 1">
+                                            <Tooltip>
+                                                <TooltipTrigger as-child>
+                                                    <Button
+                                                        variant="secondary"
+                                                        size="icon"
+                                                        class="h-6 w-6"
+                                                        @click="handleIgnoreSolarsystem(solarsystem.id)"
+                                                    >
+                                                        <TimesIcon class="h-2.5 w-2.5" />
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent> Ignore this system</TooltipContent>
+                                            </Tooltip>
+                                        </template>
                                     </TableCell>
                                 </TableRow>
                             </DestinationContextMenu>

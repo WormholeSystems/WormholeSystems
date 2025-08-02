@@ -138,8 +138,7 @@ function handleHover(hovered: boolean, route: TSolarsystem[] | null) {
             </CardAction>
         </CardHeader>
 
-        <CardContent class="p-2 pt-0">
-            <!-- Pilot Status -->
+        <CardContent class="p-1 pt-0">
             <div
                 class="mb-2 flex items-center gap-2 rounded border bg-white p-2 dark:bg-neutral-900/40"
                 v-element-hover="(e) => handleHover(e, activeCharacter?.route ?? null)"
@@ -174,8 +173,6 @@ function handleHover(hovered: boolean, route: TSolarsystem[] | null) {
                     </RoutePopover>
                 </div>
             </div>
-
-            <!-- Destinations Grid -->
             <Deferred data="map_route_solarsystems">
                 <template #fallback>
                     <div class="flex items-center justify-center gap-2 py-3 text-xs text-muted-foreground">
@@ -186,25 +183,20 @@ function handleHover(hovered: boolean, route: TSolarsystem[] | null) {
 
                 <div
                     :class="can_write ? 'grid-cols-[auto_1fr_auto_1fr_auto_auto]' : 'grid-cols-[auto_1fr_auto_1fr_auto]'"
-                    class="grid gap-x-4 rounded border bg-white text-xs dark:bg-neutral-900/40"
+                    class="grid gap-x-4 rounded border bg-white dark:bg-neutral-900/40"
                 >
-                    <!-- Grid Header -->
                     <div
-                        class="col-span-full grid grid-cols-subgrid border-b bg-neutral-50 px-3 py-1 text-[10px] font-medium text-muted-foreground dark:bg-neutral-800/50"
+                        class="col-span-full grid grid-cols-subgrid border-b bg-neutral-50 px-3 py-1 font-medium text-muted-foreground dark:bg-neutral-800/50"
                     >
                         <div></div>
                         <div>System</div>
                         <div class="text-center">Jumps</div>
                         <div>Region</div>
-                        <div class="text-center">Sov</div>
-                        <div class="text-center" v-if="can_write">Actions</div>
                     </div>
 
-                    <!-- Grid Rows -->
                     <MapRouteSolarsystem v-for="route in sorted" :key="route.solarsystem.id" :map_route="route" />
 
-                    <!-- Empty State -->
-                    <div v-if="!sorted?.length" class="col-span-full py-4 text-center text-xs text-muted-foreground">
+                    <div v-if="!sorted?.length" class="col-span-full py-4 text-center text-muted-foreground">
                         <div class="mb-1 text-sm">🎯</div>
                         <div>No destinations</div>
                     </div>

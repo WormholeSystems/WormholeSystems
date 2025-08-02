@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DestinationContextMenu from '@/components/DestinationContextMenu.vue';
 import PinIcon from '@/components/icons/PinIcon.vue';
 import TrashIcon from '@/components/icons/TrashIcon.vue';
 import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue';
@@ -54,70 +55,62 @@ function removeRoute() {
 </script>
 
 <template>
-    <div
-        class="group col-span-full grid grid-cols-subgrid items-center border-b px-3 py-1 last:border-b-0 hover:bg-neutral-50 dark:hover:bg-neutral-800/30"
-        v-element-hover="onHover"
-    >
-        <!-- Class Column -->
-        <div class="flex justify-center">
-            <SolarsystemClass :wormhole_class="map_route.solarsystem.class" :security="map_route.solarsystem.security" />
-        </div>
+    <DestinationContextMenu :solarsystem_id="map_route.solarsystem.id">
+        <div
+            class="group col-span-full grid grid-cols-subgrid items-center border-b py-1 text-sm *:first:pl-2 last:border-b-0 *:last:pr-2 hover:bg-neutral-50 dark:hover:bg-neutral-800/30"
+            v-element-hover="onHover"
+        >
+            <div class="flex items-center justify-center">
+                <SolarsystemClass :wormhole_class="map_route.solarsystem.class" :security="map_route.solarsystem.security" />
+            </div>
 
-        <!-- Name Column -->
-        <div class="min-w-0 truncate font-medium">
-            {{ map_route.solarsystem.name }}
-        </div>
+            <span class="truncate font-medium">
+                {{ map_route.solarsystem.name }}
+            </span>
 
-        <!-- Jumps Column -->
-        <div class="flex justify-center">
             <RoutePopover :route="map_route.route">
-                <Button variant="secondary" size="sm" class="h-5 w-8 px-0 font-mono text-[10px] font-medium">
+                <Button variant="secondary" size="sm" class="font-mono">
                     <span v-if="map_route.route && map_route.route.length > 0">
                         {{ map_route.route.length - 1 }}
                     </span>
                     <span v-else>∞</span>
                 </Button>
             </RoutePopover>
-        </div>
 
-        <!-- Region Column -->
-        <div class="min-w-0 truncate text-[10px] text-muted-foreground">
-            {{ map_route.solarsystem.region?.name || '' }}
-        </div>
+            <span class="truncate text-muted-foreground">
+                {{ map_route.solarsystem.region?.name || '' }}
+            </span>
 
-        <!-- Sovereignty Column -->
-        <div class="flex justify-center">
-            <SolarsystemSovereignty v-if="map_route.solarsystem.sovereignty" :sovereignty="map_route.solarsystem.sovereignty" />
+            <SolarsystemSovereignty v-if="map_route.solarsystem.sovereignty" :sovereignty="map_route.solarsystem.sovereignty" class="size-6" />
             <div v-else class="size-4"></div>
-        </div>
 
-        <!-- Actions Column -->
-        <div v-if="can_write" class="flex justify-center">
-            <Tooltip>
-                <TooltipTrigger>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        @click="togglePinned"
-                        :class="map_route.is_pinned ? 'text-yellow-600' : 'text-muted-foreground'"
-                        class="h-5 w-5 p-0"
-                    >
-                        <PinIcon class="size-3" />
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent>{{ map_route.is_pinned ? 'Unpin' : 'Pin' }}</TooltipContent>
-            </Tooltip>
+            <div v-if="can_write" class="flex justify-center gap-2">
+                <Tooltip>
+                    <TooltipTrigger as-child>
+                        <Button
+                            :data-pinned="map_route.is_pinned"
+                            class="data-[pinned=false]:text-muted-foreground"
+                            :variant="map_route.is_pinned ? 'secondary' : 'ghost'"
+                            size="sm"
+                            @click="togglePinned"
+                        >
+                            <PinIcon />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{{ map_route.is_pinned ? 'Unpin' : 'Pin' }}</TooltipContent>
+                </Tooltip>
 
-            <Tooltip>
-                <TooltipTrigger>
-                    <Button variant="ghost" size="sm" @click="removeRoute" class="h-5 w-5 p-0 text-muted-foreground hover:text-red-600">
-                        <TrashIcon class="size-3" />
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent>Remove</TooltipContent>
-            </Tooltip>
+                <Tooltip>
+                    <TooltipTrigger as-child>
+                        <Button variant="secondary" size="sm" @click="removeRoute">
+                            <TrashIcon />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Remove</TooltipContent>
+                </Tooltip>
+            </div>
         </div>
-    </div>
+    </DestinationContextMenu>
 </template>
 
 <style scoped></style>

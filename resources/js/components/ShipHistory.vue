@@ -33,11 +33,11 @@ const page = usePage<AppPageProps<TShowMapProps>>();
                             <TableCell>
                                 <TypeImage
                                     :type_id="ship_history.ship_type_id"
-                                    class="size-8 rounded-lg"
+                                    class="size-8 shrink-0 rounded-lg"
                                     :type_name="ship_history.ship_type?.name || ''"
                                 />
                             </TableCell>
-                            <TableCell>{{ ship_history.name }}</TableCell>
+                            <TableCell class="truncate">{{ ship_history.name }}</TableCell>
                             <TableCell>{{ ship_history.character?.name }}</TableCell>
                             <TableCell>{{ format(new Date(ship_history.created_at), 'MMM dd, HH:ii') }}</TableCell>
                             <TableCell>{{ format(new Date(ship_history.updated_at), 'MMM dd, HH:ii') }}</TableCell>

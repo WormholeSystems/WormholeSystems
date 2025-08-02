@@ -77,7 +77,7 @@ const modified_class = computed(() => {
     <Tooltip>
         <TooltipTrigger
             :data-modified-class="modified_class"
-            class="whitespace-nowrap data-[modified-class=eol]:text-purple-500 data-[modified-class=fresh]:text-green-500 data-[modified-class=old]:text-yellow-500 data-[modified-class=very-old]:text-red-500"
+            class="whitespace-nowrap data-[modified-class=eol]:text-purple-500 data-[modified-class=fresh]:text-neutral-500 data-[modified-class=old]:text-neutral-500 data-[modified-class=very-old]:text-neutral-500"
         >
             {{ modified_at }}
         </TooltipTrigger>

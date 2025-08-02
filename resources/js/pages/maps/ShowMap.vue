@@ -93,8 +93,8 @@ useOnClient(() =>
                     </div>
                 </div>
             </div>
-            <div class="grid grid-cols-12 content-start items-start gap-4">
-                <div class="col-span-12 grid gap-4 lg:col-span-6 xl:col-span-5">
+            <div class="grid grid-cols-10 content-start items-start gap-4">
+                <div class="col-span-10 grid gap-4 lg:col-span-5 2xl:col-span-4">
                     <SolarsystemDetails v-if="selected_map_solarsystem" :map_solarsystem="selected_map_solarsystem" :map :map_route_solarsystems />
                     <div class="flex flex-col items-center justify-center gap-8 rounded-lg border border-dashed p-16 text-neutral-700" v-else>
                         <QuestionIcon class="text-4xl" />
@@ -103,11 +103,11 @@ useOnClient(() =>
                     <Signatures :map :map_solarsystem="selected_map_solarsystem" v-if="selected_map_solarsystem" />
                     <ShipHistory />
                 </div>
-                <div class="col-span-12 grid gap-4 lg:col-span-6 xl:col-span-4">
+                <div class="col-span-10 grid gap-4 lg:col-span-5 2xl:col-span-3">
                     <MapCharacters :map_characters />
                     <MapKillmails :map_killmails="map_killmails" :map_id="map.id" />
                 </div>
-                <div class="col-span-12 xl:col-span-3">
+                <div class="col-span-10 2xl:col-span-3">
                     <Autopilot
                         :map_route_solarsystems
                         v-if="selected_map_solarsystem"

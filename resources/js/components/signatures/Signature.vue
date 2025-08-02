@@ -113,8 +113,8 @@ function handleIDSubmit() {
             <SignatureID v-model="signature_id" :disabled="!can_write" @submit="handleIDSubmit" :current-value="signature.signature_id" />
         </div>
         <Select :model-value="signature.category" @update:modelValue="handleCategoryChange" :disabled="!can_write">
-            <SelectTrigger class="w-full">
-                <SelectValue placeholder="Select category" />
+            <SelectTrigger class="w-full overflow-hidden">
+                <SelectValue placeholder="Category" />
             </SelectTrigger>
             <SelectContent>
                 <SelectItem v-for="option in options" :key="option" :value="option">
@@ -125,7 +125,7 @@ function handleIDSubmit() {
         <Select :model-value="signature.type" @update:model-value="handleTypeChange" :disabled="!can_write">
             <SelectTrigger class="w-full overflow-hidden data-[wormhole=false]:col-span-2" :data-wormhole="signature.category === 'Wormhole'">
                 <SelectValue as-child>
-                    <span class="truncate">{{ signature.type || 'Select type' }}</span>
+                    <span class="truncate">{{ signature.type || 'Type' }}</span>
                 </SelectValue>
             </SelectTrigger>
             <SelectContent>

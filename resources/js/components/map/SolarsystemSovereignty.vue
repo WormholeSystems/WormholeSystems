@@ -3,34 +3,27 @@ import AllianceLogo from '@/components/images/AllianceLogo.vue';
 import CorporationLogo from '@/components/images/CorporationLogo.vue';
 import FactionLogo from '@/components/images/FactionLogo.vue';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 import { TSovereignty } from '@/types/models';
 
-const { sovereignty } = defineProps<{
+const { sovereignty, ...props } = defineProps<{
     sovereignty: TSovereignty;
+    class?: string;
 }>();
 </script>
 
 <template>
-    <Tooltip>
-        <TooltipTrigger>
-            <AllianceLogo
-                v-if="sovereignty.alliance"
-                :alliance_id="sovereignty.alliance.id"
-                :alliance_name="sovereignty.alliance.name"
-                class="size-4"
-            />
-            <CorporationLogo
-                v-else-if="sovereignty.corporation"
-                :corporation_id="sovereignty.corporation.id"
-                :corporation_name="sovereignty.corporation.name"
-                class="size-4"
-            />
-            <FactionLogo
-                v-else-if="sovereignty.faction"
-                :faction_id="sovereignty.faction.id"
-                :faction_name="sovereignty.faction.name"
-                class="size-4"
-            />
+    <Tooltip :delay-duration="1000">
+        <TooltipTrigger as-child>
+            <div :class="cn('size-4', props.class)">
+                <AllianceLogo v-if="sovereignty.alliance" :alliance_id="sovereignty.alliance.id" :alliance_name="sovereignty.alliance.name" />
+                <CorporationLogo
+                    v-else-if="sovereignty.corporation"
+                    :corporation_id="sovereignty.corporation.id"
+                    :corporation_name="sovereignty.corporation.name"
+                />
+                <FactionLogo v-else-if="sovereignty.faction" :faction_id="sovereignty.faction.id" :faction_name="sovereignty.faction.name" />
+            </div>
         </TooltipTrigger>
         <TooltipContent class="text-sm">
             <div v-if="sovereignty.alliance" class="flex items-center gap-2">

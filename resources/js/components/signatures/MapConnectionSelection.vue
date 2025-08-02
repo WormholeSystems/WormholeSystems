@@ -17,7 +17,7 @@ const model = defineModel<number | null>({
 
 <template>
     <Select v-model:model-value="model">
-        <SelectTrigger class="w-full">
+        <SelectTrigger class="w-full overflow-hidden">
             <SelectValue as-child>
                 <template v-if="selected">
                     <SolarsystemClass :wormhole_class="selected.target.class" :security="selected.target.solarsystem?.security" />
@@ -28,7 +28,7 @@ const model = defineModel<number | null>({
                     </span>
                 </template>
                 <template v-else>
-                    <span class="truncate">Select connection</span>
+                    <span class="truncate">Connection</span>
                 </template>
             </SelectValue>
         </SelectTrigger>
