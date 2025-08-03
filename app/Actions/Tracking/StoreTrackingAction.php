@@ -6,15 +6,21 @@ use App\Actions\MapConnections\CreateMapConnectionAction;
 use App\Actions\MapSolarsystem\StoreMapSolarsystemAction;
 use App\Enums\MassStatus;
 use App\Enums\ShipSize;
+use App\Models\MapConnection;
 use App\Models\MapSolarsystem;
 use App\Models\Solarsystem;
 use App\Utilities\WormholeConnectionClassifier;
 use Illuminate\Container\Attributes\Config;
 use Illuminate\Support\Facades\DB;
+use Random\RandomException;
 use Throwable;
 
 class StoreTrackingAction
 {
+    private const int MINIMUM_DISTANCE_Y = 40;
+
+    private const int MINIMUM_DISTANCE_X = 120;
+
     public function __construct(
         protected WormholeConnectionClassifier $connectionClassifier,
         protected StoreMapSolarsystemAction $storeMapSolarsystemAction,
@@ -56,14 +62,12 @@ class StoreTrackingAction
 
             $ship_size = $this->connectionClassifier->getSize($map_solarsystem->solarsystem, $to_solarsystem);
 
-            $minimum_distance_y = 40;
-            $minimum_distance_x = 120;
-            $distance_x = random_int($minimum_distance_x, $minimum_distance_x * 2);
-            $distance_y = random_int($minimum_distance_y, $minimum_distance_y * 2);
-            $direction_y = random_int(0, 1) !== 0 ? 1 : -1;
-
-            $position_x = max(40, min($this->max_x, $map_solarsystem->position_x + $distance_x));
-            $position_y = max(20, min($this->max_y, $map_solarsystem->position_y + ($distance_y * $direction_y)));
+            [
+                'position_x' => $position_x,
+                'position_y' => $position_y,
+            ] = $this->guessGoodPositionForNewSolarsystem(
+                $map_solarsystem,
+            );
 
             $new_map_solarsystem = $this->storeMapSolarsystemAction->handle(
                 $map_solarsystem->map,
@@ -86,5 +90,82 @@ class StoreTrackingAction
             );
 
         }, 10);
+    }
+
+    /**
+     * @return array{position_x: int, position_y: int}
+     *
+     * @throws RandomException
+     */
+    private function getRandomPositionAroundSolarsystem(
+        MapSolarsystem $mapSolarsystem,
+    ): array {
+        $distance_x = random_int(self::MINIMUM_DISTANCE_X, self::MINIMUM_DISTANCE_X * 2);
+        $distance_y = random_int(self::MINIMUM_DISTANCE_Y, self::MINIMUM_DISTANCE_Y * 2);
+        $direction_y = random_int(0, 1) !== 0 ? 1 : -1;
+        $position_x = max(40, min($this->max_x, $mapSolarsystem->position_x + $distance_x));
+        $position_y = max(20, min($this->max_y, $mapSolarsystem->position_y + ($distance_y * $direction_y)));
+
+        return [
+            'position_x' => $position_x,
+            'position_y' => $position_y,
+        ];
+
+    }
+
+    /**
+     * @return array{position_x: int, position_y: int}
+     *
+     * @throws RandomException
+     */
+    private function guessGoodPositionForNewSolarsystem(
+        MapSolarsystem $mapSolarsystem,
+    ): array {
+
+        /**
+         * We want to get a good new position for the map solarsystem. Wormholes should be grouped
+         */
+        $latest_created_map_connection = $mapSolarsystem->connections->sortByDesc('created_at')
+            ->filter(function (MapConnection $mapConnection) use ($mapSolarsystem): bool {
+                if ($mapSolarsystem->alias === null) {
+                    return true;
+                }
+                $other_map_solarsystem = $mapConnection->toMapSolarsystem->is(
+                    $mapSolarsystem)
+                    ? $mapConnection->fromMapSolarsystem
+                    : $mapConnection->toMapSolarsystem;
+                if ($other_map_solarsystem->alias === null) {
+                    return true;
+                }
+                if (! is_numeric($other_map_solarsystem->alias)) {
+                    return true;
+                }
+
+                return $other_map_solarsystem->alias > $mapSolarsystem->alias;
+            })
+            ->first();
+
+        if ($latest_created_map_connection === null) {
+            return $this->getRandomPositionAroundSolarsystem($mapSolarsystem);
+        }
+
+        $latest_created_map_solarsystem = $latest_created_map_connection->toMapSolarsystem->is($mapSolarsystem)
+            ? $latest_created_map_connection->fromMapSolarsystem
+            : $latest_created_map_connection->toMapSolarsystem;
+
+        $latest_position_x = $latest_created_map_solarsystem->position_x;
+        $latest_position_y = $latest_created_map_solarsystem->position_y;
+
+        $new_y = $latest_position_y + self::MINIMUM_DISTANCE_Y;
+        $new_x = $latest_position_x;
+
+        if ($new_y > $this->max_y || $new_x > $this->max_x) {
+            return $this->getRandomPositionAroundSolarsystem($mapSolarsystem);
+        }
+
+        return [
+            'position_x' => (int) $new_x,
+            'position_y' => (int) $new_y,
+        ];
     }
 }

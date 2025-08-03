@@ -86,6 +86,9 @@ class MapSolarsystem extends Model
         return $this->hasMany(Signature::class, 'map_solarsystem_id');
     }
 
+    /**
+     * @var Collection<int,MapConnection>|null
+     */
     public ?Collection $connections {
         get {
             $mergedConnections = $this->connectionsTo->merge($this->connectionsFrom);
