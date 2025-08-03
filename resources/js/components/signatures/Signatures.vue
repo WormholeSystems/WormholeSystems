@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import SignatureController from '@/actions/App/Http/Controllers/SignatureController';
+import ChevronDownIcon from '@/components/icons/ChevronDownIcon.vue';
 import PasteIcon from '@/components/icons/PasteIcon.vue';
 import PlusIcon from '@/components/icons/PlusIcon.vue';
 import Signature from '@/components/signatures/Signature.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useHasWritePermission } from '@/composables/useHasPermission';
 import { useSignatures } from '@/composables/useSignatures';
@@ -191,13 +193,14 @@ function createNewSignature() {
     );
 }
 
-function deleteMissingSignatures() {
+function deleteMissingSignatures(with_solarsystems = false) {
     router.delete(Signatures.destroy(map_solarsystem.id).url, {
         preserveScroll: true,
         preserveState: true,
-        only: ['selected_map_solarsystem'],
+        only: ['selected_map_solarsystem', 'map'],
         data: {
             signature_ids: deleted_signatures.value.map((signature) => signature.id),
+            remove_map_solarsystems: with_solarsystems,
         },
     });
 }
@@ -235,7 +238,21 @@ useEventListener('paste', (event) => {
                     </TooltipTrigger>
                     <TooltipContent> Unselect signatures</TooltipContent>
                 </Tooltip>
-                <Button v-if="deleted_signatures.length > 0" @click="deleteMissingSignatures" variant="destructive"> Delete Missing </Button>
+                <div class="flex divide-x" v-if="deleted_signatures.length > 0">
+                    <Button @click="deleteMissingSignatures" variant="destructive" class="rounded-r-none"> Delete Missing </Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger as-child>
+                            <Button variant="destructive" class="rounded-l-none" size="icon">
+                                <ChevronDownIcon />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                            <DropdownMenuItem @click="deleteMissingSignatures(true)" as-child>
+                                <Button variant="destructive" class="w-full"> Delete Missing with Solarsystems</Button>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
                 <Tooltip>
                     <TooltipTrigger as-child>
                         <Button @click="handlePaste" variant="secondary" size="icon">

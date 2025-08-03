@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { SelectItem } from '@/components/ui/select';
 import SolarsystemClass from '@/components/SolarsystemClass.vue';
+import { SelectItem } from '@/components/ui/select';
 import { TProcessedConnection } from '@/composables/map';
 
 defineProps<{

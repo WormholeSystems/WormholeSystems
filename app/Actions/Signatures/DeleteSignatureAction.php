@@ -22,21 +22,24 @@ readonly class DeleteSignatureAction
     /**
      * @throws Throwable
      */
-    public function handle(Signature $signature, bool $without_events = false): bool
+    public function handle(Signature $signature, bool $without_events = false, bool $remove_map_solarsystem = false): bool
     {
-        return DB::transaction(function () use ($signature, $without_events): true {
+        return DB::transaction(function () use ($signature, $without_events, $remove_map_solarsystem): true {
             broadcast_unless($without_events, new SignatureDeletedEvent($signature->mapSolarsystem->map_id))->toOthers();
-            $this->deleteMapConnection($signature);
+            $this->deleteMapConnection($signature, $remove_map_solarsystem);
             $signature->delete();
 
             return true;
         });
     }
 
-    private function deleteMapConnection(Signature $signature): void
+    /**
+     * @throws Throwable
+     */
+    private function deleteMapConnection(Signature $signature, bool $remove_map_solarsystem = false): void
     {
         if ($signature->map_connection_id) {
-            $this->deleteMapConnectionAction->handle($signature->mapConnection);
+            $this->deleteMapConnectionAction->handle($signature->mapConnection, $remove_map_solarsystem);
         }
     }
 }

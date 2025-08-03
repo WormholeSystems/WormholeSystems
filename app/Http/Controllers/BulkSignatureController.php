@@ -20,6 +20,7 @@ class BulkSignatureController extends Controller
         $deleteSignaturesAction->handle(
             mapSolarsystem: $mapSolarsystem,
             signature_ids: $request->input('signature_ids', []),
+            remove_map_solarsystems: $request->boolean('remove_map_solarsystems'),
         );
 
         return back()->notify(

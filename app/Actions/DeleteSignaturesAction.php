@@ -20,12 +20,12 @@ final readonly class DeleteSignaturesAction
      *
      * @throws Throwable
      */
-    public function handle(MapSolarsystem $mapSolarsystem, array $signature_ids): void
+    public function handle(MapSolarsystem $mapSolarsystem, array $signature_ids, bool $remove_map_solarsystems = false): void
     {
-        DB::transaction(function () use ($mapSolarsystem, $signature_ids): void {
+        DB::transaction(function () use ($mapSolarsystem, $signature_ids, $remove_map_solarsystems): void {
             $mapSolarsystem->signatures()
                 ->whereIn('signatures.id', $signature_ids)
-                ->each(fn ($signature): bool => $this->action->handle($signature, without_events: true));
+                ->each(fn ($signature): bool => $this->action->handle($signature, without_events: true, remove_map_solarsystem: $remove_map_solarsystems));
 
             broadcast(new MapConnectionsDeletedEvent(
                 map_id: $mapSolarsystem->map_id,
