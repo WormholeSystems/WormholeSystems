@@ -94,7 +94,7 @@ class MapController extends Controller
             'ship_history' => $ship_history,
             'has_write_access' => Gate::allows('update', $map),
             'allow_eol' => Session::get('allow_eol', true),
-            'allow_mass' => Session::get('allow_mass', MassStatus::Reduced->value),
+            'allow_mass' => Session::get('allow_mass', MassStatus::Reduced),
             'allow_eve_scout' => Session::get('allow_eve_scout', false),
             'ignored_systems' => Session::get('ignored_systems', []),
             'killmail_filter' => $killmail_filter,
