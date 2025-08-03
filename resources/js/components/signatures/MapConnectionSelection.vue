@@ -63,7 +63,7 @@ const model = defineModel<number | null>({
                     <span class="mr-auto truncate" v-if="!connection.target!.alias">{{ connection?.target!.name }}</span>
                     <span class="mr-auto truncate" v-else>
                         <span class="mr-1">{{ connection?.target!.alias }}</span>
-                        <span class="-foreground text-muted">{{ connection?.target!.name }}</span>
+                        <span class="-foreground text-muted-foreground">{{ connection?.target!.name }}</span>
                     </span>
                 </SelectItem>
             </SelectGroup>
