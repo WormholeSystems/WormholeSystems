@@ -32,7 +32,7 @@ const {
     map_killmails,
     map_route_solarsystems,
     has_write_access,
-    allow_crit,
+    allow_mass,
     allow_eol,
     allow_eve_scout,
     killmail_filter,
@@ -123,7 +123,7 @@ useOnClient(() =>
                         :map
                         :solarsystems
                         :selected_map_solarsystem
-                        :allow_crit
+                        :allow_mass
                         :allow_eol
                         :allow_eve_scout
                         :map_characters

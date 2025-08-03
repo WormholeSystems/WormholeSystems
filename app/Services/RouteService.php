@@ -7,6 +7,7 @@ use App\Http\Resources\SolarsystemResource;
 use App\Models\Map;
 use App\Models\MapConnection;
 use App\Models\Solarsystem;
+use App\Scopes\ConnectionSatisfiesMass;
 use Illuminate\Database\Eloquent\Builder;
 use NicolasKion\SDE\Models\SolarsystemConnection;
 use SplPriorityQueue;
@@ -36,7 +37,7 @@ class RouteService
     /**
      * Find the fastest route with session-based system exclusions
      */
-    public function findRoute(int $fromId, int $toId, RouteOptions $options = new RouteOptions): array
+    public function findRoute(int $fromId, int $toId, RouteOptions $options): array
     {
         $connections = $this->prepareConnections($options);
         $ignoredSystems = $options->ignoredSystems ?? [];
@@ -186,7 +187,7 @@ class RouteService
         $connections = $this->connections;
 
         if ($options->map instanceof Map) {
-            $connections = $this->mergeMapConnections($options->map, $connections, $options->allowEol, $options->allowCrit);
+            $connections = $this->mergeMapConnections($options->map, $connections, $options->allowEol, $options->massStatus);
         }
 
         if ($options->allowEveScout) {
@@ -196,9 +197,9 @@ class RouteService
         return $connections;
     }
 
-    private function mergeMapConnections(Map $map, array $connections, bool $allowEol, bool $allowCrit): array
+    private function mergeMapConnections(Map $map, array $connections, bool $allowEol, MassStatus $massStatus): array
     {
-        $mapConnections = $this->getMapConnections($map, $allowEol, $allowCrit);
+        $mapConnections = $this->getMapConnections($map, $allowEol, $massStatus);
 
         foreach ($mapConnections as $from => $to) {
             $connections[$from] = isset($connections[$from]) ? array_merge($connections[$from], $to) : $to;
@@ -207,14 +208,14 @@ class RouteService
         return $connections;
     }
 
-    private function getMapConnections(Map $map, bool $allowEol, bool $allowCrit): array
+    private function getMapConnections(Map $map, bool $allow_eol, MassStatus $minimum_mass): array
     {
         return MapConnection::query()
             ->join('map_solarsystems as from', 'map_connections.from_map_solarsystem_id', '=', 'from.id')
             ->join('map_solarsystems as to', 'map_connections.to_map_solarsystem_id', '=', 'to.id')
             ->where('map_connections.map_id', $map->id)
-            ->when(! $allowEol, fn (Builder $query) => $query->where('is_eol', false))
-            ->when(! $allowCrit, fn (Builder $query) => $query->where('mass_status', '!=', MassStatus::Critical))
+            ->when(! $allow_eol, fn (Builder $query) => $query->where('is_eol', false))
+            ->when($minimum_mass, fn (Builder $query) => $query->tap(new ConnectionSatisfiesMass($minimum_mass)))
             ->select('from.solarsystem_id as from_solarsystem_id', 'to.solarsystem_id as to_solarsystem_id')
             ->get()
             ->map(static function (MapConnection $connection): array {

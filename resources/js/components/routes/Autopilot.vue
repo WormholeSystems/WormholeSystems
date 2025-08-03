@@ -10,22 +10,23 @@ import { Button } from '@/components/ui/button';
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useHasWritePermission } from '@/composables/useHasPermission';
 import { usePath } from '@/composables/usePath';
 import useUser from '@/composables/useUser';
 import Watchlist from '@/routes/watchlist';
-import { TCharacter, TMap, TMapRouteSolarsystem, TMapSolarSystem, TSolarsystem } from '@/types/models';
+import { TCharacter, TMap, TMapRouteSolarsystem, TMapSolarSystem, TMassStatus, TSolarsystem } from '@/types/models';
 import { Deferred, router } from '@inertiajs/vue3';
 import { vElementHover } from '@vueuse/components';
 import { computed } from 'vue';
 
-const { map_route_solarsystems, map, solarsystems, allow_eol, allow_crit, allow_eve_scout, map_characters } = defineProps<{
+const { map_route_solarsystems, map, solarsystems, allow_eol, allow_mass, allow_eve_scout, map_characters } = defineProps<{
     map: TMap;
     solarsystems: TSolarsystem[];
     map_route_solarsystems?: TMapRouteSolarsystem[];
     selected_map_solarsystem?: TMapSolarSystem;
     allow_eol: boolean;
-    allow_crit: boolean;
+    allow_mass: TMassStatus;
     allow_eve_scout: boolean;
     map_characters?: TCharacter[];
 }>();
@@ -57,21 +58,21 @@ function handleToggleEol(value: boolean | 'indeterminate') {
         },
         {
             preserveScroll: true,
-            only: ['map_route_solarsystems', 'allow_eol', 'allow_crit', 'allow_eve_scout'],
+            only: ['map_route_solarsystems', 'allow_eol', 'allow_mass', 'allow_eve_scout'],
             preserveState: true,
         },
     );
 }
 
-function handleToggleCrit(value: boolean | 'indeterminate') {
+function handleToggleMass(value: string) {
     router.put(
         Watchlist.update().url,
         {
-            allow_crit: value === true,
+            allow_mass: value,
         },
         {
             preserveScroll: true,
-            only: ['map_route_solarsystems', 'allow_eol', 'allow_crit', 'allow_eve_scout'],
+            only: ['map_route_solarsystems', 'allow_eol', 'allow_mass', 'allow_eve_scout'],
             preserveState: true,
         },
     );
@@ -85,7 +86,7 @@ function handleToggleEveScout(value: boolean | 'indeterminate') {
         },
         {
             preserveScroll: true,
-            only: ['map_route_solarsystems', 'allow_eol', 'allow_crit', 'allow_eve_scout'],
+            only: ['map_route_solarsystems', 'allow_eol', 'allow_mass', 'allow_eve_scout'],
             preserveState: true,
         },
     );
@@ -120,16 +121,24 @@ function handleHover(hovered: boolean, route: TSolarsystem[] | null) {
                                     <Checkbox :model-value="allow_eol" @update:model-value="handleToggleEol" id="eol-checkbox" />
                                     <label for="eol-checkbox" class="cursor-pointer text-xs font-medium"> Allow EOL connections </label>
                                 </div>
-
-                                <div class="flex items-center gap-2">
-                                    <Checkbox :model-value="allow_crit" @update:model-value="handleToggleCrit" id="crit-checkbox" />
-                                    <label for="crit-checkbox" class="cursor-pointer text-xs font-medium"> Allow critical mass </label>
-                                </div>
-
                                 <div class="flex items-center gap-2">
                                     <Checkbox :model-value="allow_eve_scout" @update:model-value="handleToggleEveScout" id="thera-checkbox" />
                                     <label for="thera-checkbox" class="cursor-pointer text-xs font-medium"> Use Thera/Turnur </label>
                                 </div>
+                                <RadioGroup :model-value="allow_mass" @update:model-value="handleToggleMass">
+                                    <div class="flex items-center gap-2">
+                                        <RadioGroupItem value="critical" id="crit" />
+                                        <Label class="cursor-pointer text-xs font-medium" for="crit"> Allow critical</Label>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <RadioGroupItem value="reduced" id="reduced" />
+                                        <Label class="cursor-pointer text-xs font-medium" for="reduced">Allow reduced</Label>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <RadioGroupItem value="fresh" id="fresh" />
+                                        <Label class="cursor-pointer text-xs font-medium" for="fresh">Only fresh</Label>
+                                    </div>
+                                </RadioGroup>
                             </div>
                         </div>
                     </PopoverContent>

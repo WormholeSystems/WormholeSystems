@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\Map\CreateMapAction;
 use App\Enums\KillmailFilter;
+use App\Enums\MassStatus;
 use App\Http\Requests\StoreMapRequest;
 use App\Http\Resources\CharacterResource;
 use App\Http\Resources\KillmailResource;
@@ -93,7 +94,7 @@ class MapController extends Controller
             'ship_history' => $ship_history,
             'has_write_access' => Gate::allows('update', $map),
             'allow_eol' => Session::get('allow_eol', true),
-            'allow_crit' => Session::get('allow_crit', true),
+            'allow_mass' => Session::get('allow_mass', MassStatus::Reduced->value),
             'allow_eve_scout' => Session::get('allow_eve_scout', false),
             'ignored_systems' => Session::get('ignored_systems', []),
             'killmail_filter' => $killmail_filter,
@@ -189,7 +190,7 @@ class MapController extends Controller
                 }
                 $character->route = $this->getFastestRoute(
                     $mapSolarsystem->solarsystem_id ?? 0,
-                    $character->characterStatus?->solarsystem_id ?? 0,
+                    $character->characterStatus->solarsystem_id ?? 0,
                     $map
                 );
 
@@ -229,13 +230,13 @@ class MapController extends Controller
     private function getFastestRoute(int $start_solarsystem_id, int $destination_solarsystem_id, ?Map $map = null): array
     {
         $allow_eol = Session::get('allow_eol', true);
-        $allow_crit = Session::get('allow_crit', true);
+        $allow_mass = Session::get('allow_mass', MassStatus::Reduced);
         $allow_eve_scout = Session::get('allow_eve_scout', false);
         $ignored_systems = Session::get('ignored_systems', []);
 
         $options = new RouteOptions(
             allowEol: $allow_eol,
-            allowCrit: $allow_crit,
+            massStatus: $allow_mass,
             allowEveScout: $allow_eve_scout,
             map: $map,
             ignoredSystems: $ignored_systems
