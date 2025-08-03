@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import QuestionIcon from '@/components/icons/QuestionIcon.vue';
 import SolarsystemClass from '@/components/SolarsystemClass.vue';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TProcessedConnection } from '@/composables/map';
 
 defineProps<{
@@ -33,12 +32,10 @@ const model = defineModel<number | null>({
             </SelectValue>
         </SelectTrigger>
         <SelectContent class="max-h-80">
-            <SelectItem :value="null" text-value="Unknown connection">
-                <QuestionIcon />
-                Unknown connection
-            </SelectItem>
+            <SelectItem :value="null" text-value="Unknown connection"> Unknown connection</SelectItem>
             <SelectGroup v-if="unconnected_connections.length > 0">
-                <SelectLabel> Unconnected solarsystems</SelectLabel>
+                <SelectSeparator />
+                <SelectLabel class="text-muted-foreground"> Unconnected solarsystems</SelectLabel>
                 <SelectItem
                     v-for="connection in unconnected_connections"
                     :key="connection.id"
@@ -54,7 +51,8 @@ const model = defineModel<number | null>({
                 </SelectItem>
             </SelectGroup>
             <SelectGroup v-if="connected_connections.length > 0">
-                <SelectLabel> Connected solarsystems</SelectLabel>
+                <SelectSeparator />
+                <SelectLabel class="text-muted-foreground"> Connected solarsystems</SelectLabel>
                 <SelectItem
                     v-for="connection in connected_connections"
                     :key="connection.id"
