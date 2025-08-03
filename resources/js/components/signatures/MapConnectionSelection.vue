@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ConnectionOption from '@/components/signatures/ConnectionOption.vue';
 import SolarsystemClass from '@/components/SolarsystemClass.vue';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TProcessedConnection } from '@/composables/map';
@@ -36,36 +37,12 @@ const model = defineModel<number | null>({
             <SelectGroup v-if="unconnected_connections.length > 0">
                 <SelectSeparator />
                 <SelectLabel class="text-muted-foreground"> Unconnected solarsystems</SelectLabel>
-                <SelectItem
-                    v-for="connection in unconnected_connections"
-                    :key="connection.id"
-                    :value="connection.id"
-                    :text-value="connection.target.solarsystem?.name"
-                >
-                    <SolarsystemClass :wormhole_class="connection?.target!.class" :security="connection?.target!.solarsystem?.security" />
-                    <span class="mr-auto truncate" v-if="!connection.target!.alias">{{ connection?.target!.name }}</span>
-                    <span class="mr-auto truncate" v-else>
-                        <span class="mr-1">{{ connection?.target!.alias }}</span>
-                        <span class="text-muted-foreground">{{ connection?.target!.name }}</span>
-                    </span>
-                </SelectItem>
+                <ConnectionOption v-for="connection in unconnected_connections" :key="connection.id" :connection="connection" />
             </SelectGroup>
             <SelectGroup v-if="connected_connections.length > 0">
                 <SelectSeparator />
                 <SelectLabel class="text-muted-foreground"> Connected solarsystems</SelectLabel>
-                <SelectItem
-                    v-for="connection in connected_connections"
-                    :key="connection.id"
-                    :value="connection.id"
-                    :text-value="connection.target.solarsystem?.name"
-                >
-                    <SolarsystemClass :wormhole_class="connection?.target!.class" :security="connection?.target!.solarsystem?.security" />
-                    <span class="mr-auto truncate" v-if="!connection.target!.alias">{{ connection?.target!.name }}</span>
-                    <span class="mr-auto truncate" v-else>
-                        <span class="mr-1">{{ connection?.target!.alias }}</span>
-                        <span class="-foreground text-muted-foreground">{{ connection?.target!.name }}</span>
-                    </span>
-                </SelectItem>
+                <ConnectionOption v-for="connection in connected_connections" :key="connection.id" :connection="connection" />
             </SelectGroup>
         </SelectContent>
     </Select>
