@@ -146,8 +146,8 @@ function handleIDSubmit() {
                 </SelectItem>
             </SelectContent>
         </Select>
-        <Select :model-value="signature.type" @update:model-value="handleTypeChange" :disabled="!can_write">
-            <SelectTrigger class="w-full overflow-hidden data-[wormhole=false]:col-span-2" :data-wormhole="signature.category === 'Wormhole'">
+        <Select :model-value="signature.type" @update:model-value="handleTypeChange" :disabled="!can_write" v-if="signature.category === 'Wormhole'">
+            <SelectTrigger class="w-full overflow-hidden">
                 <SelectValue as-child>
                     <WormholeOption v-if="selected_signature" :wormhole="selected_signature" />
                     <template v-else>
@@ -169,6 +169,16 @@ function handleIDSubmit() {
                         <WormholeOption :wormhole="option" />
                     </SelectItem>
                 </SelectGroup>
+            </SelectContent>
+        </Select>
+        <Select v-else :model-value="signature.type" @update:model-value="handleTypeChange" :disabled="!can_write">
+            <SelectTrigger class="col-span-2 w-full overflow-hidden">
+                <SelectValue placeholder="Type" />
+            </SelectTrigger>
+            <SelectContent v-if="signature.category">
+                <SelectItem v-for="option in possible_signatures[signature.category]" :key="option" :value="option">
+                    {{ option }}
+                </SelectItem>
             </SelectContent>
         </Select>
         <MapConnectionSelection
