@@ -20,7 +20,12 @@ import { TShowMapProps } from '@/pages/maps';
 import { AppPageProps } from '@/types';
 import { TSolarsystem } from '@/types/models';
 import { usePage } from '@inertiajs/vue3';
+import { Position } from '@vueuse/core';
 import { computed, ref } from 'vue';
+
+const { position } = defineProps<{
+    position: Position;
+}>();
 
 const { removeAllMapSolarsystems, organizeMapSolarsystems, removeSelectedMapSolarsystems } = useMapAction();
 
@@ -51,7 +56,7 @@ const existing_solarsystems = computed(() => {
 });
 
 function handleSolarsystemSelect(solarsystem: TSolarsystem) {
-    addMapSolarsystem(solarsystem.id);
+    addMapSolarsystem(solarsystem.id, position);
     adding.value = false;
 }
 

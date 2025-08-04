@@ -5,7 +5,7 @@ import MapSolarsystems from '@/routes/map-solarsystems';
 import { TMapConfig } from '@/types/map';
 import { TMap, TMapConnection, TMapSolarSystem } from '@/types/models';
 import { router } from '@inertiajs/vue3';
-import { MaybeRefOrGetter, useDraggable, useEventListener, useMouse } from '@vueuse/core';
+import { MaybeRefOrGetter, Position, useDraggable, useEventListener, useMouse } from '@vueuse/core';
 import { computed, reactive, shallowRef, toValue, watchEffect } from 'vue';
 
 type Coordinates = {
@@ -429,8 +429,8 @@ export function useMapAction() {
         );
     }
 
-    function addMapSolarsystem(solarsystem_id: number) {
-        const position = getFreePosition();
+    function addMapSolarsystem(solarsystem_id: number, position: Position | null = null) {
+        position = position ?? getFreePosition();
         return router.post(
             MapSolarsystems.store().url,
             {

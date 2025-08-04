@@ -8,7 +8,7 @@ import MapContextMenu from '@/components/map/MapContextMenu.vue';
 import MapSolarsystem from '@/components/map/MapSolarsystem.vue';
 import { Button } from '@/components/ui/button';
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu';
-import { useMapAction, useMapConnections, useMapGrid, useMapScale, useMapSolarsystems, useMap as useNewMap } from '@/composables/map';
+import { useMapAction, useMapConnections, useMapGrid, useMapMouse, useMapScale, useMapSolarsystems, useMap as useNewMap } from '@/composables/map';
 import { useHasWritePermission } from '@/composables/useHasPermission';
 import { useLayout } from '@/composables/useLayout';
 import { useOnClient } from '@/composables/useOnClient';
@@ -33,7 +33,7 @@ import { TMapConfig } from '@/types/map';
 import { TMap } from '@/types/models';
 import { router } from '@inertiajs/vue3';
 import { useEcho } from '@laravel/echo-vue';
-import { useEventListener, useMagicKeys, whenever } from '@vueuse/core';
+import { Position, useEventListener, useMagicKeys, whenever } from '@vueuse/core';
 import { computed, ref, useTemplateRef } from 'vue';
 
 const { map, config } = defineProps<{
@@ -74,12 +74,19 @@ const resizing = ref(false);
 
 const { scale, setScale } = useMapScale();
 
+const mouse = useMapMouse();
+
+const opened_at = ref<Position>();
+
 whenever(Delete, () => removeSelectedMapSolarsystems());
 
 function onOpenChange(open: boolean) {
     if (!open) {
         selected_connection_id.value = null;
+        return;
     }
+
+    opened_at.value = mouse.value;
 }
 
 useOnClient(() =>
@@ -219,7 +226,7 @@ useEventListener('pointerup', () => {
                         <MapSolarsystem v-for="solarsystem in map_solarsystems" :key="solarsystem.id" :map_solarsystem="solarsystem" />
                     </div>
                 </ContextMenuTrigger>
-                <MapContextMenu v-if="context_menu_type === 'map' && can_write" />
+                <MapContextMenu v-if="context_menu_type === 'map' && can_write" :position="opened_at!" />
                 <MapConnectionContextMenu
                     v-else-if="context_menu_type === 'connection' && selected_connection && can_write"
                     :map_connection="selected_connection"
