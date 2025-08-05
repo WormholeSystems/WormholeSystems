@@ -9,26 +9,27 @@ import RoutePopover from '@/components/routes/RoutePopover.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { useMapSolarsystems } from '@/composables/map';
 import { useHasWritePermission } from '@/composables/useHasPermission';
 import { usePath } from '@/composables/usePath';
 import useUser from '@/composables/useUser';
-import Watchlist from '@/routes/watchlist';
-import { TCharacter, TMap, TMapRouteSolarsystem, TMapSolarSystem, TMassStatus, TSolarsystem } from '@/types/models';
+import MapUserSettings from '@/routes/map-user-settings';
+import { TCharacter, TMap, TMapRouteSolarsystem, TMapSolarSystem, TMapUserSetting, TMassStatus, TSolarsystem } from '@/types/models';
 import { Deferred, router } from '@inertiajs/vue3';
 import { vElementHover } from '@vueuse/components';
 import { computed } from 'vue';
 
-const { map_route_solarsystems, map, solarsystems, allow_eol, allow_mass, allow_eve_scout, map_characters } = defineProps<{
+const { map_route_solarsystems, map, solarsystems, map_characters, map_user_settings, map_solarsystem } = defineProps<{
     map: TMap;
     solarsystems: TSolarsystem[];
     map_route_solarsystems?: TMapRouteSolarsystem[];
     selected_map_solarsystem?: TMapSolarSystem;
-    allow_eol: boolean;
-    allow_mass: TMassStatus;
-    allow_eve_scout: boolean;
+    map_user_settings: TMapUserSetting;
     map_characters?: TCharacter[];
+    map_solarsystem: TMapSolarSystem | null;
 }>();
 
 const user = useUser();
@@ -48,48 +49,34 @@ const sorted = computed(() => {
 
 const can_write = useHasWritePermission();
 
+const { setHoveredMapSolarsystem } = useMapSolarsystems();
+
 const { setPath } = usePath();
 
+function updateMapUserSettings(settings: Partial<TMapUserSetting>) {
+    router.put(MapUserSettings.update(map_user_settings.id).url, settings, {
+        preserveScroll: true,
+        only: ['map_route_solarsystems', 'map_user_settings'],
+        preserveState: true,
+    });
+}
+
 function handleToggleEol(value: boolean | 'indeterminate') {
-    router.put(
-        Watchlist.update().url,
-        {
-            allow_eol: value === true,
-        },
-        {
-            preserveScroll: true,
-            only: ['map_route_solarsystems', 'allow_eol', 'allow_mass', 'allow_eve_scout'],
-            preserveState: true,
-        },
-    );
+    updateMapUserSettings({
+        route_allow_eol: value === true,
+    });
 }
 
 function handleToggleMass(value: string) {
-    router.put(
-        Watchlist.update().url,
-        {
-            allow_mass: value,
-        },
-        {
-            preserveScroll: true,
-            only: ['map_route_solarsystems', 'allow_eol', 'allow_mass', 'allow_eve_scout'],
-            preserveState: true,
-        },
-    );
+    updateMapUserSettings({
+        route_allow_mass_status: value as TMassStatus,
+    });
 }
 
 function handleToggleEveScout(value: boolean | 'indeterminate') {
-    router.put(
-        Watchlist.update().url,
-        {
-            allow_eve_scout: value === true,
-        },
-        {
-            preserveScroll: true,
-            only: ['map_route_solarsystems', 'allow_eol', 'allow_mass', 'allow_eve_scout'],
-            preserveState: true,
-        },
-    );
+    updateMapUserSettings({
+        route_use_evescout: value === true,
+    });
 }
 
 function handleHover(hovered: boolean, route: TSolarsystem[] | null) {
@@ -99,13 +86,19 @@ function handleHover(hovered: boolean, route: TSolarsystem[] | null) {
         setPath(null);
     }
 }
+
+function handleSolarsystemHover(hovered: boolean) {
+    setHoveredMapSolarsystem(map_solarsystem?.id ?? 0, hovered);
+}
 </script>
 
 <template>
     <Card class="bg-neutral-50 pb-0 dark:bg-transparent">
         <CardHeader>
             <CardTitle class="text-base">Autopilot</CardTitle>
-            <CardDescription> Manage your autopilot routes and settings.</CardDescription>
+            <CardDescription>
+                See how far you have to travel from <b class="text-primary" v-element-hover="handleSolarsystemHover">{{ map_solarsystem?.name }}</b>
+            </CardDescription>
             <CardAction class="flex gap-2">
                 <Popover>
                     <PopoverTrigger>
@@ -114,31 +107,37 @@ function handleHover(hovered: boolean, route: TSolarsystem[] | null) {
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent class="w-64 p-3">
-                        <div class="space-y-3">
-                            <div class="text-sm font-medium">Route Settings</div>
-                            <div class="space-y-2">
-                                <div class="flex items-center gap-2">
-                                    <Checkbox :model-value="allow_eol" @update:model-value="handleToggleEol" id="eol-checkbox" />
-                                    <label for="eol-checkbox" class="cursor-pointer text-xs font-medium"> Allow EOL connections </label>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <Checkbox :model-value="allow_eve_scout" @update:model-value="handleToggleEveScout" id="thera-checkbox" />
-                                    <label for="thera-checkbox" class="cursor-pointer text-xs font-medium"> Use Thera/Turnur </label>
-                                </div>
-                                <RadioGroup :model-value="allow_mass" @update:model-value="handleToggleMass">
-                                    <div class="flex items-center gap-2">
-                                        <RadioGroupItem value="critical" id="crit" />
-                                        <Label class="cursor-pointer text-xs font-medium" for="crit"> Allow critical</Label>
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        <RadioGroupItem value="reduced" id="reduced" />
-                                        <Label class="cursor-pointer text-xs font-medium" for="reduced">Allow reduced</Label>
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        <RadioGroupItem value="fresh" id="fresh" />
-                                        <Label class="cursor-pointer text-xs font-medium" for="fresh">Only fresh</Label>
-                                    </div>
-                                </RadioGroup>
+                        <div class="grid auto-cols-[auto_1fr_auto] gap-x-1 gap-y-1">
+                            <h4 class="col-span-3 text-xs text-muted-foreground">Wormholes</h4>
+                            <div class="col-span-3 grid grid-cols-subgrid">
+                                <Checkbox :model-value="map_user_settings.route_allow_eol" @update:model-value="handleToggleEol" id="eol-checkbox" />
+                                <label for="eol-checkbox" class="cursor-pointer text-xs font-medium"> Allow EOL </label>
+                                <span class="text-xs text-muted-foreground">&lt; 4 hours</span>
+                            </div>
+
+                            <RadioGroup
+                                :model-value="map_user_settings.route_allow_mass_status"
+                                @update:model-value="handleToggleMass"
+                                class="col-span-3 grid grid-cols-subgrid gap-1"
+                            >
+                                <RadioGroupItem value="critical" id="mass-critical" />
+                                <Label for="mass-critical" class="cursor-pointer text-xs font-medium">Critical Mass</Label>
+                                <span class="text-xs text-muted-foreground">&lt; 10%</span>
+                                <RadioGroupItem value="reduced" id="mass-reduced" />
+                                <Label for="mass-reduced" class="cursor-pointer text-xs font-medium">Reduced Mass</Label>
+                                <span class="text-xs text-muted-foreground">&lt; 50%</span>
+                                <RadioGroupItem value="fresh" id="mass-fresh" />
+                                <Label for="mass-fresh" class="cursor-pointer text-xs font-medium">High Mass</Label>
+                                <span class="text-xs text-muted-foreground">&gt; 50%</span>
+                            </RadioGroup>
+                            <h4 class="col-span-3 mt-2 text-xs text-muted-foreground">Information Sources</h4>
+                            <div class="col-span-3 grid grid-cols-subgrid">
+                                <Checkbox
+                                    :model-value="map_user_settings.route_use_evescout"
+                                    @update:model-value="handleToggleEveScout"
+                                    id="evescout-checkbox"
+                                />
+                                <label for="evescout-checkbox" class="cursor-pointer text-xs font-medium"> Use EVE Scout </label>
                             </div>
                         </div>
                     </PopoverContent>

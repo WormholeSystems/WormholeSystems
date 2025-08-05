@@ -26,17 +26,7 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { echo } from '@laravel/echo-vue';
 import { ref } from 'vue';
 
-const {
-    map,
-    selected_map_solarsystem,
-    map_killmails,
-    map_route_solarsystems,
-    has_write_access,
-    allow_mass,
-    allow_eol,
-    allow_eve_scout,
-    killmail_filter,
-} = defineProps<TShowMapProps>();
+const { map, selected_map_solarsystem, map_killmails, map_route_solarsystems, has_write_access, map_user_settings } = defineProps<TShowMapProps>();
 
 const user = useUser();
 
@@ -61,7 +51,7 @@ useOnClient(() =>
                     <MapComponent :map :config />
                     <MapSearch :map :search :solarsystems v-if="has_write_access" />
                     <div class="absolute top-4 right-4 flex gap-2" v-if="has_write_access">
-                        <Tracker :map_characters v-if="map_characters" :map :key="user.active_character?.id" />
+                        <Tracker :map_user_settings="map_user_settings" :map_characters v-if="map_characters" :map :key="user.active_character?.id" />
                         <Tooltip>
                             <TooltipTrigger>
                                 <Button :variant="'outline'" as-child>
@@ -114,7 +104,7 @@ useOnClient(() =>
                 </div>
                 <div class="col-span-10 grid gap-4 lg:col-span-5 2xl:col-span-3">
                     <MapCharacters :map_characters />
-                    <MapKillmails :map_killmails="map_killmails" :map_id="map.id" :filter="killmail_filter" />
+                    <MapKillmails :map_killmails="map_killmails" :map_id="map.id" :map_user_settings="map_user_settings" />
                 </div>
                 <div class="col-span-10 2xl:col-span-3">
                     <Autopilot
@@ -123,10 +113,9 @@ useOnClient(() =>
                         :map
                         :solarsystems
                         :selected_map_solarsystem
-                        :allow_mass
-                        :allow_eol
-                        :allow_eve_scout
                         :map_characters
+                        :map_user_settings
+                        :map_solarsystem="selected_map_solarsystem"
                     />
                     <div class="flex flex-col items-center justify-center gap-8 rounded-lg border border-dashed p-16 text-neutral-700" v-else>
                         <QuestionIcon class="text-4xl" />

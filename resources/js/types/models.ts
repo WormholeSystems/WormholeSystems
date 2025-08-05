@@ -233,6 +233,12 @@ export type TMapUserSetting = {
     user_id: number;
     map_id: number;
     tracking_allowed: boolean;
+    is_tracking: boolean;
+    has_write_access: boolean;
+    route_allow_eol: boolean;
+    route_allow_mass_status: TMassStatus;
+    route_use_evescout: boolean;
+    killmail_filter: 'all' | 'jspace' | 'kspace';
 };
 
 export type TShipHistory = {

@@ -76,7 +76,7 @@ const { scale, setScale } = useMapScale();
 
 const mouse = useMapMouse();
 
-const opened_at = ref<Position>();
+const opened_at = ref<Position | null>(null);
 
 whenever(Delete, () => removeSelectedMapSolarsystems());
 

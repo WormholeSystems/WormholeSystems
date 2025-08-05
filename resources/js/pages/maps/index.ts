@@ -1,6 +1,6 @@
 import { TLayout } from '@/composables/useLayout';
 import { TMapConfig } from '@/types/map';
-import { TCharacter, TKillmail, TMap, TMapRouteSolarsystem, TMapSolarSystem, TMassStatus, TShipHistory, TSolarsystem } from '@/types/models';
+import { TCharacter, TKillmail, TMap, TMapRouteSolarsystem, TMapSolarSystem, TMapUserSetting, TShipHistory, TSolarsystem } from '@/types/models';
 
 export type TShowMapProps = {
     map: TMap;
@@ -13,9 +13,6 @@ export type TShowMapProps = {
     map_route_solarsystems?: TMapRouteSolarsystem[];
     ship_history: TShipHistory[];
     has_write_access: boolean;
-    allow_eol: boolean;
-    allow_mass: TMassStatus;
-    allow_eve_scout: boolean;
     layout: TLayout;
-    killmail_filter: 'all' | 'jspace' | 'kspace';
+    map_user_settings: TMapUserSetting;
 };

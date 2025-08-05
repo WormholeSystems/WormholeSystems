@@ -5,7 +5,6 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BulkSignatureController;
 use App\Http\Controllers\EveController;
 use App\Http\Controllers\IgnoreListController;
-use App\Http\Controllers\KillmailFilterController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MapAccessController;
@@ -21,7 +20,6 @@ use App\Http\Controllers\SignatureController;
 use App\Http\Controllers\StatisticsController;
 use App\Http\Controllers\TrackingController;
 use App\Http\Controllers\UserCharacterController;
-use App\Http\Controllers\WatchlistController;
 use App\Http\Controllers\WaypointController;
 use Illuminate\Support\Facades\Route;
 
@@ -67,7 +65,6 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('map-route-solarsystems', MapRouteSolarsystemController::class)->only(['store', 'update', 'destroy']);
     Route::resource('map-user-settings', MapUserSettingController::class)->only(['update']);
-    Route::put('watchlist', [WatchlistController::class, 'update'])->name('watchlist.update');
 
     Route::post('statistics', [StatisticsController::class, 'store'])->name('statistics.store');
 
@@ -77,6 +74,4 @@ Route::middleware('auth')->group(function () {
 
     Route::delete('map-solarsystems/{mapSolarsystem}/signatures', [BulkSignatureController::class, 'destroy'])
         ->name('map-solarsystems.signatures.destroy');
-
-    Route::put('killmails-filters', [KillmailFilterController::class, 'update'])->name('killmail-filters.update');
 });

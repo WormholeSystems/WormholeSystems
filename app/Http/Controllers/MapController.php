@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Actions\Map\CreateMapAction;
 use App\Enums\KillmailFilter;
-use App\Enums\MassStatus;
 use App\Http\Requests\StoreMapRequest;
 use App\Http\Resources\CharacterResource;
 use App\Http\Resources\KillmailResource;
@@ -18,6 +17,7 @@ use App\Models\Killmail;
 use App\Models\Map;
 use App\Models\MapRouteSolarsystem;
 use App\Models\MapSolarsystem;
+use App\Models\MapUserSetting;
 use App\Models\ShipHistory;
 use App\Models\Solarsystem;
 use App\Models\User;
@@ -59,28 +59,21 @@ class MapController extends Controller
 
         $search = $request->string('search');
 
-        $solarsystems = Solarsystem::query()->whereLike('name', sprintf('%s%%', $search->value()))
-            ->limit(10)->get()->toResourceCollection(SolarsystemResource::class);
+        $settings = $this->getMapUserSettings($map->id);
+
+        $solarsystems = fn (): ResourceCollection => $this->getSolarsystemsMatchingSearch($search);
 
         $selected_map_solarsystem_id = $request->integer('map_solarsystem_id');
 
         $selected_map_solarsystem = $this->getSelectedSolarsystem($map, $selected_map_solarsystem_id);
 
-        $killmail_filter = KillmailFilter::tryFrom(Session::get('killmail_filter', 'all')) ?? KillmailFilter::All;
+        $map_killmails = Inertia::defer(fn (): ResourceCollection => $this->getMapKills($map, $settings->killmail_filter));
 
-        $map_killmails = Inertia::defer(
-            fn (): ResourceCollection => $this->getMapKills($map, $killmail_filter)
-        );
+        $map_characters = fn (): ResourceCollection => $this->getMapCharacters($map, $selected_map_solarsystem_id);
 
-        $map_characters = fn (): ResourceCollection => $this->getMapCharacters($map, $selected_map_solarsystem);
+        $ship_history = fn (): ResourceCollection => $this->getShipHistory();
 
-        $ship_history = ShipHistory::query()
-            ->where('ship_id', '=', CharacterStatus::query()->where('character_id', '=', $this->user->active_character->id)
-                ->select('ship_item_id'))
-            ->latest()
-            ->limit(10)
-            ->get()
-            ->toResourceCollection(ShipHistoryResource::class);
+        $map_route_solarsystems = Inertia::defer(fn (): array => $this->getMapRouteSolarsystems($map, $settings, $selected_map_solarsystem_id));
 
         return Inertia::render('maps/ShowMap', [
             'map' => $map->toResource(MapResource::class),
@@ -90,14 +83,44 @@ class MapController extends Controller
             'selected_map_solarsystem' => fn (): ?JsonResource => $selected_map_solarsystem?->toResource(MapSolarsystemResource::class),
             'map_killmails' => $map_killmails,
             'map_characters' => $map_characters,
-            'map_route_solarsystems' => Inertia::defer(fn (): array => $this->getMapRouteSolarsystems($map, $selected_map_solarsystem_id)),
+            'map_route_solarsystems' => $map_route_solarsystems,
             'ship_history' => $ship_history,
             'has_write_access' => Gate::allows('update', $map),
-            'allow_eol' => Session::get('allow_eol', true),
-            'allow_mass' => Session::get('allow_mass', MassStatus::Reduced),
-            'allow_eve_scout' => Session::get('allow_eve_scout', false),
-            'ignored_systems' => Session::get('ignored_systems', []),
-            'killmail_filter' => $killmail_filter,
+            'map_user_settings' => fn (): JsonResource => $settings->toResource(),
+        ]);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    private function getShipHistory(): ResourceCollection
+    {
+        return ShipHistory::query()
+            ->where('ship_id', '=', CharacterStatus::query()
+                ->where('character_id', '=', $this->user->active_character->id)
+                ->select('ship_item_id'))
+            ->latest()
+            ->limit(10)
+            ->get()
+            ->toResourceCollection(ShipHistoryResource::class);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    private function getSolarsystemsMatchingSearch(string $search): ResourceCollection
+    {
+        return Solarsystem::query()
+            ->whereLike('name', sprintf('%s%%', $search))
+            ->limit(10)
+            ->get()
+            ->toResourceCollection(SolarsystemResource::class);
+    }
+
+    private function getMapUserSettings(int $map_id): MapUserSetting
+    {
+        return $this->user->mapUserSettings()->firstOrCreate([
+            'map_id' => $map_id,
         ]);
     }
 
@@ -176,20 +199,22 @@ class MapController extends Controller
     /**
      * @throws Throwable
      */
-    private function getMapCharacters(Map $map, ?MapSolarsystem $mapSolarsystem = null): ResourceCollection
+    private function getMapCharacters(Map $map, ?int $map_solarsystem_id = null): ResourceCollection
     {
+        $map_solarsystem = $this->getSelectedSolarsystem($map, $map_solarsystem_id);
+
         return Character::query()
             ->with('characterStatus')
             ->tap(new UserAllowedMapTracking($map))
             ->tap(new CharacterHasMapAccess($map))
             ->tap(new CharacterIsOnline)
             ->get()
-            ->map(function (Character $character) use ($mapSolarsystem, $map): Character {
-                if (! $mapSolarsystem instanceof MapSolarsystem) {
+            ->map(function (Character $character) use ($map, $map_solarsystem): Character {
+                if (! $map_solarsystem instanceof MapSolarsystem) {
                     return $character;
                 }
                 $character->route = $this->getFastestRoute(
-                    $mapSolarsystem->solarsystem_id ?? 0,
+                    $map_solarsystem->solarsystem_id ?? 0,
                     $character->characterStatus->solarsystem_id ?? 0,
                     $map
                 );
@@ -202,7 +227,7 @@ class MapController extends Controller
     /**
      * @throws Throwable
      */
-    private function getMapRouteSolarsystems(Map $map, ?int $map_solarsystem_id): array
+    private function getMapRouteSolarsystems(Map $map, MapUserSetting $mapUserSetting, ?int $map_solarsystem_id): array
     {
         if ($map_solarsystem_id === null || $map_solarsystem_id === 0) {
             return [];
@@ -220,24 +245,21 @@ class MapController extends Controller
             'id' => $map_route_solarsystem->id,
             'solarsystem' => $map_route_solarsystem->solarsystem->toResource(SolarsystemResource::class),
             'is_pinned' => $map_route_solarsystem->is_pinned,
-            'route' => $this->getFastestRoute($current_solarsystem->id, $map_route_solarsystem->solarsystem_id, $map),
+            'route' => $this->getFastestRoute($current_solarsystem->id, $map_route_solarsystem->solarsystem_id, $mapUserSetting, $map),
         ])->all();
     }
 
     /**
      * Get the fastest route while respecting session-based ignored systems
      */
-    private function getFastestRoute(int $start_solarsystem_id, int $destination_solarsystem_id, ?Map $map = null): array
+    private function getFastestRoute(int $start_solarsystem_id, int $destination_solarsystem_id, MapUserSetting $mapUserSetting, ?Map $map = null): array
     {
-        $allow_eol = Session::get('allow_eol', true);
-        $allow_mass = Session::get('allow_mass', MassStatus::Reduced);
-        $allow_eve_scout = Session::get('allow_eve_scout', false);
         $ignored_systems = Session::get('ignored_systems', []);
 
         $options = new RouteOptions(
-            allowEol: $allow_eol,
-            massStatus: $allow_mass,
-            allowEveScout: $allow_eve_scout,
+            allowEol: $mapUserSetting->route_allow_eol,
+            massStatus: $mapUserSetting->route_allow_mass_status,
+            allowEveScout: $mapUserSetting->route_use_evescout,
             map: $map,
             ignoredSystems: $ignored_systems
         );

@@ -5,13 +5,18 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMapAction, useMapSolarsystems } from '@/composables/map';
 import useUser from '@/composables/useUser';
+import MapUserSettings from '@/routes/map-user-settings';
 import Tracking from '@/routes/tracking';
-import { TCharacter, TMap } from '@/types/models';
+import { TCharacter, TMap, TMapUserSetting } from '@/types/models';
 import { router } from '@inertiajs/vue3';
-import { useFetch, useIntervalFn, useLocalStorage } from '@vueuse/core';
+import { useFetch, useIntervalFn } from '@vueuse/core';
 import { computed, onMounted, watch } from 'vue';
 
-const { map_characters, map } = defineProps<{ map_characters: TCharacter[]; map: TMap }>();
+const { map_characters, map, map_user_settings } = defineProps<{
+    map_characters: TCharacter[];
+    map: TMap;
+    map_user_settings: TMapUserSetting;
+}>();
 
 const user = useUser();
 
@@ -22,10 +27,6 @@ const active_map_character = computed(() => {
 });
 
 const { map_solarsystems } = useMapSolarsystems();
-
-const enabled = useLocalStorage(`map-tracking-${map.id}`, true, {
-    listenToStorageChanges: true,
-});
 
 const ping_interval_seconds = 60 * 5 * 1000;
 
@@ -39,7 +40,7 @@ useIntervalFn(execute, ping_interval_seconds, {
 watch(
     () => active_map_character.value?.status?.solarsystem_id,
     (new_solarsystem_id, old_solarsystem_id) => {
-        if (!enabled.value) return;
+        if (!map_user_settings.is_tracking) return;
         if (!new_solarsystem_id || !old_solarsystem_id) return;
         if (new_solarsystem_id === old_solarsystem_id) return;
 
@@ -48,7 +49,7 @@ watch(
 );
 
 onMounted(() => {
-    if (!enabled.value) return;
+    if (!map_user_settings.is_tracking) return;
 
     const active_solarsystem = active_map_character.value?.status?.solarsystem;
     if (!active_solarsystem) return;
@@ -76,18 +77,34 @@ function requestConnectSolarsystem(old_solarsystem_id: number | null, new_solars
         },
     );
 }
+
+function handleToggleTracking() {
+    router.put(
+        MapUserSettings.update(map_user_settings.id).url,
+        {
+            is_tracking: !map_user_settings.is_tracking,
+        },
+        {
+            preserveScroll: true,
+            only: ['map_user_settings'],
+            preserveState: true,
+        },
+    );
+}
 </script>
 
 <template>
     <Tooltip>
         <TooltipTrigger>
-            <Button @click="enabled = !enabled" :variant="enabled ? 'default' : 'secondary'" size="icon">
+            <Button @click="handleToggleTracking" :variant="map_user_settings.is_tracking ? 'default' : 'secondary'" size="icon">
                 <TrackingIcon />
             </Button>
         </TooltipTrigger>
         <TooltipContent side="bottom">
             <p class="text-sm">Tracking</p>
-            <p class="text-xs text-muted-foreground">{{ enabled ? 'Enabled' : 'Disabled' }} - Automatically track solarsystem changes</p>
+            <p class="text-xs text-muted-foreground">
+                {{ map_user_settings.is_tracking ? 'Enabled' : 'Disabled' }} - Automatically track solarsystem changes
+            </p>
             <p class="text-xs text-muted-foreground">Current Solarsystem: {{ active_map_character?.status?.solarsystem?.name || 'Unknown' }}</p>
         </TooltipContent>
     </Tooltip>

@@ -9,15 +9,15 @@ import { Table, TableCell, TableHead, TableHeader, TableRow } from '@/components
 import { useOnClient } from '@/composables/useOnClient';
 import { getMapChannelName } from '@/const/channels';
 import { KillmailReceivedEvent } from '@/const/events';
-import killmailFilters from '@/routes/killmail-filters';
-import { TKillmail } from '@/types/models';
+import MapUserSettings from '@/routes/map-user-settings';
+import { TKillmail, TMapUserSetting } from '@/types/models';
 import { Deferred, router } from '@inertiajs/vue3';
 import { useEcho } from '@laravel/echo-vue';
 
-const { map_killmails, map_id } = defineProps<{
+const { map_killmails, map_id, map_user_settings } = defineProps<{
     map_killmails?: TKillmail[];
     map_id: number;
-    filter: 'all' | 'jspace' | 'kspace';
+    map_user_settings: TMapUserSetting;
 }>();
 
 type KillmailReceivedEvent = {
@@ -26,12 +26,12 @@ type KillmailReceivedEvent = {
 
 function handleFilterChange(value: 'all' | 'jspace' | 'kspace' | string) {
     router.put(
-        killmailFilters.update().url,
+        MapUserSettings.update(map_user_settings.id).url,
         {
             killmail_filter: value,
         },
         {
-            only: ['map_killmails', 'killmail_filter'],
+            only: ['map_killmails', 'map_user_settings'],
             preserveState: true,
             preserveScroll: true,
         },
@@ -60,7 +60,7 @@ useOnClient(() =>
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                        <DropdownMenuRadioGroup :model-value="filter" @update:model-value="handleFilterChange">
+                        <DropdownMenuRadioGroup :model-value="map_user_settings.killmail_filter" @update:model-value="handleFilterChange">
                             <DropdownMenuRadioItem value="all"> All killmails</DropdownMenuRadioItem>
                             <DropdownMenuRadioItem value="jspace"> J-Space killmails</DropdownMenuRadioItem>
                             <DropdownMenuRadioItem value="kspace"> K-Space killmails</DropdownMenuRadioItem>

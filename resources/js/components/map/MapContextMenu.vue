@@ -24,7 +24,7 @@ import { Position } from '@vueuse/core';
 import { computed, ref } from 'vue';
 
 const { position } = defineProps<{
-    position: Position;
+    position: Position | null;
 }>();
 
 const { removeAllMapSolarsystems, organizeMapSolarsystems, removeSelectedMapSolarsystems } = useMapAction();

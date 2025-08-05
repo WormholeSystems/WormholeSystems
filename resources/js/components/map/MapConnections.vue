@@ -18,6 +18,10 @@ const { selection, setSelectionStart, setSelectionEnd } = useSelection();
 
 const dragging = ref(false);
 
+const emit = defineEmits<{
+    (e: 'connection-contextmenu', event: MouseEvent, connection: TMapConnection): void;
+}>();
+
 function handleDragStart(event: PointerEvent) {
     document.body.classList.add('select-none');
     if (event.button !== 0) return;
@@ -74,7 +78,7 @@ function getConnectionExtra(connection: TMapConnection): string {
                 :mass_status="map_connection.mass_status"
                 :is_eol="map_connection.is_eol"
                 :is_highlighted="map_connection.is_on_route"
-                @contextmenu="$emit('connection-contextmenu', $event, map_connection)"
+                @contextmenu="(event) => emit('connection-contextmenu', event, map_connection)"
             />
             <MapConnection v-if="origin" :from="origin.position!" :to="mouse" />
             <rect
