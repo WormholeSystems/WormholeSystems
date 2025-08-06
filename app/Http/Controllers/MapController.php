@@ -69,7 +69,7 @@ class MapController extends Controller
 
         $map_killmails = Inertia::defer(fn (): ResourceCollection => $this->getMapKills($map, $settings->killmail_filter));
 
-        $map_characters = fn (): ResourceCollection => $this->getMapCharacters($map, $selected_map_solarsystem_id);
+        $map_characters = fn (): ResourceCollection => $this->getMapCharacters($map, $selected_map_solarsystem_id, $settings);
 
         $ship_history = fn (): ResourceCollection => $this->getShipHistory();
 
@@ -199,7 +199,7 @@ class MapController extends Controller
     /**
      * @throws Throwable
      */
-    private function getMapCharacters(Map $map, ?int $map_solarsystem_id = null): ResourceCollection
+    private function getMapCharacters(Map $map, ?int $map_solarsystem_id, MapUserSetting $map_user_setting): ResourceCollection
     {
         $map_solarsystem = $this->getSelectedSolarsystem($map, $map_solarsystem_id);
 
@@ -209,13 +209,14 @@ class MapController extends Controller
             ->tap(new CharacterHasMapAccess($map))
             ->tap(new CharacterIsOnline)
             ->get()
-            ->map(function (Character $character) use ($map, $map_solarsystem): Character {
+            ->map(function (Character $character) use ($map, $map_solarsystem, $map_user_setting): Character {
                 if (! $map_solarsystem instanceof MapSolarsystem) {
                     return $character;
                 }
                 $character->route = $this->getFastestRoute(
                     $map_solarsystem->solarsystem_id ?? 0,
                     $character->characterStatus->solarsystem_id ?? 0,
+                    $map_user_setting,
                     $map
                 );
 
