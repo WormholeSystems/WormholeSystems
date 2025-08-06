@@ -1,21 +1,12 @@
 <script setup lang="ts">
-import { CharacterImage } from '@/components/images';
-import {
-    ContextMenu,
-    ContextMenuContent,
-    ContextMenuItem,
-    ContextMenuSeparator,
-    ContextMenuSub,
-    ContextMenuSubContent,
-    ContextMenuSubTrigger,
-    ContextMenuTrigger,
-} from '@/components/ui/context-menu';
+import DestinationContextMenu from '@/components/DestinationContextMenu.vue';
+import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue';
+import RoutePopover from '@/components/routes/RoutePopover.vue';
+import SolarsystemClass from '@/components/SolarsystemClass.vue';
+import { Button } from '@/components/ui/button';
 import { usePath } from '@/composables/usePath';
-import useUser from '@/composables/useUser';
-import { useWaypoint } from '@/composables/useWaypoint';
 import { TMapRouteSolarsystem } from '@/types/models';
-import { useElementHover } from '@vueuse/core';
-import { computed, useTemplateRef, watch } from 'vue';
+import { vElementHover } from '@vueuse/components';
 
 const { destination } = defineProps<{
     destination: TMapRouteSolarsystem;
@@ -23,81 +14,42 @@ const { destination } = defineProps<{
 
 const { setPath } = usePath();
 
-const element = useTemplateRef('element');
-
-const hovered = useElementHover(element);
-
-const user = useUser();
-
-const setWaypoint = useWaypoint();
-
-watch(hovered, (isHovered) => {
-    if (isHovered) {
+function onHover(hovered: boolean) {
+    if (hovered) {
         const routeToShow = destination.route ?? [];
         setPath(routeToShow);
     } else {
         setPath(null);
     }
-});
-
-const distance = computed(() => {
-    const jumps = destination.route && destination.route.length > 0 ? destination.route.length - 1 : -1;
-
-    if (jumps < 0) return 'none';
-    if (jumps > 10) return 'far';
-    if (jumps > 5) return 'near';
-    return 'short';
-});
+}
 </script>
 
 <template>
-    <ContextMenu>
-        <ContextMenuTrigger>
-            <div class="flex items-center gap-1" ref="element">
-                <span class="text-xs text-muted-foreground">
-                    {{ destination.solarsystem.name }}
-                </span>
-                <span
-                    v-if="destination.route && destination.route.length > 0"
-                    :data-distance="distance"
-                    class="text-xs text-muted-foreground data-[distance=far]:text-red-500 data-[distance=near]:text-yellow-500 data-[distance=none]:text-neutral-500 data-[distance=short]:text-green-500"
-                >
-                    {{ destination.route.length - 1 }}
-                </span>
-                <span v-else class="text-xs text-muted-foreground">N/A</span>
-            </div>
-        </ContextMenuTrigger>
-        <ContextMenuContent>
-            <ContextMenuSub>
-                <ContextMenuSubTrigger>Set destination</ContextMenuSubTrigger>
-                <ContextMenuSubContent>
-                    <ContextMenuItem
-                        v-for="character in user.characters"
-                        :key="character.id"
-                        @select="setWaypoint(character.id, destination.solarsystem.id)"
-                    >
-                        <CharacterImage :character_id="character.id" :character_name="character.name" class="size-5 rounded-lg" />
-                        {{ character.name }}
-                    </ContextMenuItem>
-                </ContextMenuSubContent>
-            </ContextMenuSub>
+    <DestinationContextMenu :solarsystem_id="destination.solarsystem.id">
+        <div
+            class="flex items-center gap-1.5 rounded border bg-white px-2 py-1 hover:bg-neutral-50 dark:bg-neutral-900/40 dark:hover:bg-neutral-800/30"
+            v-element-hover="onHover"
+        >
+            <SolarsystemClass :wormhole_class="destination.solarsystem.class" :security="destination.solarsystem.security" />
+            
+            <span class="truncate text-xs font-medium">{{ destination.solarsystem.name }}</span>
+            
+            <SolarsystemSovereignty 
+                v-if="destination.solarsystem.sovereignty" 
+                :sovereignty="destination.solarsystem.sovereignty" 
+                class="size-3" 
+            />
 
-            <ContextMenuSub>
-                <ContextMenuSubTrigger>Add waypoint</ContextMenuSubTrigger>
-                <ContextMenuSubContent>
-                    <ContextMenuItem
-                        v-for="character in user.characters"
-                        :key="character.id"
-                        @select="setWaypoint(character.id, destination.solarsystem.id, false)"
-                    >
-                        <CharacterImage :character_id="character.id" :character_name="character.name" class="size-5 rounded-lg" />
-                        {{ character.name }}
-                    </ContextMenuItem>
-                </ContextMenuSubContent>
-            </ContextMenuSub>
-            <ContextMenuSeparator />
-        </ContextMenuContent>
-    </ContextMenu>
+            <RoutePopover :route="destination.route">
+                <Button variant="secondary" size="sm" class="h-5 px-1.5 font-mono text-xs">
+                    <span v-if="destination.route && destination.route.length > 0">
+                        {{ destination.route.length - 1 }}
+                    </span>
+                    <span v-else>∞</span>
+                </Button>
+            </RoutePopover>
+        </div>
+    </DestinationContextMenu>
 </template>
 
 <style scoped></style>
