@@ -107,7 +107,7 @@ watch(
                             <span class="animate-pulse"> Loading pinned destinations...</span>
                         </span>
                     </template>
-                    <div class="flex items-center gap-2">
+                    <div class="flex flex-wrap items-center justify-end gap-1">
                         <Destination v-for="jump in pinned" :key="jump.solarsystem.id" :destination="jump" />
                     </div>
                 </Deferred>
