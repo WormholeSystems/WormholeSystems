@@ -7,7 +7,7 @@ import Destination from '@/components/solarsystem/Destination.vue';
 import SecurityStatus from '@/components/solarsystem/SecurityStatus.vue';
 import SolarsystemClass from '@/components/SolarsystemClass.vue';
 import { Button } from '@/components/ui/button';
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { useHasWritePermission } from '@/composables/useHasPermission';
@@ -79,39 +79,76 @@ watch(
 
 <template>
     <Card>
-        <CardHeader>
-            <CardTitle class="flex items-center gap-2">
-                <SolarsystemClass :wormhole_class="map_solarsystem.class" v-if="map_solarsystem.class" />
-                <SecurityStatus :security="map_solarsystem.solarsystem?.security" v-else-if="map_solarsystem.solarsystem?.security !== undefined" />
-                {{ map_solarsystem.name }}
-                <SolarsystemEffect :effect="map_solarsystem.effect" :effects="map_solarsystem.effects" v-if="map_solarsystem.effect" />
-                <SolarsystemSovereignty v-if="map_solarsystem.solarsystem?.sovereignty" :sovereignty="map_solarsystem.solarsystem.sovereignty" />
-                <a
-                    :href="`https://zkillboard.com/system/${map_solarsystem.solarsystem?.id}/`"
-                    target="_blank"
-                    class="text-xs text-muted-foreground hover:text-foreground"
-                    rel="noopener noreferrer"
-                >
-                    <ExternalIcon />
-                </a>
-            </CardTitle>
-            <CardDescription>
-                {{ map_solarsystem.solarsystem?.region?.name }} |
-                {{ map_solarsystem.solarsystem?.constellation?.name }}
-            </CardDescription>
-            <CardAction>
+        <CardHeader class="pb-4">
+            <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0 flex-1">
+                    <CardTitle class="flex items-center gap-2 text-xl">
+                        <SolarsystemClass :wormhole_class="map_solarsystem.class" v-if="map_solarsystem.class" />
+                        <SecurityStatus
+                            :security="map_solarsystem.solarsystem?.security"
+                            v-else-if="map_solarsystem.solarsystem?.security !== undefined"
+                        />
+                        <span class="truncate">{{ map_solarsystem.name }}</span>
+                        <SolarsystemEffect :effect="map_solarsystem.effect" :effects="map_solarsystem.effects" v-if="map_solarsystem.effect" />
+                    </CardTitle>
+
+                    <div class="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+                        <span>{{ map_solarsystem.solarsystem?.region?.name }}</span>
+                        <span class="text-xs">•</span>
+                        <span>{{ map_solarsystem.solarsystem?.constellation?.name }}</span>
+                        <SolarsystemSovereignty
+                            v-if="map_solarsystem.solarsystem?.sovereignty"
+                            :sovereignty="map_solarsystem.solarsystem.sovereignty"
+                            class="ml-1"
+                        />
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 text-xs">
+                    <a
+                        :href="`https://zkillboard.com/system/${map_solarsystem.solarsystem?.id}/`"
+                        target="_blank"
+                        class="flex items-center gap-1 text-muted-foreground transition-colors hover:text-foreground"
+                        rel="noopener"
+                    >
+                        <ExternalIcon class="size-3" />
+                        <span>zKillboard</span>
+                    </a>
+                    <a
+                        :href="`https://evemaps.dotlan.net/system/${map_solarsystem.name}`"
+                        target="_blank"
+                        class="flex items-center gap-1 text-muted-foreground transition-colors hover:text-foreground"
+                        rel="noopener"
+                    >
+                        <ExternalIcon class="size-3" />
+                        <span>Dotlan</span>
+                    </a>
+                    <a
+                        v-if="map_solarsystem.class"
+                        :href="`https://anoik.is/systems/${map_solarsystem.name}`"
+                        target="_blank"
+                        class="flex items-center gap-1 text-muted-foreground transition-colors hover:text-foreground"
+                        rel="noopener"
+                    >
+                        <ExternalIcon class="size-3" />
+                        <span>Anoik.is</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="mt-4" v-if="pinned?.length">
                 <Deferred data="map_route_solarsystems">
                     <template #fallback>
-                        <span class="flex items-center gap-2 text-xs text-muted-foreground">
-                            <Spinner class="animate-spin" />
-                            <span class="animate-pulse"> Loading pinned destinations...</span>
-                        </span>
+                        <div class="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Spinner class="size-3 animate-spin" />
+                            <span class="animate-pulse">Loading destinations...</span>
+                        </div>
                     </template>
-                    <div class="flex flex-wrap items-center justify-end gap-1">
+                    <div class="flex flex-wrap gap-1">
                         <Destination v-for="jump in pinned" :key="jump.solarsystem.id" :destination="jump" />
                     </div>
                 </Deferred>
-            </CardAction>
+            </div>
         </CardHeader>
         <CardContent>
             <form @submit.prevent="handleSubmit" class="w-full">
