@@ -97,7 +97,13 @@ function handleSolarsystemHover(hovered: boolean) {
         <CardHeader>
             <CardTitle class="text-base">Autopilot</CardTitle>
             <CardDescription>
-                See how far you have to travel from <b class="text-primary" v-element-hover="handleSolarsystemHover">{{ map_solarsystem?.name }}</b>
+                See how far you have to travel from
+                <b v-element-hover="handleSolarsystemHover">
+                    <span v-if="map_solarsystem?.alias">
+                        <span class="text-primary">{{ map_solarsystem.alias }}</span> {{ map_solarsystem.name }}
+                    </span>
+                    <span v-else class="text-primary">{{ map_solarsystem?.name }}</span>
+                </b>
             </CardDescription>
             <CardAction class="flex gap-2">
                 <Popover>
