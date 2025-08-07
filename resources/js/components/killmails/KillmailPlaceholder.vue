@@ -4,7 +4,7 @@ import { TableCell, TableRow } from '@/components/ui/table';
 
 <template>
     <TableRow>
-        <TableCell colspan="3" class="h-12"> Loading killmails... </TableCell>
+        <TableCell colspan="4" class="h-12"> Loading killmails... </TableCell>
     </TableRow>
 </template>
 

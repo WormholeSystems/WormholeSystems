@@ -51,7 +51,7 @@ useOnClient(() =>
     <Card class="bg-neutral-50 pb-0 dark:bg-transparent">
         <CardHeader>
             <CardTitle>Map killmails</CardTitle>
-            <CardDescription>Recents killmails that happened in one of the map solarsystems</CardDescription>
+            <CardDescription>See what is happening in your chain</CardDescription>
             <CardAction>
                 <DropdownMenu>
                     <DropdownMenuTrigger as-child>
@@ -71,13 +71,14 @@ useOnClient(() =>
         </CardHeader>
         <CardContent class="px-1 pb-1">
             <div class="relative max-h-100 overflow-x-hidden overflow-y-scroll mask-b-from-90% mask-alpha pr-1">
-                <div class="rounded-lg border bg-white dark:bg-neutral-900/40">
+                <div class="@container rounded-lg border bg-white dark:bg-neutral-900/40">
                     <Table>
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Victim</TableHead>
                                 <TableHead>Attacker</TableHead>
-                                <TableHead>Details</TableHead>
+                                <TableHead>System</TableHead>
+                                <TableHead class="hidden text-right @lg:table-cell">Total Value</TableHead>
                             </TableRow>
                         </TableHeader>
                         <Deferred data="map_killmails">
@@ -85,7 +86,7 @@ useOnClient(() =>
                                 <Killmail v-for="killmail in map_killmails" :key="killmail.id" :killmail="killmail" />
                             </TransitionGroup>
                             <TableRow v-if="!map_killmails?.length">
-                                <TableCell colspan="3" class="text-center text-muted-foreground"> No killmails found </TableCell>
+                                <TableCell colspan="4" class="text-center text-muted-foreground"> No killmails found </TableCell>
                             </TableRow>
                             <template #fallback>
                                 <KillmailPlaceholder />
