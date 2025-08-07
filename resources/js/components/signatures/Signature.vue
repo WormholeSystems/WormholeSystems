@@ -3,13 +3,13 @@ import TrashIcon from '@/components/icons/TrashIcon.vue';
 import MapConnectionSelection from '@/components/signatures/MapConnectionSelection.vue';
 import SignatureID from '@/components/signatures/SignatureID.vue';
 import SignatureTimeDetails from '@/components/signatures/SignatureTimeDetails.vue';
-import WormholeOption from '@/components/signatures/WormholeOption.vue';
+import SignatureTypeSelection from '@/components/signatures/SignatureTypeSelection.vue';
+import WormholeTypeSelection from '@/components/signatures/WormholeTypeSelection.vue';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { TProcessedConnection } from '@/composables/map';
 import { useHasWritePermission } from '@/composables/useHasPermission';
-import { TWormholeDefinition } from '@/const/signatures';
 import { TSignatureCategory } from '@/lib/SignatureParser';
 import Signatures from '@/routes/signatures';
 import { TMapSolarSystem, TSignature } from '@/types/models';
@@ -28,34 +28,6 @@ const { signature, unconnected_connections, possible_signatures, connected_conne
     selected_map_solarsystem: TMapSolarSystem;
     possible_signatures: any;
 }>();
-
-const wormhole_options = computed(() => {
-    if (signature.category !== 'Wormhole') {
-        return [];
-    }
-    return possible_signatures['Wormhole'] || [];
-});
-
-const k162_options = computed<TWormholeDefinition[]>(() => {
-    if (signature.category !== 'Wormhole') {
-        return [];
-    }
-    return wormhole_options.value.filter((option: TWormholeDefinition) => option.signature === 'K162');
-});
-
-const wormholes = computed<TWormholeDefinition[]>(() => {
-    if (signature.category !== 'Wormhole') {
-        return [];
-    }
-    return wormhole_options.value.filter((option: TWormholeDefinition) => option.signature !== 'K162');
-});
-
-const selected_signature = computed(() => {
-    if (signature.category !== 'Wormhole') {
-        return null;
-    }
-    return wormhole_options.value.find((option: TWormholeDefinition) => option.name === signature.type) || null;
-});
 
 const original = toRef(() => signature.signature_id || '');
 const signature_id = ref('');
@@ -146,41 +118,21 @@ function handleIDSubmit() {
                 </SelectItem>
             </SelectContent>
         </Select>
-        <Select :model-value="signature.type" @update:model-value="handleTypeChange" :disabled="!can_write" v-if="signature.category === 'Wormhole'">
-            <SelectTrigger class="w-full overflow-hidden">
-                <SelectValue as-child>
-                    <WormholeOption v-if="selected_signature" :wormhole="selected_signature" />
-                    <template v-else>
-                        <span class="truncate">Type</span>
-                    </template>
-                </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-                <SelectGroup>
-                    <SelectLabel class="text-muted-foreground">K162</SelectLabel>
-                    <SelectItem v-for="option in k162_options" :key="option.name" :value="option.name">
-                        <WormholeOption :wormhole="option" />
-                    </SelectItem>
-                </SelectGroup>
-                <SelectSeparator />
-                <SelectGroup>
-                    <SelectLabel class="text-muted-foreground">Wormholes</SelectLabel>
-                    <SelectItem v-for="option in wormholes" :key="option.name" :value="option.name">
-                        <WormholeOption :wormhole="option" />
-                    </SelectItem>
-                </SelectGroup>
-            </SelectContent>
-        </Select>
-        <Select v-else :model-value="signature.type" @update:model-value="handleTypeChange" :disabled="!can_write">
-            <SelectTrigger class="col-span-2 w-full overflow-hidden">
-                <SelectValue placeholder="Type" />
-            </SelectTrigger>
-            <SelectContent v-if="signature.category">
-                <SelectItem v-for="option in possible_signatures[signature.category]" :key="option" :value="option">
-                    {{ option }}
-                </SelectItem>
-            </SelectContent>
-        </Select>
+        <WormholeTypeSelection
+            :model-value="signature.type"
+            @update:model-value="handleTypeChange"
+            :can_write="can_write"
+            :possible_signatures="possible_signatures"
+            v-if="signature.category === 'Wormhole'"
+        />
+        <SignatureTypeSelection
+            v-else
+            :model-value="signature.type"
+            @update:model-value="handleTypeChange"
+            :can_write="can_write"
+            :options="signature.category ? possible_signatures[signature.category] : []"
+            :category="signature.category"
+        />
         <MapConnectionSelection
             v-if="signature.category === 'Wormhole'"
             :selected="selected_connection"

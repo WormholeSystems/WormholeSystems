@@ -31,14 +31,10 @@ function onHover(hovered: boolean) {
             v-element-hover="onHover"
         >
             <SolarsystemClass :wormhole_class="destination.solarsystem.class" :security="destination.solarsystem.security" />
-            
+
             <span class="truncate text-xs font-medium">{{ destination.solarsystem.name }}</span>
-            
-            <SolarsystemSovereignty 
-                v-if="destination.solarsystem.sovereignty" 
-                :sovereignty="destination.solarsystem.sovereignty" 
-                class="size-3" 
-            />
+
+            <SolarsystemSovereignty v-if="destination.solarsystem.sovereignty" :sovereignty="destination.solarsystem.sovereignty" class="size-3" />
 
             <RoutePopover :route="destination.route">
                 <Button variant="secondary" size="sm" class="h-5 px-1.5 font-mono text-xs">
