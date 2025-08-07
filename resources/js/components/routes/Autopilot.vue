@@ -22,14 +22,13 @@ import { Deferred, router } from '@inertiajs/vue3';
 import { vElementHover } from '@vueuse/components';
 import { computed } from 'vue';
 
-const { map_route_solarsystems, map, solarsystems, map_characters, map_user_settings, map_solarsystem } = defineProps<{
+const { map_route_solarsystems, map, solarsystems, map_characters, map_user_settings, selected_map_solarsystem } = defineProps<{
     map: TMap;
     solarsystems: TSolarsystem[];
     map_route_solarsystems?: TMapRouteSolarsystem[];
     selected_map_solarsystem?: TMapSolarSystem;
     map_user_settings: TMapUserSetting;
     map_characters?: TCharacter[];
-    map_solarsystem: TMapSolarSystem | null;
 }>();
 
 const user = useUser();
@@ -88,7 +87,7 @@ function handleHover(hovered: boolean, route: TSolarsystem[] | null) {
 }
 
 function handleSolarsystemHover(hovered: boolean) {
-    setHoveredMapSolarsystem(map_solarsystem?.id ?? 0, hovered);
+    setHoveredMapSolarsystem(selected_map_solarsystem?.id ?? 0, hovered);
 }
 </script>
 
@@ -99,10 +98,10 @@ function handleSolarsystemHover(hovered: boolean) {
             <CardDescription>
                 See how far you have to travel from
                 <b v-element-hover="handleSolarsystemHover">
-                    <span v-if="map_solarsystem?.alias">
-                        <span class="text-primary">{{ map_solarsystem.alias }}</span> {{ map_solarsystem.name }}
+                    <span v-if="selected_map_solarsystem?.alias">
+                        <span class="text-primary">{{ selected_map_solarsystem.alias }}</span> {{ selected_map_solarsystem.name }}
                     </span>
-                    <span v-else class="text-primary">{{ map_solarsystem?.name }}</span>
+                    <span v-else class="text-primary">{{ selected_map_solarsystem?.name }}</span>
                 </b>
             </CardDescription>
             <CardAction class="flex gap-2">

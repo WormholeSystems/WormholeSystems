@@ -60,7 +60,7 @@ function handleSubmit() {
         },
         preserveScroll: true,
         preserveState: true,
-        only: ['map'],
+        only: ['map', 'selected_map_solarsystem'],
     });
 }
 

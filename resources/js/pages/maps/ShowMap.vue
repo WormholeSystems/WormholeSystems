@@ -115,7 +115,6 @@ useOnClient(() =>
                         :selected_map_solarsystem
                         :map_characters
                         :map_user_settings
-                        :map_solarsystem="selected_map_solarsystem"
                     />
                     <div class="flex flex-col items-center justify-center gap-8 rounded-lg border border-dashed p-16 text-neutral-700" v-else>
                         <QuestionIcon class="text-4xl" />
