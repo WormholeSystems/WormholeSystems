@@ -3,6 +3,7 @@ import ConnectionOption from '@/components/signatures/ConnectionOption.vue';
 import SolarsystemClass from '@/components/SolarsystemClass.vue';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TProcessedConnection } from '@/composables/map';
+import { ref } from 'vue';
 
 defineProps<{
     selected: TProcessedConnection | null;
@@ -13,10 +14,12 @@ defineProps<{
 const model = defineModel<number | null>({
     required: true,
 });
+
+const open = ref(false);
 </script>
 
 <template>
-    <Select v-model:model-value="model">
+    <Select v-model:model-value="model" v-model:open="open">
         <SelectTrigger class="w-full overflow-hidden">
             <SelectValue as-child>
                 <template v-if="selected">
@@ -33,17 +36,19 @@ const model = defineModel<number | null>({
             </SelectValue>
         </SelectTrigger>
         <SelectContent class="max-h-80">
-            <SelectItem :value="null" text-value="Unknown connection"> Unknown connection</SelectItem>
-            <SelectGroup v-if="unconnected_connections.length > 0">
-                <SelectSeparator />
-                <SelectLabel class="text-muted-foreground"> Unconnected solarsystems</SelectLabel>
-                <ConnectionOption v-for="connection in unconnected_connections" :key="connection.id" :connection="connection" />
-            </SelectGroup>
-            <SelectGroup v-if="connected_connections.length > 0">
-                <SelectSeparator />
-                <SelectLabel class="text-muted-foreground"> Connected solarsystems</SelectLabel>
-                <ConnectionOption v-for="connection in connected_connections" :key="connection.id" :connection="connection" />
-            </SelectGroup>
+            <template v-if="open">
+                <SelectItem :value="null" text-value="Unknown connection"> Unknown connection</SelectItem>
+                <SelectGroup v-if="unconnected_connections.length > 0">
+                    <SelectSeparator />
+                    <SelectLabel class="text-muted-foreground"> Unconnected solarsystems</SelectLabel>
+                    <ConnectionOption v-for="connection in unconnected_connections" :key="connection.id" :connection="connection" />
+                </SelectGroup>
+                <SelectGroup v-if="connected_connections.length > 0">
+                    <SelectSeparator />
+                    <SelectLabel class="text-muted-foreground"> Connected solarsystems</SelectLabel>
+                    <ConnectionOption v-for="connection in connected_connections" :key="connection.id" :connection="connection" />
+                </SelectGroup>
+            </template>
         </SelectContent>
     </Select>
 </template>
