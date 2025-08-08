@@ -22,7 +22,7 @@ class UpdateSignatureAction
      */
     public function handle(Signature $signature, array $data): Signature
     {
-        return DB::transaction(function () use ($signature, $data): \App\Models\Signature {
+        return DB::transaction(function () use ($signature, $data): Signature {
             $signature->update($data);
 
             broadcast(new SignatureUpdatedEvent($signature->mapSolarsystem->map_id))->toOthers();
