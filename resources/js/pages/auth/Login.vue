@@ -5,10 +5,11 @@ import Notifications from '@/components/Notifications.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Eve from '@/routes/eve';
+import { UTCDate } from '@date-fns/utc';
 import { Head } from '@inertiajs/vue3';
 import { format } from 'date-fns';
 
-const currentYear = format(new Date(), 'yyyy');
+const currentYear = format(new UTCDate(), 'yyyy');
 </script>
 
 <template>

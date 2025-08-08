@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { TShowMapProps } from '@/pages/maps';
 import { AppPageProps } from '@/types';
+import { UTCDate } from '@date-fns/utc';
 import { usePage } from '@inertiajs/vue3';
 import { format } from 'date-fns';
 
@@ -39,8 +40,8 @@ const page = usePage<AppPageProps<TShowMapProps>>();
                             </TableCell>
                             <TableCell class="truncate">{{ ship_history.name }}</TableCell>
                             <TableCell>{{ ship_history.character?.name }}</TableCell>
-                            <TableCell>{{ format(new Date(ship_history.created_at), 'MMM dd, HH:ii') }}</TableCell>
-                            <TableCell>{{ format(new Date(ship_history.updated_at), 'MMM dd, HH:ii') }}</TableCell>
+                            <TableCell>{{ format(new UTCDate(ship_history.created_at), 'MMM dd, HH:ii') }}</TableCell>
+                            <TableCell>{{ format(new UTCDate(ship_history.updated_at), 'MMM dd, HH:ii') }}</TableCell>
                         </TableRow>
                     </TableBody>
                 </Table>

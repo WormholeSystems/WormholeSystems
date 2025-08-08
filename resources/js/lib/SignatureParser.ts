@@ -1,3 +1,4 @@
+import { UTCDate } from '@date-fns/utc';
 import { toast } from 'vue-sonner';
 
 export type TSignatureCategory = 'Wormhole' | 'Data Site' | 'Relic Site' | 'Combat Site' | 'Gas Site' | 'Ore Site' | null;
@@ -58,7 +59,7 @@ class SignatureParser {
             signature_id: signature_id.trim(),
             category: app_category as TSignatureCategory,
             type: getType(app_category, type),
-            created_at: new Date().toISOString(),
+            created_at: new UTCDate().toISOString(),
         };
     }
 }

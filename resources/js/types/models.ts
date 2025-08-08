@@ -252,3 +252,13 @@ export type TShipHistory = {
     created_at: string;
     updated_at: string;
 };
+
+export type TServerStatus = {
+    id: number;
+    server_version: string;
+    start_time: string;
+    players: number;
+    vip: boolean;
+    created_at: string;
+    updated_at: string;
+};

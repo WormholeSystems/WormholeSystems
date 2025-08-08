@@ -1,5 +1,5 @@
 import { TLayout } from '@/composables/useLayout';
-import { TCharacter } from '@/types/models';
+import { TCharacter, TServerStatus } from '@/types/models';
 import type { LucideIcon } from 'lucide-vue-next';
 import { Component } from 'vue';
 import type { Config } from 'ziggy-js';
@@ -31,6 +31,7 @@ export type AppPageProps<T extends Record<string, unknown> = Record<string, unkn
         invite: string;
     };
     layout: TLayout;
+    server_status: TServerStatus;
 };
 
 export interface User {

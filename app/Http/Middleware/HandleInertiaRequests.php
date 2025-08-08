@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Http\Resources\CharacterResource;
 use App\Http\Resources\UserResource;
+use App\Models\ServerStatus;
 use App\Models\User;
 use App\Scopes\CharacterDoesntHaveRequiredScopes;
 use Illuminate\Container\Attributes\CurrentUser;
@@ -63,6 +64,7 @@ class HandleInertiaRequests extends Middleware
                 'invite' => config('services.discord.invite'),
             ],
             'layout' => $this->getLayout($request),
+            'server_status' => fn () => ServerStatus::query()->latest()->first(),
         ];
     }
 

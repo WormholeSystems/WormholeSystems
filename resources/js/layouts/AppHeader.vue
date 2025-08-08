@@ -4,6 +4,7 @@ import MoonIcon from '@/components/icons/MoonIcon.vue';
 import SunIcon from '@/components/icons/SunIcon.vue';
 import { CharacterImage } from '@/components/images';
 import Breadcrumbs from '@/components/navigation/Breadcrumbs.vue';
+import ServerStatus from '@/components/ServerStatus.vue';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { NavigationMenu, NavigationMenuItem, NavigationMenuList, navigationMenuTriggerStyle } from '@/components/ui/navigation-menu';
@@ -68,7 +69,7 @@ const { appearance, updateAppearance } = useAppearance();
 <template>
     <div>
         <div class="border-b border-sidebar-border/80">
-            <div class="flex h-16 items-center px-4">
+            <div class="flex h-16 grid-cols-3 items-center px-4 lg:grid">
                 <!-- Mobile Menu -->
                 <div class="lg:hidden">
                     <Sheet>
@@ -124,42 +125,46 @@ const { appearance, updateAppearance } = useAppearance();
                     </Sheet>
                 </div>
 
-                <Link :href="home()" class="flex items-center gap-x-2">
-                    <AppLogo />
-                </Link>
+                <div class="flex items-center gap-4">
+                    <Link :href="home()" class="flex items-center gap-x-2">
+                        <AppLogo />
+                    </Link>
 
-                <!-- Desktop Menu -->
-                <div class="hidden h-full lg:flex lg:flex-1">
-                    <NavigationMenu class="ml-10 flex h-full items-stretch">
-                        <NavigationMenuList class="flex h-full items-stretch space-x-2">
-                            <NavigationMenuItem v-for="(item, index) in mainNavItems" :key="index" class="relative flex h-full items-center">
-                                <Link
-                                    v-if="!item.isExternal"
-                                    :class="[navigationMenuTriggerStyle(), activeItemStyles(item.href), 'h-9 cursor-pointer px-3']"
-                                    :href="item.href"
-                                >
-                                    <component v-if="item.icon" :is="item.icon" class="mr-2 h-4 w-4" />
-                                    {{ item.title }}
-                                </Link>
-                                <a
-                                    v-else
-                                    :class="[navigationMenuTriggerStyle(), activeItemStyles(item.href), 'h-9 cursor-pointer px-3']"
-                                    :href="item.href"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                >
-                                    <component v-if="item.icon" :is="item.icon" class="mr-2 h-4 w-4" />
-                                    {{ item.title }}
-                                </a>
-                                <div
-                                    v-if="isCurrentRoute(item.href)"
-                                    class="absolute bottom-0 left-0 h-0.5 w-full translate-y-px bg-black dark:bg-white"
-                                ></div>
-                            </NavigationMenuItem>
-                        </NavigationMenuList>
-                    </NavigationMenu>
+                    <!-- Desktop Menu -->
+                    <div class="hidden h-full lg:flex lg:flex-1">
+                        <NavigationMenu class="ml-10 flex h-full items-stretch">
+                            <NavigationMenuList class="flex h-full items-stretch space-x-2">
+                                <NavigationMenuItem v-for="(item, index) in mainNavItems" :key="index" class="relative flex h-full items-center">
+                                    <Link
+                                        v-if="!item.isExternal"
+                                        :class="[navigationMenuTriggerStyle(), activeItemStyles(item.href), 'h-9 cursor-pointer px-3']"
+                                        :href="item.href"
+                                    >
+                                        <component v-if="item.icon" :is="item.icon" class="mr-2 h-4 w-4" />
+                                        {{ item.title }}
+                                    </Link>
+                                    <a
+                                        v-else
+                                        :class="[navigationMenuTriggerStyle(), activeItemStyles(item.href), 'h-9 cursor-pointer px-3']"
+                                        :href="item.href"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        <component v-if="item.icon" :is="item.icon" class="mr-2 h-4 w-4" />
+                                        {{ item.title }}
+                                    </a>
+                                    <div
+                                        v-if="isCurrentRoute(item.href)"
+                                        class="absolute bottom-0 left-0 h-0.5 w-full translate-y-px bg-black dark:bg-white"
+                                    ></div>
+                                </NavigationMenuItem>
+                            </NavigationMenuList>
+                        </NavigationMenu>
+                    </div>
                 </div>
-
+                <div class="justify-self-center">
+                    <ServerStatus />
+                </div>
                 <div class="ml-auto flex items-center space-x-2">
                     <div class="relative flex items-center space-x-1">
                         <div class="hidden space-x-1 lg:flex">

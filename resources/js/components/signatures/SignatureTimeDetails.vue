@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { TProcessedConnection } from '@/composables/map';
+import { useNowUTC } from '@/composables/useNowUTC';
 import { TSignatureCategory } from '@/lib/SignatureParser';
 import { TSignature } from '@/types/models';
-import { useNow } from '@vueuse/core';
+import { UTCDate } from '@date-fns/utc';
 import { differenceInDays, differenceInHours, differenceInMinutes, format, min } from 'date-fns';
 import { computed } from 'vue';
 
@@ -13,7 +14,7 @@ const { category, selected_connection, signature } = defineProps<{
     signature: TSignature;
 }>();
 
-const now = useNow();
+const now = useNowUTC();
 
 const created_at = computed(() => {
     if (!selected_connection) return signature.created_at;
@@ -31,9 +32,9 @@ const modified_at = computed(() => {
     return updated_at.value;
 });
 
-const created_date = computed(() => new Date(created_at.value));
-const updated_date = computed(() => new Date(updated_at.value));
-const modified_date = computed(() => new Date(modified_at.value));
+const created_date = computed(() => new UTCDate(created_at.value));
+const updated_date = computed(() => new UTCDate(updated_at.value));
+const modified_date = computed(() => new UTCDate(modified_at.value));
 
 const modified_ago = computed(() => {
     const diff_in_days = differenceInDays(now.value, modified_date.value);

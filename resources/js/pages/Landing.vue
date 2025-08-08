@@ -8,11 +8,12 @@ import { Button } from '@/components/ui/button';
 import useUser from '@/composables/useUser';
 import { home } from '@/routes';
 import Eve from '@/routes/eve';
+import { UTCDate } from '@date-fns/utc';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { format } from 'date-fns';
 import { ArrowRight, Globe, Route, Shield, Users, Zap } from 'lucide-vue-next';
 
-const currentYear = format(new Date(), 'yyyy');
+const currentYear = format(new UTCDate(), 'yyyy');
 const user = useUser();
 
 const page = usePage();
