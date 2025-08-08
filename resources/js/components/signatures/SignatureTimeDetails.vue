@@ -85,7 +85,7 @@ const modified_class = computed(() => {
             <span class="font-semibold">Created at</span>
             <p class="">{{ format(created_at, 'MMM dd, HH:ii') }}</p>
             <span class="font-semibold">Last modified at</span>
-            <p class="">{{ updated_at ? format(updated_at, 'MMM dd, HH:ii') : 'Never' }}</p>
+            <p class="">{{ modified_date ? format(modified_date, 'MMM dd, HH:ii') : 'N/A' }}</p>
         </TooltipContent>
     </Tooltip>
 </template>
