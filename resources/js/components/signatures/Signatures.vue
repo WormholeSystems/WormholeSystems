@@ -228,7 +228,10 @@ useEventListener('paste', (event) => {
 <template>
     <Card class="overflow-hidden pb-0">
         <CardHeader>
-            <CardTitle> Signatures</CardTitle>
+            <CardTitle
+                >Signatures
+                <span class="text-muted-foreground" v-if="signatures.length">({{ signatures.length }})</span>
+            </CardTitle>
             <CardDescription> All the signatures in this solarsystem. You can paste, copy and clear signatures here. </CardDescription>
 
             <CardAction class="flex gap-2" v-if="can_write">
