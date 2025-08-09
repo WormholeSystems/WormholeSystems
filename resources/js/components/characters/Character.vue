@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DestinationContextMenu from '@/components/DestinationContextMenu.vue';
 import { CharacterImage } from '@/components/images';
 import TypeImage from '@/components/images/TypeImage.vue';
 import RoutePopover from '@/components/routes/RoutePopover.vue';
@@ -55,51 +56,55 @@ function onRouteHover(hovered: boolean) {
 
 <template>
     <TableRow ref="row" v-element-hover="onHover" :data-inactive="is_inactive" class="data-[inactive=true]:opacity-50">
-        <TableCell>
-            <div class="flex gap-2">
-                <CharacterImage :character_id="character.id" :character_name="character.name" class="size-6 rounded-lg" />
-                {{ character.name }}
+        <DestinationContextMenu :solarsystem_id="character.status?.solarsystem_id ?? 0">
+            <div class="contents">
+                <TableCell>
+                    <div class="flex gap-2">
+                        <CharacterImage :character_id="character.id" :character_name="character.name" class="size-6 rounded-lg" />
+                        {{ character.name }}
+                    </div>
+                </TableCell>
+                <TableCell>
+                    <div class="flex items-center">
+                        <Tooltip>
+                            <TooltipTrigger as-child>
+                                <span v-if="character.status?.ship_type" class="flex items-center gap-2">
+                                    <TypeImage
+                                        :type_id="character.status.ship_type.id"
+                                        :type_name="character.status.ship_type.name"
+                                        class="size-6 rounded-lg"
+                                    />
+                                    {{ character.status.ship_type.name }}</span
+                                >
+                                <span v-else>Unknown Ship</span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <span v-if="character.status?.ship_name">{{ character.status.ship_name }}</span>
+                                <span v-else>Unknown Ship Name</span>
+                            </TooltipContent>
+                        </Tooltip>
+                    </div>
+                </TableCell>
+                <TableCell>
+                    <RoutePopover :route="character.route">
+                        <Button variant="secondary" v-element-hover="onRouteHover">
+                            <span v-if="map_solarsystem && map_solarsystem.alias" class="flex items-center gap-2">
+                                <span>{{ map_solarsystem.alias }}</span>
+                                <span class="text-muted-foreground"> {{ map_solarsystem.name }}</span>
+                                <span v-if="is_docked" class="text-xs text-muted-foreground">(Docked)</span>
+                                <span v-else-if="is_scanner" class="text-xs text-amber-500">(Scanner)</span>
+                            </span>
+                            <span v-else-if="character.status?.solarsystem" class="flex items-center gap-2">
+                                <span>{{ character.status.solarsystem.name }}</span>
+                                <span v-if="is_docked" class="text-xs text-muted-foreground">(Docked)</span>
+                                <span v-else-if="is_scanner" class="text-xs text-amber-500">(Scanner)</span>
+                            </span>
+                        </Button>
+                    </RoutePopover>
+                    <span v-if="!map_solarsystem && !character.status?.solarsystem">Unknown Location</span>
+                </TableCell>
             </div>
-        </TableCell>
-        <TableCell>
-            <div class="flex items-center">
-                <Tooltip>
-                    <TooltipTrigger as-child>
-                        <span v-if="character.status?.ship_type" class="flex items-center gap-2">
-                            <TypeImage
-                                :type_id="character.status.ship_type.id"
-                                :type_name="character.status.ship_type.name"
-                                class="size-6 rounded-lg"
-                            />
-                            {{ character.status.ship_type.name }}</span
-                        >
-                        <span v-else>Unknown Ship</span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <span v-if="character.status?.ship_name">{{ character.status.ship_name }}</span>
-                        <span v-else>Unknown Ship Name</span>
-                    </TooltipContent>
-                </Tooltip>
-            </div>
-        </TableCell>
-        <TableCell>
-            <RoutePopover :route="character.route">
-                <Button variant="secondary" v-element-hover="onRouteHover">
-                    <span v-if="map_solarsystem && map_solarsystem.alias" class="flex items-center gap-2">
-                        <span>{{ map_solarsystem.alias }}</span>
-                        <span class="text-muted-foreground"> {{ map_solarsystem.name }}</span>
-                        <span v-if="is_docked" class="text-xs text-muted-foreground">(Docked)</span>
-                        <span v-else-if="is_scanner" class="text-xs text-amber-500">(Scanner)</span>
-                    </span>
-                    <span v-else-if="character.status?.solarsystem" class="flex items-center gap-2">
-                        <span>{{ character.status.solarsystem.name }}</span>
-                        <span v-if="is_docked" class="text-xs text-muted-foreground">(Docked)</span>
-                        <span v-else-if="is_scanner" class="text-xs text-amber-500">(Scanner)</span>
-                    </span>
-                </Button>
-            </RoutePopover>
-            <span v-if="!map_solarsystem && !character.status?.solarsystem">Unknown Location</span>
-        </TableCell>
+        </DestinationContextMenu>
     </TableRow>
 </template>
 
