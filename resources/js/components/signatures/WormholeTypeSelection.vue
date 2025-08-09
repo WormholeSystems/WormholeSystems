@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import WormholeOption from '@/components/signatures/WormholeOption.vue';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger } from '@/components/ui/select';
 import { TWormholeDefinition } from '@/const/signatures';
 import { computed, shallowRef } from 'vue';
 
@@ -35,14 +35,12 @@ const open = shallowRef(false);
 <template>
     <Select v-model="model" :disabled="!can_write" v-model:open="open">
         <SelectTrigger class="w-full overflow-hidden">
-            <SelectValue as-child>
-                <WormholeOption v-if="selected_signature" :wormhole="selected_signature" />
-                <template v-else>
-                    <span class="truncate">Type</span>
-                </template>
-            </SelectValue>
+            <WormholeOption v-if="selected_signature" :wormhole="selected_signature" />
+            <template v-else>
+                <span class="truncate">Type</span>
+            </template>
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent class="max-h-100">
             <template v-if="open">
                 <SelectGroup>
                     <SelectLabel class="text-muted-foreground">K162</SelectLabel>
