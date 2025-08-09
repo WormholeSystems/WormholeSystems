@@ -7,7 +7,6 @@ import {
     ContextMenuRadioGroup,
     ContextMenuRadioItem,
     ContextMenuSeparator,
-    ContextMenuShortcut,
     ContextMenuSub,
     ContextMenuSubContent,
     ContextMenuSubTrigger,
@@ -117,10 +116,7 @@ const options: TMapSolarsystemStatus[] = ['unknown', 'friendly', 'hostile', 'act
             </ContextMenuSub>
             <template v-if="!map_solarsystem.pinned && can_write">
                 <ContextMenuSeparator />
-                <ContextMenuItem @select="handleRemoveFromMap">
-                    Remove
-                    <ContextMenuShortcut>DEL</ContextMenuShortcut>
-                </ContextMenuItem>
+                <ContextMenuItem @select="handleRemoveFromMap"> Remove </ContextMenuItem>
             </template>
         </ContextMenuContent>
     </ContextMenu>
