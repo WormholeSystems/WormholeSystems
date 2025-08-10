@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import SignatureController from '@/actions/App/Http/Controllers/SignatureController';
 import ChevronDownIcon from '@/components/icons/ChevronDownIcon.vue';
 import PasteIcon from '@/components/icons/PasteIcon.vue';
 import PlusIcon from '@/components/icons/PlusIcon.vue';
@@ -8,13 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { createSignature, deleteSignatures, pasteSignatures, useSignatures } from '@/composables/map';
 import { useHasWritePermission } from '@/composables/useHasPermission';
-import { useSignatures } from '@/composables/useSignatures';
 import { signatureParser, TRawSignature } from '@/lib/SignatureParser';
-import Signatures from '@/routes/map-solarsystems/signatures';
-import PasteSignatures from '@/routes/paste-signatures';
 import { TMapSolarSystem, TSignature } from '@/types/models';
-import { router } from '@inertiajs/vue3';
 import { useActiveElement, useEventListener } from '@vueuse/core';
 import { computed, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
@@ -111,22 +107,7 @@ async function handlePaste() {
 
 function processSignatures(signatures: TRawSignature[]) {
     pasted_signatures.value = signatures;
-    router.post(
-        PasteSignatures.store().url,
-        {
-            map_solarsystem_id: map_solarsystem.id,
-            signatures: signatures.map((signature) => ({
-                signature_id: signature.signature_id,
-                type: signature.type,
-                category: signature.category,
-            })),
-        },
-        {
-            preserveScroll: true,
-            preserveState: true,
-            only: ['selected_map_solarsystem'],
-        },
-    );
+    pasteSignatures(map_solarsystem.id, signatures);
 }
 
 async function getSignaturesFromClipboard() {
@@ -177,32 +158,15 @@ function getDeletedSignatures(parsed_signatures: Partial<TSignature>[]) {
 }
 
 function createNewSignature() {
-    router.post(
-        SignatureController.store().url,
-        {
-            map_solarsystem_id: map_solarsystem.id,
-            signature_id: '',
-            type: null,
-            category: null,
-        } satisfies Partial<TSignature>,
-        {
-            preserveScroll: true,
-            preserveState: true,
-            only: ['selected_map_solarsystem'],
-        },
-    );
+    createSignature(map_solarsystem.id);
 }
 
 function deleteMissingSignatures(with_solarsystems = false) {
-    router.delete(Signatures.destroy(map_solarsystem.id).url, {
-        preserveScroll: true,
-        preserveState: true,
-        only: ['selected_map_solarsystem', 'map'],
-        data: {
-            signature_ids: deleted_signatures.value.map((signature) => signature.id),
-            remove_map_solarsystems: with_solarsystems,
-        },
-    });
+    deleteSignatures(
+        map_solarsystem.id,
+        deleted_signatures.value.map((signature) => signature.id),
+        with_solarsystems,
+    );
 }
 
 useEventListener('paste', (event) => {

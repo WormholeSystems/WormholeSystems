@@ -1,9 +1,9 @@
-import { TProcessedConnection } from '@/composables/map';
 import { useMap } from '@/composables/useMap';
 import { useSelectedMapSolarsystem } from '@/composables/useSelectedMapSolarsystem';
 import signature_tree from '@/const/signatures';
 import { TMapSolarSystem } from '@/types/models';
 import { computed } from 'vue';
+import { TProcessedConnection } from '../types';
 
 export function useSignatures() {
     const map = useMap();

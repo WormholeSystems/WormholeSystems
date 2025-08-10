@@ -12,7 +12,7 @@ import {
     ContextMenuSubTrigger,
     ContextMenuTrigger,
 } from '@/components/ui/context-menu';
-import { useMapAction } from '@/composables/map';
+import { deleteMapSolarsystem, updateMapSolarsystem } from '@/composables/map';
 import { useHasWritePermission } from '@/composables/useHasPermission';
 import useUser from '@/composables/useUser';
 import { useWaypoint } from '@/composables/useWaypoint';
@@ -22,7 +22,7 @@ const { map_solarsystem } = defineProps<{
     map_solarsystem: TMapSolarSystem;
 }>();
 
-const { removeMapSolarsystem, updateMapSolarsystem } = useMapAction();
+// deleteMapSolarsystem and updateMapSolarsystem imported directly
 
 const user = useUser();
 
@@ -35,7 +35,7 @@ function handleTogglePin() {
 }
 
 function handleRemoveFromMap() {
-    removeMapSolarsystem(map_solarsystem);
+    deleteMapSolarsystem(map_solarsystem);
 }
 
 function handleStatusChange(status: string) {

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import MapConnection from '@/components/map/MapConnection.vue';
-import { useMapConnections, useMapMouse, useSelection } from '@/composables/map';
-import { useNewConnection } from '@/composables/useNewConnection';
+import { useMapConnections, useMapMouse, useNewConnection, useSelection } from '@/composables/map';
 import { TMapConnection } from '@/types/models';
 import { useEventListener } from '@vueuse/core';
 import { ref, useTemplateRef } from 'vue';

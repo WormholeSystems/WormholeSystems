@@ -52,8 +52,6 @@ const modified_ago = computed(() => {
 
     return 'now';
 });
-
-console.log(updated_date.value);
 </script>
 
 <template>

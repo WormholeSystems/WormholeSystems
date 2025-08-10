@@ -8,7 +8,15 @@ import MapContextMenu from '@/components/map/MapContextMenu.vue';
 import MapSolarsystem from '@/components/map/MapSolarsystem.vue';
 import { Button } from '@/components/ui/button';
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu';
-import { useMapAction, useMapConnections, useMapGrid, useMapMouse, useMapScale, useMapSolarsystems, useMap as useNewMap } from '@/composables/map';
+import {
+    deleteSelectedMapSolarsystems,
+    useCreateMap,
+    useMapConnections,
+    useMapGrid,
+    useMapMouse,
+    useMapScale,
+    useMapSolarsystems,
+} from '@/composables/map';
 import { useHasWritePermission } from '@/composables/useHasPermission';
 import { useLayout } from '@/composables/useLayout';
 import { useOnClient } from '@/composables/useOnClient';
@@ -47,7 +55,7 @@ const scroll_locked = ref(false);
 
 const { layout, setLayout } = useLayout();
 
-useNewMap(
+useCreateMap(
     () => map,
     () => container.value!,
     () => config,
@@ -62,7 +70,7 @@ const { Delete } = useMagicKeys();
 
 const { grid_size } = useMapGrid();
 
-const { removeSelectedMapSolarsystems } = useMapAction();
+// removeSelectedMapSolarsystems imported directly
 
 const can_write = useHasWritePermission();
 
@@ -78,7 +86,7 @@ const mouse = useMapMouse();
 
 const opened_at = ref<Position | null>(null);
 
-whenever(Delete, () => removeSelectedMapSolarsystems());
+whenever(Delete, () => deleteSelectedMapSolarsystems());
 
 function onOpenChange(open: boolean) {
     if (!open) {

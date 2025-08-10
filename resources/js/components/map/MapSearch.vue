@@ -2,7 +2,7 @@
 import SolarsystemEffect from '@/components/map/SolarsystemEffect.vue';
 import SolarsystemClass from '@/components/SolarsystemClass.vue';
 import { Combobox, ComboboxAnchor, ComboboxEmpty, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxList } from '@/components/ui/combobox';
-import { useMapAction } from '@/composables/map';
+import { createMapSolarsystem } from '@/composables/map';
 import { useSearch } from '@/composables/useSearch';
 import { TMap, TSolarsystem } from '@/types/models';
 import { computed } from 'vue';
@@ -12,12 +12,12 @@ const { map, solarsystems } = defineProps<{
     solarsystems: TSolarsystem[];
 }>();
 
-const { addMapSolarsystem } = useMapAction();
+// createMapSolarsystem imported directly
 
 const search = useSearch('search', ['solarsystems']);
 
 function handleSolarsystemSelect(solarsystem: TSolarsystem) {
-    addMapSolarsystem(solarsystem.id);
+    createMapSolarsystem(solarsystem.id);
 }
 
 const new_solarsystems = computed(() => {

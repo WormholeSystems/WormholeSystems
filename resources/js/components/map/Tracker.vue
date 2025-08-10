@@ -3,12 +3,9 @@ import PingController from '@/actions/App/Http/Controllers/PingController';
 import TrackingIcon from '@/components/icons/TrackingIcon.vue';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useMapAction, useMapSolarsystems } from '@/composables/map';
+import { createMapSolarsystem, createTracking, updateMapUserSettings, useMapSolarsystems } from '@/composables/map';
 import useUser from '@/composables/useUser';
-import MapUserSettings from '@/routes/map-user-settings';
-import Tracking from '@/routes/tracking';
 import { TCharacter, TMap, TMapUserSetting } from '@/types/models';
-import { router } from '@inertiajs/vue3';
 import { useFetch, useIntervalFn } from '@vueuse/core';
 import { computed, onMounted, watch } from 'vue';
 
@@ -20,7 +17,7 @@ const { map_characters, map, map_user_settings } = defineProps<{
 
 const user = useUser();
 
-const { addMapSolarsystem } = useMapAction();
+// createMapSolarsystem imported directly
 
 const active_map_character = computed(() => {
     return map_characters.find((character) => character.id === user.value.active_character.id);
@@ -57,7 +54,7 @@ onMounted(() => {
     const existing_solarsystem = map_solarsystems.value.find((s) => s.solarsystem_id === active_solarsystem.id);
     if (existing_solarsystem) return;
 
-    addMapSolarsystem(active_solarsystem.id);
+    createMapSolarsystem(active_solarsystem.id);
 });
 
 function requestConnectSolarsystem(old_solarsystem_id: number | null, new_solarsystem_id: number) {
@@ -65,31 +62,13 @@ function requestConnectSolarsystem(old_solarsystem_id: number | null, new_solars
     if (!old_map_solarsystem) return;
     if (old_map_solarsystem.solarsystem_id === new_solarsystem_id) return;
 
-    router.post(
-        Tracking.store().url,
-        {
-            from_map_solarsystem_id: old_map_solarsystem.id,
-            to_solarsystem_id: new_solarsystem_id,
-        },
-        {
-            preserveState: true,
-            preserveScroll: true,
-        },
-    );
+    createTracking(old_map_solarsystem.id, new_solarsystem_id);
 }
 
 function handleToggleTracking() {
-    router.put(
-        MapUserSettings.update(map_user_settings.id).url,
-        {
-            is_tracking: !map_user_settings.is_tracking,
-        },
-        {
-            preserveScroll: true,
-            only: ['map_user_settings'],
-            preserveState: true,
-        },
-    );
+    updateMapUserSettings(map_user_settings, {
+        is_tracking: !map_user_settings.is_tracking,
+    });
 }
 </script>
 

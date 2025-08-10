@@ -3,7 +3,7 @@ import SolarsystemEffect from '@/components/map/SolarsystemEffect.vue';
 import SolarsystemClass from '@/components/SolarsystemClass.vue';
 import { Combobox, ComboboxAnchor, ComboboxEmpty, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxList } from '@/components/ui/combobox';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useMapAction } from '@/composables/map';
+import { createMapSolarsystem } from '@/composables/map';
 import { useSearch } from '@/composables/useSearch';
 import { TShowMapProps } from '@/pages/maps';
 import { AppPageProps } from '@/types';
@@ -11,7 +11,7 @@ import { TSolarsystem } from '@/types/models';
 import { usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
-const { addMapSolarsystem } = useMapAction();
+// createMapSolarsystem imported directly
 
 const search = useSearch('search', ['solarsystems']);
 
@@ -32,7 +32,7 @@ const existing_solarsystems = computed(() => {
 });
 
 function handleSolarsystemSelect(solarsystem: TSolarsystem) {
-    addMapSolarsystem(solarsystem.id);
+    createMapSolarsystem(solarsystem.id);
 }
 </script>
 

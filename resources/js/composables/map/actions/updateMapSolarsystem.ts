@@ -1,0 +1,30 @@
+import MapSolarsystems from '@/routes/map-solarsystems';
+import { TMapSolarSystem } from '@/types/models';
+import { router } from '@inertiajs/vue3';
+import { mapState } from '../state';
+
+export function updateMapSolarsystem(
+    map_solarsystem: TMapSolarSystem,
+    data: {
+        position_x?: number;
+        position_y?: number;
+        alias?: string;
+        occupier_alias?: string;
+        status?: string;
+        pinned?: boolean;
+    },
+) {
+    return router.put(
+        MapSolarsystems.update(map_solarsystem.id).url,
+        {
+            ...data,
+            position_x: data.position_x ? data.position_x * (1 / mapState.scale) : map_solarsystem.position?.x,
+            position_y: data.position_y ? data.position_y * (1 / mapState.scale) : map_solarsystem.position?.y,
+        },
+        {
+            preserveState: true,
+            preserveScroll: true,
+            only: ['map'],
+        },
+    );
+}

@@ -14,7 +14,13 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { NumberField, NumberFieldContent, NumberFieldDecrement, NumberFieldIncrement, NumberFieldInput } from '@/components/ui/number-field';
-import { useMapAction, useMapSolarsystems } from '@/composables/map';
+import {
+    createMapSolarsystem,
+    deleteAllMapSolarsystems,
+    deleteSelectedMapSolarsystems,
+    organizeMapSolarsystems,
+    useMapSolarsystems,
+} from '@/composables/map';
 import { useSearch } from '@/composables/useSearch';
 import { TShowMapProps } from '@/pages/maps';
 import { AppPageProps } from '@/types';
@@ -27,13 +33,11 @@ const { position } = defineProps<{
     position: Position | null;
 }>();
 
-const { removeAllMapSolarsystems, organizeMapSolarsystems, removeSelectedMapSolarsystems } = useMapAction();
+// deleteAllMapSolarsystems, organizeMapSolarsystems, deleteSelectedMapSolarsystems, createMapSolarsystem imported directly
 
 const { map_solarsystems_selected } = useMapSolarsystems();
 
 const is_clearing_map = ref(false);
-
-const { addMapSolarsystem } = useMapAction();
 
 const search = useSearch('search', ['solarsystems']);
 
@@ -56,7 +60,7 @@ const existing_solarsystems = computed(() => {
 });
 
 function handleSolarsystemSelect(solarsystem: TSolarsystem) {
-    addMapSolarsystem(solarsystem.id, position);
+    createMapSolarsystem(solarsystem.id, position);
     adding.value = false;
 }
 
@@ -65,7 +69,7 @@ function handleDelete() {
 }
 
 function handleConfirmDelete() {
-    removeAllMapSolarsystems();
+    deleteAllMapSolarsystems();
     is_clearing_map.value = false;
 }
 
@@ -79,7 +83,7 @@ function handeCancelDelete() {
         <ContextMenuItem @select="adding = true"> Add Solarsystem</ContextMenuItem>
         <template v-if="map_solarsystems_selected.length">
             <ContextMenuSeparator />
-            <ContextMenuItem @select="removeSelectedMapSolarsystems"> Delete selection</ContextMenuItem>
+            <ContextMenuItem @select="deleteSelectedMapSolarsystems"> Delete selection</ContextMenuItem>
             <ContextMenuSub>
                 <ContextMenuSubTrigger> Organize selection</ContextMenuSubTrigger>
                 <ContextMenuSubContent>

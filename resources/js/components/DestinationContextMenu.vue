@@ -10,7 +10,7 @@ import {
     ContextMenuSubTrigger,
     ContextMenuTrigger,
 } from '@/components/ui/context-menu';
-import { useMapAction, useMapSolarsystems } from '@/composables/map';
+import { createMapSolarsystem, useMapSolarsystems } from '@/composables/map';
 import { useHasWritePermission } from '@/composables/useHasPermission';
 import useUser from '@/composables/useUser';
 import { useWaypoint } from '@/composables/useWaypoint';
@@ -26,7 +26,7 @@ const setWaypoint = useWaypoint();
 
 const { map_solarsystems } = useMapSolarsystems();
 
-const { addMapSolarsystem } = useMapAction();
+// createMapSolarsystem imported directly
 
 const already_on_map = computed(() => {
     return map_solarsystems.value.some((map_solarsystem) => map_solarsystem.solarsystem_id === solarsystem_id);
@@ -66,7 +66,7 @@ const can_write = useHasWritePermission();
             </ContextMenuSub>
             <template v-if="!already_on_map && can_write">
                 <ContextMenuSeparator />
-                <ContextMenuItem @select="addMapSolarsystem(solarsystem_id)">Add to map</ContextMenuItem>
+                <ContextMenuItem @select="createMapSolarsystem(solarsystem_id)">Add to map</ContextMenuItem>
             </template>
         </ContextMenuContent>
     </ContextMenu>

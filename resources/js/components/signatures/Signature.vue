@@ -8,12 +8,10 @@ import WormholeTypeSelection from '@/components/signatures/WormholeTypeSelection
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { TProcessedConnection } from '@/composables/map';
+import { deleteSignature, TProcessedConnection, updateSignature } from '@/composables/map';
 import { useHasWritePermission } from '@/composables/useHasPermission';
 import { TSignatureCategory } from '@/lib/SignatureParser';
-import Signatures from '@/routes/signatures';
 import { TMapSolarSystem, TSignature } from '@/types/models';
-import { router } from '@inertiajs/vue3';
 import { syncRefs } from '@vueuse/core';
 import { AcceptableValue } from 'reka-ui';
 import { computed, ref, toRef } from 'vue';
@@ -47,19 +45,11 @@ const selected_connection = computed(() => {
 const options = ['Wormhole', 'Gas Site', 'Ore Site', 'Combat Site', 'Data Site', 'Relic Site', 'Unknown'];
 
 function handleChange(data: Record<any, any>) {
-    router.put(Signatures.update(signature.id).url, data, {
-        preserveScroll: true,
-        preserveState: true,
-        only: ['selected_map_solarsystem'],
-    });
+    updateSignature(signature, data);
 }
 
 function handleDelete() {
-    router.delete(Signatures.destroy(signature.id).url, {
-        preserveScroll: true,
-        preserveState: true,
-        only: ['selected_map_solarsystem', 'map'],
-    });
+    deleteSignature(signature);
 }
 
 function handleCategoryChange(value: AcceptableValue) {
