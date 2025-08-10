@@ -1,3 +1,4 @@
+import { useOnClient } from '@/composables/useOnClient';
 import { getServerStatusChannelName } from '@/const/channels';
 import { ServerStatusUpdatedEvent } from '@/const/events';
 import { TServerStatus } from '@/types/models';
@@ -10,10 +11,12 @@ export function useServerStatus() {
 
     const server_status = ref(page.props.server_status);
 
-    useEchoPublic<{
-        server_status: TServerStatus;
-    }>(getServerStatusChannelName(), ServerStatusUpdatedEvent, (event) => {
-        server_status.value = event.server_status;
+    useOnClient(() => {
+        useEchoPublic<{
+            server_status: TServerStatus;
+        }>(getServerStatusChannelName(), ServerStatusUpdatedEvent, (event) => {
+            server_status.value = event.server_status;
+        });
     });
 
     return server_status;
