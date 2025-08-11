@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Console\Commands\Characters\GetOnlineCharacterLocationsCommand;
 use App\Console\Commands\Characters\GetOnlineCharactersCommand;
 use App\Console\Commands\CheckConnectionAgeCommand;

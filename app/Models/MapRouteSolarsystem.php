@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Database\Factories\MapRouteSolarsystemFactory;
@@ -17,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read Solarsystem $solarsystem
  * @property-read Map $map
  */
-class MapRouteSolarsystem extends Model
+final class MapRouteSolarsystem extends Model
 {
     /** @use HasFactory<MapRouteSolarsystemFactory> */
     use HasFactory;

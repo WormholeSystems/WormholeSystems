@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Enums\KillmailFilter;
@@ -23,22 +25,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property CarbonImmutable|string $created_at
  * @property CarbonImmutable|string $updated_at
  */
-class MapUserSetting extends Model
+final class MapUserSetting extends Model
 {
-    protected function casts(): array
-    {
-        return [
-            'created_at' => 'immutable_datetime',
-            'updated_at' => 'immutable_datetime',
-            'tracking_allowed' => 'boolean',
-            'is_tracking' => 'boolean',
-            'route_allow_eol' => 'boolean',
-            'route_allow_mass_status' => MassStatus::class,
-            'killmail_filter' => KillmailFilter::class,
-            'route_use_evescout' => 'boolean',
-        ];
-    }
-
     /**
      * The map that this setting belongs to.
      *
@@ -57,5 +45,19 @@ class MapUserSetting extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'created_at' => 'immutable_datetime',
+            'updated_at' => 'immutable_datetime',
+            'tracking_allowed' => 'boolean',
+            'is_tracking' => 'boolean',
+            'route_allow_eol' => 'boolean',
+            'route_allow_mass_status' => MassStatus::class,
+            'killmail_filter' => KillmailFilter::class,
+            'route_use_evescout' => 'boolean',
+        ];
     }
 }

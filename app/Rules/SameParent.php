@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Rules;
 
 use Closure;
@@ -7,7 +9,7 @@ use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Translation\PotentiallyTranslatedString;
 
-class SameParent implements ValidationRule
+final class SameParent implements ValidationRule
 {
     public function __construct(
         private readonly string $item_table,

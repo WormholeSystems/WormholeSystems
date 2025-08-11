@@ -24,7 +24,7 @@ use NicolasKion\SDE\ClassResolver;
  * @property-read Collection<int,Character> $characters
  * @property-read Collection<int,Bloodline> $bloodlines
  */
-class Race extends Model
+final class Race extends Model
 {
     public $incrementing = false;
 

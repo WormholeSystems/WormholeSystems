@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Utilities;
 
 use JMGQ\AStar\DomainLogicInterface;
 
-class DomainLogic implements DomainLogicInterface
+final class DomainLogic implements DomainLogicInterface
 {
     /**
      * @param  array<int, int[]>  $connections

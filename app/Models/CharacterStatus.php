@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Carbon\CarbonImmutable;
@@ -28,17 +30,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read Station|null $station
  * @property-read Type $shipType
  */
-class CharacterStatus extends Model
+final class CharacterStatus extends Model
 {
-    protected function casts(): array
-    {
-        return [
-            'last_online_at' => 'immutable_datetime',
-            'online_last_checked_at' => 'immutable_datetime',
-            'location_last_checked_at' => 'immutable_datetime',
-        ];
-    }
-
     /**
      * @return BelongsTo<Character, $this>
      */
@@ -69,5 +62,14 @@ class CharacterStatus extends Model
     public function shipType(): BelongsTo
     {
         return $this->belongsTo(Type::class, 'ship_type_id');
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'last_online_at' => 'immutable_datetime',
+            'online_last_checked_at' => 'immutable_datetime',
+            'location_last_checked_at' => 'immutable_datetime',
+        ];
     }
 }

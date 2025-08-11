@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions\Signatures;
 
 use App\Events\Signatures\SignatureCreatedEvent;
@@ -8,7 +10,7 @@ use App\Models\Signature;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
-class StoreSignatureAction
+final class StoreSignatureAction
 {
     /**
      * Create a new class instance.

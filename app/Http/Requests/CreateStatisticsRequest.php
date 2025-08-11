@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Requests;
 
 use App\Models\Map;
@@ -9,7 +11,7 @@ use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class CreateStatisticsRequest extends FormRequest
+final class CreateStatisticsRequest extends FormRequest
 {
     public Map $map {
         get {
@@ -30,7 +32,7 @@ class CreateStatisticsRequest extends FormRequest
      */
     public function authorize(#[CurrentUser] User $user): bool
     {
-        if ($this->mapSolarsystem instanceof \App\Models\MapSolarsystem) {
+        if ($this->mapSolarsystem instanceof MapSolarsystem) {
             return $user->can('update', $this->mapSolarsystem);
         }
 

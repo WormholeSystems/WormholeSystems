@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Scopes;
 
 use App\Models\Character;
 use Illuminate\Database\Eloquent\Builder;
 
-readonly class CharacterIsOnline
+final readonly class CharacterIsOnline
 {
     /**
      * @param  Builder<Character>  $query

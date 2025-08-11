@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Resources;
 
 use App\Models\MapUserSetting;
@@ -9,7 +11,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 /**
  * @mixin MapUserSetting
  */
-class MapUserSettingResource extends JsonResource
+final class MapUserSettingResource extends JsonResource
 {
     /**
      * Transform the resource into an array.

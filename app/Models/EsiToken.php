@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Carbon\CarbonImmutable;
@@ -23,7 +25,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property-read Character $character
  * @property-read Collection<int, EsiScope> $scopes
  */
-class EsiToken extends Model implements \NicolasKion\Esi\Interfaces\EsiToken
+final class EsiToken extends Model implements \NicolasKion\Esi\Interfaces\EsiToken
 {
     protected $casts = [
         'expires_at' => 'immutable_datetime',

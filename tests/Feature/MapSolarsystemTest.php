@@ -1,6 +1,6 @@
 <?php
 
-/** @noinspection PhpUnhandledExceptionInspection */
+declare(strict_types=1);
 
 use App\Enums\Permission;
 use App\Models\Character;

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
 use App\Actions\MapSolarsystem\DeleteMapSolarsystemAction;
@@ -13,7 +15,7 @@ use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
-class MapSolarsystemController extends Controller
+final class MapSolarsystemController extends Controller
 {
     public function update(UpdateMapSolarsystemRequest $request, MapSolarsystem $mapSolarsystem, UpdateMapSolarsystemAction $action): JsonResponse
     {

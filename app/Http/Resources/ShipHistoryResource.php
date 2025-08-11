@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Resources;
 
 use App\Models\ShipHistory;
@@ -10,7 +12,7 @@ use Throwable;
 /**
  * @mixin ShipHistory
  */
-class ShipHistoryResource extends JsonResource
+final class ShipHistoryResource extends JsonResource
 {
     /**
      * Transform the resource into an array.

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Scopes;
 
 use App\Models\Character;
@@ -7,7 +9,7 @@ use App\Models\Map;
 use App\Models\MapAccess;
 use Illuminate\Database\Eloquent\Builder;
 
-readonly class CharacterHasMapAccess
+final readonly class CharacterHasMapAccess
 {
     public function __construct(private Map $map) {}
 

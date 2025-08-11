@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Factories;
 
 use App\Enums\MassStatus;
@@ -12,7 +14,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 /**
  * @extends Factory<MapConnection>
  */
-class MapConnectionFactory extends Factory
+final class MapConnectionFactory extends Factory
 {
     /**
      * Define the model's default state.

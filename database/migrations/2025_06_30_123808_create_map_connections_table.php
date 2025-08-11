@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\MassStatus;
 use App\Enums\ShipSize;
 use Illuminate\Database\Migrations\Migration;

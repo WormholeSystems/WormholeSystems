@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Requests;
 
 use App\Enums\SignatureCategory;
@@ -10,12 +12,10 @@ use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class PasteSignaturesRequest extends FormRequest
+final class PasteSignaturesRequest extends FormRequest
 {
     public MapSolarsystem $map_solarsystem {
-        get {
-            return MapSolarsystem::query()->findOrFail($this->integer('map_solarsystem_id'));
-        }
+        get => MapSolarsystem::query()->findOrFail($this->integer('map_solarsystem_id'));
     }
 
     /**

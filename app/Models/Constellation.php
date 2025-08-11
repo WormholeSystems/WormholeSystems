@@ -26,7 +26,7 @@ use NicolasKion\SDE\ClassResolver;
  * @property-read Collection<int,Station> $stations
  * @property-read Collection<int,Celestial> $celestials
  */
-class Constellation extends Model
+final class Constellation extends Model
 {
     use HasSlug;
 

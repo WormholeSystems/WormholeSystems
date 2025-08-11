@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Actions\Tracking\StoreTrackingAction;
@@ -7,7 +9,7 @@ use App\Http\Requests\StoreTrackingRequest;
 use Illuminate\Http\RedirectResponse;
 use Throwable;
 
-class TrackingController extends Controller
+final class TrackingController extends Controller
 {
     /**
      * @throws Throwable

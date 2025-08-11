@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Console\Commands\Killmails;
 
 use App\Models\Killmail;
@@ -12,7 +14,7 @@ use Illuminate\Support\Facades\Storage;
 use function Laravel\Prompts\error;
 use function Laravel\Prompts\info;
 
-class GetKillmailsForDayCommand extends Command
+final class GetKillmailsForDayCommand extends Command
 {
     /**
      * The name and signature of the console command.

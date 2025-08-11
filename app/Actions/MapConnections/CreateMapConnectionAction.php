@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions\MapConnections;
 
 use App\Events\MapConnections\MapConnectionCreatedEvent;
 use App\Models\MapConnection;
 use App\Models\MapSolarsystem;
 
-class CreateMapConnectionAction
+final class CreateMapConnectionAction
 {
     public function handle(array $data): MapConnection
     {

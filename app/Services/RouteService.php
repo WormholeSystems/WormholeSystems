@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Enums\MassStatus;
@@ -12,26 +14,15 @@ use Illuminate\Database\Eloquent\Builder;
 use NicolasKion\SDE\Models\SolarsystemConnection;
 use SplPriorityQueue;
 
-class RouteService
+final class RouteService
 {
-    private readonly array $connections;
-
     public const string MAP_CACHE_PATTERN = 'map_%d'; // Keep public for MapRoutesBecameOutdated listener
+
+    private readonly array $connections;
 
     public function __construct()
     {
         $this->connections = $this->getConnections();
-    }
-
-    private function getConnections(): array
-    {
-        return SolarsystemConnection::query()
-            ->whereDoesntHaveRelation('fromSolarsystem', 'name', '=', 'Zarzakh')
-            ->select('from_solarsystem_id', 'to_solarsystem_id')
-            ->get(['from_solarsystem_id', 'to_solarsystem_id'])
-            ->groupBy('from_solarsystem_id')
-            ->map(static fn ($group) => $group->pluck('to_solarsystem_id')->toArray())
-            ->all();
     }
 
     /**
@@ -51,6 +42,17 @@ class RouteService
 
         // Enrich with solarsystem data
         return $this->enrichRouteWithSolarsystemData($path);
+    }
+
+    private function getConnections(): array
+    {
+        return SolarsystemConnection::query()
+            ->whereDoesntHaveRelation('fromSolarsystem', 'name', '=', 'Zarzakh')
+            ->select('from_solarsystem_id', 'to_solarsystem_id')
+            ->get(['from_solarsystem_id', 'to_solarsystem_id'])
+            ->groupBy('from_solarsystem_id')
+            ->map(static fn ($group) => $group->pluck('to_solarsystem_id')->toArray())
+            ->all();
     }
 
     /**

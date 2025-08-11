@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -7,7 +9,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\MapRouteSolarsystem>
  */
-class MapRouteSolarsystemFactory extends Factory
+final class MapRouteSolarsystemFactory extends Factory
 {
     /**
      * Define the model's default state.

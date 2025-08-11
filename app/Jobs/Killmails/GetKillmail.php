@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Jobs\Killmails;
 
 use App\Http\Integrations\zKillboard\zKillboard;
@@ -9,7 +11,7 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Http\Client\ConnectionException;
 use NicolasKion\Esi\Esi;
 
-class GetKillmail implements ShouldQueue
+final class GetKillmail implements ShouldQueue
 {
     use Queueable;
 

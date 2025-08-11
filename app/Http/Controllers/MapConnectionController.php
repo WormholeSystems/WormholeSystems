@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Actions\MapConnections\CreateMapConnectionAction;
@@ -11,7 +13,7 @@ use App\Models\MapConnection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 
-class MapConnectionController extends Controller
+final class MapConnectionController extends Controller
 {
     public function store(StoreMapConnectionRequest $request, CreateMapConnectionAction $action): RedirectResponse
     {

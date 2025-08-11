@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Resources;
 
 use App\Models\Signature;
@@ -8,7 +10,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 /**
  * @mixin Signature
  */
-class SignatureResource extends JsonResource
+final class SignatureResource extends JsonResource
 {
     /**
      * Transform the resource into an array.

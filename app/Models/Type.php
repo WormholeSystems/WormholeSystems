@@ -41,7 +41,7 @@ use NicolasKion\SDE\ClassResolver;
  * @property-read MetaGroup|null $metaGroup
  * @property-read Graphic|null $graphic
  */
-class Type extends Model
+final class Type extends Model
 {
     public $incrementing = false;
 

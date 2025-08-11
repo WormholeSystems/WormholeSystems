@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions\MapConnections;
 
 use App\Events\MapConnections\MapConnectionCreatedEvent;
 use App\Models\Map;
 
-readonly class CreateMapConnectionWithIDsAction
+final readonly class CreateMapConnectionWithIDsAction
 {
     public function __construct(private CreateMapConnectionAction $connectMapSolarsystems) {}
 

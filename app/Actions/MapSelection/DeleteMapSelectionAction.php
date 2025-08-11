@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions\MapSelection;
 
 use App\Events\MapSolarsystems\MapSolarsystemsDeletedEvent;
@@ -9,7 +11,7 @@ use App\Models\MapSolarsystem;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
-class DeleteMapSelectionAction
+final class DeleteMapSelectionAction
 {
     /**
      * Delete selected map solarsystems from the database.

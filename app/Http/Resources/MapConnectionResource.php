@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Resources;
 
 use App\Models\MapConnection;
@@ -9,7 +11,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 /**
  * @mixin MapConnection
  */
-class MapConnectionResource extends JsonResource
+final class MapConnectionResource extends JsonResource
 {
     /**
      * Transform the resource into an array.

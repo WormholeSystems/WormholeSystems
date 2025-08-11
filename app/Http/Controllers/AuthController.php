@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Models\User;
@@ -9,10 +11,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
-class AuthController
+final class AuthController
 {
     public function __construct(
-        #[CurrentUser] protected ?User $user = null
+        #[CurrentUser] private ?User $user = null
     ) {}
 
     public function show(Request $request): RedirectResponse

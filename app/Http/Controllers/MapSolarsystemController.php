@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Actions\MapSolarsystem\DeleteMapSolarsystemAction;
@@ -11,7 +13,7 @@ use App\Models\MapSolarsystem;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 
-class MapSolarsystemController extends Controller
+final class MapSolarsystemController extends Controller
 {
     public function store(StoreMapSolarsystemRequest $request, StoreMapSolarsystemAction $action): RedirectResponse
     {

@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Console\Commands\Sovereignty;
 
 use App\Jobs\Sovereignty\GetSovereignties;
 use Illuminate\Console\Command;
 
-class GetSovereigntiesCommand extends Command
+final class GetSovereigntiesCommand extends Command
 {
     /**
      * The name and signature of the console command.

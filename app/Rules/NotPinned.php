@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Rules;
 
 use App\Models\MapSolarsystem;
@@ -7,7 +9,7 @@ use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Translation\PotentiallyTranslatedString;
 
-class NotPinned implements ValidationRule
+final class NotPinned implements ValidationRule
 {
     /**
      * Run the validation rule.

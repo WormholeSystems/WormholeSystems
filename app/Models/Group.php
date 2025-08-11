@@ -31,7 +31,7 @@ use NicolasKion\SDE\ClassResolver;
  * @property-read Collection<int,Celestial> $celestials
  * @property-read Collection<int,Station> $stations
  */
-class Group extends Model
+final class Group extends Model
 {
     public $incrementing = false;
 

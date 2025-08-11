@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Utilities;
 
 use App\Enums\ShipSize;
 use App\Models\Solarsystem;
 
-class WormholeConnectionClassifier
+final class WormholeConnectionClassifier
 {
     public function getSize(Solarsystem $from, Solarsystem $to): ?ShipSize
     {

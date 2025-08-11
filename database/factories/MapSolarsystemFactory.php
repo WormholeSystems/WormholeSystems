@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Factories;
 
 use App\Enums\MapSolarsystemStatus;
@@ -11,7 +13,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 /**
  * @extends Factory<MapSolarsystem>
  */
-class MapSolarsystemFactory extends Factory
+final class MapSolarsystemFactory extends Factory
 {
     /**
      * Define the model's default state.

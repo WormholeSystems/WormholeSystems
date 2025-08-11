@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\KillmailFilter;
 use App\Enums\MassStatus;
 use Illuminate\Database\Migrations\Migration;

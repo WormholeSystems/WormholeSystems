@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Requests;
 
 use App\Models\Map;
@@ -8,8 +10,12 @@ use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreMapSolarsystemRequest extends FormRequest
+final class StoreMapSolarsystemRequest extends FormRequest
 {
+    public Map $map {
+        get => Map::findOrFail($this->input('map_id'));
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -35,11 +41,5 @@ class StoreMapSolarsystemRequest extends FormRequest
             'status' => ['nullable', 'sometimes', 'in:active,inactive'],
             'pinned' => ['boolean'],
         ];
-    }
-
-    public Map $map {
-        get {
-            return Map::findOrFail($this->input('map_id'));
-        }
     }
 }

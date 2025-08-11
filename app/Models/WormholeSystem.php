@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Carbon\CarbonImmutable;
@@ -20,7 +22,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read Solarsystem $solarsystem
  * @property-read Collection<int,WormholeStatic> $wormholeStatics
  */
-class WormholeSystem extends Model
+final class WormholeSystem extends Model
 {
     /**
      * The effect of the wormhole system.

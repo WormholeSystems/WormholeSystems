@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Policies;
 
 use App\Models\Map;
 use App\Models\MapConnection;
 use App\Models\User;
 
-class MapConnectionPolicy
+final class MapConnectionPolicy
 {
     /**
      * Create a new policy instance.

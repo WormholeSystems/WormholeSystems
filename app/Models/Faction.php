@@ -32,7 +32,7 @@ use NicolasKion\SDE\ClassResolver;
  * @property-read Collection<int,Character> $characters
  * @property-read Collection<int,Alliance> $alliances
  */
-class Faction extends Model
+final class Faction extends Model
 {
     public $incrementing = false;
 

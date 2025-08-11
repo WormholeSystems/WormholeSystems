@@ -1,18 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Resources;
 
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Throwable;
 
 /**
  * @mixin User
  */
-class UserResource extends JsonResource
+final class UserResource extends JsonResource
 {
     /**
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function toArray(Request $request): array
     {

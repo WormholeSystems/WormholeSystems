@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions\MapConnections;
 
 use App\Actions\MapSolarsystem\DeleteMapSolarsystemAction;
@@ -8,7 +10,7 @@ use App\Models\MapConnection;
 use App\Models\MapSolarsystem;
 use Throwable;
 
-readonly class DeleteMapConnectionAction
+final readonly class DeleteMapConnectionAction
 {
     public function __construct(private DeleteMapSolarsystemAction $deleteMapSolarsystemAction) {}
 

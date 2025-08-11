@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Resources;
 
 use App\Models\Solarsystem;
@@ -11,7 +13,7 @@ use Throwable;
 /**
  * @mixin Solarsystem
  */
-class SolarsystemResource extends JsonResource
+final class SolarsystemResource extends JsonResource
 {
     /**
      * Transform the resource into an array.

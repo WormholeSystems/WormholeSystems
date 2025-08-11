@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions\Map;
 
 use App\Events\Maps\MapUpdatedEvent;
 use App\Models\Map;
 
-class UpdateMapAction
+final class UpdateMapAction
 {
     /**
      * Create a new class instance.

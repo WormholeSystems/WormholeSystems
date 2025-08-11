@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Resources;
 
 use App\Models\CharacterStatus;
@@ -10,7 +12,7 @@ use Throwable;
 /**
  * @mixin CharacterStatus
  */
-class CharacterStatusResource extends JsonResource
+final class CharacterStatusResource extends JsonResource
 {
     /**
      * Transform the resource into an array.

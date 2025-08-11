@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions\MapSelection;
 
 use App\Events\MapSolarsystems\MapSolarsystemsUpdatedEvent;
@@ -8,7 +10,7 @@ use App\Models\MapSolarsystem;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
-class UpdateMapSelectionAction
+final class UpdateMapSelectionAction
 {
     /**
      * @throws Throwable

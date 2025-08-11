@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Policies;
 
 use App\Models\Signature;
 use App\Models\User;
 
-class SignaturePolicy
+final class SignaturePolicy
 {
     /**
      * Create a new policy instance.

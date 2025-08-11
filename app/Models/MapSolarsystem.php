@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Enums\MapSolarsystemStatus;
@@ -33,10 +35,23 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property-read Collection<int,Signature> $signatures
  */
 #[UseFactory(MapSolarsystemFactory::class)]
-class MapSolarsystem extends Model
+final class MapSolarsystem extends Model
 {
     /** @use HasFactory<MapSolarsystemFactory> */
     use HasFactory;
+
+    /**
+     * @var Collection<int,MapConnection>|null
+     */
+    public ?Collection $connections {
+        get {
+            $mergedConnections = $this->connectionsTo->merge($this->connectionsFrom);
+
+            $this->setRelation('connections', $mergedConnections);
+
+            return $mergedConnections;
+        }
+    }
 
     /**
      * @return BelongsTo<Solarsystem,$this>
@@ -84,19 +99,6 @@ class MapSolarsystem extends Model
     public function signatures(): HasMany
     {
         return $this->hasMany(Signature::class, 'map_solarsystem_id');
-    }
-
-    /**
-     * @var Collection<int,MapConnection>|null
-     */
-    public ?Collection $connections {
-        get {
-            $mergedConnections = $this->connectionsTo->merge($this->connectionsFrom);
-
-            $this->setRelation('connections', $mergedConnections);
-
-            return $mergedConnections;
-        }
     }
 
     protected function casts(): array

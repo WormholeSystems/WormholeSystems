@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Traits\HasSlug;
@@ -25,7 +27,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property-read MapUserSetting $mapUserSetting
  * @property-read MapAccess $mapOwner
  */
-class Map extends Model
+final class Map extends Model
 {
     /** @use HasFactory<MapFactory> */
     use HasFactory, HasSlug;

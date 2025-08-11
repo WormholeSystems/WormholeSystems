@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Integrations\zKillboard\Requests;
 
 use App\Enums\RequestMethod;
 use App\Http\Integrations\zKillboard\DTO\RedisQKillmail;
 use App\Http\Integrations\zKillboard\zKillboardRequest;
 
-class ListenForKill extends zKillboardRequest
+final class ListenForKill extends zKillboardRequest
 {
     public RequestMethod $method = RequestMethod::GET;
 

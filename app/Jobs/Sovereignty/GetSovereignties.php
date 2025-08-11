@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Jobs\Sovereignty;
 
 use App\Models\Alliance;
@@ -15,7 +17,7 @@ use NicolasKion\Esi\DTO\Name;
 use NicolasKion\Esi\Enums\NameCategory;
 use NicolasKion\Esi\Esi;
 
-class GetSovereignties implements ShouldQueue
+final class GetSovereignties implements ShouldQueue
 {
     use Queueable;
 

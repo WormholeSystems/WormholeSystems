@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Enums\Permission;
@@ -23,7 +25,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  * @property-read Map $map
  */
 #[UseFactory(MapAccessFactory::class)]
-class MapAccess extends Model
+final class MapAccess extends Model
 {
     /** @use HasFactory<MapAccessFactory> */
     use HasFactory;

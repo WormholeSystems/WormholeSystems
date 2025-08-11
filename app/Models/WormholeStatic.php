@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Carbon\CarbonImmutable;
@@ -17,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read WormholeSystem $wormholeSystem
  * @property-read Wormhole $wormhole
  */
-class WormholeStatic extends Model
+final class WormholeStatic extends Model
 {
     /**
      * The system that this static wormhole belongs to.

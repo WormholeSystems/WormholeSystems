@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Utilities;
 
 /**
@@ -9,7 +11,7 @@ namespace App\Utilities;
  *
  * https://gitlab.com/rift-intel-fusion-tool/
  */
-class CCPRounding
+final class CCPRounding
 {
     public static function roundSecurity(float $number): float
     {

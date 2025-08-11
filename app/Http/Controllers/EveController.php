@@ -14,7 +14,7 @@ use Laravel\Socialite\Facades\Socialite;
 use NicolasKion\Esi\Enums\EsiScope;
 use SocialiteProviders\Eveonline\Provider;
 
-class EveController extends Controller
+final class EveController extends Controller
 {
     /**
      * @throws ConnectionException

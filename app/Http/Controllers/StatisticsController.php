@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Actions\CreateStatisticsAction;
 use App\Http\Requests\CreateStatisticsRequest;
 use Illuminate\Http\RedirectResponse;
 
-class StatisticsController extends Controller
+final class StatisticsController extends Controller
 {
     public function store(CreateStatisticsRequest $request, CreateStatisticsAction $action): RedirectResponse
     {

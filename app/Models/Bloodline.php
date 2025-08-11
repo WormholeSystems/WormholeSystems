@@ -29,7 +29,7 @@ use NicolasKion\SDE\ClassResolver;
  * @property-read Type $shipType
  * @property-read Collection<int,Character> $characters
  */
-class Bloodline extends Model
+final class Bloodline extends Model
 {
     public $incrementing = false;
 

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Models\Map;
@@ -7,7 +9,7 @@ use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\JsonResponse;
 
-class PingController extends Controller
+final class PingController extends Controller
 {
     public function __construct(#[CurrentUser] private readonly User $user) {}
 

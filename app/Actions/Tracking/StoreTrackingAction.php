@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions\Tracking;
 
 use App\Actions\MapConnections\CreateMapConnectionAction;
@@ -15,18 +17,18 @@ use Illuminate\Support\Facades\DB;
 use Random\RandomException;
 use Throwable;
 
-class StoreTrackingAction
+final class StoreTrackingAction
 {
     private const int MINIMUM_DISTANCE_Y = 40;
 
     private const int MINIMUM_DISTANCE_X = 120;
 
     public function __construct(
-        protected WormholeConnectionClassifier $connectionClassifier,
-        protected StoreMapSolarsystemAction $storeMapSolarsystemAction,
-        protected CreateMapConnectionAction $storeMapConnectionRequest,
-        #[Config('map.max_size.x')] protected int $max_x,
-        #[Config('map.max_size.y')] protected int $max_y
+        private WormholeConnectionClassifier $connectionClassifier,
+        private StoreMapSolarsystemAction $storeMapSolarsystemAction,
+        private CreateMapConnectionAction $storeMapConnectionRequest,
+        #[Config('map.max_size.x')] private int $max_x,
+        #[Config('map.max_size.y')] private int $max_y
     ) {}
 
     /**

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Resources;
 
 use App\Models\Constellation;
@@ -9,7 +11,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 /**
  * @mixin Constellation
  */
-class ConstellationResource extends JsonResource
+final class ConstellationResource extends JsonResource
 {
     /**
      * Transform the resource into an array.

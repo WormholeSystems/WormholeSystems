@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Console\Commands\Characters;
 
 use App\Actions\ShipHistories\UpdateShipHistoryAction;
@@ -19,7 +21,7 @@ use NicolasKion\Esi\Enums\EsiScope;
 use NicolasKion\Esi\Esi;
 use Throwable;
 
-class GetOnlineCharacterLocationsCommand extends Command
+final class GetOnlineCharacterLocationsCommand extends Command
 {
     /**
      * The name and signature of the console command.

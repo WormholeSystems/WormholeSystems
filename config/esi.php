@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 // config for NicolasKion/Esi
 return [
     'user_agent' => env('APP_NAME'),

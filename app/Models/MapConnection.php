@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Enums\MassStatus;
@@ -30,7 +32,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read Map $map
  */
 #[UseFactory(MapConnectionFactory::class)]
-class MapConnection extends Model
+final class MapConnection extends Model
 {
     /** @use HasFactory<MapConnectionFactory> */
     use HasFactory;

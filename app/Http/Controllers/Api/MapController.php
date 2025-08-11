@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
 use App\Actions\Map\UpdateMapAction;
@@ -11,7 +13,7 @@ use App\Scopes\WithVisibleSolarsystems;
 use Illuminate\Http\JsonResponse;
 use Throwable;
 
-class MapController extends Controller
+final class MapController extends Controller
 {
     /**
      * @throws Throwable

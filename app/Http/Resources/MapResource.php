@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Resources;
 
 use App\Models\Map;
@@ -11,7 +13,7 @@ use Throwable;
 /**
  * @mixin Map
  */
-class MapResource extends JsonResource
+final class MapResource extends JsonResource
 {
     /**
      * Transform the resource into an array.

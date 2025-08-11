@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -11,7 +13,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $start_time
  * @property bool $vip
  */
-class ServerStatus extends Model
+final class ServerStatus extends Model
 {
     protected function casts(): array
     {

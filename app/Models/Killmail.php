@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Carbon\CarbonImmutable;
@@ -22,7 +24,7 @@ use Staudenmeir\EloquentJsonRelations\HasJsonRelationships;
  * @property-read Type $shipType
  * @property-read Solarsystem $solarsystem
  */
-class Killmail extends Model
+final class Killmail extends Model
 {
     use HasJsonRelationships;
 

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Console\Commands\Characters;
 
 use App\Events\Characters\CharacterStatusUpdatedEvent;
@@ -13,7 +15,7 @@ use Illuminate\Http\Client\ConnectionException;
 use NicolasKion\Esi\Enums\EsiScope;
 use NicolasKion\Esi\Esi;
 
-class GetOnlineCharactersCommand extends Command
+final class GetOnlineCharactersCommand extends Command
 {
     /**
      * The name and signature of the console command.

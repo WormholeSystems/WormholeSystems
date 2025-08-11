@@ -25,7 +25,7 @@ use NicolasKion\SDE\ClassResolver;
  * @property-read Collection<int,Group> $groups
  * @property-read Collection<int,Category> $categories
  */
-class Icon extends Model
+final class Icon extends Model
 {
     public $incrementing = false;
 

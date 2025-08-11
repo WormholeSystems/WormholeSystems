@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Requests;
 
 use App\Models\Character;
@@ -8,12 +10,10 @@ use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class SetWaypointRequest extends FormRequest
+final class SetWaypointRequest extends FormRequest
 {
     public Character $character {
-        get {
-            return Character::findOrFail($this->integer('character_id'));
-        }
+        get => Character::findOrFail($this->integer('character_id'));
     }
 
     /**

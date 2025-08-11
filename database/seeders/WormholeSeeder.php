@@ -1,13 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
 use App\Models\Wormhole;
 use Illuminate\Database\Seeder;
+use RuntimeException;
 
-class WormholeSeeder extends Seeder
+final class WormholeSeeder extends Seeder
 {
-    const string json = __DIR__.'/data/wormholes.json';
+    public const string json = __DIR__.'/data/wormholes.json';
 
     /**
      * Run the database seeds.
@@ -15,13 +18,13 @@ class WormholeSeeder extends Seeder
     public function run(): void
     {
         if (! file_exists(self::json)) {
-            throw new \RuntimeException('Wormhole JSON file not found: '.self::json);
+            throw new RuntimeException('Wormhole JSON file not found: '.self::json);
         }
 
         $data = json_decode(file_get_contents(self::json), true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new \RuntimeException('Invalid JSON in wormhole file: '.json_last_error_msg());
+            throw new RuntimeException('Invalid JSON in wormhole file: '.json_last_error_msg());
         }
 
         foreach ($data as $name => $details) {

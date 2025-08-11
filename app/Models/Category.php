@@ -21,7 +21,7 @@ use NicolasKion\SDE\ClassResolver;
  * @property-read string|CarbonImmutable $updated_at
  * @property-read Collection<int,Group> $groups
  */
-class Category extends Model
+final class Category extends Model
 {
     public $incrementing = false;
 

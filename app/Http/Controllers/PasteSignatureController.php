@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Actions\Signatures\PasteSignaturesAction;
@@ -7,7 +9,7 @@ use App\Http\Requests\PasteSignaturesRequest;
 use Illuminate\Http\RedirectResponse;
 use Throwable;
 
-class PasteSignatureController extends Controller
+final class PasteSignatureController extends Controller
 {
     /**
      * @throws Throwable

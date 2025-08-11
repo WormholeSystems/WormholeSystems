@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Jobs;
 
 use App\Models\Alliance;
@@ -12,7 +14,7 @@ use Illuminate\Support\Facades\Log;
 use NicolasKion\Esi\DTO\CharacterAffiliation;
 use NicolasKion\Esi\Esi;
 
-class UpdateAffiliations implements ShouldQueue
+final class UpdateAffiliations implements ShouldQueue
 {
     use Queueable;
 

@@ -37,7 +37,7 @@ use NicolasKion\SDE\ClassResolver;
  * @property-read Collection<int,MapRouteSolarsystem> $mapRouteSolarsystems
  * @property-read Collection<int,Killmail> $killmails
  */
-class Solarsystem extends Model
+final class Solarsystem extends Model
 {
     use HasSlug;
 

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Requests;
 
 use App\Models\Map;
@@ -9,14 +11,12 @@ use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateMapSelectionRequest extends FormRequest
+final class UpdateMapSelectionRequest extends FormRequest
 {
     public Map $map {
-        get {
-            return Map::query()
-                ->whereHas('mapSolarsystems', fn ($query) => $query->whereIn('id', $this->array('map_solarsystems.*.id')))
-                ->firstOrFail();
-        }
+        get => Map::query()
+            ->whereHas('mapSolarsystems', fn ($query) => $query->whereIn('id', $this->array('map_solarsystems.*.id')))
+            ->firstOrFail();
     }
 
     /**

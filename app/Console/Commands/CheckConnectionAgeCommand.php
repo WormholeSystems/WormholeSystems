@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Console\Commands;
 
 use App\Actions\MapConnections\UpdateMapConnectionAction;
@@ -7,7 +9,7 @@ use App\Models\MapConnection;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Builder;
 
-class CheckConnectionAgeCommand extends Command
+final class CheckConnectionAgeCommand extends Command
 {
     /**
      * The name and signature of the console command.

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Console\Commands\Killmails;
 
 use App\Enums\MapSolarsystemStatus;
@@ -20,25 +22,8 @@ use Psr\SimpleCache\InvalidArgumentException;
 use function Laravel\Prompts\error;
 use function Laravel\Prompts\progress;
 
-class AnalyzeWormholeSystems extends Command
+final class AnalyzeWormholeSystems extends Command
 {
-    private int $mapId;
-
-    private int $daysAgo;
-
-    private int $daysActive;
-
-    private int $top;
-
-    private int $activeThreshold;
-
-    private int $hostileThreshold;
-
-    public function __construct(private readonly Esi $esi)
-    {
-        parent::__construct();
-    }
-
     /**
      * The name and signature of the console command.
      *
@@ -58,6 +43,23 @@ class AnalyzeWormholeSystems extends Command
      * @var string
      */
     protected $description = 'Analyze wormhole systems based on killmails';
+
+    private int $mapId;
+
+    private int $daysAgo;
+
+    private int $daysActive;
+
+    private int $top;
+
+    private int $activeThreshold;
+
+    private int $hostileThreshold;
+
+    public function __construct(private readonly Esi $esi)
+    {
+        parent::__construct();
+    }
 
     /**
      * Execute the console command.

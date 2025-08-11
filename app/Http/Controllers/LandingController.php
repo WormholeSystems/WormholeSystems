@@ -1,14 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class LandingController extends Controller
+final class LandingController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(): Response
     {
         return Inertia::render('Landing');
     }

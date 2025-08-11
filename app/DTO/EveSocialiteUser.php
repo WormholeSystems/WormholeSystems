@@ -6,7 +6,7 @@ namespace App\DTO;
 
 use SocialiteProviders\Manager\OAuth2\User;
 
-class EveSocialiteUser
+final class EveSocialiteUser
 {
     public function __construct(
         public int $character_id,

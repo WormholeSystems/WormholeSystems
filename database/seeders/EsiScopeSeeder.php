@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use NicolasKion\Esi\Enums\EsiScope;
 
-class EsiScopeSeeder extends Seeder
+final class EsiScopeSeeder extends Seeder
 {
     /**
      * Run the database seeds.

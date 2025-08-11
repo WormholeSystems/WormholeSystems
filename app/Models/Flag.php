@@ -17,7 +17,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property-read string|CarbonImmutable $created_at
  * @property-read string|CarbonImmutable $updated_at
  */
-class Flag extends Model
+final class Flag extends Model
 {
     public $incrementing = false;
 }

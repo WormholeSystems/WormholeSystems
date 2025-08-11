@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Requests\Signatures;
 
 use App\Enums\SignatureCategory;
@@ -12,7 +14,7 @@ use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class UpdateSignatureRequest extends FormRequest
+final class UpdateSignatureRequest extends FormRequest
 {
     public ?MapConnection $mapConnection {
         get {
@@ -33,7 +35,7 @@ class UpdateSignatureRequest extends FormRequest
             return false;
         }
 
-        if (! $this->mapConnection instanceof \App\Models\MapConnection) {
+        if (! $this->mapConnection instanceof MapConnection) {
             return true;
         }
         if ($this->mapConnection->fromMapSolarsystem()->is($signature->mapSolarsystem)) {

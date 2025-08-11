@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Enums\MassStatus;
 use App\Models\Map;
 
-readonly class RouteOptions
+final readonly class RouteOptions
 {
     public function __construct(
         public bool $allowEol,

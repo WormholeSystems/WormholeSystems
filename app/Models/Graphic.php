@@ -23,7 +23,7 @@ use NicolasKion\SDE\ClassResolver;
  * @property-read string|CarbonImmutable $updated_at
  * @property-read Collection<int,Type> $types
  */
-class Graphic extends Model
+final class Graphic extends Model
 {
     public $incrementing = false;
 

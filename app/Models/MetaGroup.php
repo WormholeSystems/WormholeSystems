@@ -24,7 +24,7 @@ use NicolasKion\SDE\ClassResolver;
  * @property-read Collection<int,Type> $types
  * @property-read Icon|null $icon
  */
-class MetaGroup extends Model
+final class MetaGroup extends Model
 {
     public $incrementing = false;
 

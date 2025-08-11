@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Actions\Signatures\DeleteSignatureAction;
@@ -12,7 +14,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Throwable;
 
-class SignatureController extends Controller
+final class SignatureController extends Controller
 {
     /**
      * @throws Throwable

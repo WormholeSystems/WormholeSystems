@@ -24,7 +24,7 @@ use NicolasKion\SDE\ClassResolver;
  * @property-read Collection<int,Celestial> $celestials
  * @property-read Collection<int,Station> $stations
  */
-class Region extends Model
+final class Region extends Model
 {
     use HasSlug;
 

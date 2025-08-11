@@ -29,7 +29,7 @@ use NicolasKion\SDE\ClassResolver;
  * @property-read Group $group
  * @property-read Region $region
  */
-class Station extends Model
+final class Station extends Model
 {
     public $incrementing = false;
 

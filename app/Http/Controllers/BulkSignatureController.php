@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Actions\DeleteSignaturesAction;
@@ -8,7 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Throwable;
 
-class BulkSignatureController extends Controller
+final class BulkSignatureController extends Controller
 {
     /**
      * @throws Throwable

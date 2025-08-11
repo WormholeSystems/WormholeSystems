@@ -30,7 +30,7 @@ use NicolasKion\SDE\ClassResolver;
  * @property-read Icon|null $icon
  * @property-read Unit|null $unit
  */
-class Attribute extends Model
+final class Attribute extends Model
 {
     public $incrementing = false;
 

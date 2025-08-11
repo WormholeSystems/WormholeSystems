@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Actions\SetWaypointAction;
@@ -8,7 +10,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\RedirectResponse;
 use NicolasKion\Esi\Enums\EsiScope;
 
-class WaypointController extends Controller
+final class WaypointController extends Controller
 {
     /**
      * @throws ConnectionException

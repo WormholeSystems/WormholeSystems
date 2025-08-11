@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Carbon\CarbonImmutable;
@@ -21,7 +23,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read Faction|null $faction
  * @property-read Solarsystem $solarsystem
  */
-class Sovereignty extends Model
+final class Sovereignty extends Model
 {
     /**
      * The solarsystem that this sovereignty belongs to.

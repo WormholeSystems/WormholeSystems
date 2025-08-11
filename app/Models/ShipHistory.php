@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Carbon\CarbonImmutable;
@@ -19,16 +21,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read Type $shipType
  * @property-read Character $character
  */
-class ShipHistory extends Model
+final class ShipHistory extends Model
 {
-    protected function casts(): array
-    {
-        return [
-            'created_at' => 'immutable_datetime',
-            'updated_at' => 'immutable_datetime',
-        ];
-    }
-
     /**
      * @return BelongsTo<Character, $this>
      */
@@ -43,5 +37,13 @@ class ShipHistory extends Model
     public function shipType(): BelongsTo
     {
         return $this->belongsTo(Type::class, 'ship_type_id');
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'created_at' => 'immutable_datetime',
+            'updated_at' => 'immutable_datetime',
+        ];
     }
 }

@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Integrations\zKillboard\DTO;
 
 use NicolasKion\Esi\DTO\Killmail;
 
-class RedisQKillmail
+final class RedisQKillmail
 {
     public function __construct(
         public int $killID,

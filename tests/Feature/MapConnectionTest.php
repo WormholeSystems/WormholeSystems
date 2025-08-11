@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\MassStatus;
 use App\Models\Character;
 use App\Models\Map;

@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Policies;
 
 use App\Enums\Permission;
 use App\Models\Map;
 use App\Models\User;
 
-class MapPolicy
+final class MapPolicy
 {
     /**
      * Create a new policy instance.

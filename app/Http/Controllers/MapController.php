@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Actions\Map\CreateMapAction;
@@ -35,11 +37,12 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Stringable;
 use Inertia\Inertia;
 use Inertia\Response;
 use Throwable;
 
-class MapController extends Controller
+final class MapController extends Controller
 {
     public function __construct(
         #[CurrentUser] private readonly User $user,
@@ -93,40 +96,6 @@ class MapController extends Controller
     /**
      * @throws Throwable
      */
-    private function getShipHistory(): ResourceCollection
-    {
-        return ShipHistory::query()
-            ->where('ship_id', '=', CharacterStatus::query()
-                ->where('character_id', '=', $this->user->active_character->id)
-                ->select('ship_item_id'))
-            ->latest()
-            ->limit(10)
-            ->get()
-            ->toResourceCollection(ShipHistoryResource::class);
-    }
-
-    /**
-     * @throws Throwable
-     */
-    private function getSolarsystemsMatchingSearch(string $search): ResourceCollection
-    {
-        return Solarsystem::query()
-            ->whereLike('name', sprintf('%s%%', $search))
-            ->limit(10)
-            ->get()
-            ->toResourceCollection(SolarsystemResource::class);
-    }
-
-    private function getMapUserSettings(int $map_id): MapUserSetting
-    {
-        return $this->user->mapUserSettings()->firstOrCreate([
-            'map_id' => $map_id,
-        ]);
-    }
-
-    /**
-     * @throws Throwable
-     */
     public function index(): Response
     {
         return Inertia::render('maps/ShowAllMaps', [
@@ -165,6 +134,40 @@ class MapController extends Controller
         $map->delete();
 
         return to_route('home')->notify('Map deleted successfully.', 'You have successfully deleted the map.');
+    }
+
+    /**
+     * @throws Throwable
+     */
+    private function getShipHistory(): ResourceCollection
+    {
+        return ShipHistory::query()
+            ->where('ship_id', '=', CharacterStatus::query()
+                ->where('character_id', '=', $this->user->active_character->id)
+                ->select('ship_item_id'))
+            ->latest()
+            ->limit(10)
+            ->get()
+            ->toResourceCollection(ShipHistoryResource::class);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    private function getSolarsystemsMatchingSearch(Stringable $search): ResourceCollection
+    {
+        return Solarsystem::query()
+            ->whereLike('name', sprintf('%s%%', $search))
+            ->limit(10)
+            ->get()
+            ->toResourceCollection(SolarsystemResource::class);
+    }
+
+    private function getMapUserSettings(int $map_id): MapUserSetting
+    {
+        return $this->user->mapUserSettings()->firstOrCreate([
+            'map_id' => $map_id,
+        ]);
     }
 
     /**

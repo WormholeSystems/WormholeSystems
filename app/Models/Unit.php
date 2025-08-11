@@ -21,7 +21,7 @@ use NicolasKion\SDE\ClassResolver;
  * @property-read string|CarbonImmutable $updated_at
  * @property-read Collection<int,Attribute> $attributes
  */
-class Unit extends Model
+final class Unit extends Model
 {
     public $incrementing = false;
 

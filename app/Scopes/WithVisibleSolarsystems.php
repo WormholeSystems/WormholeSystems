@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Scopes;
 
 use App\Models\Map;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class WithVisibleSolarsystems
+final class WithVisibleSolarsystems
 {
     /**
      * @param  Builder<Map>  $query

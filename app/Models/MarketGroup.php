@@ -27,7 +27,7 @@ use NicolasKion\SDE\ClassResolver;
  * @property-read MarketGroup|null $parent
  * @property-read Collection<int,MarketGroup> $children
  */
-class MarketGroup extends Model
+final class MarketGroup extends Model
 {
     public $incrementing = false;
 

@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Policies;
 
 use App\Models\Map;
 use App\Models\MapRouteSolarsystem;
 use App\Models\User;
 
-class MapRouteSolarsystemPolicy
+final class MapRouteSolarsystemPolicy
 {
     public function create(User $user, Map $map): bool
     {

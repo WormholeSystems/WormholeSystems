@@ -52,7 +52,7 @@ use Throwable;
  * @property-read Collection<int,MapAccess> $mapAccesses
  */
 #[UseFactory(CharacterFactory::class)]
-class Character extends Model implements \NicolasKion\Esi\Interfaces\Character
+final class Character extends Model implements \NicolasKion\Esi\Interfaces\Character
 {
     /** @use HasFactory<CharacterFactory> */
     use HasFactory;
@@ -146,13 +146,6 @@ class Character extends Model implements \NicolasKion\Esi\Interfaces\Character
         return $this->morphMany(MapAccess::class, 'accessible');
     }
 
-    protected function casts(): array
-    {
-        return [
-            'birthday' => 'immutable_datetime',
-        ];
-    }
-
     public function getEsiTokenWithScope(EsiScope $scope): ?EsiToken
     {
         return $this->esiTokens()
@@ -168,5 +161,12 @@ class Character extends Model implements \NicolasKion\Esi\Interfaces\Character
     public function getCorporationId(): int
     {
         return $this->corporation_id;
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'birthday' => 'immutable_datetime',
+        ];
     }
 }

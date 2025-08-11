@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Carbon\CarbonImmutable;
@@ -20,7 +22,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read MapSolarsystem $mapSolarsystem
  * @property-read MapConnection|null $mapConnection
  */
-class Signature extends Model
+final class Signature extends Model
 {
     protected $casts = [
         'created_at' => 'immutable_datetime',

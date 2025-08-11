@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Carbon\CarbonImmutable;
@@ -15,20 +17,20 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property-read CarbonImmutable $created_at
  * @property-read CarbonImmutable $updated_at
  */
-class EsiScope extends Model
+final class EsiScope extends Model
 {
-    protected function casts(): array
-    {
-        return [
-            'is_default' => 'boolean',
-        ];
-    }
-
     /**
      * @return BelongsToMany<EsiToken,$this>
      */
     public function esiTokens(): BelongsToMany
     {
         return $this->belongsToMany(EsiToken::class, 'esi_token_scope', 'esi_scope_id', 'esi_token_id');
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'is_default' => 'boolean',
+        ];
     }
 }

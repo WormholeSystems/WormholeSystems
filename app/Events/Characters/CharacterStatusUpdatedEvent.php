@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Events\Characters;
 
 use Illuminate\Broadcasting\Channel;
@@ -10,7 +12,7 @@ use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class CharacterStatusUpdatedEvent implements ShouldBroadcastNow, ShouldDispatchAfterCommit
+final class CharacterStatusUpdatedEvent implements ShouldBroadcastNow, ShouldDispatchAfterCommit
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 

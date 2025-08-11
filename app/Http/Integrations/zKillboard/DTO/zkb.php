@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Integrations\zKillboard\DTO;
 
-readonly class zkb
+final readonly class zkb
 {
     public function __construct(
         public int $locationID,

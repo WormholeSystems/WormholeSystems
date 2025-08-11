@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use Exception;
@@ -7,7 +9,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-class EveScoutService
+final class EveScoutService
 {
     private const string API_BASE_URL = 'https://api.eve-scout.com/v2/public';
 
@@ -30,6 +32,36 @@ class EveScoutService
             self::CACHE_EXPIRATION_SECONDS,
             fn (): array => $this->fetchWormholeConnections($allow_eol)
         );
+    }
+
+    /**
+     * Convert EVE Scout connections to route service format
+     *
+     * @param  bool  $allow_eol  Whether to include EOL connections (< 4 hours remaining)
+     * @return array<int, int[]>
+     */
+    public function getConnectionsForRouting(bool $allow_eol = true): array
+    {
+        $connections = $this->getWormholeConnections($allow_eol);
+        $routingConnections = [];
+
+        foreach ($connections as $connection) {
+            $from = $connection['in_system_id'];
+            $to = $connection['out_system_id'];
+
+            // Add bidirectional connections
+            if (! isset($routingConnections[$from])) {
+                $routingConnections[$from] = [];
+            }
+            if (! isset($routingConnections[$to])) {
+                $routingConnections[$to] = [];
+            }
+
+            $routingConnections[$from][] = $to;
+            $routingConnections[$to][] = $from;
+        }
+
+        return $routingConnections;
     }
 
     /**
@@ -98,35 +130,5 @@ class EveScoutService
 
             return [];
         }
-    }
-
-    /**
-     * Convert EVE Scout connections to route service format
-     *
-     * @param  bool  $allow_eol  Whether to include EOL connections (< 4 hours remaining)
-     * @return array<int, int[]>
-     */
-    public function getConnectionsForRouting(bool $allow_eol = true): array
-    {
-        $connections = $this->getWormholeConnections($allow_eol);
-        $routingConnections = [];
-
-        foreach ($connections as $connection) {
-            $from = $connection['in_system_id'];
-            $to = $connection['out_system_id'];
-
-            // Add bidirectional connections
-            if (! isset($routingConnections[$from])) {
-                $routingConnections[$from] = [];
-            }
-            if (! isset($routingConnections[$to])) {
-                $routingConnections[$to] = [];
-            }
-
-            $routingConnections[$from][] = $to;
-            $routingConnections[$to][] = $from;
-        }
-
-        return $routingConnections;
     }
 }

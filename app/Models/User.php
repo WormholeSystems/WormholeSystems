@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Carbon\CarbonImmutable;
@@ -22,36 +24,12 @@ use Illuminate\Support\Facades\Session;
  * @property-read string|CarbonImmutable $created_at
  * @property-read string|CarbonImmutable $updated_at
  */
-class User extends Authenticatable
+final class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
-    protected $hidden = [
-    ];
-
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-        ];
-    }
-
     protected const string SESSION_ACTIVE_CHARACTER_ID = 'active_character_id';
-
-    public function getAuthPassword(): string
-    {
-        return '';
-    }
 
     public ?Character $active_character = null {
         get {
@@ -86,6 +64,19 @@ class User extends Authenticatable
         }
     }
 
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var list<string>
+     */
+    protected $hidden = [
+    ];
+
+    public function getAuthPassword(): string
+    {
+        return '';
+    }
+
     public function getAccessibleIds(): array
     {
         return $this->characters->map(fn (Character $character): array => [
@@ -118,5 +109,16 @@ class User extends Authenticatable
     public function mapUserSettings(): HasMany
     {
         return $this->hasMany(MapUserSetting::class, 'user_id');
+    }
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+        ];
     }
 }

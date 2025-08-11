@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Console\Commands\Killmails;
 
 use Carbon\CarbonImmutable;
@@ -7,7 +9,7 @@ use Illuminate\Console\Command;
 
 use function Laravel\Prompts\progress;
 
-class GetKillmailsForLast90DaysCommand extends Command
+final class GetKillmailsForLast90DaysCommand extends Command
 {
     /**
      * The name and signature of the console command.
@@ -32,7 +34,7 @@ class GetKillmailsForLast90DaysCommand extends Command
 
         $days = CarbonImmutable::now()->diffInDays($date, true);
         progress('Downloading killmails for the last 90 days',
-            $days,
+            (int) $days,
             function (int $step) use ($date): void {
                 $this->callSilently('app:get-killmails-for-day', [
                     'date' => $date->addDays($step)->toDateString(),

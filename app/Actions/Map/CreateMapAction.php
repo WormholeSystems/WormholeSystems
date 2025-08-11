@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions\Map;
 
 use App\Actions\MapAccess\CreateMapAccessAction;
@@ -10,7 +12,7 @@ use App\Models\Solarsystem;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
-readonly class CreateMapAction
+final readonly class CreateMapAction
 {
     /**
      * Create a new class instance.

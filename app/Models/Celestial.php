@@ -31,7 +31,7 @@ use NicolasKion\SDE\ClassResolver;
  * @property-read Celestial|null $parent
  * @property-read Collection<int,Station> $stations
  */
-class Celestial extends Model
+final class Celestial extends Model
 {
     public $incrementing = false;
 

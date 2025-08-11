@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Scopes;
 
 use App\Models\Character;
 use App\Models\Map;
 use Illuminate\Database\Eloquent\Builder;
 
-readonly class UserAllowedMapTracking
+final readonly class UserAllowedMapTracking
 {
     public function __construct(private Map $map) {}
 

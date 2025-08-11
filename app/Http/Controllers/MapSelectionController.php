@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Actions\MapSelection\DeleteMapSelectionAction;
@@ -9,7 +11,7 @@ use App\Http\Requests\UpdateMapSelectionRequest;
 use Illuminate\Http\RedirectResponse;
 use Throwable;
 
-class MapSelectionController extends Controller
+final class MapSelectionController extends Controller
 {
     /**
      * @throws Throwable

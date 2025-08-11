@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Resources;
 
 use App\Models\Wormhole;
@@ -8,7 +10,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 /**
  * @mixin Wormhole
  */
-class WormholeResource extends JsonResource
+final class WormholeResource extends JsonResource
 {
     public function toArray($request): array
     {

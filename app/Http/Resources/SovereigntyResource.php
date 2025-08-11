@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Resources;
 
 use App\Models\Sovereignty;
@@ -9,7 +11,7 @@ use Throwable;
 /**
  * @mixin Sovereignty
  */
-class SovereigntyResource extends JsonResource
+final class SovereigntyResource extends JsonResource
 {
     /**
      * Transform the resource into an array.

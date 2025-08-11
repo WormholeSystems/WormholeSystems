@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Requests;
 
 use App\Enums\Permission;
@@ -9,7 +11,7 @@ use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreTrackingRequest extends FormRequest
+final class StoreTrackingRequest extends FormRequest
 {
     public MapSolarsystem $solarsystem {
         get => MapSolarsystem::query()

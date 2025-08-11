@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Console\Commands\Database;
 
 use Illuminate\Console\Command;
@@ -8,7 +10,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 
-class RestoreDatabase extends Command
+final class RestoreDatabase extends Command
 {
     /**
      * The name and signature of the console command.

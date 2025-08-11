@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Console\Commands;
 
 use App\Events\ServerStatusUpdatedEvent;
@@ -9,7 +11,7 @@ use Illuminate\Console\Command;
 use NicolasKion\Esi\DTO\Status;
 use NicolasKion\Esi\Esi;
 
-class GetServerStatusCommand extends Command
+final class GetServerStatusCommand extends Command
 {
     /**
      * The name and signature of the console command.

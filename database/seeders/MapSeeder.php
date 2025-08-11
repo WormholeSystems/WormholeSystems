@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
 use App\Actions\MapConnections\CreateMapConnectionWithIDsAction;
@@ -7,7 +9,7 @@ use App\Actions\MapSolarsystem\StoreMapSolarsystemAction;
 use App\Models\Map;
 use Illuminate\Database\Seeder;
 
-class MapSeeder extends Seeder
+final class MapSeeder extends Seeder
 {
     /**
      * Run the database seeds.

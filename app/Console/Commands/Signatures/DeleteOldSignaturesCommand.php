@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Console\Commands\Signatures;
 
 use App\Actions\Signatures\DeleteSignatureAction;
@@ -9,8 +11,12 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
-class DeleteOldSignaturesCommand extends Command
+final class DeleteOldSignaturesCommand extends Command
 {
+    public const int SIGNATURE_LIFETIME_DAYS = 7;
+
+    public const int WORMHOLE_SIGNATURE_LIFETIME_DAYS = 3;
+
     /**
      * The name and signature of the console command.
      *
@@ -24,10 +30,6 @@ class DeleteOldSignaturesCommand extends Command
      * @var string
      */
     protected $description = 'Deletes old signatures from the database';
-
-    const int SIGNATURE_LIFETIME_DAYS = 7;
-
-    const int WORMHOLE_SIGNATURE_LIFETIME_DAYS = 3;
 
     public function __construct(
         private readonly DeleteSignatureAction $deleteSignatureAction

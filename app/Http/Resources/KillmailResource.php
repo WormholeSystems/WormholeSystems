@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Resources;
 
 use App\Models\Killmail;
@@ -10,7 +12,7 @@ use Throwable;
 /**
  * @mixin Killmail
  */
-class KillmailResource extends JsonResource
+final class KillmailResource extends JsonResource
 {
     /**
      * Transform the resource into an array.

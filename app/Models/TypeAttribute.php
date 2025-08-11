@@ -21,7 +21,7 @@ use NicolasKion\SDE\ClassResolver;
  * @property-read Type $type
  * @property-read Attribute $attribute
  */
-class TypeAttribute extends Model
+final class TypeAttribute extends Model
 {
     public $incrementing = false;
 

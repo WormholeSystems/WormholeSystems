@@ -1,8 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Requests;
 
 use App\Enums\Permission;
+use App\Models\Alliance;
+use App\Models\Character;
+use App\Models\Corporation;
 use App\Models\Map;
 use App\Models\MapAccess;
 use Illuminate\Container\Attributes\RouteParameter;
@@ -10,21 +15,33 @@ use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class UpdateMapAccessRequest extends FormRequest
+final class UpdateMapAccessRequest extends FormRequest
 {
+    public ?MapAccess $map_access {
+        get => MapAccess::query()
+            ->where('map_id', $this->map->id)
+            ->where('accessible_type', sprintf('App\\Models\\%s', $this->string('entity_type')->ucfirst()))
+            ->where('accessible_id', $this->integer('entity_id'))
+            ->first();
+
+    }
+
+    public Alliance|Corporation|Character|null $accessor {
+        get => match ($this->string('entity_type')->value()) {
+            'character' => Character::find($this->integer('entity_id')),
+            'corporation' => Corporation::find($this->integer('entity_id')),
+            'alliance' => Alliance::find($this->integer('entity_id')),
+            default => null,
+        };
+    }
+
+    public ?Permission $permission {
+        get => $this->enum('permission', Permission::class);
+    }
+
     public function __construct(#[RouteParameter('map')] public Map $map)
     {
         parent::__construct();
-    }
-
-    public ?MapAccess $map_access {
-        get {
-            return MapAccess::query()
-                ->where('map_id', $this->map->id)
-                ->where('accessible_type', sprintf('App\\Models\\%s', $this->string('entity_type')->ucfirst()))
-                ->where('accessible_id', $this->integer('entity_id'))
-                ->first();
-        }
     }
 
     /**

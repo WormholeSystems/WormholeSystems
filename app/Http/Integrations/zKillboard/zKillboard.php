@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Integrations\zKillboard;
 
 use App\Http\Integrations\zKillboard\DTO\RedisQKillmail;
@@ -8,7 +10,7 @@ use App\Http\Integrations\zKillboard\Requests\GetSolarsystemKills;
 use App\Http\Integrations\zKillboard\Requests\ListenForKill;
 use Exception;
 
-class zKillboard
+final class zKillboard
 {
     /**
      * @throws Exception

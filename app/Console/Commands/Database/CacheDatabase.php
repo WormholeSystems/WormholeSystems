@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Console\Commands\Database;
 
 use Illuminate\Console\Command;
@@ -7,7 +9,7 @@ use Illuminate\Container\Attributes\Config;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 
-class CacheDatabase extends Command
+final class CacheDatabase extends Command
 {
     /**
      * The name and signature of the console command.

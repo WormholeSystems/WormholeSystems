@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Policies;
 
 use App\Models\Map;
 use App\Models\MapSolarsystem;
 use App\Models\User;
 
-class MapSolarsystemPolicy
+final class MapSolarsystemPolicy
 {
     /**
      * Create a new policy instance.

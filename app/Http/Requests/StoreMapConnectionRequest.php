@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Requests;
 
 use App\Enums\MassStatus;
@@ -12,7 +14,7 @@ use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class StoreMapConnectionRequest extends FormRequest
+final class StoreMapConnectionRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

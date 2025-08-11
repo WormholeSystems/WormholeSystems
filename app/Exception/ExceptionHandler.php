@@ -13,7 +13,7 @@ use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
-class ExceptionHandler
+final class ExceptionHandler
 {
     public function __invoke(Exceptions $exceptions): void
     {

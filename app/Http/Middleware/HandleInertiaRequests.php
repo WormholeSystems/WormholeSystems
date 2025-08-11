@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Middleware;
 
 use App\Http\Resources\CharacterResource;
@@ -16,10 +18,8 @@ use Inertia\Middleware;
 use NicolasKion\Esi\Enums\EsiScope;
 use Throwable;
 
-class HandleInertiaRequests extends Middleware
+final class HandleInertiaRequests extends Middleware
 {
-    public function __construct(#[CurrentUser] protected ?User $user = null) {}
-
     /**
      * The root template that's loaded on the first page visit.
      *
@@ -28,6 +28,8 @@ class HandleInertiaRequests extends Middleware
      * @var string
      */
     protected $rootView = 'app';
+
+    public function __construct(#[CurrentUser] protected ?User $user = null) {}
 
     /**
      * Determines the current asset version.

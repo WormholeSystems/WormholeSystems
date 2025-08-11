@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Scopes;
 
 use App\Models\Character;
 use Illuminate\Database\Eloquent\Builder;
 use NicolasKion\Esi\Enums\EsiScope;
 
-readonly class CharacterHasRequiredScopes
+final readonly class CharacterHasRequiredScopes
 {
     /**
      * @param  EsiScope[]  $scopes

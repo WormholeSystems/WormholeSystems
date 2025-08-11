@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Actions\MapRouteSolarsystems\CreateMapRouteSolarsystemAction;
@@ -12,7 +14,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Throwable;
 
-class MapRouteSolarsystemController extends Controller
+final class MapRouteSolarsystemController extends Controller
 {
     /**
      * @throws Throwable

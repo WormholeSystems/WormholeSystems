@@ -1,11 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Integrations\zKillboard;
 
 use App\Enums\RequestMethod;
+use Exception;
 use Illuminate\Support\Facades\Http;
+use InvalidArgumentException;
 
-class zKillboardConnector
+final class zKillboardConnector
 {
     public function handle(zKillboardRequest $zKillboardRequest): mixed
     {
@@ -22,11 +26,11 @@ class zKillboardConnector
 
         $result = match ($method) {
             RequestMethod::GET => $request->get($endpoint, $zKillboardRequest->getQuery()),
-            default => throw new \InvalidArgumentException('Unsupported request method: '.$method->value),
+            default => throw new InvalidArgumentException('Unsupported request method: '.$method->value),
         };
 
         if ($result->failed()) {
-            throw new \Exception('Request failed with status code: '.$result->status());
+            throw new Exception('Request failed with status code: '.$result->status());
         }
         $data = $result->json();
 

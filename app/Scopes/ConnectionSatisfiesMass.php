@@ -1,14 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Scopes;
 
 use App\Enums\MassStatus;
 use Illuminate\Database\Eloquent\Builder;
 
-class ConnectionSatisfiesMass
+final class ConnectionSatisfiesMass
 {
     public function __construct(
-        protected MassStatus $massStatus,
+        private MassStatus $massStatus,
     ) {}
 
     public function __invoke(Builder $query)

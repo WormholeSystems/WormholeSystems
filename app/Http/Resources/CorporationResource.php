@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Resources;
 
 use App\Models\Corporation;
@@ -8,7 +10,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 /**
  * @mixin Corporation
  */
-class CorporationResource extends JsonResource
+final class CorporationResource extends JsonResource
 {
     /**
      * Transform the resource into an array.

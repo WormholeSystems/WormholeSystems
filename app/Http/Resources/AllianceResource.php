@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Resources;
 
 use App\Models\Alliance;
@@ -8,7 +10,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 /**
  * @mixin Alliance
  */
-class AllianceResource extends JsonResource
+final class AllianceResource extends JsonResource
 {
     /**
      * Transform the resource into an array.

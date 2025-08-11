@@ -16,10 +16,10 @@ use Laravel\Socialite\Facades\Socialite;
 use NicolasKion\Esi\DTO\CharacterAffiliation;
 use NicolasKion\Esi\Esi;
 
-class EsiAuthService
+final class EsiAuthService
 {
     public function __construct(
-        protected Esi $esi
+        private Esi $esi
     ) {}
 
     /**

@@ -1,8 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
-use App\Enums\Permission;
+use App\Actions\MapAccess\CreateMapAccessAction;
+use App\Actions\MapAccess\DeleteMapAccessAction;
+use App\Actions\MapAccess\UpdateMapAccessAction;
 use App\Http\Requests\UpdateMapAccessRequest;
 use App\Http\Resources\MapResource;
 use App\Models\Alliance;
@@ -19,7 +23,7 @@ use Inertia\Response;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Throwable;
 
-class MapAccessController extends Controller
+final class MapAccessController extends Controller
 {
     public function __construct(
         #[CurrentUser] protected ?User $user,
@@ -70,34 +74,46 @@ class MapAccessController extends Controller
         ]);
     }
 
-    public function store(UpdateMapAccessRequest $request, Map $map): RedirectResponse
-    {
-
-        Gate::authorize('create', [MapAccess::class, $map]);
-
-        if ($request->map_access instanceof \App\Models\MapAccess) {
-            if (! Gate::check('update', [MapAccess::class, $map, $request->map_access])) {
+    /**
+     * @throws Throwable
+     */
+    public function store(
+        UpdateMapAccessRequest $request,
+        Map $map,
+        CreateMapAccessAction $createMapAccessAction,
+        UpdateMapAccessAction $updateMapAccessAction,
+        DeleteMapAccessAction $deleteMapAccessAction
+    ): RedirectResponse {
+        if ($this->isUpdatingExistingAccess($request)) {
+            if (! $this->canUpdateExistingAccess($request, $map)) {
                 return back()->notify('Access denied.', 'You do not have permission to change this character access.');
             }
-            $permission = $request->enum('permission', Permission::class);
 
-            $map_access = $request->map_access;
-            if ($permission) {
-                $map_access->permission = $permission;
-                $map_access->save();
-            } else {
-                $map_access->delete();
+            if (($permission = $request->permission) instanceof \App\Enums\Permission) {
+                $updateMapAccessAction->handle($request->map_access, permission: $permission);
+
+                return back()->notify('Access updated successfully.', sprintf('The access for %s has been updated.', $request->map_access->accessible->name));
             }
 
-            return back()->notify('Access updated successfully.', 'The access for the entity has been updated.');
+            $name = $request->map_access->accessible->name;
+
+            $deleteMapAccessAction->handle($request->map_access);
+
+            return back()->notify('Access removed successfully.', sprintf('The access for %s has been removed.', $name));
         }
 
-        $map->mapAccessors()->create([
-            'accessible_type' => sprintf('App\\Models\\%s', $request->string('entity_type')->ucfirst()),
-            'accessible_id' => $request->integer('entity_id'),
-            'permission' => $request->enum('permission', Permission::class),
-        ]);
+        $createMapAccessAction->handle($map, $request->accessor, permission: $request->permission);
 
         return back()->notify('Access updated successfully.', 'You have successfully granted access to the entity.');
+    }
+
+    private function isUpdatingExistingAccess(UpdateMapAccessRequest $request): bool
+    {
+        return $request->map_access instanceof MapAccess;
+    }
+
+    private function canUpdateExistingAccess(UpdateMapAccessRequest $request, Map $map): bool
+    {
+        return Gate::check('update', [MapAccess::class, $map, $request->map_access]);
     }
 }

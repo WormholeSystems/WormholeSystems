@@ -44,7 +44,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
  * @property-read Collection<int,MapAccess> $mapAccesses
  */
 #[UseFactory(CorporationFactory::class)]
-class Corporation extends Model
+final class Corporation extends Model
 {
     /** @use HasFactory<CorporationFactory> */
     use HasFactory;

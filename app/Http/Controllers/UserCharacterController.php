@@ -10,7 +10,7 @@ use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
-class UserCharacterController extends Controller
+final class UserCharacterController extends Controller
 {
     public function __construct(#[CurrentUser] protected User $user) {}
 

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Resources;
 
 use App\Models\Region;
@@ -9,7 +11,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 /**
  * @mixin Region
  */
-class RegionResource extends JsonResource
+final class RegionResource extends JsonResource
 {
     /**
      * Transform the resource into an array.

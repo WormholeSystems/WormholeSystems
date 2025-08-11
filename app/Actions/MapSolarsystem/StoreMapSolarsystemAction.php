@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions\MapSolarsystem;
 
 use App\Events\MapSolarsystems\MapSolarsystemCreatedEvent;
 use App\Models\Map;
 use App\Models\MapSolarsystem;
 
-class StoreMapSolarsystemAction
+final class StoreMapSolarsystemAction
 {
     public function handle(Map $map, array $data): MapSolarsystem
     {

@@ -17,7 +17,7 @@ final readonly class UpdateShipHistoryAction
      */
     public function handle(int $character_id, int $ship_id, int $ship_type_id, ?string $name = ''): ShipHistory
     {
-        return DB::transaction(fn (): \App\Models\ShipHistory => $this->upsertShipHistory(
+        return DB::transaction(fn (): ShipHistory => $this->upsertShipHistory(
             $ship_id,
             $ship_type_id,
             $character_id,

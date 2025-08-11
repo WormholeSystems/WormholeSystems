@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Console\Commands\Killmails;
 
 use App\Events\Killmails\KillmailReceivedEvent;
@@ -10,7 +12,7 @@ use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Container\Attributes\Config;
 
-class ListenForKillmails extends Command
+final class ListenForKillmails extends Command
 {
     /**
      * The name and signature of the console command.

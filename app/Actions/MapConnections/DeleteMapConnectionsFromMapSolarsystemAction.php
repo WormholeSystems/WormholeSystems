@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions\MapConnections;
 
 use App\Events\MapConnections\MapConnectionsDeletedEvent;
 use App\Models\MapConnection;
 use App\Models\MapSolarsystem;
 
-class DeleteMapConnectionsFromMapSolarsystemAction
+final class DeleteMapConnectionsFromMapSolarsystemAction
 {
     /**
      * Handle the deletion of map connections from a solarsystem.

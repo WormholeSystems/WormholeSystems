@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions\Signatures;
 
 use App\Events\Signatures\SignatureUpdatedEvent;
@@ -7,7 +9,7 @@ use App\Models\Signature;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
-class UpdateSignatureAction
+final class UpdateSignatureAction
 {
     /**
      * Create a new class instance.

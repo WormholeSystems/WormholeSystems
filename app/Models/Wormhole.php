@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Carbon\CarbonImmutable;
@@ -21,7 +23,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read string|CarbonImmutable $updated_at
  * @property-read Type $type
  */
-class Wormhole extends Model
+final class Wormhole extends Model
 {
     /**
      * The type of the wormhole.

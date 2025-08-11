@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Carbon\CarbonImmutable;
@@ -17,15 +19,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read string|CarbonImmutable $updated_at
  * @property-read Collection<int,WormholeSystem> $wormholeSystems
  */
-class WormholeEffect extends Model
+final class WormholeEffect extends Model
 {
-    protected function casts(): array
-    {
-        return [
-            'effects' => 'collection',
-        ];
-    }
-
     /**
      * @return HasMany<WormholeSystem,$this>
      */
@@ -34,7 +29,7 @@ class WormholeEffect extends Model
         return $this->hasMany(WormholeSystem::class, 'effect_id');
     }
 
-    public function getEffectArray(string $class): ?array
+    public function getEffectArray(int|string $class): ?array
     {
         $effects = $this->effects;
 
@@ -75,5 +70,12 @@ class WormholeEffect extends Model
             )
             ->values()
             ->all();
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'effects' => 'collection',
+        ];
     }
 }
