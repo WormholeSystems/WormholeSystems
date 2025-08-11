@@ -90,6 +90,7 @@ final class MapController extends Controller
             'ship_history' => $ship_history,
             'has_write_access' => Gate::allows('update', $map),
             'map_user_settings' => fn (): JsonResource => $settings->toResource(),
+            'ignored_systems' => fn (): array => $this->getIgnoredSystems(),
         ]);
     }
 
@@ -269,5 +270,10 @@ final class MapController extends Controller
         );
 
         return $this->route_service->findRoute($start_solarsystem_id, $destination_solarsystem_id, $options);
+    }
+
+    private function getIgnoredSystems(): array
+    {
+        return Session::get('ignored_systems', []);
     }
 }

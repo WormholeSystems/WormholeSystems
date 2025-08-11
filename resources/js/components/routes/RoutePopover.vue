@@ -3,6 +3,7 @@ import DestinationContextMenu from '@/components/DestinationContextMenu.vue';
 import TimesIcon from '@/components/icons/TimesIcon.vue';
 import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue';
 import SolarsystemClass from '@/components/SolarsystemClass.vue';
+import SolarsystemEffect from '@/components/SolarsystemEffect.vue';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -113,13 +114,7 @@ function onHover(hovered: boolean) {
                                     <TableCell class="h-auto p-1">
                                         <div class="flex justify-center">
                                             <SolarsystemSovereignty v-if="solarsystem.sovereignty" :sovereignty="solarsystem.sovereignty" />
-                                            <span
-                                                v-else-if="solarsystem.effect"
-                                                class="rounded bg-muted px-1 py-0.5 text-xs text-muted-foreground"
-                                                :title="solarsystem.effect"
-                                            >
-                                                {{ solarsystem.effect.charAt(0) }}
-                                            </span>
+                                            <SolarsystemEffect v-else-if="solarsystem.effect" :effect="solarsystem.effect" />
                                         </div>
                                     </TableCell>
                                     <TableCell class="h-auto p-1">
