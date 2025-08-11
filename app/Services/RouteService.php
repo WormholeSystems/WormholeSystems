@@ -14,11 +14,11 @@ use Illuminate\Database\Eloquent\Builder;
 use NicolasKion\SDE\Models\SolarsystemConnection;
 use SplPriorityQueue;
 
-final class RouteService
+final readonly class RouteService
 {
     public const string MAP_CACHE_PATTERN = 'map_%d'; // Keep public for MapRoutesBecameOutdated listener
 
-    private readonly array $connections;
+    private array $connections;
 
     public function __construct()
     {

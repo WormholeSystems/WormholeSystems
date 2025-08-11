@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Console\Commands\Killmails;
 
 use App\Events\Killmails\KillmailReceivedEvent;
+use App\Http\Integrations\zKillboard\DTO\RedisQKillmail;
 use App\Http\Integrations\zKillboard\zKillboard;
 use App\Models\Killmail;
 use App\Models\Map;
@@ -28,7 +29,7 @@ final class ListenForKillmails extends Command
      */
     protected $description = 'Listen to zKillboard for killmails and process them.';
 
-    protected bool $should_keep_running = true;
+    private bool $should_keep_running = true;
 
     /**
      * Execute the console command.
@@ -43,7 +44,7 @@ final class ListenForKillmails extends Command
         while ($this->should_keep_running) {
             $killmail = $zKillboard->listenForKill($identifier);
 
-            if (! $killmail instanceof \App\Http\Integrations\zKillboard\DTO\RedisQKillmail) {
+            if (! $killmail instanceof RedisQKillmail) {
                 info('No killmail received, waiting for the next one...');
                 sleep(10);
 
@@ -71,7 +72,7 @@ final class ListenForKillmails extends Command
     /**
      * Notify maps about the new killmail.
      */
-    protected function notifyMaps(Killmail $killmail): void
+    private function notifyMaps(Killmail $killmail): void
     {
         $maps = Map::query()->whereRelation('mapSolarsystems', 'solarsystem_id', $killmail->solarsystem_id)->get();
 

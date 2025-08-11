@@ -12,8 +12,6 @@ const { map, solarsystems } = defineProps<{
     solarsystems: TSolarsystem[];
 }>();
 
-// createMapSolarsystem imported directly
-
 const search = useSearch('search', ['solarsystems']);
 
 function handleSolarsystemSelect(solarsystem: TSolarsystem) {

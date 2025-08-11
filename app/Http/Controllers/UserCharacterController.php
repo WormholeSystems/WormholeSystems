@@ -12,16 +12,17 @@ use Illuminate\Http\Request;
 
 final class UserCharacterController extends Controller
 {
-    public function __construct(#[CurrentUser] protected User $user) {}
+    public function __construct(#[CurrentUser]
+        private readonly User $user) {}
 
     public function delete(Request $request, Character $character): RedirectResponse
     {
         if (! $character->user()->is($request->user())) {
-            to_route('home')->notify('Character not removed', type: 'error', message: 'You do not have permission to remove this character.');
+            to_route('home')->notify('Character not removed', message: 'You do not have permission to remove this character.', type: 'error');
         }
 
         if ($request->user()->characters()->count() === 1) {
-            return to_route('home')->notify('Character not removed', type: 'error', message: 'You cannot remove your last character.');
+            return to_route('home')->notify('Character not removed', message: 'You cannot remove your last character.', type: 'error');
         }
 
         $character->user()->disassociate();

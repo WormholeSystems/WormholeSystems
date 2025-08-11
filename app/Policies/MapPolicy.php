@@ -23,7 +23,7 @@ final class MapPolicy
         return $map->mapAccessors()->whereIn('accessible_id', $user->getAccessibleIds())->exists();
     }
 
-    public function create(User $user): bool
+    public function create(): bool
     {
         return true;
     }

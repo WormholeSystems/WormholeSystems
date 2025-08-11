@@ -24,14 +24,14 @@ final class GetOnlineCharactersCommand extends Command
      */
     protected $signature = 'app:get-online-characters';
 
-    protected int $activity_threshold_minutes = 10;
-
     /**
      * The console command description.
      *
      * @var string
      */
     protected $description = 'Checks the online status of characters and updates their status in the database';
+
+    private int $activity_threshold_minutes = 10;
 
     /**
      * Execute the console command.

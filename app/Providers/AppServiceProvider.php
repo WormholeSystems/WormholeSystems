@@ -40,7 +40,6 @@ final class AppServiceProvider extends ServiceProvider
             $event->extendSocialite('eveonline', Provider::class);
         });
 
-        // Executed when a test database is created...
         ParallelTesting::setUpTestDatabase(function (): void {
             Artisan::call('db:restore', [
                 '--database' => 'test_database',
@@ -48,7 +47,7 @@ final class AppServiceProvider extends ServiceProvider
         });
     }
 
-    protected function registerNotificationMacro(): void
+    private function registerNotificationMacro(): void
     {
         RedirectResponse::macro('notify', function (string $title, string $message = '', string $type = 'success') {
             if (request()->boolean('silent')) {

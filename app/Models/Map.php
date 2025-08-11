@@ -24,7 +24,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property-read Collection<int,MapConnection> $mapConnections
  * @property-read Collection<int,MapAccess> $mapAccessors
  * @property-read Collection<int,MapRouteSolarsystem> $mapRouteSolarsystems
- * @property-read MapUserSetting $mapUserSetting
+ * @property-read null|MapUserSetting $mapUserSetting
  * @property-read MapAccess $mapOwner
  */
 final class Map extends Model

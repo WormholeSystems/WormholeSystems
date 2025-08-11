@@ -9,12 +9,12 @@ use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Translation\PotentiallyTranslatedString;
 
-final class SameParent implements ValidationRule
+final readonly class SameParent implements ValidationRule
 {
     public function __construct(
-        private readonly string $item_table,
-        private readonly string $parent_column,
-        private readonly string $value_column = 'id',
+        private string $item_table,
+        private string $parent_column,
+        private string $value_column = 'id',
     ) {}
 
     /**
@@ -36,7 +36,7 @@ final class SameParent implements ValidationRule
             ->count();
 
         if ($parents_count > 1) {
-            $fail("The selected {$attribute} must have the same parent.");
+            $fail("The selected $attribute must have the same parent.");
         }
     }
 }

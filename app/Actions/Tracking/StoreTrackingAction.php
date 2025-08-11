@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Random\RandomException;
 use Throwable;
 
-final class StoreTrackingAction
+final readonly class StoreTrackingAction
 {
     private const int MINIMUM_DISTANCE_Y = 40;
 
@@ -27,8 +27,10 @@ final class StoreTrackingAction
         private WormholeConnectionClassifier $connectionClassifier,
         private StoreMapSolarsystemAction $storeMapSolarsystemAction,
         private CreateMapConnectionAction $storeMapConnectionRequest,
-        #[Config('map.max_size.x')] private int $max_x,
-        #[Config('map.max_size.y')] private int $max_y
+        #[Config('map.max_size.x')]
+        private int $max_x,
+        #[Config('map.max_size.y')]
+        private int $max_y
     ) {}
 
     /**

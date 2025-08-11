@@ -7,7 +7,7 @@ namespace App\Scopes;
 use App\Enums\MassStatus;
 use Illuminate\Database\Eloquent\Builder;
 
-final class ConnectionSatisfiesMass
+final readonly class ConnectionSatisfiesMass
 {
     public function __construct(
         private MassStatus $massStatus,

@@ -29,7 +29,8 @@ final class HandleInertiaRequests extends Middleware
      */
     protected $rootView = 'app';
 
-    public function __construct(#[CurrentUser] protected ?User $user = null) {}
+    public function __construct(#[CurrentUser]
+        private readonly ?User $user = null) {}
 
     /**
      * Determines the current asset version.

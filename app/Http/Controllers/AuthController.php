@@ -11,10 +11,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
-final class AuthController
+final readonly class AuthController
 {
     public function __construct(
-        #[CurrentUser] private ?User $user = null
+        #[CurrentUser]
+        private ?User $user = null
     ) {}
 
     public function show(Request $request): RedirectResponse

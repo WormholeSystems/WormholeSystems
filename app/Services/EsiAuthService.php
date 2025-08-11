@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\DTO\EveSocialiteUser;
 use App\Jobs\UpdateAffiliations;
+use App\Models\Alliance;
 use App\Models\Character;
 use App\Models\Corporation;
 use App\Models\EsiScope;
@@ -16,7 +17,7 @@ use Laravel\Socialite\Facades\Socialite;
 use NicolasKion\Esi\DTO\CharacterAffiliation;
 use NicolasKion\Esi\Esi;
 
-final class EsiAuthService
+final readonly class EsiAuthService
 {
     public function __construct(
         private Esi $esi
@@ -154,7 +155,7 @@ final class EsiAuthService
         }
 
         if ($affiliation->alliance_id !== null && $affiliation->alliance_id !== 0) {
-            \App\Models\Alliance::query()->updateOrCreate([
+            Alliance::query()->updateOrCreate([
                 'id' => $affiliation->alliance_id,
             ]);
         }

@@ -28,8 +28,7 @@ final class MapResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'slug' => $this->slug,
-            'map_solarsystems' => $this->whenLoaded('mapSolarsystems', fn () => $this->mapSolarsystems->toResourceCollection(MapSolarsystemResource::class
-            )),
+            'map_solarsystems' => $this->whenLoaded('mapSolarsystems', fn () => $this->mapSolarsystems->toResourceCollection(MapSolarsystemResource::class)),
             'map_connections' => $this->whenLoaded('mapConnections', fn () => $this->mapConnections->toResourceCollection(MapConnectionResource::class)),
             'map_solarsystems_count' => $this->whenCounted('mapSolarsystems', fn () => $this->map_solarsystems_count),
             'map_user_setting' => $this->handleUserSetting(),
@@ -42,7 +41,7 @@ final class MapResource extends JsonResource
      *
      * @throws Throwable
      */
-    protected function handleUserSetting(): ?JsonResource
+    private function handleUserSetting(): JsonResource
     {
         if ($this->mapUserSetting) {
             return $this->mapUserSetting->toResource(MapUserSettingResource::class);

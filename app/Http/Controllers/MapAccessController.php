@@ -7,14 +7,13 @@ namespace App\Http\Controllers;
 use App\Actions\MapAccess\CreateMapAccessAction;
 use App\Actions\MapAccess\DeleteMapAccessAction;
 use App\Actions\MapAccess\UpdateMapAccessAction;
+use App\Enums\Permission;
 use App\Http\Requests\UpdateMapAccessRequest;
 use App\Http\Resources\MapResource;
 use App\Models\Alliance;
 use App\Models\Corporation;
 use App\Models\Map;
 use App\Models\MapAccess;
-use App\Models\User;
-use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -25,9 +24,7 @@ use Throwable;
 
 final class MapAccessController extends Controller
 {
-    public function __construct(
-        #[CurrentUser] protected ?User $user,
-    ) {}
+    public function __construct() {}
 
     /**
      * @throws Throwable
@@ -89,7 +86,7 @@ final class MapAccessController extends Controller
                 return back()->notify('Access denied.', 'You do not have permission to change this character access.');
             }
 
-            if (($permission = $request->permission) instanceof \App\Enums\Permission) {
+            if (($permission = $request->permission) instanceof Permission) {
                 $updateMapAccessAction->handle($request->map_access, permission: $permission);
 
                 return back()->notify('Access updated successfully.', sprintf('The access for %s has been updated.', $request->map_access->accessible->name));
