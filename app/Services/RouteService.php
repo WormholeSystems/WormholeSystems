@@ -51,15 +51,13 @@ final readonly class RouteService
 
     private function getConnections(): array
     {
-        return Cache::remember(self::BASE_CONNECTIONS_CACHE_KEY, self::CACHE_TTL, static function (): array {
-            return SolarsystemConnection::query()
-                ->whereDoesntHaveRelation('fromSolarsystem', 'name', '=', 'Zarzakh')
-                ->select('from_solarsystem_id', 'to_solarsystem_id')
-                ->get(['from_solarsystem_id', 'to_solarsystem_id'])
-                ->groupBy('from_solarsystem_id')
-                ->map(static fn ($group) => $group->pluck('to_solarsystem_id')->toArray())
-                ->all();
-        });
+        return Cache::remember(self::BASE_CONNECTIONS_CACHE_KEY, self::CACHE_TTL, static fn (): array => SolarsystemConnection::query()
+            ->whereDoesntHaveRelation('fromSolarsystem', 'name', '=', 'Zarzakh')
+            ->select('from_solarsystem_id', 'to_solarsystem_id')
+            ->get(['from_solarsystem_id', 'to_solarsystem_id'])
+            ->groupBy('from_solarsystem_id')
+            ->map(static fn ($group) => $group->pluck('to_solarsystem_id')->toArray())
+            ->all());
     }
 
     /**

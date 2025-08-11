@@ -1,5 +1,5 @@
 import '@fortawesome/fontawesome-svg-core/styles.css';
-import { createInertiaApp } from '@inertiajs/vue3';
+import { createInertiaApp, router } from '@inertiajs/vue3';
 import { configureEcho } from '@laravel/echo-vue';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import type { DefineComponent } from 'vue';
@@ -9,6 +9,10 @@ import { initializeTheme } from './composables/useAppearance';
 
 configureEcho({
     broadcaster: 'reverb',
+});
+
+router.on('finish', () => {
+    router.flushAll();
 });
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
