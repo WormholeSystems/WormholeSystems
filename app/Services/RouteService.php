@@ -11,12 +11,17 @@ use App\Models\MapConnection;
 use App\Models\Solarsystem;
 use App\Scopes\ConnectionSatisfiesMass;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Cache;
 use NicolasKion\SDE\Models\SolarsystemConnection;
 use SplPriorityQueue;
 
 final readonly class RouteService
 {
     public const string MAP_CACHE_PATTERN = 'map_%d'; // Keep public for MapRoutesBecameOutdated listener
+
+    private const string BASE_CONNECTIONS_CACHE_KEY = 'route_service_base_connections';
+
+    private const int CACHE_TTL = 3600; // 1 hour
 
     private array $connections;
 
@@ -46,13 +51,15 @@ final readonly class RouteService
 
     private function getConnections(): array
     {
-        return SolarsystemConnection::query()
-            ->whereDoesntHaveRelation('fromSolarsystem', 'name', '=', 'Zarzakh')
-            ->select('from_solarsystem_id', 'to_solarsystem_id')
-            ->get(['from_solarsystem_id', 'to_solarsystem_id'])
-            ->groupBy('from_solarsystem_id')
-            ->map(static fn ($group) => $group->pluck('to_solarsystem_id')->toArray())
-            ->all();
+        return Cache::remember(self::BASE_CONNECTIONS_CACHE_KEY, self::CACHE_TTL, static function (): array {
+            return SolarsystemConnection::query()
+                ->whereDoesntHaveRelation('fromSolarsystem', 'name', '=', 'Zarzakh')
+                ->select('from_solarsystem_id', 'to_solarsystem_id')
+                ->get(['from_solarsystem_id', 'to_solarsystem_id'])
+                ->groupBy('from_solarsystem_id')
+                ->map(static fn ($group) => $group->pluck('to_solarsystem_id')->toArray())
+                ->all();
+        });
     }
 
     /**
@@ -79,16 +86,18 @@ final readonly class RouteService
             return $connections;
         }
 
+        // Convert to hash map for O(1) lookups instead of O(n) in_array calls
+        $ignoredSystemsMap = array_flip($ignoredSystems);
         $filtered = [];
 
         foreach ($connections as $fromSystem => $targets) {
             // Skip if the source system is ignored
-            if (in_array($fromSystem, $ignoredSystems)) {
+            if (isset($ignoredSystemsMap[$fromSystem])) {
                 continue;
             }
 
-            // Filter out ignored target systems
-            $filteredTargets = array_filter($targets, fn ($target): bool => ! in_array($target, $ignoredSystems));
+            // Filter out ignored target systems using isset() instead of in_array()
+            $filteredTargets = array_filter($targets, fn ($target): bool => ! isset($ignoredSystemsMap[$target]));
 
             if ($filteredTargets !== []) {
                 $filtered[$fromSystem] = array_values($filteredTargets);
@@ -131,10 +140,14 @@ final readonly class RouteService
             return [$start];
         }
 
+        if ($this->isConnectedToSolarsystem($start, $end, $connections)) {
+            return [$start, $end];
+        }
+
         $queue = new SplPriorityQueue;
         $visited = [];
         $distances = [$start => 0];
-        $previous = [];
+        $bestPathLength = PHP_INT_MAX;
 
         $queue->insert(new RouteNode($start, 0, [$start]), 0);
 
@@ -142,6 +155,11 @@ final readonly class RouteService
             $current = $queue->extract();
 
             if (isset($visited[$current->solarsystemId])) {
+                continue;
+            }
+
+            // Early termination: if current distance is already >= best found path, skip
+            if ($current->distance >= $bestPathLength) {
                 continue;
             }
 
@@ -160,9 +178,13 @@ final readonly class RouteService
 
                 $newDistance = $current->distance + 1;
 
+                // Skip if this path is already longer than our best found path
+                if ($newDistance >= $bestPathLength) {
+                    continue;
+                }
+
                 if (! isset($distances[$neighbor]) || $newDistance < $distances[$neighbor]) {
                     $distances[$neighbor] = $newDistance;
-                    $previous[$neighbor] = $current->solarsystemId;
 
                     $newPath = [...$current->path, $neighbor];
                     $heuristic = $this->calculateHeuristic($neighbor, $end);
@@ -176,6 +198,11 @@ final readonly class RouteService
         }
 
         return [];
+    }
+
+    private function isConnectedToSolarsystem(int $from, int $to, array $connections): bool
+    {
+        return isset($connections[$from]) && in_array($to, $connections[$from], true);
     }
 
     private function calculateHeuristic(int $from, int $to): float
@@ -204,7 +231,12 @@ final readonly class RouteService
         $mapConnections = $this->getMapConnections($map, $allowEol, $massStatus);
 
         foreach ($mapConnections as $from => $to) {
-            $connections[$from] = isset($connections[$from]) ? array_merge($connections[$from], $to) : $to;
+            if (isset($connections[$from])) {
+                // Use array_push with spread operator for better performance than array_merge
+                array_push($connections[$from], ...$to);
+            } else {
+                $connections[$from] = $to;
+            }
         }
 
         return $connections;
@@ -239,7 +271,12 @@ final readonly class RouteService
         $eveScoutConnections = $eveScoutService->getConnectionsForRouting($allowEol);
 
         foreach ($eveScoutConnections as $from => $to) {
-            $connections[$from] = isset($connections[$from]) ? array_merge($connections[$from], $to) : $to;
+            if (isset($connections[$from])) {
+                // Use array_push with spread operator for better performance than array_merge
+                array_push($connections[$from], ...$to);
+            } else {
+                $connections[$from] = $to;
+            }
         }
 
         return $connections;
