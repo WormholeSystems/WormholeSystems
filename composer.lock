@@ -3374,16 +3374,16 @@
         },
         {
             "name": "nicolaskion/sde",
-            "version": "v0.1.6",
+            "version": "v0.1.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/NicolasKion/SDE.git",
-                "reference": "710c4cb5c68b0af58062e9b8aa4da36a2e493580"
+                "reference": "2fb98a6e4fd96e2cab939e22199f06710c75640f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/NicolasKion/SDE/zipball/710c4cb5c68b0af58062e9b8aa4da36a2e493580",
-                "reference": "710c4cb5c68b0af58062e9b8aa4da36a2e493580",
+                "url": "https://api.github.com/repos/NicolasKion/SDE/zipball/2fb98a6e4fd96e2cab939e22199f06710c75640f",
+                "reference": "2fb98a6e4fd96e2cab939e22199f06710c75640f",
                 "shasum": ""
             },
             "require": {
@@ -3433,7 +3433,7 @@
             ],
             "support": {
                 "issues": "https://github.com/NicolasKion/SDE/issues",
-                "source": "https://github.com/NicolasKion/SDE/tree/v0.1.6"
+                "source": "https://github.com/NicolasKion/SDE/tree/v0.1.7"
             },
             "funding": [
                 {
@@ -3449,7 +3449,7 @@
                     "type": "patreon"
                 }
             ],
-            "time": "2025-07-12T10:10:46+00:00"
+            "time": "2025-08-11T11:30:38+00:00"
         },
         {
             "name": "nikic/php-parser",
