@@ -6,6 +6,6 @@ export function updateMapUserSettings(map_user_settings: TMapUserSetting, data: 
     return router.put(MapUserSettings.update(map_user_settings.id).url, data, {
         preserveScroll: true,
         preserveState: true,
-        only: ['map_user_settings', 'map_route_solarsystems'],
+        only: ['map_user_settings', 'map_route_solarsystems', 'shortest_path'],
     });
 }

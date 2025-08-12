@@ -78,6 +78,8 @@ final class MapController extends Controller
 
         $map_route_solarsystems = Inertia::defer(fn (): array => $this->getMapRouteSolarsystems($map, $settings, $selected_map_solarsystem_id));
 
+        $shortest_path = $this->getShortestPathFromRequest($request, $settings, $map);
+
         return Inertia::render('maps/ShowMap', [
             'map' => $map->toResource(MapResource::class),
             'solarsystems' => $solarsystems,
@@ -91,6 +93,7 @@ final class MapController extends Controller
             'has_write_access' => Gate::allows('update', $map),
             'map_user_settings' => fn (): JsonResource => $settings->toResource(),
             'ignored_systems' => fn (): array => $this->getIgnoredSystems(),
+            'shortest_path' => $shortest_path,
         ]);
     }
 
@@ -275,5 +278,59 @@ final class MapController extends Controller
     private function getIgnoredSystems(): array
     {
         return Session::get('ignored_systems', []);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    private function getShortestPathFromRequest(Request $request, MapUserSetting $settings, Map $map): ?array
+    {
+        $from_solarsystem_id = $request->integer('from_solarsystem_id');
+        $to_solarsystem_id = $request->integer('to_solarsystem_id');
+
+        if (! $from_solarsystem_id || ! $to_solarsystem_id) {
+            return null;
+        }
+
+        return $this->getShortestPath($from_solarsystem_id, $to_solarsystem_id, $settings, $map);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    private function getShortestPath(int $from_solarsystem_id, int $to_solarsystem_id, MapUserSetting $mapUserSetting, Map $map): ?array
+    {
+        $route = $this->getFastestRoute($from_solarsystem_id, $to_solarsystem_id, $mapUserSetting, $map);
+
+        if ($route === []) {
+            return null;
+        }
+
+        $fromSolarsystem = Solarsystem::query()
+            ->with([
+                'sovereignty' => ['alliance', 'corporation', 'faction'],
+                'wormholeSystem.effect',
+                'constellation',
+                'region',
+            ])
+            ->find($from_solarsystem_id);
+
+        $toSolarsystem = Solarsystem::query()
+            ->with([
+                'sovereignty' => ['alliance', 'corporation', 'faction'],
+                'wormholeSystem.effect',
+                'constellation',
+                'region',
+            ])
+            ->find($to_solarsystem_id);
+
+        return [
+            'from_solarsystem_id' => $from_solarsystem_id,
+            'to_solarsystem_id' => $to_solarsystem_id,
+            'from_solarsystem' => $fromSolarsystem?->toResource(SolarsystemResource::class),
+            'to_solarsystem' => $toSolarsystem?->toResource(SolarsystemResource::class),
+            'route' => $route,
+            'jumps' => count($route),
+        ];
     }
 }

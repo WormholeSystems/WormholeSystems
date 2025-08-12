@@ -26,7 +26,8 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { echo } from '@laravel/echo-vue';
 import { ref } from 'vue';
 
-const { map, selected_map_solarsystem, map_killmails, map_route_solarsystems, has_write_access, map_user_settings } = defineProps<TShowMapProps>();
+const { map, selected_map_solarsystem, map_killmails, map_route_solarsystems, has_write_access, map_user_settings, shortest_path, ignored_systems } =
+    defineProps<TShowMapProps>();
 
 const user = useUser();
 
@@ -109,17 +110,14 @@ useOnClient(() =>
                 <div class="col-span-10 2xl:col-span-3">
                     <Autopilot
                         :map_route_solarsystems
-                        v-if="selected_map_solarsystem"
                         :map
                         :solarsystems
                         :selected_map_solarsystem
                         :map_characters
                         :map_user_settings
+                        :shortest_path
+                        :ignored_systems
                     />
-                    <div class="flex flex-col items-center justify-center gap-8 rounded-lg border border-dashed p-16 text-neutral-700" v-else>
-                        <QuestionIcon class="text-4xl" />
-                        <p class="text-center">Select a solarsystem to see autopilot</p>
-                    </div>
                 </div>
             </div>
         </div>

@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import RouteIcon from '@/components/icons/RouteIcon.vue';
 import SettingsIcon from '@/components/icons/SettingsIcon.vue';
 import Spinner from '@/components/icons/Spinner.vue';
 import { CharacterImage } from '@/components/images';
 import TypeImage from '@/components/images/TypeImage.vue';
+import ShortestPathDialog from '@/components/map/ShortestPathDialog.vue';
 import MapRouteSolarsystem from '@/components/routes/MapRouteSolarsystem.vue';
 import MapRouteSolarsystemAdd from '@/components/routes/MapRouteSolarsystemAdd.vue';
 import RoutePopover from '@/components/routes/RoutePopover.vue';
@@ -12,24 +14,29 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMapSolarsystems } from '@/composables/map';
 import { useHasWritePermission } from '@/composables/useHasPermission';
 import { usePath } from '@/composables/usePath';
 import useUser from '@/composables/useUser';
+import { TShortestPath } from '@/pages/maps';
 import MapUserSettings from '@/routes/map-user-settings';
 import { TCharacter, TMap, TMapRouteSolarsystem, TMapSolarSystem, TMapUserSetting, TMassStatus, TSolarsystem } from '@/types/models';
 import { Deferred, router } from '@inertiajs/vue3';
 import { vElementHover } from '@vueuse/components';
 import { computed } from 'vue';
 
-const { map_route_solarsystems, map, solarsystems, map_characters, map_user_settings, selected_map_solarsystem } = defineProps<{
-    map: TMap;
-    solarsystems: TSolarsystem[];
-    map_route_solarsystems?: TMapRouteSolarsystem[];
-    selected_map_solarsystem?: TMapSolarSystem;
-    map_user_settings: TMapUserSetting;
-    map_characters?: TCharacter[];
-}>();
+const { map_route_solarsystems, map, solarsystems, map_characters, map_user_settings, selected_map_solarsystem, shortest_path, ignored_systems } =
+    defineProps<{
+        map: TMap;
+        solarsystems: TSolarsystem[];
+        map_route_solarsystems?: TMapRouteSolarsystem[];
+        selected_map_solarsystem?: TMapSolarSystem | null;
+        map_user_settings: TMapUserSetting;
+        map_characters?: TCharacter[];
+        shortest_path?: TShortestPath | null;
+        ignored_systems: number[];
+    }>();
 
 const user = useUser();
 const activeCharacter = computed(() => {
@@ -96,20 +103,43 @@ function handleSolarsystemHover(hovered: boolean) {
         <CardHeader>
             <CardTitle class="text-base">Autopilot</CardTitle>
             <CardDescription>
-                See how far you have to travel from
-                <b v-element-hover="handleSolarsystemHover">
-                    <span v-if="selected_map_solarsystem?.alias">
-                        <span class="text-primary">{{ selected_map_solarsystem.alias }}</span> {{ selected_map_solarsystem.name }}
-                    </span>
-                    <span v-else class="text-primary">{{ selected_map_solarsystem?.name }}</span>
-                </b>
+                <template v-if="selected_map_solarsystem">
+                    See how far you have to travel from
+                    <b v-element-hover="handleSolarsystemHover">
+                        <span v-if="selected_map_solarsystem.alias">
+                            <span class="text-primary">{{ selected_map_solarsystem.alias }}</span> {{ selected_map_solarsystem.name }}
+                        </span>
+                        <span v-else class="text-primary">{{ selected_map_solarsystem.name }}</span>
+                    </b>
+                </template>
+                <template v-else> Select a solarsystem to see routes, or use the shortest path finder </template>
             </CardDescription>
             <CardAction class="flex gap-2">
+                <Tooltip>
+                    <ShortestPathDialog :map="map" :solarsystems="solarsystems" :shortest_path="shortest_path" :ignored_systems="ignored_systems">
+                        <TooltipTrigger as-child>
+                            <Button variant="secondary" size="icon">
+                                <RouteIcon />
+                            </Button>
+                        </TooltipTrigger>
+                    </ShortestPathDialog>
+
+                    <TooltipContent>
+                        <p>Find shortest path between systems</p>
+                    </TooltipContent>
+                </Tooltip>
                 <Popover>
                     <PopoverTrigger>
-                        <Button variant="secondary" size="icon">
-                            <SettingsIcon />
-                        </Button>
+                        <Tooltip>
+                            <TooltipTrigger as-child>
+                                <Button variant="secondary" size="icon">
+                                    <SettingsIcon />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Autopilot settings</p>
+                            </TooltipContent>
+                        </Tooltip>
                     </PopoverTrigger>
                     <PopoverContent class="w-64 p-3">
                         <div class="grid auto-cols-[auto_1fr_auto] gap-x-1 gap-y-1">
@@ -152,67 +182,78 @@ function handleSolarsystemHover(hovered: boolean) {
         </CardHeader>
 
         <CardContent class="p-1 pt-0">
-            <div
-                class="mb-2 flex items-center gap-2 rounded border bg-white p-2 dark:bg-neutral-900/40"
-                v-element-hover="(e) => handleHover(e, activeCharacter?.route ?? null)"
-                v-if="activeCharacter"
-            >
-                <CharacterImage
-                    v-if="activeCharacter"
-                    :character_id="activeCharacter.id"
-                    :character_name="activeCharacter.name"
-                    class="size-8 rounded-lg"
-                />
-                <div class="min-w-0 flex-1">
-                    <div class="flex items-center gap-2">
-                        <span class="truncate text-sm font-medium">{{ activeCharacter?.name || 'Unknown' }}</span>
-                    </div>
-                    <div class="flex items-center gap-1 text-xs text-muted-foreground">
-                        <TypeImage
-                            v-if="characterStatus?.ship_type"
-                            :type_id="characterStatus.ship_type.id"
-                            :type_name="characterStatus.ship_type.name"
-                            class="size-3 rounded"
-                        />
-                        <span class="truncate">{{ characterStatus?.ship_name || characterStatus?.ship_type?.name || 'Unknown Ship' }}</span>
-                        <span v-if="characterStatus?.solarsystem" class="text-muted-foreground">• {{ characterStatus.solarsystem.name }}</span>
-                    </div>
-                </div>
-                <div v-if="activeCharacter?.route" class="flex-shrink-0">
-                    <RoutePopover :route="activeCharacter.route">
-                        <Button variant="secondary" size="sm" class="font-mono text-xs">
-                            {{ activeCharacter.route.length > 0 ? activeCharacter.route.length - 1 : '0' }}
-                        </Button>
-                    </RoutePopover>
-                </div>
-            </div>
-            <Deferred data="map_route_solarsystems">
-                <template #fallback>
-                    <div class="flex items-center justify-center gap-2 py-3 text-xs text-muted-foreground">
-                        <Spinner class="size-3 animate-spin" />
-                        <span>Loading routes...</span>
-                    </div>
-                </template>
-
+            <template v-if="selected_map_solarsystem">
                 <div
-                    :class="can_write ? 'grid-cols-[auto_1fr_auto_1fr_auto_auto]' : 'grid-cols-[auto_1fr_auto_1fr_auto]'"
-                    class="grid gap-x-4 rounded border bg-white dark:bg-neutral-900/40"
+                    class="mb-2 flex items-center gap-2 rounded border bg-white p-2 dark:bg-neutral-900/40"
+                    v-element-hover="(e) => handleHover(e, activeCharacter?.route ?? null)"
+                    v-if="activeCharacter"
                 >
-                    <div class="col-span-full grid grid-cols-subgrid border-b px-3 py-2 text-sm font-medium text-muted-foreground">
-                        <div></div>
-                        <div>System</div>
-                        <div class="text-center">Jumps</div>
-                        <div>Region</div>
+                    <CharacterImage
+                        v-if="activeCharacter"
+                        :character_id="activeCharacter.id"
+                        :character_name="activeCharacter.name"
+                        class="size-8 rounded-lg"
+                    />
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-2">
+                            <span class="truncate text-sm font-medium">{{ activeCharacter?.name || 'Unknown' }}</span>
+                        </div>
+                        <div class="flex items-center gap-1 text-xs text-muted-foreground">
+                            <TypeImage
+                                v-if="characterStatus?.ship_type"
+                                :type_id="characterStatus.ship_type.id"
+                                :type_name="characterStatus.ship_type.name"
+                                class="size-3 rounded"
+                            />
+                            <span class="truncate">{{ characterStatus?.ship_name || characterStatus?.ship_type?.name || 'Unknown Ship' }}</span>
+                            <span v-if="characterStatus?.solarsystem" class="text-muted-foreground">• {{ characterStatus.solarsystem.name }}</span>
+                        </div>
                     </div>
-
-                    <MapRouteSolarsystem v-for="route in sorted" :key="route.solarsystem.id" :map_route="route" />
-
-                    <div v-if="!sorted?.length" class="col-span-full py-4 text-center text-muted-foreground">
-                        <div class="mb-1 text-sm">🎯</div>
-                        <div>No destinations</div>
+                    <div v-if="activeCharacter?.route" class="flex-shrink-0">
+                        <RoutePopover :route="activeCharacter.route">
+                            <Button variant="secondary" size="sm" class="font-mono text-xs">
+                                {{ activeCharacter.route.length > 0 ? activeCharacter.route.length - 1 : '0' }}
+                            </Button>
+                        </RoutePopover>
                     </div>
                 </div>
-            </Deferred>
+                <Deferred data="map_route_solarsystems">
+                    <template #fallback>
+                        <div class="flex items-center justify-center gap-2 py-3 text-xs text-muted-foreground">
+                            <Spinner class="size-3 animate-spin" />
+                            <span>Loading routes...</span>
+                        </div>
+                    </template>
+
+                    <div
+                        :class="can_write ? 'grid-cols-[auto_1fr_auto_1fr_auto_auto]' : 'grid-cols-[auto_1fr_auto_1fr_auto]'"
+                        class="grid gap-x-4 rounded border bg-white dark:bg-neutral-900/40"
+                    >
+                        <div class="col-span-full grid grid-cols-subgrid border-b px-3 py-2 text-sm font-medium text-muted-foreground">
+                            <div></div>
+                            <div>System</div>
+                            <div class="text-center">Jumps</div>
+                            <div>Region</div>
+                        </div>
+
+                        <MapRouteSolarsystem v-for="route in sorted" :key="route.solarsystem.id" :map_route="route" />
+
+                        <div v-if="!sorted?.length" class="col-span-full py-4 text-center text-muted-foreground">
+                            <div class="mb-1 text-sm">🎯</div>
+                            <div>No destinations</div>
+                        </div>
+                    </div>
+                </Deferred>
+            </template>
+            <template v-else>
+                <div class="flex flex-col items-center justify-center gap-4 py-8 text-center text-muted-foreground">
+                    <RouteIcon class="text-2xl" />
+                    <div>
+                        <p class="mb-1 font-medium">No system selected</p>
+                        <p class="text-xs">Select a system on the map to see routes, or use the shortest path finder above</p>
+                    </div>
+                </div>
+            </template>
         </CardContent>
     </Card>
 </template>
