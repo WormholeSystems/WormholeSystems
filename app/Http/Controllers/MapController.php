@@ -78,7 +78,7 @@ final class MapController extends Controller
 
         $map_route_solarsystems = Inertia::defer(fn (): array => $this->getMapRouteSolarsystems($map, $settings, $selected_map_solarsystem_id));
 
-        $shortest_path = $this->getShortestPathFromRequest($request, $settings, $map);
+        $shortest_path = fn () => $this->getShortestPathFromRequest($request, $settings, $map);
 
         return Inertia::render('maps/ShowMap', [
             'map' => $map->toResource(MapResource::class),
