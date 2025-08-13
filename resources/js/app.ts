@@ -18,7 +18,15 @@ router.on('finish', () => {
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 createInertiaApp({
-    title: (title) => (title ? `${title} | ${appName}` : appName),
+    title: (title) => {
+        // Check if we're in PWA mode
+        const isPWA = window.matchMedia('(display-mode: standalone)').matches;
+        if (isPWA) {
+            return 'wormhole.systems';
+        }
+        // In browser mode, use the normal title format
+        return title ? `${title} | ${appName}` : appName;
+    },
     resolve: (name) => resolvePageComponent(`./pages/${name}.vue`, import.meta.glob<DefineComponent>('./pages/**/*.vue')),
     setup({ el, App, props, plugin }) {
         createApp({ render: () => h(App, props) })
@@ -33,3 +41,29 @@ createInertiaApp({
 
 // This will set light / dark mode on page load...
 initializeTheme();
+
+// Register service worker for PWA functionality
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+    window.addEventListener('load', async () => {
+        try {
+            const registration = await navigator.serviceWorker.register('/sw.js');
+
+            // Check for updates
+            registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                if (newWorker) {
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            // New service worker installed, prompt user to reload
+                            if (confirm('A new version is available. Reload to update?')) {
+                                window.location.reload();
+                            }
+                        }
+                    });
+                }
+            });
+        } catch (error) {
+            console.error('Service Worker registration failed:', error);
+        }
+    });
+}

@@ -36,3 +36,4 @@ frankenphp-worker.php
 /resources/js/actions
 /resources/js/routes
 '
+.DS_Store

@@ -23,7 +23,7 @@ use App\Http\Controllers\UserCharacterController;
 use App\Http\Controllers\WaypointController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [LandingController::class, 'index'])->name('landing');
+Route::get('/', [LandingController::class, 'index'])->name('landing')->middleware('guest');
 Route::get('login', [LoginController::class, 'show'])->name('login');
 Route::get('auth', [AuthController::class, 'show'])->name('auth');
 Route::get('eve', [EveController::class, 'show'])->name('eve.show');
