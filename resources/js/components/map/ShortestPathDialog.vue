@@ -25,7 +25,6 @@ const open = ref(false);
 const fromSystem = ref<TSolarsystem | null>(null);
 const toSystem = ref<TSolarsystem | null>(null);
 const route = ref<TSolarsystem[]>([]);
-const loading = ref(false);
 const selectionMode = ref<'from' | 'to'>('from');
 
 const { setPath } = usePath();
@@ -54,12 +53,22 @@ function handleFromSystemSelect(system: TSolarsystem) {
     search.value = ''; // Clear search after selection
     route.value = [];
     selectionMode.value = 'to'; // Switch to 'to' mode after selecting from
+
+    // Auto-calculate if both systems are now selected
+    if (toSystem.value && system.id !== toSystem.value.id) {
+        calculateShortestPath();
+    }
 }
 
 function handleToSystemSelect(system: TSolarsystem) {
     toSystem.value = system;
     search.value = ''; // Clear search after selection
     route.value = [];
+
+    // Auto-calculate if both systems are now selected
+    if (fromSystem.value && system.id !== fromSystem.value.id) {
+        calculateShortestPath();
+    }
 }
 
 function handleSystemSelect(system: TSolarsystem) {
@@ -132,166 +141,168 @@ watch(
         <DialogTrigger as-child>
             <slot />
         </DialogTrigger>
-        <DialogContent class="max-w-2xl">
+        <DialogContent class="flex min-h-[600px] max-w-2xl flex-col gap-4 py-4">
             <DialogHeader>
                 <DialogTitle>Find Shortest Path</DialogTitle>
                 <DialogDescription> Calculate the shortest route between two solar systems</DialogDescription>
             </DialogHeader>
-
-            <div class="grid gap-4 py-4">
-                <!-- Selected Systems Display -->
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div class="rounded-lg border p-3">
-                        <Label class="text-xs text-muted-foreground">From</Label>
-                        <div v-if="fromSystem" class="grid grid-cols-[1fr_auto]">
-                            <div class="font-medium">{{ fromSystem.name }}</div>
-                            <div class="">
-                                <SolarsystemClass :wormhole_class="fromSystem.class" :security="fromSystem.security" />
-                            </div>
-                            <div class="text-sm text-muted-foreground">{{ fromSystem.region?.name }}</div>
-                            <div class="">
-                                <SolarsystemSovereignty v-if="fromSystem.sovereignty" :sovereignty="fromSystem.sovereignty" />
-                            </div>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div class="h-20 rounded-lg border p-3">
+                    <Label class="text-xs text-muted-foreground">From</Label>
+                    <div v-if="fromSystem" class="grid grid-cols-[1fr_auto]">
+                        <div class="font-medium">{{ fromSystem.name }}</div>
+                        <div class="">
+                            <SolarsystemClass :wormhole_class="fromSystem.class" :security="fromSystem.security" />
                         </div>
-                        <div v-else class="mt-1 text-sm text-muted-foreground">No system selected</div>
-                    </div>
-
-                    <div class="rounded-lg border p-3">
-                        <Label class="text-xs text-muted-foreground">To</Label>
-                        <div v-if="toSystem" class="grid grid-cols-[1fr_auto]">
-                            <div class="font-medium">{{ toSystem.name }}</div>
-                            <div class="">
-                                <SolarsystemClass :wormhole_class="toSystem.class" :security="toSystem.security" />
-                            </div>
-                            <div class="text-sm text-muted-foreground">{{ toSystem.region?.name }}</div>
-                            <div class="">
-                                <SolarsystemSovereignty v-if="toSystem.sovereignty" :sovereignty="toSystem.sovereignty" />
-                            </div>
+                        <div class="text-sm text-muted-foreground">{{ fromSystem.region?.name }}</div>
+                        <div class="">
+                            <SolarsystemSovereignty v-if="fromSystem.sovereignty" :sovereignty="fromSystem.sovereignty" />
                         </div>
-                        <div v-else class="mt-1 text-sm text-muted-foreground">No system selected</div>
                     </div>
+                    <div v-else class="mt-1 text-sm text-muted-foreground">No system selected</div>
                 </div>
 
-                <!-- System Search -->
-                <div class="grid gap-2">
-                    <Label for="system-search">Search Systems</Label>
-                    <Combobox class="rounded-lg border">
-                        <ComboboxAnchor class="w-full">
-                            <ComboboxInput
-                                v-model="search"
-                                :placeholder="`Type to search for ${selectionMode} system...`"
-                                id="system-search"
-                                @keydown="handleKeydown"
-                                class="w-full"
-                            />
-                        </ComboboxAnchor>
-                        <ComboboxList class="w-100">
-                            <ComboboxEmpty>No systems found.</ComboboxEmpty>
-                            <ComboboxItem
-                                v-for="system in solarsystems"
-                                :key="system.id"
-                                :value="system.name"
-                                @select="handleSystemSelect(system)"
-                                class="flex items-center justify-between"
-                            >
-                                <div class="flex flex-col items-start">
-                                    <span class="font-medium">{{ system.name }}</span>
-                                    <span class="text-sm text-muted-foreground">
-                                        {{ system.region?.name }}
-                                    </span>
-                                </div>
-                                <div class="flex gap-1">
-                                    <Button
-                                        size="sm"
-                                        :variant="selectionMode === 'from' ? 'default' : 'outline'"
-                                        @click="selectionMode = 'from'"
-                                        :disabled="fromSystem?.id === system.id"
-                                    >
-                                        From
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        :variant="selectionMode === 'to' ? 'default' : 'outline'"
-                                        @click="selectionMode = 'to'"
-                                        :disabled="toSystem?.id === system.id"
-                                    >
-                                        To
-                                    </Button>
-                                </div>
-                            </ComboboxItem>
-                        </ComboboxList>
-                    </Combobox>
-                </div>
-
-                <div class="flex gap-2">
-                    <Button @click="calculateShortestPath" :disabled="!canCalculate || loading" class="flex-1">
-                        <span v-if="loading">Calculating...</span>
-                        <span v-else>Calculate Route</span>
-                    </Button>
-                    <Button v-if="ignored_systems.length > 0" variant="secondary" @click="handleClearIgnoreList" class="shrink-0">
-                        Clear Ignored ({{ ignored_systems.length }})
-                    </Button>
-                </div>
-
-                <div v-if="route.length > 0" class="mt-4" v-element-hover="onRouteHover">
-                    <div class="mb-2 flex items-center justify-between">
-                        <span class="text-sm font-medium">Route Found</span>
-                        <span class="text-sm text-muted-foreground">{{ jumps }} jumps</span>
+                <div class="h-20 rounded-lg border p-3">
+                    <Label class="text-xs text-muted-foreground">To</Label>
+                    <div v-if="toSystem" class="grid grid-cols-[1fr_auto]">
+                        <div class="font-medium">{{ toSystem.name }}</div>
+                        <div class="">
+                            <SolarsystemClass :wormhole_class="toSystem.class" :security="toSystem.security" />
+                        </div>
+                        <div class="text-sm text-muted-foreground">{{ toSystem.region?.name }}</div>
+                        <div class="">
+                            <SolarsystemSovereignty v-if="toSystem.sovereignty" :sovereignty="toSystem.sovereignty" />
+                        </div>
                     </div>
-                    <div class="max-h-64 overflow-y-auto rounded border bg-muted/20">
-                        <Table>
-                            <TableHeader>
+                    <div v-else class="mt-1 text-sm text-muted-foreground">No system selected</div>
+                </div>
+            </div>
+
+            <div class="grid gap-2">
+                <Combobox class="rounded-lg border">
+                    <ComboboxAnchor class="w-full">
+                        <ComboboxInput
+                            v-model="search"
+                            placeholder="Search for a solar system..."
+                            id="system-search"
+                            @keydown="handleKeydown"
+                            class="w-full"
+                            auto-focus
+                        />
+                    </ComboboxAnchor>
+                    <ComboboxList class="w-100">
+                        <ComboboxEmpty>No systems found.</ComboboxEmpty>
+                        <ComboboxItem
+                            v-for="system in solarsystems"
+                            :key="system.id"
+                            :value="system.name"
+                            @select="handleSystemSelect(system)"
+                            class="grid grid-cols-[auto_1fr_auto_auto_auto_auto] items-center gap-2 py-2"
+                        >
+                            <div class="flex justify-center">
+                                <SolarsystemClass :wormhole_class="system.class" :security="system.security" />
+                            </div>
+                            <div class="min-w-0">
+                                <div class="truncate font-medium">{{ system.name }}</div>
+                            </div>
+                            <div class="flex justify-center">
+                                <SolarsystemSovereignty v-if="system.sovereignty" :sovereignty="system.sovereignty" />
+                                <SolarsystemEffect v-else-if="system.effect" :effect="system.effect" />
+                            </div>
+                            <div class="min-w-0 truncate text-sm text-muted-foreground">
+                                {{ system.region?.name }}
+                            </div>
+                            <div class="flex gap-1">
+                                <Button
+                                    size="sm"
+                                    :variant="selectionMode === 'from' ? 'default' : 'outline'"
+                                    @click="selectionMode = 'from'"
+                                    :disabled="fromSystem?.id === system.id"
+                                >
+                                    From
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    :variant="selectionMode === 'to' ? 'default' : 'outline'"
+                                    @click="selectionMode = 'to'"
+                                    :disabled="toSystem?.id === system.id"
+                                >
+                                    To
+                                </Button>
+                            </div>
+                        </ComboboxItem>
+                    </ComboboxList>
+                </Combobox>
+            </div>
+
+            <Button v-if="ignored_systems.length > 0" variant="secondary" @click="handleClearIgnoreList" class="w-full">
+                Clear Ignored ({{ ignored_systems.length }})
+            </Button>
+
+            <div class="mt-4 h-full grow" v-element-hover="onRouteHover" v-if="route.length">
+                <div class="mb-2 flex items-center justify-between">
+                    <span class="text-sm font-medium">Route</span>
+                    <span class="text-sm text-muted-foreground" v-if="route.length">{{ jumps }} jumps</span>
+                </div>
+                <div class="max-h-64 overflow-y-auto rounded border bg-muted/50">
+                    <Table>
+                        <TableHeader>
+                            <TableRow class="text-xs">
+                                <TableHead class="h-auto w-8 p-1"></TableHead>
+                                <TableHead class="h-auto p-1">System</TableHead>
+                                <TableHead class="h-auto p-1">Region</TableHead>
+                                <TableHead class="h-auto w-8 p-1"></TableHead>
+                                <TableHead class="h-auto w-8 p-1"></TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            <DestinationContextMenu v-for="(system, index) in route" :key="system.id" :solarsystem_id="system.id">
                                 <TableRow class="text-xs">
-                                    <TableHead class="h-auto w-8 p-1"></TableHead>
-                                    <TableHead class="h-auto p-1">System</TableHead>
-                                    <TableHead class="h-auto p-1">Region</TableHead>
-                                    <TableHead class="h-auto w-8 p-1"></TableHead>
-                                    <TableHead class="h-auto w-8 p-1"></TableHead>
+                                    <TableCell class="h-auto p-1">
+                                        <div class="flex justify-center">
+                                            <SolarsystemClass :wormhole_class="system.class" :security="system.security" />
+                                        </div>
+                                    </TableCell>
+                                    <TableCell class="h-auto p-1">
+                                        <span class="font-medium">{{ system.name }}</span>
+                                    </TableCell>
+                                    <TableCell class="h-auto p-1 text-muted-foreground">
+                                        {{ system.region?.name }}
+                                    </TableCell>
+                                    <TableCell class="h-auto p-1">
+                                        <div class="flex justify-center">
+                                            <SolarsystemSovereignty v-if="system.sovereignty" :sovereignty="system.sovereignty" />
+                                            <SolarsystemEffect v-else-if="system.effect" :effect="system.effect" />
+                                        </div>
+                                    </TableCell>
+                                    <TableCell class="h-auto p-1">
+                                        <template v-if="route && index !== 0 && index !== route.length - 1">
+                                            <Tooltip>
+                                                <TooltipTrigger as-child>
+                                                    <Button
+                                                        variant="secondary"
+                                                        size="icon"
+                                                        class="h-6 w-6"
+                                                        @click="handleIgnoreSolarsystem(system.id)"
+                                                    >
+                                                        <TimesIcon class="h-2.5 w-2.5" />
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>Ignore this system</TooltipContent>
+                                            </Tooltip>
+                                        </template>
+                                    </TableCell>
                                 </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                <DestinationContextMenu v-for="(system, index) in route" :key="system.id" :solarsystem_id="system.id">
-                                    <TableRow class="text-xs">
-                                        <TableCell class="h-auto p-1">
-                                            <div class="flex justify-center">
-                                                <SolarsystemClass :wormhole_class="system.class" :security="system.security" />
-                                            </div>
-                                        </TableCell>
-                                        <TableCell class="h-auto p-1">
-                                            <span class="font-medium">{{ system.name }}</span>
-                                        </TableCell>
-                                        <TableCell class="h-auto p-1 text-muted-foreground">
-                                            {{ system.region?.name }}
-                                        </TableCell>
-                                        <TableCell class="h-auto p-1">
-                                            <div class="flex justify-center">
-                                                <SolarsystemSovereignty v-if="system.sovereignty" :sovereignty="system.sovereignty" />
-                                                <SolarsystemEffect v-else-if="system.effect" :effect="system.effect" />
-                                            </div>
-                                        </TableCell>
-                                        <TableCell class="h-auto p-1">
-                                            <template v-if="route && index !== 0 && index !== route.length - 1">
-                                                <Tooltip>
-                                                    <TooltipTrigger as-child>
-                                                        <Button
-                                                            variant="secondary"
-                                                            size="icon"
-                                                            class="h-6 w-6"
-                                                            @click="handleIgnoreSolarsystem(system.id)"
-                                                        >
-                                                            <TimesIcon class="h-2.5 w-2.5" />
-                                                        </Button>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>Ignore this system</TooltipContent>
-                                                </Tooltip>
-                                            </template>
-                                        </TableCell>
-                                    </TableRow>
-                                </DestinationContextMenu>
-                            </TableBody>
-                        </Table>
-                    </div>
+                            </DestinationContextMenu>
+                        </TableBody>
+                    </Table>
                 </div>
+            </div>
+            <div
+                v-else
+                class="flex h-full grow items-center justify-center rounded-lg border border-dashed bg-muted/50 text-sm text-muted-foreground"
+            >
+                No route found. Select systems to calculate the shortest path.
             </div>
 
             <DialogFooter>
