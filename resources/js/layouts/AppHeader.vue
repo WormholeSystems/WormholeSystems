@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import DiscordIcon from '@/components/icons/DiscordIcon.vue';
-import MoonIcon from '@/components/icons/MoonIcon.vue';
-import SunIcon from '@/components/icons/SunIcon.vue';
 import { CharacterImage } from '@/components/images';
 import Breadcrumbs from '@/components/navigation/Breadcrumbs.vue';
 import ServerStatus from '@/components/ServerStatus.vue';
@@ -12,8 +10,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import UserMenuContent from '@/components/UserMenuContent.vue';
-import { useAppearance } from '@/composables/useAppearance';
 import useUser from '@/composables/useUser';
+import Appearance from '@/layouts/Appearance.vue';
 import AppLogo from '@/layouts/AppLogo.vue';
 import { home } from '@/routes';
 import type { AppPageProps, BreadcrumbItem, NavItem } from '@/types';
@@ -58,8 +56,6 @@ const mainNavItems: NavItem[] = [
 ];
 
 const rightNavItems: NavItem[] = [];
-
-const { appearance, updateAppearance } = useAppearance();
 </script>
 
 <template>
@@ -252,12 +248,7 @@ const { appearance, updateAppearance } = useAppearance();
                         </template>
                     </div>
 
-                    <!-- Theme toggle -->
-                    <Button @click="updateAppearance(appearance === 'dark' ? 'light' : 'dark')" variant="outline" size="icon" class="h-9 w-9">
-                        <span class="sr-only">Toggle Dark Mode</span>
-                        <SunIcon v-if="appearance === 'dark'" class="h-4 w-4" />
-                        <MoonIcon v-else class="h-4 w-4" />
-                    </Button>
+                    <Appearance />
 
                     <!-- User menu -->
                     <template v-if="user">
