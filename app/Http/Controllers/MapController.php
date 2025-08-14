@@ -100,17 +100,21 @@ final class MapController extends Controller
     /**
      * @throws Throwable
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $search = $request->string('search');
+
         return Inertia::render('maps/ShowAllMaps', [
             'maps' => Map::query()
                 ->whereHas('mapAccessors', fn (Builder $builder) => $builder->whereIn('accessible_id', $this->user->getAccessibleIds()))
+                ->when($search->isNotEmpty(), fn (Builder $query) => $query->whereLike('name', sprintf('%%%s%%', $search)))
                 ->withCount([
                     'mapSolarsystems' => fn (Builder $builder) => $builder->whereNotNull('position_x'),
                 ])
                 ->with('mapUserSetting')
                 ->get()
                 ->toResourceCollection(MapResource::class),
+            'search' => $search->toString(),
         ]);
     }
 
