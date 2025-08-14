@@ -75,7 +75,7 @@ const is_active = computed(() => {
                             "
                             preserve-state
                             preserve-scroll
-                            :only="['map', 'selected_map_solarsystem', 'map_route_solarsystems']"
+                            :only="['map', 'selected_map_solarsystem', 'map_route_solarsystems', 'map_characters']"
                             prefetch
                             cache-for="2s"
                         >
