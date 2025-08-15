@@ -6,6 +6,6 @@ import { Badge } from '@/components/ui/badge';
 <template>
     <Logo class="size-6 fill-current text-black dark:text-white" />
     <div class="ml-1 grid flex-1 text-left text-sm">
-        <span class="mb-0.5 truncate leading-tight font-semibold"> WormholeSystems <badge variant="outline" class="ml-2">alpha</badge></span>
+        <span class="mb-0.5 truncate leading-tight font-semibold"> WormholeSystems <badge variant="outline" class="ml-2">beta</badge></span>
     </div>
 </template>
