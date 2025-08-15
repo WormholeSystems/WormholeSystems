@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useActiveMapCharacter } from '@/composables/useActiveMapCharacter';
 import { useOnClient } from '@/composables/useOnClient';
 import useUser from '@/composables/useUser';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -27,12 +28,23 @@ import { Link, router } from '@inertiajs/vue3';
 import { echo } from '@laravel/echo-vue';
 import { ref } from 'vue';
 
-const { map, selected_map_solarsystem, map_killmails, map_route_solarsystems, has_write_access, map_user_settings, shortest_path, ignored_systems } =
-    defineProps<TShowMapProps>();
+const {
+    map,
+    selected_map_solarsystem,
+    map_killmails,
+    map_route_solarsystems,
+    has_write_access,
+    map_user_settings,
+    shortest_path,
+    ignored_systems,
+    map_characters,
+} = defineProps<TShowMapProps>();
+
+const confirmation = ref('');
 
 const user = useUser();
 
-const confirmation = ref('');
+const character = useActiveMapCharacter();
 
 useOnClient(() =>
     router.on('before', (event) => {
@@ -45,7 +57,7 @@ useOnClient(() =>
 
 <template>
     <AppLayout>
-        <SeoHead 
+        <SeoHead
             :title="map.name"
             :description="`Explore the ${map.name} wormhole mapping network. Navigate dangerous wormhole space with real-time intel, signature tracking, and collaborative mapping tools.`"
             keywords="wormhole map, eve online navigation, wormhole signatures, space exploration, real-time intel"
@@ -57,7 +69,7 @@ useOnClient(() =>
                     <MapComponent :map :config />
                     <MapSearch :map :search :solarsystems v-if="has_write_access" />
                     <div class="absolute top-4 right-4 flex gap-2" v-if="has_write_access">
-                        <Tracker :map_user_settings="map_user_settings" :map_characters v-if="map_characters" :map :key="user.active_character?.id" />
+                        <Tracker :map_user_settings="map_user_settings" :character :map :key="character?.id" />
                         <Tooltip>
                             <TooltipTrigger>
                                 <Button :variant="'outline'" as-child>
