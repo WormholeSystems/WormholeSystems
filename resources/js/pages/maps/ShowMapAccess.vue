@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { AllianceLogo, CharacterImage, CorporationLogo } from '@/components/images';
+import SeoHead from '@/components/SeoHead.vue';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,7 +9,7 @@ import { useSearch } from '@/composables/useSearch';
 import AppLayout from '@/layouts/AppLayout.vue';
 import MapAccess from '@/routes/map-access';
 import { TMap } from '@/types/models';
-import { Head, router } from '@inertiajs/vue3';
+import { router } from '@inertiajs/vue3';
 
 type TEntity = {
     id: number;
@@ -42,7 +43,11 @@ function toggleAccess(entity: TEntity, permission: 'read' | 'write' | null) {
 
 <template>
     <AppLayout>
-        <Head title="Manage Map Access" />
+        <SeoHead 
+            title="Manage Map Access"
+            :description="`Manage access permissions for ${map.name}. Control who can view and edit your wormhole mapping network.`"
+            keywords="map access, permissions, wormhole map sharing, collaboration"
+        />
         <div class="mx-auto mt-8 grid max-w-4xl gap-4">
             <Input v-model="search" placeholder="Search..." />
             <p class="border-l-2 border-l-orange-500 bg-orange-950 p-4 text-orange-500">

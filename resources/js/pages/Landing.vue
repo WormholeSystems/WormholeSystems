@@ -1,16 +1,17 @@
 <script setup lang="ts">
 import BrainIcon from '@/components/icons/BrainIcon.vue';
 import DiscordIcon from '@/components/icons/DiscordIcon.vue';
+import Logo from '@/components/icons/Logo.vue';
 import SignatureIcon from '@/components/icons/SignatureIcon.vue';
-import TelescopeIcon from '@/components/icons/TelescopeIcon.vue';
 import Notifications from '@/components/Notifications.vue';
+import SeoHead from '@/components/SeoHead.vue';
 import { Button } from '@/components/ui/button';
 import useUser from '@/composables/useUser';
 import Appearance from '@/layouts/Appearance.vue';
 import { home } from '@/routes';
 import Eve from '@/routes/eve';
 import { UTCDate } from '@date-fns/utc';
-import { Head, Link, usePage } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import { format } from 'date-fns';
 import { ArrowRight, Globe, Route, Shield, Users, Zap } from 'lucide-vue-next';
 
@@ -19,47 +20,26 @@ const user = useUser();
 
 const page = usePage();
 
-const title = 'Get started';
-const description = 'The modern mapping platform for the wormhole community. Built for capsuleers by capsuleers.';
-const pageUrl = 'https://wormhole.systems';
-const combinedKeywords = 'wormhole, mapping, eve online, capsuleers, community, navigation';
-const image = {
-    url: '/img/og.png',
-    width: 1024,
-    height: 768,
-    type: 'image/png',
+// SEO data for Landing page (only override what's different from defaults)
+const seoData = {
+    title: 'Get started',
+    description: 'The modern mapping platform for the wormhole community. Built for capsuleers by capsuleers.',
+    keywords: 'wormhole, mapping, eve online, capsuleers, community, navigation',
 };
 </script>
 
 <template>
     <div class="min-h-screen bg-background text-foreground">
-        <Head>
-            <title>{{ title }}</title>
-            <meta :content="description" name="description" />
-            <meta :content="combinedKeywords" name="keywords" />
-            <meta :content="image.url" property="og:image" />
-            <meta :content="image.type" property="og:image:type" />
-            <meta :content="description" property="og:description" />
-            <meta :content="title" property="og:title" />
-            <meta :content="pageUrl" property="og:url" />
-            <meta :content="image.url" property="twitter:image" />
-            <meta :content="description" property="twitter:description" />
-            <meta :content="title" property="twitter:title" />
-            <meta :content="pageUrl" property="twitter:url" />
-            <meta content="summary_large_image" name="twitter:card" />
-            <meta v-if="image" :content="image.width.toFixed(0)" property="og:image:width" />
-            <meta v-if="image" :content="image.height.toFixed(0)" property="og:image:height" />
-            <meta content="wormhole.systems" name="og:site_name" />
-            <meta content="#ffffff" name="theme-color" />
-            <meta content="wormhole.systems" name="twitter:site" />
-            <meta content="en_US" name="og:locale" />
-            <meta content="website" name="og:type" />
-        </Head>
+        <SeoHead 
+            :title="seoData.title"
+            :description="seoData.description"
+            :keywords="seoData.keywords"
+        />
         <nav class="fixed top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-md">
             <div class="mx-auto max-w-7xl px-6 sm:px-8">
                 <div class="flex h-16 items-center justify-between">
                     <div class="flex items-center gap-3">
-                        <TelescopeIcon class="h-7 w-7 text-foreground" />
+                        <Logo class="h-7 w-7 text-foreground" />
                         <span class="text-lg font-semibold text-foreground">WormholeSystems</span>
                     </div>
                     <div class="flex items-center gap-4">
@@ -264,7 +244,7 @@ const image = {
             <div class="mx-auto max-w-7xl px-6 py-12 sm:px-8">
                 <div class="flex flex-col items-center justify-between gap-4 sm:flex-row">
                     <div class="flex items-center gap-3">
-                        <TelescopeIcon class="h-6 w-6 text-muted-foreground/60" />
+                        <Logo class="h-6 w-6 text-muted-foreground/60" />
                         <span class="text-sm font-medium text-muted-foreground">WormholeSystems</span>
                     </div>
                     <p class="text-sm text-muted-foreground/60">

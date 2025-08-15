@@ -39,31 +39,4 @@ createInertiaApp({
     },
 });
 
-// This will set light / dark mode on page load...
 initializeTheme();
-
-// Register service worker for PWA functionality
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
-    window.addEventListener('load', async () => {
-        try {
-            const registration = await navigator.serviceWorker.register('/sw.js');
-
-            // Check for updates
-            registration.addEventListener('updatefound', () => {
-                const newWorker = registration.installing;
-                if (newWorker) {
-                    newWorker.addEventListener('statechange', () => {
-                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            // New service worker installed, prompt user to reload
-                            if (confirm('A new version is available. Reload to update?')) {
-                                window.location.reload();
-                            }
-                        }
-                    });
-                }
-            });
-        } catch (error) {
-            console.error('Service Worker registration failed:', error);
-        }
-    });
-}

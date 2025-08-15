@@ -33,23 +33,36 @@
     <title inertia>{{ config('app.name', 'Laravel') }}</title>
 
     <!-- PWA Meta Tags -->
-    <meta name="application-name" content="{{ config('app.name', 'wormhole.sytems') }}">
+    <meta name="application-name" content="wormhole.systems">
+    <meta name="description"
+          content="Advanced wormhole mapping and tracking system for EVE Online. Navigate dangerous wormhole space with real-time intel, signature tracking, and collaborative mapping tools.">
+    <meta name="keywords"
+          content="EVE Online, wormhole, mapping, tracking, signatures, intel, navigation, space, gaming">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <meta name="apple-mobile-web-app-title" content="{{ config('app.name', 'wormhole.systems') }}">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="wormhole.systems">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="msapplication-TileColor" content="#000000">
     <meta name="msapplication-tap-highlight" content="no">
-    <meta name="theme-color" content="#000000">
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+
+        <!-- Open Graph / Social Media tags are handled by SeoHead.vue component -->
 
     <!-- Icons -->
-    <link rel="icon" href="/favicon.ico" sizes="any">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon.png">
+    <!-- Light mode favicons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" media="(prefers-color-scheme: light)">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" media="(prefers-color-scheme: light)">
+
+    <!-- Dark mode favicons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-dark.png" media="(prefers-color-scheme: dark)">
+    <link rel="apple-touch-icon" href="/apple-touch-icon-dark.png" media="(prefers-color-scheme: dark)">
+
+    <!-- Default favicon (no preference) -->
+    <link rel="icon" type="image/png" href="/favicon.png" media="(prefers-color-scheme: no-preference)">
 
     <!-- PWA Manifest -->
-    <link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="/build/manifest.webmanifest">
 
     @vite(['resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"])
     @inertiaHead

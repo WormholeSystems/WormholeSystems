@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import MapController from '@/actions/App/Http/Controllers/MapController';
+import Logo from '@/components/icons/Logo.vue';
 import SatelliteDish from '@/components/icons/SatelliteDish.vue';
-import TelescopeIcon from '@/components/icons/TelescopeIcon.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,7 +32,7 @@ const open = ref(false);
         <CardHeader>
             <Link class="group flex items-center gap-3" :href="MapController.show(map.slug)">
                 <div class="rounded-lg bg-primary/10 p-2">
-                    <TelescopeIcon class="h-5 w-5 text-primary" />
+                    <Logo class="h-5 w-5 text-primary" />
                 </div>
                 <div class="min-w-0 flex-1">
                     <CardTitle class="truncate transition-colors group-hover:text-primary">

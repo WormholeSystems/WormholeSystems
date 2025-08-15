@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import MapController from '@/actions/App/Http/Controllers/MapController';
+import Logo from '@/components/icons/Logo.vue';
 import PlusIcon from '@/components/icons/PlusIcon.vue';
-import TelescopeIcon from '@/components/icons/TelescopeIcon.vue';
 import MapCard from '@/components/MapCard.vue';
+import SeoHead from '@/components/SeoHead.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useSearch } from '@/composables/useSearch';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { TMap } from '@/types/models';
-import { Head, Link } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
 import { SearchIcon } from 'lucide-vue-next';
 import { computed } from 'vue';
 
@@ -23,7 +24,11 @@ const filteredMapsCount = computed(() => maps.length);
 
 <template>
     <AppLayout>
-        <Head title="Maps" />
+        <SeoHead 
+            title="Maps"
+            description="Manage and explore your wormhole mapping networks. Create, edit, and navigate through dangerous wormhole space with collaborative mapping tools."
+            keywords="wormhole maps, eve online mapping, wormhole navigation, space exploration"
+        />
         <div class="p-8">
             <!-- Header Section -->
             <div class="mb-8">
@@ -62,9 +67,10 @@ const filteredMapsCount = computed(() => maps.length);
 
             <!-- Empty State -->
             <div v-else class="grid justify-items-center gap-4">
-                <div class="grid size-24 place-items-center rounded-full bg-neutral-200 p-4 dark:bg-neutral-800">
-                    <component :is="search ? SearchIcon : TelescopeIcon" class="text-4xl text-neutral-600 dark:text-neutral-400" />
+                <div class="grid size-24 place-items-center rounded-full bg-neutral-200 p-4 dark:bg-neutral-800" v-if="search.length">
+                    <SearchIcon class="h-8 w-8 text-muted-foreground" />
                 </div>
+                <Logo class="h-16 w-16 text-muted-foreground" v-else />
                 <h3 class="text-xl font-semibold">
                     {{ search ? 'No maps found' : 'No maps yet' }}
                 </h3>

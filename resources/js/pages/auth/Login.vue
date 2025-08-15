@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import LockIcon from '@/components/icons/LockIcon.vue';
-import TelescopeIcon from '@/components/icons/TelescopeIcon.vue';
+import Logo from '@/components/icons/Logo.vue';
 import Notifications from '@/components/Notifications.vue';
+import SeoHead from '@/components/SeoHead.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Eve from '@/routes/eve';
 import { UTCDate } from '@date-fns/utc';
-import { Head } from '@inertiajs/vue3';
 import { format } from 'date-fns';
 
 const currentYear = format(new UTCDate(), 'yyyy');
@@ -14,13 +14,17 @@ const currentYear = format(new UTCDate(), 'yyyy');
 
 <template>
     <div class="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-background via-muted to-background p-6">
-        <Head title="Login" />
+        <SeoHead 
+            title="Login"
+            description="Sign in to TunnelVision with your EVE Online character to access advanced wormhole mapping tools."
+            url="https://wormhole.systems/login"
+        />
 
         <div class="w-full max-w-md">
             <!-- Logo and Brand -->
             <div class="mb-8 flex flex-col items-center gap-4">
                 <div class="flex h-20 w-20 items-center justify-center rounded-xl border bg-accent">
-                    <TelescopeIcon class="text-4xl text-foreground" />
+                    <Logo class="text-4xl text-foreground" />
                 </div>
                 <div class="text-center">
                     <h1 class="text-2xl font-bold text-foreground">WormholeSystems</h1>

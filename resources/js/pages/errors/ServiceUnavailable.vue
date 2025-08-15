@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import TelescopeIcon from '@/components/icons/TelescopeIcon.vue';
+import Logo from '@/components/icons/Logo.vue';
+import SeoHead from '@/components/SeoHead.vue';
 import { Button } from '@/components/ui/button';
 import { home } from '@/routes';
-import { Head, Link, usePage, usePoll } from '@inertiajs/vue3';
+import { Link, usePage, usePoll } from '@inertiajs/vue3';
 import { HomeIcon, MessageCircleIcon } from 'lucide-vue-next';
 
 interface Props {
@@ -23,14 +24,16 @@ usePoll(5000);
 
 <template>
     <div class="flex min-h-screen items-center justify-center bg-background px-4">
-        <Head title="Service Unavailable - 503" />
+        <SeoHead 
+            title="Service Unavailable"
+            description="TunnelVision is temporarily unavailable. We're working to restore service. Please check back shortly."
+            keywords="service unavailable, maintenance, server down"
+        />
 
         <div class="w-full max-w-md text-center">
             <!-- Logo -->
             <div class="mb-8 flex items-center justify-center">
-                <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-accent">
-                    <TelescopeIcon class="size-7 text-foreground" />
-                </div>
+                <Logo class="size-12 text-foreground" />
             </div>
 
             <!-- Error Content -->

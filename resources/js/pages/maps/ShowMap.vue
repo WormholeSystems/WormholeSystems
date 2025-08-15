@@ -10,6 +10,7 @@ import MapSearch from '@/components/map/MapSearch.vue';
 import MapUserSetting from '@/components/map/MapUserSetting.vue';
 import Tracker from '@/components/map/Tracker.vue';
 import Autopilot from '@/components/routes/Autopilot.vue';
+import SeoHead from '@/components/SeoHead.vue';
 import ShipHistory from '@/components/ShipHistory.vue';
 import Signatures from '@/components/signatures/Signatures.vue';
 import SolarsystemDetails from '@/components/solarsystem/SolarsystemDetails.vue';
@@ -22,7 +23,7 @@ import useUser from '@/composables/useUser';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { TShowMapProps } from '@/pages/maps/index';
 import MapAccess from '@/routes/map-access';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import { echo } from '@laravel/echo-vue';
 import { ref } from 'vue';
 
@@ -44,7 +45,11 @@ useOnClient(() =>
 
 <template>
     <AppLayout>
-        <Head :title="map.name" />
+        <SeoHead 
+            :title="map.name"
+            :description="`Explore the ${map.name} wormhole mapping network. Navigate dangerous wormhole space with real-time intel, signature tracking, and collaborative mapping tools.`"
+            keywords="wormhole map, eve online navigation, wormhole signatures, space exploration, real-time intel"
+        />
 
         <div class="space-y-4 p-4">
             <div class="">

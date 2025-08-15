@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import MapController from '@/actions/App/Http/Controllers/MapController';
 import InputError from '@/components/InputError.vue';
+import SeoHead from '@/components/SeoHead.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { home } from '@/routes';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Link, useForm } from '@inertiajs/vue3';
 
 const form = useForm({
     name: '',
@@ -20,7 +21,11 @@ function handleSubmit() {
 
 <template>
     <AppLayout>
-        <Head title="Create a Map" />
+        <SeoHead 
+            title="Create a Map"
+            description="Create a new wormhole mapping network. Start your exploration of dangerous wormhole space with collaborative mapping tools and real-time intel."
+            keywords="create wormhole map, new map, wormhole exploration, eve online mapping"
+        />
         <form @submit.prevent="handleSubmit" class="mx-auto mt-8 w-full max-w-2xl">
             <Card>
                 <CardHeader>

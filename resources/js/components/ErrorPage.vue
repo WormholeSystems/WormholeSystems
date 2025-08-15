@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import TelescopeIcon from '@/components/icons/TelescopeIcon.vue';
+import LogoFull from '@/components/icons/LogoFull.vue';
+import SeoHead from '@/components/SeoHead.vue';
 import { Button } from '@/components/ui/button';
 import { home } from '@/routes';
-import { Head, Link, usePage } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import { HomeIcon, MessageCircleIcon } from 'lucide-vue-next';
 
 interface Props {
@@ -20,14 +21,16 @@ const discordInvite = page.props.discord_invite as string | undefined;
 
 <template>
     <div class="flex min-h-screen items-center justify-center bg-background px-4">
-        <Head :title="pageTitle" />
+        <SeoHead 
+            :title="pageTitle"
+            :description="`Error ${status}: ${message}`"
+            keywords="error page, not found, server error"
+        />
 
         <div class="w-full max-w-md text-center">
             <!-- Logo -->
             <div class="mb-8 flex items-center justify-center">
-                <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-accent">
-                    <TelescopeIcon class="size-7 text-foreground" />
-                </div>
+                <LogoFull class="h-16 text-foreground" />
             </div>
 
             <!-- Error Content -->
