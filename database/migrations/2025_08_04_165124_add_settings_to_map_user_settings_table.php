@@ -16,7 +16,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('map_user_settings', function (Blueprint $table): void {
-            $table->boolean('is_tracking')->default(false);
+            $table->boolean('is_tracking')->default(true);
             $table->boolean('route_allow_eol')->default(false);
             $table->string('route_allow_mass_status')->default(MassStatus::Reduced);
             $table->boolean('route_use_evescout')->default(false);
