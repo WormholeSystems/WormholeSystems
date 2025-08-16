@@ -5,10 +5,11 @@ import PlusIcon from '@/components/icons/PlusIcon.vue';
 import { CharacterImage } from '@/components/images';
 import { DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { auth, logout } from '@/routes';
+import tokens from '@/routes/tokens';
 import UserCharacters from '@/routes/user-characters';
 import type { User } from '@/types';
 import { Link, router } from '@inertiajs/vue3';
-import { LogOut } from 'lucide-vue-next';
+import { Key, LogOut } from 'lucide-vue-next';
 
 interface Props {
     user: User;
@@ -57,6 +58,13 @@ defineProps<Props>();
             </Link>
         </DropdownMenuItem>
     </DropdownMenuGroup>
+    <DropdownMenuSeparator />
+    <DropdownMenuItem :as-child="true">
+        <Link class="block w-full" :href="tokens.index().url">
+            <Key class="mr-2 h-4 w-4" />
+            API Tokens
+        </Link>
+    </DropdownMenuItem>
     <DropdownMenuSeparator />
     <DropdownMenuItem :as-child="true">
         <Link class="block w-full" method="delete" :href="logout()" @click="handleLogout" as="button">

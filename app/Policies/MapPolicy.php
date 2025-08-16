@@ -18,6 +18,12 @@ final class MapPolicy
         //
     }
 
+    public function viewAny(): bool
+    {
+        return true;
+        // Allow authenticated users to view maps list
+    }
+
     public function view(User $user, Map $map): bool
     {
         return $map->mapAccessors()->whereIn('accessible_id', $user->getAccessibleIds())->exists();

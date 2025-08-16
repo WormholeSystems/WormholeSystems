@@ -21,6 +21,7 @@ use App\Http\Controllers\PasteSignatureController;
 use App\Http\Controllers\PingController;
 use App\Http\Controllers\SignatureController;
 use App\Http\Controllers\StatisticsController;
+use App\Http\Controllers\TokenManagementController;
 use App\Http\Controllers\TrackingController;
 use App\Http\Controllers\UserCharacterController;
 use App\Http\Controllers\WaypointController;
@@ -84,4 +85,6 @@ Route::middleware('auth')->group(function () {
 
     Route::delete('map-solarsystems/{mapSolarsystem}/signatures', [BulkSignatureController::class, 'destroy'])
         ->name('map-solarsystems.signatures.destroy');
+
+    Route::resource('tokens', TokenManagementController::class)->only(['index', 'store', 'destroy']);
 });

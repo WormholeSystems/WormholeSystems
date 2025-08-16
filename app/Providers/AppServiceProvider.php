@@ -4,14 +4,17 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Policies\PersonalAccessTokenPolicy;
 use App\Services\RouteService;
 use Artisan;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\ParallelTesting;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Sanctum\PersonalAccessToken;
 use SocialiteProviders\Eveonline\Provider;
 use SocialiteProviders\Manager\SocialiteWasCalled;
 
@@ -45,6 +48,8 @@ final class AppServiceProvider extends ServiceProvider
                 '--database' => 'test_database',
             ]);
         });
+
+        Gate::policy(PersonalAccessToken::class, PersonalAccessTokenPolicy::class);
     }
 
     private function registerNotificationMacro(): void

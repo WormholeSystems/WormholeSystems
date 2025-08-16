@@ -18,6 +18,11 @@ final class MapSolarsystemPolicy
         //
     }
 
+    public function view(User $user, MapSolarsystem $map_solarsystem): bool
+    {
+        return $user->can('view', $map_solarsystem->map);
+    }
+
     public function create(User $user, Map $map): bool
     {
         return $user->can('update', $map);
