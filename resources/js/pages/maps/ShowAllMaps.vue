@@ -24,7 +24,7 @@ const filteredMapsCount = computed(() => maps.length);
 
 <template>
     <AppLayout>
-        <SeoHead 
+        <SeoHead
             title="Maps"
             description="Manage and explore your wormhole mapping networks. Create, edit, and navigate through dangerous wormhole space with collaborative mapping tools."
             keywords="wormhole maps, eve online mapping, wormhole navigation, space exploration"

@@ -31,7 +31,7 @@ final class MapAccessController extends Controller
      */
     public function show(Request $request, Map $map): Response
     {
-        Gate::authorize('update', $map);
+        Gate::authorize('update', $map); // Only users with write access can manage access
 
         $search = $request->string('search');
         $entities = DB::query()->fromSub(DB::table('characters')
@@ -64,10 +64,11 @@ final class MapAccessController extends Controller
             ->select(['id', 'name', 'type', 'permission'])
             ->get();
 
-        return Inertia::render('maps/ShowMapAccess', [
+        return Inertia::render('maps/settings/ShowAccess', [
             'map' => $map->toResource(MapResource::class),
             'entities' => $entities,
             'search' => $search,
+            'has_write_access' => true, // If we reach here, user has write access (due to gate check)
         ]);
     }
 

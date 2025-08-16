@@ -21,11 +21,7 @@ const discordInvite = page.props.discord_invite as string | undefined;
 
 <template>
     <div class="flex min-h-screen items-center justify-center bg-background px-4">
-        <SeoHead 
-            :title="pageTitle"
-            :description="`Error ${status}: ${message}`"
-            keywords="error page, not found, server error"
-        />
+        <SeoHead :title="pageTitle" :description="`Error ${status}: ${message}`" keywords="error page, not found, server error" />
 
         <div class="w-full max-w-md text-center">
             <!-- Logo -->

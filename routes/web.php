@@ -10,8 +10,11 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MapAccessController;
 use App\Http\Controllers\MapConnectionController;
 use App\Http\Controllers\MapController;
+use App\Http\Controllers\MapPreferencesController;
 use App\Http\Controllers\MapRouteSolarsystemController;
+use App\Http\Controllers\MapRoutingSettingsController;
 use App\Http\Controllers\MapSelectionController;
+use App\Http\Controllers\MapSettingsController;
 use App\Http\Controllers\MapSolarsystemController;
 use App\Http\Controllers\MapUserSettingController;
 use App\Http\Controllers\PasteSignatureController;
@@ -43,6 +46,16 @@ Route::middleware('auth')->group(function () {
         'destroy' => 'maps.destroy',
     ]);
 
+    Route::prefix('maps/{map}/settings')->name('maps.settings.')->group(function () {
+        Route::get('general', [MapSettingsController::class, 'show'])->name('general.show');
+        Route::get('preferences', [MapPreferencesController::class, 'show'])->name('preferences.show');
+
+        Route::get('access', [MapAccessController::class, 'show'])->name('access.show');
+        Route::post('access', [MapAccessController::class, 'store'])->name('access.store');
+
+        Route::get('routing', [MapRoutingSettingsController::class, 'show'])->name('routing.show');
+    });
+
     Route::delete('logout', [AuthController::class, 'destroy'])->name('logout');
 
     Route::resource('map-solarsystems', MapSolarsystemController::class)->only(['store', 'update', 'destroy']);
@@ -55,9 +68,6 @@ Route::middleware('auth')->group(function () {
 
     Route::put('user-characters/{character}', [UserCharacterController::class, 'update'])->name('user-characters.update');
     Route::delete('user-characters/{character}', [UserCharacterController::class, 'delete'])->name('user-characters.delete');
-
-    Route::get('map-access/{map}', [MapAccessController::class, 'show'])->name('map-access.show');
-    Route::post('map-access/{map}', [MapAccessController::class, 'store'])->name('map-access.store');
 
     Route::post('tracking', [TrackingController::class, 'store'])->name('tracking.store');
 

@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import MapController from '@/actions/App/Http/Controllers/MapController';
+import MapAccessController from '@/actions/App/Http/Controllers/MapAccessController';
+import MapPreferencesController from '@/actions/App/Http/Controllers/MapPreferencesController';
+import MapSettingsController from '@/actions/App/Http/Controllers/MapSettingsController';
 import MapCharacters from '@/components/characters/MapCharacters.vue';
-import LockIcon from '@/components/icons/LockIcon.vue';
 import QuestionIcon from '@/components/icons/QuestionIcon.vue';
-import TrashIcon from '@/components/icons/TrashIcon.vue';
 import MapKillmails from '@/components/killmails/MapKillmails.vue';
 import MapComponent from '@/components/map/MapComponent.vue';
 import MapSearch from '@/components/map/MapSearch.vue';
@@ -15,36 +15,36 @@ import ShipHistory from '@/components/ShipHistory.vue';
 import Signatures from '@/components/signatures/Signatures.vue';
 import SolarsystemDetails from '@/components/solarsystem/SolarsystemDetails.vue';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useActiveMapCharacter } from '@/composables/useActiveMapCharacter';
+import useHasWritePermission from '@/composables/useHasWritePermission';
+import useIsMapOwner from '@/composables/useIsMapOwner';
 import { useOnClient } from '@/composables/useOnClient';
-import useUser from '@/composables/useUser';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { TShowMapProps } from '@/pages/maps/index';
-import MapAccess from '@/routes/map-access';
 import { Link, router } from '@inertiajs/vue3';
 import { echo } from '@laravel/echo-vue';
-import { ref } from 'vue';
+import { Settings } from 'lucide-vue-next';
+import { computed } from 'vue';
 
-const {
-    map,
-    selected_map_solarsystem,
-    map_killmails,
-    map_route_solarsystems,
-    has_write_access,
-    map_user_settings,
-    shortest_path,
-    ignored_systems,
-    map_characters,
-} = defineProps<TShowMapProps>();
-
-const confirmation = ref('');
-
-const user = useUser();
+const { map, selected_map_solarsystem, map_killmails, map_route_solarsystems, map_user_settings, shortest_path, ignored_systems, map_characters } =
+    defineProps<TShowMapProps>();
 
 const character = useActiveMapCharacter();
+const hasWriteAccess = useHasWritePermission();
+const isOwner = useIsMapOwner();
+
+const settingsUrl = computed(() => {
+    if (isOwner.value) {
+        return MapSettingsController.show(map.slug).url;
+    }
+
+    if (hasWriteAccess.value) {
+        return MapAccessController.show(map.slug).url;
+    }
+
+    return MapPreferencesController.show(map.slug).url;
+});
 
 useOnClient(() =>
     router.on('before', (event) => {
@@ -67,46 +67,21 @@ useOnClient(() =>
             <div class="">
                 <div class="relative">
                     <MapComponent :map :config />
-                    <MapSearch :map :search :solarsystems v-if="has_write_access" />
-                    <div class="absolute top-4 right-4 flex gap-2" v-if="has_write_access">
-                        <Tracker :map_user_settings="map_user_settings" :character :map :key="character?.id" />
+                    <MapSearch :map :search :solarsystems v-if="hasWriteAccess" />
+                    <div class="absolute top-4 right-4 flex gap-2">
+                        <Tracker :map_user_settings="map_user_settings" :character :map :key="character?.id" v-if="hasWriteAccess" />
                         <Tooltip>
                             <TooltipTrigger>
-                                <Button :variant="'outline'" as-child>
-                                    <Link :href="MapAccess.show(map.slug)">
-                                        <LockIcon />
+                                <Button variant="outline" size="icon" as-child>
+                                    <Link :href="settingsUrl">
+                                        <Settings class="h-4 w-4" />
                                     </Link>
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent side="bottom">
-                                <p class="text-sm">Map Access</p>
-                                <p class="text-xs text-muted-foreground">Manage who can view and edit this map</p>
+                                <p class="text-sm">Settings</p>
                             </TooltipContent>
                         </Tooltip>
-                        <Dialog v-if="user.characters.find((c) => c.id === map.owner.id)">
-                            <DialogTrigger>
-                                <Button size="icon" variant="destructive">
-                                    <TrashIcon />
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                                <DialogHeader>
-                                    <DialogTitle> Are you sure you want to delete this map?</DialogTitle>
-                                    <DialogDescription>
-                                        This action cannot be undone. All data associated with this map will be permanently deleted. If you want to
-                                        proceed, please type the name of the map ({{ map.name }}) below to confirm.
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <DialogFooter>
-                                    <Input v-model="confirmation" />
-                                    <Button as-child variant="destructive" :disabled="confirmation !== map.name">
-                                        <Link :href="MapController.destroy(map.slug)" method="delete" data-confirm="Are you sure?">
-                                            Permanently Delete Map
-                                        </Link>
-                                    </Button>
-                                </DialogFooter>
-                            </DialogContent>
-                        </Dialog>
                     </div>
                 </div>
             </div>

@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { useHasWritePermission } from '@/composables/useHasPermission';
+import useHasWritePermission from '@/composables/useHasWritePermission';
 import MapSolarsystems from '@/routes/map-solarsystems';
 import Statistics from '@/routes/statistics';
 import { TMap, TMapRouteSolarsystem, TMapSolarSystem } from '@/types/models';

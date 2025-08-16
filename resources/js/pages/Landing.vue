@@ -30,11 +30,7 @@ const seoData = {
 
 <template>
     <div class="min-h-screen bg-background text-foreground">
-        <SeoHead 
-            :title="seoData.title"
-            :description="seoData.description"
-            :keywords="seoData.keywords"
-        />
+        <SeoHead :title="seoData.title" :description="seoData.description" :keywords="seoData.keywords" />
         <nav class="fixed top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-md">
             <div class="mx-auto max-w-7xl px-6 sm:px-8">
                 <div class="flex h-16 items-center justify-between">

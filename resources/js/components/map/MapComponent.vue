@@ -17,7 +17,7 @@ import {
     useMapScale,
     useMapSolarsystems,
 } from '@/composables/map';
-import { useHasWritePermission } from '@/composables/useHasPermission';
+import useHasWritePermission from '@/composables/useHasWritePermission';
 import { useLayout } from '@/composables/useLayout';
 import { useOnClient } from '@/composables/useOnClient';
 import { getMapChannelName } from '@/const/channels';

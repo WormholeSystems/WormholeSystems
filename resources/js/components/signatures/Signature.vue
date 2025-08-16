@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { deleteSignature, TProcessedConnection, updateSignature } from '@/composables/map';
-import { useHasWritePermission } from '@/composables/useHasPermission';
+import useHasWritePermission from '@/composables/useHasWritePermission';
 import { TSignatureCategory } from '@/lib/SignatureParser';
 import { TMapSolarSystem, TSignature } from '@/types/models';
 import { syncRefs } from '@vueuse/core';

@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Actions\Map\CreateMapAction;
+use App\Actions\Map\UpdateMapAction;
 use App\Enums\KillmailFilter;
 use App\Http\Requests\StoreMapRequest;
+use App\Http\Requests\UpdateMapRequest;
 use App\Http\Resources\CharacterResource;
 use App\Http\Resources\KillmailResource;
 use App\Http\Resources\MapResource;
@@ -133,6 +135,13 @@ final class MapController extends Controller
         $map = $action->handle($this->user->active_character, $request->validated());
 
         return to_route('maps.show', $map)->notify('Map created successfully.', 'You have successfully created a new map.');
+    }
+
+    public function update(UpdateMapRequest $request, Map $map, UpdateMapAction $action): RedirectResponse
+    {
+        $action->handle($map, $request->validated());
+
+        return back()->notify('Map updated successfully.', 'The map details have been updated.');
     }
 
     public function destroy(Map $map): RedirectResponse

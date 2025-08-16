@@ -13,7 +13,7 @@ import {
     ContextMenuTrigger,
 } from '@/components/ui/context-menu';
 import { deleteMapSolarsystem, updateMapSolarsystem } from '@/composables/map';
-import { useHasWritePermission } from '@/composables/useHasPermission';
+import useHasWritePermission from '@/composables/useHasWritePermission';
 import useUser from '@/composables/useUser';
 import { useWaypoint } from '@/composables/useWaypoint';
 import { TMapSolarSystem, TMapSolarsystemStatus } from '@/types/models';

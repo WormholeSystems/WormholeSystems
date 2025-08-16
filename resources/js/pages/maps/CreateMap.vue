@@ -21,7 +21,7 @@ function handleSubmit() {
 
 <template>
     <AppLayout>
-        <SeoHead 
+        <SeoHead
             title="Create a Map"
             description="Create a new wormhole mapping network. Start your exploration of dangerous wormhole space with collaborative mapping tools and real-time intel."
             keywords="create wormhole map, new map, wormhole exploration, eve online mapping"

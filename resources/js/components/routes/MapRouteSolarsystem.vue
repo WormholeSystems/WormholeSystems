@@ -7,7 +7,7 @@ import RoutePopover from '@/components/routes/RoutePopover.vue';
 import SolarsystemClass from '@/components/SolarsystemClass.vue';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useHasWritePermission } from '@/composables/useHasPermission';
+import useHasWritePermission from '@/composables/useHasWritePermission';
 import { usePath } from '@/composables/usePath';
 import MapRouteSolarsystems from '@/routes/map-route-solarsystems';
 import { TMapRouteSolarsystem } from '@/types/models';

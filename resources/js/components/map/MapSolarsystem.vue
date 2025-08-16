@@ -4,7 +4,7 @@ import MapSolarsystemContextMenu from '@/components/map/MapSolarsystemContextMen
 import SolarsystemConnectionHandle from '@/components/map/solarsystem/SolarsystemConnectionHandle.vue';
 import SolarsystemDragHandle from '@/components/map/solarsystem/SolarsystemDragHandle.vue';
 import { TDataMapSolarSystem, useMapScale, useMapSolarsystem, useNewConnection, usePilotsInMapSolarsystem } from '@/composables/map';
-import { useHasWritePermission } from '@/composables/useHasPermission';
+import useHasWritePermission from '@/composables/useHasWritePermission';
 import { TShowMapProps } from '@/pages/maps';
 import { show } from '@/routes/maps';
 import { AppPageProps } from '@/types';
