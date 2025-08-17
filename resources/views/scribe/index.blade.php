@@ -623,9 +623,9 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"solarsystem_id\": \"architecto\",
     \"alias\": \"n\",
     \"occupier_alias\": \"g\",
-    \"position_x\": 4326.41688,
-    \"position_y\": 4326.41688,
-    \"status\": \"unknown\",
+    \"position_x\": 16,
+    \"position_y\": 17,
+    \"status\": \"friendly\",
     \"pinned\": true
 }"
 </code></pre></div>
@@ -647,9 +647,9 @@ let body = {
     "solarsystem_id": "architecto",
     "alias": "n",
     "occupier_alias": "g",
-    "position_x": 4326.41688,
-    "position_y": 4326.41688,
-    "status": "unknown",
+    "position_x": 16,
+    "position_y": 17,
+    "status": "friendly",
     "pinned": true
 };
 
@@ -794,10 +794,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="position_x"                data-endpoint="POSTapi-map-solarsystems"
-               value="4326.41688"
+               value="16"
                data-component="body">
     <br>
-<p>Example: <code>4326.41688</code></p>
+<p>Must be at least 20. Must not be greater than 3980. Example: <code>16</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>position_y</code></b>&nbsp;&nbsp;
@@ -805,10 +805,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="position_y"                data-endpoint="POSTapi-map-solarsystems"
-               value="4326.41688"
+               value="17"
                data-component="body">
     <br>
-<p>Example: <code>4326.41688</code></p>
+<p>Must be at least 20. Must not be greater than 1980. Example: <code>17</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>status</code></b>&nbsp;&nbsp;
@@ -816,10 +816,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="status"                data-endpoint="POSTapi-map-solarsystems"
-               value="unknown"
+               value="friendly"
                data-component="body">
     <br>
-<p>Example: <code>unknown</code></p>
+<p>Example: <code>friendly</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>active</code></li> <li><code>unknown</code></li> <li><code>unscanned</code></li> <li><code>hostile</code></li> <li><code>friendly</code></li> <li><code>empty</code></li></ul>
         </div>
@@ -1018,10 +1018,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --data "{
     \"alias\": \"b\",
     \"occupier_alias\": \"n\",
-    \"position_x\": 4326.41688,
-    \"position_y\": 4326.41688,
-    \"status\": \"unknown\",
-    \"pinned\": true,
+    \"position_x\": 7,
+    \"position_y\": 16,
+    \"status\": \"empty\",
+    \"pinned\": false,
     \"notes\": \"m\"
 }"
 </code></pre></div>
@@ -1041,10 +1041,10 @@ const headers = {
 let body = {
     "alias": "b",
     "occupier_alias": "n",
-    "position_x": 4326.41688,
-    "position_y": 4326.41688,
-    "status": "unknown",
-    "pinned": true,
+    "position_x": 7,
+    "position_y": 16,
+    "status": "empty",
+    "pinned": false,
     "notes": "m"
 };
 
@@ -1183,10 +1183,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="position_x"                data-endpoint="PUTapi-map-solarsystems--id-"
-               value="4326.41688"
+               value="7"
                data-component="body">
     <br>
-<p>Example: <code>4326.41688</code></p>
+<p>Must be at least 20. Must not be greater than 3980. Example: <code>7</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>position_y</code></b>&nbsp;&nbsp;
@@ -1194,10 +1194,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="position_y"                data-endpoint="PUTapi-map-solarsystems--id-"
-               value="4326.41688"
+               value="16"
                data-component="body">
     <br>
-<p>Example: <code>4326.41688</code></p>
+<p>Must be at least 20. Must not be greater than 1980. Example: <code>16</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>status</code></b>&nbsp;&nbsp;
@@ -1205,10 +1205,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="status"                data-endpoint="PUTapi-map-solarsystems--id-"
-               value="unknown"
+               value="empty"
                data-component="body">
     <br>
-<p>Example: <code>unknown</code></p>
+<p>Example: <code>empty</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>active</code></li> <li><code>unknown</code></li> <li><code>unscanned</code></li> <li><code>hostile</code></li> <li><code>friendly</code></li> <li><code>empty</code></li></ul>
         </div>
@@ -1231,7 +1231,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>Example: <code>true</code></p>
+<p>Example: <code>false</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>notes</code></b>&nbsp;&nbsp;

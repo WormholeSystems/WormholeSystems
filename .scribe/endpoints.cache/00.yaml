@@ -225,9 +225,9 @@ endpoints:
         custom: []
       position_x:
         name: position_x
-        description: ''
+        description: 'Must be at least 20. Must not be greater than 3980.'
         required: false
-        example: 4326.41688
+        example: 16
         type: number
         enumValues: []
         exampleWasSpecified: false
@@ -235,9 +235,9 @@ endpoints:
         custom: []
       position_y:
         name: position_y
-        description: ''
+        description: 'Must be at least 20. Must not be greater than 1980.'
         required: false
-        example: 4326.41688
+        example: 17
         type: number
         enumValues: []
         exampleWasSpecified: false
@@ -247,7 +247,7 @@ endpoints:
         name: status
         description: ''
         required: false
-        example: unknown
+        example: friendly
         type: string
         enumValues:
           - active
@@ -274,9 +274,9 @@ endpoints:
       solarsystem_id: architecto
       alias: 'n'
       occupier_alias: g
-      position_x: 4326.41688
-      position_y: 4326.41688
-      status: unknown
+      position_x: 16
+      position_y: 17
+      status: friendly
       pinned: true
     fileParameters: []
     responses: []
@@ -401,9 +401,9 @@ endpoints:
         custom: []
       position_x:
         name: position_x
-        description: ''
+        description: 'Must be at least 20. Must not be greater than 3980.'
         required: false
-        example: 4326.41688
+        example: 7
         type: number
         enumValues: []
         exampleWasSpecified: false
@@ -411,9 +411,9 @@ endpoints:
         custom: []
       position_y:
         name: position_y
-        description: ''
+        description: 'Must be at least 20. Must not be greater than 1980.'
         required: false
-        example: 4326.41688
+        example: 16
         type: number
         enumValues: []
         exampleWasSpecified: false
@@ -423,7 +423,7 @@ endpoints:
         name: status
         description: ''
         required: false
-        example: unknown
+        example: empty
         type: string
         enumValues:
           - active
@@ -439,7 +439,7 @@ endpoints:
         name: pinned
         description: ''
         required: false
-        example: true
+        example: false
         type: boolean
         enumValues: []
         exampleWasSpecified: false
@@ -458,10 +458,10 @@ endpoints:
     cleanBodyParameters:
       alias: b
       occupier_alias: 'n'
-      position_x: 4326.41688
-      position_y: 4326.41688
-      status: unknown
-      pinned: true
+      position_x: 7
+      position_y: 16
+      status: empty
+      pinned: false
       notes: m
     fileParameters: []
     responses: []
