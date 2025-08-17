@@ -2,6 +2,16 @@
 import TokenController from '@/actions/App/Http/Controllers/TokenManagementController';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -52,7 +62,8 @@ function formatDate(date: string): string {
                 <h1 class="text-3xl font-bold">API Token Management</h1>
                 <p class="mt-2 max-w-xl text-muted-foreground">
                     You can create api tokens for your account. The tokens allow you to read and modify any maps that you have access to. Be careful
-                    with these tokens, as they can be used to access your data without further authentication.
+                    with these tokens, as they can be used to access your data without further authentication. You can view the documentation for our
+                    API <a href="/docs" target="_blank" class="underline">here</a>.
                 </p>
             </div>
             <Card>
@@ -102,7 +113,26 @@ function formatDate(date: string): string {
                                     {{ token.last_used_at ? formatDate(token.last_used_at) : 'Never' }}
                                 </TableCell>
                                 <TableCell class="text-right">
-                                    <Button @click="handleDelete(token)" variant="destructive" size="sm" class="ml-2"> Revoke </Button>
+                                    <Dialog>
+                                        <DialogTrigger as-child>
+                                            <Button variant="destructive" size="sm" class="ml-2"> Revoke </Button>
+                                        </DialogTrigger>
+                                        <DialogContent>
+                                            <DialogHeader>
+                                                <DialogTitle> Revoke Token </DialogTitle>
+                                                <DialogDescription>
+                                                    Are you sure you want to revoke this token? This action cannot be undone and will prevent any
+                                                    further use of the token.
+                                                </DialogDescription>
+                                            </DialogHeader>
+                                            <DialogFooter>
+                                                <DialogClose as-child>
+                                                    <Button variant="outline"> Cancel </Button>
+                                                </DialogClose>
+                                                <Button variant="destructive" @click="handleDelete(token)"> Revoke Token </Button>
+                                            </DialogFooter>
+                                        </DialogContent>
+                                    </Dialog>
                                 </TableCell>
                             </TableRow>
                         </TableBody>
