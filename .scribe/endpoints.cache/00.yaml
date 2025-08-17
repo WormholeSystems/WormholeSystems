@@ -247,7 +247,7 @@ endpoints:
         name: status
         description: ''
         required: false
-        example: unscanned
+        example: unknown
         type: string
         enumValues:
           - active
@@ -276,7 +276,7 @@ endpoints:
       occupier_alias: g
       position_x: 4326.41688
       position_y: 4326.41688
-      status: unscanned
+      status: unknown
       pinned: true
     fileParameters: []
     responses: []
@@ -423,7 +423,7 @@ endpoints:
         name: status
         description: ''
         required: false
-        example: active
+        example: unknown
         type: string
         enumValues:
           - active
@@ -439,7 +439,7 @@ endpoints:
         name: pinned
         description: ''
         required: false
-        example: false
+        example: true
         type: boolean
         enumValues: []
         exampleWasSpecified: false
@@ -460,8 +460,8 @@ endpoints:
       occupier_alias: 'n'
       position_x: 4326.41688
       position_y: 4326.41688
-      status: active
-      pinned: false
+      status: unknown
+      pinned: true
       notes: m
     fileParameters: []
     responses: []

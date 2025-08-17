@@ -26,7 +26,7 @@
             </style>
 
     <script>
-        var tryItOutBaseUrl = "https://wormholesystems.test";
+        var tryItOutBaseUrl = "https://wormhole.systems";
         var useCsrf = Boolean();
         var csrfUrl = "/sanctum/csrf-cookie";
     </script>
@@ -121,7 +121,7 @@
         <h1 id="introduction">Introduction</h1>
 <p>RESTful API for managing wormhole maps and solar system data in EVE Online. Access and manipulate collaborative mapping data for navigating wormhole space.</p>
 <aside>
-    <strong>Base URL</strong>: <code>https://wormholesystems.test</code>
+    <strong>Base URL</strong>: <code>https://wormhole.systems</code>
 </aside>
 <p>Welcome to the Tunnel Vision API! This API provides programmatic access to wormhole mapping functionality for EVE Online players and corporations.</p>
 <h2 id="what-you-can-do">What You Can Do</h2>
@@ -165,7 +165,7 @@
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "https://wormholesystems.test/api/maps" \
+    --get "https://wormhole.systems/api/maps" \
     --header "Authorization: Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
@@ -173,7 +173,7 @@
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "https://wormholesystems.test/api/maps"
+    "https://wormhole.systems/api/maps"
 );
 
 const headers = {
@@ -304,7 +304,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "https://wormholesystems.test/api/maps/test-map-1" \
+    --get "https://wormhole.systems/api/maps/test-map-1" \
     --header "Authorization: Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
@@ -312,7 +312,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "https://wormholesystems.test/api/maps/test-map-1"
+    "https://wormhole.systems/api/maps/test-map-1"
 );
 
 const headers = {
@@ -455,7 +455,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request PUT \
-    "https://wormholesystems.test/api/maps/test-map-1" \
+    "https://wormhole.systems/api/maps/test-map-1" \
     --header "Authorization: Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
@@ -467,7 +467,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "https://wormholesystems.test/api/maps/test-map-1"
+    "https://wormhole.systems/api/maps/test-map-1"
 );
 
 const headers = {
@@ -614,7 +614,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "https://wormholesystems.test/api/map-solarsystems" \
+    "https://wormhole.systems/api/map-solarsystems" \
     --header "Authorization: Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
@@ -625,7 +625,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"occupier_alias\": \"g\",
     \"position_x\": 4326.41688,
     \"position_y\": 4326.41688,
-    \"status\": \"unscanned\",
+    \"status\": \"unknown\",
     \"pinned\": true
 }"
 </code></pre></div>
@@ -633,7 +633,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "https://wormholesystems.test/api/map-solarsystems"
+    "https://wormhole.systems/api/map-solarsystems"
 );
 
 const headers = {
@@ -649,7 +649,7 @@ let body = {
     "occupier_alias": "g",
     "position_x": 4326.41688,
     "position_y": 4326.41688,
-    "status": "unscanned",
+    "status": "unknown",
     "pinned": true
 };
 
@@ -816,10 +816,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="status"                data-endpoint="POSTapi-map-solarsystems"
-               value="unscanned"
+               value="unknown"
                data-component="body">
     <br>
-<p>Example: <code>unscanned</code></p>
+<p>Example: <code>unknown</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>active</code></li> <li><code>unknown</code></li> <li><code>unscanned</code></li> <li><code>hostile</code></li> <li><code>friendly</code></li> <li><code>empty</code></li></ul>
         </div>
@@ -860,7 +860,7 @@ Must be one of:
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "https://wormholesystems.test/api/map-solarsystems/1" \
+    --get "https://wormhole.systems/api/map-solarsystems/1" \
     --header "Authorization: Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
@@ -868,7 +868,7 @@ Must be one of:
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "https://wormholesystems.test/api/map-solarsystems/1"
+    "https://wormhole.systems/api/map-solarsystems/1"
 );
 
 const headers = {
@@ -1011,7 +1011,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request PUT \
-    "https://wormholesystems.test/api/map-solarsystems/1" \
+    "https://wormhole.systems/api/map-solarsystems/1" \
     --header "Authorization: Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
@@ -1020,8 +1020,8 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"occupier_alias\": \"n\",
     \"position_x\": 4326.41688,
     \"position_y\": 4326.41688,
-    \"status\": \"active\",
-    \"pinned\": false,
+    \"status\": \"unknown\",
+    \"pinned\": true,
     \"notes\": \"m\"
 }"
 </code></pre></div>
@@ -1029,7 +1029,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "https://wormholesystems.test/api/map-solarsystems/1"
+    "https://wormhole.systems/api/map-solarsystems/1"
 );
 
 const headers = {
@@ -1043,8 +1043,8 @@ let body = {
     "occupier_alias": "n",
     "position_x": 4326.41688,
     "position_y": 4326.41688,
-    "status": "active",
-    "pinned": false,
+    "status": "unknown",
+    "pinned": true,
     "notes": "m"
 };
 
@@ -1205,10 +1205,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="status"                data-endpoint="PUTapi-map-solarsystems--id-"
-               value="active"
+               value="unknown"
                data-component="body">
     <br>
-<p>Example: <code>active</code></p>
+<p>Example: <code>unknown</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>active</code></li> <li><code>unknown</code></li> <li><code>unscanned</code></li> <li><code>hostile</code></li> <li><code>friendly</code></li> <li><code>empty</code></li></ul>
         </div>
@@ -1231,7 +1231,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>Example: <code>false</code></p>
+<p>Example: <code>true</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>notes</code></b>&nbsp;&nbsp;
@@ -1260,7 +1260,7 @@ Must be one of:
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request DELETE \
-    "https://wormholesystems.test/api/map-solarsystems/1" \
+    "https://wormhole.systems/api/map-solarsystems/1" \
     --header "Authorization: Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
@@ -1268,7 +1268,7 @@ Must be one of:
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "https://wormholesystems.test/api/map-solarsystems/1"
+    "https://wormhole.systems/api/map-solarsystems/1"
 );
 
 const headers = {
