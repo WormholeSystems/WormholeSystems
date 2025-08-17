@@ -16,7 +16,7 @@ const currentYear = format(new UTCDate(), 'yyyy');
     <div class="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-background via-muted to-background p-6">
         <SeoHead
             title="Login"
-            description="Sign in to TunnelVision with your EVE Online character to access advanced wormhole mapping tools."
+            description="Sign in to WormholeSystems with your EVE Online character to access advanced wormhole mapping tools."
             url="https://wormhole.systems/login"
         />
 

@@ -6,7 +6,7 @@ RESTful API for managing wormhole maps and solar system data in EVE Online. Acce
     <strong>Base URL</strong>: <code>https://wormhole.systems</code>
 </aside>
 
- Welcome to the Tunnel Vision API! This API provides programmatic access to wormhole mapping functionality for EVE Online players and corporations.
+ Welcome to the WormholeSystems API! This API provides programmatic access to wormhole mapping functionality for EVE Online players and corporations.
 
  ## What You Can Do
 

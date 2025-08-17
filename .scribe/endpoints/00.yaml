@@ -261,7 +261,7 @@ endpoints:
         name: pinned
         description: ''
         required: false
-        example: true
+        example: false
         type: boolean
         enumValues: []
         exampleWasSpecified: false
@@ -275,7 +275,7 @@ endpoints:
       position_x: 16
       position_y: 17
       status: friendly
-      pinned: true
+      pinned: false
     fileParameters: []
     responses: []
     responseFields: []
@@ -421,7 +421,7 @@ endpoints:
         name: status
         description: ''
         required: false
-        example: empty
+        example: unknown
         type: string
         enumValues:
           - active
@@ -437,7 +437,7 @@ endpoints:
         name: pinned
         description: ''
         required: false
-        example: false
+        example: true
         type: boolean
         enumValues: []
         exampleWasSpecified: false
@@ -458,8 +458,8 @@ endpoints:
       occupier_alias: 'n'
       position_x: 7
       position_y: 16
-      status: empty
-      pinned: false
+      status: unknown
+      pinned: true
       notes: m
     fileParameters: []
     responses: []

@@ -19,7 +19,7 @@ return [
 
     // Text to place in the "Introduction" section, right after the `description`. Markdown and HTML are supported.
     'intro_text' => <<<'INTRO'
-     Welcome to the Tunnel Vision API! This API provides programmatic access to wormhole mapping functionality for EVE Online players and corporations.
+     Welcome to the WormholeSystems API! This API provides programmatic access to wormhole mapping functionality for EVE Online players and corporations.
 
      ## What You Can Do
 

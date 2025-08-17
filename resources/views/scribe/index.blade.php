@@ -123,7 +123,7 @@
 <aside>
     <strong>Base URL</strong>: <code>https://wormhole.systems</code>
 </aside>
-<p>Welcome to the Tunnel Vision API! This API provides programmatic access to wormhole mapping functionality for EVE Online players and corporations.</p>
+<p>Welcome to the WormholeSystems API! This API provides programmatic access to wormhole mapping functionality for EVE Online players and corporations.</p>
 <h2 id="what-you-can-do">What You Can Do</h2>
 <p>The API allows you to:</p>
 <ul>
@@ -626,7 +626,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"position_x\": 16,
     \"position_y\": 17,
     \"status\": \"friendly\",
-    \"pinned\": true
+    \"pinned\": false
 }"
 </code></pre></div>
 
@@ -650,7 +650,7 @@ let body = {
     "position_x": 16,
     "position_y": 17,
     "status": "friendly",
-    "pinned": true
+    "pinned": false
 };
 
 fetch(url, {
@@ -842,7 +842,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>Example: <code>true</code></p>
+<p>Example: <code>false</code></p>
         </div>
         </form>
 
@@ -1020,8 +1020,8 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"occupier_alias\": \"n\",
     \"position_x\": 7,
     \"position_y\": 16,
-    \"status\": \"empty\",
-    \"pinned\": false,
+    \"status\": \"unknown\",
+    \"pinned\": true,
     \"notes\": \"m\"
 }"
 </code></pre></div>
@@ -1043,8 +1043,8 @@ let body = {
     "occupier_alias": "n",
     "position_x": 7,
     "position_y": 16,
-    "status": "empty",
-    "pinned": false,
+    "status": "unknown",
+    "pinned": true,
     "notes": "m"
 };
 
@@ -1205,10 +1205,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="status"                data-endpoint="PUTapi-map-solarsystems--id-"
-               value="empty"
+               value="unknown"
                data-component="body">
     <br>
-<p>Example: <code>empty</code></p>
+<p>Example: <code>unknown</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>active</code></li> <li><code>unknown</code></li> <li><code>unscanned</code></li> <li><code>hostile</code></li> <li><code>friendly</code></li> <li><code>empty</code></li></ul>
         </div>
@@ -1231,7 +1231,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>Example: <code>false</code></p>
+<p>Example: <code>true</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>notes</code></b>&nbsp;&nbsp;

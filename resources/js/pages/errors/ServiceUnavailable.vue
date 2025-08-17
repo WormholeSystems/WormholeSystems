@@ -26,7 +26,7 @@ usePoll(5000);
     <div class="flex min-h-screen items-center justify-center bg-background px-4">
         <SeoHead
             title="Service Unavailable"
-            description="TunnelVision is temporarily unavailable. We're working to restore service. Please check back shortly."
+            description="WormholeSystems is temporarily unavailable. We're working to restore service. Please check back shortly."
             keywords="service unavailable, maintenance, server down"
         />
 
