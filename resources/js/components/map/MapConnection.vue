@@ -19,7 +19,8 @@ type Props = {
 const { from, to, extra, mass_status, is_eol } = defineProps<Props>();
 
 const emit = defineEmits<{
-    (e: 'contextmenu', event: MouseEvent): void;
+    (e: 'connectionContextMenu', event: MouseEvent): void;
+    (e: 'connectionClick', event: MouseEvent): void;
 }>();
 
 const curve = computed(() => bezierCurve(from, to));
@@ -100,7 +101,9 @@ function getDashArray() {
             fill="none"
             stroke-width="24"
             class="cursor-pointer transition-colors duration-200"
-            @contextmenu="(event) => emit('contextmenu', event)"
+            @contextmenu="(event) => emit('connectionContextMenu', event)"
+            @click="(event) => emit('connectionClick', event)"
+            @pointerdown.stop
         />
         <circle :cx="from.x" :cy="from.y" r="8" fill="currentColor" />
         <circle :cx="to.x" :cy="to.y" r="8" fill="currentColor" />

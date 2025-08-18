@@ -46,6 +46,7 @@ export type TMapConnection = {
     is_eol: boolean;
     created_at: string;
     updated_at: string;
+    signatures: TSignature[] | null;
 };
 
 export type TWormhole = {
@@ -194,6 +195,7 @@ export type TSignature = {
     category: TSignatureCategory;
     created_at: string;
     updated_at: string;
+    wormhole: TWormhole | null;
 };
 
 export type TMapSolarsystemStatus = 'active' | 'unscanned' | 'unknown' | 'friendly' | 'hostile' | 'empty';

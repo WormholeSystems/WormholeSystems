@@ -16,7 +16,7 @@ export function pasteSignatures(map_solarsystem_id: number, signatures: TRawSign
         {
             preserveScroll: true,
             preserveState: true,
-            only: ['selected_map_solarsystem'],
+            only: ['selected_map_solarsystem', 'map'],
         },
     );
 }

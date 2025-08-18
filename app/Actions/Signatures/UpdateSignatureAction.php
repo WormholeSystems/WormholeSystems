@@ -27,6 +27,11 @@ final class UpdateSignatureAction
         return DB::transaction(function () use ($signature, $data): Signature {
             $signature->update($data);
 
+            if ($signature->category === 'Wormhole') {
+                $signature->wormhole_id = Signature::typeToWormhole($signature->type)?->id;
+                $signature->save();
+            }
+
             broadcast(new SignatureUpdatedEvent($signature->mapSolarsystem->map_id))->toOthers();
 
             return $signature;

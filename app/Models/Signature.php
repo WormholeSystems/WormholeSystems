@@ -17,10 +17,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $category
  * @property int $map_solarsystem_id
  * @property int|null $map_connection_id
+ * @property int|null $wormhole_id
  * @property CarbonImmutable $created_at
  * @property CarbonImmutable $updated_at
  * @property-read MapSolarsystem $mapSolarsystem
  * @property-read MapConnection|null $mapConnection
+ * @property-read Wormhole|null $wormhole
  */
 final class Signature extends Model
 {
@@ -28,6 +30,17 @@ final class Signature extends Model
         'created_at' => 'immutable_datetime',
         'updated_at' => 'immutable_datetime',
     ];
+
+    public static function typeToWormhole(string $type): ?Wormhole
+    {
+        if ($type === '') {
+            return null;
+        }
+
+        $name = str($type)->explode(' - ')->first();
+
+        return Wormhole::query()->where('name', $name)->first();
+    }
 
     /**
      * @return BelongsTo<MapSolarsystem,$this>
@@ -43,5 +56,15 @@ final class Signature extends Model
     public function mapConnection(): BelongsTo
     {
         return $this->belongsTo(MapConnection::class, 'map_connection_id');
+    }
+
+    /**
+     * Get the wormhole associated with this signature.
+     *
+     * @return BelongsTo<Wormhole, $this>
+     */
+    public function wormhole(): BelongsTo
+    {
+        return $this->belongsTo(Wormhole::class);
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Signatures;
 
 use App\Models\MapSolarsystem;
+use App\Models\Signature;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -30,7 +31,7 @@ final readonly class PasteSignaturesAction
             $new_signatures = $signatures->filter(fn (array $signature): bool => $existing_signatures->firstWhere('signature_id', $signature['signature_id']) === null);
             $updated_signatures = $signatures->filter(fn (array $signature): bool => $existing_signatures->firstWhere('signature_id', $signature['signature_id']) !== null);
 
-            $new_signatures->each(fn (array $signature): \App\Models\Signature => $this->storeSignatureAction->handle([
+            $new_signatures->each(fn (array $signature): Signature => $this->storeSignatureAction->handle([
                 ...$signature,
                 'map_solarsystem_id' => $map_solarsystem->id,
             ]));
@@ -46,6 +47,7 @@ final readonly class PasteSignaturesAction
                     'category' => $new_category,
                     'type' => $new_type,
                     'map_connection_id' => $new_map_connection_id,
+                    'wormhole_id' => $new_category === 'Wormhole' ? Signature::typeToWormhole($new_type)?->id : null,
                 ]);
             });
         });

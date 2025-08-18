@@ -1,47 +1,20 @@
 <script setup lang="ts">
-import GripLines from '@/components/icons/GripLines.vue';
-import MinusIcon from '@/components/icons/MinusIcon.vue';
-import PlusIcon from '@/components/icons/PlusIcon.vue';
 import MapConnectionContextMenu from '@/components/map/MapConnectionContextMenu.vue';
+import MapConnectionDetails from '@/components/map/MapConnectionDetails.vue';
 import MapConnections from '@/components/map/MapConnections.vue';
 import MapContextMenu from '@/components/map/MapContextMenu.vue';
+import MapOptions from '@/components/map/MapOptions.vue';
 import MapSolarsystem from '@/components/map/MapSolarsystem.vue';
-import { Button } from '@/components/ui/button';
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu';
-import {
-    deleteSelectedMapSolarsystems,
-    useCreateMap,
-    useMapConnections,
-    useMapGrid,
-    useMapMouse,
-    useMapScale,
-    useMapSolarsystems,
-} from '@/composables/map';
+import { Popover, PopoverAnchor } from '@/components/ui/popover';
+import { deleteSelectedMapSolarsystems, useCreateMap, useMapGrid, useMapMouse, useMapScale, useMapSolarsystems } from '@/composables/map';
+import { useConnectionInteraction } from '@/composables/map/composables/useConnectionInteraction';
+import { useMapEvents } from '@/composables/map/composables/useMapEvents';
 import useHasWritePermission from '@/composables/useHasWritePermission';
 import { useLayout } from '@/composables/useLayout';
-import { useOnClient } from '@/composables/useOnClient';
-import { getMapChannelName } from '@/const/channels';
-import {
-    CharacterStatusUpdatedEvent,
-    MapConnectionCreatedEvent,
-    MapConnectionDeletedEvent,
-    MapConnectionUpdatedEvent,
-    MapRouteSolarsystemsUpdatedEvent,
-    MapSolarsystemCreatedEvent,
-    MapSolarsystemDeletedEvent,
-    MapSolarsystemsDeletedEvent,
-    MapSolarsystemsUpdatedEvent,
-    MapSolarsystemUpdatedEvent,
-    MapUpdatedEvent,
-    SignatureCreatedEvent,
-    SignatureDeletedEvent,
-    SignatureUpdatedEvent,
-} from '@/const/events';
 import { TMapConfig } from '@/types/map';
 import { TMap } from '@/types/models';
-import { router } from '@inertiajs/vue3';
-import { useEcho } from '@laravel/echo-vue';
-import { Position, useEventListener, useMagicKeys, whenever } from '@vueuse/core';
+import { Position, useMagicKeys, whenever } from '@vueuse/core';
 import { computed, ref, useTemplateRef } from 'vue';
 
 const { map, config } = defineProps<{
@@ -53,7 +26,7 @@ const container = useTemplateRef('map-container');
 
 const scroll_locked = ref(false);
 
-const { layout, setLayout } = useLayout();
+const { layout } = useLayout();
 
 useCreateMap(
     () => map,
@@ -64,25 +37,28 @@ useCreateMap(
 
 const { map_solarsystems } = useMapSolarsystems();
 
-const connections = useMapConnections();
-
 const { Delete } = useMagicKeys();
 
 const { grid_size } = useMapGrid();
 
-// removeSelectedMapSolarsystems imported directly
-
 const can_write = useHasWritePermission();
 
-const selected_connection_id = ref<number | null>(null);
-const selected_connection = computed(() => connections.value.find((con) => con.id === selected_connection_id.value));
+const {
+    selected_connection,
+    selected_connection_id,
+    handleConnectionContextMenu,
+    handleConnectionClick,
+    connection_popover_open,
+    connection_popover_position,
+} = useConnectionInteraction();
+
 const context_menu_type = computed(() => (selected_connection.value ? 'connection' : 'map'));
 
-const resizing = ref(false);
-
-const { scale, setScale } = useMapScale();
+const { scale } = useMapScale();
 
 const mouse = useMapMouse();
+
+useMapEvents(map);
 
 const opened_at = ref<Position | null>(null);
 
@@ -96,64 +72,6 @@ function onOpenChange(open: boolean) {
 
     opened_at.value = mouse.value;
 }
-
-useOnClient(() =>
-    useEcho(
-        getMapChannelName(map.id),
-        [
-            MapUpdatedEvent,
-            MapSolarsystemUpdatedEvent,
-            MapSolarsystemsUpdatedEvent,
-            MapConnectionCreatedEvent,
-            MapConnectionUpdatedEvent,
-            MapConnectionDeletedEvent,
-        ],
-        () => {
-            router.reload({
-                only: ['map'],
-            });
-        },
-    ),
-);
-
-useOnClient(() =>
-    useEcho(getMapChannelName(map.id), [MapSolarsystemCreatedEvent, MapSolarsystemDeletedEvent, MapSolarsystemsDeletedEvent], () => {
-        router.reload({
-            only: ['map', 'map_killmails'],
-        });
-    }),
-);
-
-useOnClient(() =>
-    useEcho(getMapChannelName(map.id), [MapRouteSolarsystemsUpdatedEvent], () => {
-        router.reload({
-            only: ['map_route_solarsystems'],
-        });
-    }),
-);
-
-useOnClient(() =>
-    useEcho(getMapChannelName(map.id), CharacterStatusUpdatedEvent, () => {
-        router.reload({
-            only: ['map_characters', 'ship_history'],
-        });
-    }),
-);
-
-useOnClient(() =>
-    useEcho(getMapChannelName(map.id), [SignatureCreatedEvent, SignatureUpdatedEvent, SignatureDeletedEvent], () => {
-        router.reload({
-            only: ['selected_map_solarsystem'],
-        });
-    }),
-);
-useOnClient(() =>
-    useEcho(getMapChannelName(map.id), [MapConnectionCreatedEvent, MapConnectionDeletedEvent, MapConnectionUpdatedEvent], () => {
-        router.reload({
-            only: ['selected_map_solarsystem', 'map_route_solarsystems'],
-        });
-    }),
-);
 
 let timeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -170,42 +88,6 @@ function onScroll(event: WheelEvent) {
         timeout = null;
     }, 500);
 }
-
-function onResizeStart(event: MouseEvent) {
-    event.preventDefault();
-    resizing.value = true;
-}
-
-useEventListener('pointermove', (event) => {
-    if (!resizing.value) {
-        return;
-    }
-
-    event.preventDefault();
-
-    const map_container = container.value;
-    if (!map_container) {
-        return;
-    }
-
-    const rect = map_container.getBoundingClientRect();
-    const new_height = Math.max(300, event.clientY - rect.top);
-
-    if (new_height < 300 || new_height > config.max_size.y + 4) {
-        return;
-    }
-
-    setLayout({
-        ...layout.value,
-        map_height: new_height,
-    });
-});
-useEventListener('pointerup', () => {
-    if (!resizing.value) {
-        return;
-    }
-    resizing.value = false;
-});
 </script>
 
 <template>
@@ -230,7 +112,7 @@ useEventListener('pointerup', () => {
                             minWidth: `${config.max_size.x * scale}px`,
                         }"
                     >
-                        <MapConnections @connection-contextmenu="(e, con) => (selected_connection_id = con.id)" />
+                        <MapConnections @connection-context-menu="handleConnectionContextMenu" @connection-click="handleConnectionClick" />
                         <MapSolarsystem v-for="solarsystem in map_solarsystems" :key="solarsystem.id" :map_solarsystem="solarsystem" />
                     </div>
                 </ContextMenuTrigger>
@@ -241,19 +123,18 @@ useEventListener('pointerup', () => {
                 />
             </ContextMenu>
         </div>
-        <div class="absolute right-0 bottom-0 z-30 flex overflow-hidden rounded-tl-lg border bg-neutral-100 dark:bg-neutral-900">
-            <span class="flex h-8 items-center px-2 text-muted-foreground">{{ (scale * 100).toFixed(0) + '%' }}</span>
-            <Button variant="ghost" size="icon" class="h-8 w-8" @click="setScale(scale - 0.1)">
-                <MinusIcon />
-            </Button>
-            <Button variant="ghost" size="icon" class="h-8 w-8" @click="setScale(scale + 0.1)">
-                <PlusIcon />
-            </Button>
-            <div @pointerdown="onResizeStart" id="map-resize-handle" class="flex size-8 cursor-ns-resize items-center justify-center">
-                <GripLines class="text-muted-foreground" />
-            </div>
-        </div>
+        <MapOptions :config />
     </div>
+    <Popover v-model:open="connection_popover_open" :key="selected_connection?.id" v-if="selected_connection">
+        <PopoverAnchor
+            :style="{
+                position: 'absolute',
+                left: connection_popover_position?.x + 'px',
+                top: connection_popover_position?.y + 'px',
+            }"
+        />
+        <MapConnectionDetails :connection="selected_connection" />
+    </Popover>
 </template>
 
 <style scoped>

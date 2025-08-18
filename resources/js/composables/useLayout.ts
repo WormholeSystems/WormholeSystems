@@ -1,5 +1,6 @@
 import { setCookie } from '@/lib/utils';
-import { usePage } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
+import { useDebounceFn } from '@vueuse/core';
 import { ref, watch } from 'vue';
 
 export type TLayout = {
@@ -25,9 +26,18 @@ export function useLayout() {
         { immediate: true },
     );
 
+    function syncLayout() {
+        router.reload({
+            only: ['layout'],
+        });
+    }
+
+    const debouncedSyncLayout = useDebounceFn(syncLayout, 1000);
+
     function setLayout(newLayout: TLayout) {
         layout.value = newLayout;
         setCookie('layout', JSON.stringify(newLayout), 365);
+        debouncedSyncLayout();
     }
 
     return {

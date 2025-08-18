@@ -9,9 +9,11 @@ use App\Enums\ShipSize;
 use Carbon\CarbonImmutable;
 use Database\Factories\MapConnectionFactory;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Represents a connection between solar systems in a map.
@@ -30,6 +32,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read MapSolarsystem $fromMapSolarsystem
  * @property-read MapSolarsystem $toMapSolarsystem
  * @property-read Map $map
+ * @property-read Collection<int, Signature> $signatures
  */
 #[UseFactory(MapConnectionFactory::class)]
 final class MapConnection extends Model
@@ -74,5 +77,15 @@ final class MapConnection extends Model
     public function map(): BelongsTo
     {
         return $this->belongsTo(Map::class);
+    }
+
+    /**
+     * The signatures associated with this connection.
+     *
+     * @return HasMany<Signature, $this>
+     */
+    public function signatures(): HasMany
+    {
+        return $this->hasMany(Signature::class);
     }
 }

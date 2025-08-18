@@ -1,6 +1,7 @@
 export * from './useConnections';
 export * from './useCreateMap';
 export * from './useDragging';
+export * from './useMapContainer';
 export * from './useMapGrid';
 export * from './useMapMouse';
 export * from './useMapScale';

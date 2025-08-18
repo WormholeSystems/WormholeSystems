@@ -7,6 +7,7 @@ namespace App\Http\Resources;
 use App\Models\MapConnection;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Throwable;
 
 /**
  * @mixin MapConnection
@@ -17,6 +18,8 @@ final class MapConnectionResource extends JsonResource
      * Transform the resource into an array.
      *
      * @return array<string, mixed>
+     *
+     * @throws Throwable
      */
     public function toArray(Request $request): array
     {
@@ -32,6 +35,7 @@ final class MapConnectionResource extends JsonResource
             'is_eol' => $this->is_eol,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
+            'signatures' => $this->signatures->toResourceCollection(SignatureResource::class),
         ];
     }
 }

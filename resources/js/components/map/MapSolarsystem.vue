@@ -49,7 +49,7 @@ const is_active = computed(() => {
     <div
         ref="element"
         :style="drag.style.value"
-        class="absolute hover:z-20 data-[active=true]:z-10"
+        class="pointer-events-none absolute hover:z-20 data-[active=true]:z-10"
         :data-active="page.props.selected_map_solarsystem?.id === map_solarsystem.id"
     >
         <div
@@ -57,7 +57,7 @@ const is_active = computed(() => {
                 '--tw-translate-x': -scale * 40 + 'px',
                 '--tw-translate-y': -scale * 20 + 'px',
             }"
-            class="origin-top-left translate-[var(--translate-x),var(--translate-y)]"
+            class="pointer-events-auto origin-top-left translate-[var(--translate-x),var(--translate-y)]"
         >
             <MapSolarsystemContextMenu :map_solarsystem>
                 <div

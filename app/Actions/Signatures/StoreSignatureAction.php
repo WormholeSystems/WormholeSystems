@@ -28,11 +28,14 @@ final class StoreSignatureAction
         return DB::transaction(function () use ($data) {
             $mapSolarsystem = MapSolarsystem::query()->findOrFail($data['map_solarsystem_id']);
 
+            $category = $data['category'] ?? null;
+
             $signature = $mapSolarsystem->signatures()->create([
                 'map_connection_id' => $data['map_connection_id'] ?? null,
                 'signature_id' => $data['signature_id'] ?? null,
-                'category' => $data['category'] ?? null,
+                'category' => $category,
                 'type' => $data['type'] ?? null,
+                'wormhole_id' => $category === 'Wormhole' ? Signature::typeToWormhole($data['type'] ?? '')?->id : null,
             ]);
 
             broadcast(new SignatureCreatedEvent($mapSolarsystem->map_id))->toOthers();
