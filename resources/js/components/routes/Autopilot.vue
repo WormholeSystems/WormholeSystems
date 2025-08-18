@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import RouteIcon from '@/components/icons/RouteIcon.vue';
+import SearchIcon from '@/components/icons/SearchIcon.vue';
 import SettingsIcon from '@/components/icons/SettingsIcon.vue';
 import Spinner from '@/components/icons/Spinner.vue';
 import { CharacterImage } from '@/components/images';
@@ -112,14 +113,14 @@ function handleSolarsystemHover(hovered: boolean) {
                         <span v-else class="text-primary">{{ selected_map_solarsystem.name }}</span>
                     </b>
                 </template>
-                <template v-else> Select a solarsystem to see routes, or use the shortest path finder </template>
+                <template v-else> Select a solarsystem to see routes, or use the shortest path finder</template>
             </CardDescription>
             <CardAction class="flex gap-2">
                 <Tooltip>
                     <ShortestPathDialog :map="map" :solarsystems="solarsystems" :shortest_path="shortest_path" :ignored_systems="ignored_systems">
                         <TooltipTrigger as-child>
                             <Button variant="secondary" size="icon">
-                                <RouteIcon />
+                                <SearchIcon />
                             </Button>
                         </TooltipTrigger>
                     </ShortestPathDialog>

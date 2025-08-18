@@ -1,3 +1,4 @@
+import { useSelectedMapSolarsystem } from '@/composables/useSelectedMapSolarsystem';
 import MapSolarsystems from '@/routes/map-solarsystems';
 import { TMapSolarSystem } from '@/types/models';
 import { router } from '@inertiajs/vue3';
@@ -14,6 +15,13 @@ export function updateMapSolarsystem(
         pinned?: boolean;
     },
 ) {
+    const only = ['map'];
+
+    const selected = useSelectedMapSolarsystem();
+
+    if (selected.value?.id === map_solarsystem.id) {
+        only.push('selected_map_solarsystem');
+    }
     return router.put(
         MapSolarsystems.update(map_solarsystem.id).url,
         {
@@ -24,7 +32,7 @@ export function updateMapSolarsystem(
         {
             preserveState: true,
             preserveScroll: true,
-            only: ['map'],
+            only,
         },
     );
 }

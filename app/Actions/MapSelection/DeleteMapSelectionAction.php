@@ -23,7 +23,10 @@ final class DeleteMapSelectionAction
     public function handle(array $map_solarsystem_ids): void
     {
         DB::transaction(function () use ($map_solarsystem_ids): void {
+
             MapSolarsystem::query()->whereIn('id', $map_solarsystem_ids)
+                ->get()
+                ->each
                 ->update(['position_x' => null, 'position_y' => null, 'alias' => null]);
 
             MapConnection::query()

@@ -1,7 +1,7 @@
 import { useMapConnections, useMapMouse } from '@/composables/map';
 import { TMapConnection } from '@/types/models';
 import { Position } from '@vueuse/core';
-import { computed, ref, watchEffect } from 'vue';
+import { computed, ref } from 'vue';
 
 export function useConnectionInteraction() {
     const connection_popover_open = ref(false);
@@ -26,8 +26,6 @@ export function useConnectionInteraction() {
         };
         selected_connection_id.value = connection.id;
     }
-
-    watchEffect(() => console.log(selected_connection.value));
 
     return {
         connection_popover_open,

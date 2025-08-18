@@ -33,6 +33,7 @@ export type TMapSolarSystem = {
     signatures_count?: number;
     notes: string | null;
     map_connections: TMapConnection[] | null;
+    audits: TAudit[] | null;
 };
 
 export type TMapConnection = {
@@ -270,4 +271,15 @@ export type TToken = {
     name: string;
     created_at: string;
     last_used_at: string;
+};
+
+export type TAudit = {
+    id: number;
+    character_id: number | null;
+    character: TCharacter | null;
+    event: 'created' | 'updated' | 'deleted';
+    new_values: Record<string, any>;
+    old_values: Record<string, any>;
+    tags: string[];
+    created_at: string;
 };

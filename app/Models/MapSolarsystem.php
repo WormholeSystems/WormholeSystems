@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use OwenIt\Auditing\Auditable;
+use OwenIt\Auditing\Models\Audit;
 
 /**
  * Represents a solarsystem on a map
@@ -33,10 +35,13 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property-read Collection<int,MapConnection> $connectionsFrom
  * @property-read WormholeSystem|null $wormholeSystem
  * @property-read Collection<int,Signature> $signatures
+ * @property-read Collection<int,Audit> $audits
  */
 #[UseFactory(MapSolarsystemFactory::class)]
-final class MapSolarsystem extends Model
+final class MapSolarsystem extends Model implements \OwenIt\Auditing\Contracts\Auditable
 {
+    use Auditable;
+
     /** @use HasFactory<MapSolarsystemFactory> */
     use HasFactory;
 

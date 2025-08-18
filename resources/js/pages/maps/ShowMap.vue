@@ -2,6 +2,7 @@
 import MapAccessController from '@/actions/App/Http/Controllers/MapAccessController';
 import MapPreferencesController from '@/actions/App/Http/Controllers/MapPreferencesController';
 import MapSettingsController from '@/actions/App/Http/Controllers/MapSettingsController';
+import Audits from '@/components/audits/Audits.vue';
 import MapCharacters from '@/components/characters/MapCharacters.vue';
 import QuestionIcon from '@/components/icons/QuestionIcon.vue';
 import MapKillmails from '@/components/killmails/MapKillmails.vue';
@@ -93,6 +94,7 @@ useOnClient(() =>
                         <p class="text-center">Select a solarsystem to see more details</p>
                     </div>
                     <Signatures :map :map_solarsystem="selected_map_solarsystem" v-if="selected_map_solarsystem" />
+                    <Audits :audits="selected_map_solarsystem?.audits" v-if="selected_map_solarsystem && selected_map_solarsystem.audits" />
                     <ShipHistory />
                 </div>
                 <div class="col-span-10 grid gap-4 lg:col-span-5 2xl:col-span-3">

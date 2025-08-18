@@ -45,6 +45,7 @@ final class MapSolarsystemResource extends JsonResource
             'statics' => $this->wormholeSystem?->wormholeStatics?->map(fn (WormholeStatic $static) => $static->wormhole->toResource(WormholeResource::class)),
             'signatures' => $this->whenLoaded('signatures', fn () => $this->signatures->toResourceCollection(SignatureResource::class)),
             'signatures_count' => $this->whenCounted('signatures', fn () => $this->signatures_count),
+            'audits' => $this->whenLoaded('audits', fn () => $this->audits->toResourceCollection(AuditResource::class)),
             'notes' => $this->notes,
         ];
     }

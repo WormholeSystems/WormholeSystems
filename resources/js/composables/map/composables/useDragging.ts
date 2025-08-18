@@ -1,10 +1,11 @@
+import { useSelectedMapSolarsystem } from '@/composables/useSelectedMapSolarsystem';
 import MapSelection from '@/routes/map-selection';
 import MapSolarsystems from '@/routes/map-solarsystems';
 import { TMapSolarSystem } from '@/types/models';
 import { router } from '@inertiajs/vue3';
 import { MaybeRefOrGetter, useDraggable, useEventListener } from '@vueuse/core';
 import { computed, shallowRef, toValue, watchEffect } from 'vue';
-import { mapState, map_solarsystems, map_solarsystems_selected } from '../state';
+import { map_solarsystems, map_solarsystems_selected, mapState } from '../state';
 import { useSelection } from './useSelection';
 import { useMapSolarsystems } from './useSolarsystems';
 
@@ -19,6 +20,8 @@ export function useMapSolarsystem(
     const is_dragging = shallowRef(false);
 
     const current_map_solarsystem = computed(() => map_solarsystems.value.find((s) => s.id === toValue(system)?.id)!);
+
+    const selected_map_solarsystem = useSelectedMapSolarsystem();
 
     const draggable = useDraggable(element, {
         initialValue() {
@@ -70,6 +73,10 @@ export function useMapSolarsystem(
 
     function updateMapSolarsystem(suppress_notification: boolean = false) {
         if (!map_solarsystems_selected.value?.length && !current_map_solarsystem.value?.pinned) {
+            const only = ['map'];
+            if (selected_map_solarsystem.value?.id === current_map_solarsystem.value.id) {
+                only.push('selected_map_solarsystem');
+            }
             return router.put(
                 MapSolarsystems.update(current_map_solarsystem.value.id).url,
                 {
@@ -78,7 +85,7 @@ export function useMapSolarsystem(
                     suppress_notification,
                 },
                 {
-                    only: ['map'],
+                    only,
                     preserveState: true,
                     preserveScroll: true,
                 },
@@ -102,7 +109,7 @@ export function useMapSolarsystem(
                 onSuccess: () => {
                     clearSelection();
                 },
-                only: ['map'],
+                only: ['map', 'selected_map_solarsystem'],
             },
         );
     }

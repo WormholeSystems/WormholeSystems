@@ -7,6 +7,7 @@ namespace App\Actions\MapSelection;
 use App\Events\MapSolarsystems\MapSolarsystemsUpdatedEvent;
 use App\Models\Map;
 use App\Models\MapSolarsystem;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -19,17 +20,22 @@ final class UpdateMapSelectionAction
     {
         DB::transaction(function () use ($data): void {
 
-            $collection = collect($data['map_solarsystems']);
-            $collection
-                ->each(function (array $item): void {
-                    MapSolarsystem::where('id', $item['id'])
-                        ->update(['position_x' => $item['position_x'], 'position_y' => $item['position_y']]);
-                });
+            $collection = collect($data['map_solarsystems'])->keyBy('id');
+
+            $models = MapSolarsystem::query()
+                ->whereIn('id', $collection->pluck('id'))
+                ->get();
+
+            $models->each(function (MapSolarsystem $mapSolarsystem) use ($collection): void {
+                $values = $collection->get($mapSolarsystem->id, []);
+                $mapSolarsystem->update([
+                    'position_x' => $values['position_x'] ?? $mapSolarsystem->position_x,
+                    'position_y' => $values['position_y'] ?? $mapSolarsystem->position_y,
+                ]);
+            });
 
             Map::query()
-                ->whereHas('mapSolarsystems', function ($query) use ($data): void {
-                    $query->whereIn('id', collect($data['map_solarsystems'])->pluck('id'));
-                })
+                ->whereHas('mapSolarsystems', fn (Builder $query) => $query->whereIn('id', $models->pluck('id')))
                 ->each(fn (Map $map) => broadcast(new MapSolarsystemsUpdatedEvent($map->id))->toOthers());
         });
     }

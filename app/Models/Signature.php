@@ -33,7 +33,7 @@ final class Signature extends Model
 
     public static function typeToWormhole(?string $type = null): ?Wormhole
     {
-        if (empty($type)) {
+        if ($type === null || $type === '') {
             return null;
         }
 
