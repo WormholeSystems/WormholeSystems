@@ -31,7 +31,7 @@ final class Signature extends Model
         'updated_at' => 'immutable_datetime',
     ];
 
-    public static function typeToWormhole(string $type): ?Wormhole
+    public static function typeToWormhole(string $type = ''): ?Wormhole
     {
         if ($type === '') {
             return null;
