@@ -40,6 +40,12 @@ final class GetServerStatusCommand extends Command
             return self::FAILURE;
         }
 
+        if ($response->failed()) {
+            $this->error('Failed to retrieve server status: '.$response->error->code);
+
+            return self::FAILURE;
+        }
+
         /** @var Status $data */
         $data = $response->data;
 

@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Models\ServerStatus;
 use App\Policies\PersonalAccessTokenPolicy;
 use App\Services\RouteService;
 use Artisan;
+use Illuminate\Console\Scheduling\Event as ScheduledEvent;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -17,6 +19,8 @@ use Illuminate\Support\ServiceProvider;
 use Laravel\Sanctum\PersonalAccessToken;
 use SocialiteProviders\Eveonline\Provider;
 use SocialiteProviders\Manager\SocialiteWasCalled;
+
+use function Laravel\Prompts\info;
 
 final class AppServiceProvider extends ServiceProvider
 {
@@ -50,6 +54,8 @@ final class AppServiceProvider extends ServiceProvider
         });
 
         Gate::policy(PersonalAccessToken::class, PersonalAccessTokenPolicy::class);
+
+        $this->registerScheduleMacros();
     }
 
     private function registerNotificationMacro(): void
@@ -65,5 +71,24 @@ final class AppServiceProvider extends ServiceProvider
                 'type' => $type,
             ]);
         });
+    }
+
+    private function registerScheduleMacros(): void
+    {
+        ScheduledEvent::macro('notDuringDowntime', fn () => $this->skip(
+            function (): bool {
+                $status = ServerStatus::query()->latest()->first();
+
+                $should_skip = $status !== null && $status->players === 0;
+
+                if ($should_skip) {
+                    info('Skipping scheduled task during downtime (0 players online)');
+
+                    return true;
+                }
+
+                return false;
+            }
+        ));
     }
 }
