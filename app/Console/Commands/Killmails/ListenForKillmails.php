@@ -13,6 +13,8 @@ use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Container\Attributes\Config;
 
+use function Laravel\Prompts\error;
+
 final class ListenForKillmails extends Command
 {
     /**
@@ -39,10 +41,10 @@ final class ListenForKillmails extends Command
     public function handle(#[Config('services.zkillboard.identifier')] string $identifier, zKillboard $zKillboard): void
     {
 
-        $this->trap([SIGTERM, SIGQUIT], fn (): false => $this->should_keep_running = false);
+        $this->trap([SIGTERM, SIGQUIT], $this->handleStop(...));
 
         while ($this->should_keep_running) {
-            $killmail = $zKillboard->listenForKill($identifier);
+            $killmail = $this->getNextKillmail($zKillboard, $identifier);
 
             if (! $killmail instanceof RedisQKillmail) {
                 info('No killmail received, waiting for the next one...');
@@ -51,7 +53,7 @@ final class ListenForKillmails extends Command
                 continue;
             }
 
-            \Laravel\Prompts\info(sprintf('Received killmail with ID: %d', $killmail->killID));
+            info(sprintf('Received killmail with ID: %d', $killmail->killID));
 
             $killmail = Killmail::query()
                 ->updateOrCreate(
@@ -77,5 +79,28 @@ final class ListenForKillmails extends Command
         $maps = Map::query()->whereRelation('mapSolarsystems', 'solarsystem_id', $killmail->solarsystem_id)->get();
 
         $maps->each(fn (Map $map) => KillmailReceivedEvent::dispatch($map, $killmail));
+    }
+
+    private function getNextKillmail(zKillboard $zKillboard, string $identifier): ?RedisQKillmail
+    {
+        try {
+            $killmail = $zKillboard->listenForKill($identifier);
+        } catch (Exception $e) {
+            error('Error fetching killmail: '.$e->getMessage());
+
+            return null;
+        }
+
+        return $killmail;
+    }
+
+    private function handleStop(int $signal): void
+    {
+        switch ($signal) {
+            case SIGTERM:
+            case SIGQUIT:
+                $this->should_keep_running = false;
+                break;
+        }
     }
 }
