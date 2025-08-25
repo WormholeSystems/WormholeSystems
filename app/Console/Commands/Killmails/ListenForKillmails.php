@@ -12,6 +12,7 @@ use App\Models\Map;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Container\Attributes\Config;
+use Throwable;
 
 use function Laravel\Prompts\error;
 
@@ -85,7 +86,7 @@ final class ListenForKillmails extends Command
     {
         try {
             $killmail = $zKillboard->listenForKill($identifier);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             error('Error fetching killmail: '.$e->getMessage());
 
             return null;

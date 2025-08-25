@@ -21,7 +21,7 @@ final class RedisQKillmail
         $zkb = zkb::fromArray($data['zkb'] ?? []);
 
         return new self(
-            killID: $killID,
+            killID: (int) $killID,
             killmail: $killmail,
             zkb: $zkb,
         );
