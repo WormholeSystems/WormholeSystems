@@ -34,7 +34,7 @@ const props = withDefaults(defineProps<SeoHeadProps>(), {
 
 // Default image
 const defaultImage = {
-    url: '/img/og.png',
+    url: '/img/og.png?v=1',
     width: 1024,
     height: 768,
     type: 'image/png',
