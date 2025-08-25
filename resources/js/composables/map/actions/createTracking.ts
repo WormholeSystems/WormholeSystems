@@ -11,7 +11,7 @@ export function createTracking(from_map_solarsystem_id: number, to_solarsystem_i
         {
             preserveScroll: true,
             preserveState: true,
-            only: ['map', 'map_route_solarsystems'],
+            only: ['map', 'map_route_solarsystems', 'selected_map_solarsystem'],
         },
     );
 }

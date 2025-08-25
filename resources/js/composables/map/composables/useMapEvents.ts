@@ -48,7 +48,7 @@ export function useMapEvents(map: MaybeRefOrGetter<TMap>) {
     useOnClient(() =>
         useEcho(map_channel_name.value, [MapSolarsystemCreatedEvent, MapSolarsystemDeletedEvent, MapSolarsystemsDeletedEvent], () => {
             router.reload({
-                only: ['map', 'map_killmails'],
+                only: ['map', 'map_killmails', 'selected_map_solarsystem'],
             });
         }),
     );
