@@ -25,6 +25,7 @@ use NicolasKion\SDE\ClassResolver;
  * @property float $pos_y
  * @property float $pos_z
  * @property string $type
+ * @property bool $has_jove_observatory
  * @property-read string|CarbonImmutable $created_at
  * @property-read string|CarbonImmutable $updated_at
  * @property-read Constellation $constellation

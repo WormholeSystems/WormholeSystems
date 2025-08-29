@@ -28,8 +28,17 @@ import { echo } from '@laravel/echo-vue';
 import { Settings } from 'lucide-vue-next';
 import { computed } from 'vue';
 
-const { map, selected_map_solarsystem, map_killmails, map_route_solarsystems, map_user_settings, shortest_path, ignored_systems, map_characters } =
-    defineProps<TShowMapProps>();
+const {
+    map,
+    selected_map_solarsystem,
+    map_killmails,
+    map_route_solarsystems,
+    map_user_settings,
+    shortest_path,
+    ignored_systems,
+    map_characters,
+    closest_systems,
+} = defineProps<TShowMapProps>();
 
 const character = useActiveMapCharacter();
 const hasWriteAccess = useHasWritePermission();
@@ -111,6 +120,7 @@ useOnClient(() =>
                         :map_user_settings
                         :shortest_path
                         :ignored_systems
+                        :closest_systems
                     />
                 </div>
             </div>

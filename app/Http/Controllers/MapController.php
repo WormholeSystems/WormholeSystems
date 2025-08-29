@@ -31,6 +31,7 @@ use App\Scopes\UserAllowedMapTracking;
 use App\Scopes\WithVisibleSolarsystems;
 use App\Services\RouteOptions;
 use App\Services\RouteService;
+use Closure;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -83,6 +84,13 @@ final class MapController extends Controller
 
         $shortest_path = fn (): ?array => $this->getShortestPathFromRequest($request, $settings, $map);
 
+        $closest_systems = fn (): array => [
+            'results' => $this->getClosestSystemsFromRequest($request, $settings, $map),
+            'from_system' => $this->getFromSystemForClosestSystems($request, $selected_map_solarsystem),
+            'condition' => $request->string('condition', 'observatories')->toString(),
+            'limit' => $request->integer('limit', 15),
+        ];
+
         return Inertia::render('maps/ShowMap', [
             'map' => $map->toResource(MapResource::class),
             'solarsystems' => $solarsystems,
@@ -97,6 +105,7 @@ final class MapController extends Controller
             'map_user_settings' => fn (): JsonResource => $settings->toResource(),
             'ignored_systems' => fn (): array => $this->getIgnoredSystems(),
             'shortest_path' => $shortest_path,
+            'closest_systems' => $closest_systems,
         ]);
     }
 
@@ -308,6 +317,77 @@ final class MapController extends Controller
         }
 
         return $this->getShortestPath($from_solarsystem_id, $to_solarsystem_id, $settings, $map);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    private function getClosestSystemsFromRequest(Request $request, MapUserSetting $settings, Map $map): ?array
+    {
+        $fromSystemName = $request->string('from_system');
+        $condition = $request->string('condition', 'observatories');
+        $limit = $request->integer('limit', 15);
+        $request->string('custom_condition');
+
+        if ($fromSystemName->isEmpty()) {
+            return null;
+        }
+
+        $fromSystem = Solarsystem::query()->where('name', $fromSystemName->toString())->first();
+
+        if (! $fromSystem) {
+            return null;
+        }
+
+        $conditionClosure = $this->getConditionClosure($condition->toString());
+
+        if (! $conditionClosure instanceof Closure) {
+            return null;
+        }
+
+        $options = new RouteOptions(
+            allowEol: $settings->route_allow_eol,
+            massStatus: $settings->route_allow_mass_status,
+            allowEveScout: $settings->route_use_evescout,
+            map: $map,
+            ignoredSystems: Session::get('ignored_systems', [])
+        );
+
+        return $this->route_service->findClosestSystems($fromSystem->id, $options, $conditionClosure, $limit);
+    }
+
+    private function getConditionClosure(string $condition): ?Closure
+    {
+        return match ($condition) {
+            'observatories' => fn ($query) => $query->where('has_jove_observatory', true),
+            'highsec' => fn ($query) => $query->where('security', '>=', 0.5),
+            'lowsec' => fn ($query) => $query->whereBetween('security', [0.1, 0.4]),
+            'nullsec' => fn ($query) => $query->where('security', '<=', 0.0),
+            default => null,
+        };
+    }
+
+    private function getFromSystemForClosestSystems(Request $request, ?MapSolarsystem $selected_map_solarsystem): ?JsonResource
+    {
+        $fromSystemName = $request->string('from_system');
+
+        // If we have a system name from request, find and return it
+        if ($fromSystemName->isNotEmpty()) {
+            $fromSystem = Solarsystem::query()
+                ->with([
+                    'sovereignty' => ['alliance', 'corporation', 'faction'],
+                    'wormholeSystem.effect',
+                    'constellation',
+                    'region',
+                ])
+                ->where('name', $fromSystemName->toString())
+                ->first();
+
+            return $fromSystem?->toResource(SolarsystemResource::class);
+        }
+
+        // Otherwise, return the selected map solarsystem if available
+        return $selected_map_solarsystem?->solarsystem?->toResource(SolarsystemResource::class);
     }
 
     /**

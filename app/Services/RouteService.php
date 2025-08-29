@@ -10,10 +10,12 @@ use App\Models\Map;
 use App\Models\MapConnection;
 use App\Models\Solarsystem;
 use App\Scopes\ConnectionSatisfiesMass;
+use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Cache;
 use NicolasKion\SDE\Models\SolarsystemConnection;
 use SplPriorityQueue;
+use SplQueue;
 
 final readonly class RouteService
 {
@@ -47,6 +49,54 @@ final readonly class RouteService
 
         // Enrich with solarsystem data
         return $this->enrichRouteWithSolarsystemData($path);
+    }
+
+    /**
+     * Find the closest systems matching a given condition
+     */
+    public function findClosestSystems(int $fromId, RouteOptions $options, Closure $condition, int $limit = 15): array
+    {
+        $connections = $this->prepareConnections($options);
+        $ignoredSystems = $options->ignoredSystems ?? [];
+
+        // Get all systems matching the condition
+        $targetSystems = Solarsystem::query()
+            ->where($condition)
+            ->pluck('id')
+            ->toArray();
+
+        if ($targetSystems === []) {
+            return [];
+        }
+
+        // Find distances to all target systems
+        $distances = $this->findDistancesToMultipleTargets($fromId, $targetSystems, $connections, $ignoredSystems);
+
+        // Sort by distance and take the closest ones
+        asort($distances);
+        $closestSystems = array_slice($distances, 0, $limit, true);
+
+        // Enrich with solarsystem data
+        $solarsystemIds = array_keys($closestSystems);
+        $solarsystems = Solarsystem::query()
+            ->with([
+                'sovereignty' => ['alliance', 'corporation', 'faction'],
+                'wormholeSystem.effect',
+                'constellation',
+                'region',
+            ])
+            ->whereIn('id', $solarsystemIds)
+            ->get()
+            ->keyBy('id');
+
+        return collect($closestSystems)
+            ->map(fn (int $distance, int $id): array => [
+                'solarsystem' => $solarsystems->get($id)?->toResource(SolarsystemResource::class),
+                'distance' => $distance,
+            ])
+            ->filter(fn (array $item): bool => $item['solarsystem'] !== null)
+            ->values()
+            ->toArray();
     }
 
     private function getConnections(): array
@@ -130,6 +180,72 @@ final readonly class RouteService
             ->filter()
             ->values()
             ->toArray();
+    }
+
+    /**
+     * Find distances to multiple target systems efficiently using a single BFS
+     */
+    private function findDistancesToMultipleTargets(int $start, array $targets, array $connections, array $ignoredSystems): array
+    {
+        if ($targets === []) {
+            return [];
+        }
+
+        // Convert targets to hash map for O(1) lookups
+        $targetMap = array_flip($targets);
+        $distances = [];
+        $visited = [];
+        $queue = new SplQueue;
+
+        // Start BFS from the origin
+        $queue->enqueue(['id' => $start, 'distance' => 0]);
+        $visited[$start] = true;
+
+        // If start is a target, record it
+        if (isset($targetMap[$start])) {
+            $distances[$start] = 0;
+        }
+
+        while (! $queue->isEmpty()) {
+            $current = $queue->dequeue();
+            $currentId = $current['id'];
+            $currentDistance = $current['distance'];
+
+            // Early termination if we found all targets
+            if (count($distances) === count($targets)) {
+                break;
+            }
+
+            $neighbors = $connections[$currentId] ?? [];
+
+            foreach ($neighbors as $neighbor) {
+                // Skip if already visited or is an ignored system
+                if (isset($visited[$neighbor])) {
+                    continue;
+                }
+                if (in_array($neighbor, $ignoredSystems, true)) {
+                    continue;
+                }
+                $visited[$neighbor] = true;
+                $newDistance = $currentDistance + 1;
+
+                // If this neighbor is a target, record its distance
+                if (isset($targetMap[$neighbor])) {
+                    $distances[$neighbor] = $newDistance;
+                }
+
+                $queue->enqueue(['id' => $neighbor, 'distance' => $newDistance]);
+            }
+        }
+
+        // For unreachable targets, set distance to PHP_INT_MAX
+        foreach ($targets as $target) {
+            if (! isset($distances[$target])) {
+                $distances[$target] = PHP_INT_MAX;
+            }
+        }
+
+        return $distances;
     }
 
     private function findShortestPath(int $start, int $end, array $connections): array

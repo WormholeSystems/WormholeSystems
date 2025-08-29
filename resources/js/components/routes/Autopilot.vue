@@ -6,6 +6,7 @@ import Spinner from '@/components/icons/Spinner.vue';
 import { CharacterImage } from '@/components/images';
 import TypeImage from '@/components/images/TypeImage.vue';
 import ShortestPathDialog from '@/components/map/ShortestPathDialog.vue';
+import ClosestSystemsDialog from '@/components/routes/ClosestSystemsDialog.vue';
 import MapRouteSolarsystem from '@/components/routes/MapRouteSolarsystem.vue';
 import MapRouteSolarsystemAdd from '@/components/routes/MapRouteSolarsystemAdd.vue';
 import RoutePopover from '@/components/routes/RoutePopover.vue';
@@ -20,24 +21,34 @@ import { useMapSolarsystems } from '@/composables/map';
 import useHasWritePermission from '@/composables/useHasWritePermission';
 import { usePath } from '@/composables/usePath';
 import useUser from '@/composables/useUser';
-import { TShortestPath } from '@/pages/maps';
+import { TClosestSystems, TShortestPath } from '@/pages/maps';
 import MapUserSettings from '@/routes/map-user-settings';
 import { TCharacter, TMap, TMapRouteSolarsystem, TMapSolarSystem, TMapUserSetting, TMassStatus, TSolarsystem } from '@/types/models';
 import { Deferred, router } from '@inertiajs/vue3';
 import { vElementHover } from '@vueuse/components';
 import { computed } from 'vue';
 
-const { map_route_solarsystems, map, solarsystems, map_characters, map_user_settings, selected_map_solarsystem, shortest_path, ignored_systems } =
-    defineProps<{
-        map: TMap;
-        solarsystems: TSolarsystem[];
-        map_route_solarsystems?: TMapRouteSolarsystem[];
-        selected_map_solarsystem?: TMapSolarSystem | null;
-        map_user_settings: TMapUserSetting;
-        map_characters?: TCharacter[];
-        shortest_path?: TShortestPath | null;
-        ignored_systems: number[];
-    }>();
+const {
+    map_route_solarsystems,
+    map,
+    solarsystems,
+    map_characters,
+    map_user_settings,
+    selected_map_solarsystem,
+    shortest_path,
+    ignored_systems,
+    closest_systems,
+} = defineProps<{
+    map: TMap;
+    solarsystems: TSolarsystem[];
+    map_route_solarsystems?: TMapRouteSolarsystem[];
+    selected_map_solarsystem?: TMapSolarSystem | null;
+    map_user_settings: TMapUserSetting;
+    map_characters?: TCharacter[];
+    shortest_path?: TShortestPath | null;
+    ignored_systems: number[];
+    closest_systems?: TClosestSystems | null;
+}>();
 
 const user = useUser();
 const activeCharacter = computed(() => {
@@ -127,6 +138,25 @@ function handleSolarsystemHover(hovered: boolean) {
 
                     <TooltipContent>
                         <p>Find shortest path between systems</p>
+                    </TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                    <ClosestSystemsDialog
+                        :map="map"
+                        :solarsystems="solarsystems"
+                        :selected_map_solarsystem="selected_map_solarsystem"
+                        :closest_systems="closest_systems"
+                    >
+                        <TooltipTrigger as-child>
+                            <Button variant="secondary" size="icon">
+                                <RouteIcon />
+                            </Button>
+                        </TooltipTrigger>
+                    </ClosestSystemsDialog>
+
+                    <TooltipContent>
+                        <p>Find closest systems by condition</p>
                     </TooltipContent>
                 </Tooltip>
                 <Popover>

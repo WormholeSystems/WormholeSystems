@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('solarsystems', function (Blueprint $table) {
+        Schema::table('solarsystems', function (Blueprint $table): void {
             $table->boolean('has_jove_observatory')->default(false)->after('type');
         });
     }
@@ -23,7 +23,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('solarsystems', function (Blueprint $table) {
+        Schema::table('solarsystems', function (Blueprint $table): void {
             $table->dropColumn('has_jove_observatory');
         });
     }

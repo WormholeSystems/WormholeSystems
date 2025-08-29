@@ -18,6 +18,18 @@ export type TShortestPathDialogProps = {
     ignored_systems: number[];
 };
 
+export type TClosestSystem = {
+    solarsystem: TSolarsystem;
+    distance: number;
+};
+
+export type TClosestSystems = {
+    results: TClosestSystem[] | null;
+    from_system: TSolarsystem | null;
+    condition: string;
+    limit: number;
+};
+
 export type TShowMapProps = {
     map: TMap;
     search: string;
@@ -33,4 +45,5 @@ export type TShowMapProps = {
     map_user_settings: TMapUserSetting;
     shortest_path?: TShortestPath | null;
     ignored_systems: number[];
+    closest_systems?: TClosestSystems | null;
 };
