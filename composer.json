@@ -23,7 +23,7 @@
         "laravel/tinker": "^2.10.1",
         "laravel/wayfinder": "^0.1.6",
         "nicolaskion/eve": "^0.1.6",
-        "nicolaskion/sde": "^v0.1.6",
+        "nicolaskion/sde": "^v0.1.8",
         "nunomaduro/essentials": "^0.1",
         "owen-it/laravel-auditing": "^14.0",
         "socialiteproviders/eveonline": "^4.3",
