@@ -4,7 +4,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useNowUTC } from '@/composables/useNowUTC';
 import { TMapConnection, TMapSolarSystem } from '@/types/models';
 import { UTCDate } from '@date-fns/utc';
-import { format, min, max, differenceInDays, differenceInHours, differenceInMinutes } from 'date-fns';
+import { differenceInDays, differenceInHours, differenceInMinutes, format, max, min } from 'date-fns';
 import { computed } from 'vue';
 
 const { connection } = defineProps<{
@@ -58,11 +58,7 @@ const ship_size = computed(() => {
 });
 
 const hasWormholeData = computed(() => {
-    return wormhole.value && (
-        wormhole.value.maximum_lifetime || 
-        wormhole.value.maximum_jump_mass || 
-        wormhole.value.total_mass
-    );
+    return wormhole.value && (wormhole.value.maximum_lifetime || wormhole.value.maximum_jump_mass || wormhole.value.total_mass);
 });
 
 const massStatusDisplay = computed(() => {
@@ -81,34 +77,34 @@ const massStatusDisplay = computed(() => {
 
 const createdDate = computed(() => {
     const dates = [connection.created_at];
-    
+
     // Add signature created_at dates if they exist
     if (connection.signatures?.length) {
-        connection.signatures.forEach(sig => {
+        connection.signatures.forEach((sig) => {
             if (sig.created_at) {
                 dates.push(sig.created_at);
             }
         });
     }
-    
+
     // Find the earliest date
-    return min(dates.map(date => new UTCDate(date)));
+    return min(dates.map((date) => new UTCDate(date)));
 });
 
 const updatedDate = computed(() => {
     const dates = [connection.updated_at];
-    
+
     // Add signature updated_at dates if they exist
     if (connection.signatures?.length) {
-        connection.signatures.forEach(sig => {
+        connection.signatures.forEach((sig) => {
             if (sig.updated_at) {
                 dates.push(sig.updated_at);
             }
         });
     }
-    
+
     // Find the latest date
-    return max(dates.map(date => new UTCDate(date)));
+    return max(dates.map((date) => new UTCDate(date)));
 });
 
 const createdAt = computed(() => {
@@ -148,7 +144,7 @@ function formatMass(mass: number): string {
         <div v-if="outSignature || inSignature" class="space-y-3">
             <!-- Out Signature (Non-K162) -->
             <div v-if="outSignature" class="space-y-1">
-                <div class="text-xs font-medium text-foreground border-b pb-1">Out Sig</div>
+                <div class="border-b pb-1 text-xs font-medium text-foreground">Out Sig</div>
                 <div class="grid grid-cols-2 divide-y truncate text-xs text-muted-foreground *:py-1">
                     <div class="col-span-full grid grid-cols-subgrid">
                         <span>Type</span>
@@ -171,7 +167,7 @@ function formatMass(mass: number): string {
 
             <!-- In Signature (K162) -->
             <div v-if="inSignature" class="space-y-1">
-                <div class="text-xs font-medium text-foreground border-b pb-1">In Sig</div>
+                <div class="border-b pb-1 text-xs font-medium text-foreground">In Sig</div>
                 <div class="grid grid-cols-2 divide-y truncate text-xs text-muted-foreground *:py-1">
                     <div class="col-span-full grid grid-cols-subgrid">
                         <span>Type</span>
@@ -186,7 +182,7 @@ function formatMass(mass: number): string {
 
             <!-- Connection Status -->
             <div class="space-y-1">
-                <div class="text-xs font-medium text-foreground border-b pb-1">Status</div>
+                <div class="border-b pb-1 text-xs font-medium text-foreground">Status</div>
                 <div class="grid grid-cols-2 divide-y truncate text-xs text-muted-foreground *:py-1">
                     <div class="col-span-full grid grid-cols-subgrid">
                         <span>EOL</span>
@@ -196,11 +192,14 @@ function formatMass(mass: number): string {
                     </div>
                     <div class="col-span-full grid grid-cols-subgrid">
                         <span>Mass Status</span>
-                        <span class="text-right" :class="{
-                            'text-green-500': connection.mass_status === 'fresh',
-                            'text-yellow-500': connection.mass_status === 'reduced',
-                            'text-red-500': connection.mass_status === 'critical'
-                        }">
+                        <span
+                            class="text-right"
+                            :class="{
+                                'text-green-500': connection.mass_status === 'fresh',
+                                'text-yellow-500': connection.mass_status === 'reduced',
+                                'text-red-500': connection.mass_status === 'critical',
+                            }"
+                        >
                             {{ massStatusDisplay }}
                         </span>
                     </div>
@@ -208,7 +207,7 @@ function formatMass(mass: number): string {
                         <span>Created</span>
                         <Tooltip>
                             <TooltipTrigger as-child>
-                                <span class="text-right cursor-help">{{ createdAt }}</span>
+                                <span class="cursor-help text-right">{{ createdAt }}</span>
                             </TooltipTrigger>
                             <TooltipContent>{{ createdAgo }}</TooltipContent>
                         </Tooltip>
@@ -217,7 +216,7 @@ function formatMass(mass: number): string {
                         <span>Updated</span>
                         <Tooltip>
                             <TooltipTrigger as-child>
-                                <span class="text-right cursor-help">{{ updatedAt }}</span>
+                                <span class="cursor-help text-right">{{ updatedAt }}</span>
                             </TooltipTrigger>
                             <TooltipContent>{{ updatedAgo }}</TooltipContent>
                         </Tooltip>
@@ -227,7 +226,7 @@ function formatMass(mass: number): string {
 
             <!-- Wormhole Properties (shared between both signatures) -->
             <div v-if="hasWormholeData" class="space-y-1">
-                <div class="text-xs font-medium text-foreground border-b pb-1">Properties</div>
+                <div class="border-b pb-1 text-xs font-medium text-foreground">Properties</div>
                 <div class="grid grid-cols-2 divide-y truncate text-xs text-muted-foreground *:py-1">
                     <div v-if="totalMass !== null" class="col-span-full grid grid-cols-subgrid">
                         <span>Total Mass</span>
