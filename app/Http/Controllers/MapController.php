@@ -86,7 +86,7 @@ final class MapController extends Controller
 
         $closest_systems = fn (): array => [
             'results' => $this->getClosestSystemsFromRequest($request, $settings, $map),
-            'from_system' => $this->getFromSystemForClosestSystems($request, $selected_map_solarsystem),
+            'from_system' => $this->getFromSystemForClosestSystems($request),
             'condition' => $request->string('condition', 'observatories')->toString(),
             'limit' => $request->integer('limit', 15),
         ];
@@ -367,27 +367,24 @@ final class MapController extends Controller
         };
     }
 
-    private function getFromSystemForClosestSystems(Request $request, ?MapSolarsystem $selected_map_solarsystem): ?JsonResource
+    private function getFromSystemForClosestSystems(Request $request): ?JsonResource
     {
         $fromSystemName = $request->string('from_system');
 
-        // If we have a system name from request, find and return it
-        if ($fromSystemName->isNotEmpty()) {
-            $fromSystem = Solarsystem::query()
-                ->with([
-                    'sovereignty' => ['alliance', 'corporation', 'faction'],
-                    'wormholeSystem.effect',
-                    'constellation',
-                    'region',
-                ])
-                ->where('name', $fromSystemName->toString())
-                ->first();
-
-            return $fromSystem?->toResource(SolarsystemResource::class);
+        if ($fromSystemName->isEmpty()) {
+            return null;
         }
 
-        // Otherwise, return the selected map solarsystem if available
-        return $selected_map_solarsystem?->solarsystem?->toResource(SolarsystemResource::class);
+        return Solarsystem::query()
+            ->with([
+                'sovereignty' => ['alliance', 'corporation', 'faction'],
+                'wormholeSystem.effect',
+                'constellation',
+                'region',
+            ])
+            ->where('name', $fromSystemName->toString())
+            ->first()
+            ?->toResource(SolarsystemResource::class);
     }
 
     /**
