@@ -52,7 +52,7 @@ function handleBlur() {
         :disabled="disabled"
         placeholder="XXX-XXX"
         maxlength="7"
-        class="w-[10ch] font-mono"
+        class="w-[11ch] font-mono"
     />
 </template>
 
