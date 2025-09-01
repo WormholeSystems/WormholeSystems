@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DestinationContextMenu from '@/components/DestinationContextMenu.vue';
 import SearchIcon from '@/components/icons/SearchIcon.vue';
 import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue';
 import SolarsystemClass from '@/components/SolarsystemClass.vue';
@@ -207,28 +208,33 @@ function clearSystem() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            <TableRow v-for="result in results" :key="result.solarsystem.id">
-                                <TableCell>
-                                    <div class="flex items-center gap-2">
-                                        <span class="font-medium">{{ result.solarsystem.name }}</span>
-                                    </div>
-                                </TableCell>
-                                <TableCell class="text-center font-mono text-sm">
-                                    <SolarsystemClass :wormhole_class="result.solarsystem.class" :security="result.solarsystem.security" />
-                                </TableCell>
-                                <TableCell class="text-sm">
-                                    {{ result.solarsystem.region?.name ?? 'Unknown' }}
-                                </TableCell>
-                                <TableCell>
-                                    <div class="flex justify-center">
-                                        <SolarsystemSovereignty v-if="result.solarsystem.sovereignty" :sovereignty="result.solarsystem.sovereignty" />
-                                        <SolarsystemEffect v-else-if="result.solarsystem.effect" :effect="result.solarsystem.effect" />
-                                    </div>
-                                </TableCell>
-                                <TableCell class="text-center font-mono">
-                                    {{ result.distance === 2147483647 ? '∞' : result.distance }}
-                                </TableCell>
-                            </TableRow>
+                            <DestinationContextMenu v-for="result in results" :key="result.solarsystem.id" :solarsystem_id="result.solarsystem.id">
+                                <TableRow>
+                                    <TableCell>
+                                        <div class="flex items-center gap-2">
+                                            <span class="font-medium">{{ result.solarsystem.name }}</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell class="text-center font-mono text-sm">
+                                        <SolarsystemClass :wormhole_class="result.solarsystem.class" :security="result.solarsystem.security" />
+                                    </TableCell>
+                                    <TableCell class="text-sm">
+                                        {{ result.solarsystem.region?.name ?? 'Unknown' }}
+                                    </TableCell>
+                                    <TableCell>
+                                        <div class="flex justify-center">
+                                            <SolarsystemSovereignty
+                                                v-if="result.solarsystem.sovereignty"
+                                                :sovereignty="result.solarsystem.sovereignty"
+                                            />
+                                            <SolarsystemEffect v-else-if="result.solarsystem.effect" :effect="result.solarsystem.effect" />
+                                        </div>
+                                    </TableCell>
+                                    <TableCell class="text-center font-mono">
+                                        {{ result.distance === 2147483647 ? '∞' : result.distance }}
+                                    </TableCell>
+                                </TableRow>
+                            </DestinationContextMenu>
                         </TableBody>
                     </Table>
                 </div>

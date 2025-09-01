@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\MassStatus;
+use App\Enums\ShipSize;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,6 +20,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $map_solarsystem_id
  * @property int|null $map_connection_id
  * @property int|null $wormhole_id
+ * @property MassStatus|null $mass_status
+ * @property bool|null $is_eol
+ * @property ShipSize|null $ship_size
  * @property CarbonImmutable $created_at
  * @property CarbonImmutable $updated_at
  * @property-read MapSolarsystem $mapSolarsystem
@@ -29,6 +34,9 @@ final class Signature extends Model
     protected $casts = [
         'created_at' => 'immutable_datetime',
         'updated_at' => 'immutable_datetime',
+        'mass_status' => MassStatus::class,
+        'ship_size' => ShipSize::class,
+        'is_eol' => 'boolean',
     ];
 
     public static function typeToWormhole(?string $type = null): ?Wormhole

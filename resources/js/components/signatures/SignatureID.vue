@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PinInput, PinInputGroup, PinInputSeparator, PinInputSlot } from '@/components/ui/pin-input';
+import { Input } from '@/components/ui/input';
 
 const { currentValue } = defineProps<{
     disabled?: boolean;
@@ -14,8 +14,16 @@ const emit = defineEmits<{
     (e: 'submit'): void;
 }>();
 
-function handleUpdate(value: string[]) {
-    model.value = [...value.slice(0, 3), '-', ...value.slice(3, 6)].join('').toUpperCase();
+function handleInput(event: Event) {
+    const target = event.target as HTMLInputElement;
+    let value = target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+
+    // Format as XXX-XXX if length is appropriate
+    if (value.length >= 4) {
+        value = value.slice(0, 3) + '-' + value.slice(3, 6);
+    }
+
+    model.value = value;
 }
 
 function handleSubmit() {
@@ -36,19 +44,16 @@ function handleBlur() {
 </script>
 
 <template>
-    <div @focusout="handleBlur">
-        <PinInput :model-value="model.replace('-', '').split('')" @update:modelValue="handleUpdate" :disabled @keydown="handleKeydown">
-            <PinInputGroup>
-                <PinInputSlot :index="0" />
-                <PinInputSlot :index="1" />
-                <PinInputSlot :index="2" />
-                <PinInputSeparator />
-                <PinInputSlot :index="3" />
-                <PinInputSlot :index="4" />
-                <PinInputSlot :index="5" />
-            </PinInputGroup>
-        </PinInput>
-    </div>
+    <Input
+        :model-value="model"
+        @input="handleInput"
+        @keydown="handleKeydown"
+        @blur="handleBlur"
+        :disabled="disabled"
+        placeholder="XXX-XXX"
+        maxlength="7"
+        class="w-[10ch] font-mono"
+    />
 </template>
 
 <style scoped></style>

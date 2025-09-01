@@ -52,22 +52,79 @@ const modified_ago = computed(() => {
 
     return 'now';
 });
+
+const created_date_formatted = computed(() => {
+    return format(created_date.value, 'MMM dd, HH:mm');
+});
+const updated_date_formatted = computed(() => {
+    return format(updated_date.value, 'MMM dd, HH:mm');
+});
 </script>
 
 <template>
     <Tooltip>
-        <TooltipTrigger :data-eol="selected_connection?.is_eol" class="whitespace-nowrap text-neutral-500 data-[eol=true]:text-purple-500">
+        <TooltipTrigger
+            :data-eol="selected_connection?.is_eol || signature.is_eol"
+            :data-mass="selected_connection?.mass_status || signature.mass_status"
+            class="time whitespace-nowrap text-neutral-500"
+        >
             <span>
                 {{ modified_ago }}
             </span>
         </TooltipTrigger>
         <TooltipContent class="grid grid-cols-[auto_auto] gap-2">
             <span class="font-semibold">Created at</span>
-            <p class="">{{ format(created_date, 'MMM dd, HH:mm') }}</p>
+            <p class="">{{ created_date_formatted }}</p>
             <span class="font-semibold">Last modified at</span>
-            <p class="">{{ format(updated_date, 'MMM dd, HH:mm') }}</p>
+            <p class="">{{ updated_date_formatted }}</p>
         </TooltipContent>
     </Tooltip>
 </template>
 
-<style scoped></style>
+<style scoped>
+.time[data-eol='true'][data-mass='critical'] {
+    color: var(--color-red-500);
+    animation: eol-critical 2s infinite;
+}
+
+@keyframes eol-critical {
+    0%,
+    100% {
+        color: var(--color-red-500);
+    }
+    50% {
+        color: var(--color-purple-500);
+    }
+}
+
+.time[data-eol='true'][data-mass='reduced'] {
+    color: var(--color-orange-500);
+    animation: eol-heavy 2s infinite;
+}
+
+@keyframes eol-heavy {
+    0%,
+    100% {
+        color: var(--color-orange-500);
+    }
+    50% {
+        color: var(--color-purple-500);
+    }
+}
+
+.time[data-mass='unknown'] {
+    color: var(--color-neutral-500);
+}
+
+.time[data-mass='reduced'] {
+    color: var(--color-orange-500);
+}
+
+.time[data-mass='critical'] {
+    color: var(--color-red-500);
+}
+
+.time[data-eol='true'] {
+    color: var(--color-purple-500);
+}
+</style>

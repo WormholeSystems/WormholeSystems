@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Actions\MapConnections\CreateMapConnectionAction;
 use App\Actions\MapConnections\DeleteMapConnectionAction;
 use App\Actions\MapConnections\UpdateMapConnectionAction;
+use App\Data\MapConnectionData;
 use App\Http\Requests\StoreMapConnectionRequest;
 use App\Http\Requests\UpdateMapConnectionRequest;
 use App\Models\MapConnection;
@@ -41,7 +42,7 @@ final class MapConnectionController extends Controller
     {
         Gate::authorize('update', $mapConnection);
 
-        $action->handle($mapConnection, $request->validated());
+        $action->handle($mapConnection, MapConnectionData::from($request->validated()));
 
         return back()->notify(
             'Connection updated!',

@@ -13,6 +13,6 @@ export function updateMapConnection(
     return router.put(MapConnections.update(map_connection.id).url, data, {
         preserveScroll: true,
         preserveState: true,
-        only: ['map', 'map_route_solarsystems'],
+        only: ['map', 'map_route_solarsystems', 'selected_map_solarsystem'],
     });
 }

@@ -17,7 +17,7 @@ const open = ref(false);
 
 <template>
     <Select v-model:model-value="model" :disabled="!can_write || !category" v-model:open="open">
-        <SelectTrigger class="col-span-2 w-full overflow-hidden">
+        <SelectTrigger class="w-full text-xs">
             <SelectValue>{{ model ?? 'Type' }}</SelectValue>
         </SelectTrigger>
         <SelectContent v-if="category">

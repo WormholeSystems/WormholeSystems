@@ -5,7 +5,12 @@ import PlusIcon from '@/components/icons/PlusIcon.vue';
 import Signature from '@/components/signatures/Signature.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { createSignature, deleteSignatures, pasteSignatures, useSignatures } from '@/composables/map';
 import useHasWritePermission from '@/composables/useHasWritePermission';
@@ -238,20 +243,30 @@ useEventListener('paste', (event) => {
                 </Tooltip>
             </CardAction>
         </CardHeader>
-        <CardContent class="px-1 pb-1">
-            <div class="grid grid-cols-[auto_1fr_1fr_1fr_auto_auto] gap-x-2 divide-y">
-                <Signature
-                    v-for="signature in signatures"
-                    :signature="signature"
-                    :key="signature.id"
-                    :deleted="signature.deleted"
-                    :new="signature.new"
-                    :updated="signature.updated"
-                    :unconnected_connections="unconnected_connections"
-                    :connected_connections="connected_connections"
-                    :selected_map_solarsystem="map_solarsystem"
-                    :possible_signatures="relevant_signatures"
-                />
+        <CardContent class="p-1">
+            <div class="overflow-hidden rounded-lg border">
+                <div class="grid grid-cols-[auto_1fr_1fr_1fr_auto_auto] gap-x-2 divide-y">
+                    <div class="col-span-full grid grid-cols-subgrid border-b bg-muted/50 px-2 py-1.5 text-xs font-medium text-muted-foreground">
+                        <div class="text-left">ID</div>
+                        <div class="text-left">Category</div>
+                        <div class="text-left">Type</div>
+                        <div class="text-left">Connection</div>
+                        <div class="text-left">Age</div>
+                        <div></div>
+                    </div>
+                    <Signature
+                        v-for="signature in signatures"
+                        :signature="signature"
+                        :key="signature.id"
+                        :deleted="signature.deleted"
+                        :new="signature.new"
+                        :updated="signature.updated"
+                        :unconnected_connections="unconnected_connections"
+                        :connected_connections="connected_connections"
+                        :selected_map_solarsystem="map_solarsystem"
+                        :possible_signatures="relevant_signatures"
+                    />
+                </div>
             </div>
         </CardContent>
     </Card>

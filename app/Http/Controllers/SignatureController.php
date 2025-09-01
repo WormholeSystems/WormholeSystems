@@ -7,8 +7,8 @@ namespace App\Http\Controllers;
 use App\Actions\Signatures\DeleteSignatureAction;
 use App\Actions\Signatures\StoreSignatureAction;
 use App\Actions\Signatures\UpdateSignatureAction;
+use App\Data\SignatureData;
 use App\Http\Requests\Signatures\StoreSignatureRequest;
-use App\Http\Requests\Signatures\UpdateSignatureRequest;
 use App\Models\Signature;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
@@ -29,9 +29,9 @@ final class SignatureController extends Controller
     /**
      * @throws Throwable
      */
-    public function update(UpdateSignatureRequest $request, Signature $signature, UpdateSignatureAction $updateSignatureAction): RedirectResponse
+    public function update(Signature $signature, SignatureData $signatureData, UpdateSignatureAction $updateSignatureAction): RedirectResponse
     {
-        $updateSignatureAction->handle($signature, $request->validated());
+        $updateSignatureAction->handle($signature, $signatureData);
 
         return back()->notify('Signature updated successfully.', message: 'You have successfully updated the signature.');
     }

@@ -9,9 +9,9 @@ defineProps<{
 </script>
 
 <template>
-    <Button variant="ghost" class="flex w-full justify-between">
+    <Button variant="ghost" class="flex justify-between">
         <slot />
-        <div class="w-4">
+        <div>
             <ChevronUpIcon v-if="direction === 'asc'" />
             <ChevronDownIcon v-else-if="direction === 'desc'" />
         </div>

@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Actions\MapConnections\UpdateMapConnectionAction;
+use App\Data\MapConnectionData;
 use App\Models\MapConnection;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Builder;
+use Throwable;
 
 final class CheckConnectionAgeCommand extends Command
 {
@@ -27,6 +29,8 @@ final class CheckConnectionAgeCommand extends Command
 
     /**
      * Execute the console command.
+     *
+     * @throws Throwable
      */
     public function handle(UpdateMapConnectionAction $updateMapConnectionAction): int
     {
@@ -49,9 +53,9 @@ final class CheckConnectionAgeCommand extends Command
             ->where('is_eol', false)
             ->get();
 
-        $eol_connections->each(fn (MapConnection $connection): MapConnection => $updateMapConnectionAction->handle($connection, [
+        $eol_connections->each(fn (MapConnection $connection): MapConnection => $updateMapConnectionAction->handle($connection, MapConnectionData::from([
             'is_eol' => true,
-        ]));
+        ])));
 
         $c6_connections = MapConnection::query()
             ->where(
@@ -68,9 +72,9 @@ final class CheckConnectionAgeCommand extends Command
             ->where('is_eol', false)
             ->get();
 
-        $c6_connections->each(fn (MapConnection $connection): MapConnection => $updateMapConnectionAction->handle($connection, [
+        $c6_connections->each(fn (MapConnection $connection): MapConnection => $updateMapConnectionAction->handle($connection, MapConnectionData::from([
             'is_eol' => true,
-        ]));
+        ])));
 
         $drifter_connections = MapConnection::query()
             ->where(fn (Builder $query) => $query
@@ -86,9 +90,9 @@ final class CheckConnectionAgeCommand extends Command
             ->where('is_eol', false)
             ->get();
 
-        $drifter_connections->each(fn (MapConnection $connection): MapConnection => $updateMapConnectionAction->handle($connection, [
+        $drifter_connections->each(fn (MapConnection $connection): MapConnection => $updateMapConnectionAction->handle($connection, MapConnectionData::from([
             'is_eol' => true,
-        ]));
+        ])));
 
         $this->info('Old connections marked as EOL: '.($eol_connections->count() + $c6_connections->count() + $drifter_connections->count()));
 

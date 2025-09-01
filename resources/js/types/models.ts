@@ -194,6 +194,9 @@ export type TSignature = {
     signature_id: string | null;
     type: string | null;
     category: TSignatureCategory;
+    mass_status: TMassStatus | null;
+    ship_size: TShipSize | null;
+    is_eol: boolean | null;
     created_at: string;
     updated_at: string;
     wormhole: TWormhole | null;

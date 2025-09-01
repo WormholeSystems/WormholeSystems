@@ -34,7 +34,7 @@ const open = shallowRef(false);
 
 <template>
     <Select v-model="model" :disabled="!can_write" v-model:open="open">
-        <SelectTrigger class="w-full overflow-hidden">
+        <SelectTrigger class="w-full text-xs">
             <WormholeOption v-if="selected_signature" :wormhole="selected_signature" />
             <template v-else>
                 <span class="truncate">Type</span>

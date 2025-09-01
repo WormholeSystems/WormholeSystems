@@ -20,7 +20,7 @@ const open = ref(false);
 
 <template>
     <Select v-model:model-value="model" v-model:open="open">
-        <SelectTrigger class="w-full overflow-hidden">
+        <SelectTrigger class="w-full text-xs">
             <SelectValue as-child>
                 <template v-if="selected">
                     <SolarsystemClass :wormhole_class="selected.target.class" :security="selected.target.solarsystem?.security" />
