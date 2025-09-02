@@ -7,7 +7,7 @@ import { CardAction, CardDescription, CardHeader, CardTitle } from '@/components
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import MapPanel from '@/components/ui/map-panel/MapPanel.vue';
 import MapPanelContent from '@/components/ui/map-panel/MapPanelContent.vue';
-import { Table, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TableCell, TableRow } from '@/components/ui/table';
 import { useOnClient } from '@/composables/useOnClient';
 import { getMapChannelName } from '@/const/channels';
 import { KillmailReceivedEvent } from '@/const/events';
@@ -74,15 +74,15 @@ useOnClient(() =>
         <MapPanelContent inner-class="border-0 bg-transparent">
             <div class="relative max-h-100 overflow-x-hidden overflow-y-scroll mask-b-from-90% mask-alpha pr-1">
                 <div class="@container rounded-lg border bg-white dark:bg-neutral-900/40">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Victim</TableHead>
-                                <TableHead>Attacker</TableHead>
-                                <TableHead>System</TableHead>
-                                <TableHead class="hidden text-right @lg:table-cell">Total Value</TableHead>
-                            </TableRow>
-                        </TableHeader>
+                    <div class="grid grid-cols-[auto_auto_auto_auto_auto_auto] gap-x-2">
+                        <div class="col-span-full grid grid-cols-subgrid *:p-2 *:text-sm *:font-medium *:text-muted-foreground">
+                            <span>Victim</span>
+                            <span>Attacker</span>
+                            <span>Location</span>
+                            <span class="hidden @lg:block">Sov</span>
+                            <span>Time</span>
+                            <span class="hidden text-right @lg:block">Value</span>
+                        </div>
                         <Deferred data="map_killmails">
                             <TransitionGroup name="list">
                                 <Killmail v-for="killmail in map_killmails" :key="killmail.id" :killmail="killmail" />
@@ -94,7 +94,7 @@ useOnClient(() =>
                                 <KillmailPlaceholder />
                             </template>
                         </Deferred>
-                    </Table>
+                    </div>
                 </div>
             </div>
         </MapPanelContent>

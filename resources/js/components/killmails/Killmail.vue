@@ -6,14 +6,13 @@ import AttackerImage from '@/components/killmails/AttackerImage.vue';
 import VictimImage from '@/components/killmails/VictimImage.vue';
 import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue';
 import SolarsystemClass from '@/components/SolarsystemClass.vue';
-import { TableCell, TableRow } from '@/components/ui/table';
 import { useMapSolarsystems } from '@/composables/map';
 import { formatISK } from '@/lib/utils';
 import { TKillmail } from '@/types/models';
 import { UTCDate } from '@date-fns/utc';
 import { vElementHover } from '@vueuse/components';
 import { useNow } from '@vueuse/core';
-import { formatDistanceStrict } from 'date-fns';
+import { differenceInDays, differenceInHours, differenceInMinutes } from 'date-fns';
 import { computed } from 'vue';
 
 const { killmail } = defineProps<{
@@ -39,9 +38,19 @@ const final_blow = computed(() => {
 const now = useNow();
 
 const time_ago = computed(() => {
-    return formatDistanceStrict(new UTCDate(killmail.time), now.value, {
-        addSuffix: true,
-    });
+    const days_ago = differenceInDays(now.value, new UTCDate(killmail.time));
+    if (days_ago > 1) {
+        return `${days_ago}d ago`;
+    }
+    const hours_ago = differenceInHours(now.value, new UTCDate(killmail.time));
+    if (hours_ago >= 1) {
+        return `${hours_ago}h ago`;
+    }
+    const minutes_ago = differenceInMinutes(now.value, new UTCDate(killmail.time));
+    if (minutes_ago >= 1) {
+        return `${minutes_ago}m ago`;
+    }
+    return 'just now';
 });
 
 const total_worth = computed(() => {
@@ -50,61 +59,52 @@ const total_worth = computed(() => {
 </script>
 
 <template>
-    <TableRow v-element-hover="onHover" class="cursor-pointer">
+    <div class="col-span-full grid grid-cols-subgrid text-sm *:*:p-2" v-element-hover="onHover">
         <DestinationContextMenu :solarsystem_id="killmail.solarsystem.id">
             <div class="contents">
-                <TableCell>
-                    <div class="flex gap-x-2">
-                        <a :href="`https://zkillboard.com/kill/${killmail.id}/`" target="_blank" rel="noopener noreferrer">
-                            <TypeImage class="size-8 rounded-lg" :type_id="killmail.ship_type.id" :type_name="killmail.ship_type.name" />
-                        </a>
-                        <a :href="`https://zkillboard.com/character/${killmail.data.victim.character_id}/`" target="_blank" rel="noopener noreferrer">
-                            <VictimImage class="size-8 overflow-hidden rounded-lg" :victim="killmail.data.victim" />
-                        </a>
-                        <Affiliation class="size-8 overflow-hidden rounded-lg" alt="Victim group" :affiliation="killmail.data.victim" />
+                <div class="flex gap-x-2">
+                    <a :href="`https://zkillboard.com/kill/${killmail.id}/`" target="_blank" rel="noopener noreferrer">
+                        <TypeImage class="size-6 rounded-lg" :type_id="killmail.ship_type.id" :type_name="killmail.ship_type.name" />
+                    </a>
+                    <a :href="`https://zkillboard.com/character/${killmail.data.victim.character_id}/`" target="_blank" rel="noopener noreferrer">
+                        <VictimImage class="size-6 overflow-hidden rounded-lg" :victim="killmail.data.victim" />
+                    </a>
+                    <Affiliation class="size-6 overflow-hidden rounded-lg" alt="Victim group" :affiliation="killmail.data.victim" />
+                </div>
+                <div class="flex gap-x-2">
+                    <a :href="`https://zkillboard.com/character/${final_blow.character_id}/`" target="_blank" rel="noopener noreferrer">
+                        <AttackerImage class="size-6 overflow-hidden rounded-lg" :attacker="final_blow" />
+                    </a>
+                    <Affiliation class="size-6 overflow-hidden rounded-lg" alt="Attacker group" :affiliation="final_blow" />
+                </div>
+                <div class="grid grid-cols-[1.5rem_1fr] items-center gap-1">
+                    <div class="flex size-6 items-center justify-center">
+                        <SolarsystemClass :wormhole_class="killmail.solarsystem.class" :security="killmail.solarsystem.security" />
                     </div>
-                </TableCell>
-                <TableCell>
-                    <div class="flex gap-x-2">
-                        <a :href="`https://zkillboard.com/character/${final_blow.character_id}/`" target="_blank" rel="noopener noreferrer">
-                            <AttackerImage class="size-8 overflow-hidden rounded-lg" :attacker="final_blow" />
-                        </a>
-                        <Affiliation class="size-8 overflow-hidden rounded-lg" alt="Attacker group" :affiliation="final_blow" />
+                    <div v-if="map_solarsystem?.alias" class="truncate font-medium hover:text-accent-foreground">
+                        {{ map_solarsystem.alias }} <span class="text-muted-foreground">{{ killmail.solarsystem.name }}</span>
                     </div>
-                </TableCell>
-                <TableCell>
-                    <div class="flex items-center gap-2">
-                        <div class="flex w-6 flex-shrink-0 justify-center">
-                            <SolarsystemClass :wormhole_class="killmail.solarsystem.class" :security="killmail.solarsystem.security" />
-                        </div>
-                        <div class="min-w-0 flex-1 truncate">
-                            <div v-if="map_solarsystem?.alias" class="flex gap-1 font-medium hover:text-accent-foreground">
-                                {{ map_solarsystem.alias }}<span class="text-muted-foreground">{{ killmail.solarsystem.name }}</span>
-                            </div>
-                            <div v-else class="font-medium hover:text-accent-foreground">
-                                {{ killmail.solarsystem.name }}
-                            </div>
-                            <p class="text-xs text-muted-foreground">
-                                {{ time_ago }}
-                            </p>
-                        </div>
-                        <SolarsystemSovereignty
-                            v-if="killmail.solarsystem.sovereignty"
-                            :sovereignty="killmail.solarsystem.sovereignty"
-                            class="size-6 flex-shrink-0"
-                        />
+                    <div v-else class="font-medium hover:text-accent-foreground">
+                        {{ killmail.solarsystem.name }}
                     </div>
-                </TableCell>
-                <TableCell class="hidden @lg:table-cell">
-                    <div class="text-right">
-                        <div class="font-mono text-sm font-medium text-primary">
-                            {{ total_worth }}
-                        </div>
-                    </div>
-                </TableCell>
+                </div>
+                <div class="hidden @lg:block">
+                    <SolarsystemSovereignty
+                        v-if="killmail.solarsystem.sovereignty"
+                        :sovereignty="killmail.solarsystem.sovereignty"
+                        class="size-6 flex-shrink-0"
+                    />
+                </div>
+                <span class="truncate text-right text-muted-foreground">
+                    {{ time_ago }}
+                </span>
+
+                <span class="hidden text-right font-mono whitespace-nowrap text-muted-foreground @lg:block">
+                    {{ total_worth }}
+                </span>
             </div>
         </DestinationContextMenu>
-    </TableRow>
+    </div>
 </template>
 
 <style scoped></style>
