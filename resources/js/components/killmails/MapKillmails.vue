@@ -3,8 +3,10 @@ import SettingsIcon from '@/components/icons/SettingsIcon.vue';
 import Killmail from '@/components/killmails/Killmail.vue';
 import KillmailPlaceholder from '@/components/killmails/KillmailPlaceholder.vue';
 import { Button } from '@/components/ui/button';
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CardAction, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import MapPanel from '@/components/ui/map-panel/MapPanel.vue';
+import MapPanelContent from '@/components/ui/map-panel/MapPanelContent.vue';
 import { Table, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useOnClient } from '@/composables/useOnClient';
 import { getMapChannelName } from '@/const/channels';
@@ -48,7 +50,7 @@ useOnClient(() =>
 </script>
 
 <template>
-    <Card class="bg-neutral-50 pb-0 dark:bg-transparent">
+    <MapPanel>
         <CardHeader>
             <CardTitle>Map killmails</CardTitle>
             <CardDescription>See what is happening in your chain</CardDescription>
@@ -69,7 +71,7 @@ useOnClient(() =>
                 </DropdownMenu>
             </CardAction>
         </CardHeader>
-        <CardContent class="px-1 pb-1">
+        <MapPanelContent inner-class="border-0 bg-transparent">
             <div class="relative max-h-100 overflow-x-hidden overflow-y-scroll mask-b-from-90% mask-alpha pr-1">
                 <div class="@container rounded-lg border bg-white dark:bg-neutral-900/40">
                     <Table>
@@ -95,8 +97,8 @@ useOnClient(() =>
                     </Table>
                 </div>
             </div>
-        </CardContent>
-    </Card>
+        </MapPanelContent>
+    </MapPanel>
 </template>
 
 <style scoped>

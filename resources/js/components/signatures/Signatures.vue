@@ -4,13 +4,10 @@ import PasteIcon from '@/components/icons/PasteIcon.vue';
 import PlusIcon from '@/components/icons/PlusIcon.vue';
 import Signature from '@/components/signatures/Signature.vue';
 import { Button } from '@/components/ui/button';
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
+import { CardAction, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import MapPanel from '@/components/ui/map-panel/MapPanel.vue';
+import MapPanelContent from '@/components/ui/map-panel/MapPanelContent.vue';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { createSignature, deleteSignatures, pasteSignatures, useSignatures } from '@/composables/map';
 import useHasWritePermission from '@/composables/useHasWritePermission';
@@ -195,7 +192,7 @@ useEventListener('paste', (event) => {
 </script>
 
 <template>
-    <Card class="overflow-hidden pb-0">
+    <MapPanel class="overflow-hidden">
         <CardHeader>
             <CardTitle
                 >Signatures
@@ -243,7 +240,7 @@ useEventListener('paste', (event) => {
                 </Tooltip>
             </CardAction>
         </CardHeader>
-        <CardContent class="p-1">
+        <MapPanelContent>
             <div class="overflow-hidden rounded-lg border">
                 <div class="grid grid-cols-[auto_1fr_1fr_1fr_auto_auto] gap-x-2 divide-y">
                     <div class="col-span-full grid grid-cols-subgrid border-b bg-muted/50 px-2 py-1.5 text-xs font-medium text-muted-foreground">
@@ -267,9 +264,10 @@ useEventListener('paste', (event) => {
                         :possible_signatures="relevant_signatures"
                     />
                 </div>
+                <div v-if="!signatures.length" class="p-4 text-center text-sm text-muted-foreground">No signatures found</div>
             </div>
-        </CardContent>
-    </Card>
+        </MapPanelContent>
+    </MapPanel>
 </template>
 
 <style scoped>

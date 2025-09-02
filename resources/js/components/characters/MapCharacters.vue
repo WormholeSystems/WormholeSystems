@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import Character from '@/components/characters/Character.vue';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import MapPanel from '@/components/ui/map-panel/MapPanel.vue';
+import MapPanelContent from '@/components/ui/map-panel/MapPanelContent.vue';
 import { Table, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { TCharacter } from '@/types/models';
 import { computed } from 'vue';
@@ -44,31 +46,29 @@ function isCovertOps(character: TCharacter) {
 </script>
 
 <template>
-    <Card class="bg-neutral-50 pb-0 dark:bg-transparent">
+    <MapPanel>
         <CardHeader>
             <CardTitle>Characters</CardTitle>
             <CardDescription> See what characters are flying and where they are located in the map solarsystems. </CardDescription>
         </CardHeader>
-        <CardContent class="px-1 pb-1">
-            <div class="rounded-lg border bg-white dark:bg-neutral-900/40">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead> Pilot</TableHead>
-                            <TableHead> Ship</TableHead>
-                            <TableHead> Location</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TransitionGroup name="list">
-                        <Character v-for="character in sorted_characters" :key="character.id" :character />
-                    </TransitionGroup>
-                    <TableRow v-if="!sorted_characters?.length">
-                        <TableCell colspan="3" class="text-center text-muted-foreground"> No characters found </TableCell>
+        <MapPanelContent>
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead> Pilot</TableHead>
+                        <TableHead> Ship</TableHead>
+                        <TableHead> Location</TableHead>
                     </TableRow>
-                </Table>
-            </div>
-        </CardContent>
-    </Card>
+                </TableHeader>
+                <TransitionGroup name="list">
+                    <Character v-for="character in sorted_characters" :key="character.id" :character />
+                </TransitionGroup>
+                <TableRow v-if="!sorted_characters?.length">
+                    <TableCell colspan="3" class="text-center text-muted-foreground"> No characters found </TableCell>
+                </TableRow>
+            </Table>
+        </MapPanelContent>
+    </MapPanel>
 </template>
 
 <style scoped>

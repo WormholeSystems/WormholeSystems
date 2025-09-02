@@ -7,8 +7,10 @@ import Destination from '@/components/solarsystem/Destination.vue';
 import SecurityStatus from '@/components/solarsystem/SecurityStatus.vue';
 import SolarsystemClass from '@/components/SolarsystemClass.vue';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import MapPanel from '@/components/ui/map-panel/MapPanel.vue';
+import MapPanelContent from '@/components/ui/map-panel/MapPanelContent.vue';
 import { Textarea } from '@/components/ui/textarea';
 import useHasWritePermission from '@/composables/useHasWritePermission';
 import MapSolarsystems from '@/routes/map-solarsystems';
@@ -78,7 +80,7 @@ watch(
 </script>
 
 <template>
-    <Card>
+    <MapPanel>
         <CardHeader class="pb-4">
             <div class="flex items-start justify-between gap-4">
                 <div class="min-w-0 flex-1">
@@ -150,7 +152,7 @@ watch(
                 </Deferred>
             </div>
         </CardHeader>
-        <CardContent>
+        <MapPanelContent inner-class="p-4">
             <form @submit.prevent="handleSubmit" class="w-full">
                 <div class="mb-4 flex justify-between gap-4">
                     <h3 class="mr-auto text-lg font-semibold">Notes</h3>
@@ -203,8 +205,8 @@ watch(
                 />
                 <p class="text-xs text-muted-foreground" v-else-if="!map_solarsystem.notes">No notes found</p>
             </form>
-        </CardContent>
-    </Card>
+        </MapPanelContent>
+    </MapPanel>
 </template>
 
 <style scoped></style>

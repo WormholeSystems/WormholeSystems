@@ -3,23 +3,22 @@ import RouteIcon from '@/components/icons/RouteIcon.vue';
 import SearchIcon from '@/components/icons/SearchIcon.vue';
 import SettingsIcon from '@/components/icons/SettingsIcon.vue';
 import Spinner from '@/components/icons/Spinner.vue';
-import { CharacterImage } from '@/components/images';
-import TypeImage from '@/components/images/TypeImage.vue';
 import ShortestPathDialog from '@/components/map/ShortestPathDialog.vue';
+import ActiveCharacterLocation from '@/components/routes/ActiveCharacterLocation.vue';
 import ClosestSystemsDialog from '@/components/routes/ClosestSystemsDialog.vue';
 import MapRouteSolarsystem from '@/components/routes/MapRouteSolarsystem.vue';
 import MapRouteSolarsystemAdd from '@/components/routes/MapRouteSolarsystemAdd.vue';
-import RoutePopover from '@/components/routes/RoutePopover.vue';
 import { Button } from '@/components/ui/button';
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CardAction, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import MapPanel from '@/components/ui/map-panel/MapPanel.vue';
+import MapPanelContent from '@/components/ui/map-panel/MapPanelContent.vue';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMapSolarsystems } from '@/composables/map';
 import useHasWritePermission from '@/composables/useHasWritePermission';
-import { usePath } from '@/composables/usePath';
 import useUser from '@/composables/useUser';
 import { TClosestSystems, TShortestPath } from '@/pages/maps';
 import MapUserSettings from '@/routes/map-user-settings';
@@ -69,8 +68,6 @@ const can_write = useHasWritePermission();
 
 const { setHoveredMapSolarsystem } = useMapSolarsystems();
 
-const { setPath } = usePath();
-
 function updateMapUserSettings(settings: Partial<TMapUserSetting>) {
     router.put(MapUserSettings.update(map_user_settings.id).url, settings, {
         preserveScroll: true,
@@ -97,21 +94,13 @@ function handleToggleEveScout(value: boolean | 'indeterminate') {
     });
 }
 
-function handleHover(hovered: boolean, route: TSolarsystem[] | null) {
-    if (hovered) {
-        setPath(route);
-    } else {
-        setPath(null);
-    }
-}
-
 function handleSolarsystemHover(hovered: boolean) {
     setHoveredMapSolarsystem(selected_map_solarsystem?.id ?? 0, hovered);
 }
 </script>
 
 <template>
-    <Card class="bg-neutral-50 pb-0 dark:bg-transparent">
+    <MapPanel>
         <CardHeader>
             <CardTitle class="text-base">Autopilot</CardTitle>
             <CardDescription>
@@ -212,42 +201,13 @@ function handleSolarsystemHover(hovered: boolean) {
             </CardAction>
         </CardHeader>
 
-        <CardContent class="p-1 pt-0">
+        <MapPanelContent inner-class="border-0 bg-transparent">
             <template v-if="selected_map_solarsystem">
-                <div
-                    class="mb-2 flex items-center gap-2 rounded border bg-white p-2 dark:bg-neutral-900/40"
-                    v-element-hover="(e) => handleHover(e, activeCharacter?.route ?? null)"
-                    v-if="activeCharacter"
-                >
-                    <CharacterImage
-                        v-if="activeCharacter"
-                        :character_id="activeCharacter.id"
-                        :character_name="activeCharacter.name"
-                        class="size-8 rounded-lg"
-                    />
-                    <div class="min-w-0 flex-1">
-                        <div class="flex items-center gap-2">
-                            <span class="truncate text-sm font-medium">{{ activeCharacter?.name || 'Unknown' }}</span>
-                        </div>
-                        <div class="flex items-center gap-1 text-xs text-muted-foreground">
-                            <TypeImage
-                                v-if="characterStatus?.ship_type"
-                                :type_id="characterStatus.ship_type.id"
-                                :type_name="characterStatus.ship_type.name"
-                                class="size-3 rounded"
-                            />
-                            <span class="truncate">{{ characterStatus?.ship_name || characterStatus?.ship_type?.name || 'Unknown Ship' }}</span>
-                            <span v-if="characterStatus?.solarsystem" class="text-muted-foreground">• {{ characterStatus.solarsystem.name }}</span>
-                        </div>
-                    </div>
-                    <div v-if="activeCharacter?.route" class="flex-shrink-0">
-                        <RoutePopover :route="activeCharacter.route">
-                            <Button variant="secondary" size="sm" class="font-mono text-xs">
-                                {{ activeCharacter.route.length > 0 ? activeCharacter.route.length - 1 : '0' }}
-                            </Button>
-                        </RoutePopover>
-                    </div>
-                </div>
+                <ActiveCharacterLocation
+                    :active-character="activeCharacter"
+                    :character-status="characterStatus"
+                    v-if="activeCharacter && characterStatus"
+                />
                 <Deferred data="map_route_solarsystems">
                     <template #fallback>
                         <div class="flex items-center justify-center gap-2 py-3 text-xs text-muted-foreground">
@@ -258,7 +218,7 @@ function handleSolarsystemHover(hovered: boolean) {
 
                     <div
                         :class="can_write ? 'grid-cols-[auto_1fr_auto_1fr_auto_auto]' : 'grid-cols-[auto_1fr_auto_1fr_auto]'"
-                        class="grid gap-x-4 rounded border bg-white dark:bg-neutral-900/40"
+                        class="grid gap-x-4 overflow-hidden rounded border bg-white dark:bg-neutral-900/40"
                     >
                         <div class="col-span-full grid grid-cols-subgrid border-b px-3 py-2 text-sm font-medium text-muted-foreground">
                             <div></div>
@@ -285,8 +245,8 @@ function handleSolarsystemHover(hovered: boolean) {
                     </div>
                 </div>
             </template>
-        </CardContent>
-    </Card>
+        </MapPanelContent>
+    </MapPanel>
 </template>
 
 <style scoped></style>
