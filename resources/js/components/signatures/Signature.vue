@@ -20,9 +20,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { deleteSignature, TProcessedConnection, updateSignature } from '@/composables/map';
 import useHasWritePermission from '@/composables/useHasWritePermission';
 import { TSignatureCategory } from '@/lib/SignatureParser';
+import { formatDateToISO } from '@/lib/utils';
 import { TMapSolarSystem, TSignature } from '@/types/models';
+import { UTCDate } from '@date-fns/utc';
 import { syncRefs } from '@vueuse/core';
-import { format } from 'date-fns';
 import { MoreVertical } from 'lucide-vue-next';
 import { AcceptableValue } from 'reka-ui';
 import { computed, ref, toRef } from 'vue';
@@ -96,7 +97,7 @@ function handleIDSubmit() {
 
 function handleEolChange(checked: boolean | 'indeterminate') {
     const isEol = checked === true;
-    handleChange({ marked_as_eol_at: isEol ? format(new Date(), "yyyy-MM-dd'T'HH:mm:ssxxxxx") : null });
+    handleChange({ marked_as_eol_at: isEol ? formatDateToISO(new UTCDate()) : null });
 }
 
 function handleMassStatusChange(mass_status: string) {

@@ -4,7 +4,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useNowUTC } from '@/composables/useNowUTC';
 import { TMapConnection, TMapSolarSystem } from '@/types/models';
 import { UTCDate } from '@date-fns/utc';
-import { differenceInDays, differenceInHours, differenceInMinutes, format, max, min } from 'date-fns';
+import { differenceInDays, differenceInHours, differenceInMinutes, format, formatDistanceStrict, max, min } from 'date-fns';
 import { computed } from 'vue';
 
 const { connection } = defineProps<{
@@ -134,6 +134,21 @@ function getTimeAgo(date: Date): string {
 const createdAgo = computed(() => getTimeAgo(createdDate.value));
 const updatedAgo = computed(() => getTimeAgo(updatedDate.value));
 
+const eolDate = computed(() => {
+    return connection.marked_as_eol_at ? new UTCDate(connection.marked_as_eol_at) : null;
+});
+
+const eolAt = computed(() => {
+    return eolDate.value ? format(eolDate.value, 'MMM dd, HH:mm') : null;
+});
+
+const eolAgo = computed(() => {
+    if (!eolDate.value) return null;
+    return formatDistanceStrict(eolDate.value, now.value, {
+        addSuffix: true,
+    });
+});
+
 function formatMass(mass: number): string {
     return mass.toLocaleString('en-US');
 }
@@ -187,7 +202,15 @@ function formatMass(mass: number): string {
                     <div class="col-span-full grid grid-cols-subgrid">
                         <span>EOL</span>
                         <span class="text-right" :class="{ 'text-purple-500': connection.marked_as_eol_at }">
-                            {{ connection.marked_as_eol_at ? 'Yes' : 'No' }}
+                            <template v-if="connection.marked_as_eol_at && eolAt">
+                                <Tooltip>
+                                    <TooltipTrigger as-child>
+                                        <span class="cursor-help">Yes</span>
+                                    </TooltipTrigger>
+                                    <TooltipContent> {{ eolAt }} ({{ eolAgo }}) </TooltipContent>
+                                </Tooltip>
+                            </template>
+                            <span v-else>No</span>
                         </span>
                     </div>
                     <div class="col-span-full grid grid-cols-subgrid">

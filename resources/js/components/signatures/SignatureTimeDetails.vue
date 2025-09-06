@@ -5,7 +5,7 @@ import { useNowUTC } from '@/composables/useNowUTC';
 import { TSignatureCategory } from '@/lib/SignatureParser';
 import { TSignature } from '@/types/models';
 import { UTCDate } from '@date-fns/utc';
-import { differenceInDays, differenceInHours, differenceInMinutes, format, min } from 'date-fns';
+import { differenceInDays, differenceInHours, differenceInMinutes, format, formatDistanceStrict, min } from 'date-fns';
 import { computed } from 'vue';
 
 const { category, selected_connection, signature } = defineProps<{
@@ -63,6 +63,18 @@ const created_date_formatted = computed(() => {
 const updated_date_formatted = computed(() => {
     return format(updated_date.value, 'MMM dd, HH:mm');
 });
+
+const eol_date = computed(() => {
+    const eolTime = signature.marked_as_eol_at || selected_connection?.marked_as_eol_at;
+    return eolTime ? new UTCDate(eolTime) : null;
+});
+
+const eol_ago = computed(() => {
+    if (!eol_date.value) return null;
+    return formatDistanceStrict(eol_date.value, now.value, {
+        addSuffix: true,
+    });
+});
 </script>
 
 <template>
@@ -81,6 +93,10 @@ const updated_date_formatted = computed(() => {
             <p class="">{{ created_date_formatted }}</p>
             <span class="font-semibold">Last modified at</span>
             <p class="">{{ updated_date_formatted }}</p>
+            <template v-if="eol_ago">
+                <span class="font-semibold">Marked as EOL</span>
+                <p class="">{{ eol_ago }}</p>
+            </template>
         </TooltipContent>
     </Tooltip>
 </template>

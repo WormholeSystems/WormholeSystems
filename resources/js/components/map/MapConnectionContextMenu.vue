@@ -10,8 +10,9 @@ import {
     ContextMenuSubTrigger,
 } from '@/components/ui/context-menu';
 import { deleteMapConnection, updateMapConnection } from '@/composables/map';
+import { formatDateToISO } from '@/lib/utils';
 import { TMapConnection, TMassStatus, TShipSize } from '@/types/models';
-import { format } from 'date-fns';
+import { UTCDate } from '@date-fns/utc';
 
 const { map_connection } = defineProps<{
     map_connection: TMapConnection;
@@ -31,7 +32,7 @@ function handleShipSizeChange(ship_size: TShipSize | string) {
 
 function handleToggleEol() {
     updateMapConnection(map_connection, {
-        marked_as_eol_at: map_connection.marked_as_eol_at ? null : format(new Date(), "yyyy-MM-dd'T'HH:mm:ssxxxxx"),
+        marked_as_eol_at: map_connection.marked_as_eol_at ? null : formatDateToISO(new UTCDate()),
     });
 }
 </script>

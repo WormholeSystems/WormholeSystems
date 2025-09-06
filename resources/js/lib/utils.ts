@@ -1,4 +1,6 @@
+import { UTCDate } from '@date-fns/utc';
 import { type ClassValue, clsx } from 'clsx';
+import { format } from 'date-fns';
 import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]) {
@@ -24,4 +26,8 @@ export function formatISK(value: number): string {
 
     const formattedValue = compactNumberFormat.format(value);
     return `${formattedValue} ISK`;
+}
+
+export function formatDateToISO(date: UTCDate | Date): string {
+    return format(date, "yyyy-MM-dd'T'HH:mm:ssxxxxx");
 }
