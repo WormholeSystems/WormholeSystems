@@ -89,7 +89,7 @@ final readonly class StoreTrackingAction
                     'wormhole_id' => $data['wormhole_id'] ?? null,
                     'mass_status' => $data['mass_status'] ?? MassStatus::Fresh,
                     'ship_size' => $ship_size ?? ShipSize::Large,
-                    'is_eol' => $data['is_eol'] ?? false,
+                    'marked_as_eol_at' => $data['marked_as_eol_at'] ?? null,
                 ]
             );
 
