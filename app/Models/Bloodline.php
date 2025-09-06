@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use NicolasKion\SDE\ClassResolver;
 
 /**
  * Bloodline model representing a character's bloodline in the game.
@@ -38,7 +37,7 @@ final class Bloodline extends Model
      */
     public function race(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::race());
+        return $this->belongsTo(Race::class);
     }
 
     /**
@@ -46,7 +45,7 @@ final class Bloodline extends Model
      */
     public function shipType(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::type());
+        return $this->belongsTo(Type::class);
     }
 
     /**
@@ -54,6 +53,6 @@ final class Bloodline extends Model
      */
     public function characters(): HasMany
     {
-        return $this->hasMany(ClassResolver::character(), 'bloodline_id');
+        return $this->hasMany(Character::class, 'bloodline_id');
     }
 }

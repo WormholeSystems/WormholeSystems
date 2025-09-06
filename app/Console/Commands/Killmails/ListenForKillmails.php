@@ -79,7 +79,7 @@ final class ListenForKillmails extends Command
     {
         $maps = Map::query()->whereRelation('mapSolarsystems', 'solarsystem_id', $killmail->solarsystem_id)->get();
 
-        $maps->each(fn (Map $map) => KillmailReceivedEvent::dispatch($map, $killmail));
+        $maps->each(fn (Map $map) => KillmailReceivedEvent::dispatch($map));
     }
 
     private function getNextKillmail(zKillboard $zKillboard, string $identifier): ?RedisQKillmail

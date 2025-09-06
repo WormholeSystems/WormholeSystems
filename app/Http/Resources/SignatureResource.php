@@ -32,7 +32,7 @@ final class SignatureResource extends JsonResource
             'wormhole_id' => $this->wormhole_id,
             'mass_status' => $this->mass_status,
             'ship_size' => $this->ship_size,
-            'is_eol' => $this->is_eol,
+            'marked_as_eol_at' => $this->marked_as_eol_at,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'wormhole' => $this->wormhole?->toResource(WormholeResource::class),

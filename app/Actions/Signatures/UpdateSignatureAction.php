@@ -8,6 +8,7 @@ use App\Data\SignatureData;
 use App\Enums\MassStatus;
 use App\Events\Signatures\SignatureUpdatedEvent;
 use App\Models\Signature;
+use DateTimeImmutable;
 use Illuminate\Support\Facades\DB;
 use Spatie\LaravelData\Optional;
 use Throwable;
@@ -46,12 +47,12 @@ final class UpdateSignatureAction
         $mass = $this->getNewMassStatus($signature, $data);
 
         $signature->mapConnection->update([
-            'is_eol' => $eol,
+            'marked_as_eol_at' => $eol,
             'mass_status' => $mass,
         ]);
 
         $signature->update([
-            'is_eol' => $eol,
+            'marked_as_eol_at' => $eol,
             'mass_status' => $mass,
         ]);
     }
@@ -81,12 +82,20 @@ final class UpdateSignatureAction
         };
     }
 
-    private function getNewEolValue(Signature $signature, SignatureData $data): bool
+    private function getNewEolValue(Signature $signature, SignatureData $data): ?DateTimeImmutable
     {
-        if (! $data->is_eol instanceof Optional) {
-            return $data->is_eol;
+        if (! $data->marked_as_eol_at instanceof Optional) {
+            return $data->marked_as_eol_at;
         }
 
-        return $signature->is_eol || $signature->mapConnection->is_eol;
+        $connection_eol = $signature->mapConnection->marked_as_eol_at;
+        $signature_eol = $signature->marked_as_eol_at;
+
+        return match (true) {
+            $connection_eol === null && $signature_eol !== null => $signature_eol,
+            $connection_eol !== null && $signature_eol === null => $connection_eol,
+            $connection_eol !== null && $signature_eol !== null => min($connection_eol, $signature_eol),
+            default => null
+        };
     }
 }

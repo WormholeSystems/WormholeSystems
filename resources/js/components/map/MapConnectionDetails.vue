@@ -186,8 +186,8 @@ function formatMass(mass: number): string {
                 <div class="grid grid-cols-2 divide-y truncate text-xs text-muted-foreground *:py-1">
                     <div class="col-span-full grid grid-cols-subgrid">
                         <span>EOL</span>
-                        <span class="text-right" :class="{ 'text-purple-500': connection.is_eol }">
-                            {{ connection.is_eol ? 'Yes' : 'No' }}
+                        <span class="text-right" :class="{ 'text-purple-500': connection.marked_as_eol_at }">
+                            {{ connection.marked_as_eol_at ? 'Yes' : 'No' }}
                         </span>
                     </div>
                     <div class="col-span-full grid grid-cols-subgrid">

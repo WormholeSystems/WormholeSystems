@@ -9,7 +9,6 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use NicolasKion\SDE\ClassResolver;
 
 /**
  * Region model representing a region in the game.
@@ -35,7 +34,7 @@ final class Region extends Model
      */
     public function constellations(): HasMany
     {
-        return $this->hasMany(ClassResolver::constellation(), 'region_id');
+        return $this->hasMany(Constellation::class, 'region_id');
     }
 
     /**
@@ -43,7 +42,7 @@ final class Region extends Model
      */
     public function solarsystems(): HasMany
     {
-        return $this->hasMany(ClassResolver::solarsystem(), 'region_id');
+        return $this->hasMany(Solarsystem::class, 'region_id');
     }
 
     /**
@@ -51,7 +50,7 @@ final class Region extends Model
      */
     public function celestials(): HasMany
     {
-        return $this->hasMany(ClassResolver::celestial(), 'region_id');
+        return $this->hasMany(Celestial::class, 'region_id');
     }
 
     /**
@@ -59,6 +58,6 @@ final class Region extends Model
      */
     public function stations(): HasMany
     {
-        return $this->hasMany(ClassResolver::station(), 'region_id');
+        return $this->hasMany(Station::class, 'region_id');
     }
 }

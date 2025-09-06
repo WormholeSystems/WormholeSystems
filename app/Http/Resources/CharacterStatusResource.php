@@ -27,7 +27,7 @@ final class CharacterStatusResource extends JsonResource
             'station_id' => $this->station_id,
             'structure_id' => $this->structure_id,
             'ship_name' => $this->ship_name,
-            'ship_type' => $this->shipType?->toResource(TypeResource::class),
+            'ship_type' => $this->shipType->toResource(TypeResource::class),
             'solarsystem' => $this->solarsystem?->toResource(SolarsystemResource::class),
             'is_online' => $this->is_online,
             'last_online_at' => $this->last_online_at,

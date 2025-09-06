@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use NicolasKion\SDE\ClassResolver;
 
 /**
  * Group model representing a group in the game.
@@ -40,7 +39,7 @@ final class Group extends Model
      */
     public function icon(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::icon());
+        return $this->belongsTo(Icon::class);
     }
 
     /**
@@ -48,7 +47,7 @@ final class Group extends Model
      */
     public function category(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::category());
+        return $this->belongsTo(Category::class);
     }
 
     /**
@@ -56,7 +55,7 @@ final class Group extends Model
      */
     public function types(): HasMany
     {
-        return $this->hasMany(ClassResolver::type(), 'group_id');
+        return $this->hasMany(Type::class, 'group_id');
     }
 
     /**
@@ -64,7 +63,7 @@ final class Group extends Model
      */
     public function celestials(): HasMany
     {
-        return $this->hasMany(ClassResolver::celestial(), 'group_id');
+        return $this->hasMany(Celestial::class, 'group_id');
     }
 
     /**
@@ -72,7 +71,7 @@ final class Group extends Model
      */
     public function stations(): HasMany
     {
-        return $this->hasMany(ClassResolver::station(), 'group_id');
+        return $this->hasMany(Station::class, 'group_id');
     }
 
     protected function casts(): array

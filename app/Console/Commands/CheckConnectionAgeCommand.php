@@ -50,11 +50,11 @@ final class CheckConnectionAgeCommand extends Command
                     ->whereHas('fromMapSolarsystem', fn (Builder $query) => $query->whereDoesntHave('wormholeSystem'))
                 ))
             ->where('created_at', '<=', now()->subHours(20))
-            ->where('is_eol', false)
+            ->whereNull('marked_as_eol_at')
             ->get();
 
         $eol_connections->each(fn (MapConnection $connection): MapConnection => $updateMapConnectionAction->handle($connection, MapConnectionData::from([
-            'is_eol' => true,
+            'marked_as_eol_at' => now(),
         ])));
 
         $c6_connections = MapConnection::query()
@@ -69,11 +69,11 @@ final class CheckConnectionAgeCommand extends Command
                         ->whereHas('fromMapSolarsystem', fn (Builder $query) => $query->whereDoesntHave('wormholeSystem'))
                     ))
             ->where('created_at', '<=', now()->subHours(44))
-            ->where('is_eol', false)
+            ->whereNull('marked_as_eol_at')
             ->get();
 
         $c6_connections->each(fn (MapConnection $connection): MapConnection => $updateMapConnectionAction->handle($connection, MapConnectionData::from([
-            'is_eol' => true,
+            'marked_as_eol_at' => now(),
         ])));
 
         $drifter_connections = MapConnection::query()
@@ -87,11 +87,11 @@ final class CheckConnectionAgeCommand extends Command
                     ->whereHas('fromMapSolarsystem', fn (Builder $query) => $query->whereDoesntHave('wormholeSystem'))
                 ))
             ->where('created_at', '<=', now()->subHours(12))
-            ->where('is_eol', false)
+            ->whereNull('marked_as_eol_at')
             ->get();
 
         $drifter_connections->each(fn (MapConnection $connection): MapConnection => $updateMapConnectionAction->handle($connection, MapConnectionData::from([
-            'is_eol' => true,
+            'marked_as_eol_at' => now(),
         ])));
 
         $this->info('Old connections marked as EOL: '.($eol_connections->count() + $c6_connections->count() + $drifter_connections->count()));

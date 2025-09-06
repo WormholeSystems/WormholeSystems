@@ -8,7 +8,6 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use NicolasKion\SDE\ClassResolver;
 
 /**
  * Unit model representing a unit in the game.
@@ -30,6 +29,6 @@ final class Unit extends Model
      */
     public function attributes(): HasMany
     {
-        return $this->hasMany(ClassResolver::attribute(), 'unit_id');
+        return $this->hasMany(Attribute::class, 'unit_id');
     }
 }

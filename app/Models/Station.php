@@ -7,7 +7,6 @@ namespace App\Models;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use NicolasKion\SDE\ClassResolver;
 
 /**
  * Station model representing a station in the game.
@@ -38,7 +37,7 @@ final class Station extends Model
      */
     public function solarsystem(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::solarsystem());
+        return $this->belongsTo(Solarsystem::class);
     }
 
     /**
@@ -46,7 +45,7 @@ final class Station extends Model
      */
     public function constellation(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::constellation());
+        return $this->belongsTo(Constellation::class);
     }
 
     /**
@@ -54,7 +53,7 @@ final class Station extends Model
      */
     public function parent(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::celestial());
+        return $this->belongsTo(Celestial::class);
     }
 
     /**
@@ -62,7 +61,7 @@ final class Station extends Model
      */
     public function type(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::type());
+        return $this->belongsTo(Type::class);
     }
 
     /**
@@ -70,7 +69,7 @@ final class Station extends Model
      */
     public function group(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::group());
+        return $this->belongsTo(Group::class);
     }
 
     /**
@@ -78,6 +77,6 @@ final class Station extends Model
      */
     public function region(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::region());
+        return $this->belongsTo(Region::class);
     }
 }

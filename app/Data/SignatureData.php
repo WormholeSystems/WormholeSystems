@@ -10,9 +10,12 @@ use App\Enums\SignatureCategory;
 use App\Models\MapConnection;
 use App\Models\Signature;
 use App\Models\User;
+use DateTimeImmutable;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Container\Attributes\RouteParameter;
 use Illuminate\Validation\Rule;
+use Spatie\LaravelData\Attributes\WithCast;
+use Spatie\LaravelData\Casts\DateTimeInterfaceCast;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Optional;
 
@@ -25,7 +28,8 @@ final class SignatureData extends Data
         public int|Optional|null $map_connection_id,
         public MassStatus|Optional|null $mass_status,
         public ShipSize|Optional|null $ship_size,
-        public bool|Optional|null $is_eol,
+        #[WithCast(DateTimeInterfaceCast::class)]
+        public DateTimeImmutable|Optional|null $marked_as_eol_at,
     ) {}
 
     public static function rules(): array
@@ -35,7 +39,7 @@ final class SignatureData extends Data
             'category' => ['nullable', 'sometimes', Rule::enum(SignatureCategory::class)],
             'type' => ['nullable', 'sometimes', 'string', 'max:255'],
             'map_connection_id' => ['nullable', 'sometimes', 'integer', 'exists:map_connections,id'],
-            'is_eol' => ['nullable', 'sometimes', 'boolean'],
+            'marked_as_eol_at' => ['nullable', 'sometimes', "date_format:Y-m-d\TH:i:sP"],
             'mass_status' => ['nullable', 'sometimes', Rule::enum(MassStatus::class)],
             'ship_size' => ['nullable', 'sometimes', Rule::enum(ShipSize::class)],
         ];

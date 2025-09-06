@@ -35,7 +35,7 @@ final class UpdateMapConnectionRequest extends FormRequest
             'wormhole_id' => ['nullable', 'sometimes', 'integer', 'exists:wormholes,id'],
             'mass_status' => ['nullable', 'sometimes', Rule::enum(MassStatus::class)],
             'ship_size' => ['nullable', 'sometimes', Rule::enum(ShipSize::class)],
-            'is_eol' => ['nullable', 'sometimes', 'boolean'],
+            'marked_as_eol_at' => ['nullable', 'sometimes', 'date'],
         ];
     }
 }

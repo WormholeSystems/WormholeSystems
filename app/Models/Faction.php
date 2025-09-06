@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use NicolasKion\SDE\ClassResolver;
 
 /**
  * Faction model representing a faction in the game.
@@ -41,7 +40,7 @@ final class Faction extends Model
      */
     public function militiaCorporation(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::corporation());
+        return $this->belongsTo(Corporation::class);
     }
 
     /**
@@ -49,7 +48,7 @@ final class Faction extends Model
      */
     public function corporation(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::corporation());
+        return $this->belongsTo(Corporation::class);
     }
 
     /**
@@ -57,7 +56,7 @@ final class Faction extends Model
      */
     public function corporations(): HasMany
     {
-        return $this->hasMany(ClassResolver::corporation());
+        return $this->hasMany(Corporation::class);
     }
 
     /**
@@ -65,7 +64,7 @@ final class Faction extends Model
      */
     public function characters(): HasMany
     {
-        return $this->hasMany(ClassResolver::character(), 'faction_id');
+        return $this->hasMany(Character::class, 'faction_id');
     }
 
     /**
@@ -73,7 +72,7 @@ final class Faction extends Model
      */
     public function alliances(): HasMany
     {
-        return $this->hasMany(ClassResolver::alliance(), 'faction_id');
+        return $this->hasMany(Alliance::class, 'faction_id');
     }
 
     protected function casts(): array

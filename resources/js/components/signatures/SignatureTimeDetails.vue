@@ -14,6 +14,10 @@ const { category, selected_connection, signature } = defineProps<{
     signature: TSignature;
 }>();
 
+const is_eol = computed(() => {
+    return Boolean(signature.marked_as_eol_at) || Boolean(selected_connection?.marked_as_eol_at);
+});
+
 const now = useNowUTC();
 
 const created_at = computed(() => {
@@ -64,7 +68,7 @@ const updated_date_formatted = computed(() => {
 <template>
     <Tooltip>
         <TooltipTrigger
-            :data-eol="selected_connection?.is_eol || signature.is_eol"
+            :data-eol="is_eol"
             :data-mass="selected_connection?.mass_status || signature.mass_status"
             class="time whitespace-nowrap text-neutral-500"
         >

@@ -8,6 +8,7 @@ use App\Enums\MassStatus;
 use App\Enums\ShipSize;
 use Carbon\CarbonImmutable;
 use Database\Factories\MapConnectionFactory;
+use DateTimeImmutable;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -25,7 +26,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int|null $wormhole_id
  * @property string|MassStatus $mass_status
  * @property string|ShipSize $ship_size
- * @property bool $is_eol
+ * @property DateTimeImmutable|string|null $marked_as_eol_at
  * @property CarbonImmutable $connected_at
  * @property-read string|CarbonImmutable $created_at
  * @property-read string|CarbonImmutable $updated_at
@@ -46,7 +47,7 @@ final class MapConnection extends Model
         'updated_at' => 'immutable_datetime',
         'mass_status' => MassStatus::class,
         'ship_size' => ShipSize::class,
-        'is_eol' => 'boolean',
+        'marked_as_eol_at' => 'immutable_datetime',
     ];
 
     /**

@@ -8,7 +8,6 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use NicolasKion\SDE\ClassResolver;
 
 /**
  * Icon model representing an icon in the game.
@@ -34,7 +33,7 @@ final class Icon extends Model
      */
     public function types(): HasMany
     {
-        return $this->hasMany(ClassResolver::type(), 'icon_id');
+        return $this->hasMany(Type::class, 'icon_id');
     }
 
     /**
@@ -42,7 +41,7 @@ final class Icon extends Model
      */
     public function attributes(): HasMany
     {
-        return $this->hasMany(ClassResolver::attribute(), 'icon_id');
+        return $this->hasMany(Attribute::class, 'icon_id');
     }
 
     /**
@@ -50,7 +49,7 @@ final class Icon extends Model
      */
     public function marketGroups(): HasMany
     {
-        return $this->hasMany(ClassResolver::marketGroup(), 'icon_id');
+        return $this->hasMany(MarketGroup::class, 'icon_id');
     }
 
     /**
@@ -58,7 +57,7 @@ final class Icon extends Model
      */
     public function metaGroups(): HasMany
     {
-        return $this->hasMany(ClassResolver::metaGroup(), 'icon_id');
+        return $this->hasMany(MetaGroup::class, 'icon_id');
     }
 
     /**
@@ -66,7 +65,7 @@ final class Icon extends Model
      */
     public function groups(): HasMany
     {
-        return $this->hasMany(ClassResolver::group(), 'icon_id');
+        return $this->hasMany(Group::class, 'icon_id');
     }
 
     /**
@@ -74,6 +73,6 @@ final class Icon extends Model
      */
     public function categories(): HasMany
     {
-        return $this->hasMany(ClassResolver::category(), 'icon_id');
+        return $this->hasMany(Category::class, 'icon_id');
     }
 }

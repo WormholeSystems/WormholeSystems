@@ -34,7 +34,7 @@ use App\Services\RouteService;
 use Closure;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -208,7 +208,7 @@ final class MapController extends Controller
 
         return $map->mapSolarsystems()
             ->with('signatures')
-            ->with('audits', fn (MorphMany $query) => $query->latest())
+            ->with('audits', fn (Relation $query) => $query->latest())
             ->findOrFail($solarsystem_id);
     }
 

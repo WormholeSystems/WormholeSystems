@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use NicolasKion\SDE\ClassResolver;
 
 /**
  * Solarsystem model representing a solar system in the game.
@@ -49,7 +48,7 @@ final class Solarsystem extends Model
      */
     public function region(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::region());
+        return $this->belongsTo(Region::class);
     }
 
     /**
@@ -57,7 +56,7 @@ final class Solarsystem extends Model
      */
     public function constellation(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::constellation());
+        return $this->belongsTo(Constellation::class);
     }
 
     /**
@@ -65,7 +64,7 @@ final class Solarsystem extends Model
      */
     public function celestials(): HasMany
     {
-        return $this->hasMany(ClassResolver::celestial(), 'solarsystem_id');
+        return $this->hasMany(Celestial::class, 'solarsystem_id');
     }
 
     /**
@@ -73,7 +72,7 @@ final class Solarsystem extends Model
      */
     public function stations(): HasMany
     {
-        return $this->hasMany(ClassResolver::station(), 'solarsystem_id');
+        return $this->hasMany(Station::class, 'solarsystem_id');
     }
 
     /**

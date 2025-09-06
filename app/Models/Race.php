@@ -8,7 +8,6 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use NicolasKion\SDE\ClassResolver;
 
 /**
  * Race model representing a race in the game.
@@ -33,7 +32,7 @@ final class Race extends Model
      */
     public function types(): HasMany
     {
-        return $this->hasMany(ClassResolver::type(), 'race_id');
+        return $this->hasMany(Type::class, 'race_id');
     }
 
     /**
@@ -41,7 +40,7 @@ final class Race extends Model
      */
     public function characters(): HasMany
     {
-        return $this->hasMany(ClassResolver::character(), 'race_id');
+        return $this->hasMany(Character::class, 'race_id');
     }
 
     /**
@@ -49,6 +48,6 @@ final class Race extends Model
      */
     public function bloodlines(): HasMany
     {
-        return $this->hasMany(ClassResolver::bloodline(), 'race_id');
+        return $this->hasMany(Bloodline::class, 'race_id');
     }
 }

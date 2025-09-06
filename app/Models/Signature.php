@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Enums\MassStatus;
 use App\Enums\ShipSize;
 use Carbon\CarbonImmutable;
+use DateTimeImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -21,7 +22,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int|null $map_connection_id
  * @property int|null $wormhole_id
  * @property MassStatus|null $mass_status
- * @property bool|null $is_eol
+ * @property DateTimeImmutable|string|null $marked_as_eol_at
  * @property ShipSize|null $ship_size
  * @property CarbonImmutable $created_at
  * @property CarbonImmutable $updated_at
@@ -36,7 +37,7 @@ final class Signature extends Model
         'updated_at' => 'immutable_datetime',
         'mass_status' => MassStatus::class,
         'ship_size' => ShipSize::class,
-        'is_eol' => 'boolean',
+        'marked_as_eol_at' => 'immutable_datetime',
     ];
 
     public static function typeToWormhole(?string $type = null): ?Wormhole

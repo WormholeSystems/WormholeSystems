@@ -8,6 +8,7 @@ use App\Data\MapConnectionData;
 use App\Enums\MassStatus;
 use App\Events\MapConnections\MapConnectionUpdatedEvent;
 use App\Models\MapConnection;
+use DateTimeImmutable;
 use Illuminate\Support\Facades\DB;
 use Spatie\LaravelData\Optional;
 use Throwable;
@@ -43,13 +44,13 @@ final class UpdateMapConnectionAction
         $mass = $this->getNewMassStatus($mapConnection, $data);
 
         $mapConnection->update([
-            'is_eol' => $eol,
+            'marked_as_eol_at' => $eol,
             'mass_status' => $mass,
         ]);
 
         foreach ($signatures as $signature) {
             $signature->update([
-                'is_eol' => $eol,
+                'marked_as_eol_at' => $eol,
                 'mass_status' => $mass,
             ]);
         }
@@ -93,26 +94,35 @@ final class UpdateMapConnectionAction
         return $worst_mass_status;
     }
 
-    private function getNewEolValue(MapConnection $mapConnection, MapConnectionData $data): bool
+    private function getNewEolValue(MapConnection $mapConnection, MapConnectionData $data): ?DateTimeImmutable
     {
-        if (! $data->is_eol instanceof Optional) {
-            return $data->is_eol;
+        if (! $data->marked_as_eol_at instanceof Optional) {
+            return $data->marked_as_eol_at;
         }
 
         $signatures = $mapConnection->signatures;
         if ($signatures->isEmpty()) {
-            return $mapConnection->is_eol ?? false;
+            return $mapConnection->marked_as_eol_at;
         }
 
-        $is_eol = $mapConnection->is_eol ?? false;
+        $connection_eol = $mapConnection->marked_as_eol_at;
+        $earliest_signature_eol = null;
 
         foreach ($signatures as $signature) {
-            if ($signature->is_eol) {
-                $is_eol = true;
-                break;
+            if ($signature->marked_as_eol_at === null) {
+                continue;
             }
+            if ($earliest_signature_eol !== null && $signature->marked_as_eol_at >= $earliest_signature_eol) {
+                continue;
+            }
+            $earliest_signature_eol = $signature->marked_as_eol_at;
         }
 
-        return $is_eol;
+        return match (true) {
+            $connection_eol === null && $earliest_signature_eol !== null => $earliest_signature_eol,
+            $connection_eol !== null && $earliest_signature_eol === null => $connection_eol,
+            $connection_eol !== null && $earliest_signature_eol !== null => min($connection_eol, $earliest_signature_eol),
+            default => null
+        };
     }
 }

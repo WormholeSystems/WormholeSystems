@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use NicolasKion\SDE\ClassResolver;
 
 /**
  * MetaGroup model representing a meta group in the game.
@@ -33,7 +32,7 @@ final class MetaGroup extends Model
      */
     public function types(): HasMany
     {
-        return $this->hasMany(ClassResolver::type(), 'meta_group_id');
+        return $this->hasMany(Type::class, 'meta_group_id');
     }
 
     /**
@@ -41,6 +40,6 @@ final class MetaGroup extends Model
      */
     public function icon(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::icon());
+        return $this->belongsTo(Icon::class);
     }
 }

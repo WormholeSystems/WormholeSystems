@@ -22,6 +22,7 @@ import useHasWritePermission from '@/composables/useHasWritePermission';
 import { TSignatureCategory } from '@/lib/SignatureParser';
 import { TMapSolarSystem, TSignature } from '@/types/models';
 import { syncRefs } from '@vueuse/core';
+import { format } from 'date-fns';
 import { MoreVertical } from 'lucide-vue-next';
 import { AcceptableValue } from 'reka-ui';
 import { computed, ref, toRef } from 'vue';
@@ -95,7 +96,7 @@ function handleIDSubmit() {
 
 function handleEolChange(checked: boolean | 'indeterminate') {
     const isEol = checked === true;
-    handleChange({ is_eol: isEol });
+    handleChange({ marked_as_eol_at: isEol ? format(new Date(), "yyyy-MM-dd'T'HH:mm:ssxxxxx") : null });
 }
 
 function handleMassStatusChange(mass_status: string) {
@@ -182,19 +183,19 @@ function handleMassStatusChange(mass_status: string) {
                         <DropdownMenuRadioGroup :model-value="signature.mass_status || 'unknown'" @update:model-value="handleMassStatusChange">
                             <DropdownMenuRadioItem value="fresh">
                                 <span class="flex items-center gap-2">
-                                    <div class="size-2 rounded-full bg-neutral-500" />
+                                    <span class="inline-block size-2 rounded-full bg-neutral-500" />
                                     Fresh Mass
                                 </span>
                             </DropdownMenuRadioItem>
                             <DropdownMenuRadioItem value="reduced">
                                 <span class="flex items-center gap-2">
-                                    <div class="size-2 rounded-full bg-amber-500" />
+                                    <span class="inline-block size-2 rounded-full bg-amber-500" />
                                     Reduced Mass
                                 </span>
                             </DropdownMenuRadioItem>
                             <DropdownMenuRadioItem value="critical">
                                 <span class="flex items-center gap-2">
-                                    <div class="size-2 rounded-full bg-red-500" />
+                                    <span class="inline-block size-2 rounded-full bg-red-500" />
                                     Critical Mass
                                 </span>
                             </DropdownMenuRadioItem>
@@ -202,9 +203,9 @@ function handleMassStatusChange(mass_status: string) {
 
                         <DropdownMenuSeparator />
 
-                        <DropdownMenuItem @click="handleEolChange(!signature.is_eol)">
+                        <DropdownMenuItem @click="handleEolChange(!signature.marked_as_eol_at)">
                             <span class="flex items-center gap-2">
-                                <Checkbox :model-value="signature.is_eol || false" />
+                                <Checkbox :model-value="signature.marked_as_eol_at !== null" />
                                 Is EOL
                             </span>
                         </DropdownMenuItem>

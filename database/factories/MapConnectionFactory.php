@@ -28,7 +28,7 @@ final class MapConnectionFactory extends Factory
             'from_map_solarsystem_id' => MapSolarsystem::factory(),
             'to_map_solarsystem_id' => MapSolarsystem::factory(),
             'mass_status' => $this->faker->randomElement(MassStatus::cases()),
-            'is_eol' => $this->faker->boolean(),
+            'marked_as_eol_at' => $this->faker->dateTime(),
             'ship_size' => $this->faker->randomElement(ShipSize::cases()),
         ];
     }

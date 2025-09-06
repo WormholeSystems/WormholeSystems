@@ -45,7 +45,7 @@ use Throwable;
  * @property-read Faction|null $faction
  * @property-read Alliance|null $alliance
  * @property-read User|null $user
- * @property-read Collection<int,EsiToken> $esiTokens
+ * @property-read Collection<int,\App\Models\EsiToken> $esiTokens
  * @property-read Type|null $shipType
  * @property-read Solarsystem|null $solarsystem
  * @property-read CharacterStatus|null $characterStatus

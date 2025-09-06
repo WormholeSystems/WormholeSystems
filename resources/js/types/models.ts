@@ -44,7 +44,7 @@ export type TMapConnection = {
     wormhole: TWormhole | null;
     ship_size: TShipSize;
     mass_status: TMassStatus;
-    is_eol: boolean;
+    marked_as_eol_at: string | null;
     created_at: string;
     updated_at: string;
     signatures: TSignature[] | null;
@@ -196,7 +196,7 @@ export type TSignature = {
     category: TSignatureCategory;
     mass_status: TMassStatus | null;
     ship_size: TShipSize | null;
-    is_eol: boolean | null;
+    marked_as_eol_at: string | null;
     created_at: string;
     updated_at: string;
     wormhole: TWormhole | null;

@@ -8,7 +8,6 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use NicolasKion\SDE\ClassResolver;
 
 /**
  * Category model representing a category in the game.
@@ -30,6 +29,6 @@ final class Category extends Model
      */
     public function groups(): HasMany
     {
-        return $this->hasMany(ClassResolver::group(), 'category_id');
+        return $this->hasMany(Group::class, 'category_id');
     }
 }

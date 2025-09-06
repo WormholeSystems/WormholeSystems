@@ -252,18 +252,18 @@ final class AnalyzeWormholeSystems extends Command
      */
     private function ensureNameExists(int $id): void
     {
-        if (Cache::memo()->get($id)) {
+        if (Cache::memo()->get((string) $id)) {
             return;
         }
 
         if (Corporation::query()->whereId($id)->whereNotNull('name')->exists()) {
-            Cache::memo()->put($id, true);
+            Cache::memo()->put((string) $id, true);
 
             return;
         }
 
         if (Alliance::query()->whereId($id)->whereNotNull('name')->exists()) {
-            Cache::memo()->put($id, true);
+            Cache::memo()->put((string) $id, true);
 
             return;
         }
@@ -284,7 +284,7 @@ final class AnalyzeWormholeSystems extends Command
                 ['id' => $data->id],
                 ['name' => $data->name]
             );
-            Cache::memo()->put($data->id, true);
+            Cache::memo()->put((string) $data->id, true);
 
             return;
         }
@@ -294,7 +294,7 @@ final class AnalyzeWormholeSystems extends Command
                 ['id' => $data->id],
                 ['name' => $data->name]
             );
-            Cache::memo()->put($data->id, true);
+            Cache::memo()->put((string) $data->id, true);
 
             return;
         }

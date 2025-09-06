@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use NicolasKion\SDE\ClassResolver;
 
 /**
  * Type model representing a type in the game.
@@ -50,7 +49,7 @@ final class Type extends Model
      */
     public function typeAttributes(): HasMany
     {
-        return $this->hasMany(ClassResolver::typeAttribute(), 'type_id');
+        return $this->hasMany(TypeAttribute::class, 'type_id');
     }
 
     /**
@@ -58,7 +57,7 @@ final class Type extends Model
      */
     public function race(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::race());
+        return $this->belongsTo(Race::class);
     }
 
     /**
@@ -66,7 +65,7 @@ final class Type extends Model
      */
     public function group(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::group());
+        return $this->belongsTo(Group::class);
     }
 
     /**
@@ -74,7 +73,7 @@ final class Type extends Model
      */
     public function icon(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::icon());
+        return $this->belongsTo(Icon::class);
     }
 
     /**
@@ -82,7 +81,7 @@ final class Type extends Model
      */
     public function marketGroup(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::marketGroup());
+        return $this->belongsTo(MarketGroup::class);
     }
 
     /**
@@ -90,7 +89,7 @@ final class Type extends Model
      */
     public function metaGroup(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::metaGroup());
+        return $this->belongsTo(MetaGroup::class);
     }
 
     /**
@@ -98,7 +97,7 @@ final class Type extends Model
      */
     public function graphic(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::graphic());
+        return $this->belongsTo(Graphic::class);
     }
 
     protected function casts(): array

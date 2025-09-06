@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use NicolasKion\SDE\ClassResolver;
 
 /**
  * MarketGroup model representing a market group in the game.
@@ -36,7 +35,7 @@ final class MarketGroup extends Model
      */
     public function types(): HasMany
     {
-        return $this->hasMany(ClassResolver::type(), 'market_group_id');
+        return $this->hasMany(Type::class, 'market_group_id');
     }
 
     /**
@@ -44,7 +43,7 @@ final class MarketGroup extends Model
      */
     public function icon(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::icon());
+        return $this->belongsTo(Icon::class);
     }
 
     /**
@@ -52,7 +51,7 @@ final class MarketGroup extends Model
      */
     public function parent(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::marketGroup());
+        return $this->belongsTo(self::class);
     }
 
     /**
@@ -60,7 +59,7 @@ final class MarketGroup extends Model
      */
     public function children(): HasMany
     {
-        return $this->hasMany(ClassResolver::marketGroup(), 'parent_id');
+        return $this->hasMany(self::class, 'parent_id');
     }
 
     protected function casts(): array

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Events\Killmails;
 
-use App\Models\Killmail;
 use App\Models\Map;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
@@ -21,7 +20,7 @@ final class KillmailReceivedEvent implements ShouldBroadcastNow, ShouldDispatchA
     /**
      * Create a new event instance.
      */
-    public function __construct(private readonly Map $map, private readonly Killmail $killmail)
+    public function __construct(private readonly Map $map)
     {
         //
     }

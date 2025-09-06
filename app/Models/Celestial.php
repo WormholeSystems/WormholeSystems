@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use NicolasKion\SDE\ClassResolver;
 
 /**
  * Celestial model representing a celestial object in the game.
@@ -40,7 +39,7 @@ final class Celestial extends Model
      */
     public function region(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::region());
+        return $this->belongsTo(Region::class);
     }
 
     /**
@@ -48,7 +47,7 @@ final class Celestial extends Model
      */
     public function constellation(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::constellation());
+        return $this->belongsTo(Constellation::class);
     }
 
     /**
@@ -56,7 +55,7 @@ final class Celestial extends Model
      */
     public function type(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::type());
+        return $this->belongsTo(Type::class);
     }
 
     /**
@@ -64,7 +63,7 @@ final class Celestial extends Model
      */
     public function group(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::group());
+        return $this->belongsTo(Group::class);
     }
 
     /**
@@ -72,7 +71,7 @@ final class Celestial extends Model
      */
     public function parent(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::celestial());
+        return $this->belongsTo(self::class);
     }
 
     /**
@@ -80,6 +79,6 @@ final class Celestial extends Model
      */
     public function stations(): HasMany
     {
-        return $this->hasMany(ClassResolver::station(), 'parent_id');
+        return $this->hasMany(Station::class, 'parent_id');
     }
 }

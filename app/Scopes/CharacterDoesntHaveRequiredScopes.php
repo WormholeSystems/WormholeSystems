@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Scopes;
 
-use App\Models\Character;
 use Illuminate\Database\Eloquent\Builder;
 use NicolasKion\Esi\Enums\EsiScope;
 
@@ -17,10 +16,6 @@ final readonly class CharacterDoesntHaveRequiredScopes
         private array $scopes
     ) {}
 
-    /**
-     * @param  Builder<Character>  $query
-     * @return Builder<Character>
-     */
     public function __invoke(Builder $query): Builder
     {
         return $query->whereNot(function (Builder $query): void {

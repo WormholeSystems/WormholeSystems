@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use NicolasKion\SDE\ClassResolver;
 
 /**
  * Attribute model representing an attribute in the game.
@@ -39,7 +38,7 @@ final class Attribute extends Model
      */
     public function typeAttributes(): HasMany
     {
-        return $this->hasMany(ClassResolver::typeAttribute(), 'attribute_id');
+        return $this->hasMany(TypeAttribute::class, 'attribute_id');
     }
 
     /**
@@ -47,7 +46,7 @@ final class Attribute extends Model
      */
     public function unit(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::unit());
+        return $this->belongsTo(Unit::class);
     }
 
     /**
@@ -55,6 +54,6 @@ final class Attribute extends Model
      */
     public function icon(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::icon());
+        return $this->belongsTo(Icon::class);
     }
 }

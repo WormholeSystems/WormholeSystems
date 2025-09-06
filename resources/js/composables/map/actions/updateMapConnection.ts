@@ -7,7 +7,7 @@ export function updateMapConnection(
     data: {
         mass_status?: TMassStatus | string;
         ship_size?: TShipSize | string;
-        is_eol?: boolean;
+        marked_as_eol_at?: string | null | Date;
     },
 ) {
     return router.put(MapConnections.update(map_connection.id).url, data, {

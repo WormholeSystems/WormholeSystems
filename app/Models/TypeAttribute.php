@@ -7,7 +7,6 @@ namespace App\Models;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use NicolasKion\SDE\ClassResolver;
 
 /**
  * TypeAttribute model representing a type attribute in the game.
@@ -30,7 +29,7 @@ final class TypeAttribute extends Model
      */
     public function type(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::type());
+        return $this->belongsTo(Type::class);
     }
 
     /**
@@ -38,7 +37,7 @@ final class TypeAttribute extends Model
      */
     public function attribute(): BelongsTo
     {
-        return $this->belongsTo(ClassResolver::attribute());
+        return $this->belongsTo(Attribute::class);
     }
 
     protected function casts(): array
