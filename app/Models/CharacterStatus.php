@@ -28,7 +28,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read Character $character
  * @property-read Solarsystem|null $solarsystem
  * @property-read Station|null $station
- * @property-read Type $shipType
+ * @property-read Type|null $shipType
  */
 final class CharacterStatus extends Model
 {
