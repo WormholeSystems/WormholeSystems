@@ -14,8 +14,12 @@ use Exception;
 use Illuminate\Container\Attributes\Config;
 use Throwable;
 
+use function sleep;
+
 final class ListenForKillmails extends AppCommand
 {
+    private const int ZKILL_RATE_LIMIT_SECONDS = 1;
+
     /**
      * The name and signature of the console command.
      *
@@ -65,6 +69,8 @@ final class ListenForKillmails extends AppCommand
                         'zkb' => (array) $killmail->zkb,
                     ]
                 );
+
+            sleep(self::ZKILL_RATE_LIMIT_SECONDS);
 
             $this->notifyMaps($killmail);
         }
