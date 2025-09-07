@@ -15,6 +15,8 @@ use Illuminate\Container\Attributes\Config;
 use Throwable;
 
 use function Laravel\Prompts\error;
+use function Laravel\Prompts\info;
+use function sprintf;
 
 final class ListenForKillmails extends Command
 {
@@ -48,13 +50,13 @@ final class ListenForKillmails extends Command
             $killmail = $this->getNextKillmail($zKillboard, $identifier);
 
             if (! $killmail instanceof RedisQKillmail) {
-                info('No killmail received, waiting for the next one...');
-                sleep(10);
+                $this->info('No killmail received, retrying in 60 seconds...');
+                sleep(60);
 
                 continue;
             }
 
-            info(sprintf('Received killmail with ID: %d', $killmail->killID));
+            $this->info('Received killmail ID: '.$killmail->killID);
 
             $killmail = Killmail::query()
                 ->updateOrCreate(
@@ -72,6 +74,16 @@ final class ListenForKillmails extends Command
         }
     }
 
+    public function info($string, $verbosity = null): void
+    {
+        info(sprintf('[%s] %s', now()->toDateTimeString(), $string));
+    }
+
+    public function error($string, $verbosity = null): void
+    {
+        error(sprintf('[%s] %s', now()->toDateTimeString(), $string));
+    }
+
     /**
      * Notify maps about the new killmail.
      */
@@ -87,7 +99,7 @@ final class ListenForKillmails extends Command
         try {
             $killmail = $zKillboard->listenForKill($identifier);
         } catch (Throwable $e) {
-            error('Error fetching killmail: '.$e->getMessage());
+            $this->error('Error while listening for killmail: '.$e->getMessage());
 
             return null;
         }
