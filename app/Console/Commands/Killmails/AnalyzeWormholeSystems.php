@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console\Commands\Killmails;
 
+use App\Console\Commands\AppCommand;
 use App\Enums\MapSolarsystemStatus;
 use App\Events\MapSolarsystems\MapSolarsystemsUpdatedEvent;
 use App\Models\Alliance;
@@ -19,10 +20,9 @@ use NicolasKion\Esi\Enums\NameCategory;
 use NicolasKion\Esi\Esi;
 use Psr\SimpleCache\InvalidArgumentException;
 
-use function Laravel\Prompts\error;
 use function Laravel\Prompts\progress;
 
-final class AnalyzeWormholeSystems extends Command
+final class AnalyzeWormholeSystems extends AppCommand
 {
     /**
      * The name and signature of the console command.
@@ -71,6 +71,8 @@ final class AnalyzeWormholeSystems extends Command
         progress('Analyzing wormhole systems', WormholeSystem::all(), fn (WormholeSystem $wormholeSystem) => $this->analyzeWormholeSystem($wormholeSystem));
 
         MapSolarsystemsUpdatedEvent::dispatch($this->mapId);
+
+        $this->info('Finished analyzing wormhole systems');
 
         return self::SUCCESS;
     }
@@ -271,7 +273,7 @@ final class AnalyzeWormholeSystems extends Command
         $request = $this->esi->getNames([$id]);
 
         if ($request->failed()) {
-            error(sprintf('Failed to get name for ID %d', $id));
+            $this->error(sprintf('Failed to get name for ID %d', $id));
 
             return;
         }
@@ -299,7 +301,7 @@ final class AnalyzeWormholeSystems extends Command
             return;
         }
 
-        error(sprintf('Unknown name category for ID %d: %s', $id, $data->category->value));
+        $this->error(sprintf('Unknown name category for ID %d: %s', $id, $data->category->value));
     }
 
     private function getOrganizationFromEntity(object $entity): array

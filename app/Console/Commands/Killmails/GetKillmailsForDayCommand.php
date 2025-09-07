@@ -4,17 +4,15 @@ declare(strict_types=1);
 
 namespace App\Console\Commands\Killmails;
 
+use App\Console\Commands\AppCommand;
 use App\Models\Killmail;
 use Carbon\CarbonImmutable;
-use Illuminate\Console\Command;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 
-use function Laravel\Prompts\error;
-use function Laravel\Prompts\info;
-
-final class GetKillmailsForDayCommand extends Command
+final class GetKillmailsForDayCommand extends AppCommand
 {
     /**
      * The name and signature of the console command.
@@ -32,6 +30,8 @@ final class GetKillmailsForDayCommand extends Command
 
     /**
      * Execute the console command.
+     *
+     * @throws ConnectionException
      */
     public function handle(): int
     {
@@ -40,19 +40,19 @@ final class GetKillmailsForDayCommand extends Command
         $remote_file = $this->getRemoteFileName($date);
         $local_file = $this->getLocalFileName($date);
 
-        info(sprintf('Downloading %s to %s', $remote_file, $local_file));
+        $this->info(sprintf('Downloading %s to %s', $remote_file, $local_file));
 
         $response = Http::retry(5)->get($remote_file);
 
         if ($response->failed()) {
-            error(sprintf('Failed to download file from %s', $remote_file));
+            $this->error(sprintf('Failed to download file from %s', $remote_file));
 
             return self::FAILURE;
         }
 
         Storage::put($local_file, $response->body());
 
-        info(sprintf('Successfully downloaded %s', $local_file));
+        $this->info(sprintf('Successfully downloaded %s', $local_file));
 
         $this->extractKillmails($local_file);
 
@@ -99,9 +99,9 @@ final class GetKillmailsForDayCommand extends Command
         $res = Process::run($command);
 
         if ($res->successful()) {
-            info(sprintf('Successfully extracted %s', $local_file));
+            $this->info(sprintf('Successfully extracted %s', $local_file));
         } else {
-            error(sprintf('Failed to extract %s: %s', $local_file, $res->errorOutput()));
+            $this->error(sprintf('Failed to extract %s: %s', $local_file, $res->errorOutput()));
         }
 
     }
@@ -113,7 +113,7 @@ final class GetKillmailsForDayCommand extends Command
             $this->info(sprintf('Processing %s', $file));
             $content = Storage::json($file);
             if (! $content) {
-                info(sprintf('Failed to read %s, skipping', $file));
+                $this->info(sprintf('Failed to read %s, skipping', $file));
 
                 continue;
             }

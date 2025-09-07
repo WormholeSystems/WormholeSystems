@@ -4,21 +4,17 @@ declare(strict_types=1);
 
 namespace App\Console\Commands\Killmails;
 
+use App\Console\Commands\AppCommand;
 use App\Events\Killmails\KillmailReceivedEvent;
 use App\Http\Integrations\zKillboard\DTO\RedisQKillmail;
 use App\Http\Integrations\zKillboard\zKillboard;
 use App\Models\Killmail;
 use App\Models\Map;
 use Exception;
-use Illuminate\Console\Command;
 use Illuminate\Container\Attributes\Config;
 use Throwable;
 
-use function Laravel\Prompts\error;
-use function Laravel\Prompts\info;
-use function sprintf;
-
-final class ListenForKillmails extends Command
+final class ListenForKillmails extends AppCommand
 {
     /**
      * The name and signature of the console command.
@@ -72,16 +68,6 @@ final class ListenForKillmails extends Command
 
             $this->notifyMaps($killmail);
         }
-    }
-
-    public function info($string, $verbosity = null): void
-    {
-        info(sprintf('[%s] %s', now()->toDateTimeString(), $string));
-    }
-
-    public function error($string, $verbosity = null): void
-    {
-        error(sprintf('[%s] %s', now()->toDateTimeString(), $string));
     }
 
     /**

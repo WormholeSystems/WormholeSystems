@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Console\Commands\Killmails;
 
+use App\Console\Commands\AppCommand;
 use Carbon\CarbonImmutable;
-use Illuminate\Console\Command;
 
 use function Laravel\Prompts\progress;
 
-final class GetKillmailsForLast90DaysCommand extends Command
+final class GetKillmailsForLast90DaysCommand extends AppCommand
 {
     /**
      * The name and signature of the console command.
@@ -40,6 +40,8 @@ final class GetKillmailsForLast90DaysCommand extends Command
                     'date' => $date->addDays($step)->toDateString(),
                 ]);
             });
+
+        $this->info('Finished downloading and processing killmails for the last 90 days');
 
         return self::SUCCESS;
     }
