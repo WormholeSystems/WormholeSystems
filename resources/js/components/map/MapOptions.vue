@@ -1,10 +1,16 @@
 <script setup lang="ts">
+import BackgroundImageIcon from '@/components/icons/BackgroundImageIcon.vue';
+import CheckIcon from '@/components/icons/CheckIcon.vue';
 import GripLines from '@/components/icons/GripLines.vue';
 import MinusIcon from '@/components/icons/MinusIcon.vue';
 import PlusIcon from '@/components/icons/PlusIcon.vue';
+import TimesIcon from '@/components/icons/TimesIcon.vue';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useMapContainer, useMapScale } from '@/composables/map';
 import { useLayout } from '@/composables/useLayout';
+import { useMapBackground } from '@/composables/useMapBackground';
 import { TMapConfig } from '@/types/map';
 import { useEventListener } from '@vueuse/core';
 import { ref } from 'vue';
@@ -19,7 +25,10 @@ const container = useMapContainer();
 
 const { layout, setLayout } = useLayout();
 
+const { backgroundImageUrl, setBackgroundImageUrl, clearBackgroundImage } = useMapBackground();
+
 const resizing = ref(false);
+const backgroundInputUrl = ref('');
 
 function onResizeStart(event: MouseEvent) {
     event.preventDefault();
@@ -56,10 +65,39 @@ useEventListener('pointerup', () => {
     }
     resizing.value = false;
 });
+
+function applyBackgroundImage() {
+    if (backgroundInputUrl.value.trim()) {
+        setBackgroundImageUrl(backgroundInputUrl.value.trim());
+        backgroundInputUrl.value = '';
+    }
+}
+
+function removeBackgroundImage() {
+    clearBackgroundImage();
+}
 </script>
 
 <template>
     <div class="absolute right-0 bottom-0 z-30 flex overflow-hidden rounded-tl-lg border bg-neutral-100 dark:bg-neutral-900">
+        <Popover>
+            <PopoverTrigger as-child>
+                <Button variant="ghost" size="icon" class="h-8 w-8 text-muted-foreground" title="Background Image">
+                    <BackgroundImageIcon />
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent class="w-80" side="top" align="end">
+                <div class="flex gap-2">
+                    <Input v-model="backgroundInputUrl" placeholder="Enter image URL..." class="flex-1" @keydown.enter="applyBackgroundImage" />
+                    <Button variant="ghost" size="icon" @click="applyBackgroundImage" :disabled="!backgroundInputUrl.trim()" title="Apply">
+                        <CheckIcon />
+                    </Button>
+                    <Button variant="ghost" size="icon" @click="removeBackgroundImage" :disabled="!backgroundImageUrl" title="Clear">
+                        <TimesIcon />
+                    </Button>
+                </div>
+            </PopoverContent>
+        </Popover>
         <span class="flex h-8 items-center px-2 text-muted-foreground">{{ (scale * 100).toFixed(0) + '%' }}</span>
         <Button variant="ghost" size="icon" class="h-8 w-8" @click="setScale(scale - 0.1)">
             <MinusIcon />

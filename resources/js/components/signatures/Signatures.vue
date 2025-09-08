@@ -171,10 +171,10 @@ function deleteMissingSignatures(with_solarsystems = false) {
 }
 
 useEventListener('paste', (event) => {
-    event.preventDefault();
     if (using_input.value) {
         return;
     }
+    event.preventDefault();
     const clipboardData = event.clipboardData?.getData('text/plain');
 
     if (!clipboardData) {

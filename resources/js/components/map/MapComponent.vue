@@ -12,6 +12,7 @@ import { useConnectionInteraction } from '@/composables/map/composables/useConne
 import { useMapEvents } from '@/composables/map/composables/useMapEvents';
 import useHasWritePermission from '@/composables/useHasWritePermission';
 import { useLayout } from '@/composables/useLayout';
+import { useMapBackground } from '@/composables/useMapBackground';
 import { TMapConfig } from '@/types/map';
 import { TMap } from '@/types/models';
 import { Position, useMagicKeys, whenever } from '@vueuse/core';
@@ -58,6 +59,29 @@ const { scale } = useMapScale();
 
 const mouse = useMapMouse();
 
+const { backgroundImageUrl } = useMapBackground();
+
+const mapContainerStyle = computed(() => {
+    const baseStyle = {
+        backgroundSize: `${grid_size.value * scale.value}px ${grid_size.value * scale.value}px`,
+        minHeight: `${config.max_size.y * scale.value}px`,
+        minWidth: `${config.max_size.x * scale.value}px`,
+    };
+
+    if (backgroundImageUrl.value) {
+        return {
+            ...baseStyle,
+            backgroundImage: `linear-gradient(to right, rgba(0, 0, 0, 0.3) 1px, transparent 1px), linear-gradient(to bottom, rgba(0, 0, 0, 0.3) 1px, transparent 1px), url(${backgroundImageUrl.value})`,
+            backgroundSize: `${grid_size.value * scale.value}px ${grid_size.value * scale.value}px, ${grid_size.value * scale.value}px ${grid_size.value * scale.value}px, cover`,
+            backgroundRepeat: 'repeat, repeat, no-repeat',
+            backgroundPosition: '0 0, 0 0, center center',
+            backgroundAttachment: 'scroll, scroll, fixed',
+        };
+    }
+
+    return baseStyle;
+});
+
 useMapEvents(map);
 
 const opened_at = ref<Position | null>(null);
@@ -102,16 +126,7 @@ function onScroll(event: WheelEvent) {
         >
             <ContextMenu @update:open="onOpenChange">
                 <ContextMenuTrigger>
-                    <div
-                        class="bg-grid relative grid h-full w-full"
-                        @dragover.prevent
-                        ref="map-container"
-                        :style="{
-                            backgroundSize: `${grid_size * scale}px ${grid_size * scale}px`,
-                            minHeight: `${config.max_size.y * scale}px`,
-                            minWidth: `${config.max_size.x * scale}px`,
-                        }"
-                    >
+                    <div class="bg-grid relative grid h-full w-full" @dragover.prevent ref="map-container" :style="mapContainerStyle">
                         <MapConnections @connection-context-menu="handleConnectionContextMenu" @connection-click="handleConnectionClick" />
                         <MapSolarsystem v-for="solarsystem in map_solarsystems" :key="solarsystem.id" :map_solarsystem="solarsystem" />
                     </div>
@@ -144,5 +159,10 @@ function onScroll(event: WheelEvent) {
 
 html.dark .bg-grid {
     background-image: linear-gradient(to right, var(--grid) 1px, transparent 1px), linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
+}
+
+/* Ensure custom background images work properly with grid overlay */
+.bg-grid[style*='background-image: url'] {
+    background-image: inherit; /* Use the inline style from the computed property */
 }
 </style>
