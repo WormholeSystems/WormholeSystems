@@ -1,53 +1,38 @@
 <script setup lang="ts">
 import RouteIcon from '@/components/icons/RouteIcon.vue';
 import SearchIcon from '@/components/icons/SearchIcon.vue';
-import SettingsIcon from '@/components/icons/SettingsIcon.vue';
 import Spinner from '@/components/icons/Spinner.vue';
 import ShortestPathDialog from '@/components/map/ShortestPathDialog.vue';
 import ActiveCharacterLocation from '@/components/routes/ActiveCharacterLocation.vue';
+import AutopilotSettings from '@/components/routes/AutopilotSettings.vue';
 import ClosestSystemsDialog from '@/components/routes/ClosestSystemsDialog.vue';
-import MapRouteSolarsystem from '@/components/routes/MapRouteSolarsystem.vue';
 import MapRouteSolarsystemAdd from '@/components/routes/MapRouteSolarsystemAdd.vue';
+import MapRouteSolarsystems from '@/components/routes/MapRouteSolarsystems.vue';
 import { Button } from '@/components/ui/button';
 import { CardAction, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
 import MapPanel from '@/components/ui/map-panel/MapPanel.vue';
 import MapPanelContent from '@/components/ui/map-panel/MapPanelContent.vue';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMapSolarsystems } from '@/composables/map';
 import useHasWritePermission from '@/composables/useHasWritePermission';
 import useUser from '@/composables/useUser';
 import { TClosestSystems, TShortestPath } from '@/pages/maps';
-import MapUserSettings from '@/routes/map-user-settings';
-import { TCharacter, TMap, TMapRouteSolarsystem, TMapSolarSystem, TMapUserSetting, TMassStatus, TSolarsystem } from '@/types/models';
-import { Deferred, router } from '@inertiajs/vue3';
+import { TCharacter, TMap, TMapRouteSolarsystem, TMapSolarSystem, TSolarsystem } from '@/types/models';
+import { Deferred } from '@inertiajs/vue3';
 import { vElementHover } from '@vueuse/components';
 import { computed } from 'vue';
 
-const {
-    map_route_solarsystems,
-    map,
-    solarsystems,
-    map_characters,
-    map_user_settings,
-    selected_map_solarsystem,
-    shortest_path,
-    ignored_systems,
-    closest_systems,
-} = defineProps<{
-    map: TMap;
-    solarsystems: TSolarsystem[];
-    map_route_solarsystems?: TMapRouteSolarsystem[];
-    selected_map_solarsystem?: TMapSolarSystem | null;
-    map_user_settings: TMapUserSetting;
-    map_characters?: TCharacter[];
-    shortest_path?: TShortestPath | null;
-    ignored_systems: number[];
-    closest_systems?: TClosestSystems | null;
-}>();
+const { map_route_solarsystems, map, solarsystems, map_characters, selected_map_solarsystem, shortest_path, ignored_systems, closest_systems } =
+    defineProps<{
+        map: TMap;
+        solarsystems: TSolarsystem[];
+        map_route_solarsystems?: TMapRouteSolarsystem[];
+        selected_map_solarsystem?: TMapSolarSystem | null;
+        map_characters?: TCharacter[];
+        shortest_path?: TShortestPath | null;
+        ignored_systems: number[];
+        closest_systems?: TClosestSystems | null;
+    }>();
 
 const user = useUser();
 const activeCharacter = computed(() => {
@@ -56,43 +41,9 @@ const activeCharacter = computed(() => {
 });
 const characterStatus = computed(() => activeCharacter.value?.status);
 
-const sorted = computed(() => {
-    return map_route_solarsystems?.toSorted((a, b) => {
-        if (a.is_pinned && !b.is_pinned) return -1;
-        if (!a.is_pinned && b.is_pinned) return 1;
-        return a.solarsystem.name.localeCompare(b.solarsystem.name);
-    });
-});
-
 const can_write = useHasWritePermission();
 
 const { setHoveredMapSolarsystem } = useMapSolarsystems();
-
-function updateMapUserSettings(settings: Partial<TMapUserSetting>) {
-    router.put(MapUserSettings.update(map_user_settings.id).url, settings, {
-        preserveScroll: true,
-        only: ['map_route_solarsystems', 'map_user_settings'],
-        preserveState: true,
-    });
-}
-
-function handleToggleEol(value: boolean | 'indeterminate') {
-    updateMapUserSettings({
-        route_allow_eol: value === true,
-    });
-}
-
-function handleToggleMass(value: string) {
-    updateMapUserSettings({
-        route_allow_mass_status: value as TMassStatus,
-    });
-}
-
-function handleToggleEveScout(value: boolean | 'indeterminate') {
-    updateMapUserSettings({
-        route_use_evescout: value === true,
-    });
-}
 
 function handleSolarsystemHover(hovered: boolean) {
     setHoveredMapSolarsystem(selected_map_solarsystem?.id ?? 0, hovered);
@@ -148,55 +99,7 @@ function handleSolarsystemHover(hovered: boolean) {
                         <p>Find closest systems by condition</p>
                     </TooltipContent>
                 </Tooltip>
-                <Popover>
-                    <PopoverTrigger>
-                        <Tooltip>
-                            <TooltipTrigger as-child>
-                                <Button variant="secondary" size="icon">
-                                    <SettingsIcon />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>Autopilot settings</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </PopoverTrigger>
-                    <PopoverContent class="w-64 p-3">
-                        <div class="grid auto-cols-[auto_1fr_auto] gap-x-1 gap-y-1">
-                            <h4 class="col-span-3 text-xs text-muted-foreground">Wormholes</h4>
-                            <div class="col-span-3 grid grid-cols-subgrid">
-                                <Checkbox :model-value="map_user_settings.route_allow_eol" @update:model-value="handleToggleEol" id="eol-checkbox" />
-                                <label for="eol-checkbox" class="cursor-pointer text-xs font-medium"> Allow EOL </label>
-                                <span class="text-xs text-muted-foreground">&lt; 4 hours</span>
-                            </div>
-
-                            <RadioGroup
-                                :model-value="map_user_settings.route_allow_mass_status"
-                                @update:model-value="handleToggleMass"
-                                class="col-span-3 grid grid-cols-subgrid gap-1"
-                            >
-                                <RadioGroupItem value="critical" id="mass-critical" />
-                                <Label for="mass-critical" class="cursor-pointer text-xs font-medium">Critical Mass</Label>
-                                <span class="text-xs text-muted-foreground">&lt; 10%</span>
-                                <RadioGroupItem value="reduced" id="mass-reduced" />
-                                <Label for="mass-reduced" class="cursor-pointer text-xs font-medium">Reduced Mass</Label>
-                                <span class="text-xs text-muted-foreground">&lt; 50%</span>
-                                <RadioGroupItem value="fresh" id="mass-fresh" />
-                                <Label for="mass-fresh" class="cursor-pointer text-xs font-medium">High Mass</Label>
-                                <span class="text-xs text-muted-foreground">&gt; 50%</span>
-                            </RadioGroup>
-                            <h4 class="col-span-3 mt-2 text-xs text-muted-foreground">Information Sources</h4>
-                            <div class="col-span-3 grid grid-cols-subgrid">
-                                <Checkbox
-                                    :model-value="map_user_settings.route_use_evescout"
-                                    @update:model-value="handleToggleEveScout"
-                                    id="evescout-checkbox"
-                                />
-                                <label for="evescout-checkbox" class="cursor-pointer text-xs font-medium"> Use EVE Scout </label>
-                            </div>
-                        </div>
-                    </PopoverContent>
-                </Popover>
+                <AutopilotSettings />
                 <MapRouteSolarsystemAdd :map :solarsystems :map_route_solarsystems v-if="can_write" />
             </CardAction>
         </CardHeader>
@@ -215,25 +118,7 @@ function handleSolarsystemHover(hovered: boolean) {
                             <span>Loading routes...</span>
                         </div>
                     </template>
-
-                    <div
-                        :class="can_write ? 'grid-cols-[auto_1fr_auto_1fr_auto_auto]' : 'grid-cols-[auto_1fr_auto_1fr_auto]'"
-                        class="grid gap-x-4 overflow-hidden rounded border bg-white text-xs dark:bg-neutral-900/40"
-                    >
-                        <div class="col-span-full grid grid-cols-subgrid border-b bg-muted/50 px-2 py-1.5 text-xs font-medium text-muted-foreground">
-                            <div></div>
-                            <div>System</div>
-                            <div class="text-center">Jumps</div>
-                            <div>Region</div>
-                        </div>
-
-                        <MapRouteSolarsystem v-for="route in sorted" :key="route.solarsystem.id" :map_route="route" />
-
-                        <div v-if="!sorted?.length" class="col-span-full py-4 text-center text-muted-foreground">
-                            <div class="mb-1 text-sm">🎯</div>
-                            <div>No destinations</div>
-                        </div>
-                    </div>
+                    <MapRouteSolarsystems v-if="map_route_solarsystems" :map_route_solarsystems="map_route_solarsystems" />
                 </Deferred>
             </template>
             <template v-else>
