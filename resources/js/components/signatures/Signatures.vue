@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import ChevronDownIcon from '@/components/icons/ChevronDownIcon.vue';
 import PasteIcon from '@/components/icons/PasteIcon.vue';
 import PlusIcon from '@/components/icons/PlusIcon.vue';
+import TrashIcon from '@/components/icons/TrashIcon.vue';
 import Signature from '@/components/signatures/Signature.vue';
 import { Button } from '@/components/ui/button';
 import { CardAction, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import MapPanel from '@/components/ui/map-panel/MapPanel.vue';
 import MapPanelContent from '@/components/ui/map-panel/MapPanelContent.vue';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -207,21 +206,12 @@ useEventListener('paste', (event) => {
                     </TooltipTrigger>
                     <TooltipContent> Unselect signatures</TooltipContent>
                 </Tooltip>
-                <div class="flex divide-x" v-if="deleted_signatures.length > 0">
-                    <Button @click="deleteMissingSignatures" variant="destructive" class="rounded-r-none"> Delete Missing </Button>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger as-child>
-                            <Button variant="destructive" class="rounded-l-none" size="icon">
-                                <ChevronDownIcon />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                            <DropdownMenuItem @click="deleteMissingSignatures(true)" as-child>
-                                <Button variant="destructive" class="w-full"> Delete Missing with Solarsystems</Button>
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
+                <Tooltip v-if="deleted_signatures.length > 0">
+                    <TooltipTrigger as-child>
+                        <Button @click="deleteMissingSignatures(true)" variant="destructive" size="icon"> <TrashIcon /> </Button>
+                    </TooltipTrigger>
+                    <TooltipContent> Delete missing signatures and their connections </TooltipContent>
+                </Tooltip>
                 <Tooltip>
                     <TooltipTrigger as-child>
                         <Button @click="handlePaste" variant="secondary" size="icon">

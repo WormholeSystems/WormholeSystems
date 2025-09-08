@@ -57,7 +57,7 @@ function removeRoute() {
 <template>
     <DestinationContextMenu :solarsystem_id="map_route.solarsystem.id">
         <div
-            class="group col-span-full grid grid-cols-subgrid items-center border-b py-1 text-sm *:first:pl-2 last:border-b-0 *:last:pr-2 hover:bg-neutral-50 dark:hover:bg-neutral-800/30"
+            class="group col-span-full grid grid-cols-subgrid items-center border-b py-1 *:first:pl-2 last:border-b-0 *:last:pr-2 hover:bg-neutral-50 dark:hover:bg-neutral-800/30"
             v-element-hover="onHover"
         >
             <div class="flex items-center justify-center">

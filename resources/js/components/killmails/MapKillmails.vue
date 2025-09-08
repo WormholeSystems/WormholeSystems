@@ -7,7 +7,6 @@ import { CardAction, CardDescription, CardHeader, CardTitle } from '@/components
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import MapPanel from '@/components/ui/map-panel/MapPanel.vue';
 import MapPanelContent from '@/components/ui/map-panel/MapPanelContent.vue';
-import { TableCell, TableRow } from '@/components/ui/table';
 import { useOnClient } from '@/composables/useOnClient';
 import { getMapChannelName } from '@/const/channels';
 import { KillmailReceivedEvent } from '@/const/events';
@@ -74,8 +73,8 @@ useOnClient(() =>
         <MapPanelContent inner-class="border-0 bg-transparent">
             <div class="relative max-h-100 overflow-x-hidden overflow-y-scroll mask-b-from-90% mask-alpha pr-1">
                 <div class="@container rounded-lg border bg-white dark:bg-neutral-900/40">
-                    <div class="grid grid-cols-[auto_auto_auto_auto_auto_auto] gap-x-2">
-                        <div class="col-span-full grid grid-cols-subgrid *:p-2 *:text-sm *:font-medium *:text-muted-foreground">
+                    <div class="grid grid-cols-[auto_auto_auto_auto_auto_auto] gap-x-2 text-xs">
+                        <div class="col-span-full grid grid-cols-subgrid border-b bg-muted/50 px-2 py-1.5 text-xs font-medium text-muted-foreground">
                             <span>Victim</span>
                             <span>Attacker</span>
                             <span>Location</span>
@@ -87,9 +86,7 @@ useOnClient(() =>
                             <TransitionGroup name="list">
                                 <Killmail v-for="killmail in map_killmails" :key="killmail.id" :killmail="killmail" />
                             </TransitionGroup>
-                            <TableRow v-if="!map_killmails?.length">
-                                <TableCell colspan="4" class="text-center text-muted-foreground"> No killmails found </TableCell>
-                            </TableRow>
+                            <div v-if="!map_killmails?.length" class="col-span-full p-2 text-center text-muted-foreground">No killmails found</div>
                             <template #fallback>
                                 <KillmailPlaceholder />
                             </template>

@@ -218,9 +218,9 @@ function handleSolarsystemHover(hovered: boolean) {
 
                     <div
                         :class="can_write ? 'grid-cols-[auto_1fr_auto_1fr_auto_auto]' : 'grid-cols-[auto_1fr_auto_1fr_auto]'"
-                        class="grid gap-x-4 overflow-hidden rounded border bg-white dark:bg-neutral-900/40"
+                        class="grid gap-x-4 overflow-hidden rounded border bg-white text-xs dark:bg-neutral-900/40"
                     >
-                        <div class="col-span-full grid grid-cols-subgrid border-b px-3 py-2 text-sm font-medium text-muted-foreground">
+                        <div class="col-span-full grid grid-cols-subgrid border-b bg-muted/50 px-2 py-1.5 text-xs font-medium text-muted-foreground">
                             <div></div>
                             <div>System</div>
                             <div class="text-center">Jumps</div>
