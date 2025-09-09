@@ -42,9 +42,14 @@ final class GetKillmailsForDayCommand extends AppCommand
 
         $this->info(sprintf('Downloading %s to %s', $remote_file, $local_file));
 
-        $response = Http::retry(5)->get($remote_file);
+        $response = Http::retry(5, throw: false)->get($remote_file);
 
         if ($response->failed()) {
+            if ($response->notFound()) {
+                $this->info(sprintf('No killmails found for %s', $date->toDateString()));
+
+                return self::SUCCESS;
+            }
             $this->error(sprintf('Failed to download file from %s', $remote_file));
 
             return self::FAILURE;
