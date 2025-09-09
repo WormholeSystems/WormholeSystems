@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * @property-read int $id
  * @property int $character_id
- * @property-read Character $character
+ * @property-read Character|null $character
  * @property-read CarbonImmutable $created_at
  * @property-read CarbonImmutable $updated_at
  */

@@ -26,7 +26,7 @@ final class AuditResource extends JsonResource
             'new_values' => $this->new_values,
             'old_values' => $this->old_values,
             'character_id' => $this->character_id,
-            'character' => $this->character->toResource(CharacterResource::class),
+            'character' => $this->character?->toResource(CharacterResource::class),
             'created_at' => $this->created_at,
         ];
     }
