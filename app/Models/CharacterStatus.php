@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Builders\CharacterStatusBuilder;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Attributes\UseEloquentBuilder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -30,6 +32,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read Station|null $station
  * @property-read Type|null $shipType
  */
+#[UseEloquentBuilder(CharacterStatusBuilder::class)]
 final class CharacterStatus extends Model
 {
     /**
@@ -62,6 +65,12 @@ final class CharacterStatus extends Model
     public function shipType(): BelongsTo
     {
         return $this->belongsTo(Type::class, 'ship_type_id');
+    }
+
+    public function newEloquentBuilder($query): CharacterStatusBuilder
+    {
+
+        return new CharacterStatusBuilder($query);
     }
 
     protected function casts(): array

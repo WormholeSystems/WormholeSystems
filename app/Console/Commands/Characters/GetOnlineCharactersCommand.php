@@ -4,18 +4,19 @@ declare(strict_types=1);
 
 namespace App\Console\Commands\Characters;
 
+use App\Console\Commands\AppCommand;
 use App\Events\Characters\CharacterStatusUpdatedEvent;
 use App\Models\CharacterStatus;
 use App\Models\Map;
-use App\Scopes\CharacterHasRequiredScopes;
 use Illuminate\Console\Command;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Client\ConnectionException;
-use NicolasKion\Esi\Enums\EsiScope;
 use NicolasKion\Esi\Esi;
 
-final class GetOnlineCharactersCommand extends Command
+use function now;
+use function sprintf;
+
+final class GetOnlineCharactersCommand extends AppCommand
 {
     /**
      * The name and signature of the console command.
@@ -31,47 +32,24 @@ final class GetOnlineCharactersCommand extends Command
      */
     protected $description = 'Checks the online status of characters and updates their status in the database';
 
-    private int $activity_threshold_minutes = 10;
+    public function __construct(
+        private readonly Esi $esi,
+    ) {
+        parent::__construct();
+    }
 
     /**
      * Execute the console command.
-     *
-     * @throws ConnectionException
      */
-    public function handle(Esi $esi): void
+    public function handle(): void
     {
-        $this->markInactiveUsersAsOffline();
+        $this->markInactiveCharactersAsOffline();
 
-        $characters = $this->getRecentlyActiveCharacters();
+        $characters = $this->getRecentlyActiveCharacterIds();
 
-        $updated_character_ids = [];
+        $updated_character_ids = $characters->map($this->checkCharacterStatus(...))->filter();
 
-        foreach ($characters as $character) {
-            $request = $esi->getOnline($character->character);
-
-            if ($request->failed()) {
-                $this->error(sprintf('Failed to get online status for character %d', $character->character_id));
-
-                continue;
-            }
-
-            $this->info(sprintf('Character %d is %s', $character->character_id, $request->data->online ? 'online' : 'offline'));
-
-            $online_status_changed = $character->is_online !== $request->data->online;
-
-            $character->update([
-                'is_online' => $request->data->online,
-                'last_online_at' => $request->data->online ? now() : $character->last_online_at,
-                'online_last_checked_at' => now(),
-            ]);
-
-            if ($online_status_changed) {
-                $updated_character_ids[] = $character->character_id;
-                $this->info(sprintf('Character %d status changed to %s', $character->character_id, $request->data->online ? 'online' : 'offline'));
-            }
-        }
-
-        if ($updated_character_ids === []) {
+        if ($updated_character_ids->isEmpty()) {
             $this->info('No character status changes detected.');
 
             return;
@@ -82,11 +60,43 @@ final class GetOnlineCharactersCommand extends Command
             ->each(fn ($map) => CharacterStatusUpdatedEvent::dispatch($map->id));
     }
 
-    private function markInactiveUsersAsOffline(): void
+    /**
+     * @throws ConnectionException
+     */
+    private function checkCharacterStatus(CharacterStatus $characterStatus): ?int
+    {
+        $request = $this->esi->getOnline($characterStatus->character);
+
+        if ($request->failed()) {
+            $this->error(sprintf('Failed to get online status for character %d', $characterStatus->character_id));
+
+            return null;
+        }
+
+        $this->info(sprintf('Character %d is %s', $characterStatus->character_id, $request->data->online ? 'online' : 'offline'));
+
+        $online_status_changed = $characterStatus->is_online !== $request->data->online;
+
+        $characterStatus->update([
+            'is_online' => $request->data->online,
+            'last_online_at' => $request->data->online ? now() : $characterStatus->last_online_at,
+            'online_last_checked_at' => now(),
+        ]);
+
+        if ($online_status_changed) {
+            $this->info(sprintf('Character %d status changed to %s', $characterStatus->character_id, $request->data->online ? 'online' : 'offline'));
+
+            return $characterStatus->character_id;
+        }
+
+        return null;
+    }
+
+    private function markInactiveCharactersAsOffline(): void
     {
         CharacterStatus::query()
-            ->where('is_online', true)
-            ->whereHas('character.user', fn (Builder $query) => $query->where('last_active_at', '<=', now()->subMinutes($this->activity_threshold_minutes)))
+            ->isOnline()
+            ->wasNotRecentlyActive()
             ->update([
                 'is_online' => false,
                 'online_last_checked_at' => now(),
@@ -96,16 +106,11 @@ final class GetOnlineCharactersCommand extends Command
     /**
      * @return Collection<int, CharacterStatus>
      */
-    private function getRecentlyActiveCharacters(): Collection
+    private function getRecentlyActiveCharacterIds(): Collection
     {
         return CharacterStatus::query()
-            ->whereHas('character.user', fn (Builder $query) => $query->where('last_active_at', '>=', now()->subMinutes($this->activity_threshold_minutes)))
-            ->whereHas('character', fn (Builder $query) => $query
-                ->tap(new CharacterHasRequiredScopes([
-                    EsiScope::ReadOnlineStatus,
-                    EsiScope::ReadLocations,
-                    EsiScope::ReadShip,
-                ])))
+            ->wasRecentlyActive()
+            ->hasRequiredScopes()
             ->get();
     }
 }

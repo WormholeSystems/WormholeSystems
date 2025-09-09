@@ -5,23 +5,22 @@ declare(strict_types=1);
 namespace App\Console\Commands\Characters;
 
 use App\Actions\ShipHistories\UpdateShipHistoryAction;
+use App\Console\Commands\AppCommand;
 use App\Events\Characters\CharacterStatusUpdatedEvent;
 use App\Models\Character;
 use App\Models\CharacterStatus;
 use App\Models\Map;
-use App\Scopes\CharacterDoesntHaveRequiredScopes;
-use App\Scopes\CharacterHasRequiredScopes;
 use Illuminate\Console\Command;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Support\Facades\Log;
 use NicolasKion\Esi\DTO\Location;
 use NicolasKion\Esi\DTO\Ship;
-use NicolasKion\Esi\Enums\EsiScope;
 use NicolasKion\Esi\Esi;
 use Throwable;
 
-final class GetOnlineCharacterLocationsCommand extends Command
+use function assert;
+use function sprintf;
+
+final class GetOnlineCharacterLocationsCommand extends AppCommand
 {
     /**
      * The name and signature of the console command.
@@ -37,95 +36,34 @@ final class GetOnlineCharacterLocationsCommand extends Command
      */
     protected $description = 'Checks the location of online characters and updates their status in the database';
 
+    public function __construct(
+        private readonly Esi $esi,
+        private readonly UpdateShipHistoryAction $action,
+    ) {
+        parent::__construct();
+    }
+
     /**
      * Execute the console command.
      *
-     * @throws ConnectionException
      * @throws Throwable
      */
-    public function handle(Esi $esi, UpdateShipHistoryAction $action): void
+    public function handle(): void
     {
         $characters = CharacterStatus::query()
-            ->where('is_online', true)
-            ->whereHas('character', fn (Builder $query) => $query
-                ->tap(new CharacterHasRequiredScopes([
-                    EsiScope::ReadOnlineStatus,
-                    EsiScope::ReadLocations,
-                    EsiScope::ReadShip,
-                ])))
+            ->isOnline()
+            ->hasRequiredScopes()
             ->get();
 
         CharacterStatus::query()
-            ->whereHas('character', fn (Builder $query) => $query
-                ->tap(new CharacterDoesntHaveRequiredScopes([
-                    EsiScope::ReadOnlineStatus,
-                    EsiScope::ReadLocations,
-                    EsiScope::ReadShip,
-                ])))
+            ->doesntHaveRequiredScopes()
             ->update([
                 'is_online' => false,
             ]);
 
-        $updated_character_ids = [];
+        $updated_character_ids = $characters->map($this->checkCharacterStatus(...))->filter();
 
-        foreach ($characters as $character) {
-            $location_request = $esi->getLocation($character->character);
-
-            if ($location_request->failed()) {
-                $this->error(sprintf('Failed to get online status for character %d', $character->character_id));
-
-                continue;
-            }
-
-            $ship_request = $esi->getShip($character->character);
-
-            if ($ship_request->failed()) {
-                $this->error(sprintf('Failed to get ship details for character %d', $character->character_id));
-
-                continue;
-            }
-
-            /** @var Location $location */
-            $location = $location_request->data;
-
-            /** @var Ship $ship */
-            $ship = $ship_request->data;
-
-            $character->update([
-                'solarsystem_id' => $location->solar_system_id,
-                'station_id' => $location->station_id,
-                'structure_id' => $location->structure_id,
-                'ship_name' => $ship->ship_name,
-                'ship_type_id' => $ship->ship_type_id,
-                'ship_item_id' => $ship->ship_item_id,
-            ]);
-
-            $action->handle(
-                $character->character_id,
-                $ship->ship_item_id,
-                $ship->ship_type_id,
-                $ship->ship_name
-            );
-
-            Log::info('Updated character location', [
-                'character_id' => $character->character_id,
-                'solar_system_id' => $location->solar_system_id,
-                'station_id' => $location->station_id,
-                'structure_id' => $location->structure_id,
-                'ship_name' => $ship->ship_name,
-                'ship_type_id' => $ship->ship_type_id,
-                'ship_item_id' => $ship->ship_item_id,
-            ]);
-
-            if ($character->wasChanged()) {
-                $updated_character_ids[] = $character->character_id;
-                $this->info(sprintf('Updated character %d location to system %d', $character->character_id, $location->solar_system_id));
-            } else {
-                $this->info(sprintf('No changes for character %d', $character->character_id));
-            }
-        }
-
-        if ($updated_character_ids === []) {
+        if ($updated_character_ids->isEmpty()) {
             $this->info('No characters were updated.');
 
             return;
@@ -145,5 +83,65 @@ final class GetOnlineCharacterLocationsCommand extends Command
             ->whereHas('mapAccessors', fn ($query) => $query->whereIn('accessible_id', $accessible_ids))
             ->each(fn (Map $map) => CharacterStatusUpdatedEvent::dispatch($map->id));
 
+    }
+
+    /**
+     * @throws Throwable
+     * @throws ConnectionException
+     */
+    private function checkCharacterStatus(CharacterStatus $characterStatus): ?int
+    {
+        $location_request = $this->esi->getLocation($characterStatus->character);
+
+        if ($location_request->failed()) {
+            $this->error(sprintf('Failed to get online status for character %d', $characterStatus->character_id));
+
+            return null;
+        }
+
+        $ship_request = $this->esi->getShip($characterStatus->character);
+
+        if ($ship_request->failed()) {
+            $this->error(sprintf('Failed to get ship details for character %d', $characterStatus->character_id));
+
+            return null;
+        }
+
+        $location = $location_request->data;
+        $ship = $ship_request->data;
+
+        assert($location instanceof Location);
+        assert($ship instanceof Ship);
+
+        $characterStatus->update([
+            'solarsystem_id' => $location->solar_system_id,
+            'station_id' => $location->station_id,
+            'structure_id' => $location->structure_id,
+            'ship_name' => $ship->ship_name,
+            'ship_type_id' => $ship->ship_type_id,
+            'ship_item_id' => $ship->ship_item_id,
+        ]);
+
+        $this->action->handle(
+            $characterStatus->character_id,
+            $ship->ship_item_id,
+            $ship->ship_type_id,
+            $ship->ship_name
+        );
+
+        if ($characterStatus->wasChanged()) {
+            $this->info(sprintf('Updated character %d: Ship "%s" (Type ID: %d), Location: %d',
+                $characterStatus->character_id,
+                $characterStatus->ship_name,
+                $characterStatus->ship_type_id,
+                $characterStatus->solarsystem_id,
+            ));
+
+            return $characterStatus->character_id;
+        }
+
+        $this->info(sprintf('No changes for character %d', $characterStatus->character_id));
+
+        return null;
     }
 }
