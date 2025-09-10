@@ -34,6 +34,7 @@ export type TMapSolarSystem = {
     notes: string | null;
     map_connections: TMapConnection[] | null;
     audits: TAudit[] | null;
+    wormholes?: TWormhole[];
 };
 
 export type TMapConnection = {

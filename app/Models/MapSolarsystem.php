@@ -15,6 +15,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Models\Audit;
+use Staudenmeir\EloquentHasManyDeep\HasManyDeep;
+use Staudenmeir\EloquentHasManyDeep\HasRelationships;
 
 /**
  * Represents a solarsystem on a map
@@ -36,6 +38,7 @@ use OwenIt\Auditing\Models\Audit;
  * @property-read WormholeSystem|null $wormholeSystem
  * @property-read Collection<int,Signature> $signatures
  * @property-read Collection<int,Audit> $audits
+ * @property-read Collection<int,Wormhole> $wormholes
  */
 #[UseFactory(MapSolarsystemFactory::class)]
 final class MapSolarsystem extends Model implements \OwenIt\Auditing\Contracts\Auditable
@@ -44,6 +47,8 @@ final class MapSolarsystem extends Model implements \OwenIt\Auditing\Contracts\A
 
     /** @use HasFactory<MapSolarsystemFactory> */
     use HasFactory;
+
+    use HasRelationships;
 
     /**
      * @var Collection<int,MapConnection>|null
@@ -104,6 +109,15 @@ final class MapSolarsystem extends Model implements \OwenIt\Auditing\Contracts\A
     public function signatures(): HasMany
     {
         return $this->hasMany(Signature::class, 'map_solarsystem_id');
+    }
+
+    public function wormholes(): HasManyDeep
+    {
+        return $this->hasManyDeepFromRelations([
+            $this->wormholeSystem(),
+            new WormholeSystem()->wormholeStatics(),
+            new WormholeStatic()->wormhole(),
+        ]);
     }
 
     protected function casts(): array

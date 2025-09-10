@@ -207,7 +207,7 @@ final class MapController extends Controller
         }
 
         return $map->mapSolarsystems()
-            ->with('signatures')
+            ->with('signatures', 'wormholes')
             ->with('audits', fn (Relation $query) => $query->latest())
             ->findOrFail($solarsystem_id);
     }

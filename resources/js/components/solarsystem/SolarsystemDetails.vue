@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import StatisticsController from '@/actions/App/Http/Controllers/StatisticsController';
 import ExternalIcon from '@/components/icons/ExternalIcon.vue';
 import Spinner from '@/components/icons/Spinner.vue';
+import WormholeProperties from '@/components/map/connection/WormholeProperties.vue';
 import SolarsystemEffect from '@/components/map/SolarsystemEffect.vue';
 import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue';
 import Destination from '@/components/solarsystem/Destination.vue';
@@ -11,10 +13,10 @@ import { CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import MapPanel from '@/components/ui/map-panel/MapPanel.vue';
 import MapPanelContent from '@/components/ui/map-panel/MapPanelContent.vue';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import useHasWritePermission from '@/composables/useHasWritePermission';
 import MapSolarsystems from '@/routes/map-solarsystems';
-import Statistics from '@/routes/statistics';
 import { TMap, TMapRouteSolarsystem, TMapSolarSystem } from '@/types/models';
 import { Deferred, Link, useForm } from '@inertiajs/vue3';
 import markdownit from 'markdown-it';
@@ -91,6 +93,36 @@ watch(
                             v-else-if="map_solarsystem.solarsystem?.security !== undefined"
                         />
                         <span class="truncate">{{ map_solarsystem.name }}</span>
+                        <div v-if="map_solarsystem.wormholes?.length" class="flex gap-1">
+                            <Popover v-for="wormhole in map_solarsystem.wormholes" :key="wormhole.id">
+                                <PopoverTrigger>
+                                    <span
+                                        :data-leads-to="wormhole.leads_to"
+                                        class="cursor-pointer text-xl uppercase transition-colors hover:opacity-70 data-[leads-to=c1]:text-c1 data-[leads-to=c2]:text-c2 data-[leads-to=c3]:text-c3 data-[leads-to=c4]:text-c4 data-[leads-to=c5]:text-c5 data-[leads-to=c6]:text-c6 data-[leads-to=hs]:text-hs data-[leads-to=ls]:text-ls data-[leads-to=ns]:text-ns"
+                                    >
+                                        {{ wormhole.leads_to.replace('s', '') }}
+                                    </span>
+                                </PopoverTrigger>
+                                <PopoverContent class="w-60">
+                                    <div class="space-y-3">
+                                        <div class="space-y-1">
+                                            <div class="border-b pb-1 text-xs font-medium text-foreground">{{ wormhole.name }}</div>
+                                            <div class="grid grid-cols-2 text-xs text-muted-foreground">
+                                                <span>Leads to:</span>
+                                                <span
+                                                    class="text-right uppercase"
+                                                    :data-leads-to="wormhole.leads_to"
+                                                    :class="`data-[leads-to=c1]:text-c1 data-[leads-to=c2]:text-c2 data-[leads-to=c3]:text-c3 data-[leads-to=c4]:text-c4 data-[leads-to=c5]:text-c5 data-[leads-to=c6]:text-c6 data-[leads-to=hs]:text-hs data-[leads-to=ls]:text-ls data-[leads-to=ns]:text-ns`"
+                                                >
+                                                    {{ wormhole.leads_to.replace('s', '') }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <WormholeProperties :wormhole="wormhole" />
+                                    </div>
+                                </PopoverContent>
+                            </Popover>
+                        </div>
                         <SolarsystemEffect :effect="map_solarsystem.effect" :effects="map_solarsystem.effects" v-if="map_solarsystem.effect" />
                     </CardTitle>
 
@@ -172,7 +204,7 @@ watch(
                                 <Button variant="secondary" @click="statistics = false"> Cancel</Button>
                                 <Button as-child>
                                     <Link
-                                        :href="Statistics.store()"
+                                        :href="StatisticsController.store()"
                                         :data="{ map_id: map_solarsystem.map_id }"
                                         method="post"
                                         @click="statistics = false"

@@ -46,6 +46,7 @@ final class MapSolarsystemResource extends JsonResource
             'signatures' => $this->whenLoaded('signatures', fn () => $this->signatures->toResourceCollection(SignatureResource::class)),
             'signatures_count' => $this->whenCounted('signatures', fn () => $this->signatures_count),
             'audits' => $this->whenLoaded('audits', fn () => $this->audits->toResourceCollection(AuditResource::class)),
+            'wormholes' => $this->whenLoaded('wormholes', fn () => $this->wormholes->toResourceCollection(WormholeResource::class)),
             'notes' => $this->notes,
         ];
     }
