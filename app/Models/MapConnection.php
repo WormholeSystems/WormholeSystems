@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\LifetimeStatus;
 use App\Enums\MassStatus;
 use App\Enums\ShipSize;
 use Carbon\CarbonImmutable;
@@ -26,7 +27,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int|null $wormhole_id
  * @property string|MassStatus $mass_status
  * @property string|ShipSize $ship_size
- * @property DateTimeImmutable|string|null $marked_as_eol_at
+ * @property LifetimeStatus $lifetime
+ * @property DateTimeImmutable|string|null $lifetime_updated_at
  * @property CarbonImmutable $connected_at
  * @property-read string|CarbonImmutable $created_at
  * @property-read string|CarbonImmutable $updated_at
@@ -47,7 +49,8 @@ final class MapConnection extends Model
         'updated_at' => 'immutable_datetime',
         'mass_status' => MassStatus::class,
         'ship_size' => ShipSize::class,
-        'marked_as_eol_at' => 'immutable_datetime',
+        'lifetime' => LifetimeStatus::class,
+        'lifetime_updated_at' => 'immutable_datetime',
     ];
 
     /**

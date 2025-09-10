@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Signatures;
 
+use App\Enums\LifetimeStatus;
 use App\Enums\MassStatus;
 use App\Enums\SignatureCategory;
 use App\Models\MapConnection;
@@ -64,7 +65,7 @@ final class StoreSignatureRequest extends FormRequest
             'category' => ['nullable', 'sometimes', Rule::enum(SignatureCategory::class)],
             'type' => ['nullable', 'sometimes', 'string', 'max:255'],
             'map_connection_id' => ['nullable', 'sometimes', 'integer', 'exists:map_connections,id'],
-            'marked_as_eol_at' => ['nullable', 'sometimes', 'date'],
+            'lifetime' => ['nullable', 'sometimes', Rule::enum(LifetimeStatus::class)],
             'mass_status' => ['nullable', 'sometimes', Rule::enum(MassStatus::class)],
         ];
     }

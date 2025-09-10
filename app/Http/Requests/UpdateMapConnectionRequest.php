@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Enums\LifetimeStatus;
 use App\Enums\MassStatus;
 use App\Enums\ShipSize;
 use App\Models\MapConnection;
@@ -35,7 +36,7 @@ final class UpdateMapConnectionRequest extends FormRequest
             'wormhole_id' => ['nullable', 'sometimes', 'integer', 'exists:wormholes,id'],
             'mass_status' => ['nullable', 'sometimes', Rule::enum(MassStatus::class)],
             'ship_size' => ['nullable', 'sometimes', Rule::enum(ShipSize::class)],
-            'marked_as_eol_at' => ['nullable', 'sometimes', 'date'],
+            'lifetime' => ['nullable', 'sometimes', Rule::enum(LifetimeStatus::class)],
         ];
     }
 }

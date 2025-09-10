@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Data;
 
+use App\Enums\LifetimeStatus;
 use App\Enums\MassStatus;
 use App\Enums\ShipSize;
 use App\Models\MapConnection;
@@ -23,8 +24,9 @@ final class MapConnectionData extends Data
         public int|Optional|null $wormhole_id,
         public MassStatus|Optional|null $mass_status,
         public ShipSize|Optional|null $ship_size,
+        public LifetimeStatus|Optional $lifetime,
         #[WithCast(DateTimeInterfaceCast::class)]
-        public DateTimeImmutable|Optional|null $marked_as_eol_at,
+        public DateTimeImmutable|Optional|null $lifetime_updated_at,
     ) {}
 
     public static function rules(): array
@@ -33,7 +35,8 @@ final class MapConnectionData extends Data
             'wormhole_id' => ['nullable', 'sometimes', 'integer', 'exists:wormholes,id'],
             'mass_status' => ['nullable', 'sometimes', Rule::enum(MassStatus::class)],
             'ship_size' => ['nullable', 'sometimes', Rule::enum(ShipSize::class)],
-            'marked_as_eol_at' => ['nullable', 'sometimes', "date_format:Y-m-d\TH:i:sP"],
+            'lifetime' => ['nullable', 'sometimes', Rule::enum(LifetimeStatus::class)],
+            'lifetime_updated_at' => ['nullable', 'sometimes', "date_format:Y-m-d\TH:i:sP"],
         ];
     }
 

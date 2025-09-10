@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Actions\MapConnections;
 
 use App\Data\MapConnectionData;
+use App\Enums\LifetimeStatus;
 use App\Enums\MassStatus;
 use App\Events\MapConnections\MapConnectionUpdatedEvent;
 use App\Models\MapConnection;
-use DateTimeImmutable;
 use Illuminate\Support\Facades\DB;
 use Spatie\LaravelData\Optional;
 use Throwable;
@@ -24,7 +24,7 @@ final class UpdateMapConnectionAction
 
             $mapConnection->update($data->toArray());
 
-            $this->syncMassAndEol($mapConnection, $data);
+            $this->syncMassAndLifetime($mapConnection, $data);
 
             broadcast(new MapConnectionUpdatedEvent($mapConnection->map_id))->toOthers();
 
@@ -32,7 +32,7 @@ final class UpdateMapConnectionAction
         });
     }
 
-    private function syncMassAndEol(MapConnection $mapConnection, MapConnectionData $data): void
+    private function syncMassAndLifetime(MapConnection $mapConnection, MapConnectionData $data): void
     {
         $signatures = $mapConnection->signatures;
 
@@ -40,19 +40,29 @@ final class UpdateMapConnectionAction
             return;
         }
 
-        $eol = $this->getNewEolValue($mapConnection, $data);
+        $lifetime = $this->getNewLifetimeValue($mapConnection, $data);
         $mass = $this->getNewMassStatus($mapConnection, $data);
 
-        $mapConnection->update([
-            'marked_as_eol_at' => $eol,
-            'mass_status' => $mass,
-        ]);
+        $updateData = ['mass_status' => $mass];
+
+        // Only update lifetime and timestamp if lifetime actually changed
+        if ($mapConnection->lifetime !== $lifetime) {
+            $updateData['lifetime'] = $lifetime;
+            $updateData['lifetime_updated_at'] = now();
+        }
+
+        $mapConnection->update($updateData);
 
         foreach ($signatures as $signature) {
-            $signature->update([
-                'marked_as_eol_at' => $eol,
-                'mass_status' => $mass,
-            ]);
+            $signatureUpdateData = ['mass_status' => $mass];
+
+            // Only update lifetime and timestamp if lifetime actually changed
+            if ($signature->lifetime !== $lifetime) {
+                $signatureUpdateData['lifetime'] = $lifetime;
+                $signatureUpdateData['lifetime_updated_at'] = now();
+            }
+
+            $signature->update($signatureUpdateData);
         }
     }
 
@@ -94,35 +104,38 @@ final class UpdateMapConnectionAction
         return $worst_mass_status;
     }
 
-    private function getNewEolValue(MapConnection $mapConnection, MapConnectionData $data): ?DateTimeImmutable
+    private function getLifetimeSeverity(LifetimeStatus $status): int
     {
-        if (! $data->marked_as_eol_at instanceof Optional) {
-            return $data->marked_as_eol_at;
+        return match ($status) {
+            LifetimeStatus::Healthy => 1,
+            LifetimeStatus::EndOfLife => 2,
+            LifetimeStatus::Critical => 3,
+        };
+    }
+
+    private function getNewLifetimeValue(MapConnection $mapConnection, MapConnectionData $data): LifetimeStatus
+    {
+        if (! $data->lifetime instanceof Optional) {
+            return $data->lifetime;
         }
 
         $signatures = $mapConnection->signatures;
         if ($signatures->isEmpty()) {
-            return $mapConnection->marked_as_eol_at;
+            return $mapConnection->lifetime;
         }
 
-        $connection_eol = $mapConnection->marked_as_eol_at;
-        $earliest_signature_eol = null;
+        $connection_lifetime_severity = $this->getLifetimeSeverity($mapConnection->lifetime);
+        $max_severity = $connection_lifetime_severity;
+        $worst_lifetime = $mapConnection->lifetime;
 
         foreach ($signatures as $signature) {
-            if ($signature->marked_as_eol_at === null) {
-                continue;
+            $signature_severity = $this->getLifetimeSeverity($signature->lifetime);
+            if ($signature_severity > $max_severity) {
+                $max_severity = $signature_severity;
+                $worst_lifetime = $signature->lifetime;
             }
-            if ($earliest_signature_eol !== null && $signature->marked_as_eol_at >= $earliest_signature_eol) {
-                continue;
-            }
-            $earliest_signature_eol = $signature->marked_as_eol_at;
         }
 
-        return match (true) {
-            $connection_eol === null && $earliest_signature_eol !== null => $earliest_signature_eol,
-            $connection_eol !== null && $earliest_signature_eol === null => $connection_eol,
-            $connection_eol !== null && $earliest_signature_eol !== null => min($connection_eol, $earliest_signature_eol),
-            default => null
-        };
+        return $worst_lifetime;
     }
 }

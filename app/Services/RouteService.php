@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\LifetimeStatus;
 use App\Enums\MassStatus;
 use App\Http\Resources\SolarsystemResource;
 use App\Models\Map;
@@ -362,7 +363,7 @@ final readonly class RouteService
             ->join('map_solarsystems as from', 'map_connections.from_map_solarsystem_id', '=', 'from.id')
             ->join('map_solarsystems as to', 'map_connections.to_map_solarsystem_id', '=', 'to.id')
             ->where('map_connections.map_id', $map->id)
-            ->when(! $allow_eol, fn (Builder $query) => $query->whereNull('marked_as_eol_at'))
+            ->when(! $allow_eol, fn (Builder $query) => $query->where('lifetime', LifetimeStatus::Healthy))
             ->when($minimum_mass, fn (Builder $query) => $query->tap(new ConnectionSatisfiesMass($minimum_mass)))
             ->select('from.solarsystem_id as from_solarsystem_id', 'to.solarsystem_id as to_solarsystem_id')
             ->get()

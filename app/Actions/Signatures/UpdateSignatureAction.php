@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Actions\Signatures;
 
 use App\Data\SignatureData;
+use App\Enums\LifetimeStatus;
 use App\Enums\MassStatus;
 use App\Events\Signatures\SignatureUpdatedEvent;
 use App\Models\Signature;
-use DateTimeImmutable;
 use Illuminate\Support\Facades\DB;
 use Spatie\LaravelData\Optional;
 use Throwable;
@@ -29,7 +29,7 @@ final class UpdateSignatureAction
                 $signature->save();
             }
 
-            $this->syncMassAndEol($signature, $data);
+            $this->syncMassAndLifetime($signature, $data);
 
             broadcast(new SignatureUpdatedEvent($signature->mapSolarsystem->map_id))->toOthers();
 
@@ -37,24 +37,31 @@ final class UpdateSignatureAction
         });
     }
 
-    private function syncMassAndEol(Signature $signature, SignatureData $data): void
+    private function syncMassAndLifetime(Signature $signature, SignatureData $data): void
     {
         if ($signature->mapConnection === null) {
             return;
         }
 
-        $eol = $this->getNewEolValue($signature, $data);
+        $lifetime = $this->getNewLifetimeValue($signature, $data);
         $mass = $this->getNewMassStatus($signature, $data);
 
-        $signature->mapConnection->update([
-            'marked_as_eol_at' => $eol,
-            'mass_status' => $mass,
-        ]);
+        $connectionUpdateData = ['mass_status' => $mass];
+        $signatureUpdateData = ['mass_status' => $mass];
 
-        $signature->update([
-            'marked_as_eol_at' => $eol,
-            'mass_status' => $mass,
-        ]);
+        // Only update lifetime and timestamp if lifetime actually changed
+        if ($signature->mapConnection->lifetime !== $lifetime) {
+            $connectionUpdateData['lifetime'] = $lifetime;
+            $connectionUpdateData['lifetime_updated_at'] = now();
+        }
+
+        if ($signature->lifetime !== $lifetime) {
+            $signatureUpdateData['lifetime'] = $lifetime;
+            $signatureUpdateData['lifetime_updated_at'] = now();
+        }
+
+        $signature->mapConnection->update($connectionUpdateData);
+        $signature->update($signatureUpdateData);
     }
 
     private function getMassStatusSeverity(MassStatus $status): int
@@ -82,20 +89,27 @@ final class UpdateSignatureAction
         };
     }
 
-    private function getNewEolValue(Signature $signature, SignatureData $data): ?DateTimeImmutable
+    private function getLifetimeSeverity(LifetimeStatus $status): int
     {
-        if (! $data->marked_as_eol_at instanceof Optional) {
-            return $data->marked_as_eol_at;
+        return match ($status) {
+            LifetimeStatus::Healthy => 1,
+            LifetimeStatus::EndOfLife => 2,
+            LifetimeStatus::Critical => 3,
+        };
+    }
+
+    private function getNewLifetimeValue(Signature $signature, SignatureData $data): LifetimeStatus
+    {
+        if (! $data->lifetime instanceof Optional) {
+            return $data->lifetime;
         }
 
-        $connection_eol = $signature->mapConnection->marked_as_eol_at;
-        $signature_eol = $signature->marked_as_eol_at;
+        $connection_lifetime_severity = $this->getLifetimeSeverity($signature->mapConnection->lifetime);
+        $signature_lifetime_severity = $this->getLifetimeSeverity($signature->lifetime);
 
         return match (true) {
-            $connection_eol === null && $signature_eol !== null => $signature_eol,
-            $connection_eol !== null && $signature_eol === null => $connection_eol,
-            $connection_eol !== null && $signature_eol !== null => min($connection_eol, $signature_eol),
-            default => null
+            $signature_lifetime_severity >= $connection_lifetime_severity => $signature->lifetime,
+            default => $signature->mapConnection->lifetime,
         };
     }
 }

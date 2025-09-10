@@ -6,6 +6,7 @@ namespace App\Actions\Tracking;
 
 use App\Actions\MapConnections\CreateMapConnectionAction;
 use App\Actions\MapSolarsystem\StoreMapSolarsystemAction;
+use App\Enums\LifetimeStatus;
 use App\Enums\MassStatus;
 use App\Enums\ShipSize;
 use App\Models\MapConnection;
@@ -89,7 +90,7 @@ final readonly class StoreTrackingAction
                     'wormhole_id' => $data['wormhole_id'] ?? null,
                     'mass_status' => $data['mass_status'] ?? MassStatus::Fresh,
                     'ship_size' => $ship_size ?? ShipSize::Large,
-                    'marked_as_eol_at' => $data['marked_as_eol_at'] ?? null,
+                    'lifetime' => $data['lifetime'] ?? LifetimeStatus::Healthy,
                 ]
             );
 
