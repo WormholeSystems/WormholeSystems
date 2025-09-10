@@ -59,7 +59,7 @@ function getDashArray() {
             :stroke-dasharray="getDashArray()"
             :data-lifetime="lifetime"
             :data-highlighted="is_highlighted"
-            class="cursor-pointer text-neutral-300 transition-colors duration-200 ease-in-out group-hover:text-neutral-200 data-[highlighted=true]:text-amber-500 data-[lifetime=critical]:text-red-500 data-[lifetime=eol]:text-purple-500 dark:text-neutral-700 dark:group-hover:text-neutral-600 dark:data-[highlighted=true]:text-amber-500 dark:data-[lifetime=critical]:text-red-500 dark:data-[lifetime=eol]:text-purple-500"
+            class="cursor-pointer text-neutral-300 transition-colors duration-200 ease-in-out group-hover:text-neutral-200 dark:text-neutral-700 dark:group-hover:text-neutral-600"
         />
         <path
             v-if="mass_status !== 'fresh'"
@@ -71,7 +71,7 @@ function getDashArray() {
             stroke-dashoffset="4"
             :data-connection-status="mass_status"
             :data-highlighted="is_highlighted"
-            class="cursor-pointer transition-colors duration-200 ease-in-out data-[connection-status=critical]:text-red-500 data-[connection-status=reduced]:text-orange-500 data-[highlighted=true]:text-amber-500 dark:data-[connection-status=critical]:text-red-500 dark:data-[connection-status=reduced]:text-orange-500 dark:data-[highlighted=true]:text-amber-500"
+            class="cursor-pointer transition-colors duration-200 ease-in-out"
         />
         <rect
             class="pointer-events-none fill-white stroke-neutral-300 dark:fill-neutral-900 dark:stroke-neutral-700"
@@ -100,7 +100,7 @@ function getDashArray() {
             stroke="transparent"
             fill="none"
             stroke-width="24"
-            class="cursor-pointer transition-colors duration-200"
+            class="hover-path cursor-pointer transition-colors duration-200"
             @contextmenu="(event) => emit('connectionContextMenu', event)"
             @click="(event) => emit('connectionClick', event)"
             @pointerdown.stop
@@ -110,4 +110,44 @@ function getDashArray() {
     </g>
 </template>
 
-<style scoped></style>
+<style scoped>
+[data-lifetime='critical'] {
+    color: var(--color-red-500);
+}
+
+.group:hover [data-lifetime='critical'] {
+    color: var(--color-red-400);
+}
+
+[data-connection-status='critical'] {
+    color: var(--color-red-500);
+}
+
+.group:hover [data-connection-status='critical'] {
+    color: var(--color-red-400);
+}
+
+[data-lifetime='eol'] {
+    color: var(--color-purple-500);
+}
+
+.group:hover [data-lifetime='eol'] {
+    color: var(--color-purple-400);
+}
+
+[data-connection-status='reduced'] {
+    color: var(--color-orange-500);
+}
+
+.group:hover [data-connection-status='reduced'] {
+    color: var(--color-orange-400);
+}
+
+[data-highlighted='true'] {
+    color: var(--color-amber-500);
+}
+
+.group:hover [data-highlighted='true'] {
+    color: var(--color-amber-400);
+}
+</style>
