@@ -6,7 +6,6 @@ import SignatureTimeDetails from '@/components/signatures/SignatureTimeDetails.v
 import SignatureTypeSelection from '@/components/signatures/SignatureTypeSelection.vue';
 import WormholeTypeSelection from '@/components/signatures/WormholeTypeSelection.vue';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -95,9 +94,11 @@ function handleIDSubmit() {
     });
 }
 
-function handleEolChange(checked: boolean | 'indeterminate') {
-    const isEol = checked === true;
-    handleChange({ marked_as_eol_at: isEol ? formatDateToISO(new UTCDate()) : null });
+function handleLifetimeChange(lifetime: string) {
+    handleChange({
+        lifetime: lifetime,
+        lifetime_updated_at: formatDateToISO(new UTCDate()),
+    });
 }
 
 function handleMassStatusChange(mass_status: string) {
@@ -115,8 +116,9 @@ function handleMassStatusChange(mass_status: string) {
     >
         <div class="flex items-center gap-2">
             <div
-                class="size-2 shrink-0 rounded-full data-[scanned=false]:bg-red-500 data-[scanned=true]:bg-green-500"
-                :data-scanned="Boolean(signature.signature_id && signature.category)"
+                class="size-2 shrink-0 rounded-full bg-red-500 data-[incomplete=true]:bg-amber-500 data-[scanned=true]:bg-green-500"
+                :data-scanned="Boolean(signature.signature_id && signature.category && signature.type)"
+                :data-incomplete="!signature.signature_id || !signature.category || !signature.type"
             />
             <SignatureID
                 v-model="signature_id"
@@ -204,12 +206,29 @@ function handleMassStatusChange(mass_status: string) {
 
                         <DropdownMenuSeparator />
 
-                        <DropdownMenuItem @click="handleEolChange(!signature.marked_as_eol_at)">
-                            <span class="flex items-center gap-2">
-                                <Checkbox :model-value="signature.marked_as_eol_at !== null" />
-                                Is EOL
-                            </span>
-                        </DropdownMenuItem>
+                        <!-- Lifetime Options -->
+                        <DropdownMenuRadioGroup :model-value="signature.lifetime" @update:model-value="handleLifetimeChange">
+                            <DropdownMenuRadioItem value="healthy" class="flex items-center justify-between gap-2">
+                                <span class="flex items-center gap-2">
+                                    <span class="inline-block size-2 rounded-full bg-neutral-500" />
+                                    Healthy
+                                </span>
+                            </DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="eol" class="flex items-center justify-between gap-2">
+                                <span class="flex items-center gap-2">
+                                    <span class="inline-block size-2 rounded-full bg-purple-500" />
+                                    End of Life
+                                </span>
+                                <span class="text-muted-foreground">&lt; 4h</span>
+                            </DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="critical" class="flex items-center justify-between gap-2">
+                                <span class="flex items-center gap-2">
+                                    <span class="inline-block size-2 rounded-full bg-red-500" />
+                                    Critical
+                                </span>
+                                <span class="text-muted-foreground">&lt; 1h</span>
+                            </DropdownMenuRadioItem>
+                        </DropdownMenuRadioGroup>
 
                         <DropdownMenuSeparator />
                     </template>

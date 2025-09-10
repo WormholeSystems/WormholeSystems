@@ -73,19 +73,32 @@ function getTimeAgo(date: Date): string {
 const createdAgo = computed(() => getTimeAgo(createdDate.value));
 const updatedAgo = computed(() => getTimeAgo(updatedDate.value));
 
-const eolDate = computed(() => {
-    return props.connection.marked_as_eol_at ? new UTCDate(props.connection.marked_as_eol_at) : null;
+const lifetimeDate = computed(() => {
+    return props.connection.lifetime_updated_at ? new UTCDate(props.connection.lifetime_updated_at) : null;
 });
 
-const eolAt = computed(() => {
-    return eolDate.value ? format(eolDate.value, 'MMM dd, HH:mm') : null;
+const lifetimeAt = computed(() => {
+    return lifetimeDate.value ? format(lifetimeDate.value, 'MMM dd, HH:mm') : null;
 });
 
-const eolAgo = computed(() => {
-    if (!eolDate.value) return null;
-    return formatDistanceStrict(eolDate.value, now.value, {
+const lifetimeAgo = computed(() => {
+    if (!lifetimeDate.value) return null;
+    return formatDistanceStrict(lifetimeDate.value, now.value, {
         addSuffix: true,
     });
+});
+
+const lifetimeDisplay = computed(() => {
+    switch (props.connection.lifetime) {
+        case 'healthy':
+            return 'Healthy';
+        case 'eol':
+            return 'End of Life (<4h)';
+        case 'critical':
+            return 'Critical (<1h)';
+        default:
+            return 'Unknown';
+    }
 });
 </script>
 
@@ -94,17 +107,23 @@ const eolAgo = computed(() => {
         <div class="border-b pb-1 text-xs font-medium text-foreground">Status</div>
         <div class="grid grid-cols-2 divide-y truncate text-xs text-muted-foreground *:py-1">
             <div class="col-span-full grid grid-cols-subgrid">
-                <span>EOL</span>
-                <span class="text-right" :class="{ 'text-purple-500': connection.marked_as_eol_at }">
-                    <template v-if="connection.marked_as_eol_at && eolAt">
+                <span>Lifetime</span>
+                <span
+                    class="text-right"
+                    :class="{
+                        'text-purple-500': connection.lifetime === 'eol',
+                        'text-red-500': connection.lifetime === 'critical',
+                    }"
+                >
+                    <template v-if="lifetimeAt && connection.lifetime !== 'healthy'">
                         <Tooltip>
                             <TooltipTrigger as-child>
-                                <span class="cursor-help">Yes</span>
+                                <span class="cursor-help">{{ lifetimeDisplay }}</span>
                             </TooltipTrigger>
-                            <TooltipContent> {{ eolAt }} ({{ eolAgo }}) </TooltipContent>
+                            <TooltipContent> {{ lifetimeAt }} ({{ lifetimeAgo }}) </TooltipContent>
                         </Tooltip>
                     </template>
-                    <span v-else>No</span>
+                    <span v-else>{{ lifetimeDisplay }}</span>
                 </span>
             </div>
             <div class="col-span-full grid grid-cols-subgrid">

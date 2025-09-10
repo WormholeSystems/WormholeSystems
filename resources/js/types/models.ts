@@ -44,7 +44,8 @@ export type TMapConnection = {
     wormhole: TWormhole | null;
     ship_size: TShipSize;
     mass_status: TMassStatus;
-    marked_as_eol_at: string | null;
+    lifetime: TLifetimeStatus;
+    lifetime_updated_at: string | null;
     created_at: string;
     updated_at: string;
     signatures: TSignature[] | null;
@@ -96,6 +97,8 @@ export type TWormholeEffect = {
 };
 
 export type TMassStatus = 'fresh' | 'reduced' | 'critical';
+
+export type TLifetimeStatus = 'healthy' | 'eol' | 'critical';
 
 export type TShipSize = 'frigate' | 'medium' | 'large';
 
@@ -196,7 +199,8 @@ export type TSignature = {
     category: TSignatureCategory;
     mass_status: TMassStatus | null;
     ship_size: TShipSize | null;
-    marked_as_eol_at: string | null;
+    lifetime: TLifetimeStatus;
+    lifetime_updated_at: string | null;
     created_at: string;
     updated_at: string;
     wormhole: TWormhole | null;

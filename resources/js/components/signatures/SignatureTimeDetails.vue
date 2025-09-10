@@ -14,10 +14,6 @@ const { category, selected_connection, signature } = defineProps<{
     signature: TSignature;
 }>();
 
-const is_eol = computed(() => {
-    return Boolean(signature.marked_as_eol_at) || Boolean(selected_connection?.marked_as_eol_at);
-});
-
 const now = useNowUTC();
 
 const created_at = computed(() => {
@@ -64,23 +60,39 @@ const updated_date_formatted = computed(() => {
     return format(updated_date.value, 'MMM dd, HH:mm');
 });
 
-const eol_date = computed(() => {
-    const eolTime = signature.marked_as_eol_at || selected_connection?.marked_as_eol_at;
-    return eolTime ? new UTCDate(eolTime) : null;
+const lifetime_date = computed(() => {
+    const lifetimeTime = signature.lifetime_updated_at || selected_connection?.lifetime_updated_at;
+    return lifetimeTime ? new UTCDate(lifetimeTime) : null;
 });
 
-const eol_ago = computed(() => {
-    if (!eol_date.value) return null;
-    return formatDistanceStrict(eol_date.value, now.value, {
+const lifetime_ago = computed(() => {
+    if (!lifetime_date.value) return null;
+    return formatDistanceStrict(lifetime_date.value, now.value, {
         addSuffix: true,
     });
+});
+
+const lifetime_display = computed(() => {
+    const lifetime = signature.lifetime !== 'healthy' ? signature.lifetime : selected_connection?.lifetime;
+    switch (lifetime) {
+        case 'eol':
+            return 'End of Life (<4h)';
+        case 'critical':
+            return 'Critical (<1h)';
+        default:
+            return null;
+    }
+});
+
+const current_lifetime = computed(() => {
+    return signature.lifetime !== 'healthy' ? signature.lifetime : selected_connection?.lifetime || 'healthy';
 });
 </script>
 
 <template>
     <Tooltip>
         <TooltipTrigger
-            :data-eol="is_eol"
+            :data-lifetime="current_lifetime"
             :data-mass="selected_connection?.mass_status || signature.mass_status"
             class="time whitespace-nowrap text-neutral-500"
         >
@@ -93,21 +105,52 @@ const eol_ago = computed(() => {
             <p class="">{{ created_date_formatted }}</p>
             <span class="font-semibold">Last modified at</span>
             <p class="">{{ updated_date_formatted }}</p>
-            <template v-if="eol_ago">
-                <span class="font-semibold">Marked as EOL</span>
-                <p class="">{{ eol_ago }}</p>
+            <template v-if="lifetime_ago && lifetime_display">
+                <span class="font-semibold">{{ lifetime_display }}</span>
+                <p class="">{{ lifetime_ago }}</p>
             </template>
         </TooltipContent>
     </Tooltip>
 </template>
 
 <style scoped>
-.time[data-eol='true'][data-mass='critical'] {
+/* Lifetime + Mass combinations with animations */
+.time[data-lifetime='critical'][data-mass='critical'] {
     color: var(--color-red-500);
-    animation: eol-critical 2s infinite;
+    animation: lifetime-critical-mass-critical 2s infinite;
 }
 
-@keyframes eol-critical {
+@keyframes lifetime-critical-mass-critical {
+    0%,
+    100% {
+        color: var(--color-red-500);
+    }
+    50% {
+        color: var(--color-red-700);
+    }
+}
+
+.time[data-lifetime='critical'][data-mass='reduced'] {
+    color: var(--color-red-500);
+    animation: lifetime-critical-mass-reduced 2s infinite;
+}
+
+@keyframes lifetime-critical-mass-reduced {
+    0%,
+    100% {
+        color: var(--color-red-500);
+    }
+    50% {
+        color: var(--color-orange-500);
+    }
+}
+
+.time[data-lifetime='eol'][data-mass='critical'] {
+    color: var(--color-red-500);
+    animation: lifetime-eol-mass-critical 2s infinite;
+}
+
+@keyframes lifetime-eol-mass-critical {
     0%,
     100% {
         color: var(--color-red-500);
@@ -117,12 +160,12 @@ const eol_ago = computed(() => {
     }
 }
 
-.time[data-eol='true'][data-mass='reduced'] {
+.time[data-lifetime='eol'][data-mass='reduced'] {
     color: var(--color-orange-500);
-    animation: eol-heavy 2s infinite;
+    animation: lifetime-eol-mass-reduced 2s infinite;
 }
 
-@keyframes eol-heavy {
+@keyframes lifetime-eol-mass-reduced {
     0%,
     100% {
         color: var(--color-orange-500);
@@ -132,6 +175,16 @@ const eol_ago = computed(() => {
     }
 }
 
+/* Pure lifetime states */
+.time[data-lifetime='critical'] {
+    color: var(--color-red-500);
+}
+
+.time[data-lifetime='eol'] {
+    color: var(--color-purple-500);
+}
+
+/* Pure mass states */
 .time[data-mass='unknown'] {
     color: var(--color-neutral-500);
 }
@@ -142,9 +195,5 @@ const eol_ago = computed(() => {
 
 .time[data-mass='critical'] {
     color: var(--color-red-500);
-}
-
-.time[data-eol='true'] {
-    color: var(--color-purple-500);
 }
 </style>

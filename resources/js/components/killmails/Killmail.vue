@@ -54,6 +54,7 @@ const time_ago = computed(() => {
 });
 
 const total_worth = computed(() => {
+    if (!killmail.zkb?.totalValue) return 'N/A';
     return formatISK(killmail.zkb.totalValue);
 });
 </script>

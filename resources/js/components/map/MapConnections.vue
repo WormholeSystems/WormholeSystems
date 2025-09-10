@@ -76,7 +76,7 @@ function getConnectionExtra(connection: TMapConnection): string {
                 :to="map_connection.target.position!"
                 :extra="getConnectionExtra(map_connection)"
                 :mass_status="map_connection.mass_status"
-                :is_eol="map_connection.marked_as_eol_at !== null"
+                :lifetime="map_connection.lifetime"
                 :is_highlighted="map_connection.is_on_route"
                 @connection-context-menu="(event) => emit('connectionContextMenu', event, map_connection)"
                 @connection-click="(event) => emit('connectionClick', event, map_connection)"

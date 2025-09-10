@@ -123,16 +123,16 @@ const actor = computed(() => {
             />
             <div v-else class="flex size-6 items-center justify-center rounded-lg bg-muted text-muted-foreground">S</div>
         </div>
-        <span v-if="action === 'added'"
+        <span class="inline-block truncate" v-if="action === 'added'"
             ><span class="text-neutral-900 dark:text-neutral-100">{{ actor }}</span> added {{ selectedMapSolarsystem?.name }} to the map
         </span>
-        <span v-else-if="action === 'removed'"
+        <span class="inline-block truncate" v-else-if="action === 'removed'"
             ><span class="text-neutral-900 dark:text-neutral-100">{{ actor }}</span> removed {{ selectedMapSolarsystem?.name }} from the map
         </span>
-        <span v-else-if="action === 'moved'"
+        <span class="inline-block truncate" v-else-if="action === 'moved'"
             ><span class="text-neutral-900 dark:text-neutral-100">{{ actor }}</span> moved {{ selectedMapSolarsystem?.name }} to a new position
         </span>
-        <span v-else-if="action === 'updated'">
+        <span class="inline-block truncate" v-else-if="action === 'updated'">
             <span class="text-neutral-900 dark:text-neutral-100">{{ actor }}</span>
             {{ updated_values }}</span
         >

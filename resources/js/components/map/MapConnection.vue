@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { TMassStatus } from '@/types/models';
+import { TLifetimeStatus, TMassStatus } from '@/types/models';
 import { computed } from 'vue';
 
 type Position = {
@@ -12,11 +12,11 @@ type Props = {
     to: Position;
     extra?: string;
     mass_status?: TMassStatus;
-    is_eol?: boolean;
+    lifetime?: TLifetimeStatus;
     is_highlighted?: boolean;
 };
 
-const { from, to, extra, mass_status, is_eol } = defineProps<Props>();
+const { from, to, extra, mass_status, lifetime } = defineProps<Props>();
 
 const emit = defineEmits<{
     (e: 'connectionContextMenu', event: MouseEvent): void;
@@ -44,22 +44,22 @@ function midPoint(from: Position, to: Position): Position {
 
 function getDashArray() {
     if (!mass_status) return '0';
-    if (is_eol) return '2,6';
+    if (lifetime === 'eol' || lifetime === 'critical') return '2,6';
 }
 </script>
 
 <template>
     <g pointer-events="visiblePainted" class="group text-neutral-300 dark:text-neutral-700">
         <path
-            v-if="mass_status === 'fresh' || is_eol"
+            v-if="mass_status === 'fresh' || lifetime === 'eol' || lifetime === 'critical'"
             :d="curve"
             stroke="currentColor"
             fill="none"
             stroke-width="4"
             :stroke-dasharray="getDashArray()"
-            :data-eol="is_eol"
+            :data-lifetime="lifetime"
             :data-highlighted="is_highlighted"
-            class="cursor-pointer text-neutral-300 transition-colors duration-200 ease-in-out group-hover:text-neutral-200 data-[eol=true]:text-purple-500 data-[highlighted=true]:text-amber-500 dark:text-neutral-700 dark:group-hover:text-neutral-600 dark:data-[eol=true]:text-purple-500 dark:data-[highlighted=true]:text-amber-500"
+            class="cursor-pointer text-neutral-300 transition-colors duration-200 ease-in-out group-hover:text-neutral-200 data-[highlighted=true]:text-amber-500 data-[lifetime=critical]:text-red-500 data-[lifetime=eol]:text-purple-500 dark:text-neutral-700 dark:group-hover:text-neutral-600 dark:data-[highlighted=true]:text-amber-500 dark:data-[lifetime=critical]:text-red-500 dark:data-[lifetime=eol]:text-purple-500"
         />
         <path
             v-if="mass_status !== 'fresh'"
