@@ -22,7 +22,13 @@ final class UpdateMapConnectionAction
     {
         return DB::transaction(function () use ($mapConnection, $data): MapConnection {
 
-            $mapConnection->update($data->toArray());
+            $data_array = $data->toArray();
+
+            if (! $data->lifetime instanceof Optional && $mapConnection->lifetime !== $data->lifetime) {
+                $data_array['lifetime_updated_at'] = now();
+            }
+
+            $mapConnection->update($data_array);
 
             $this->syncMassAndLifetime($mapConnection, $data);
 
