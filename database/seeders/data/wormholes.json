@@ -1202,5 +1202,23 @@
         "total_mass": 2000000000,
         "sibling_groups": [],
         "typeID": 30709
+    },
+    "J492": {
+        "mass_regen": 0,
+        "dest": "ls",
+        "src": [
+            "c1",
+            "c2",
+            "c3",
+            "c4",
+            "c5",
+            "c6"
+        ],
+        "static": false,
+        "max_mass_per_jump": 620000000,
+        "lifetime": 24,
+        "total_mass": 1000000000,
+        "sibling_groups": null,
+        "typeID": 87827
     }
 }

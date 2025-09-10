@@ -296,6 +296,7 @@ const normal_wh_signatures: Record<string, TWormholeDefinition> = {
     C414: { name: 'C414 - Conflux (C17)', signature: 'C414', target_class: 'C17', extra: 'Conflux' },
     E004: { name: 'E004 - C1', signature: 'E004', target_class: 'C1', extra: '' },
     G008: { name: 'G008 - C6', signature: 'G008', target_class: 'C6', extra: '' },
+    J492: { name: 'J492 - L', signature: 'J492', target_class: 'L', extra: '' },
     L005: { name: 'L005 - C2', signature: 'L005', target_class: 'C2', extra: '' },
     M001: { name: 'M001 - C4', signature: 'M001', target_class: 'C4', extra: '' },
     Q003: { name: 'Q003 - 0.0', signature: 'Q003', target_class: 'N', extra: '' },
@@ -445,6 +446,7 @@ export const signature_tree = {
                 wh.N110, // H
                 wh.J244, // L
                 wh.J377, // L (Turnur)
+                wh.J492, // L (universal)
                 wh.Z060, // N
                 wh.Q003, // N (universal)
                 wh.H121, // C1
@@ -490,6 +492,7 @@ export const signature_tree = {
                 wh.B274, // H
                 wh.A239, // L
                 wh.J377, // L (Turnur)
+                wh.J492, // L (universal)
                 wh.E545, // N
                 wh.Q003, // N (universal)
                 wh.Z647, // C1
@@ -536,6 +539,7 @@ export const signature_tree = {
                 wh.D845, // H
                 wh.U210, // L
                 wh.J377, // L (Turnur)
+                wh.J492, // L (universal)
                 wh.K346, // N
                 wh.Q003, // N (universal)
                 wh.V301, // C1
@@ -582,6 +586,7 @@ export const signature_tree = {
                 wh.S047, // H
                 wh.N290, // L
                 wh.J377, // L (Turnur)
+                wh.J492, // L (universal)
                 wh.K329, // N
                 wh.Q003, // N (universal)
                 wh.P060, // C1
@@ -627,6 +632,7 @@ export const signature_tree = {
                 wh.D792, // H
                 wh.C140, // L
                 wh.J377, // L (Turnur)
+                wh.J492, // L (universal)
                 wh.Z142, // N
                 wh.Q003, // N (universal)
                 wh.Y790, // C1
@@ -674,6 +680,7 @@ export const signature_tree = {
                 wh.C391, // L
                 wh.C140, // L (also appears in C5)
                 wh.J377, // L (Turnur)
+                wh.J492, // L (universal)
                 wh.C248, // N
                 wh.Z142, // N (also appears in C5)
                 wh.Q003, // N (universal)
