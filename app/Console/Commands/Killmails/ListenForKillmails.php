@@ -15,6 +15,7 @@ use Illuminate\Container\Attributes\Config;
 use Throwable;
 
 use function sleep;
+use function sprintf;
 
 final class ListenForKillmails extends AppCommand
 {
@@ -56,24 +57,31 @@ final class ListenForKillmails extends AppCommand
                 continue;
             }
 
-            $this->info('Received killmail ID: '.$killmail->killID);
+            $this->info(sprintf('Received killmail ID %d in system %d at %s', $killmail->killID, $killmail->killmail->solar_system_id, $killmail->killmail->killmail_time));
 
-            $killmail = Killmail::query()
-                ->updateOrCreate(
-                    ['id' => $killmail->killID],
-                    [
-                        'hash' => $killmail->zkb->hash,
-                        'solarsystem_id' => $killmail->killmail->solar_system_id,
-                        'time' => $killmail->killmail->killmail_time,
-                        'data' => (array) $killmail->killmail,
-                        'zkb' => (array) $killmail->zkb,
-                    ]
-                );
-
-            sleep(self::ZKILL_RATE_LIMIT_SECONDS);
+            $killmail = $this->processKillmail($killmail);
 
             $this->notifyMaps($killmail);
+
+            sleep(self::ZKILL_RATE_LIMIT_SECONDS);
         }
+
+        $this->info('Stopped listening for killmails.');
+    }
+
+    private function processKillmail(RedisQKillmail $killmail): Killmail
+    {
+        return Killmail::query()
+            ->updateOrCreate(
+                ['id' => $killmail->killID],
+                [
+                    'hash' => $killmail->zkb->hash,
+                    'solarsystem_id' => $killmail->killmail->solar_system_id,
+                    'time' => $killmail->killmail->killmail_time,
+                    'data' => (array) $killmail->killmail,
+                    'zkb' => (array) $killmail->zkb,
+                ]
+            );
     }
 
     /**
@@ -91,7 +99,7 @@ final class ListenForKillmails extends AppCommand
         try {
             $killmail = $zKillboard->listenForKill($identifier);
         } catch (Throwable $e) {
-            $this->error('Error while listening for killmail: '.$e->getMessage());
+            $this->error(sprintf('Error while listening for killmail: %s', $e->getMessage()));
 
             return null;
         }

@@ -11,7 +11,7 @@ use Illuminate\Console\Command;
 use NicolasKion\Esi\DTO\Status;
 use NicolasKion\Esi\Esi;
 
-final class GetServerStatusCommand extends Command
+final class GetServerStatusCommand extends AppCommand
 {
     /**
      * The name and signature of the console command.
