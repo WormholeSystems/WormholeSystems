@@ -7,9 +7,11 @@ import { Button } from '@/components/ui/button';
 import { CardAction, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import MapPanel from '@/components/ui/map-panel/MapPanel.vue';
 import MapPanelContent from '@/components/ui/map-panel/MapPanelContent.vue';
+import SortHeader from '@/components/ui/SortHeader.vue';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { createSignature, deleteSignatures, pasteSignatures, useSignatures } from '@/composables/map';
 import useHasWritePermission from '@/composables/useHasWritePermission';
+import { useSortPreference } from '@/composables/useSortPreference';
 import { signatureParser, TRawSignature } from '@/lib/SignatureParser';
 import { TMapSolarSystem, TSignature } from '@/types/models';
 import { useActiveElement, useEventListener } from '@vueuse/core';
@@ -23,6 +25,8 @@ const { map_solarsystem } = defineProps<{
 const { relevant_signatures, connections } = useSignatures();
 
 const can_write = useHasWritePermission();
+
+const { sortPreferences, updateSortPreferences } = useSortPreference('signatures');
 
 const pasted_signatures = ref<Partial<TSignature>[] | null>();
 const new_signatures = computed(() => {
@@ -45,28 +49,56 @@ const deleted_signatures = computed(() => {
     return getDeletedSignatures(pasted_signatures.value);
 });
 
+function compareNullableStrings(a: string | null, b: string | null): number {
+    if (!a && !b) return 0;
+
+    if (!a) return 1;
+
+    if (!b) return -1;
+
+    return a.localeCompare(b);
+}
+
+function getSortComparison(
+    a: TSignature & { deleted: boolean; new: boolean; updated: boolean },
+    b: TSignature & { deleted: boolean; new: boolean; updated: boolean },
+): number {
+    let primaryComparison = 0;
+
+    switch (sortPreferences.value.column) {
+        case 'id':
+            primaryComparison = compareNullableStrings(a.signature_id, b.signature_id);
+            break;
+        case 'category':
+            primaryComparison = compareNullableStrings(a.category, b.category);
+            break;
+        case 'type':
+            primaryComparison = compareNullableStrings(a.type, b.type);
+            break;
+        default:
+            primaryComparison = 0;
+    }
+
+    const directedPrimaryComparison = sortPreferences.value.direction === 'desc' ? -primaryComparison : primaryComparison;
+
+    if (primaryComparison === 0) {
+        return compareNullableStrings(a.signature_id, b.signature_id);
+    }
+
+    return directedPrimaryComparison;
+}
+
 const signatures = computed(() => {
-    return map_solarsystem
-        .signatures!.map((sig) => ({
-            ...sig,
-            deleted: isSignatureDeleted(sig),
-            new: isSignatureNew(sig),
-            updated: isSignatureUpdated(sig),
-        }))
-        .sort((a, b) => {
-            if (a.signature_id && b.signature_id) {
-                return a.signature_id.localeCompare(b.signature_id);
-            }
-            if (a.signature_id) {
-                return -1;
-            }
+    const enriched_signatures = map_solarsystem.signatures!.map((sig) => ({
+        ...sig,
+        deleted: isSignatureDeleted(sig),
+        new: isSignatureNew(sig),
+        updated: isSignatureUpdated(sig),
+    }));
 
-            if (b.signature_id) {
-                return 1;
-            }
-
-            return 0;
-        });
+    return enriched_signatures.sort((a, b) => {
+        return getSortComparison(a, b);
+    });
 });
 
 const connected_connections = computed(() => {
@@ -96,6 +128,19 @@ watch(
         pasted_signatures.value = null;
     },
 );
+
+function handleSort(column: string) {
+    const sortColumn = column as 'id' | 'category' | 'type';
+    let newDirection: 'asc' | 'desc';
+
+    if (sortPreferences.value.column === sortColumn) {
+        newDirection = sortPreferences.value.direction === 'asc' ? 'desc' : 'asc';
+    } else {
+        newDirection = 'asc';
+    }
+
+    updateSortPreferences(sortColumn, newDirection);
+}
 
 async function handlePaste() {
     const signatures = await getSignaturesFromClipboard();
@@ -234,9 +279,27 @@ useEventListener('paste', (event) => {
             <div class="overflow-hidden rounded-lg border">
                 <div class="grid grid-cols-[auto_1fr_1fr_1fr_auto_auto] gap-x-2 divide-y">
                     <div class="col-span-full grid grid-cols-subgrid border-b bg-muted/50 px-2 py-1.5 text-xs font-medium text-muted-foreground">
-                        <div class="text-left">ID</div>
-                        <div class="text-left">Category</div>
-                        <div class="text-left">Type</div>
+                        <SortHeader
+                            label="ID"
+                            column="id"
+                            :is-current-column="sortPreferences.column === 'id'"
+                            :current-direction="sortPreferences.direction"
+                            @sort="handleSort"
+                        />
+                        <SortHeader
+                            label="Category"
+                            column="category"
+                            :is-current-column="sortPreferences.column === 'category'"
+                            :current-direction="sortPreferences.direction"
+                            @sort="handleSort"
+                        />
+                        <SortHeader
+                            label="Type"
+                            column="type"
+                            :is-current-column="sortPreferences.column === 'type'"
+                            :current-direction="sortPreferences.direction"
+                            @sort="handleSort"
+                        />
                         <div class="text-left">Connection</div>
                         <div class="text-left">Age</div>
                         <div></div>

@@ -32,6 +32,9 @@ export type AppPageProps<T extends Record<string, unknown> = Record<string, unkn
     };
     layout: TLayout;
     server_status: TServerStatus;
+    sort_preferences: {
+        signatures: SortPreference;
+    };
 };
 
 export interface User {
@@ -42,5 +45,10 @@ export interface User {
     created_at: string;
     updated_at: string;
 }
+
+export type SortPreference = {
+    column: string;
+    direction: 'asc' | 'desc';
+};
 
 export type BreadcrumbItemType = BreadcrumbItem;

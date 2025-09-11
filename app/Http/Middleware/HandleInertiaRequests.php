@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\DTO\SortPreference;
+use App\DTO\SortPreferences;
+use App\Enums\SortDirection;
 use App\Http\Resources\CharacterResource;
 use App\Http\Resources\UserResource;
 use App\Models\ServerStatus;
@@ -17,6 +20,8 @@ use Inertia\Inertia;
 use Inertia\Middleware;
 use NicolasKion\Esi\Enums\EsiScope;
 use Throwable;
+
+use function json_encode;
 
 final class HandleInertiaRequests extends Middleware
 {
@@ -67,6 +72,7 @@ final class HandleInertiaRequests extends Middleware
                 'invite' => config('services.discord.invite'),
             ],
             'layout' => $this->getLayout($request),
+            'sort_preferences' => $this->getSortPreferences($request),
             'server_status' => fn () => ServerStatus::query()->latest()->first(),
         ];
     }
@@ -133,5 +139,38 @@ final class HandleInertiaRequests extends Middleware
         Cookie::make('layout', json_encode($layout), 60 * 24 * 365); // 1 year
 
         return $layout;
+    }
+
+    private function getSortPreferences(Request $request): SortPreferences
+    {
+        $cookie = $request->cookie('sort_preferences');
+
+        if ($cookie) {
+            return $this->parseSortPreferencesCookie($cookie);
+        }
+
+        return $this->createSortPreferencesCookie();
+    }
+
+    private function parseSortPreferencesCookie(string $cookie): SortPreferences
+    {
+        try {
+            $preferences = json_decode($cookie, true, 512, JSON_THROW_ON_ERROR);
+
+            return SortPreferences::fromArray($preferences);
+        } catch (Throwable) {
+            return $this->createSortPreferencesCookie();
+        }
+    }
+
+    private function createSortPreferencesCookie(): SortPreferences
+    {
+        $preferences = new SortPreferences(
+            signatures: new SortPreference(column: 'id', direction: SortDirection::DESC),
+        );
+
+        Cookie::queue(Cookie::make('sort_preferences', json_encode($preferences->toArray()), 60 * 24 * 365, secure: false, httpOnly: false, raw: true));
+
+        return $preferences;
     }
 }
