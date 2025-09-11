@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Builders\MapConnectionBuilder;
 use App\Enums\LifetimeStatus;
 use App\Enums\MassStatus;
 use App\Enums\ShipSize;
 use Carbon\CarbonImmutable;
 use Database\Factories\MapConnectionFactory;
 use DateTimeImmutable;
+use Illuminate\Database\Eloquent\Attributes\UseEloquentBuilder;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -38,6 +40,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read Collection<int, Signature> $signatures
  */
 #[UseFactory(MapConnectionFactory::class)]
+#[UseEloquentBuilder(MapConnectionBuilder::class)]
 final class MapConnection extends Model
 {
     /** @use HasFactory<MapConnectionFactory> */
