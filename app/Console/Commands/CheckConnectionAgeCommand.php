@@ -95,6 +95,10 @@ final class CheckConnectionAgeCommand extends AppCommand
 
     private function calculateLifetimeStatus(MapConnection $connection): LifetimeStatus
     {
+        if ($connection->lifetime === LifetimeStatus::EndOfLife) {
+            return $this->calculateLifetimeStatusForEolConnection($connection);
+        }
+
         $createdAt = $connection->connected_at ?? $connection->created_at;
         $hoursAlive = now()->diffInHours($createdAt, absolute: true);
 
@@ -121,6 +125,17 @@ final class CheckConnectionAgeCommand extends AppCommand
             $hoursAlive >= 23 => LifetimeStatus::Critical, // <1h remaining
             $hoursAlive >= 20 => LifetimeStatus::EndOfLife, // <4h remaining
             default => LifetimeStatus::Healthy,
+        };
+    }
+
+    private function calculateLifetimeStatusForEolConnection(MapConnection $connection): LifetimeStatus
+    {
+        $marked_as_eol_at = $connection->lifetime_updated_at;
+        $time_passed = now()->diffInHours($marked_as_eol_at, absolute: true);
+
+        return match (true) {
+            $time_passed >= 3 => LifetimeStatus::Critical, // <1h remaining
+            default => LifetimeStatus::EndOfLife, // <4h remaining
         };
     }
 
