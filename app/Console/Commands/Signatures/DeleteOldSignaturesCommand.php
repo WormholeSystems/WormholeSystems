@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace App\Console\Commands\Signatures;
 
 use App\Actions\Signatures\DeleteSignatureAction;
+use App\Console\Commands\AppCommand;
 use App\Enums\SignatureCategory;
 use App\Models\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
-final class DeleteOldSignaturesCommand extends Command
+final class DeleteOldSignaturesCommand extends AppCommand
 {
     public const int SIGNATURE_LIFETIME_DAYS = 7;
 
