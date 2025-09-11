@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Console\Commands\Sovereignty;
 
+use App\Console\Commands\AppCommand;
 use App\Jobs\Sovereignty\GetSovereignties;
-use Illuminate\Console\Command;
 
-final class GetSovereigntiesCommand extends Command
+final class GetSovereigntiesCommand extends AppCommand
 {
     /**
      * The name and signature of the console command.
