@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Builders\EsiTokenBuilder;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Attributes\UseEloquentBuilder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -25,6 +27,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property-read Character $character
  * @property-read Collection<int, EsiScope> $scopes
  */
+#[UseEloquentBuilder(EsiTokenBuilder::class)]
 final class EsiToken extends Model implements \NicolasKion\Esi\Interfaces\EsiToken
 {
     protected $casts = [
