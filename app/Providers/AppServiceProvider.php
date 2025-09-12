@@ -54,12 +54,6 @@ final class AppServiceProvider extends ServiceProvider
             $event->extendSocialite('eveonline', Provider::class);
         });
 
-        ParallelTesting::setUpTestDatabase(function (): void {
-            Artisan::call('db:restore', [
-                '--database' => 'test_database',
-            ]);
-        });
-
         Gate::policy(PersonalAccessToken::class, PersonalAccessTokenPolicy::class);
 
         $this->registerScheduleMacros();
