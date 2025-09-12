@@ -20,10 +20,9 @@ const user = useUser();
 
 const page = usePage();
 
-// SEO data for Landing page (only override what's different from defaults)
 const seoData = {
-    title: 'Get started',
-    description: 'The modern mapping platform for the wormhole community. Built for capsuleers by capsuleers.',
+    title: 'WormholeSystems - The new wormhole mapping tool',
+    description: 'Map and navigate wormhole space with ease using WormholeSystems, the modern mapping platform for capsuleers.',
     keywords: 'wormhole, mapping, eve online, capsuleers, community, navigation',
 };
 </script>
