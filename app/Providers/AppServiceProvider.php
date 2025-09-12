@@ -64,7 +64,7 @@ final class AppServiceProvider extends ServiceProvider
 
     private function registerNotificationMacro(): void
     {
-        RedirectResponse::macro('notify', function (string $title, string $message = '', string $type = 'success') {
+        RedirectResponse::macro('notify', function (string $title, string $message = '', string $type = 'success', ?array $action = null) {
             if (request()->boolean('silent')) {
                 return $this;
             }
@@ -73,7 +73,13 @@ final class AppServiceProvider extends ServiceProvider
                 'title' => $title,
                 'message' => $message,
                 'type' => $type,
-            ]);
+            ];
+
+            if ($action !== null) {
+                $notification['action'] = $action;
+            }
+
+            return $this->with('notification', $notification);
         });
     }
 
