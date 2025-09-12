@@ -1,5 +1,7 @@
 <script lang="ts" setup>
 import { Toaster as Sonner, type ToasterProps } from 'vue-sonner';
+import { buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 const props = defineProps<ToasterProps>();
 </script>
@@ -16,6 +18,7 @@ const props = defineProps<ToasterProps>();
                 description: 'text-sm mt-2',
                 icon: 'hidden',
                 closeButton: 'hidden',
+                actionButton: cn(buttonVariants({variant: 'default'}), 'mt-4')
             }
         }"
         descriptionClass="text-neutral-400"

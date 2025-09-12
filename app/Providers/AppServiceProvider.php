@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\DTO\CTA;
 use App\Models\ServerStatus;
 use App\Policies\PersonalAccessTokenPolicy;
 use App\Services\RouteService;
@@ -64,7 +65,7 @@ final class AppServiceProvider extends ServiceProvider
 
     private function registerNotificationMacro(): void
     {
-        RedirectResponse::macro('notify', function (string $title, string $message = '', string $type = 'success', ?array $action = null) {
+        RedirectResponse::macro('notify', function (string $title, string $message = '', string $type = 'success', ?CTA $action = null): RedirectResponse {
             if (request()->boolean('silent')) {
                 return $this;
             }
@@ -75,8 +76,8 @@ final class AppServiceProvider extends ServiceProvider
                 'type' => $type,
             ];
 
-            if ($action !== null) {
-                $notification['action'] = $action;
+            if ($action instanceof CTA) {
+                $notification['action'] = $action->toArray();
             }
 
             return $this->with('notification', $notification);
