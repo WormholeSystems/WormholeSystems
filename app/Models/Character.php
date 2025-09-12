@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Builders\CharacterBuilder;
 use Carbon\CarbonImmutable;
 use Database\Factories\CharacterFactory;
+use Illuminate\Database\Eloquent\Attributes\UseEloquentBuilder;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,10 +16,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Illuminate\Support\Facades\DB;
 use NicolasKion\Esi\Enums\EsiScope;
 use NicolasKion\Esi\Interfaces\EsiToken;
-use Throwable;
+use Staudenmeir\EloquentHasManyDeep\HasManyDeep;
+use Staudenmeir\EloquentHasManyDeep\HasRelationships;
 
 /**
  * Character model representing a character in the game.
@@ -50,27 +52,18 @@ use Throwable;
  * @property-read Solarsystem|null $solarsystem
  * @property-read CharacterStatus|null $characterStatus
  * @property-read Collection<int,MapAccess> $mapAccesses
+ * @property-read Collection<int,\App\Models\EsiScope> $esiScopes
  */
 #[UseFactory(CharacterFactory::class)]
+#[UseEloquentBuilder(CharacterBuilder::class)]
 final class Character extends Model implements \NicolasKion\Esi\Interfaces\Character
 {
     /** @use HasFactory<CharacterFactory> */
     use HasFactory;
 
-    public $incrementing = false;
+    use HasRelationships;
 
-    /**
-     * @param  int[]  $ids
-     *
-     * @throws Throwable
-     */
-    public static function createFromIds(array $ids): void
-    {
-        DB::transaction(fn () => self::query()->upsert(
-            collect($ids)->map(fn ($id): array => ['id' => $id])->toArray(),
-            ['id']
-        ), 5);
-    }
+    public $incrementing = false;
 
     /**
      * @return BelongsTo<Race,$this>
@@ -151,6 +144,14 @@ final class Character extends Model implements \NicolasKion\Esi\Interfaces\Chara
         return $this->esiTokens()
             ->whereRelation('esiScopes', 'name', $scope)
             ->first();
+    }
+
+    public function esiScopes(): HasManyDeep
+    {
+        return $this->hasManyDeepFromRelations(
+            $this->esiTokens(),
+            new \App\Models\EsiToken()->esiScopes()
+        );
     }
 
     public function getId(): int
