@@ -15,6 +15,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Sanctum\PersonalAccessToken;
@@ -48,6 +49,8 @@ final class AppServiceProvider extends ServiceProvider
 
         Vite::useAggressivePrefetching();
 
+        URL::forceHttps();
+
         Date::use(CarbonImmutable::class);
 
         Event::listen(function (SocialiteWasCalled $event): void {
@@ -66,7 +69,7 @@ final class AppServiceProvider extends ServiceProvider
                 return $this;
             }
 
-            return $this->with('notification', [
+            $notification = [
                 'title' => $title,
                 'message' => $message,
                 'type' => $type,
