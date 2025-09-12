@@ -7,14 +7,15 @@ namespace App\Providers;
 use App\Models\ServerStatus;
 use App\Policies\PersonalAccessTokenPolicy;
 use App\Services\RouteService;
-use Artisan;
+use Carbon\CarbonImmutable;
 use Illuminate\Console\Scheduling\Event as ScheduledEvent;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\ParallelTesting;
+use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Sanctum\PersonalAccessToken;
 use SocialiteProviders\Eveonline\Provider;
@@ -41,7 +42,13 @@ final class AppServiceProvider extends ServiceProvider
 
         $this->registerNotificationMacro();
 
+        Model::shouldBeStrict();
+        Model::unguard();
         Model::automaticallyEagerLoadRelationships();
+
+        Vite::useAggressivePrefetching();
+
+        Date::use(CarbonImmutable::class);
 
         Event::listen(function (SocialiteWasCalled $event): void {
             $event->extendSocialite('eveonline', Provider::class);
