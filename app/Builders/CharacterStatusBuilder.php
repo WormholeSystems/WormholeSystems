@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Builders;
 
 use App\Models\CharacterStatus;
-use App\Scopes\CharacterHasRequiredScopes;
 use Illuminate\Database\Eloquent\Builder;
 use NicolasKion\Esi\Enums\EsiScope;
 
@@ -32,12 +31,11 @@ final class CharacterStatusBuilder extends Builder
 
     public function hasRequiredScopes(): self
     {
-        return $this->whereHas('character', fn (Builder $query) => $query
-            ->tap(new CharacterHasRequiredScopes([
-                EsiScope::ReadOnlineStatus,
-                EsiScope::ReadLocations,
-                EsiScope::ReadShip,
-            ])));
+        return $this->whereHas('character', fn (CharacterBuilder $query): CharacterBuilder => $query->hasTokenWithScopes([
+            EsiScope::ReadOnlineStatus,
+            EsiScope::ReadShip,
+            EsiScope::ReadLocations,
+        ]));
     }
 
     public function doesntHaveRequiredScopes(): self
