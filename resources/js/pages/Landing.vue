@@ -62,13 +62,21 @@ const seoData = {
                             <br class="hidden sm:block" />
                             Built for capsuleers by capsuleers.
                         </p>
-                        <div class="mt-12 flex items-center justify-center gap-6">
-                            <Button asChild size="lg" v-if="!user">
-                                <a :href="Eve.show().url" class="inline-flex items-center gap-2">
-                                    Get Started
-                                    <ArrowRight class="h-4 w-4" />
-                                </a>
-                            </Button>
+                        <div class="mt-12 flex flex-wrap items-center justify-center gap-6">
+                            <template v-if="!user">
+                                <Button asChild size="lg">
+                                    <a :href="Eve.show().url" class="inline-flex items-center gap-2">
+                                        Sign in
+                                        <ArrowRight class="h-4 w-4" />
+                                    </a>
+                                </Button>
+                                <Button asChild size="lg" variant="secondary">
+                                    <a :href="Eve.show({ query: { without_scopes: true } }).url" class="inline-flex items-center gap-2">
+                                        Sign in without scopes
+                                        <ArrowRight class="h-4 w-4" />
+                                    </a>
+                                </Button>
+                            </template>
                             <Button asChild size="lg" v-else>
                                 <Link :href="home()" class="inline-flex items-center gap-2">
                                     Explore Maps

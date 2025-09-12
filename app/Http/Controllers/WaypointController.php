@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Actions\SetWaypointAction;
+use App\DTO\CTA;
 use App\Http\Requests\SetWaypointRequest;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\RedirectResponse;
-use NicolasKion\Esi\Enums\EsiScope;
 
 final class WaypointController extends Controller
 {
@@ -19,8 +19,13 @@ final class WaypointController extends Controller
     {
         $validated = $request->validated();
 
-        if (! $request->character->esiTokens()->whereRelation('esiScopes', 'name', EsiScope::WriteWaypoint)->exists()) {
-            return back()->notify('Missing ESI scope', message: 'Please reauthenticate your character to set waypoints.', type: 'error');
+        if ($request->character->esiTokens()->hasWaypointScopes()->doesntExist()) {
+            return back()->notify(
+                'Additional Permission Required',
+                message: 'To set waypoints, you need to grant waypoint permissions for this character.',
+                type: 'warning',
+                action: CTA::make()->title('Manage permission')->url(route('scopes.index'))
+            );
         }
 
         $setWaypointAction->handle($request->character, $validated);

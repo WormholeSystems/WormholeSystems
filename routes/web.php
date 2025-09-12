@@ -19,6 +19,7 @@ use App\Http\Controllers\MapSolarsystemController;
 use App\Http\Controllers\MapUserSettingController;
 use App\Http\Controllers\PasteSignatureController;
 use App\Http\Controllers\PingController;
+use App\Http\Controllers\ScopeController;
 use App\Http\Controllers\SignatureController;
 use App\Http\Controllers\StatisticsController;
 use App\Http\Controllers\TokenManagementController;
@@ -73,6 +74,12 @@ Route::middleware('auth')->group(function () {
     Route::post('tracking', [TrackingController::class, 'store'])->name('tracking.store');
 
     Route::post('waypoints', [WaypointController::class, 'store'])->name('waypoints.store');
+
+    Route::prefix('scopes')->name('scopes.')->group(function () {
+        Route::get('/', [ScopeController::class, 'index'])->name('index');
+        Route::get('add', [ScopeController::class, 'show'])->name('show');
+        Route::delete('{character}', [ScopeController::class, 'destroy'])->name('destroy');
+    });
 
     Route::resource('map-route-solarsystems', MapRouteSolarsystemController::class)->only(['store', 'update', 'destroy']);
     Route::resource('map-user-settings', MapUserSettingController::class)->only(['update']);

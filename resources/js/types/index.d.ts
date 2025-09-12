@@ -35,6 +35,7 @@ export type AppPageProps<T extends Record<string, unknown> = Record<string, unkn
     sort_preferences: {
         signatures: SortPreference;
     };
+    missing_scopes: TCharacter[];
 };
 
 export interface User {

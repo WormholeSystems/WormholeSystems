@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import MapController from '@/actions/App/Http/Controllers/MapController';
+import ScopeController from '@/actions/App/Http/Controllers/ScopeController';
 import DiscordIcon from '@/components/icons/DiscordIcon.vue';
 import { CharacterImage } from '@/components/images';
 import Breadcrumbs from '@/components/navigation/Breadcrumbs.vue';
@@ -6,7 +8,6 @@ import ServerStatus from '@/components/ServerStatus.vue';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { NavigationMenu, NavigationMenuItem, NavigationMenuList, navigationMenuTriggerStyle } from '@/components/ui/navigation-menu';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import UserMenuContent from '@/components/UserMenuContent.vue';
@@ -17,7 +18,7 @@ import { home } from '@/routes';
 import type { AppPageProps, BreadcrumbItem, NavItem } from '@/types';
 import { TCharacter } from '@/types/models';
 import { Link, usePage } from '@inertiajs/vue3';
-import { AlertTriangle, LayoutGrid, Menu } from 'lucide-vue-next';
+import { AlertTriangle, LayoutGrid, Menu, Shield } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 interface Props {
@@ -44,7 +45,7 @@ const activeItemStyles = computed(
 const mainNavItems: NavItem[] = [
     {
         title: 'Maps',
-        href: '/maps',
+        href: MapController.index().url,
         icon: LayoutGrid,
     },
     {
@@ -54,8 +55,6 @@ const mainNavItems: NavItem[] = [
         isExternal: true,
     },
 ];
-
-const rightNavItems: NavItem[] = [];
 </script>
 
 <template>
@@ -102,41 +101,32 @@ const rightNavItems: NavItem[] = [];
                                         </template>
                                     </nav>
                                     <div class="flex flex-col space-y-4">
-                                        <!-- Missing scopes alert for mobile -->
-                                        <div v-if="user && page.props.missing_scopes.length" class="border-t border-sidebar-border/50 pt-4">
-                                            <div class="mb-2 flex items-center space-x-2">
-                                                <AlertTriangle class="h-4 w-4 text-red-500" />
-                                                <div class="text-xs font-medium text-red-700 dark:text-red-400">Missing ESI Scopes</div>
-                                            </div>
-                                            <div class="mb-2 text-xs text-muted-foreground">Characters needing re-authorization:</div>
-                                            <ul class="mb-2 space-y-1">
-                                                <li
-                                                    v-for="character in page.props.missing_scopes"
-                                                    :key="character.id"
-                                                    class="flex items-center space-x-2 text-xs"
-                                                >
-                                                    <div class="h-1.5 w-1.5 rounded-full bg-red-500"></div>
-                                                    <span class="font-medium">{{ character.name }}</span>
-                                                </li>
-                                            </ul>
-                                            <div class="text-xs text-muted-foreground">Please re-authorize to restore functionality.</div>
+                                        <!-- Scopes status for mobile -->
+                                        <div v-if="user" class="border-t border-sidebar-border/50 pt-4">
+                                            <Button
+                                                :variant="page.props.missing_scopes.length ? 'destructive' : 'ghost'"
+                                                size="sm"
+                                                as-child
+                                                class="w-full justify-start"
+                                            >
+                                                <Link :href="ScopeController.index()" class="flex items-center space-x-3">
+                                                    <AlertTriangle v-if="page.props.missing_scopes.length" class="h-4 w-4" />
+                                                    <Shield v-else class="h-4 w-4" />
+                                                    <span class="text-sm font-medium">
+                                                        {{
+                                                            page.props.missing_scopes.length
+                                                                ? `Missing Scopes (${page.props.missing_scopes.length})`
+                                                                : 'Manage Scopes'
+                                                        }}
+                                                    </span>
+                                                </Link>
+                                            </Button>
                                         </div>
 
                                         <div class="border-t border-sidebar-border/50 pt-4">
                                             <div class="mb-2 text-xs text-muted-foreground">Server Status</div>
                                             <ServerStatus />
                                         </div>
-                                        <a
-                                            v-for="item in rightNavItems"
-                                            :key="item.title"
-                                            :href="item.href"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            class="flex items-center space-x-2 text-sm font-medium"
-                                        >
-                                            <component v-if="item.icon" :is="item.icon" class="h-5 w-5" />
-                                            <span>{{ item.title }}</span>
-                                        </a>
                                     </div>
                                 </div>
                             </SheetContent>
@@ -187,67 +177,36 @@ const rightNavItems: NavItem[] = [];
 
                 <!-- Right: Actions -->
                 <div class="flex items-center justify-end space-x-1 sm:space-x-2 md:col-start-3">
-                    <!-- Missing scopes alert -->
-                    <template v-if="user && page.props.missing_scopes.length">
-                        <Popover>
-                            <PopoverTrigger as-child>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    class="h-9 w-9 text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/20"
-                                >
-                                    <span class="sr-only">Missing ESI scopes</span>
-                                    <AlertTriangle class="h-4 w-4" />
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent class="w-80" align="end">
-                                <div class="space-y-3">
-                                    <div class="flex items-center space-x-2">
-                                        <AlertTriangle class="h-5 w-5 text-red-500" />
-                                        <h4 class="font-semibold text-red-700 dark:text-red-400">Missing ESI Scopes</h4>
-                                    </div>
-                                    <div class="text-sm text-muted-foreground">
-                                        <p class="mb-2">The following characters need to be re-authorized with updated permissions:</p>
-                                        <ul class="space-y-1">
-                                            <li
-                                                v-for="character in page.props.missing_scopes"
-                                                :key="character.id"
-                                                class="flex items-center space-x-2"
-                                            >
-                                                <div class="h-2 w-2 rounded-full bg-red-500"></div>
-                                                <span class="font-medium">{{ character.name }}</span>
-                                            </li>
-                                        </ul>
-                                        <p class="mt-3 text-xs text-muted-foreground">
-                                            Please re-authorize these characters to restore full functionality.
+                    <!-- Scopes status button -->
+                    <template v-if="user">
+                        <TooltipProvider :delay-duration="0">
+                            <Tooltip>
+                                <TooltipTrigger as-child>
+                                    <Button :variant="page.props.missing_scopes.length ? 'destructive' : 'outline'" size="icon" as-child>
+                                        <Link :href="ScopeController.index()">
+                                            <AlertTriangle v-if="page.props.missing_scopes.length" class="h-4 w-4" />
+                                            <Shield v-else class="h-4 w-4" />
+                                            <span class="sr-only">
+                                                {{ page.props.missing_scopes.length ? 'Missing ESI scopes' : 'Manage ESI scopes' }}
+                                            </span>
+                                        </Link>
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <template v-if="page.props.missing_scopes.length">
+                                        <p class="font-medium">
+                                            {{ page.props.missing_scopes.length }} character{{ page.props.missing_scopes.length === 1 ? '' : 's' }}
+                                            missing scopes for some features
                                         </p>
-                                    </div>
-                                </div>
-                            </PopoverContent>
-                        </Popover>
+                                        <p class="mt-1 text-xs text-muted-foreground">Click to manage ESI scopes</p>
+                                    </template>
+                                    <template v-else>
+                                        <p>Manage ESI scopes</p>
+                                    </template>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
                     </template>
-
-                    <!-- Right nav items (desktop only) -->
-                    <div class="hidden items-center space-x-1 lg:flex">
-                        <template v-for="item in rightNavItems" :key="item.title">
-                            <TooltipProvider :delay-duration="0">
-                                <Tooltip>
-                                    <TooltipTrigger>
-                                        <Button variant="ghost" size="icon" as-child class="group h-9 w-9 cursor-pointer">
-                                            <a :href="item.href" target="_blank" rel="noopener noreferrer">
-                                                <span class="sr-only">{{ item.title }}</span>
-                                                <component :is="item.icon" class="size-5 opacity-80 group-hover:opacity-100" />
-                                            </a>
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>{{ item.title }}</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        </template>
-                    </div>
-
                     <Appearance />
 
                     <!-- User menu -->

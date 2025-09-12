@@ -6,9 +6,9 @@ import Audits from '@/components/audits/Audits.vue';
 import MapCharacters from '@/components/characters/MapCharacters.vue';
 import QuestionIcon from '@/components/icons/QuestionIcon.vue';
 import MapKillmails from '@/components/killmails/MapKillmails.vue';
+import LocationVisibility from '@/components/map/LocationVisibility.vue';
 import MapComponent from '@/components/map/MapComponent.vue';
 import MapSearch from '@/components/map/MapSearch.vue';
-import MapUserSetting from '@/components/map/MapUserSetting.vue';
 import Tracker from '@/components/map/Tracker.vue';
 import Autopilot from '@/components/routes/Autopilot.vue';
 import SeoHead from '@/components/SeoHead.vue';
@@ -79,6 +79,7 @@ useOnClient(() =>
                     <MapComponent :map :config />
                     <MapSearch :map :search :solarsystems v-if="hasWriteAccess" />
                     <div class="absolute top-4 right-4 flex gap-2">
+                        <LocationVisibility :map_user_settings="map_user_settings" :key="character?.id" v-if="hasWriteAccess" />
                         <Tracker :map_user_settings="map_user_settings" :character :map :key="character?.id" v-if="hasWriteAccess" />
                         <Tooltip>
                             <TooltipTrigger>
@@ -125,7 +126,6 @@ useOnClient(() =>
                 </div>
             </div>
         </div>
-        <MapUserSetting :map_user_setting="map.map_user_setting" v-if="map.map_user_setting" />
     </AppLayout>
 </template>
 <style></style>

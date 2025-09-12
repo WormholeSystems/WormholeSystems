@@ -51,6 +51,8 @@ function requestConnectSolarsystem(old_solarsystem_id: number | null, new_solars
 }
 
 function handleToggleTracking() {
+    if (!map_user_settings.tracking_allowed) return;
+
     updateMapUserSettings(map_user_settings, {
         is_tracking: !map_user_settings.is_tracking,
     });
@@ -70,16 +72,32 @@ function addCurrentSolarsystem() {
 <template>
     <Tooltip>
         <TooltipTrigger>
-            <Button @click="handleToggleTracking" :variant="map_user_settings.is_tracking ? 'default' : 'secondary'" size="icon">
+            <Button
+                @click="handleToggleTracking"
+                :variant="map_user_settings.is_tracking && character && map_user_settings.tracking_allowed ? 'default' : 'secondary'"
+                :disabled="!character || !map_user_settings.tracking_allowed"
+                size="icon"
+            >
                 <TrackingIcon />
             </Button>
         </TooltipTrigger>
         <TooltipContent side="bottom">
-            <p class="text-sm">Tracking</p>
-            <p class="text-xs text-muted-foreground">
-                {{ map_user_settings.is_tracking ? 'Enabled' : 'Disabled' }} - Automatically track solarsystem changes
-            </p>
-            <p class="text-xs text-muted-foreground">Current Solarsystem: {{ character?.status?.solarsystem?.name || 'Unknown' }}</p>
+            <template v-if="!character">
+                <p class="text-sm font-medium text-red-500">Tracking Unavailable</p>
+                <p class="text-xs text-muted-foreground">You must have an active character that is online and has scopes granted</p>
+            </template>
+            <template v-else-if="!map_user_settings.tracking_allowed">
+                <p class="text-sm font-medium text-red-500">Tracking Unavailable</p>
+                <p class="text-xs text-muted-foreground">Location sharing must be enabled to use tracking</p>
+                <p class="text-xs text-muted-foreground">Click the eye icon to enable location sharing</p>
+            </template>
+            <template v-else>
+                <p class="text-sm">Tracking</p>
+                <p class="text-xs text-muted-foreground">
+                    {{ map_user_settings.is_tracking ? 'Enabled' : 'Disabled' }} - Automatically track solarsystem changes
+                </p>
+                <p class="text-xs text-muted-foreground">Current Solarsystem: {{ character?.status?.solarsystem?.name || 'Unknown' }}</p>
+            </template>
         </TooltipContent>
     </Tooltip>
 </template>

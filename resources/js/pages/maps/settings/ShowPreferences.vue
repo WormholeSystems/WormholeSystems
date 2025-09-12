@@ -15,7 +15,7 @@ const { map, map_user_settings } = defineProps<{
 }>();
 
 function updateMapUserSettings(settings: Partial<TMapUserSetting>) {
-    router.put(MapUserSettings.update(map.slug), settings, {
+    router.put(MapUserSettings.update(map_user_settings.id), settings, {
         preserveScroll: true,
     });
 }

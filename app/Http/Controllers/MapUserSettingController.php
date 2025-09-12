@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Actions\UpdateMapUserSettingRequestAction;
 use App\Http\Requests\UpdateMapUserSettingRequest;
 use App\Models\MapUserSetting;
+use Illuminate\Http\RedirectResponse;
 use Throwable;
 
 final class MapUserSettingController extends Controller
@@ -14,7 +15,7 @@ final class MapUserSettingController extends Controller
     /**
      * @throws Throwable
      */
-    public function update(UpdateMapUserSettingRequest $request, MapUserSetting $mapUserSetting, UpdateMapUserSettingRequestAction $action)
+    public function update(UpdateMapUserSettingRequest $request, MapUserSetting $mapUserSetting, UpdateMapUserSettingRequestAction $action): RedirectResponse
     {
         $action->handle($mapUserSetting, $request->validated());
 
