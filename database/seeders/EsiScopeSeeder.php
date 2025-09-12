@@ -15,6 +15,7 @@ final class EsiScopeSeeder extends Seeder
     public function run(): void
     {
         $defaultScopes = [
+            EsiScope::PublicData,
             EsiScope::ReadLocations,
             EsiScope::ReadShip,
             EsiScope::ReadOnlineStatus,

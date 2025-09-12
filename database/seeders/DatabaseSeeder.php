@@ -20,6 +20,5 @@ final class DatabaseSeeder extends Seeder
         $this->call(WormholeEffectSeeder::class);
         $this->call(WormholeSeeder::class);
         $this->call(WormholeSystemSeeder::class);
-        $this->call(MapSeeder::class);
     }
 }
