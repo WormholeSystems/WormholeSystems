@@ -33,10 +33,18 @@ final class EveController extends Controller
         $user->active_character = $character;
 
         if ($account_id) {
+            if ($redirect = Session::pull('redirect_to')) {
+                return redirect($redirect)->notify('Account Updated', message: 'Your character has been added to your account.');
+            }
+
             return to_route('home')->notify('Account Updated', message: 'Your character has been added to your account.');
         }
 
         $redirect = redirect()->intended(route('home'))->getTargetUrl();
+
+        if (Session::has('redirect_to')) {
+            $redirect = Session::pull('redirect_to');
+        }
 
         return redirect($redirect)->notify('Welcome back!', message: sprintf('We have successfully logged you in, %s.', $character->name));
     }
