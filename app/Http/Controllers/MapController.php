@@ -235,6 +235,7 @@ final class MapController extends Controller
         $map_solarsystem = $this->getSelectedSolarsystem($map, $map_solarsystem_id);
 
         return Character::query()
+            ->hasTokenWithTrackingScopes()
             ->with('characterStatus')
             ->tap(new UserAllowedMapTracking($map))
             ->tap(new CharacterHasMapAccess($map))
