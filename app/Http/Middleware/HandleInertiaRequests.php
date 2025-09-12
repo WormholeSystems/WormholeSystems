@@ -11,14 +11,12 @@ use App\Http\Resources\CharacterResource;
 use App\Http\Resources\UserResource;
 use App\Models\ServerStatus;
 use App\Models\User;
-use App\Scopes\CharacterDoesntHaveRequiredScopes;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Cookie;
 use Inertia\Inertia;
 use Inertia\Middleware;
-use NicolasKion\Esi\Enums\EsiScope;
 use Throwable;
 
 use function json_encode;
@@ -87,11 +85,7 @@ final class HandleInertiaRequests extends Middleware
         }
 
         $characters_with_missing_scopes = $this->user->characters()
-            ->tap(new CharacterDoesntHaveRequiredScopes([
-                EsiScope::ReadOnlineStatus,
-                EsiScope::ReadLocations,
-                EsiScope::ReadShip,
-            ]))
+            ->doesntHaveTokenWithTrackingScopes()
             ->get();
 
         return $characters_with_missing_scopes->toResourceCollection(CharacterResource::class);
