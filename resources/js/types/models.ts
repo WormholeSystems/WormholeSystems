@@ -217,6 +217,7 @@ export type TCharacter = {
     faction: TFaction | null;
     status: TCharacterStatus | null;
     route?: TSolarsystem[]; // Fastest route
+    esi_scopes?: string[];
 };
 
 export type TCharacterStatus = {
@@ -250,6 +251,7 @@ export type TMapUserSetting = {
     route_allow_mass_status: TMassStatus;
     route_use_evescout: boolean;
     killmail_filter: 'all' | 'jspace' | 'kspace';
+    introduction_confirmed_at: string | null;
 };
 
 export type TShipHistory = {

@@ -13,6 +13,7 @@ use App\Http\Controllers\MapController;
 use App\Http\Controllers\MapPreferencesController;
 use App\Http\Controllers\MapRouteSolarsystemController;
 use App\Http\Controllers\MapRoutingSettingsController;
+use App\Http\Controllers\MapScopeController;
 use App\Http\Controllers\MapSelectionController;
 use App\Http\Controllers\MapSettingsController;
 use App\Http\Controllers\MapSolarsystemController;
@@ -80,6 +81,8 @@ Route::middleware('auth')->group(function () {
         Route::get('add', [ScopeController::class, 'show'])->name('show');
         Route::delete('{character}', [ScopeController::class, 'destroy'])->name('destroy');
     });
+
+    Route::get('maps/{map}/scopes/add', [MapScopeController::class, 'show'])->name('map-scopes.show');
 
     Route::resource('map-route-solarsystems', MapRouteSolarsystemController::class)->only(['store', 'update', 'destroy']);
     Route::resource('map-user-settings', MapUserSettingController::class)->only(['update']);

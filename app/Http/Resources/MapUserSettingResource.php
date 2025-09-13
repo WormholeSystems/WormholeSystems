@@ -30,6 +30,7 @@ final class MapUserSettingResource extends JsonResource
             'route_allow_mass_status' => $this->route_allow_mass_status,
             'route_use_evescout' => $this->route_use_evescout,
             'killmail_filter' => $this->killmail_filter,
+            'introduction_confirmed_at' => $this->introduction_confirmed_at?->toISOString(),
         ];
     }
 }

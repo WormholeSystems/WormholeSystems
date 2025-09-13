@@ -70,13 +70,12 @@ const open = ref(false);
                         <DialogTitle> Manage Map Tracking Consent</DialogTitle>
                         <DialogDescription>
                             <p v-if="map.map_user_setting?.tracking_allowed">
-                                You have consented to allow tracking of your location on this map. This is necessary for accurate map features and
-                                updates. If you change your mind, you can revoke this consent by clicking the button below. Keep in mind that revoking
-                                consent will result in you no longer being able to use this map until you provide consent again.
+                                You have consented to allow tracking of your location on this map. Other users may see your location and movements. If
+                                you want to revoke this consent, click the button below.
                             </p>
                             <p v-else>
-                                You have not consented to allow tracking of your location on this map. This is necessary for accurate map features and
-                                updates. If you want to use this map, you must provide consent by clicking the button below.
+                                You have not consented to allow tracking of your location on this map. Other users will not see your location and
+                                movements, but you won't be able to use certain features. If you want to provide consent, click the button below.
                             </p>
                         </DialogDescription>
                     </DialogHeader>

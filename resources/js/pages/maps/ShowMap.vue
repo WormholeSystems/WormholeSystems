@@ -8,6 +8,7 @@ import QuestionIcon from '@/components/icons/QuestionIcon.vue';
 import MapKillmails from '@/components/killmails/MapKillmails.vue';
 import LocationVisibility from '@/components/map/LocationVisibility.vue';
 import MapComponent from '@/components/map/MapComponent.vue';
+import MapIntroduction from '@/components/map/MapIntroduction.vue';
 import MapSearch from '@/components/map/MapSearch.vue';
 import Tracker from '@/components/map/Tracker.vue';
 import Autopilot from '@/components/routes/Autopilot.vue';
@@ -23,7 +24,7 @@ import useIsMapOwner from '@/composables/useIsMapOwner';
 import { useOnClient } from '@/composables/useOnClient';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { TShowMapProps } from '@/pages/maps/index';
-import { Link, router } from '@inertiajs/vue3';
+import { Link, router, usePage } from '@inertiajs/vue3';
 import { echo } from '@laravel/echo-vue';
 import { Settings } from 'lucide-vue-next';
 import { computed } from 'vue';
@@ -43,6 +44,14 @@ const {
 const character = useActiveMapCharacter();
 const hasWriteAccess = useHasWritePermission();
 const isOwner = useIsMapOwner();
+const page = usePage();
+
+// Get user scopes from auth data
+const userScopes = computed(() => {
+    const user = page.props.auth?.user;
+    if (!user?.active_character?.esi_scopes) return [];
+    return user.active_character.esi_scopes;
+});
 
 const settingsUrl = computed(() => {
     if (isOwner.value) {
@@ -71,6 +80,14 @@ useOnClient(() =>
             :title="map.name"
             :description="`Explore the ${map.name} wormhole mapping network. Navigate dangerous wormhole space with real-time intel, signature tracking, and collaborative mapping tools.`"
             keywords="wormhole map, eve online navigation, wormhole signatures, space exploration, real-time intel"
+        />
+
+        <!-- Introduction Modal -->
+        <MapIntroduction
+            :mapUserSettings="map_user_settings"
+            :userScopes="userScopes"
+            :isVisible="!map_user_settings.introduction_confirmed_at"
+            :mapSlug="map.slug"
         />
 
         <div class="space-y-4 p-4">
