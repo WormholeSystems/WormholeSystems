@@ -46,6 +46,13 @@ const currentYear = format(new UTCDate(), 'yyyy');
                             Sign in with EVE Online
                         </a>
                     </Button>
+                    <Separator />
+                    <Button asChild class="w-full" size="lg" variant="outline">
+                        <a :href="Eve.show({ query: { without_scopes: true } }).url" class="flex items-center justify-center gap-3">
+                            <LockIcon />
+                            Sign in without scopes
+                        </a>
+                    </Button>
 
                     <!-- Info Section -->
                     <div class="text-center text-sm text-muted-foreground">
