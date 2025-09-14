@@ -118,7 +118,7 @@ function handleMassStatusChange(mass_status: string) {
             <div
                 class="size-2 shrink-0 rounded-full bg-red-500 data-[incomplete=true]:bg-amber-500 data-[scanned=true]:bg-green-500"
                 :data-scanned="Boolean(signature.signature_id && signature.category && signature.type)"
-                :data-incomplete="!signature.signature_id || !signature.category || !signature.type"
+                :data-incomplete="Boolean(signature_id && (signature.category || signature.type))"
             />
             <SignatureID
                 v-model="signature_id"
