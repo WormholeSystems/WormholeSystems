@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Throwable;
 
+use function in_array;
+
 /**
  * @mixin MapSolarsystem
  */
@@ -47,7 +49,21 @@ final class MapSolarsystemResource extends JsonResource
             'signatures_count' => $this->whenCounted('signatures', fn () => $this->signatures_count),
             'audits' => $this->whenLoaded('audits', fn () => $this->audits->toResourceCollection(AuditResource::class)),
             'wormholes' => $this->whenLoaded('wormholes', fn () => $this->wormholes->toResourceCollection(WormholeResource::class)),
-            'notes' => $this->notes,
+            'notes' => $this->getNotes(),
         ];
+    }
+
+    /**
+     * Get the notes for the map.
+     */
+    private function getNotes(): ?string
+    {
+        $hidden = $this->getHidden();
+
+        if (in_array('notes', $hidden, true)) {
+            return null;
+        }
+
+        return $this->notes;
     }
 }

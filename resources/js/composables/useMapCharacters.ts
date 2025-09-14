@@ -6,11 +6,11 @@ import { computed } from 'vue';
 export function useMapCharacters() {
     const page = usePage<
         AppPageProps<{
-            map_characters: TCharacter[];
+            map_characters: TCharacter[] | null;
         }>
     >();
 
     return computed(() => {
-        return page.props.map_characters;
+        return page.props.map_characters || [];
     });
 }

@@ -37,10 +37,11 @@ export type TShowMapProps = {
     config: TMapConfig;
     selected_map_solarsystem: TMapSolarSystem | null;
     map_killmails?: TKillmail[];
-    map_characters: TCharacter[];
+    map_characters: TCharacter[] | null;
     map_route_solarsystems?: TMapRouteSolarsystem[];
-    ship_history: TShipHistory[];
+    ship_history: TShipHistory[] | null;
     has_write_access: boolean;
+    has_guest_access: boolean;
     layout: TLayout;
     map_user_settings: TMapUserSetting;
     shortest_path?: TShortestPath | null;

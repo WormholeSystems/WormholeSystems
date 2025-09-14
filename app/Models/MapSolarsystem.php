@@ -120,6 +120,13 @@ final class MapSolarsystem extends Model implements \OwenIt\Auditing\Contracts\A
         );
     }
 
+    public function hideNotes(bool $hide = true): self
+    {
+        $this->makeHiddenIf($hide, 'notes');
+
+        return $this;
+    }
+
     protected function casts(): array
     {
         return [

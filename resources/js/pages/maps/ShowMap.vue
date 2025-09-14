@@ -39,6 +39,7 @@ const {
     ignored_systems,
     map_characters,
     closest_systems,
+    has_guest_access,
 } = defineProps<TShowMapProps>();
 
 const character = useActiveMapCharacter();
@@ -86,7 +87,7 @@ useOnClient(() =>
         <MapIntroduction
             :mapUserSettings="map_user_settings"
             :userScopes="userScopes"
-            :isVisible="!map_user_settings.introduction_confirmed_at"
+            :isVisible="!map_user_settings.introduction_confirmed_at && !has_guest_access"
             :mapSlug="map.slug"
         />
 
@@ -115,17 +116,26 @@ useOnClient(() =>
             </div>
             <div class="grid grid-cols-10 content-start items-start gap-4">
                 <div class="col-span-10 grid gap-4 lg:col-span-5 2xl:col-span-4">
-                    <SolarsystemDetails v-if="selected_map_solarsystem" :map_solarsystem="selected_map_solarsystem" :map :map_route_solarsystems />
+                    <SolarsystemDetails
+                        v-if="selected_map_solarsystem"
+                        :map_solarsystem="selected_map_solarsystem"
+                        :map
+                        :map_route_solarsystems
+                        :hide_notes="has_guest_access"
+                    />
                     <div class="flex flex-col items-center justify-center gap-8 rounded-lg border border-dashed p-16 text-neutral-700" v-else>
                         <QuestionIcon class="text-4xl" />
                         <p class="text-center">Select a solarsystem to see more details</p>
                     </div>
                     <Signatures :map :map_solarsystem="selected_map_solarsystem" v-if="selected_map_solarsystem" />
-                    <Audits :audits="selected_map_solarsystem?.audits" v-if="selected_map_solarsystem && selected_map_solarsystem.audits" />
-                    <ShipHistory />
+                    <Audits
+                        :audits="selected_map_solarsystem?.audits"
+                        v-if="selected_map_solarsystem && selected_map_solarsystem.audits && !has_guest_access"
+                    />
+                    <ShipHistory v-if="!has_guest_access" />
                 </div>
                 <div class="col-span-10 grid gap-4 lg:col-span-5 2xl:col-span-3">
-                    <MapCharacters :map_characters />
+                    <MapCharacters :map_characters v-if="map_characters" />
                     <MapKillmails :map_killmails="map_killmails" :map_id="map.id" :map_user_settings="map_user_settings" />
                 </div>
                 <div class="col-span-10 2xl:col-span-3">
@@ -134,7 +144,7 @@ useOnClient(() =>
                         :map
                         :solarsystems
                         :selected_map_solarsystem
-                        :map_characters
+                        :map_characters="map_characters"
                         :map_user_settings
                         :shortest_path
                         :ignored_systems

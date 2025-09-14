@@ -10,5 +10,5 @@ export function useActiveMapCharacter() {
     const user = useUser();
     const page = useShowMap();
 
-    return computed(() => page.props.map_characters.find((c) => c.id === user.value.active_character.id));
+    return computed(() => page.props.map_characters?.find((c) => c.id === user.value.active_character.id));
 }

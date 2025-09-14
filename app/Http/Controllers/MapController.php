@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Actions\Map\CreateMapAction;
 use App\Actions\Map\UpdateMapAction;
 use App\Enums\KillmailFilter;
+use App\Enums\Permission;
 use App\Http\Requests\StoreMapRequest;
 use App\Http\Requests\UpdateMapRequest;
 use App\Http\Resources\CharacterResource;
@@ -76,9 +77,11 @@ final class MapController extends Controller
 
         $map_killmails = Inertia::defer(fn (): ResourceCollection => $this->getMapKills($map, $settings->killmail_filter));
 
-        $map_characters = fn (): ResourceCollection => $this->getMapCharacters($map, $selected_map_solarsystem_id, $settings);
+        $canViewCharacters = Gate::allows('viewCharacters', $map);
 
-        $ship_history = fn (): ResourceCollection => $this->getShipHistory();
+        $map_characters = fn (): ?ResourceCollection => $canViewCharacters ? $this->getMapCharacters($map, $selected_map_solarsystem_id, $settings) : null;
+
+        $ship_history = fn (): ?ResourceCollection => $canViewCharacters ? $this->getShipHistory() : null;
 
         $map_route_solarsystems = Inertia::defer(fn (): array => $this->getMapRouteSolarsystems($map, $settings, $selected_map_solarsystem_id));
 
@@ -102,6 +105,7 @@ final class MapController extends Controller
             'map_route_solarsystems' => $map_route_solarsystems,
             'ship_history' => $ship_history,
             'has_write_access' => Gate::allows('update', $map),
+            'has_guest_access' => $map->getUserPermission($this->user) === Permission::Guest,
             'map_user_settings' => fn (): JsonResource => $settings->toResource(),
             'ignored_systems' => fn (): array => $this->getIgnoredSystems(),
             'shortest_path' => $shortest_path,
@@ -206,10 +210,13 @@ final class MapController extends Controller
             return null;
         }
 
+        $isGuest = $map->getUserPermission($this->user) === Permission::Guest;
+
         return $map->mapSolarsystems()
             ->with('signatures', 'wormholes')
-            ->with('audits', fn (Relation $query) => $query->latest())
-            ->findOrFail($solarsystem_id);
+            ->when(! $isGuest, fn ($query) => $query->with('audits', fn (Relation $query) => $query->latest()))
+            ->findOrFail($solarsystem_id)
+            ->hideNotes($isGuest);
     }
 
     /**

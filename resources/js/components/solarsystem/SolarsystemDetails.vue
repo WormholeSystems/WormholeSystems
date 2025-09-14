@@ -23,10 +23,11 @@ import markdownit from 'markdown-it';
 import attr from 'markdown-it-link-attributes';
 import { computed, ref, watch } from 'vue';
 
-const { map_solarsystem, map_route_solarsystems } = defineProps<{
+const { map_solarsystem, map_route_solarsystems, hide_notes } = defineProps<{
     map_solarsystem: TMapSolarSystem;
     map_route_solarsystems?: TMapRouteSolarsystem[];
     map: TMap;
+    hide_notes?: boolean;
 }>();
 
 const can_write = useHasWritePermission();
@@ -194,7 +195,7 @@ watch(
                 </Deferred>
             </div>
         </CardHeader>
-        <MapPanelContent inner-class="p-4">
+        <MapPanelContent inner-class="p-4" v-if="!hide_notes">
             <form @submit.prevent="handleSubmit" class="w-full">
                 <div class="mb-4 flex justify-between gap-4">
                     <h3 class="mr-auto text-lg font-semibold">Notes</h3>

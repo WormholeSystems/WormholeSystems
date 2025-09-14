@@ -29,6 +29,13 @@ final class MapPolicy
         return $map->mapAccessors()->whereIn('accessible_id', $user->getAccessibleIds())->exists();
     }
 
+    public function viewCharacters(User $user, Map $map): bool
+    {
+        $permission = $map->getUserPermission($user);
+
+        return $permission !== Permission::Guest;
+    }
+
     public function create(): bool
     {
         return true;
@@ -36,7 +43,9 @@ final class MapPolicy
 
     public function update(User $user, Map $map): bool
     {
-        return $map->mapAccessors()->whereIn('accessible_id', $user->getAccessibleIds())->where('permission', Permission::Write)->exists();
+        $permission = $map->getUserPermission($user);
+
+        return $permission === Permission::Write;
     }
 
     public function delete(User $user, Map $map): bool

@@ -18,7 +18,7 @@ type TEntity = {
     id: number;
     name: string;
     type: 'character' | 'corporation' | 'alliance';
-    permission: 'read' | 'write' | null;
+    permission: 'guest' | 'read' | 'write' | null;
 };
 
 const { map, entities, entitiesWithAccess } = defineProps<{
@@ -29,7 +29,7 @@ const { map, entities, entitiesWithAccess } = defineProps<{
 
 const search = useSearch();
 
-function toggleAccess(entity: TEntity, permission: 'read' | 'write' | null) {
+function toggleAccess(entity: TEntity, permission: 'guest' | 'read' | 'write' | null) {
     router.post(
         MapAccessController.store(map.slug),
         {
@@ -108,6 +108,13 @@ function toggleAccess(entity: TEntity, permission: 'read' | 'write' | null) {
                                                     <EyeIcon class="size-3" />
                                                     Read Access
                                                 </div>
+                                                <div
+                                                    v-else-if="entity.permission === 'guest'"
+                                                    class="inline-flex items-center gap-1 rounded-full bg-gray-500/10 px-2 py-1 text-xs font-medium text-gray-500"
+                                                >
+                                                    <EyeIcon class="size-3" />
+                                                    Guest Access
+                                                </div>
                                             </div>
                                         </TableCell>
                                     </TableRow>
@@ -125,7 +132,21 @@ function toggleAccess(entity: TEntity, permission: 'read' | 'write' | null) {
                 </CardHeader>
                 <CardContent>
                     <div class="space-y-4">
-                        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                            <div class="rounded-lg border border-border/50 bg-muted/30 p-4">
+                                <div class="mb-3 flex items-center gap-2">
+                                    <EyeIcon />
+                                    <h4 class="font-medium">Guest Access</h4>
+                                </div>
+                                <ul class="space-y-1 text-sm text-muted-foreground">
+                                    <li>• View map and systems</li>
+                                    <li>• See signatures and connections</li>
+                                    <li>• Cannot see character locations</li>
+                                    <li>• Cannot see audits or ship history</li>
+                                    <li>• Cannot see or edit notes</li>
+                                    <li>• Cannot make any changes</li>
+                                </ul>
+                            </div>
                             <div class="rounded-lg border border-border/50 bg-muted/30 p-4">
                                 <div class="mb-3 flex items-center gap-2">
                                     <EyeIcon />
@@ -199,6 +220,13 @@ function toggleAccess(entity: TEntity, permission: 'read' | 'write' | null) {
                                         <TableCell class="capitalize">{{ entity.type }}</TableCell>
                                         <TableCell>
                                             <div class="flex items-center gap-6">
+                                                <Label class="flex cursor-pointer items-center gap-2 text-sm">
+                                                    <Checkbox
+                                                        :model-value="entity.permission === 'guest'"
+                                                        @update:modelValue="toggleAccess(entity, entity.permission === 'guest' ? null : 'guest')"
+                                                    />
+                                                    Guest
+                                                </Label>
                                                 <Label class="flex cursor-pointer items-center gap-2 text-sm">
                                                     <Checkbox
                                                         :model-value="entity.permission === 'read' || entity.permission === 'write'"

@@ -41,4 +41,11 @@ final class MapAccess extends Model
     {
         return $this->belongsTo(Map::class);
     }
+
+    protected function casts(): array
+    {
+        return [
+            'permission' => Permission::class,
+        ];
+    }
 }

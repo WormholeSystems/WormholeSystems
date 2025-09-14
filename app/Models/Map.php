@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\Permission;
 use App\Traits\HasSlug;
 use Carbon\CarbonImmutable;
 use Database\Factories\MapFactory;
@@ -88,5 +89,18 @@ final class Map extends Model
         return $this->hasOne(MapUserSetting::class, 'map_id')
             ->where('user_id', auth()->id())
             ->ofMany();
+    }
+
+    /**
+     * Get the user's permission level for this map.
+     */
+    public function getUserPermission(User $user): ?Permission
+    {
+        $access = $this->mapAccessors()
+            ->whereIn('accessible_id', $user->getAccessibleIds())
+            ->orderByRaw("CASE WHEN permission = 'write' THEN 1 WHEN permission = 'read' THEN 2 WHEN permission = 'guest' THEN 3 ELSE 4 END")
+            ->first();
+
+        return $access?->permission;
     }
 }

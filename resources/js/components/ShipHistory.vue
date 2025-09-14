@@ -31,7 +31,7 @@ const page = usePage<AppPageProps<TShowMapProps>>();
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    <TableRow v-for="ship_history in page.props.ship_history" :key="ship_history.id">
+                    <TableRow v-for="ship_history in page.props.ship_history || []" :key="ship_history.id">
                         <TableCell>
                             <TypeImage
                                 :type_id="ship_history.ship_type_id"

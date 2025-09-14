@@ -7,11 +7,14 @@ namespace App\Http\Controllers\Api;
 use App\Actions\MapSolarsystem\DeleteMapSolarsystemAction;
 use App\Actions\MapSolarsystem\StoreMapSolarsystemAction;
 use App\Actions\MapSolarsystem\UpdateMapSolarsystemAction;
+use App\Enums\Permission;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreMapSolarsystemRequest;
 use App\Http\Requests\UpdateMapSolarsystemRequest;
 use App\Http\Resources\MapSolarsystemResource;
 use App\Models\MapSolarsystem;
+use App\Models\User;
+use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,6 +22,10 @@ use Throwable;
 
 final class MapSolarsystemController extends Controller
 {
+    public function __construct(
+        #[CurrentUser] private readonly User $user
+    ) {}
+
     /**
      * @throws Throwable
      */
@@ -27,6 +34,9 @@ final class MapSolarsystemController extends Controller
         Gate::authorize('view', $mapSolarsystem);
 
         $mapSolarsystem->load('signatures');
+
+        $isGuest = $mapSolarsystem->map->getUserPermission($this->user) === Permission::Guest;
+        $mapSolarsystem->hideNotes($isGuest);
 
         return response()->json([
             'data' => $mapSolarsystem->toResource(MapSolarsystemResource::class),
