@@ -4669,16 +4669,16 @@
         },
         {
             "name": "nicolaskion/sde",
-            "version": "v0.1.11",
+            "version": "v0.1.12",
             "source": {
                 "type": "git",
                 "url": "https://github.com/NicolasKion/SDE.git",
-                "reference": "675b23d4f6fcb7f486144f7afb4439cd2665b979"
+                "reference": "e3a0cefe2048fa86380af8525b19f81ee0d33e48"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/NicolasKion/SDE/zipball/675b23d4f6fcb7f486144f7afb4439cd2665b979",
-                "reference": "675b23d4f6fcb7f486144f7afb4439cd2665b979",
+                "url": "https://api.github.com/repos/NicolasKion/SDE/zipball/e3a0cefe2048fa86380af8525b19f81ee0d33e48",
+                "reference": "e3a0cefe2048fa86380af8525b19f81ee0d33e48",
                 "shasum": ""
             },
             "require": {
@@ -4728,7 +4728,7 @@
             ],
             "support": {
                 "issues": "https://github.com/NicolasKion/SDE/issues",
-                "source": "https://github.com/NicolasKion/SDE/tree/v0.1.11"
+                "source": "https://github.com/NicolasKion/SDE/tree/v0.1.12"
             },
             "funding": [
                 {
@@ -4744,7 +4744,7 @@
                     "type": "patreon"
                 }
             ],
-            "time": "2025-09-12T09:17:13+00:00"
+            "time": "2025-09-13T09:31:07+00:00"
         },
         {
             "name": "nikic/php-parser",
@@ -12466,16 +12466,16 @@
         },
         {
             "name": "phpstan/phpstan",
-            "version": "2.1.24",
+            "version": "2.1.25",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpstan/phpstan.git",
-                "reference": "5a9f28e9ec3fe8b1b7cbd42b3935a66b569f2ff2"
+                "reference": "4087d28bd252895874e174d65e26b2c202ed893a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/5a9f28e9ec3fe8b1b7cbd42b3935a66b569f2ff2",
-                "reference": "5a9f28e9ec3fe8b1b7cbd42b3935a66b569f2ff2",
+                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/4087d28bd252895874e174d65e26b2c202ed893a",
+                "reference": "4087d28bd252895874e174d65e26b2c202ed893a",
                 "shasum": ""
             },
             "require": {
@@ -12520,7 +12520,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2025-09-12T07:54:24+00:00"
+            "time": "2025-09-12T14:26:42+00:00"
         },
         {
             "name": "phpunit/php-code-coverage",
