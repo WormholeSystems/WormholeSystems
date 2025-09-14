@@ -28,7 +28,7 @@ const { map_route_solarsystems, map, solarsystems, map_characters, selected_map_
         solarsystems: TSolarsystem[];
         map_route_solarsystems?: TMapRouteSolarsystem[];
         selected_map_solarsystem?: TMapSolarSystem | null;
-        map_characters?: TCharacter[];
+        map_characters: TCharacter[] | null;
         shortest_path?: TShortestPath | null;
         ignored_systems: number[];
         closest_systems?: TClosestSystems | null;
