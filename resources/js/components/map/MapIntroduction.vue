@@ -6,7 +6,18 @@ import { Switch } from '@/components/ui/switch';
 import { updateMapUserSettings } from '@/composables/map';
 import { TMapUserSetting } from '@/types/models';
 import { useLocalStorage } from '@vueuse/core';
-import { ArrowLeft, ArrowRight, CheckCircle, ExternalLink, Eye, MapPin, Route, Settings, Shield, Zap } from 'lucide-vue-next';
+import {
+    ArrowLeft,
+    ArrowRight,
+    CheckCircle,
+    ExternalLink,
+    Eye,
+    MapPin,
+    Route,
+    Settings,
+    Shield,
+    Zap
+} from 'lucide-vue-next';
 import { computed } from 'vue';
 
 const props = defineProps<{
@@ -135,7 +146,7 @@ const stepDescriptions = [
                         <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
                             <MapPin class="h-8 w-8 text-primary" />
                         </div>
-                        <h3 class="text-lg font-semibold">Welcome to Wormhole Mapping!</h3>
+                        <h3 class="text-lg font-semibold">Welcome to WormholeSystems!</h3>
                         <p class="mx-auto max-w-md text-muted-foreground">
                             This quick setup will help you get the most out of your mapping experience. We'll guide you through granting permissions
                             and configuring your preferences.
@@ -335,11 +346,17 @@ const stepDescriptions = [
                         <ArrowRight class="h-4 w-4" />
                     </Button>
                     <template v-else-if="currentStep === 2">
-                        <Button as-child class="gap-2">
-                            <a :href="missingScopesLink"> Grant all </a>
-                        </Button>
-                        <Button @click="nextStep" variant="outline" class="gap-2">
-                            Skip for now
+                        <template v-if="missingScopes.length > 0">
+                            <Button as-child class="gap-2">
+                                <a :href="missingScopesLink"> Grant all </a>
+                            </Button>
+                            <Button @click="nextStep" variant="outline" class="gap-2">
+                                Skip for now
+                                <ArrowRight class="h-4 w-4" />
+                            </Button>
+                        </template>
+                        <Button @click="nextStep" class="gap-2" v-else>
+                            Next
                             <ArrowRight class="h-4 w-4" />
                         </Button>
                     </template>
