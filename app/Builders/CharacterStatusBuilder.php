@@ -8,6 +8,7 @@ use App\Models\CharacterStatus;
 use Illuminate\Database\Eloquent\Builder;
 use NicolasKion\Esi\Enums\EsiScope;
 
+use function assert;
 use function now;
 
 /**
@@ -31,11 +32,15 @@ final class CharacterStatusBuilder extends Builder
 
     public function hasRequiredScopes(): self
     {
-        return $this->whereHas('character', fn (CharacterBuilder $query): CharacterBuilder => $query->hasTokenWithScopes([
-            EsiScope::ReadOnlineStatus,
-            EsiScope::ReadShip,
-            EsiScope::ReadLocations,
-        ]));
+        return $this->whereHas('character', function (Builder $query): CharacterBuilder {
+            assert($query instanceof CharacterBuilder);
+
+            return $query->hasTokenWithScopes([
+                EsiScope::ReadOnlineStatus,
+                EsiScope::ReadShip,
+                EsiScope::ReadLocations,
+            ]);
+        });
     }
 
     public function doesntHaveRequiredScopes(): self

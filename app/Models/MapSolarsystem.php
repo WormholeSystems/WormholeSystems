@@ -24,8 +24,8 @@ use Staudenmeir\EloquentHasManyDeep\HasRelationships;
  * @property int $id
  * @property int $map_id
  * @property int $solarsystem_id
- * @property string $alias
- * @property string $occupier_alias
+ * @property string|null $alias
+ * @property string|null $occupier_alias
  * @property float|null $position_x
  * @property float|null $position_y
  * @property MapSolarsystemStatus $status
@@ -113,11 +113,11 @@ final class MapSolarsystem extends Model implements \OwenIt\Auditing\Contracts\A
 
     public function wormholes(): HasManyDeep
     {
-        return $this->hasManyDeepFromRelations([
+        return $this->hasManyDeepFromRelations(
             $this->wormholeSystem(),
             new WormholeSystem()->wormholeStatics(),
             new WormholeStatic()->wormhole(),
-        ]);
+        );
     }
 
     protected function casts(): array
