@@ -89,7 +89,8 @@ function addCurrentSolarsystem() {
             </template>
             <template v-else-if="!character">
                 <p class="text-sm font-medium text-red-500">Character Status Unknown</p>
-                <p class="text-xs text-muted-foreground">You must have an active character that is online and has scopes granted</p>
+                <p class="max-w-sm text-xs text-muted-foreground">You must have an active character that is online and has scopes granted</p>
+                <p class="max-w-sm text-xs text-muted-foreground">Note: It might take a minute for the character to show up</p>
             </template>
             <template v-else>
                 <p class="text-sm">Tracking</p>
