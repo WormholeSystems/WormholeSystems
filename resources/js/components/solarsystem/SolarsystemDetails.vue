@@ -47,6 +47,16 @@ const md = markdownit({
     breaks: true,
 });
 
+const dotlan_link = computed(() => {
+    const region = map_solarsystem.solarsystem?.region?.name.replace(' ', '_');
+    const name = map_solarsystem.name.replace(' ', '_');
+    if (map_solarsystem.class) {
+        return `https://evemaps.dotlan.net/system/${name}`;
+    }
+
+    return `https://evemaps.dotlan.net/map/${region}/${name}`;
+});
+
 md.use(attr, {
     attrs: {
         target: '_blank',
@@ -149,7 +159,7 @@ watch(
                         <span>zKillboard</span>
                     </a>
                     <a
-                        :href="`https://evemaps.dotlan.net/system/${map_solarsystem.name}`"
+                        :href="dotlan_link"
                         target="_blank"
                         class="flex items-center gap-1 text-muted-foreground transition-colors hover:text-foreground"
                         rel="noopener"
