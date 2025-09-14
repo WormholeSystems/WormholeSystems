@@ -3,7 +3,6 @@ import Character from '@/components/characters/Character.vue';
 import { CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import MapPanel from '@/components/ui/map-panel/MapPanel.vue';
 import MapPanelContent from '@/components/ui/map-panel/MapPanelContent.vue';
-import { Table, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { TCharacter } from '@/types/models';
 import { computed } from 'vue';
 
@@ -51,22 +50,22 @@ function isCovertOps(character: TCharacter) {
             <CardTitle>Characters</CardTitle>
             <CardDescription> See what characters are flying and where they are located in the map solarsystems. </CardDescription>
         </CardHeader>
-        <MapPanelContent>
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead> Pilot</TableHead>
-                        <TableHead> Ship</TableHead>
-                        <TableHead> Location</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TransitionGroup name="list">
-                    <Character v-for="character in sorted_characters" :key="character.id" :character />
-                </TransitionGroup>
-                <TableRow v-if="!sorted_characters?.length">
-                    <TableCell colspan="3" class="text-center text-muted-foreground"> No characters found </TableCell>
-                </TableRow>
-            </Table>
+        <MapPanelContent inner-class="border-0 bg-transparent">
+            <div class="relative max-h-200 overflow-x-hidden overflow-y-scroll mask-b-from-90% mask-alpha pr-1">
+                <div class="@container rounded-lg border bg-white dark:bg-neutral-900/40">
+                    <div class="grid grid-cols-[auto_auto_auto] gap-x-2 text-xs">
+                        <div class="col-span-full grid grid-cols-subgrid border-b bg-muted/50 px-2 py-1.5 text-xs font-medium text-muted-foreground">
+                            <span>Pilot</span>
+                            <span>Ship</span>
+                            <span>Location</span>
+                        </div>
+                        <TransitionGroup name="list">
+                            <Character v-for="character in sorted_characters" :key="character.id" :character />
+                        </TransitionGroup>
+                        <div v-if="!sorted_characters?.length" class="col-span-full p-2 text-center text-muted-foreground">No characters found</div>
+                    </div>
+                </div>
+            </div>
         </MapPanelContent>
     </MapPanel>
 </template>

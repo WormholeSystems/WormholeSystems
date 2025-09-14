@@ -4,7 +4,6 @@ import { CharacterImage } from '@/components/images';
 import TypeImage from '@/components/images/TypeImage.vue';
 import RoutePopover from '@/components/routes/RoutePopover.vue';
 import { Button } from '@/components/ui/button';
-import { TableCell, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMapSolarsystems } from '@/composables/map';
 import { usePath } from '@/composables/usePath';
@@ -55,57 +54,56 @@ function onRouteHover(hovered: boolean) {
 </script>
 
 <template>
-    <TableRow ref="row" v-element-hover="onHover" :data-inactive="is_inactive" class="data-[inactive=true]:opacity-50">
-        <DestinationContextMenu :solarsystem_id="character.status?.solarsystem_id ?? 0">
-            <div class="contents">
-                <TableCell>
-                    <div class="flex gap-2">
-                        <CharacterImage :character_id="character.id" :character_name="character.name" class="size-6 rounded-lg" />
-                        {{ character.name }}
-                    </div>
-                </TableCell>
-                <TableCell>
-                    <div class="flex items-center">
-                        <Tooltip>
-                            <TooltipTrigger as-child>
-                                <span v-if="character.status?.ship_type" class="flex items-center gap-2">
-                                    <TypeImage
-                                        :type_id="character.status.ship_type.id"
-                                        :type_name="character.status.ship_type.name"
-                                        class="size-6 rounded-lg"
-                                    />
-                                    {{ character.status.ship_type.name }}</span
-                                >
-                                <span v-else>Unknown Ship</span>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <span v-if="character.status?.ship_name">{{ character.status.ship_name }}</span>
-                                <span v-else>Unknown Ship Name</span>
-                            </TooltipContent>
-                        </Tooltip>
-                    </div>
-                </TableCell>
-                <TableCell>
-                    <RoutePopover :route="character.route">
-                        <Button variant="secondary" v-element-hover="onRouteHover">
-                            <span v-if="map_solarsystem && map_solarsystem.alias" class="flex items-center gap-2">
-                                <span>{{ map_solarsystem.alias }}</span>
-                                <span class="text-muted-foreground"> {{ map_solarsystem.name }}</span>
-                                <span v-if="is_docked" class="text-xs text-muted-foreground">(Docked)</span>
-                                <span v-else-if="is_scanner" class="text-xs text-amber-500">(Scanner)</span>
-                            </span>
-                            <span v-else-if="character.status?.solarsystem" class="flex items-center gap-2">
-                                <span>{{ character.status.solarsystem.name }}</span>
-                                <span v-if="is_docked" class="text-xs text-muted-foreground">(Docked)</span>
-                                <span v-else-if="is_scanner" class="text-xs text-amber-500">(Scanner)</span>
-                            </span>
-                        </Button>
-                    </RoutePopover>
-                    <span v-if="!map_solarsystem && !character.status?.solarsystem">Unknown Location</span>
-                </TableCell>
+    <DestinationContextMenu :solarsystem_id="character.status?.solarsystem_id ?? 0">
+        <div
+            ref="row"
+            v-element-hover="onHover"
+            :data-inactive="is_inactive"
+            class="col-span-full grid grid-cols-subgrid border-b px-2 py-2 hover:bg-muted/50 data-[inactive=true]:opacity-50"
+        >
+            <div class="flex items-center gap-2">
+                <CharacterImage :character_id="character.id" :character_name="character.name" class="size-6 shrink-0 rounded-lg" />
+                <span class="truncate">{{ character.name }}</span>
             </div>
-        </DestinationContextMenu>
-    </TableRow>
+            <div class="flex items-center">
+                <Tooltip>
+                    <TooltipTrigger as-child>
+                        <span v-if="character.status?.ship_type" class="flex items-center gap-2">
+                            <TypeImage
+                                :type_id="character.status.ship_type.id"
+                                :type_name="character.status.ship_type.name"
+                                class="size-6 shrink-0 rounded-lg"
+                            />
+                            <span class="truncate">{{ character.status.ship_type.name }}</span>
+                        </span>
+                        <span v-else>Unknown Ship</span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <span v-if="character.status?.ship_name">{{ character.status.ship_name }}</span>
+                        <span v-else>Unknown Ship Name</span>
+                    </TooltipContent>
+                </Tooltip>
+            </div>
+            <div class="flex items-center">
+                <RoutePopover :route="character.route">
+                    <Button variant="secondary" v-element-hover="onRouteHover" class="h-auto min-h-8 justify-start">
+                        <span v-if="map_solarsystem && map_solarsystem.alias" class="flex items-center gap-2">
+                            <span class="truncate">{{ map_solarsystem.alias }}</span>
+                            <span class="truncate text-muted-foreground">{{ map_solarsystem.name }}</span>
+                            <span v-if="is_docked" class="text-xs text-muted-foreground">(Docked)</span>
+                            <span v-else-if="is_scanner" class="text-xs text-amber-500">(Scanner)</span>
+                        </span>
+                        <span v-else-if="character.status?.solarsystem" class="flex items-center gap-2">
+                            <span class="truncate">{{ character.status.solarsystem.name }}</span>
+                            <span v-if="is_docked" class="text-xs text-muted-foreground">(Docked)</span>
+                            <span v-else-if="is_scanner" class="text-xs text-amber-500">(Scanner)</span>
+                        </span>
+                    </Button>
+                </RoutePopover>
+                <span v-if="!map_solarsystem && !character.status?.solarsystem" class="text-muted-foreground">Unknown Location</span>
+            </div>
+        </div>
+    </DestinationContextMenu>
 </template>
 
 <style scoped></style>
