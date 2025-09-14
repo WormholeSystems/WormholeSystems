@@ -25,9 +25,10 @@ function handleToggleVisibility() {
             </Button>
         </TooltipTrigger>
         <TooltipContent side="bottom">
-            <p class="text-sm">Location Sharing</p>
-            <p class="text-xs text-muted-foreground">
-                {{ map_user_settings.tracking_allowed ? 'Visible' : 'Hidden' }} - Control if others can see your location
+            <p class="text-sm">Location Monitoring</p>
+            <p class="max-w-xs text-xs text-muted-foreground">
+                {{ map_user_settings.tracking_allowed ? ' Enabled' : 'Disabled' }} - Allow the map to use your location for tracking and to share with
+                other map users.
             </p>
         </TooltipContent>
     </Tooltip>

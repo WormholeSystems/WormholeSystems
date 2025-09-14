@@ -82,14 +82,14 @@ function addCurrentSolarsystem() {
             </Button>
         </TooltipTrigger>
         <TooltipContent side="bottom">
-            <template v-if="!character">
+            <template v-if="!map_user_settings.tracking_allowed">
                 <p class="text-sm font-medium text-red-500">Tracking Unavailable</p>
-                <p class="text-xs text-muted-foreground">You must have an active character that is online and has scopes granted</p>
+                <p class="text-xs text-muted-foreground">Location Monitoring must be enabled to use tracking</p>
+                <p class="text-xs text-muted-foreground">Click the eye icon to enable location monitoring</p>
             </template>
-            <template v-else-if="!map_user_settings.tracking_allowed">
-                <p class="text-sm font-medium text-red-500">Tracking Unavailable</p>
-                <p class="text-xs text-muted-foreground">Location sharing must be enabled to use tracking</p>
-                <p class="text-xs text-muted-foreground">Click the eye icon to enable location sharing</p>
+            <template v-else-if="!character">
+                <p class="text-sm font-medium text-red-500">Character Status Unknown</p>
+                <p class="text-xs text-muted-foreground">You must have an active character that is online and has scopes granted</p>
             </template>
             <template v-else>
                 <p class="text-sm">Tracking</p>

@@ -75,6 +75,20 @@ function updateSetting(key: 'tracking_allowed' | 'is_tracking', value: boolean) 
     });
 }
 
+function handleTrackingAllowedChange(allowed: boolean) {
+    if (!allowed) {
+        // If disabling tracking allowed, also disable is_tracking
+        updateMapUserSettings(props.mapUserSettings, {
+            tracking_allowed: false,
+            is_tracking: false,
+        });
+    } else {
+        updateMapUserSettings(props.mapUserSettings, {
+            tracking_allowed: true,
+        });
+    }
+}
+
 function completeOnboarding() {
     updateMapUserSettings(props.mapUserSettings, {
         introduction_confirmed_at: new Date().toISOString(),
@@ -192,42 +206,43 @@ const stepDescriptions = [
                 <!-- Step 3: Configure Settings -->
                 <div v-if="currentStep === 3" class="space-y-6">
                     <div class="space-y-4">
-                        <!-- Location Sharing -->
                         <div class="space-y-3 rounded-lg border p-4">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-3">
                                     <Eye class="h-5 w-5 text-muted-foreground" />
                                     <div>
-                                        <h4 class="font-medium">Location Sharing</h4>
-                                        <p class="text-sm text-muted-foreground">Allow other users to see your location on the map</p>
+                                        <h4 class="font-medium">Location Monitoring</h4>
+                                        <p class="text-sm text-muted-foreground">
+                                            Allow the map to use your location for tracking and to share it with other map users
+                                        </p>
                                     </div>
                                 </div>
-                                <Switch
-                                    :model-value="mapUserSettings.tracking_allowed"
-                                    @update:modelValue="(checked: boolean) => updateSetting('tracking_allowed', Boolean(checked))"
-                                />
+                                <Switch :model-value="mapUserSettings.tracking_allowed" @update:modelValue="handleTrackingAllowedChange" />
                             </div>
                             <div class="pl-8">
                                 <div class="flex items-center gap-2 text-sm">
                                     <span class="font-medium">Status:</span>
                                     <span :class="mapUserSettings.tracking_allowed ? 'text-green-600' : 'text-red-600'">
-                                        {{ mapUserSettings.tracking_allowed ? 'Visible to others' : 'Hidden from others' }}
+                                        {{ mapUserSettings.tracking_allowed ? 'Enabled' : 'Disabled' }}
                                     </span>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Auto-tracking -->
-                        <div class="space-y-3 rounded-lg border p-4">
+                        <div class="space-y-3 rounded-lg border p-4" :class="!mapUserSettings.tracking_allowed ? 'opacity-50' : ''">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-3">
                                     <Zap class="h-5 w-5 text-muted-foreground" />
                                     <div>
                                         <h4 class="font-medium">Auto-tracking</h4>
-                                        <p class="text-sm text-muted-foreground">Automatically track your movement through systems</p>
+                                        <p class="text-sm text-muted-foreground">
+                                            Automatically track your movement through systems. Requires Location Monitoring to be enabled.
+                                        </p>
                                     </div>
                                 </div>
                                 <Switch
+                                    :disabled="!mapUserSettings.tracking_allowed"
                                     :modelValue="mapUserSettings.is_tracking"
                                     @update:modelValue="(checked) => updateSetting('is_tracking', Boolean(checked))"
                                 />
@@ -306,7 +321,7 @@ const stepDescriptions = [
                                 </span>
                             </div>
                             <div class="flex items-center justify-between">
-                                <span>Location Sharing:</span>
+                                <span>Location Monitoring:</span>
                                 <span :class="mapUserSettings.tracking_allowed ? 'text-green-600' : 'text-red-600'">
                                     {{ mapUserSettings.tracking_allowed ? 'Enabled' : 'Disabled' }}
                                 </span>
