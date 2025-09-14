@@ -6,18 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { updateMapUserSettings } from '@/composables/map';
 import { TMapUserSetting } from '@/types/models';
 import { useLocalStorage } from '@vueuse/core';
-import {
-    ArrowLeft,
-    ArrowRight,
-    CheckCircle,
-    ExternalLink,
-    Eye,
-    MapPin,
-    Route,
-    Settings,
-    Shield,
-    Zap
-} from 'lucide-vue-next';
+import { ArrowLeft, ArrowRight, CheckCircle, ExternalLink, Eye, MapPin, Route, Settings, Shield, Zap } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 const props = defineProps<{
