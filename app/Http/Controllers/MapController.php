@@ -77,11 +77,11 @@ final class MapController extends Controller
 
         $map_killmails = Inertia::defer(fn (): ResourceCollection => $this->getMapKills($map, $settings->killmail_filter));
 
-        $canViewCharacters = Gate::allows('viewCharacters', $map);
+        $can_view_characters = Gate::allows('viewCharacters', $map);
 
-        $map_characters = fn (): ?ResourceCollection => $canViewCharacters ? $this->getMapCharacters($map, $selected_map_solarsystem_id, $settings) : null;
+        $map_characters = fn (): ?ResourceCollection => $can_view_characters ? $this->getMapCharacters($map, $selected_map_solarsystem_id, $settings) : null;
 
-        $ship_history = fn (): ?ResourceCollection => $canViewCharacters ? $this->getShipHistory() : null;
+        $ship_history = fn (): ?ResourceCollection => $can_view_characters ? $this->getShipHistory() : null;
 
         $map_route_solarsystems = Inertia::defer(fn (): array => $this->getMapRouteSolarsystems($map, $settings, $selected_map_solarsystem_id));
 
@@ -245,7 +245,7 @@ final class MapController extends Controller
             ->hasTokenWithTrackingScopes()
             ->with('characterStatus')
             ->tap(new UserAllowedMapTracking($map))
-            ->tap(new CharacterHasMapAccess($map))
+            ->tap(new CharacterHasMapAccess($map, without_guests: true))
             ->tap(new CharacterIsOnline)
             ->get()
             ->map(function (Character $character) use ($map, $map_solarsystem, $map_user_setting): Character {

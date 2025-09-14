@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Builders;
 
 use App\Models\Character;
+use App\Models\Map;
 use Illuminate\Database\Eloquent\Builder;
 use NicolasKion\Esi\Enums\EsiScope;
 
@@ -66,5 +67,12 @@ final class CharacterBuilder extends Builder
             EsiScope::ReadShip,
             EsiScope::ReadLocations,
         ]);
+    }
+
+    public function shouldGetTracked(Map $map): self
+    {
+        return $this->whereHas('maps', fn (Builder $query) => $query->where('map_id', '=', $map->id))
+            ->where('track', '=', true)
+            ->where('last_tracked_at', '<', now()->subMinutes(15));
     }
 }
