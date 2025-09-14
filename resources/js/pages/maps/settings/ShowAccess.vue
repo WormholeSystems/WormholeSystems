@@ -21,9 +21,10 @@ type TEntity = {
     permission: 'read' | 'write' | null;
 };
 
-const { map, entities } = defineProps<{
+const { map, entities, entitiesWithAccess } = defineProps<{
     map: TMap;
     entities: TEntity[];
+    entitiesWithAccess: TEntity[];
 }>();
 
 const search = useSearch();
@@ -47,6 +48,76 @@ function toggleAccess(entity: TEntity, permission: 'read' | 'write' | null) {
 <template>
     <SettingsLayout :map="map" title="Access Control" description="Manage who can view and edit this map">
         <div class="space-y-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Entities with Access</CardTitle>
+                    <CardDescription>All entities that currently have access to this map</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div class="space-y-4">
+                        <div
+                            v-if="entitiesWithAccess.length === 0"
+                            class="flex items-center gap-2 border-l-2 border-l-blue-500 bg-blue-500/10 p-4 text-sm text-blue-500"
+                        >
+                            <InfoIcon />
+                            <p>No entities currently have access to this map.</p>
+                        </div>
+
+                        <div v-else class="rounded-lg border border-border/50">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow class="border-border/50">
+                                        <TableHead class="w-12"></TableHead>
+                                        <TableHead>Name</TableHead>
+                                        <TableHead>Type</TableHead>
+                                        <TableHead>Access Level</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    <TableRow v-for="entity in entitiesWithAccess" :key="entity.id" class="border-border/50">
+                                        <TableCell>
+                                            <template v-if="entity.type === 'character'">
+                                                <CharacterImage :character_id="entity.id" :character_name="entity.name" class="size-8 rounded-lg" />
+                                            </template>
+                                            <template v-else-if="entity.type === 'corporation'">
+                                                <CorporationLogo
+                                                    :corporation_id="entity.id"
+                                                    :corporation_name="entity.name"
+                                                    class="size-8 rounded-lg"
+                                                />
+                                            </template>
+                                            <template v-else-if="entity.type === 'alliance'">
+                                                <AllianceLogo :alliance_id="entity.id" :alliance_name="entity.name" class="size-8 rounded-lg" />
+                                            </template>
+                                        </TableCell>
+                                        <TableCell>{{ entity.name }}</TableCell>
+                                        <TableCell class="capitalize">{{ entity.type }}</TableCell>
+                                        <TableCell>
+                                            <div class="flex items-center gap-2">
+                                                <div
+                                                    v-if="entity.permission === 'write'"
+                                                    class="inline-flex items-center gap-1 rounded-full bg-green-500/10 px-2 py-1 text-xs font-medium text-green-500"
+                                                >
+                                                    <EditIcon class="size-3" />
+                                                    Write Access
+                                                </div>
+                                                <div
+                                                    v-else-if="entity.permission === 'read'"
+                                                    class="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-2 py-1 text-xs font-medium text-blue-500"
+                                                >
+                                                    <EyeIcon class="size-3" />
+                                                    Read Access
+                                                </div>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                </TableBody>
+                            </Table>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
             <Card>
                 <CardHeader>
                     <CardTitle>Permission Levels</CardTitle>
@@ -85,8 +156,8 @@ function toggleAccess(entity: TEntity, permission: 'read' | 'write' | null) {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Map Permissions</CardTitle>
-                    <CardDescription>Control who can access and modify this map</CardDescription>
+                    <CardTitle>Manage Permissions</CardTitle>
+                    <CardDescription>Search and grant access to characters, corporations, and alliances</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div class="space-y-4">

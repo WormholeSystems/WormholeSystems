@@ -64,9 +64,39 @@ final class MapAccessController extends Controller
             ->select(['id', 'name', 'type', 'permission'])
             ->get();
 
+        $entitiesWithAccess = DB::query()->fromSub(DB::table('characters')
+            ->selectRaw('id, name, "character" as type, (
+                SELECT permission
+                FROM map_access
+                WHERE accessible_type = "App\\\\Models\\\\Character"
+                AND accessible_id = characters.id
+                AND map_id = ?
+            ) as permission', [$map->id])->unionAll(
+                Corporation::query()->selectRaw('id, name, "corporation" as type, (
+                    SELECT permission
+                    FROM map_access
+                    WHERE accessible_type = "App\\\\Models\\\\Corporation"
+                    AND accessible_id = corporations.id
+                    AND map_id = ?
+                ) as permission', [$map->id])
+            )->unionAll(
+                Alliance::query()->selectRaw('id, name, "alliance" as type, (
+                    SELECT permission
+                    FROM map_access
+                    WHERE accessible_type = "App\\\\Models\\\\Alliance"
+                    AND accessible_id = alliances.id
+                    AND map_id = ?
+                ) as permission', [$map->id])
+            ), 'entities')
+            ->whereNotNull('permission')
+            ->orderBy('name')
+            ->select(['id', 'name', 'type', 'permission'])
+            ->get();
+
         return Inertia::render('maps/settings/ShowAccess', [
             'map' => $map->toResource(MapResource::class),
             'entities' => $entities,
+            'entitiesWithAccess' => $entitiesWithAccess,
             'search' => $search,
             'has_write_access' => true, // If we reach here, user has write access (due to gate check)
         ]);
