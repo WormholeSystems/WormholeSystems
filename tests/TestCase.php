@@ -13,7 +13,7 @@ abstract class TestCase extends BaseTestCase
         parent::setUp();
         $this->artisan('migrate:fresh')->run();
 
-        if (! $this->artisan('db:restore')->run()) {
+        if ($this->artisan('db:restore')->execute()) {
             $this->artisan('db:seed')->run();
             $this->artisan('db:cache')->run();
         }

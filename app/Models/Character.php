@@ -53,6 +53,7 @@ use Staudenmeir\EloquentHasManyDeep\HasRelationships;
  * @property-read CharacterStatus|null $characterStatus
  * @property-read Collection<int,MapAccess> $mapAccesses
  * @property-read Collection<int,\App\Models\EsiScope> $esiScopes
+ * @property-read Collection<int,Map> $mapsOwned
  */
 #[UseFactory(CharacterFactory::class)]
 #[UseEloquentBuilder(CharacterBuilder::class)]
@@ -137,6 +138,14 @@ final class Character extends Model implements \NicolasKion\Esi\Interfaces\Chara
     public function mapAccesses(): MorphMany
     {
         return $this->morphMany(MapAccess::class, 'accessible');
+    }
+
+    public function mapsOwned(): HasManyDeep
+    {
+        return $this->hasManyDeepFromRelations(
+            $this->mapAccesses(),
+            new MapAccess()->map()
+        );
     }
 
     public function getEsiTokenWithScope(EsiScope $scope): ?EsiToken
