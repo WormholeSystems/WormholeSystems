@@ -10,8 +10,8 @@ use App\Models\CharacterStatus;
 use App\Models\Map;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Http\Client\ConnectionException;
 use NicolasKion\Esi\Esi;
+use Throwable;
 
 use function now;
 use function sprintf;
@@ -60,15 +60,18 @@ final class GetOnlineCharactersCommand extends AppCommand
             ->each(fn ($map) => CharacterStatusUpdatedEvent::dispatch($map->id));
     }
 
-    /**
-     * @throws ConnectionException
-     */
     private function checkCharacterStatus(CharacterStatus $characterStatus): ?int
     {
-        $request = $this->esi->getOnline($characterStatus->character);
+        try {
+            $request = $this->esi->getOnline($characterStatus->character);
+        } catch (Throwable $e) {
+            $this->error(sprintf('Connection error while checking status for character %d: %s', $characterStatus->character_id, $e->getMessage()), log: true);
+
+            return null;
+        }
 
         if ($request->failed()) {
-            $this->error(sprintf('Failed to get online status for character %d', $characterStatus->character_id));
+            $this->error(sprintf('Failed to get online status for character %d', $characterStatus->character_id), log: true);
 
             return null;
         }
