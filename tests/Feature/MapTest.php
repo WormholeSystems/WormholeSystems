@@ -42,3 +42,59 @@ it('shows a map', function () {
         ->assertNoSmoke()
         ->assertNoConsoleLogs();
 });
+
+it('shows the general settings page for a map', function () {
+
+    $map = Map::factory()->create();
+    $user = User::factory()->ownsMap($map)->create();
+
+    actingAs($user);
+
+    visit(route('maps.settings.general.show', $map))
+        ->assertSee('General Settings')
+        ->assertSee($map->name)
+        ->assertNoSmoke()
+        ->assertNoConsoleLogs();
+});
+
+it('shows the access settings page for a map', function () {
+
+    $map = Map::factory()->create();
+    $user = User::factory()->ownsMap($map)->create();
+
+    actingAs($user);
+
+    visit(route('maps.settings.access.show', $map))
+        ->assertSee('Access Control')
+        ->assertSee($map->name)
+        ->assertNoSmoke()
+        ->assertNoConsoleLogs();
+});
+
+it('shows the preferences settings page for a map', function () {
+
+    $map = Map::factory()->create();
+    $user = User::factory()->ownsMap($map)->create();
+
+    actingAs($user);
+
+    visit(route('maps.settings.preferences.show', $map))
+        ->assertSee('Preferences')
+        ->assertSee($map->name)
+        ->assertNoSmoke()
+        ->assertNoConsoleLogs();
+});
+
+it('shows the routing settings page for a map', function () {
+
+    $map = Map::factory()->create();
+    $user = User::factory()->ownsMap($map)->create();
+
+    actingAs($user);
+
+    visit(route('maps.settings.routing.show', $map))
+        ->assertSee('Routing Settings')
+        ->assertSee($map->name)
+        ->assertNoSmoke()
+        ->assertNoConsoleLogs();
+});
