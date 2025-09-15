@@ -1,13 +1,13 @@
 <script setup lang="ts">
+import ActiveCharacterLocation from '@/components/autopilot/ActiveCharacterLocation.vue';
+import AutopilotSettings from '@/components/autopilot/AutopilotSettings.vue';
+import ClosestSystemsDialog from '@/components/autopilot/ClosestSystemsDialog.vue';
+import MapRouteSolarsystemAdd from '@/components/autopilot/MapRouteSolarsystemAdd.vue';
+import MapRouteSolarsystems from '@/components/autopilot/MapRouteSolarsystems.vue';
 import RouteIcon from '@/components/icons/RouteIcon.vue';
 import SearchIcon from '@/components/icons/SearchIcon.vue';
 import Spinner from '@/components/icons/Spinner.vue';
 import ShortestPathDialog from '@/components/map/ShortestPathDialog.vue';
-import ActiveCharacterLocation from '@/components/routes/ActiveCharacterLocation.vue';
-import AutopilotSettings from '@/components/routes/AutopilotSettings.vue';
-import ClosestSystemsDialog from '@/components/routes/ClosestSystemsDialog.vue';
-import MapRouteSolarsystemAdd from '@/components/routes/MapRouteSolarsystemAdd.vue';
-import MapRouteSolarsystems from '@/components/routes/MapRouteSolarsystems.vue';
 import { Button } from '@/components/ui/button';
 import { CardAction, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import MapPanel from '@/components/ui/map-panel/MapPanel.vue';

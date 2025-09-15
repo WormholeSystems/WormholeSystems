@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import SolarsystemClass from '@/components/SolarsystemClass.vue';
 import SolarsystemEffect from '@/components/map/SolarsystemEffect.vue';
+import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import { Button } from '@/components/ui/button';
 import { Combobox, ComboboxAnchor, ComboboxEmpty, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxList } from '@/components/ui/combobox';
 import {

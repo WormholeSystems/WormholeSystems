@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { CharacterImage, CorporationLogo } from '@/components/images';
-import TypeImage from '@/components/images/TypeImage.vue';
 import { TRawKillmailAttacker } from '@/types/models';
+import TypeImage from '../images/TypeImage.vue';
 
 defineProps<{
     attacker: TRawKillmailAttacker;

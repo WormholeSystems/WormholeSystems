@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import DestinationContextMenu from '@/components/DestinationContextMenu.vue';
-import TypeImage from '@/components/images/TypeImage.vue';
-import Affiliation from '@/components/killmails/Affiliation.vue';
-import AttackerImage from '@/components/killmails/AttackerImage.vue';
-import VictimImage from '@/components/killmails/VictimImage.vue';
+import DestinationContextMenu from '@/components/autopilot/DestinationContextMenu.vue';
+import Affiliation from '@/components/map-killmails/Affiliation.vue';
+import AttackerImage from '@/components/map-killmails/AttackerImage.vue';
+import VictimImage from '@/components/map-killmails/VictimImage.vue';
 import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue';
-import SolarsystemClass from '@/components/SolarsystemClass.vue';
+import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import { useMapSolarsystems } from '@/composables/map';
 import { formatISK } from '@/lib/utils';
 import { TKillmail } from '@/types/models';
@@ -14,6 +13,7 @@ import { vElementHover } from '@vueuse/components';
 import { useNow } from '@vueuse/core';
 import { differenceInDays, differenceInHours, differenceInMinutes } from 'date-fns';
 import { computed } from 'vue';
+import TypeImage from '../images/TypeImage.vue';
 
 const { killmail } = defineProps<{
     killmail: TKillmail;

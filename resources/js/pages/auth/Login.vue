@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import LockIcon from '@/components/icons/LockIcon.vue';
 import Logo from '@/components/icons/Logo.vue';
-import Notifications from '@/components/Notifications.vue';
-import SeoHead from '@/components/SeoHead.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import Notifications from '@/components/user/Notifications.vue';
+import SeoHead from '@/layouts/SeoHead.vue';
 import Eve from '@/routes/eve';
 import { UTCDate } from '@date-fns/utc';
 import { format } from 'date-fns';

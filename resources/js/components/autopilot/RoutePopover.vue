@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import DestinationContextMenu from '@/components/DestinationContextMenu.vue';
+import DestinationContextMenu from '@/components/autopilot/DestinationContextMenu.vue';
 import TimesIcon from '@/components/icons/TimesIcon.vue';
 import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue';
-import SolarsystemClass from '@/components/SolarsystemClass.vue';
-import SolarsystemEffect from '@/components/SolarsystemEffect.vue';
+import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
+import SolarsystemEffect from '@/components/solarsystem/SolarsystemEffect.vue';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';

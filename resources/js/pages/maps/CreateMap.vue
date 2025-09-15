@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import MapController from '@/actions/App/Http/Controllers/MapController';
-import InputError from '@/components/InputError.vue';
-import SeoHead from '@/components/SeoHead.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import InputError from '@/components/ui/error/InputError.vue';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/AppLayout.vue';
+import SeoHead from '@/layouts/SeoHead.vue';
 import { home } from '@/routes';
 import { Link, useForm } from '@inertiajs/vue3';
 

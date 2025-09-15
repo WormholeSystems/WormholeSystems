@@ -2,12 +2,12 @@
 import MapController from '@/actions/App/Http/Controllers/MapController';
 import Logo from '@/components/icons/Logo.vue';
 import PlusIcon from '@/components/icons/PlusIcon.vue';
-import MapCard from '@/components/MapCard.vue';
-import SeoHead from '@/components/SeoHead.vue';
+import MapCard from '@/components/map/MapCard.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useSearch } from '@/composables/useSearch';
 import AppLayout from '@/layouts/AppLayout.vue';
+import SeoHead from '@/layouts/SeoHead.vue';
 import { TMap } from '@/types/models';
 import { Link } from '@inertiajs/vue3';
 import { SearchIcon } from 'lucide-vue-next';

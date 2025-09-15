@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Logo from '@/components/icons/Logo.vue';
-import SeoHead from '@/components/SeoHead.vue';
 import { Button } from '@/components/ui/button';
+import SeoHead from '@/layouts/SeoHead.vue';
 import { home } from '@/routes';
 import { Link, usePage, usePoll } from '@inertiajs/vue3';
 import { HomeIcon, MessageCircleIcon } from 'lucide-vue-next';

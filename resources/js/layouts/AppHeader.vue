@@ -3,31 +3,22 @@ import MapController from '@/actions/App/Http/Controllers/MapController';
 import ScopeController from '@/actions/App/Http/Controllers/ScopeController';
 import DiscordIcon from '@/components/icons/DiscordIcon.vue';
 import { CharacterImage } from '@/components/images';
-import Breadcrumbs from '@/components/navigation/Breadcrumbs.vue';
-import ServerStatus from '@/components/ServerStatus.vue';
+import ServerStatus from '@/components/server-status/ServerStatus.vue';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { NavigationMenu, NavigationMenuItem, NavigationMenuList, navigationMenuTriggerStyle } from '@/components/ui/navigation-menu';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import UserMenuContent from '@/components/UserMenuContent.vue';
+import UserMenuContent from '@/components/user/UserMenuContent.vue';
 import useUser from '@/composables/useUser';
 import Appearance from '@/layouts/Appearance.vue';
 import AppLogo from '@/layouts/AppLogo.vue';
 import { home } from '@/routes';
-import type { AppPageProps, BreadcrumbItem, NavItem } from '@/types';
+import type { AppPageProps, NavItem } from '@/types';
 import { TCharacter } from '@/types/models';
 import { Link, usePage } from '@inertiajs/vue3';
 import { AlertTriangle, LayoutGrid, Menu, Shield } from 'lucide-vue-next';
 import { computed } from 'vue';
-
-interface Props {
-    breadcrumbs?: BreadcrumbItem[];
-}
-
-const props = withDefaults(defineProps<Props>(), {
-    breadcrumbs: () => [],
-});
 
 const page = usePage<
     AppPageProps<{
@@ -231,12 +222,6 @@ const mainNavItems: NavItem[] = [
                         </DropdownMenu>
                     </template>
                 </div>
-            </div>
-        </div>
-
-        <div v-if="props.breadcrumbs.length > 1" class="flex w-full border-b border-sidebar-border/70">
-            <div class="mx-auto flex h-12 w-full items-center justify-start px-4 text-neutral-500 md:max-w-7xl">
-                <Breadcrumbs :breadcrumbs="breadcrumbs" />
             </div>
         </div>
     </div>

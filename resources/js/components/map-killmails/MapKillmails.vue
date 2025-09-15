@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import SettingsIcon from '@/components/icons/SettingsIcon.vue';
-import Killmail from '@/components/killmails/Killmail.vue';
-import KillmailPlaceholder from '@/components/killmails/KillmailPlaceholder.vue';
+import Killmail from '@/components/map-killmails/Killmail.vue';
+import KillmailPlaceholder from '@/components/map-killmails/KillmailPlaceholder.vue';
 import { Button } from '@/components/ui/button';
 import { CardAction, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';

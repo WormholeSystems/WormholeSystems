@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import DestinationContextMenu from '@/components/DestinationContextMenu.vue';
+import DestinationContextMenu from '@/components/autopilot/DestinationContextMenu.vue';
+import RoutePopover from '@/components/autopilot/RoutePopover.vue';
 import PinIcon from '@/components/icons/PinIcon.vue';
 import TrashIcon from '@/components/icons/TrashIcon.vue';
 import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue';
-import RoutePopover from '@/components/routes/RoutePopover.vue';
-import SolarsystemClass from '@/components/SolarsystemClass.vue';
+import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import useHasWritePermission from '@/composables/useHasWritePermission';

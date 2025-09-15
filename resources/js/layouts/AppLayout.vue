@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import Notifications from '@/components/Notifications.vue';
+import Notifications from '@/components/user/Notifications.vue';
 import AppContent from '@/layouts/AppContent.vue';
 import AppHeader from '@/layouts/AppHeader.vue';
-import AppShell from '@/layouts/AppShell.vue';
 import type { BreadcrumbItemType } from '@/types';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 interface Props {
     breadcrumbs?: BreadcrumbItemType[];
@@ -15,11 +15,13 @@ withDefaults(defineProps<Props>(), {
 </script>
 
 <template>
-    <AppShell class="flex-col">
-        <AppHeader :breadcrumbs="breadcrumbs" />
-        <AppContent>
-            <slot />
-        </AppContent>
-        <Notifications />
-    </AppShell>
+    <TooltipProvider>
+        <div class="flex flex-col">
+            <AppHeader />
+            <AppContent>
+                <slot />
+            </AppContent>
+            <Notifications />
+        </div>
+    </TooltipProvider>
 </template>

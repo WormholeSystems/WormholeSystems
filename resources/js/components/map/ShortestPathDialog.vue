@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import DestinationContextMenu from '@/components/DestinationContextMenu.vue';
+import DestinationContextMenu from '@/components/autopilot/DestinationContextMenu.vue';
 import TimesIcon from '@/components/icons/TimesIcon.vue';
 import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue';
-import SolarsystemClass from '@/components/SolarsystemClass.vue';
-import SolarsystemEffect from '@/components/SolarsystemEffect.vue';
+import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
+import SolarsystemEffect from '@/components/solarsystem/SolarsystemEffect.vue';
 import { Button } from '@/components/ui/button';
 import { Combobox, ComboboxAnchor, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList } from '@/components/ui/combobox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';

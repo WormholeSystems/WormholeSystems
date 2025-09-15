@@ -3,11 +3,11 @@ import MapAccessController from '@/actions/App/Http/Controllers/MapAccessControl
 import MapPreferencesController from '@/actions/App/Http/Controllers/MapPreferencesController';
 import MapRoutingSettingsController from '@/actions/App/Http/Controllers/MapRoutingSettingsController';
 import MapSettingsController from '@/actions/App/Http/Controllers/MapSettingsController';
-import SeoHead from '@/components/SeoHead.vue';
 import { Button } from '@/components/ui/button';
 import useHasWritePermission from '@/composables/useHasWritePermission';
 import useIsMapOwner from '@/composables/useIsMapOwner';
 import AppLayout from '@/layouts/AppLayout.vue';
+import SeoHead from '@/layouts/SeoHead.vue';
 import { TMap } from '@/types/models';
 import { Link, usePage } from '@inertiajs/vue3';
 import { ArrowLeft, Route, Settings, User, Users } from 'lucide-vue-next';

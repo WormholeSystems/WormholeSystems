@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import UserInfo from '@/components/UserInfo.vue';
 import MinusIcon from '@/components/icons/MinusIcon.vue';
 import PlusIcon from '@/components/icons/PlusIcon.vue';
 import { CharacterImage } from '@/components/images';
 import { DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import UserInfo from '@/components/user/UserInfo.vue';
 import { auth, logout } from '@/routes';
 import tokens from '@/routes/tokens';
 import UserCharacters from '@/routes/user-characters';

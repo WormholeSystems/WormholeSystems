@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import SolarsystemEffect from '@/components/map/SolarsystemEffect.vue';
-import SolarsystemClass from '@/components/SolarsystemClass.vue';
+import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import { Combobox, ComboboxAnchor, ComboboxEmpty, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxList } from '@/components/ui/combobox';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { createMapSolarsystem } from '@/composables/map';

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import SolarsystemClass from '@/components/SolarsystemClass.vue';
 import LockIcon from '@/components/icons/LockIcon.vue';
 import SatelliteDish from '@/components/icons/SatelliteDish.vue';
 import SolarsystemEffect from '@/components/map/SolarsystemEffect.vue';
@@ -8,6 +7,7 @@ import SolarsystemName from '@/components/map/solarsystem/SolarsystemName.vue';
 import SolarsystemPilots from '@/components/map/solarsystem/SolarsystemPilots.vue';
 import SolarsystemRegion from '@/components/map/solarsystem/SolarsystemRegion.vue';
 import SolarsystemStatics from '@/components/map/solarsystem/SolarsystemStatics.vue';
+import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';

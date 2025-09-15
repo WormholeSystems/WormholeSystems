@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import MapRouteSolarsystem from '@/components/routes/MapRouteSolarsystem.vue';
+import MapRouteSolarsystem from '@/components/autopilot/MapRouteSolarsystem.vue';
 import useHasWritePermission from '@/composables/useHasWritePermission';
 import { TMapRouteSolarsystem } from '@/types/models';
 import { computed } from 'vue';

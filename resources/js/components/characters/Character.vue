@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import DestinationContextMenu from '@/components/DestinationContextMenu.vue';
+import DestinationContextMenu from '@/components/autopilot/DestinationContextMenu.vue';
+import RoutePopover from '@/components/autopilot/RoutePopover.vue';
 import { CharacterImage } from '@/components/images';
 import TypeImage from '@/components/images/TypeImage.vue';
-import RoutePopover from '@/components/routes/RoutePopover.vue';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMapSolarsystems } from '@/composables/map';

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import DestinationContextMenu from '@/components/DestinationContextMenu.vue';
+import DestinationContextMenu from '@/components/autopilot/DestinationContextMenu.vue';
+import RoutePopover from '@/components/autopilot/RoutePopover.vue';
 import { CharacterImage } from '@/components/images';
-import RoutePopover from '@/components/routes/RoutePopover.vue';
 import { Button } from '@/components/ui/button';
 import { usePath } from '@/composables/usePath';
 import { TCharacter, TCharacterStatus, TSolarsystem } from '@/types/models';

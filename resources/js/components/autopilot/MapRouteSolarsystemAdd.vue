@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import PlusIcon from '@/components/icons/PlusIcon.vue';
 import SolarsystemEffect from '@/components/map/SolarsystemEffect.vue';
-import SolarsystemClass from '@/components/SolarsystemClass.vue';
+import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import { Button } from '@/components/ui/button';
 import { Combobox, ComboboxAnchor, ComboboxEmpty, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxList } from '@/components/ui/combobox';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';

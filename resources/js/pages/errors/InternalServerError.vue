@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ErrorPage from '@/components/ErrorPage.vue';
+import ErrorPage from '@/pages/errors/ErrorPage.vue';
 
 interface Props {
     status: number;
