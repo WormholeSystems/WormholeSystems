@@ -9,6 +9,7 @@ use App\Actions\MapSolarsystem\StoreMapSolarsystemAction;
 use App\Enums\LifetimeStatus;
 use App\Enums\MassStatus;
 use App\Enums\ShipSize;
+use App\Models\Map;
 use App\Models\MapConnection;
 use App\Models\MapSolarsystem;
 use App\Models\Solarsystem;
@@ -18,11 +19,15 @@ use Illuminate\Support\Facades\DB;
 use Random\RandomException;
 use Throwable;
 
+use function range;
+
 final readonly class StoreTrackingAction
 {
     private const int MINIMUM_DISTANCE_Y = 40;
 
     private const int MINIMUM_DISTANCE_X = 120;
+
+    private const int MAXIMUM_TRIES = 100;
 
     public function __construct(
         private WormholeConnectionClassifier $connectionClassifier,
@@ -31,7 +36,9 @@ final readonly class StoreTrackingAction
         #[Config('map.max_size.x')]
         private int $max_x,
         #[Config('map.max_size.y')]
-        private int $max_y
+        private int $max_y,
+        #[Config('map.grid_size')]
+        private int $grid_size,
     ) {}
 
     /**
@@ -43,39 +50,34 @@ final readonly class StoreTrackingAction
             $from_map_solarsystem_id = $data['from_map_solarsystem_id'];
             $to_solarsystem_id = $data['to_solarsystem_id'];
 
-            $map_solarsystem = MapSolarsystem::query()
+            $origin = MapSolarsystem::query()
                 ->lockForUpdate()
                 ->findOrFail($from_map_solarsystem_id);
             $to_solarsystem = Solarsystem::query()
                 ->lockForUpdate()
                 ->findOrFail($to_solarsystem_id);
 
-            $solarsystem_already_on_map = $map_solarsystem->map->mapSolarsystems()
-                ->where('solarsystem_id', $to_solarsystem->id)
-                ->whereNotNull('position_x')
-                ->lockForUpdate()
-                ->exists();
-
-            if ($solarsystem_already_on_map) {
+            if ($this->isSolarsystemOnMap($origin->map, $to_solarsystem)) {
+                // If the target system is already on the map, we do not create a new connection.
                 return;
             }
 
-            if ($map_solarsystem->solarsystem->type === 'eve' && $to_solarsystem->type === 'eve') {
-                // If both systems are known space, we do not create a connection.
+            if ($this->isKSpaceToKSpaceConnection($origin->solarsystem, $to_solarsystem)) {
+                // We do not track K-space to K-space connections
                 return;
             }
 
-            $ship_size = $this->connectionClassifier->getSize($map_solarsystem->solarsystem, $to_solarsystem);
+            $ship_size = $this->connectionClassifier->getSize($origin->solarsystem, $to_solarsystem);
 
             [
                 'position_x' => $position_x,
                 'position_y' => $position_y,
             ] = $this->guessGoodPositionForNewSolarsystem(
-                $map_solarsystem,
+                $origin,
             );
 
             $new_map_solarsystem = $this->storeMapSolarsystemAction->handle(
-                $map_solarsystem->map,
+                $origin->map,
                 [
                     'solarsystem_id' => $to_solarsystem->id,
                     'position_x' => $position_x,
@@ -97,6 +99,19 @@ final readonly class StoreTrackingAction
         }, 10);
     }
 
+    private function isSolarsystemOnMap(Map $map, Solarsystem $solarsystem): bool
+    {
+        return $map->mapSolarsystems()
+            ->isSolarsystem($solarsystem)
+            ->isOnMap()
+            ->exists();
+    }
+
+    private function isKSpaceToKSpaceConnection(Solarsystem $from, Solarsystem $to): bool
+    {
+        return $from->type === 'eve' && $to->type === 'eve';
+    }
+
     /**
      * @return array{position_x: int, position_y: int}
      *
@@ -108,13 +123,11 @@ final readonly class StoreTrackingAction
         $distance_x = random_int(self::MINIMUM_DISTANCE_X, self::MINIMUM_DISTANCE_X * 2);
         $distance_y = random_int(self::MINIMUM_DISTANCE_Y, self::MINIMUM_DISTANCE_Y * 2);
         $direction_y = random_int(0, 1) !== 0 ? 1 : -1;
-        $position_x = max(40, min($this->max_x, $mapSolarsystem->position_x + $distance_x));
-        $position_y = max(20, min($this->max_y, $mapSolarsystem->position_y + ($distance_y * $direction_y)));
 
-        return [
-            'position_x' => $position_x,
-            'position_y' => $position_y,
-        ];
+        $position_x = $mapSolarsystem->position_x + $distance_x;
+        $position_y = $mapSolarsystem->position_y + ($distance_y * $direction_y);
+
+        return $this->constrainPositionToMapBounds($position_x, $position_y);
 
     }
 
@@ -130,47 +143,101 @@ final readonly class StoreTrackingAction
         /**
          * We want to get a good new position for the map solarsystem. Wormholes should be grouped
          */
-        $latest_created_map_connection = $mapSolarsystem->connections->sortByDesc('created_at')
-            ->filter(function (MapConnection $mapConnection) use ($mapSolarsystem): bool {
-                if ($mapSolarsystem->alias === null) {
-                    return true;
-                }
-                $other_map_solarsystem = $mapConnection->toMapSolarsystem->is(
-                    $mapSolarsystem)
-                    ? $mapConnection->fromMapSolarsystem
-                    : $mapConnection->toMapSolarsystem;
-                if ($other_map_solarsystem->alias === null) {
-                    return true;
-                }
-                if (! is_numeric($other_map_solarsystem->alias)) {
-                    return true;
-                }
+        $latest_created_map_connection = $this->getLatestChildConnection($mapSolarsystem);
 
-                return $other_map_solarsystem->alias > $mapSolarsystem->alias;
-            })
+        if (! $latest_created_map_connection instanceof MapConnection) {
+            return $this->getRandomPositionAroundSolarsystem($mapSolarsystem);
+        }
+
+        $latest_created_map_solarsystem = $this->getConnectionTarget($latest_created_map_connection, $mapSolarsystem);
+
+        return $this->getNextFreePosition($latest_created_map_solarsystem, $mapSolarsystem);
+
+    }
+
+    /**
+     * Get the latest created connection that originated from this solarsystem.
+     * For example if A -> B and A -> C exist, and B was created before C,
+     * we want to return the connection to C.
+     */
+    private function getLatestChildConnection(MapSolarsystem $mapSolarsystem): ?MapConnection
+    {
+        return $mapSolarsystem->connections->sortByDesc('created_at')
+            ->filter(fn (MapConnection $mapConnection): bool => $this->excludeConnectionsToParent($mapConnection, $mapSolarsystem))
             ->first();
+    }
 
-        if ($latest_created_map_connection === null) {
-            return $this->getRandomPositionAroundSolarsystem($mapSolarsystem);
+    /**
+     * We want to exclude connections that point back to the parent system.
+     * For example if we have A -> B and B -> C, and we are looking for
+     * connections originating from B, we want to exclude the connection
+     * that points back to A (A -> B).
+     */
+    private function excludeConnectionsToParent(MapConnection $mapConnection, MapSolarsystem $mapSolarsystem): bool
+    {
+        // If the solarsystem has no alias, we can not infer
+        // if the connection is relevant, so we keep it as a candidate
+        if ($mapSolarsystem->alias === null) {
+            return true;
         }
 
-        $latest_created_map_solarsystem = $latest_created_map_connection->toMapSolarsystem->is($mapSolarsystem)
-            ? $latest_created_map_connection->fromMapSolarsystem
-            : $latest_created_map_connection->toMapSolarsystem;
+        $other_map_solarsystem = $this->getConnectionTarget($mapConnection, $mapSolarsystem);
 
-        $latest_position_x = $latest_created_map_solarsystem->position_x;
-        $latest_position_y = $latest_created_map_solarsystem->position_y;
-
-        $new_y = $latest_position_y + self::MINIMUM_DISTANCE_Y;
-        $new_x = $latest_position_x;
-
-        if ($new_y > $this->max_y || $new_x > $this->max_x) {
-            return $this->getRandomPositionAroundSolarsystem($mapSolarsystem);
+        if ($other_map_solarsystem->alias === null) {
+            return true;
         }
+
+        return $other_map_solarsystem->alias > $mapSolarsystem->alias;
+    }
+
+    private function getConnectionTarget(MapConnection $mapConnection, MapSolarsystem $origin): MapSolarsystem
+    {
+        return $mapConnection->toMapSolarsystem->is($origin)
+            ? $mapConnection->fromMapSolarsystem
+            : $mapConnection->toMapSolarsystem;
+    }
+
+    /**
+     * @throws RandomException
+     */
+    private function getNextFreePosition(MapSolarsystem $latestCreated, MapSolarsystem $origin): array
+    {
+        $occupiedPositions = $origin->map->mapSolarsystems()
+            ->isOnMap()
+            ->get(['position_x', 'position_y', 'id']);
+
+        $new_y = $latestCreated->position_y;
+        $new_x = $latestCreated->position_x;
+
+        foreach (range(0, self::MAXIMUM_TRIES) as $ignored) {
+            $new_y += self::MINIMUM_DISTANCE_Y;
+
+            if ($new_y > $this->max_y) {
+                $new_y = self::MINIMUM_DISTANCE_Y;
+                $new_x += self::MINIMUM_DISTANCE_X;
+            }
+
+            if (! $occupiedPositions->hasElementAtPosition($new_x, $new_y, self::MINIMUM_DISTANCE_Y, self::MINIMUM_DISTANCE_X)) {
+                return $this->constrainPositionToMapBounds($new_x, $new_y);
+            }
+        }
+
+        // If we did not find a free position after many tries, we return a random position
+        return $this->getRandomPositionAroundSolarsystem($origin);
+    }
+
+    private function constrainPositionToMapBounds(int $position_x, int $position_y): array
+    {
+        // Get Grid bounds
+        $position_x = (int) (round($position_x / $this->grid_size) * $this->grid_size);
+        $position_y = (int) (round($position_y / $this->grid_size) * $this->grid_size);
+
+        $position_x = max(40, min($this->max_x, $position_x));
+        $position_y = max(20, min($this->max_y, $position_y));
 
         return [
-            'position_x' => (int) $new_x,
-            'position_y' => (int) $new_y,
+            'position_x' => $position_x,
+            'position_y' => $position_y,
         ];
     }
 }
