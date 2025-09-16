@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Builders\MapSolarsystemBuilder;
 use App\Enums\MapSolarsystemStatus;
 use Database\Factories\MapSolarsystemFactory;
+use Illuminate\Database\Eloquent\Attributes\UseEloquentBuilder;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -41,6 +43,7 @@ use Staudenmeir\EloquentHasManyDeep\HasRelationships;
  * @property-read Collection<int,Wormhole> $wormholes
  */
 #[UseFactory(MapSolarsystemFactory::class)]
+#[UseEloquentBuilder(MapSolarsystemBuilder::class)]
 final class MapSolarsystem extends Model implements \OwenIt\Auditing\Contracts\Auditable
 {
     use Auditable;
