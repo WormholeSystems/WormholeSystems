@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import DestinationContextMenu from '@/components/autopilot/DestinationContextMenu.vue';
+import SelectedSolarsystem from '@/components/autopilot/shortest-path/SelectedSolarsystem.vue';
 import TimesIcon from '@/components/icons/TimesIcon.vue';
-import SelectedSolarsystem from '@/components/map/shortest-path/SelectedSolarsystem.vue';
 import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue';
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import SolarsystemEffect from '@/components/solarsystem/SolarsystemEffect.vue';
