@@ -2,24 +2,45 @@
 import SolarsystemEffect from '@/components/map/SolarsystemEffect.vue';
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import { Button } from '@/components/ui/button';
-import { Combobox, ComboboxAnchor, ComboboxEmpty, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxList } from '@/components/ui/combobox';
+import {
+    Combobox,
+    ComboboxAnchor,
+    ComboboxEmpty,
+    ComboboxGroup,
+    ComboboxInput,
+    ComboboxItem,
+    ComboboxList
+} from '@/components/ui/combobox';
 import {
     ContextMenuContent,
     ContextMenuItem,
     ContextMenuSeparator,
     ContextMenuSub,
     ContextMenuSubContent,
-    ContextMenuSubTrigger,
+    ContextMenuSubTrigger
 } from '@/components/ui/context-menu';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle
+} from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { NumberField, NumberFieldContent, NumberFieldDecrement, NumberFieldIncrement, NumberFieldInput } from '@/components/ui/number-field';
+import {
+    NumberField,
+    NumberFieldContent,
+    NumberFieldDecrement,
+    NumberFieldIncrement,
+    NumberFieldInput
+} from '@/components/ui/number-field';
 import {
     createMapSolarsystem,
     deleteAllMapSolarsystems,
     deleteSelectedMapSolarsystems,
     organizeMapSolarsystems,
-    useMapSolarsystems,
+    useMapSolarsystems
 } from '@/composables/map';
 import { useSearch } from '@/composables/useSearch';
 import { TShowMapProps } from '@/pages/maps';
@@ -32,8 +53,6 @@ import { computed, ref } from 'vue';
 const { position } = defineProps<{
     position: Position | null;
 }>();
-
-// deleteAllMapSolarsystems, organizeMapSolarsystems, deleteSelectedMapSolarsystems, createMapSolarsystem imported directly
 
 const { map_solarsystems_selected } = useMapSolarsystems();
 
