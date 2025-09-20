@@ -7,7 +7,7 @@ import MapRouteSolarsystems from '@/components/autopilot/MapRouteSolarsystems.vu
 import RouteIcon from '@/components/icons/RouteIcon.vue';
 import SearchIcon from '@/components/icons/SearchIcon.vue';
 import Spinner from '@/components/icons/Spinner.vue';
-import ShortestPathDialog from '@/components/map/ShortestPathDialog.vue';
+import ShortestPathDialog from '@/components/map/shortest-path/ShortestPathDialog.vue';
 import { Button } from '@/components/ui/button';
 import { CardAction, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import MapPanel from '@/components/ui/map-panel/MapPanel.vue';
