@@ -39,7 +39,7 @@ watch(
 onMounted(() => {
     if (!map_user_settings.is_tracking) return;
 
-    addCurrentSolarsystem();
+    addCurrentSolarsystemIfNotOnMap();
 });
 
 function requestConnectSolarsystem(old_solarsystem_id: number | null, new_solarsystem_id: number) {
@@ -58,14 +58,17 @@ function handleToggleTracking() {
     });
 }
 
-function addCurrentSolarsystem() {
+function addCurrentSolarsystemIfNotOnMap() {
     const active_solarsystem = character?.status?.solarsystem;
     if (!active_solarsystem) return;
 
-    const existing_solarsystem = map_solarsystems.value.find((s) => s.solarsystem_id === active_solarsystem.id);
-    if (existing_solarsystem) return;
+    if (isSolarsystemInMap(active_solarsystem.id)) return;
 
     createMapSolarsystem(active_solarsystem.id);
+}
+
+function isSolarsystemInMap(solarsystem_id: number): boolean {
+    return map_solarsystems.value.some((s) => s.solarsystem_id === solarsystem_id);
 }
 </script>
 
