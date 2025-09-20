@@ -22,8 +22,6 @@ const { map_solarsystem } = defineProps<{
     map_solarsystem: TMapSolarSystem;
 }>();
 
-// deleteMapSolarsystem and updateMapSolarsystem imported directly
-
 const user = useUser();
 
 const can_write = useHasWritePermission();
