@@ -71,8 +71,8 @@ function handleSubmit() {
                 </PopoverContent>
             </Popover>
             <div class="col-start-3 row-start-1 flex items-center gap-1">
-                <LockIcon v-if="map_solarsystem.pinned" class="w-4 text-muted-foreground" />
-                <SatelliteDish v-if="map_solarsystem.signatures_count" class="w-4 text-amber-500" />
+                <LockIcon v-if="map_solarsystem.pinned" class="size-[14px] text-muted-foreground" />
+                <SatelliteDish v-if="map_solarsystem.signatures_count" class="size-[14px] text-amber-500" />
                 <SolarsystemSovereignty v-if="map_solarsystem.solarsystem?.sovereignty" :sovereignty="map_solarsystem.solarsystem.sovereignty" />
                 <SolarsystemEffect :effect="map_solarsystem.effect" :effects="map_solarsystem.effects" v-if="map_solarsystem.effect" />
             </div>
