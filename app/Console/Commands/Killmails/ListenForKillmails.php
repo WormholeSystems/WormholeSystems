@@ -10,6 +10,7 @@ use App\Http\Integrations\zKillboard\DTO\RedisQKillmail;
 use App\Http\Integrations\zKillboard\zKillboard;
 use App\Models\Killmail;
 use App\Models\Map;
+use Date;
 use Exception;
 use Illuminate\Container\Attributes\Config;
 use Throwable;
@@ -37,18 +38,26 @@ final class ListenForKillmails extends AppCommand
 
     private bool $should_keep_running = true;
 
+    public function __construct(
+        private readonly zKillboard $zKillboard,
+        #[Config('services.zkillboard.identifier')] private readonly string $identifier,
+        #[Config('services.zkillboard.max_age_days')] private readonly int $max_age_days,
+    ) {
+        parent::__construct();
+    }
+
     /**
      * Execute the console command.
      *
      * @throws Exception
      */
-    public function handle(#[Config('services.zkillboard.identifier')] string $identifier, zKillboard $zKillboard): void
+    public function handle(): void
     {
 
         $this->trap([SIGTERM, SIGQUIT], $this->handleStop(...));
 
         while ($this->should_keep_running) {
-            $killmail = $this->getNextKillmail($zKillboard, $identifier);
+            $killmail = $this->getNextKillmail();
 
             if (! $killmail instanceof RedisQKillmail) {
                 $this->info('No killmail received, retrying in 60 seconds...');
@@ -58,6 +67,14 @@ final class ListenForKillmails extends AppCommand
             }
 
             $this->info(sprintf('Received killmail ID %d in system %d at %s', $killmail->killID, $killmail->killmail->solar_system_id, $killmail->killmail->killmail_time));
+
+            if (! $this->shouldStoreKillmail($killmail)) {
+                $this->info(sprintf('Killmail ID %d is older than %d days, skipping.', $killmail->killID, $this->max_age_days));
+
+                sleep(self::ZKILL_RATE_LIMIT_SECONDS);
+
+                continue;
+            }
 
             $killmail = $this->processKillmail($killmail);
 
@@ -94,10 +111,10 @@ final class ListenForKillmails extends AppCommand
         $maps->each(fn (Map $map) => KillmailReceivedEvent::dispatch($map));
     }
 
-    private function getNextKillmail(zKillboard $zKillboard, string $identifier): ?RedisQKillmail
+    private function getNextKillmail(): ?RedisQKillmail
     {
         try {
-            $killmail = $zKillboard->listenForKill($identifier);
+            $killmail = $this->zKillboard->listenForKill($this->identifier);
         } catch (Throwable $e) {
             $this->error(sprintf('Error while listening for killmail: %s', $e->getMessage()));
 
@@ -115,5 +132,12 @@ final class ListenForKillmails extends AppCommand
                 $this->should_keep_running = false;
                 break;
         }
+    }
+
+    private function shouldStoreKillmail(RedisQKillmail $killmail): bool
+    {
+        $time = Date::parse($killmail->killmail->killmail_time);
+
+        return $time->addDays($this->max_age_days)->isFuture();
     }
 }
