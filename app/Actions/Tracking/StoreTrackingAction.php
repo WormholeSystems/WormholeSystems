@@ -247,8 +247,8 @@ final readonly class StoreTrackingAction
     private function systemsAreConnectedPerStargates(Solarsystem $from, Solarsystem $to): bool
     {
         return SolarsystemConnection::query()
-            ->whereBelongsTo($from, 'from_solarsystem')
-            ->whereBelongsTo($to, 'to_solarsystem')
+            ->where('from_solarsystem_id', $from->id)
+            ->where('to_solarsystem_id', $to->id)
             ->exists();
     }
 }
