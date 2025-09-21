@@ -16,6 +16,7 @@ use App\Models\Solarsystem;
 use App\Utilities\WormholeConnectionClassifier;
 use Illuminate\Container\Attributes\Config;
 use Illuminate\Support\Facades\DB;
+use NicolasKion\SDE\Models\SolarsystemConnection;
 use Random\RandomException;
 use Throwable;
 
@@ -62,8 +63,10 @@ final readonly class StoreTrackingAction
                 return;
             }
 
-            if ($this->isKSpaceToKSpaceConnection($origin->solarsystem, $to_solarsystem)) {
-                // We do not track K-space to K-space connections
+            if (
+                $this->isKSpaceToKSpaceConnection($origin->solarsystem, $to_solarsystem) &&
+                $this->systemsAreConnectedPerStargates($origin->solarsystem, $to_solarsystem)
+            ) {
                 return;
             }
 
@@ -239,5 +242,13 @@ final readonly class StoreTrackingAction
             'position_x' => $position_x,
             'position_y' => $position_y,
         ];
+    }
+
+    private function systemsAreConnectedPerStargates(Solarsystem $from, Solarsystem $to): bool
+    {
+        return SolarsystemConnection::query()
+            ->whereBelongsTo($from, 'from_solarsystem')
+            ->whereBelongsTo($to, 'to_solarsystem')
+            ->exists();
     }
 }
