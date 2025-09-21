@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { faRadar } from '@awesome.me/kit-659476acbd/icons/sharp/light';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { Radar } from 'lucide-vue-next';
 </script>
 
 <template>
-    <FontAwesomeIcon :icon="faRadar" />
+    <Radar />
 </template>
 
 <style scoped></style>

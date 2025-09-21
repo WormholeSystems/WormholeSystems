@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { faEdit } from '@awesome.me/kit-659476acbd/icons/sharp/light';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { Edit } from 'lucide-vue-next';
 </script>
 
-<template><FontAwesomeIcon :icon="faEdit" /></template>
+<template><Edit /></template>
 
 <style scoped></style>

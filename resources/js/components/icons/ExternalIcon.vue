@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { faExternalLink } from '@awesome.me/kit-659476acbd/icons/sharp/light';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { ExternalLink } from 'lucide-vue-next';
 </script>
 
 <template>
-    <FontAwesomeIcon :icon="faExternalLink" />
+    <ExternalLink />
 </template>
 
 <style scoped></style>

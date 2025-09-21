@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { faThumbtack } from '@awesome.me/kit-659476acbd/icons/sharp/light';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { Pin } from 'lucide-vue-next';
 </script>
 
 <template>
-    <FontAwesomeIcon :icon="faThumbtack" />
+    <Pin />
 </template>
 
 <style scoped></style>

@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { faNetworkWired } from '@awesome.me/kit-659476acbd/icons/sharp/light';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { Network } from 'lucide-vue-next';
 </script>
 
 <template>
-    <FontAwesomeIcon :icon="faNetworkWired" />
+    <Network />
 </template>
 
 <style scoped></style>

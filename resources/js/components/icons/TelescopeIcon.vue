@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { faTelescope } from '@awesome.me/kit-659476acbd/icons/sharp/light';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { Telescope } from 'lucide-vue-next';
 </script>
 
 <template>
-    <FontAwesomeIcon :icon="faTelescope" />
+    <Telescope />
 </template>
 
 <style scoped></style>

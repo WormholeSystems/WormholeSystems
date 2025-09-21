@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { faSearch } from '@awesome.me/kit-659476acbd/icons/sharp/light';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { Search } from 'lucide-vue-next';
 </script>
 
-<template><FontAwesomeIcon :icon="faSearch" /></template>
+<template><Search /></template>
 
 <style scoped></style>

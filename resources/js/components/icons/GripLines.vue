@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { faGripLines } from '@awesome.me/kit-659476acbd/icons/sharp/light';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { GripHorizontal } from 'lucide-vue-next';
 </script>
 
 <template>
-    <FontAwesomeIcon :icon="faGripLines" />
+    <GripHorizontal />
 </template>
 
 <style scoped></style>

@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { faPaste } from '@awesome.me/kit-659476acbd/icons/sharp/light';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { ClipboardPaste } from 'lucide-vue-next';
 </script>
 
 <template>
-    <FontAwesomeIcon :icon="faPaste" />
+    <ClipboardPaste />
 </template>
 
 <style scoped></style>

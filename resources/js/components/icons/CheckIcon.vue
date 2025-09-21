@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { faCheck } from '@awesome.me/kit-659476acbd/icons/sharp/light';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { Check } from 'lucide-vue-next';
 </script>
 
 <template>
-    <FontAwesomeIcon :icon="faCheck" />
+    <Check />
 </template>
 
 <style scoped></style>

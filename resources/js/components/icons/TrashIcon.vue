@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { faTrashAlt } from '@awesome.me/kit-659476acbd/icons/sharp/light';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { Trash } from 'lucide-vue-next';
 </script>
 
 <template>
-    <FontAwesomeIcon :icon="faTrashAlt" />
+    <Trash />
 </template>
 
 <style scoped></style>

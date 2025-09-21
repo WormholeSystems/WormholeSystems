@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { faRoute } from '@awesome.me/kit-659476acbd/icons/sharp/light';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { Route } from 'lucide-vue-next';
 </script>
 
 <template>
-    <FontAwesomeIcon :icon="faRoute" />
+    <Route />
 </template>
 
 <style scoped></style>
