@@ -14,7 +14,7 @@ const { effects = [], effect } = defineProps<{
         <Popover>
             <PopoverTrigger class="pointer-events-auto" @drag.prevent>
                 <div class="grid size-[14px] cursor-pointer place-items-center">
-                    <span v-if="effect === 'Pulsar'" class="block size-2 rounded-full bg-pulsar p-2" />
+                    <span v-if="effect === 'Pulsar'" class="block size-2 rounded-full bg-pulsar" />
                     <span v-else-if="effect === 'Magnetar'" class="block size-2 rounded-full bg-magnetar" />
                     <span v-else-if="effect === 'Black Hole'" class="block size-2 rounded-full bg-black-hole" />
                     <span v-else-if="effect === 'Red Giant'" class="block size-2 rounded-full bg-red-giant" />
