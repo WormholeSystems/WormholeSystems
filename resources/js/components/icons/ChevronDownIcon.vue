@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { faChevronDown } from '@awesome.me/kit-659476acbd/icons/sharp/light';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { ChevronDown } from 'lucide-vue-next';
 </script>
 
 <template>
-    <FontAwesomeIcon :icon="faChevronDown" />
+    <ChevronDown />
 </template>
 
 <style scoped></style>

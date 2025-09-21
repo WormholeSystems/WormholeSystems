@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { faCog } from '@awesome.me/kit-659476acbd/icons/sharp/light';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { Settings } from 'lucide-vue-next';
 </script>
 
 <template>
-    <FontAwesomeIcon :icon="faCog" />
+    <Settings />
 </template>
 
 <style scoped></style>

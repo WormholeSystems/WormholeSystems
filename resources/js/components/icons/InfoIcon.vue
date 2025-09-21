@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { faInfoCircle } from '@awesome.me/kit-659476acbd/icons/sharp/light';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { Info } from 'lucide-vue-next';
 </script>
 
-<template><FontAwesomeIcon :icon="faInfoCircle" /></template>
+<template><Info /></template>
 
 <style scoped></style>

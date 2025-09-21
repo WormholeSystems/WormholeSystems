@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { faCopy } from '@awesome.me/kit-659476acbd/icons/sharp/light';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { Copy } from 'lucide-vue-next';
 </script>
 
 <template>
-    <FontAwesomeIcon :icon="faCopy" />
+    <Copy />
 </template>
 
 <style scoped></style>

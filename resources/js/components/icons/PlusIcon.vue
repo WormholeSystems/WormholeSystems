@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { faPlus } from '@awesome.me/kit-659476acbd/icons/sharp/light';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { Plus } from 'lucide-vue-next';
 </script>
 
 <template>
-    <FontAwesomeIcon :icon="faPlus" />
+    <Plus />
 </template>
 
 <style scoped></style>

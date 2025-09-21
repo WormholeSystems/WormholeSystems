@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { faMinus } from '@awesome.me/kit-659476acbd/icons/sharp/light';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { Minus } from 'lucide-vue-next';
 </script>
 
 <template>
-    <FontAwesomeIcon :icon="faMinus" />
+    <Minus />
 </template>
 
 <style scoped></style>

@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { faSatelliteDish } from '@awesome.me/kit-659476acbd/icons/sharp/light';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { Satellite } from 'lucide-vue-next';
 </script>
 
 <template>
-    <FontAwesomeIcon :icon="faSatelliteDish" />
+    <Satellite />
 </template>
 
 <style scoped></style>

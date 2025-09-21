@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { faQuestion } from '@awesome.me/kit-659476acbd/icons/sharp/light';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { HelpCircle } from 'lucide-vue-next';
 </script>
 
 <template>
-    <FontAwesomeIcon :icon="faQuestion" />
+    <HelpCircle />
 </template>
 
 <style scoped></style>

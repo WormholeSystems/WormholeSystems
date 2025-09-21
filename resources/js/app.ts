@@ -1,4 +1,3 @@
-import '@fortawesome/fontawesome-svg-core/styles.css';
 import { createInertiaApp, router } from '@inertiajs/vue3';
 import { configureEcho } from '@laravel/echo-vue';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
