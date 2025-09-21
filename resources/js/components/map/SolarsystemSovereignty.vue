@@ -13,7 +13,7 @@ const { sovereignty, ...props } = defineProps<{
 </script>
 
 <template>
-    <Tooltip :delay-duration="500">
+    <Tooltip :delay-duration="500" v-if="sovereignty.alliance || sovereignty.corporation || sovereignty.faction">
         <TooltipTrigger as-child>
             <div :class="cn('size-4', props.class)">
                 <AllianceLogo v-if="sovereignty.alliance" :alliance_id="sovereignty.alliance.id" :alliance_name="sovereignty.alliance.name" />
