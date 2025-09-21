@@ -38,6 +38,7 @@ return [
     ],
     'zkillboard' => [
         'identifier' => env('ZKILLBOARD_IDENTIFIER', 'nbrvecs7654vb68mnbv'),
+        'max_age_days' => env('ZKILLBOARD_MAX_AGE_DAYS', 2 * 365),
     ],
     'eveonline' => [
         'client_id' => env('EVE_CLIENT_ID'),
