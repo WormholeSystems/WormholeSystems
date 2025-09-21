@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import LockIcon from '@/components/icons/LockIcon.vue';
 import SatelliteDish from '@/components/icons/SatelliteDish.vue';
+import HasExtraConnections from '@/components/map/HasExtraConnections.vue';
 import SolarsystemEffect from '@/components/map/SolarsystemEffect.vue';
 import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue';
 import SolarsystemName from '@/components/map/solarsystem/SolarsystemName.vue';
@@ -15,7 +16,7 @@ import { TDataMapSolarSystem } from '@/composables/map';
 import MapSolarsystems from '@/routes/map-solarsystems';
 import { TCharacter } from '@/types/models';
 import { useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 const { map_solarsystem } = defineProps<{
     map_solarsystem: TDataMapSolarSystem;
@@ -32,6 +33,12 @@ const form = useForm<{
 });
 
 const open = ref(false);
+
+const extra_connections_count = computed(() => {
+    const connections_count = map_solarsystem.wormhole_signatures_count ?? 0;
+    const mapped_connections_count = map_solarsystem.map_connections?.length ?? 0;
+    return Math.max(0, connections_count - mapped_connections_count);
+});
 
 function handleSubmit() {
     form.put(MapSolarsystems.update(map_solarsystem.id).url, {
@@ -73,6 +80,7 @@ function handleSubmit() {
             <div class="col-start-3 row-start-1 flex items-center gap-1">
                 <LockIcon v-if="map_solarsystem.pinned" class="size-[14px] text-muted-foreground" />
                 <SatelliteDish v-if="map_solarsystem.signatures_count" class="size-[14px] text-amber-500" />
+                <HasExtraConnections v-if="extra_connections_count" :extra_connections_count="extra_connections_count" />
                 <SolarsystemSovereignty v-if="map_solarsystem.solarsystem?.sovereignty" :sovereignty="map_solarsystem.solarsystem.sovereignty" />
                 <SolarsystemEffect :effect="map_solarsystem.effect" :effects="map_solarsystem.effects" v-if="map_solarsystem.effect" />
             </div>

@@ -13,14 +13,13 @@ const { effects = [], effect } = defineProps<{
     <span>
         <Popover>
             <PopoverTrigger class="pointer-events-auto" @drag.prevent>
-                <div class="relative">
-                    <span v-if="effect === 'Pulsar'" class="block size-2 rounded-full bg-pulsar" />
+                <div class="grid size-[14px] cursor-pointer place-items-center">
+                    <span v-if="effect === 'Pulsar'" class="block size-2 rounded-full bg-pulsar p-2" />
                     <span v-else-if="effect === 'Magnetar'" class="block size-2 rounded-full bg-magnetar" />
                     <span v-else-if="effect === 'Black Hole'" class="block size-2 rounded-full bg-black-hole" />
                     <span v-else-if="effect === 'Red Giant'" class="block size-2 rounded-full bg-red-giant" />
                     <span v-else-if="effect === 'Cataclysmic Variable'" class="block size-2 rounded-full bg-catalysmic-variable" />
                     <span v-else-if="effect === 'Wolf-Rayet Star'" class="block size-2 rounded-full bg-wolf-rayet-star" />
-                    <span class="absolute -inset-4" />
                 </div>
             </PopoverTrigger>
             <PopoverContent>

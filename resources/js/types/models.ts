@@ -31,6 +31,7 @@ export type TMapSolarSystem = {
     pinned: boolean;
     signatures: TSignature[] | null;
     signatures_count?: number;
+    wormhole_signatures_count?: number;
     notes: string | null;
     map_connections: TMapConnection[] | null;
     audits: TAudit[] | null;

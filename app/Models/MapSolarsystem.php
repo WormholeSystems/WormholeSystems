@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Builders\MapSolarsystemBuilder;
 use App\Collections\MapSolarsystemCollection;
 use App\Enums\MapSolarsystemStatus;
+use App\Enums\SignatureCategory;
 use Database\Factories\MapSolarsystemFactory;
 use Illuminate\Database\Eloquent\Attributes\CollectedBy;
 use Illuminate\Database\Eloquent\Attributes\UseEloquentBuilder;
@@ -35,12 +36,14 @@ use Staudenmeir\EloquentHasManyDeep\HasRelationships;
  * @property MapSolarsystemStatus $status
  * @property bool $pinned
  * @property-read int|null $signatures_count
+ * @property-read int|null $wormhole_signatures_count
  * @property-read Solarsystem $solarsystem
  * @property-read Map $map
  * @property-read Collection<int,MapConnection> $connectionsTo
  * @property-read Collection<int,MapConnection> $connectionsFrom
  * @property-read WormholeSystem|null $wormholeSystem
  * @property-read Collection<int,Signature> $signatures
+ * @property-read Collection<int,Signature> $wormholeSignatures
  * @property-read Collection<int,Audit> $audits
  * @property-read Collection<int,Wormhole> $wormholes
  */
@@ -115,6 +118,14 @@ final class MapSolarsystem extends Model implements \OwenIt\Auditing\Contracts\A
     public function signatures(): HasMany
     {
         return $this->hasMany(Signature::class, 'map_solarsystem_id');
+    }
+
+    /**
+     * @return HasMany<Signature,$this>
+     */
+    public function wormholeSignatures(): HasMany
+    {
+        return $this->hasMany(Signature::class, 'map_solarsystem_id')->where('category', SignatureCategory::Wormhole);
     }
 
     public function wormholes(): HasManyDeep
