@@ -13,6 +13,7 @@ import MapRouteSolarsystems from '@/routes/map-route-solarsystems';
 import { TMapRouteSolarsystem } from '@/types/models';
 import { router } from '@inertiajs/vue3';
 import { vElementHover } from '@vueuse/components';
+import { computed } from 'vue';
 
 const { map_route } = defineProps<{
     map_route: TMapRouteSolarsystem;
@@ -21,6 +22,12 @@ const { map_route } = defineProps<{
 const { setPath } = usePath();
 
 const can_write = useHasWritePermission();
+
+const has_sovereignty = computed(() => {
+    return Boolean(
+        map_route.solarsystem.sovereignty?.alliance || map_route.solarsystem.sovereignty?.corporation || map_route.solarsystem.sovereignty?.faction,
+    );
+});
 
 function onHover(hovered: boolean) {
     if (hovered) {
@@ -81,7 +88,7 @@ function removeRoute() {
                 {{ map_route.solarsystem.region?.name || '' }}
             </span>
 
-            <SolarsystemSovereignty v-if="map_route.solarsystem.sovereignty" :sovereignty="map_route.solarsystem.sovereignty" class="size-6" />
+            <SolarsystemSovereignty v-if="has_sovereignty" :sovereignty="map_route.solarsystem.sovereignty!" class="size-6" />
             <div v-else class="size-4"></div>
 
             <div v-if="can_write" class="flex justify-center gap-2">
