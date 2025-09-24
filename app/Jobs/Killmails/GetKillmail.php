@@ -6,6 +6,7 @@ namespace App\Jobs\Killmails;
 
 use App\Http\Integrations\zKillboard\zKillboard;
 use App\Models\Killmail;
+use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Http\Client\ConnectionException;
@@ -26,7 +27,7 @@ final class GetKillmail implements ShouldQueue
     /**
      * Execute the job.
      *
-     * @throws ConnectionException
+     * @throws ConnectionException|Exception
      */
     public function handle(zKillboard $zKillboard, Esi $esi): void
     {

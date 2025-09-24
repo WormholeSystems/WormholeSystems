@@ -20,6 +20,7 @@
         "inertiajs/inertia-laravel": "^2.0",
         "knuckleswtf/scribe": "^5.3",
         "laravel/framework": "^12.0",
+        "laravel/horizon": "^5.34",
         "laravel/nightwatch": "^1.10",
         "laravel/octane": "^2.11",
         "laravel/reverb": "^1.0",

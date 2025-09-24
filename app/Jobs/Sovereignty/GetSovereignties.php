@@ -11,7 +11,7 @@ use App\Models\Sovereignty;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use NicolasKion\Esi\DTO\Name;
 use NicolasKion\Esi\Enums\NameCategory;
@@ -31,8 +31,6 @@ final class GetSovereignties implements ShouldQueue
 
     /**
      * Execute the job.
-     *
-     * @throws ConnectionException
      */
     public function handle(Esi $esi): void
     {
@@ -71,10 +69,7 @@ final class GetSovereignties implements ShouldQueue
         }
     }
 
-    /**
-     * @throws ConnectionException
-     */
-    private function getNamesForMissingEntities(Esi $esi, \Illuminate\Support\Collection $missing_ids): void
+    private function getNamesForMissingEntities(Esi $esi, Collection $missing_ids): void
     {
         if ($missing_ids->isEmpty()) {
             return;
