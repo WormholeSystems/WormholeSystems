@@ -188,7 +188,7 @@ final class MapController extends Controller
     private function getSolarsystemsMatchingSearch(Stringable $search): ResourceCollection
     {
         return Solarsystem::query()
-            ->whereLike('name', sprintf('%s%%', $search))
+            ->search($search)
             ->limit(10)
             ->get()
             ->toResourceCollection(SolarsystemResource::class);
