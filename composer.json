@@ -1,11 +1,16 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/vue-starter-kit",
+    "name": "wormhole-systems/wormhole-systems",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
+    "description": "The official web application for Wormhole Systems",
     "keywords": [
-        "laravel",
-        "framework"
+        "wormhole",
+        "eve-online",
+        "wh",
+        "map",
+        "tools",
+        "api",
+        "mapper"
     ],
     "license": "MIT",
     "require": {
