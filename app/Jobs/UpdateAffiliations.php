@@ -37,9 +37,6 @@ final class UpdateAffiliations implements ShouldQueue
         $this->updateAlliance($esi);
     }
 
-    /**
-     * @throws ConnectionException
-     */
     private function updateCorporation(Esi $esi): void
     {
         $corporation_doesnt_need_update = Corporation::query()
@@ -105,9 +102,6 @@ final class UpdateAffiliations implements ShouldQueue
         Log::info(sprintf('Updated corporation with ID %d', $this->affiliation->corporation_id));
     }
 
-    /**
-     * @throws ConnectionException
-     */
     private function updateAlliance(Esi $esi): void
     {
         if ($this->affiliation->alliance_id === null || $this->affiliation->alliance_id === 0) {
