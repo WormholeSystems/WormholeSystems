@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Builders\SolarsystemBuilder;
 use App\Traits\HasSlug;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Attributes\UseEloquentBuilder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -37,6 +39,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property-read Collection<int,MapRouteSolarsystem> $mapRouteSolarsystems
  * @property-read Collection<int,Killmail> $killmails
  */
+#[UseEloquentBuilder(SolarsystemBuilder::class)]
 final class Solarsystem extends Model
 {
     use HasSlug;
