@@ -7,8 +7,7 @@ namespace App\Data;
 use App\Enums\LifetimeStatus;
 use App\Enums\MassStatus;
 use App\Enums\ShipSize;
-use App\Models\MapConnection;
-use App\Models\Signature;
+use App\Models\MapSolarsystem;
 use App\Models\User;
 use DateTimeImmutable;
 use Illuminate\Container\Attributes\CurrentUser;
@@ -19,7 +18,7 @@ use Spatie\LaravelData\Casts\DateTimeInterfaceCast;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Optional;
 
-final class SignatureData extends Data
+final class NewSignatureData extends Data
 {
     public function __construct(
         public string|Optional|null $signature_id,
@@ -47,21 +46,8 @@ final class SignatureData extends Data
         ];
     }
 
-    public static function authorize(#[CurrentUser] User $user, #[RouteParameter('signature')] Signature $signature): bool
+    public static function authorize(#[CurrentUser] User $user, #[RouteParameter('map_solarsystem')] MapSolarsystem $mapSolarsystem): bool
     {
-        if (! $user->can('update', $signature)) {
-            return false;
-        }
-
-        $map_connection = MapConnection::query()->find($signature->map_connection_id);
-
-        if (! $map_connection instanceof MapConnection) {
-            return true;
-        }
-        if ($map_connection->fromMapSolarsystem()->is($signature->mapSolarsystem)) {
-            return true;
-        }
-
-        return $map_connection->toMapSolarsystem()->is($signature->mapSolarsystem);
+        return $user->can('update', $mapSolarsystem);
     }
 }

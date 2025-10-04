@@ -65,6 +65,9 @@ export function useNewConnection(
         const highsec = [from.solarsystem?.security, to.solarsystem?.security].filter((s) => s && s >= 0.5);
         if (names.includes('Thera') && highsec.length) return 'medium';
 
+        // Check if it involves a frigate-only system
+        if (classes.includes(13)) return 'frigate';
+
         return undefined;
     }
 

@@ -1,15 +1,14 @@
+import { signatureCategories, signatureTypes } from '@/const/signatures';
+import { TSignatureCategory, TSignatureType } from '@/types/models';
 import { UTCDate } from '@date-fns/utc';
 import { toast } from 'vue-sonner';
 
-export type TSignatureCategory = 'Wormhole' | 'Data Site' | 'Relic Site' | 'Combat Site' | 'Gas Site' | 'Ore Site' | null;
 export type TRawSignature = {
     signature_id: string;
-    category: TSignatureCategory;
-    type: string | null;
+    signature_category_id: number | null;
+    signature_type_id: number | null;
     created_at?: string;
 };
-
-export const signatureCategories = ['Wormhole', 'Data Site', 'Relic Site', 'Combat Site', 'Gas Site', 'Ore Site', null] as const;
 
 class SignatureParser {
     parseSignatures(text: string): TRawSignature[] {
@@ -20,7 +19,7 @@ class SignatureParser {
         return text
             .split('\n')
             .map((sig) => sig.split('\t'))
-            .map(this.parseSignature)
+            .map((sig) => this.parseSignature(sig))
             .filter((sig): sig is TRawSignature => sig !== null);
     }
 
@@ -30,37 +29,37 @@ class SignatureParser {
             return null;
         }
 
-        const [signature_id, _, category, type] = signature;
-
-        let app_category: string | null = category;
+        const [signature_id, _, category_name, type_name] = signature;
 
         if (!signature_id) {
             toast.error('Invalid signature format. Signature ID is required.');
             return null;
         }
 
-        if (!signatureCategories.includes(category as TSignatureCategory)) {
-            app_category = null;
-        }
-
-        function getType(category: string | null, type: string | null) {
-            if (category === 'Wormhole') {
-                return null;
-            }
-            const parsed_type = type?.trim();
-            if (!parsed_type) {
-                return null;
-            }
-
-            return parsed_type;
-        }
+        const signature_category = this.getCategory(category_name);
+        const signature_type = this.getType(signature_category, type_name);
 
         return {
             signature_id: signature_id.trim(),
-            category: app_category as TSignatureCategory,
-            type: getType(app_category, type),
+            signature_category_id: signature_category?.id || null,
+            signature_type_id: signature_type?.id || null,
             created_at: new UTCDate().toISOString(),
         };
+    }
+
+    getCategory(categoryName: string): TSignatureCategory | null {
+        return signatureCategories.find((cat) => cat.name === categoryName) || null;
+    }
+
+    getType(category: TSignatureCategory | null, typeName: string): TSignatureType | null {
+        if (!category) {
+            return null;
+        }
+        if (category.name === 'Wormhole') {
+            return null;
+        }
+
+        return signatureTypes.find((type) => type.name === typeName.trim() && type.signature_category_id === category.id) || null;
     }
 }
 

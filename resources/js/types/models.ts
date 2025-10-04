@@ -1,4 +1,4 @@
-import { TSignatureCategory } from '@/lib/SignatureParser';
+// TSignatureCategory now defined in this file
 
 export type TMap = {
     id: number;
@@ -194,13 +194,36 @@ export type TzKillboard = {
     totalValue: number;
 };
 
+export type TSignatureCategory = {
+    id: number;
+    name: string;
+    code: string;
+    created_at: string;
+    updated_at: string;
+};
+
+export type TSignatureType = {
+    id: number;
+    name: string;
+    signature: string;
+    signature_category_id: number;
+    category_name: string;
+    target_class: string | null;
+    extra: string | null;
+    spawn_areas: string[] | null;
+    created_at?: string;
+    updated_at?: string;
+};
+
 export type TSignature = {
     id: number;
     map_solarsystem_id: number;
     map_connection_id: number | null;
     signature_id: string | null;
-    type: string | null;
-    category: TSignatureCategory;
+    signature_type_id: number | null;
+    signature_category_id: number | null;
+    signature_type: TSignatureType | null;
+    signature_category: TSignatureCategory | null;
     mass_status: TMassStatus | null;
     ship_size: TShipSize | null;
     lifetime: TLifetimeStatus;

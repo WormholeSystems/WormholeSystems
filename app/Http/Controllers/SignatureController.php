@@ -7,8 +7,9 @@ namespace App\Http\Controllers;
 use App\Actions\Signatures\DeleteSignatureAction;
 use App\Actions\Signatures\StoreSignatureAction;
 use App\Actions\Signatures\UpdateSignatureAction;
+use App\Data\NewSignatureData;
 use App\Data\SignatureData;
-use App\Http\Requests\Signatures\StoreSignatureRequest;
+use App\Models\MapSolarsystem;
 use App\Models\Signature;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
@@ -19,9 +20,9 @@ final class SignatureController extends Controller
     /**
      * @throws Throwable
      */
-    public function store(StoreSignatureRequest $request, StoreSignatureAction $storeSignatureAction): RedirectResponse
+    public function store(NewSignatureData $data, MapSolarsystem $mapSolarsystem, StoreSignatureAction $storeSignatureAction): RedirectResponse
     {
-        $storeSignatureAction->handle($request->validated());
+        $storeSignatureAction->handle($mapSolarsystem, $data);
 
         return back()->notify('Signature created successfully.', message: 'You have successfully created a new signature.');
     }

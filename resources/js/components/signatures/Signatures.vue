@@ -9,97 +9,26 @@ import { CardAction, CardDescription, CardHeader, CardTitle } from '@/components
 import MapPanel from '@/components/ui/map-panel/MapPanel.vue';
 import MapPanelContent from '@/components/ui/map-panel/MapPanelContent.vue';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { createSignature, deleteSignatures, pasteSignatures, useSignatures } from '@/composables/map';
+import { createSignature, useSignatures } from '@/composables/map';
+import { usePasteSignatures } from '@/composables/map/composables/usePasteSignatures';
+import { useSortableSignatures } from '@/composables/map/composables/useSortedSignatures';
 import useHasWritePermission from '@/composables/useHasWritePermission';
-import { useSortPreference } from '@/composables/useSortPreference';
-import { signatureParser, TRawSignature } from '@/lib/SignatureParser';
-import { TMapSolarSystem, TSignature } from '@/types/models';
-import { useActiveElement, useEventListener } from '@vueuse/core';
-import { computed, ref, watch } from 'vue';
-import { toast } from 'vue-sonner';
+import { TMapSolarSystem } from '@/types/models';
+import { computed, toRef } from 'vue';
 
 const { map_solarsystem } = defineProps<{
     map_solarsystem: TMapSolarSystem;
 }>();
 
-const { relevant_signatures, connections } = useSignatures();
+const { connections } = useSignatures();
 
 const can_write = useHasWritePermission();
 
-const { sortPreferences, updateSortPreferences } = useSortPreference('signatures');
+const { signatures, pasted_signatures, deleted_signatures, deleteMissingSignatures, pasteSignatures } = usePasteSignatures(
+    toRef(() => map_solarsystem),
+);
 
-const pasted_signatures = ref<Partial<TSignature>[] | null>();
-const new_signatures = computed(() => {
-    if (!pasted_signatures.value) {
-        return [];
-    }
-    return getNewSignatures(pasted_signatures.value);
-});
-const updated_signatures = computed(() => {
-    if (!pasted_signatures.value) {
-        return [];
-    }
-    return getUpdatedSignatures(pasted_signatures.value);
-});
-
-const deleted_signatures = computed(() => {
-    if (!pasted_signatures.value) {
-        return [];
-    }
-    return getDeletedSignatures(pasted_signatures.value);
-});
-
-function compareNullableStrings(a: string | null, b: string | null): number {
-    if (!a && !b) return 0;
-
-    if (!a) return 1;
-
-    if (!b) return -1;
-
-    return a.localeCompare(b);
-}
-
-function getSortComparison(
-    a: TSignature & { deleted: boolean; new: boolean; updated: boolean },
-    b: TSignature & { deleted: boolean; new: boolean; updated: boolean },
-): number {
-    let primaryComparison = 0;
-
-    switch (sortPreferences.value.column) {
-        case 'id':
-            primaryComparison = compareNullableStrings(a.signature_id, b.signature_id);
-            break;
-        case 'category':
-            primaryComparison = compareNullableStrings(a.category, b.category);
-            break;
-        case 'type':
-            primaryComparison = compareNullableStrings(a.type, b.type);
-            break;
-        default:
-            primaryComparison = 0;
-    }
-
-    const directedPrimaryComparison = sortPreferences.value.direction === 'desc' ? -primaryComparison : primaryComparison;
-
-    if (primaryComparison === 0) {
-        return compareNullableStrings(a.signature_id, b.signature_id);
-    }
-
-    return directedPrimaryComparison;
-}
-
-const signatures = computed(() => {
-    const enriched_signatures = map_solarsystem.signatures!.map((sig) => ({
-        ...sig,
-        deleted: isSignatureDeleted(sig),
-        new: isSignatureNew(sig),
-        updated: isSignatureUpdated(sig),
-    }));
-
-    return enriched_signatures.sort((a, b) => {
-        return getSortComparison(a, b);
-    });
-});
+const { sortPreferences, sorted, updateSortPreferences } = useSortableSignatures(signatures);
 
 const connected_connections = computed(() => {
     return connections.value.filter((connection) => {
@@ -117,18 +46,6 @@ const unconnected_connections = computed(() => {
     });
 });
 
-const activeElement = useActiveElement();
-const using_input = computed(() => {
-    return activeElement.value && ['INPUT', 'TEXTAREA'].includes(activeElement.value.tagName);
-});
-
-watch(
-    () => map_solarsystem.solarsystem_id,
-    () => {
-        pasted_signatures.value = null;
-    },
-);
-
 function handleSort(column: string) {
     const sortColumn = column as 'id' | 'category' | 'type';
     let newDirection: 'asc' | 'desc';
@@ -142,97 +59,9 @@ function handleSort(column: string) {
     updateSortPreferences(sortColumn, newDirection);
 }
 
-async function handlePaste() {
-    const signatures = await getSignaturesFromClipboard();
-    if (!signatures) {
-        return;
-    }
-
-    processSignatures(signatures);
-}
-
-function processSignatures(signatures: TRawSignature[]) {
-    pasted_signatures.value = signatures;
-    pasteSignatures(map_solarsystem.id, signatures);
-}
-
-async function getSignaturesFromClipboard() {
-    // ask for permission to read clipboard
-    if (!navigator.clipboard || !navigator.clipboard.readText) {
-        toast.error('Clipboard access is not supported in this browser or permission is denied.');
-        return false;
-    }
-    const clipboardText = await navigator.clipboard.readText();
-    return signatureParser.parseSignatures(clipboardText);
-}
-
-function getNewSignatures(parsed_signatures: Partial<TSignature>[]) {
-    return parsed_signatures.filter((signature) => {
-        return !map_solarsystem.signatures!.some((existing_signature) => {
-            return existing_signature.signature_id === signature.signature_id;
-        });
-    });
-}
-
-function isSignatureDeleted(signature: Partial<TSignature>) {
-    return Boolean(
-        pasted_signatures.value &&
-            !pasted_signatures.value.some((pasted_signature) => pasted_signature.signature_id === signature.signature_id && !pasted_signature.id),
-    );
-}
-
-function isSignatureNew(signature: Partial<TSignature>) {
-    return Boolean(new_signatures.value.some((new_signature) => new_signature.signature_id === signature.signature_id));
-}
-
-function isSignatureUpdated(signature: Partial<TSignature>) {
-    return Boolean(updated_signatures.value.some((updated_signature) => updated_signature.signature_id === signature.signature_id));
-}
-
-function getUpdatedSignatures(parsed_signatures: Partial<TSignature>[]) {
-    return parsed_signatures.filter((signature) => {
-        return map_solarsystem.signatures!.some((existing_signature) => {
-            return existing_signature.signature_id === signature.signature_id;
-        });
-    });
-}
-
-function getDeletedSignatures(parsed_signatures: Partial<TSignature>[]) {
-    return map_solarsystem.signatures!.filter((signature) => {
-        return !parsed_signatures.some((parsed_signature) => parsed_signature.signature_id === signature.signature_id);
-    });
-}
-
 function createNewSignature() {
     createSignature(map_solarsystem.id);
 }
-
-function deleteMissingSignatures(with_solarsystems = false) {
-    deleteSignatures(
-        map_solarsystem.id,
-        deleted_signatures.value.map((signature) => signature.id),
-        with_solarsystems,
-    );
-}
-
-useEventListener('paste', (event) => {
-    if (using_input.value) {
-        return;
-    }
-    event.preventDefault();
-    const clipboardData = event.clipboardData?.getData('text/plain');
-
-    if (!clipboardData) {
-        toast.error('No text found in clipboard.');
-        return;
-    }
-    const signatures = signatureParser.parseSignatures(clipboardData);
-    if (!signatures) {
-        toast.error('Failed to parse signatures from clipboard.');
-        return;
-    }
-    processSignatures(signatures);
-});
 </script>
 
 <template>
@@ -259,7 +88,7 @@ useEventListener('paste', (event) => {
                 </Tooltip>
                 <Tooltip>
                     <TooltipTrigger as-child>
-                        <Button @click="handlePaste" variant="secondary" size="icon">
+                        <Button @click="pasteSignatures" variant="secondary" size="icon">
                             <PasteIcon />
                         </Button>
                     </TooltipTrigger>
@@ -305,16 +134,15 @@ useEventListener('paste', (event) => {
                         <div></div>
                     </div>
                     <Signature
-                        v-for="signature in signatures"
+                        v-for="signature in sorted"
                         :signature="signature"
                         :key="signature.id"
-                        :deleted="signature.deleted"
-                        :new="signature.new"
-                        :updated="signature.updated"
+                        :is_deleted="signature.deleted"
+                        :is_new="signature.new"
+                        :is_updated="signature.updated"
                         :unconnected_connections="unconnected_connections"
                         :connected_connections="connected_connections"
                         :selected_map_solarsystem="map_solarsystem"
-                        :possible_signatures="relevant_signatures"
                     />
                 </div>
                 <div v-if="!signatures.length" class="p-4 text-center text-sm text-muted-foreground">No signatures found</div>

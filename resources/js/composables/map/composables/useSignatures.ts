@@ -1,6 +1,5 @@
 import { useMap } from '@/composables/useMap';
 import { useSelectedMapSolarsystem } from '@/composables/useSelectedMapSolarsystem';
-import signature_tree from '@/const/signatures';
 import { TMapSolarSystem } from '@/types/models';
 import { computed } from 'vue';
 import { TProcessedConnection } from '../types';
@@ -11,11 +10,6 @@ export function useSignatures() {
 
     const solarsystem_class = computed(() => selected_map_solarsystem.value?.class);
     const solarsystem_security = computed(() => selected_map_solarsystem.value?.solarsystem?.security);
-
-    const relevant_signatures = computed(() => {
-        if (solarsystem_class.value) return getWormholeSignatures(solarsystem_class.value);
-        return getKnownSpaceSignatures(solarsystem_security.value!, selected_map_solarsystem.value!);
-    });
 
     const map_solarsystems = computed(() => {
         return map.value.map_solarsystems?.reduce(
@@ -60,19 +54,7 @@ export function useSignatures() {
     return {
         solarsystem_class,
         solarsystem_security,
-        relevant_signatures,
         map_solarsystems,
         connections,
     };
-}
-
-function getWormholeSignatures(solarsystem_class: number) {
-    return signature_tree.wormhole_space[solarsystem_class as keyof typeof signature_tree.wormhole_space] || [];
-}
-
-function getKnownSpaceSignatures(solarsystem_security: number, map_solarsystem: TMapSolarSystem) {
-    if (solarsystem_security >= 0.5) return signature_tree.known_space.hs;
-    if (solarsystem_security >= 0.1) return signature_tree.known_space.ls;
-    if (map_solarsystem.solarsystem?.region?.name === 'Pochven') return signature_tree.known_space.pv;
-    return signature_tree.known_space.ls;
 }

@@ -9,8 +9,8 @@ export function pasteSignatures(map_solarsystem_id: number, signatures: TRawSign
             map_solarsystem_id,
             signatures: signatures.map((signature) => ({
                 signature_id: signature.signature_id,
-                type: signature.type,
-                category: signature.category,
+                signature_category_id: signature.signature_category_id,
+                signature_type_id: signature.signature_type_id,
             })),
         },
         {

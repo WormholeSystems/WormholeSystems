@@ -1,32 +1,28 @@
 <script setup lang="ts">
 import WormholeOption from '@/components/signatures/WormholeOption.vue';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger } from '@/components/ui/select';
-import { TWormholeDefinition } from '@/const/signatures';
+import type { TSignatureType } from '@/types/models';
 import { computed, shallowRef } from 'vue';
 
-const { possible_signatures } = defineProps<{
+const { wormhole_options } = defineProps<{
     can_write: boolean;
-    possible_signatures: Record<string, TWormholeDefinition[]>;
+    wormhole_options: TSignatureType[];
 }>();
 
-const model = defineModel<string | null>({
+const model = defineModel<number | null>({
     required: true,
 });
 
-const wormhole_options = computed(() => {
-    return possible_signatures['Wormhole'] || [];
+const k162_options = computed<TSignatureType[]>(() => {
+    return wormhole_options.filter((option: TSignatureType) => option.signature === 'K162');
 });
 
-const k162_options = computed<TWormholeDefinition[]>(() => {
-    return wormhole_options.value.filter((option: TWormholeDefinition) => option.signature === 'K162');
-});
-
-const wormholes = computed<TWormholeDefinition[]>(() => {
-    return wormhole_options.value.filter((option: TWormholeDefinition) => option.signature !== 'K162');
+const wormholes = computed<TSignatureType[]>(() => {
+    return wormhole_options.filter((option: TSignatureType) => option.signature !== 'K162');
 });
 
 const selected_signature = computed(() => {
-    return wormhole_options.value.find((option: TWormholeDefinition) => option.name === model.value) || null;
+    return wormhole_options.find((option: TSignatureType) => option.id === model.value) || null;
 });
 
 const open = shallowRef(false);
@@ -44,14 +40,14 @@ const open = shallowRef(false);
             <template v-if="open">
                 <SelectGroup>
                     <SelectLabel class="text-muted-foreground">K162</SelectLabel>
-                    <SelectItem v-for="option in k162_options" :key="option.name" :value="option.name">
+                    <SelectItem v-for="option in k162_options" :key="option.id" :value="option.id">
                         <WormholeOption :wormhole="option" />
                     </SelectItem>
                 </SelectGroup>
                 <SelectSeparator />
                 <SelectGroup>
                     <SelectLabel class="text-muted-foreground">Wormholes</SelectLabel>
-                    <SelectItem v-for="option in wormholes" :key="option.name" :value="option.name">
+                    <SelectItem v-for="option in wormholes" :key="option.id" :value="option.id">
                         <WormholeOption :wormhole="option" />
                     </SelectItem>
                 </SelectGroup>
