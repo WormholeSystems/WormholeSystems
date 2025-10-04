@@ -7,6 +7,7 @@ namespace App\Actions\Signatures;
 use App\Data\SignatureData;
 use App\Enums\LifetimeStatus;
 use App\Enums\MassStatus;
+use App\Enums\SignatureCategory;
 use App\Events\Signatures\SignatureUpdatedEvent;
 use App\Models\Signature;
 use Illuminate\Support\Facades\DB;
@@ -24,8 +25,8 @@ final class UpdateSignatureAction
 
             $signature->update($data->toArray());
 
-            if ($signature->category === 'Wormhole') {
-                $signature->wormhole_id = Signature::typeToWormhole($signature->type)?->id;
+            if ($signature->signatureCategory->name === SignatureCategory::Wormhole->value) {
+                $signature->wormhole_id = $signature->signatureType->wormhole?->id;
                 $signature->save();
             }
 

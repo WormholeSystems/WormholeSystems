@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Actions\Signatures;
 
+use App\Models\MapConnection;
 use App\Models\MapSolarsystem;
 use App\Models\Signature;
+use App\Models\SignatureCategory;
+use App\Models\SignatureType;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -39,17 +42,44 @@ final readonly class PasteSignaturesAction
             $updated_signatures->each(function (array $signature) use ($existing_signatures): void {
                 $existing_signature = $existing_signatures->firstWhere('signature_id', $signature['signature_id']);
 
-                $new_category = empty($signature['category']) ? $existing_signature->category : $signature['category'];
-                $new_type = empty($signature['type']) ? $existing_signature->type : $signature['type'];
-                $new_map_connection_id = $new_category !== 'Wormhole' ? null : $existing_signature->map_connection_id;
+                $new_category = $this->getNewCategory($signature, $existing_signature);
+                $new_type = $this->getNewType($signature, $existing_signature);
+                $new_map_connection = $this->getNewMapConnection($new_category, $existing_signature);
 
                 $existing_signature->update([
                     'category' => $new_category,
                     'type' => $new_type,
-                    'map_connection_id' => $new_map_connection_id,
-                    'wormhole_id' => $new_category === 'Wormhole' ? Signature::typeToWormhole($new_type)?->id : null,
+                    'map_connection_id' => $new_map_connection?->id,
+                    'wormhole_id' => $new_type->wormhole?->id,
                 ]);
             });
         });
+    }
+
+    private function getNewCategory(array $signature, Signature $existing_signature): ?SignatureCategory
+    {
+        if ($category = $signature['category'] ?? null) {
+            return SignatureCategory::query()->firstWhere('name', $category);
+        }
+
+        return $existing_signature->signatureCategory;
+    }
+
+    private function getNewType(array $signature, Signature $existing_signature): ?SignatureType
+    {
+        if ($type = $signature['type'] ?? null) {
+            return SignatureType::query()->firstWhere('name', $type);
+        }
+
+        return $existing_signature->signatureType;
+    }
+
+    private function getNewMapConnection(?SignatureCategory $category, Signature $existing_signature): ?MapConnection
+    {
+        if ($category?->name === \App\Enums\SignatureCategory::Wormhole->value) {
+            return $existing_signature->mapConnection;
+        }
+
+        return null;
     }
 }

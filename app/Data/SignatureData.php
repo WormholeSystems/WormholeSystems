@@ -24,8 +24,8 @@ final class SignatureData extends Data
 {
     public function __construct(
         public string|Optional|null $signature_id,
-        public string|Optional|null $type,
-        public SignatureCategory|Optional|null $category,
+        public int|Optional|null $signature_type_id,
+        public SignatureCategory|Optional|null $signature_category,
         public int|Optional|null $map_connection_id,
         public MassStatus|Optional|null $mass_status,
         public ShipSize|Optional|null $ship_size,
@@ -38,8 +38,8 @@ final class SignatureData extends Data
     {
         return [
             'signature_id' => ['nullable', 'sometimes', 'string', 'max:7', 'min:7'],
-            'category' => ['nullable', 'sometimes', Rule::enum(SignatureCategory::class)],
-            'type' => ['nullable', 'sometimes', 'string', 'max:255'],
+            'signature_category' => ['nullable', 'sometimes', Rule::enum(SignatureCategory::class)],
+            'signature_type_id' => ['nullable', 'sometimes', 'integer', 'exists:signature_types,id'],
             'map_connection_id' => ['nullable', 'sometimes', 'integer', 'exists:map_connections,id'],
             'lifetime' => ['nullable', 'sometimes', Rule::enum(LifetimeStatus::class)],
             'lifetime_updated_at' => ['nullable', 'sometimes', "date_format:Y-m-d\TH:i:sP"],
@@ -54,7 +54,7 @@ final class SignatureData extends Data
             return false;
         }
 
-        $map_connection = MapConnection::find($signature->map_connection_id);
+        $map_connection = MapConnection::query()->find($signature->map_connection_id);
 
         if (! $map_connection instanceof MapConnection) {
             return true;
