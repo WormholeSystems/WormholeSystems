@@ -1,9 +1,28 @@
 <script setup lang="ts">
-import { TWormholeDefinition } from '@/const/signatures';
+import type { TSignatureType } from '@/const/signatures';
+import { computed } from 'vue';
 
-defineProps<{
-    wormhole: TWormholeDefinition;
+const props = defineProps<{
+    wormhole: TSignatureType;
 }>();
+
+const displayClass = computed(() => {
+    const targetClass = props.wormhole.target_class;
+    if (!targetClass) return '';
+    
+    // If it's a numeric class (1-18), add C prefix
+    if (/^\d+$/.test(targetClass)) {
+        return `C${targetClass}`;
+    }
+    
+    // Convert hs/ls/ns to H/L/N
+    if (targetClass === 'hs') return 'H';
+    if (targetClass === 'ls') return 'L';
+    if (targetClass === 'ns') return 'N';
+    
+    // Otherwise return as-is (for pv, unknown, etc.)
+    return targetClass.toUpperCase();
+});
 </script>
 
 <template>
@@ -13,9 +32,9 @@ defineProps<{
         </span>
         <span
             :data-class="wormhole.target_class"
-            class="text-muted-foreground data-[class=C1]:text-c1 data-[class=C2]:text-c2 data-[class=C2/C3]:text-c2 data-[class=C3]:text-c3 data-[class=C4]:text-c4 data-[class=C4/C5]:text-c4 data-[class=C5]:text-c5 data-[class=C6]:text-c6 data-[class=H]:text-hs data-[class=L]:text-ls data-[class=N]:text-ns"
+            class="text-muted-foreground data-[class='1']:text-c1 data-[class='2']:text-c2 data-[class='3']:text-c3 data-[class='4']:text-c4 data-[class='5']:text-c5 data-[class='6']:text-c6 data-[class=hs]:text-hs data-[class=ls]:text-ls data-[class=ns]:text-ns"
         >
-            {{ wormhole.target_class }}
+            {{ displayClass }}
         </span>
         <span v-if="wormhole.extra" class="text-muted-foreground"> ({{ wormhole.extra }}) </span>
     </span>

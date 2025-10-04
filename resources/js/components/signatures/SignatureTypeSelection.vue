@@ -1,33 +1,30 @@
 <script setup lang="ts">
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ref } from 'vue';
+import type { TSignatureType } from '@/const/signatures';
 
-const { options } = defineProps<{
-    options: string[];
-    category: string | null;
+const { options, category } = defineProps<{
     can_write: boolean;
+    options: TSignatureType[];
+    category: string | null | undefined;
 }>();
 
-const model = defineModel<string | null>({
+const model = defineModel<number | null>({
     required: true,
 });
-
-const open = ref(false);
 </script>
 
 <template>
-    <Select v-model:model-value="model" :disabled="!can_write || !category" v-model:open="open">
+    <Select v-model="model" :disabled="!can_write || !options.length">
         <SelectTrigger class="w-full text-xs">
-            <SelectValue>{{ model ?? 'Type' }}</SelectValue>
+            <SelectValue placeholder="Type" />
         </SelectTrigger>
-        <SelectContent v-if="category">
-            <template v-if="open">
-                <SelectItem v-for="option in options" :key="option" :value="option">
-                    {{ option }}
-                </SelectItem>
-            </template>
+        <SelectContent>
+            <SelectItem v-for="option in options" :key="option.id" :value="option.id">
+                {{ option.name }}
+            </SelectItem>
         </SelectContent>
     </Select>
 </template>
 
 <style scoped></style>
+

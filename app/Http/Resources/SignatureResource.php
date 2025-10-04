@@ -22,12 +22,16 @@ final class SignatureResource extends JsonResource
      */
     public function toArray($request): array
     {
+        $this->loadMissing(['signatureType', 'signatureCategory', 'wormhole']);
+
         return [
             'id' => $this->id,
             'signature_id' => $this->signature_id,
             'map_solarsystem_id' => $this->map_solarsystem_id,
-            'type' => $this->type,
-            'category' => $this->category,
+            'signature_type_id' => $this->signature_type_id,
+            'signature_category_id' => $this->signature_category_id,
+            'signature_type' => $this->signatureType,
+            'signature_category' => $this->signatureCategory,
             'map_connection_id' => $this->map_connection_id,
             'wormhole_id' => $this->wormhole_id,
             'mass_status' => $this->mass_status,

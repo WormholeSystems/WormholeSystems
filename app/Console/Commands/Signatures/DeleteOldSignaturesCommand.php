@@ -6,7 +6,6 @@ namespace App\Console\Commands\Signatures;
 
 use App\Actions\Signatures\DeleteSignatureAction;
 use App\Console\Commands\AppCommand;
-use App\Enums\SignatureCategory;
 use App\Models\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -84,7 +83,9 @@ final class DeleteOldSignaturesCommand extends AppCommand
     private function deleteWormholeSignatures(): void
     {
         $old_signatures = Signature::query()
-            ->where('category', SignatureCategory::Wormhole)
+            ->whereHas('signatureCategory', function ($query): void {
+                $query->where('name', 'Wormhole');
+            })
             ->where('created_at', '<', now()->subDays(self::WORMHOLE_SIGNATURE_LIFETIME_DAYS))
             ->get();
 

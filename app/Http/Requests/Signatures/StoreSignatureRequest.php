@@ -6,7 +6,6 @@ namespace App\Http\Requests\Signatures;
 
 use App\Enums\LifetimeStatus;
 use App\Enums\MassStatus;
-use App\Enums\SignatureCategory;
 use App\Models\MapConnection;
 use App\Models\MapSolarsystem;
 use App\Models\User;
@@ -62,8 +61,8 @@ final class StoreSignatureRequest extends FormRequest
         return [
             'map_solarsystem_id' => ['required', 'integer', 'exists:map_solarsystems,id'],
             'signature_id' => ['nullable', 'sometimes', 'string', 'max:7', 'min:7'],
-            'category' => ['nullable', 'sometimes', Rule::enum(SignatureCategory::class)],
-            'type' => ['nullable', 'sometimes', 'string', 'max:255'],
+            'signature_category_id' => ['nullable', 'sometimes', 'integer', 'exists:signature_categories,id'],
+            'signature_type_id' => ['nullable', 'sometimes', 'integer', 'exists:signature_types,id'],
             'map_connection_id' => ['nullable', 'sometimes', 'integer', 'exists:map_connections,id'],
             'lifetime' => ['nullable', 'sometimes', Rule::enum(LifetimeStatus::class)],
             'mass_status' => ['nullable', 'sometimes', Rule::enum(MassStatus::class)],

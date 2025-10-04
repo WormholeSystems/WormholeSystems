@@ -6,6 +6,8 @@ namespace App\Actions\Signatures;
 
 use App\Models\MapSolarsystem;
 use App\Models\Signature;
+use App\Models\SignatureCategory;
+use App\Models\SignatureType;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -39,15 +41,30 @@ final readonly class PasteSignaturesAction
             $updated_signatures->each(function (array $signature) use ($existing_signatures): void {
                 $existing_signature = $existing_signatures->firstWhere('signature_id', $signature['signature_id']);
 
-                $new_category = empty($signature['category']) ? $existing_signature->category : $signature['category'];
-                $new_type = empty($signature['type']) ? $existing_signature->type : $signature['type'];
-                $new_map_connection_id = $new_category !== 'Wormhole' ? null : $existing_signature->map_connection_id;
+                $signature_category_id = $signature['signature_category_id'] ?? $existing_signature->signature_category_id;
+                $signature_type_id = $signature['signature_type_id'] ?? $existing_signature->signature_type_id;
+
+                // Clear map_connection_id if category is not Wormhole
+                $map_connection_id = null;
+                if ($signature_category_id) {
+                    $category = SignatureCategory::query()->find($signature_category_id);
+                    if ($category?->name === 'Wormhole') {
+                        $map_connection_id = $existing_signature->map_connection_id;
+                    }
+                }
+
+                // Get wormhole_id from signature type
+                $wormhole_id = null;
+                if ($signature_type_id) {
+                    $signatureType = SignatureType::query()->find($signature_type_id);
+                    $wormhole_id = $signatureType?->wormhole?->id;
+                }
 
                 $existing_signature->update([
-                    'category' => $new_category,
-                    'type' => $new_type,
-                    'map_connection_id' => $new_map_connection_id,
-                    'wormhole_id' => $new_category === 'Wormhole' ? Signature::typeToWormhole($new_type)?->id : null,
+                    'signature_category_id' => $signature_category_id,
+                    'signature_type_id' => $signature_type_id,
+                    'map_connection_id' => $map_connection_id,
+                    'wormhole_id' => $wormhole_id,
                 ]);
             });
         });

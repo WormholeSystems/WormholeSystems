@@ -22,7 +22,7 @@ const { map_solarsystem } = defineProps<{
     map_solarsystem: TMapSolarSystem;
 }>();
 
-const { relevant_signatures, connections } = useSignatures();
+const { connections } = useSignatures();
 
 const can_write = useHasWritePermission();
 
@@ -70,10 +70,10 @@ function getSortComparison(
             primaryComparison = compareNullableStrings(a.signature_id, b.signature_id);
             break;
         case 'category':
-            primaryComparison = compareNullableStrings(a.category, b.category);
+            primaryComparison = compareNullableStrings(a.signature_category?.name ?? null, b.signature_category?.name ?? null);
             break;
         case 'type':
-            primaryComparison = compareNullableStrings(a.type, b.type);
+            primaryComparison = compareNullableStrings(a.signature_type?.name ?? null, b.signature_type?.name ?? null);
             break;
         default:
             primaryComparison = 0;
@@ -314,7 +314,6 @@ useEventListener('paste', (event) => {
                         :unconnected_connections="unconnected_connections"
                         :connected_connections="connected_connections"
                         :selected_map_solarsystem="map_solarsystem"
-                        :possible_signatures="relevant_signatures"
                     />
                 </div>
                 <div v-if="!signatures.length" class="p-4 text-center text-sm text-muted-foreground">No signatures found</div>

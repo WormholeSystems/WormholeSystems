@@ -18,7 +18,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { deleteSignature, TProcessedConnection, updateSignature } from '@/composables/map';
 import useHasWritePermission from '@/composables/useHasWritePermission';
-import { TSignatureCategory } from '@/lib/SignatureParser';
+import { signatureCategories, getTypesByCategory } from '@/const/signatures';
 import { formatDateToISO } from '@/lib/utils';
 import { TMapSolarSystem, TSignature } from '@/types/models';
 import { UTCDate } from '@date-fns/utc';
@@ -27,7 +27,7 @@ import { MoreVertical } from 'lucide-vue-next';
 import { AcceptableValue } from 'reka-ui';
 import { computed, ref, toRef } from 'vue';
 
-const { signature, unconnected_connections, possible_signatures, connected_connections } = defineProps<{
+const { signature, unconnected_connections, connected_connections, selected_map_solarsystem } = defineProps<{
     signature: TSignature;
     deleted?: boolean;
     new?: boolean;
@@ -35,7 +35,6 @@ const { signature, unconnected_connections, possible_signatures, connected_conne
     unconnected_connections: TProcessedConnection[];
     connected_connections: TProcessedConnection[];
     selected_map_solarsystem: TMapSolarSystem;
-    possible_signatures: any;
 }>();
 
 const original = toRef(() => signature.signature_id || '');
@@ -53,7 +52,71 @@ const selected_connection = computed(() => {
     );
 });
 
-const options = ['Wormhole', 'Gas Site', 'Ore Site', 'Combat Site', 'Data Site', 'Relic Site', 'Unknown'];
+// Get current solarsystem class for filtering
+const currentSystemClass = computed(() => {
+    const sysClass = selected_map_solarsystem.class;
+    if (sysClass >= 1 && sysClass <= 18) return String(sysClass);
+    if (sysClass === 25) return 'pv'; // Pochven
+    
+    // Known space
+    const security = selected_map_solarsystem.solarsystem?.security;
+    if (security === undefined) return null;
+    if (security >= 0.5) return 'hs';
+    if (security > 0.0) return 'ls';
+    return 'ns';
+});
+
+// Get available types based on selected category and filter by spawn_areas for wormholes
+const availableTypes = computed(() => {
+    if (!signature.signature_category_id) return [];
+    
+    const types = getTypesByCategory(signature.signature_category_id);
+    
+    // Filter wormhole types by current system's spawn area
+    if (isWormhole.value && currentSystemClass.value) {
+        return types.filter(type => {
+            if (!type.spawn_areas || type.spawn_areas.length === 0) return true;
+            return type.spawn_areas.includes(currentSystemClass.value!);
+        });
+    }
+    
+    return types;
+});
+
+// Helper function to get sort order for target class
+const getClassSortOrder = (targetClass: string | null): number => {
+    if (!targetClass) return 999;
+    
+    // Known space first, in order: H, L, N
+    if (targetClass === 'hs') return 1;
+    if (targetClass === 'ls') return 2;
+    if (targetClass === 'ns') return 3;
+    
+    // Wormhole space (C1-C18)
+    if (/^\d+$/.test(targetClass)) {
+        return 10 + parseInt(targetClass);
+    }
+    
+    // Special classes
+    if (targetClass === 'pv') return 200; // Pochven
+    if (targetClass === 'unknown') return 300;
+    
+    return 999;
+};
+
+// Sort available types by target class
+const sortedAvailableTypes = computed(() => {
+    return availableTypes.value.sort((a, b) => getClassSortOrder(a.target_class) - getClassSortOrder(b.target_class));
+});
+
+// Get wormhole category ID for comparison
+const wormholeCategoryId = computed(() => {
+    return signatureCategories.find(cat => cat.name === 'Wormhole')?.id;
+});
+
+const isWormhole = computed(() => {
+    return signature.signature_category_id === wormholeCategoryId.value;
+});
 
 function handleChange(data: Record<any, any>) {
     updateSignature(signature, data);
@@ -64,20 +127,21 @@ function handleDelete() {
 }
 
 function handleCategoryChange(value: AcceptableValue) {
-    const type = signature.category !== value ? null : signature.type;
-    const category = value as TSignatureCategory;
+    const categoryId = value as number;
+    const signature_category_id = categoryId;
+    const signature_type_id = null; // Clear type when category changes
     const map_connection_id = null;
     handleChange({
-        category,
-        type,
+        signature_category_id,
+        signature_type_id,
         map_connection_id,
     });
 }
 
 function handleTypeChange(value: AcceptableValue) {
-    const type = value as string;
+    const signature_type_id = value as number;
     handleChange({
-        type,
+        signature_type_id,
     });
 }
 
@@ -117,8 +181,8 @@ function handleMassStatusChange(mass_status: string) {
         <div class="flex items-center gap-2">
             <div
                 class="size-2 shrink-0 rounded-full bg-red-500 data-[incomplete=true]:bg-amber-500 data-[scanned=true]:bg-green-500"
-                :data-scanned="Boolean(signature.signature_id && signature.category && signature.type)"
-                :data-incomplete="Boolean(signature_id && (signature.category || signature.type))"
+                :data-scanned="signature.signature_id && signature.signature_category_id && signature.signature_type_id ? true : false"
+                :data-incomplete="signature_id && (signature.signature_category_id || signature.signature_type_id) ? true : false"
             />
             <SignatureID
                 v-model="signature_id"
@@ -130,37 +194,37 @@ function handleMassStatusChange(mass_status: string) {
         </div>
 
         <div>
-            <Select :model-value="signature.category" @update:modelValue="handleCategoryChange" :disabled="!can_write">
+            <Select :model-value="signature.signature_category_id" @update:modelValue="handleCategoryChange" :disabled="!can_write">
                 <SelectTrigger class="w-full text-xs">
                     <SelectValue placeholder="Category" />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem v-for="option in options" :key="option" :value="option">
-                        {{ option }}
+                    <SelectItem v-for="category in signatureCategories" :key="category.id" :value="category.id">
+                        {{ category.name }}
                     </SelectItem>
                 </SelectContent>
             </Select>
         </div>
 
-        <div :class="signature.category !== 'Wormhole' ? 'col-span-2' : ''">
+        <div :class="!isWormhole ? 'col-span-2' : ''">
             <WormholeTypeSelection
-                :model-value="signature.type"
+                v-if="isWormhole"
+                v-model="signature.signature_type_id"
                 @update:model-value="handleTypeChange"
                 :can_write="can_write"
-                :possible_signatures="possible_signatures"
-                v-if="signature.category === 'Wormhole'"
+                :wormhole_options="sortedAvailableTypes"
             />
             <SignatureTypeSelection
                 v-else
-                :model-value="signature.type"
+                v-model="signature.signature_type_id"
                 @update:model-value="handleTypeChange"
                 :can_write="can_write"
-                :options="signature.category ? possible_signatures[signature.category] : []"
-                :category="signature.category"
+                :options="sortedAvailableTypes"
+                :category="signature.signature_category?.name"
             />
         </div>
 
-        <div v-if="signature.category === 'Wormhole'">
+        <div v-if="isWormhole">
             <MapConnectionSelection
                 :selected="selected_connection"
                 :unconnected_connections="unconnected_connections"
@@ -170,7 +234,7 @@ function handleMassStatusChange(mass_status: string) {
             />
         </div>
 
-        <SignatureTimeDetails :category="signature.category" :selected_connection="selected_connection" :signature="signature" />
+        <SignatureTimeDetails :category="signature.signature_category?.name" :selected_connection="selected_connection" :signature="signature" />
 
         <!-- Actions Dropdown -->
         <div class="text-right">
@@ -181,7 +245,7 @@ function handleMassStatusChange(mass_status: string) {
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                    <template v-if="signature.category === 'Wormhole'">
+                    <template v-if="signature.signature_category?.name === 'Wormhole'">
                         <!-- Mass Status Options -->
                         <DropdownMenuRadioGroup :model-value="signature.mass_status || 'unknown'" @update:model-value="handleMassStatusChange">
                             <DropdownMenuRadioItem value="fresh">

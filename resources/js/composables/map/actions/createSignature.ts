@@ -7,8 +7,8 @@ export function createSignature(map_solarsystem_id: number) {
         {
             map_solarsystem_id,
             signature_id: '',
-            type: null,
-            category: null,
+            signature_type_id: null,
+            signature_category_id: null,
         },
         {
             preserveScroll: true,

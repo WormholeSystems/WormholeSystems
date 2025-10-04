@@ -9,6 +9,7 @@ use App\Enums\LifetimeStatus;
 use App\Enums\MassStatus;
 use App\Events\Signatures\SignatureUpdatedEvent;
 use App\Models\Signature;
+use App\Models\SignatureType;
 use Illuminate\Support\Facades\DB;
 use Spatie\LaravelData\Optional;
 use Throwable;
@@ -21,13 +22,15 @@ final class UpdateSignatureAction
     public function handle(Signature $signature, SignatureData $data): Signature
     {
         return DB::transaction(function () use ($signature, $data): Signature {
+            $updateData = $data->toArray();
 
-            $signature->update($data->toArray());
-
-            if ($signature->category === 'Wormhole') {
-                $signature->wormhole_id = Signature::typeToWormhole($signature->type)?->id;
-                $signature->save();
+            // Update wormhole_id if signature_type_id changed
+            if (! $data->signature_type_id instanceof Optional && $data->signature_type_id) {
+                $signatureType = SignatureType::query()->find($data->signature_type_id);
+                $updateData['wormhole_id'] = $signatureType?->wormhole?->id;
             }
+
+            $signature->update($updateData);
 
             $this->syncMassAndLifetime($signature, $data);
 

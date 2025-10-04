@@ -17,11 +17,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * @property int $id
  * @property string $signature_id
- * @property string $type
- * @property string|null $category
  * @property int $map_solarsystem_id
  * @property int|null $map_connection_id
  * @property int|null $wormhole_id
+ * @property int|null $signature_type_id
+ * @property int|null $signature_category_id
  * @property MassStatus|null $mass_status
  * @property LifetimeStatus $lifetime
  * @property DateTimeImmutable|string|null $lifetime_updated_at
@@ -31,6 +31,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read MapSolarsystem $mapSolarsystem
  * @property-read MapConnection|null $mapConnection
  * @property-read Wormhole|null $wormhole
+ * @property-read SignatureType|null $signatureType
+ * @property-read SignatureCategory|null $signatureCategory
  */
 final class Signature extends Model
 {
@@ -42,17 +44,6 @@ final class Signature extends Model
         'lifetime' => LifetimeStatus::class,
         'lifetime_updated_at' => 'immutable_datetime',
     ];
-
-    public static function typeToWormhole(?string $type = null): ?Wormhole
-    {
-        if ($type === null || $type === '') {
-            return null;
-        }
-
-        $name = str($type)->explode(' - ')->first();
-
-        return Wormhole::query()->where('name', $name)->first();
-    }
 
     /**
      * @return BelongsTo<MapSolarsystem,$this>
@@ -78,5 +69,25 @@ final class Signature extends Model
     public function wormhole(): BelongsTo
     {
         return $this->belongsTo(Wormhole::class);
+    }
+
+    /**
+     * Get the signature type associated with this signature.
+     *
+     * @return BelongsTo<SignatureType, $this>
+     */
+    public function signatureType(): BelongsTo
+    {
+        return $this->belongsTo(SignatureType::class);
+    }
+
+    /**
+     * Get the signature category associated with this signature.
+     *
+     * @return BelongsTo<SignatureCategory, $this>
+     */
+    public function signatureCategory(): BelongsTo
+    {
+        return $this->belongsTo(SignatureCategory::class);
     }
 }
