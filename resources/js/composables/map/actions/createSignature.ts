@@ -1,14 +1,14 @@
-import SignatureController from '@/routes/signatures';
+import MapSolarsystems from '@/routes/map-solarsystems';
 import { router } from '@inertiajs/vue3';
 
 export function createSignature(map_solarsystem_id: number) {
     return router.post(
-        SignatureController.store().url,
+        MapSolarsystems.signatures.store(map_solarsystem_id),
         {
             map_solarsystem_id,
             signature_id: '',
-            type: null,
-            category: null,
+            signature_type_id: null,
+            signature_category_id: null,
         },
         {
             preserveScroll: true,

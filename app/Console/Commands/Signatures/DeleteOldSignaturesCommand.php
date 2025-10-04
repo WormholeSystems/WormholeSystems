@@ -84,7 +84,7 @@ final class DeleteOldSignaturesCommand extends AppCommand
     private function deleteWormholeSignatures(): void
     {
         $old_signatures = Signature::query()
-            ->where('category', SignatureCategory::Wormhole)
+            ->whereRelation('signatureCategory', 'code', SignatureCategory::Wormhole)
             ->where('created_at', '<', now()->subDays(self::WORMHOLE_SIGNATURE_LIFETIME_DAYS))
             ->get();
 

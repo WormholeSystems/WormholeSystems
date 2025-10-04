@@ -4,8 +4,13 @@ declare(strict_types=1);
 
 namespace App\Actions\Signatures;
 
+use App\Data\RawSignatureData;
+use App\Data\SignaturesData;
 use App\Models\MapSolarsystem;
 use App\Models\Signature;
+use App\Models\SignatureCategory;
+use App\Models\SignatureType;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -21,35 +26,71 @@ final readonly class PasteSignaturesAction
      *
      * @throws Throwable
      */
-    public function handle(array $data): void
+    public function handle(SignaturesData $data): void
     {
         DB::transaction(function () use ($data): void {
-            $map_solarsystem = MapSolarsystem::query()->findOrFail($data['map_solarsystem_id']);
-            $signatures = collect($data['signatures']);
+            $map_solarsystem = MapSolarsystem::query()->findOrFail($data->map_solarsystem_id);
+            $signatures = collect($data->signatures);
             $existing_signatures = $map_solarsystem->signatures;
 
-            $new_signatures = $signatures->filter(fn (array $signature): bool => $existing_signatures->firstWhere('signature_id', $signature['signature_id']) === null);
-            $updated_signatures = $signatures->filter(fn (array $signature): bool => $existing_signatures->firstWhere('signature_id', $signature['signature_id']) !== null);
+            $new_signatures = $signatures->filter(fn (RawSignatureData $signature): bool => $existing_signatures->firstWhere('signature_id', $signature->signature_id) === null);
+            $updated_signatures = $signatures->filter(fn (RawSignatureData $signature): bool => $existing_signatures->firstWhere('signature_id', $signature->signature_id) !== null);
 
-            $new_signatures->each(fn (array $signature): Signature => $this->storeSignatureAction->handle([
-                ...$signature,
+            $new_signatures->each(fn (RawSignatureData $signature): Signature => $this->storeSignatureAction->handle([
+                ...$signature->toArray(),
                 'map_solarsystem_id' => $map_solarsystem->id,
             ]));
 
-            $updated_signatures->each(function (array $signature) use ($existing_signatures): void {
-                $existing_signature = $existing_signatures->firstWhere('signature_id', $signature['signature_id']);
+            $updated_signatures->each(function (RawSignatureData $signature) use ($existing_signatures): void {
+                $existing_signature = $this->getExistingSignature($existing_signatures, $signature->signature_id);
 
-                $new_category = empty($signature['category']) ? $existing_signature->category : $signature['category'];
-                $new_type = empty($signature['type']) ? $existing_signature->type : $signature['type'];
-                $new_map_connection_id = $new_category !== 'Wormhole' ? null : $existing_signature->map_connection_id;
+                $signature_category_id = $signature->signature_category_id ?? $existing_signature->signature_category_id;
+                $signature_type_id = $signature->signature_type_id ?? $existing_signature->signature_type_id;
+
+                $map_connection_id = $this->getNewMapConnectionId($signature_category_id, $existing_signature->map_connection_id);
+
+                $wormhole_id = $this->getNewWormholeId($signature_type_id);
 
                 $existing_signature->update([
-                    'category' => $new_category,
-                    'type' => $new_type,
-                    'map_connection_id' => $new_map_connection_id,
-                    'wormhole_id' => $new_category === 'Wormhole' ? Signature::typeToWormhole($new_type)?->id : null,
+                    'signature_category_id' => $signature_category_id,
+                    'signature_type_id' => $signature_type_id,
+                    'map_connection_id' => $map_connection_id,
+                    'wormhole_id' => $wormhole_id,
                 ]);
             });
         });
+    }
+
+    /**
+     * @param  Collection<int, Signature>  $signatures
+     */
+    private function getExistingSignature(Collection $signatures, string $id): ?Signature
+    {
+        return $signatures->firstWhere('signature_id', $id);
+    }
+
+    private function getNewMapConnectionId(?int $signature_category_id, ?int $existing_map_connection_id): ?int
+    {
+        if ($signature_category_id === null) {
+            return $existing_map_connection_id;
+        }
+
+        $category = SignatureCategory::query()->find($signature_category_id);
+        if ($category?->name === 'Wormhole') {
+            return $existing_map_connection_id;
+        }
+
+        return null;
+    }
+
+    private function getNewWormholeId(?int $signature_type_id): ?int
+    {
+        if ($signature_type_id === null) {
+            return null;
+        }
+
+        $type = SignatureType::query()->find($signature_type_id);
+
+        return $type?->wormhole?->id;
     }
 }
