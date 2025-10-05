@@ -6,6 +6,7 @@ namespace App\Http\Requests;
 
 use App\Enums\KillmailFilter;
 use App\Enums\MassStatus;
+use App\Enums\RoutePreference;
 use App\Models\MapUserSetting;
 use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
@@ -37,6 +38,8 @@ final class UpdateMapUserSettingRequest extends FormRequest
             'route_allow_eol' => ['boolean'],
             'route_allow_mass_status' => ['nullable', 'string', Rule::enum(MassStatus::class)],
             'route_use_evescout' => ['boolean'],
+            'route_preference' => ['nullable', 'string', Rule::enum(RoutePreference::class)],
+            'security_penalty' => ['nullable', 'integer', 'min:0', 'max:100'],
             'killmail_filter' => ['nullable', 'string', Rule::enum(KillmailFilter::class)],
             'introduction_confirmed_at' => ['nullable', 'string', 'date'],
         ];
