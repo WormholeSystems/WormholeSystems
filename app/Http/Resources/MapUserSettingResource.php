@@ -29,6 +29,8 @@ final class MapUserSettingResource extends JsonResource
             'route_allow_eol' => $this->route_allow_eol,
             'route_allow_mass_status' => $this->route_allow_mass_status,
             'route_use_evescout' => $this->route_use_evescout,
+            'route_preference' => $this->route_preference,
+            'security_penalty' => $this->security_penalty,
             'killmail_filter' => $this->killmail_filter,
             'introduction_confirmed_at' => $this->introduction_confirmed_at?->toISOString(),
         ];

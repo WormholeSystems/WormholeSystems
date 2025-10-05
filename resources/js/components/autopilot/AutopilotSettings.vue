@@ -5,12 +5,23 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { updateMapUserSettings } from '@/composables/map';
 import { useMapUserSettings } from '@/composables/useMapUserSettings';
 import { TMassStatus } from '@/types/models';
+import { ref, watch } from 'vue';
 
 const map_user_settings = useMapUserSettings();
+
+const localSecurityPenalty = ref(map_user_settings.value.security_penalty);
+
+watch(
+    () => map_user_settings.value.security_penalty,
+    (newValue) => {
+        localSecurityPenalty.value = newValue;
+    },
+);
 
 function handleToggleEol(value: boolean | 'indeterminate') {
     updateMapUserSettings(map_user_settings.value, {
@@ -29,6 +40,28 @@ function handleToggleEveScout(value: boolean | 'indeterminate') {
         route_use_evescout: value === true,
     });
 }
+
+function handleRoutePreferenceChange(value: string) {
+    if (value === 'shorter' || value === 'safer' || value === 'less_secure') {
+        updateMapUserSettings(map_user_settings.value, {
+            route_preference: value,
+        });
+    }
+}
+
+function handleSecurityPenaltyChange(value: number[] | undefined) {
+    if (value && value[0] !== undefined) {
+        localSecurityPenalty.value = value[0];
+    }
+}
+
+function handleSecurityPenaltyCommit(value: number[]) {
+    if (value[0] !== undefined) {
+        updateMapUserSettings(map_user_settings.value, {
+            security_penalty: value[0],
+        });
+    }
+}
 </script>
 
 <template>
@@ -45,7 +78,7 @@ function handleToggleEveScout(value: boolean | 'indeterminate') {
                 </TooltipContent>
             </Tooltip>
         </PopoverTrigger>
-        <PopoverContent class="w-64 p-3">
+        <PopoverContent class="w-80 p-3">
             <div class="grid auto-cols-[auto_1fr_auto] gap-x-1 gap-y-1">
                 <h4 class="col-span-3 text-xs text-muted-foreground">Wormholes</h4>
                 <div class="col-span-3 grid grid-cols-subgrid">
@@ -73,6 +106,36 @@ function handleToggleEveScout(value: boolean | 'indeterminate') {
                 <div class="col-span-3 grid grid-cols-subgrid">
                     <Checkbox :model-value="map_user_settings.route_use_evescout" @update:model-value="handleToggleEveScout" id="evescout-checkbox" />
                     <label for="evescout-checkbox" class="cursor-pointer text-xs font-medium"> Use EVE Scout </label>
+                </div>
+
+                <h4 class="col-span-3 mt-2 text-xs text-muted-foreground">Route Preference</h4>
+                <RadioGroup
+                    :model-value="map_user_settings.route_preference"
+                    @update:model-value="handleRoutePreferenceChange"
+                    class="col-span-3 grid grid-cols-subgrid gap-1"
+                >
+                    <RadioGroupItem value="shorter" id="pref-shorter" />
+                    <Label for="pref-shorter" class="cursor-pointer text-xs font-medium">Shorter</Label>
+                    <span class="text-xs text-muted-foreground">Min jumps</span>
+                    <RadioGroupItem value="safer" id="pref-safer" />
+                    <Label for="pref-safer" class="cursor-pointer text-xs font-medium">Safer</Label>
+                    <span class="text-xs text-muted-foreground">High-sec</span>
+                    <RadioGroupItem value="less_secure" id="pref-less-secure" />
+                    <Label for="pref-less-secure" class="cursor-pointer text-xs font-medium">Less Secure</Label>
+                    <span class="text-xs text-muted-foreground">Low-sec</span>
+                </RadioGroup>
+
+                <div v-if="map_user_settings.route_preference !== 'shorter'" class="col-span-3 mt-2 space-y-1">
+                    <Label class="text-xs font-medium">Security Penalty: {{ localSecurityPenalty }}%</Label>
+                    <Slider
+                        :model-value="[localSecurityPenalty]"
+                        @update:model-value="handleSecurityPenaltyChange"
+                        @value-commit="handleSecurityPenaltyCommit"
+                        :min="0"
+                        :max="100"
+                        :step="5"
+                        class="w-full"
+                    />
                 </div>
             </div>
         </PopoverContent>

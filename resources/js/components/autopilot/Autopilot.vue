@@ -68,7 +68,13 @@ function handleSolarsystemHover(hovered: boolean) {
             </CardDescription>
             <CardAction class="flex gap-2">
                 <Tooltip>
-                    <ShortestPathDialog :map="map" :solarsystems="solarsystems" :shortest_path="shortest_path" :ignored_systems="ignored_systems">
+                    <ShortestPathDialog
+                        :map="map"
+                        :solarsystems="solarsystems"
+                        :shortest_path="shortest_path"
+                        :ignored_systems="ignored_systems"
+                        :selected_map_solarsystem="selected_map_solarsystem"
+                    >
                         <TooltipTrigger as-child>
                             <Button variant="secondary" size="icon">
                                 <SearchIcon />

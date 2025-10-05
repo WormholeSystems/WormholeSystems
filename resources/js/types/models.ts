@@ -100,6 +100,8 @@ export type TWormholeEffect = {
 
 export type TMassStatus = 'fresh' | 'reduced' | 'critical';
 
+export type TRoutePreference = 'shorter' | 'safer' | 'less_secure';
+
 export type TLifetimeStatus = 'healthy' | 'eol' | 'critical';
 
 export type TShipSize = 'frigate' | 'medium' | 'large';
@@ -251,6 +253,8 @@ export type TMapUserSetting = {
     route_allow_eol: boolean;
     route_allow_mass_status: TMassStatus;
     route_use_evescout: boolean;
+    route_preference: TRoutePreference;
+    security_penalty: number;
     killmail_filter: 'all' | 'jspace' | 'kspace';
     introduction_confirmed_at: string | null;
 };

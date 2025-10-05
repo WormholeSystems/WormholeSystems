@@ -20,7 +20,8 @@ export type TShortestPathDialogProps = {
 
 export type TClosestSystem = {
     solarsystem: TSolarsystem;
-    distance: number;
+    jumps: number;
+    cost: number;
 };
 
 export type TClosestSystems = {

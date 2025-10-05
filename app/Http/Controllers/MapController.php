@@ -8,6 +8,7 @@ use App\Actions\Map\CreateMapAction;
 use App\Actions\Map\UpdateMapAction;
 use App\Enums\KillmailFilter;
 use App\Enums\Permission;
+use App\Enums\RoutePreference;
 use App\Http\Requests\StoreMapRequest;
 use App\Http\Requests\UpdateMapRequest;
 use App\Http\Resources\CharacterResource;
@@ -301,7 +302,9 @@ final class MapController extends Controller
             massStatus: $mapUserSetting->route_allow_mass_status,
             allowEveScout: $mapUserSetting->route_use_evescout,
             map: $map,
-            ignoredSystems: $ignored_systems
+            ignoredSystems: $ignored_systems,
+            routePreference: $mapUserSetting->route_preference ?? RoutePreference::Shorter,
+            securityPenalty: $mapUserSetting->security_penalty ?? 50,
         );
 
         return $this->route_service->findRoute($start_solarsystem_id, $destination_solarsystem_id, $options);
@@ -358,7 +361,9 @@ final class MapController extends Controller
             massStatus: $settings->route_allow_mass_status,
             allowEveScout: $settings->route_use_evescout,
             map: $map,
-            ignoredSystems: Session::get('ignored_systems', [])
+            ignoredSystems: Session::get('ignored_systems', []),
+            routePreference: $settings->route_preference ?? RoutePreference::Shorter,
+            securityPenalty: $settings->security_penalty ?? 50,
         );
 
         return $this->route_service->findClosestSystems($fromSystem->id, $options, $conditionClosure, $limit);
