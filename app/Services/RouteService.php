@@ -112,9 +112,9 @@ final readonly class RouteService
 
         // Convert to ClosestSystemResult DTOs and then to arrays
         return $sortedDistances
-            ->map(function ($distance) use ($solarsystems): ?\App\DTO\ClosestSystemResult {
+            ->map(function ($distance) use ($solarsystems): ?ClosestSystemResult {
                 $solarsystem = $solarsystems->get($distance->targetSystemId);
-                if (! $solarsystem) {
+                if (! $solarsystem instanceof Solarsystem) {
                     return null;
                 }
 

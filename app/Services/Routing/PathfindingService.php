@@ -31,7 +31,6 @@ final readonly class PathfindingService
         $queue = new SplPriorityQueue;
         $visited = [];
         $distances = [$start => 0];
-        $bestPathCost = PHP_INT_MAX;
 
         $queue->insert(new RouteNode($start, 0, [$start]), 0);
 
@@ -39,11 +38,6 @@ final readonly class PathfindingService
             $current = $queue->extract();
 
             if (isset($visited[$current->solarsystemId])) {
-                continue;
-            }
-
-            // Early termination: if current cost is already >= best found path, skip
-            if ($current->distance >= $bestPathCost) {
                 continue;
             }
 
@@ -62,11 +56,6 @@ final readonly class PathfindingService
 
                 $edgeCost = $this->costCalculator->calculateEdgeCost($current->solarsystemId, $neighbor, $options);
                 $newCost = $current->distance + $edgeCost;
-
-                // Skip if this path is already more expensive than our best found path
-                if ($newCost >= $bestPathCost) {
-                    continue;
-                }
 
                 if (! isset($distances[$neighbor]) || $newCost < $distances[$neighbor]) {
                     $distances[$neighbor] = $newCost;
@@ -109,7 +98,6 @@ final readonly class PathfindingService
         // Convert targets to hash map for O(1) lookups
         $targetMap = array_flip($targets);
         $distances = [];
-        $jumps = [];
         $visited = [];
         $foundTargets = [];
         $queue = new SplPriorityQueue;
@@ -117,7 +105,6 @@ final readonly class PathfindingService
         // Start from the origin
         $queue->insert(['id' => $start, 'cost' => 0, 'jumps' => 0], 0);
         $distances[$start] = 0;
-        $jumps[$start] = 0;
 
         // If start is a target, record it
         if (isset($targetMap[$start])) {
@@ -137,8 +124,8 @@ final readonly class PathfindingService
 
             $visited[$currentId] = true;
 
-            // If this is a target and we haven't recorded it yet, record the optimal cost and jumps
-            if (isset($targetMap[$currentId]) && ! isset($foundTargets[$currentId])) {
+            // If this is a target, record the optimal cost and jumps
+            if (isset($targetMap[$currentId])) {
                 $foundTargets[$currentId] = ['cost' => $currentCost, 'jumps' => $currentJumps];
             }
 
@@ -165,7 +152,6 @@ final readonly class PathfindingService
                 // Only update if we found a better path (by cost)
                 if (! isset($distances[$neighbor]) || $newCost < $distances[$neighbor]) {
                     $distances[$neighbor] = $newCost;
-                    $jumps[$neighbor] = $newJumps;
                     $queue->insert(['id' => $neighbor, 'cost' => $newCost, 'jumps' => $newJumps], -$newCost);
                 }
             }
