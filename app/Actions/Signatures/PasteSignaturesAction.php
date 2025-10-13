@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Signatures;
 
+use App\Data\NewSignatureData;
 use App\Data\RawSignatureData;
 use App\Data\SignaturesData;
 use App\Models\MapSolarsystem;
@@ -36,10 +37,14 @@ final readonly class PasteSignaturesAction
             $new_signatures = $signatures->filter(fn (RawSignatureData $signature): bool => $existing_signatures->firstWhere('signature_id', $signature->signature_id) === null);
             $updated_signatures = $signatures->filter(fn (RawSignatureData $signature): bool => $existing_signatures->firstWhere('signature_id', $signature->signature_id) !== null);
 
-            $new_signatures->each(fn (RawSignatureData $signature): Signature => $this->storeSignatureAction->handle([
-                ...$signature->toArray(),
-                'map_solarsystem_id' => $map_solarsystem->id,
-            ]));
+            $new_signatures->each(fn (RawSignatureData $signature): Signature => $this->storeSignatureAction->handle(
+                $map_solarsystem,
+                NewSignatureData::from([
+                    'signature_id' => $signature->signature_id,
+                    'signature_category_id' => $signature->signature_category_id,
+                    'signature_type_id' => $signature->signature_type_id,
+                ])
+            ));
 
             $updated_signatures->each(function (RawSignatureData $signature) use ($existing_signatures): void {
                 $existing_signature = $this->getExistingSignature($existing_signatures, $signature->signature_id);
