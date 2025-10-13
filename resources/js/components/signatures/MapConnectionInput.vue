@@ -2,10 +2,12 @@
 import ConnectionOption from '@/components/signatures/ConnectionOption.vue';
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { TProcessedConnection } from '@/composables/map';
-import { ref } from 'vue';
+import { getSolarsystemClass, TProcessedConnection } from '@/composables/map';
+import { TSignatureType } from '@/types/models';
+import { computed, ref } from 'vue';
 
-defineProps<{
+const { type, unconnected_connections, connected_connections } = defineProps<{
+    type: TSignatureType | null;
     selected: TProcessedConnection | null;
     unconnected_connections: TProcessedConnection[];
     connected_connections: TProcessedConnection[];
@@ -16,6 +18,26 @@ const model = defineModel<number | null>({
 });
 
 const open = ref(false);
+
+const filtered_unconnected_connections = computed(() => {
+    if (isNotFilterable(type)) {
+        return unconnected_connections;
+    }
+    return unconnected_connections.filter((connection) => type.target_class === getSolarsystemClass(connection.target).toString());
+});
+
+const filtered_connected_connections = computed(() => {
+    if (isNotFilterable(type)) {
+        return connected_connections;
+    }
+    return connected_connections.filter((connection) => type.target_class === getSolarsystemClass(connection.target).toString());
+});
+
+function isNotFilterable(type: TSignatureType | null): type is null {
+    if (type === null) return true;
+    if (type.target_class === null) return true;
+    return type.target_class === 'unknown';
+}
 </script>
 
 <template>
@@ -38,15 +60,15 @@ const open = ref(false);
         <SelectContent class="max-h-80">
             <template v-if="open">
                 <SelectItem :value="null" text-value="Unknown connection"> Unknown connection</SelectItem>
-                <SelectGroup v-if="unconnected_connections.length > 0">
+                <SelectGroup v-if="filtered_unconnected_connections.length > 0">
                     <SelectSeparator />
                     <SelectLabel class="text-muted-foreground"> Unconnected solarsystems</SelectLabel>
-                    <ConnectionOption v-for="connection in unconnected_connections" :key="connection.id" :connection="connection" />
+                    <ConnectionOption v-for="connection in filtered_unconnected_connections" :key="connection.id" :connection="connection" />
                 </SelectGroup>
-                <SelectGroup v-if="connected_connections.length > 0">
+                <SelectGroup v-if="filtered_connected_connections.length > 0">
                     <SelectSeparator />
                     <SelectLabel class="text-muted-foreground"> Connected solarsystems</SelectLabel>
-                    <ConnectionOption v-for="connection in connected_connections" :key="connection.id" :connection="connection" />
+                    <ConnectionOption v-for="connection in filtered_connected_connections" :key="connection.id" :connection="connection" />
                 </SelectGroup>
             </template>
         </SelectContent>

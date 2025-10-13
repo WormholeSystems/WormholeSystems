@@ -206,6 +206,7 @@ function handleMassStatusChange(mass_status: string) {
 
         <div v-if="isWormhole">
             <MapConnectionInput
+                :type="signature.signature_type"
                 :selected="selected_connection"
                 :unconnected_connections="unconnected_connections"
                 :connected_connections="connected_connections"

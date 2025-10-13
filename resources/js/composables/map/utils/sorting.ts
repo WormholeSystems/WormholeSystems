@@ -25,3 +25,9 @@ export function sortByRegion(a: TMapSolarSystem, b: TMapSolarSystem): number {
 export function sortByName(a: TMapSolarSystem, b: TMapSolarSystem): number {
     return a.solarsystem?.name.localeCompare(b.solarsystem?.name ?? '') || 0;
 }
+
+export function getSolarsystemClass(system: TMapSolarSystem): number | string {
+    if (system.class) return system.class;
+
+    return getSecurityClass(system.solarsystem!.security);
+}
