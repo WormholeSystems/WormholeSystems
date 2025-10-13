@@ -1,5 +1,5 @@
 {
-    "generated_at": "2025-10-13T09:46:49+00:00",
+    "generated_at": "2025-10-13T19:54:08+00:00",
     "categories": [
         {
             "id": 1,
@@ -41,7 +41,19 @@
             "category_name": "Wormhole",
             "target_class": "13",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
             "id": 198,
@@ -51,7 +63,10 @@
             "category_name": "Wormhole",
             "target_class": "l",
             "extra": null,
-            "spawn_areas": ["2", "13"]
+            "spawn_areas": [
+                "2",
+                "13"
+            ]
         },
         {
             "id": 243,
@@ -61,7 +76,9 @@
             "category_name": "Wormhole",
             "target_class": "h",
             "extra": null,
-            "spawn_areas": ["h"]
+            "spawn_areas": [
+                "h"
+            ]
         },
         {
             "id": 206,
@@ -71,7 +88,9 @@
             "category_name": "Wormhole",
             "target_class": "6",
             "extra": null,
-            "spawn_areas": ["3"]
+            "spawn_areas": [
+                "3"
+            ]
         },
         {
             "id": 242,
@@ -81,7 +100,9 @@
             "category_name": "Wormhole",
             "target_class": "6",
             "extra": null,
-            "spawn_areas": ["h"]
+            "spawn_areas": [
+                "h"
+            ]
         },
         {
             "id": 197,
@@ -91,7 +112,10 @@
             "category_name": "Wormhole",
             "target_class": "h",
             "extra": null,
-            "spawn_areas": ["2", "13"]
+            "spawn_areas": [
+                "2",
+                "13"
+            ]
         },
         {
             "id": 249,
@@ -101,7 +125,10 @@
             "category_name": "Wormhole",
             "target_class": "h",
             "extra": null,
-            "spawn_areas": ["l", "n"]
+            "spawn_areas": [
+                "l",
+                "n"
+            ]
         },
         {
             "id": 234,
@@ -111,7 +138,9 @@
             "category_name": "Wormhole",
             "target_class": "h",
             "extra": null,
-            "spawn_areas": ["6"]
+            "spawn_areas": [
+                "6"
+            ]
         },
         {
             "id": 168,
@@ -121,7 +150,18 @@
             "category_name": "Wormhole",
             "target_class": "15",
             "extra": "Barbican",
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
             "id": 169,
@@ -131,7 +171,18 @@
             "category_name": "Wormhole",
             "target_class": "5",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
             "id": 182,
@@ -141,7 +192,9 @@
             "category_name": "Wormhole",
             "target_class": "2",
             "extra": null,
-            "spawn_areas": ["1"]
+            "spawn_areas": [
+                "1"
+            ]
         },
         {
             "id": 226,
@@ -151,7 +204,10 @@
             "category_name": "Wormhole",
             "target_class": "l",
             "extra": null,
-            "spawn_areas": ["5", "6"]
+            "spawn_areas": [
+                "5",
+                "6"
+            ]
         },
         {
             "id": 212,
@@ -161,7 +217,10 @@
             "category_name": "Wormhole",
             "target_class": "3",
             "extra": null,
-            "spawn_areas": ["4", "13"]
+            "spawn_areas": [
+                "4",
+                "13"
+            ]
         },
         {
             "id": 236,
@@ -171,7 +230,10 @@
             "category_name": "Wormhole",
             "target_class": "n",
             "extra": null,
-            "spawn_areas": ["6", "13"]
+            "spawn_areas": [
+                "6",
+                "13"
+            ]
         },
         {
             "id": 235,
@@ -181,7 +243,10 @@
             "category_name": "Wormhole",
             "target_class": "l",
             "extra": null,
-            "spawn_areas": ["6", "13"]
+            "spawn_areas": [
+                "6",
+                "13"
+            ]
         },
         {
             "id": 170,
@@ -191,7 +256,18 @@
             "category_name": "Wormhole",
             "target_class": "17",
             "extra": "Conflux",
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
             "id": 256,
@@ -201,7 +277,11 @@
             "category_name": "Wormhole",
             "target_class": "n",
             "extra": "Pochven",
-            "spawn_areas": ["h", "l", "n"]
+            "spawn_areas": [
+                "h",
+                "l",
+                "n"
+            ]
         },
         {
             "id": 220,
@@ -211,7 +291,9 @@
             "category_name": "Wormhole",
             "target_class": "2",
             "extra": null,
-            "spawn_areas": ["5"]
+            "spawn_areas": [
+                "5"
+            ]
         },
         {
             "id": 192,
@@ -221,7 +303,15 @@
             "category_name": "Wormhole",
             "target_class": "2",
             "extra": null,
-            "spawn_areas": ["2", "13", "14", "15", "16", "17", "18"]
+            "spawn_areas": [
+                "2",
+                "13",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18"
+            ]
         },
         {
             "id": 225,
@@ -231,7 +321,11 @@
             "category_name": "Wormhole",
             "target_class": "h",
             "extra": null,
-            "spawn_areas": ["5", "6", "13"]
+            "spawn_areas": [
+                "5",
+                "6",
+                "13"
+            ]
         },
         {
             "id": 207,
@@ -241,7 +335,10 @@
             "category_name": "Wormhole",
             "target_class": "h",
             "extra": null,
-            "spawn_areas": ["3", "13"]
+            "spawn_areas": [
+                "3",
+                "13"
+            ]
         },
         {
             "id": 171,
@@ -251,7 +348,19 @@
             "category_name": "Wormhole",
             "target_class": "1",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
             "id": 222,
@@ -261,7 +370,9 @@
             "category_name": "Wormhole",
             "target_class": "4",
             "extra": null,
-            "spawn_areas": ["5"]
+            "spawn_areas": [
+                "5"
+            ]
         },
         {
             "id": 199,
@@ -271,7 +382,10 @@
             "category_name": "Wormhole",
             "target_class": "n",
             "extra": null,
-            "spawn_areas": ["2", "13"]
+            "spawn_areas": [
+                "2",
+                "13"
+            ]
         },
         {
             "id": 261,
@@ -281,7 +395,9 @@
             "category_name": "Wormhole",
             "target_class": "n",
             "extra": "Thera",
-            "spawn_areas": ["12"]
+            "spawn_areas": [
+                "12"
+            ]
         },
         {
             "id": 200,
@@ -291,7 +407,10 @@
             "category_name": "Wormhole",
             "target_class": "12",
             "extra": "Thera",
-            "spawn_areas": ["2", "3"]
+            "spawn_areas": [
+                "2",
+                "3"
+            ]
         },
         {
             "id": 258,
@@ -301,7 +420,13 @@
             "category_name": "Wormhole",
             "target_class": "n",
             "extra": "Pochven",
-            "spawn_areas": ["2", "3", "4", "5", "6"]
+            "spawn_areas": [
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
         },
         {
             "id": 190,
@@ -311,7 +436,9 @@
             "category_name": "Wormhole",
             "target_class": "12",
             "extra": "Thera",
-            "spawn_areas": ["1"]
+            "spawn_areas": [
+                "1"
+            ]
         },
         {
             "id": 172,
@@ -321,7 +448,18 @@
             "category_name": "Wormhole",
             "target_class": "6",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
             "id": 229,
@@ -331,7 +469,10 @@
             "category_name": "Wormhole",
             "target_class": "2",
             "extra": null,
-            "spawn_areas": ["6", "13"]
+            "spawn_areas": [
+                "6",
+                "13"
+            ]
         },
         {
             "id": 181,
@@ -341,7 +482,9 @@
             "category_name": "Wormhole",
             "target_class": "1",
             "extra": null,
-            "spawn_areas": ["1"]
+            "spawn_areas": [
+                "1"
+            ]
         },
         {
             "id": 223,
@@ -351,7 +494,10 @@
             "category_name": "Wormhole",
             "target_class": "5",
             "extra": null,
-            "spawn_areas": ["5", "13"]
+            "spawn_areas": [
+                "5",
+                "13"
+            ]
         },
         {
             "id": 214,
@@ -361,7 +507,10 @@
             "category_name": "Wormhole",
             "target_class": "5",
             "extra": null,
-            "spawn_areas": ["4", "13"]
+            "spawn_areas": [
+                "4",
+                "13"
+            ]
         },
         {
             "id": 202,
@@ -371,7 +520,9 @@
             "category_name": "Wormhole",
             "target_class": "2",
             "extra": null,
-            "spawn_areas": ["3"]
+            "spawn_areas": [
+                "3"
+            ]
         },
         {
             "id": 188,
@@ -381,7 +532,10 @@
             "category_name": "Wormhole",
             "target_class": "l",
             "extra": null,
-            "spawn_areas": ["1", "13"]
+            "spawn_areas": [
+                "1",
+                "13"
+            ]
         },
         {
             "id": 262,
@@ -391,7 +545,18 @@
             "category_name": "Wormhole",
             "target_class": "l",
             "extra": "Turnur",
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13", "h", "l", "n"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13",
+                "h",
+                "l",
+                "n"
+            ]
         },
         {
             "id": 173,
@@ -401,7 +566,14 @@
             "category_name": "Wormhole",
             "target_class": "l",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
         },
         {
             "id": 158,
@@ -411,7 +583,24 @@
             "category_name": "Wormhole",
             "target_class": "1",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13", "14", "15", "16", "17", "18", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
             "id": 159,
@@ -421,7 +610,24 @@
             "category_name": "Wormhole",
             "target_class": "2",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13", "14", "15", "16", "17", "18", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
             "id": 160,
@@ -431,7 +637,24 @@
             "category_name": "Wormhole",
             "target_class": "3",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13", "14", "15", "16", "17", "18", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
             "id": 161,
@@ -441,7 +664,24 @@
             "category_name": "Wormhole",
             "target_class": "4",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13", "14", "15", "16", "17", "18", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
             "id": 162,
@@ -451,7 +691,24 @@
             "category_name": "Wormhole",
             "target_class": "5",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13", "14", "15", "16", "17", "18", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
             "id": 163,
@@ -461,7 +718,24 @@
             "category_name": "Wormhole",
             "target_class": "6",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13", "14", "15", "16", "17", "18", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
             "id": 164,
@@ -471,7 +745,24 @@
             "category_name": "Wormhole",
             "target_class": "h",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13", "14", "15", "16", "17", "18", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
             "id": 165,
@@ -481,7 +772,24 @@
             "category_name": "Wormhole",
             "target_class": "l",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13", "14", "15", "16", "17", "18", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
             "id": 166,
@@ -491,7 +799,24 @@
             "category_name": "Wormhole",
             "target_class": "n",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13", "14", "15", "16", "17", "18", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
             "id": 157,
@@ -501,7 +826,24 @@
             "category_name": "Wormhole",
             "target_class": "unknown",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13", "14", "15", "16", "17", "18", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
             "id": 218,
@@ -511,7 +853,9 @@
             "category_name": "Wormhole",
             "target_class": "n",
             "extra": null,
-            "spawn_areas": ["4"]
+            "spawn_areas": [
+                "4"
+            ]
         },
         {
             "id": 209,
@@ -521,7 +865,10 @@
             "category_name": "Wormhole",
             "target_class": "n",
             "extra": null,
-            "spawn_areas": ["3", "13"]
+            "spawn_areas": [
+                "3",
+                "13"
+            ]
         },
         {
             "id": 174,
@@ -531,7 +878,19 @@
             "category_name": "Wormhole",
             "target_class": "2",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
             "id": 253,
@@ -541,7 +900,9 @@
             "category_name": "Wormhole",
             "target_class": "12",
             "extra": "Thera",
-            "spawn_areas": ["n"]
+            "spawn_areas": [
+                "n"
+            ]
         },
         {
             "id": 230,
@@ -551,7 +912,9 @@
             "category_name": "Wormhole",
             "target_class": "3",
             "extra": null,
-            "spawn_areas": ["6"]
+            "spawn_areas": [
+                "6"
+            ]
         },
         {
             "id": 185,
@@ -561,7 +924,9 @@
             "category_name": "Wormhole",
             "target_class": "5",
             "extra": null,
-            "spawn_areas": ["1"]
+            "spawn_areas": [
+                "1"
+            ]
         },
         {
             "id": 175,
@@ -571,7 +936,19 @@
             "category_name": "Wormhole",
             "target_class": "4",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
             "id": 252,
@@ -581,7 +958,9 @@
             "category_name": "Wormhole",
             "target_class": "12",
             "extra": "Thera",
-            "spawn_areas": ["l"]
+            "spawn_areas": [
+                "l"
+            ]
         },
         {
             "id": 221,
@@ -591,7 +970,10 @@
             "category_name": "Wormhole",
             "target_class": "3",
             "extra": null,
-            "spawn_areas": ["5", "13"]
+            "spawn_areas": [
+                "5",
+                "13"
+            ]
         },
         {
             "id": 241,
@@ -601,7 +983,9 @@
             "category_name": "Wormhole",
             "target_class": "5",
             "extra": null,
-            "spawn_areas": ["h"]
+            "spawn_areas": [
+                "h"
+            ]
         },
         {
             "id": 184,
@@ -611,7 +995,9 @@
             "category_name": "Wormhole",
             "target_class": "4",
             "extra": null,
-            "spawn_areas": ["1"]
+            "spawn_areas": [
+                "1"
+            ]
         },
         {
             "id": 195,
@@ -621,7 +1007,15 @@
             "category_name": "Wormhole",
             "target_class": "5",
             "extra": null,
-            "spawn_areas": ["2", "13", "14", "15", "16", "17", "18"]
+            "spawn_areas": [
+                "2",
+                "13",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18"
+            ]
         },
         {
             "id": 187,
@@ -631,7 +1025,10 @@
             "category_name": "Wormhole",
             "target_class": "h",
             "extra": null,
-            "spawn_areas": ["1", "13"]
+            "spawn_areas": [
+                "1",
+                "13"
+            ]
         },
         {
             "id": 217,
@@ -641,7 +1038,9 @@
             "category_name": "Wormhole",
             "target_class": "l",
             "extra": null,
-            "spawn_areas": ["4"]
+            "spawn_areas": [
+                "4"
+            ]
         },
         {
             "id": 247,
@@ -651,7 +1050,10 @@
             "category_name": "Wormhole",
             "target_class": "5",
             "extra": null,
-            "spawn_areas": ["l", "n"]
+            "spawn_areas": [
+                "l",
+                "n"
+            ]
         },
         {
             "id": 211,
@@ -661,7 +1063,10 @@
             "category_name": "Wormhole",
             "target_class": "2",
             "extra": null,
-            "spawn_areas": ["4", "13"]
+            "spawn_areas": [
+                "4",
+                "13"
+            ]
         },
         {
             "id": 205,
@@ -671,7 +1076,9 @@
             "category_name": "Wormhole",
             "target_class": "5",
             "extra": null,
-            "spawn_areas": ["3"]
+            "spawn_areas": [
+                "3"
+            ]
         },
         {
             "id": 250,
@@ -681,7 +1088,10 @@
             "category_name": "Wormhole",
             "target_class": "l",
             "extra": null,
-            "spawn_areas": ["l", "n"]
+            "spawn_areas": [
+                "l",
+                "n"
+            ]
         },
         {
             "id": 203,
@@ -691,7 +1101,9 @@
             "category_name": "Wormhole",
             "target_class": "3",
             "extra": null,
-            "spawn_areas": ["3"]
+            "spawn_areas": [
+                "3"
+            ]
         },
         {
             "id": 240,
@@ -701,7 +1113,11 @@
             "category_name": "Wormhole",
             "target_class": "4",
             "extra": null,
-            "spawn_areas": ["h", "l", "n"]
+            "spawn_areas": [
+                "h",
+                "l",
+                "n"
+            ]
         },
         {
             "id": 193,
@@ -711,7 +1127,15 @@
             "category_name": "Wormhole",
             "target_class": "3",
             "extra": null,
-            "spawn_areas": ["2", "13", "14", "15", "16", "17", "18"]
+            "spawn_areas": [
+                "2",
+                "13",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18"
+            ]
         },
         {
             "id": 183,
@@ -721,7 +1145,9 @@
             "category_name": "Wormhole",
             "target_class": "3",
             "extra": null,
-            "spawn_areas": ["1"]
+            "spawn_areas": [
+                "1"
+            ]
         },
         {
             "id": 210,
@@ -731,7 +1157,10 @@
             "category_name": "Wormhole",
             "target_class": "1",
             "extra": null,
-            "spawn_areas": ["4", "13"]
+            "spawn_areas": [
+                "4",
+                "13"
+            ]
         },
         {
             "id": 176,
@@ -741,7 +1170,19 @@
             "category_name": "Wormhole",
             "target_class": "n",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
             "id": 259,
@@ -751,7 +1192,9 @@
             "category_name": "Wormhole",
             "target_class": "h",
             "extra": "Thera",
-            "spawn_areas": ["12"]
+            "spawn_areas": [
+                "12"
+            ]
         },
         {
             "id": 228,
@@ -761,7 +1204,10 @@
             "category_name": "Wormhole",
             "target_class": "1",
             "extra": null,
-            "spawn_areas": ["6", "13"]
+            "spawn_areas": [
+                "6",
+                "13"
+            ]
         },
         {
             "id": 244,
@@ -771,7 +1217,9 @@
             "category_name": "Wormhole",
             "target_class": "l",
             "extra": null,
-            "spawn_areas": ["h"]
+            "spawn_areas": [
+                "h"
+            ]
         },
         {
             "id": 254,
@@ -781,7 +1229,9 @@
             "category_name": "Wormhole",
             "target_class": "4",
             "extra": null,
-            "spawn_areas": ["p"]
+            "spawn_areas": [
+                "p"
+            ]
         },
         {
             "id": 177,
@@ -791,7 +1241,18 @@
             "category_name": "Wormhole",
             "target_class": "18",
             "extra": "Redoubt",
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
             "id": 196,
@@ -801,7 +1262,14 @@
             "category_name": "Wormhole",
             "target_class": "6",
             "extra": null,
-            "spawn_areas": ["2", "14", "15", "16", "17", "18"]
+            "spawn_areas": [
+                "2",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18"
+            ]
         },
         {
             "id": 238,
@@ -811,7 +1279,11 @@
             "category_name": "Wormhole",
             "target_class": "2",
             "extra": null,
-            "spawn_areas": ["h", "l", "n"]
+            "spawn_areas": [
+                "h",
+                "l",
+                "n"
+            ]
         },
         {
             "id": 216,
@@ -821,7 +1293,9 @@
             "category_name": "Wormhole",
             "target_class": "h",
             "extra": null,
-            "spawn_areas": ["4"]
+            "spawn_areas": [
+                "4"
+            ]
         },
         {
             "id": 251,
@@ -831,7 +1305,10 @@
             "category_name": "Wormhole",
             "target_class": "n",
             "extra": null,
-            "spawn_areas": ["l", "n"]
+            "spawn_areas": [
+                "l",
+                "n"
+            ]
         },
         {
             "id": 186,
@@ -841,7 +1318,9 @@
             "category_name": "Wormhole",
             "target_class": "6",
             "extra": null,
-            "spawn_areas": ["1"]
+            "spawn_areas": [
+                "1"
+            ]
         },
         {
             "id": 178,
@@ -851,7 +1330,18 @@
             "category_name": "Wormhole",
             "target_class": "14",
             "extra": "Sentinel",
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
             "id": 204,
@@ -861,7 +1351,9 @@
             "category_name": "Wormhole",
             "target_class": "4",
             "extra": null,
-            "spawn_areas": ["3"]
+            "spawn_areas": [
+                "3"
+            ]
         },
         {
             "id": 246,
@@ -871,7 +1363,9 @@
             "category_name": "Wormhole",
             "target_class": "12",
             "extra": "Thera",
-            "spawn_areas": ["h"]
+            "spawn_areas": [
+                "h"
+            ]
         },
         {
             "id": 263,
@@ -881,7 +1375,9 @@
             "category_name": "Wormhole",
             "target_class": "l",
             "extra": null,
-            "spawn_areas": ["13"]
+            "spawn_areas": [
+                "13"
+            ]
         },
         {
             "id": 208,
@@ -891,7 +1387,10 @@
             "category_name": "Wormhole",
             "target_class": "l",
             "extra": null,
-            "spawn_areas": ["3", "13"]
+            "spawn_areas": [
+                "3",
+                "13"
+            ]
         },
         {
             "id": 248,
@@ -901,7 +1400,10 @@
             "category_name": "Wormhole",
             "target_class": "6",
             "extra": null,
-            "spawn_areas": ["l", "n"]
+            "spawn_areas": [
+                "l",
+                "n"
+            ]
         },
         {
             "id": 257,
@@ -911,7 +1413,9 @@
             "category_name": "Wormhole",
             "target_class": "n",
             "extra": "Pochven",
-            "spawn_areas": ["n"]
+            "spawn_areas": [
+                "n"
+            ]
         },
         {
             "id": 215,
@@ -921,7 +1425,10 @@
             "category_name": "Wormhole",
             "target_class": "6",
             "extra": null,
-            "spawn_areas": ["4", "13"]
+            "spawn_areas": [
+                "4",
+                "13"
+            ]
         },
         {
             "id": 245,
@@ -931,7 +1438,9 @@
             "category_name": "Wormhole",
             "target_class": "n",
             "extra": null,
-            "spawn_areas": ["h"]
+            "spawn_areas": [
+                "h"
+            ]
         },
         {
             "id": 201,
@@ -941,7 +1450,9 @@
             "category_name": "Wormhole",
             "target_class": "1",
             "extra": null,
-            "spawn_areas": ["3"]
+            "spawn_areas": [
+                "3"
+            ]
         },
         {
             "id": 224,
@@ -951,7 +1462,10 @@
             "category_name": "Wormhole",
             "target_class": "6",
             "extra": null,
-            "spawn_areas": ["5", "13"]
+            "spawn_areas": [
+                "5",
+                "13"
+            ]
         },
         {
             "id": 260,
@@ -961,7 +1475,9 @@
             "category_name": "Wormhole",
             "target_class": "l",
             "extra": "Thera",
-            "spawn_areas": ["12"]
+            "spawn_areas": [
+                "12"
+            ]
         },
         {
             "id": 232,
@@ -971,7 +1487,10 @@
             "category_name": "Wormhole",
             "target_class": "5",
             "extra": null,
-            "spawn_areas": ["6", "13"]
+            "spawn_areas": [
+                "6",
+                "13"
+            ]
         },
         {
             "id": 179,
@@ -981,7 +1500,18 @@
             "category_name": "Wormhole",
             "target_class": "16",
             "extra": "Vidette",
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
             "id": 233,
@@ -991,7 +1521,10 @@
             "category_name": "Wormhole",
             "target_class": "6",
             "extra": null,
-            "spawn_areas": ["6", "13"]
+            "spawn_areas": [
+                "6",
+                "13"
+            ]
         },
         {
             "id": 255,
@@ -1001,7 +1534,9 @@
             "category_name": "Wormhole",
             "target_class": "n",
             "extra": null,
-            "spawn_areas": ["p"]
+            "spawn_areas": [
+                "p"
+            ]
         },
         {
             "id": 239,
@@ -1011,7 +1546,11 @@
             "category_name": "Wormhole",
             "target_class": "3",
             "extra": null,
-            "spawn_areas": ["h", "l", "n"]
+            "spawn_areas": [
+                "h",
+                "l",
+                "n"
+            ]
         },
         {
             "id": 213,
@@ -1021,7 +1560,10 @@
             "category_name": "Wormhole",
             "target_class": "4",
             "extra": null,
-            "spawn_areas": ["4", "13"]
+            "spawn_areas": [
+                "4",
+                "13"
+            ]
         },
         {
             "id": 194,
@@ -1031,7 +1573,15 @@
             "category_name": "Wormhole",
             "target_class": "4",
             "extra": null,
-            "spawn_areas": ["2", "13", "14", "15", "16", "17", "18"]
+            "spawn_areas": [
+                "2",
+                "13",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18"
+            ]
         },
         {
             "id": 219,
@@ -1041,7 +1591,9 @@
             "category_name": "Wormhole",
             "target_class": "1",
             "extra": null,
-            "spawn_areas": ["5"]
+            "spawn_areas": [
+                "5"
+            ]
         },
         {
             "id": 180,
@@ -1051,7 +1603,19 @@
             "category_name": "Wormhole",
             "target_class": "3",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
             "id": 189,
@@ -1061,7 +1625,10 @@
             "category_name": "Wormhole",
             "target_class": "n",
             "extra": null,
-            "spawn_areas": ["1", "13"]
+            "spawn_areas": [
+                "1",
+                "13"
+            ]
         },
         {
             "id": 227,
@@ -1071,7 +1638,10 @@
             "category_name": "Wormhole",
             "target_class": "n",
             "extra": null,
-            "spawn_areas": ["5", "6"]
+            "spawn_areas": [
+                "5",
+                "6"
+            ]
         },
         {
             "id": 231,
@@ -1081,7 +1651,9 @@
             "category_name": "Wormhole",
             "target_class": "4",
             "extra": null,
-            "spawn_areas": ["6"]
+            "spawn_areas": [
+                "6"
+            ]
         },
         {
             "id": 191,
@@ -1091,7 +1663,15 @@
             "category_name": "Wormhole",
             "target_class": "1",
             "extra": null,
-            "spawn_areas": ["2", "13", "14", "15", "16", "17", "18"]
+            "spawn_areas": [
+                "2",
+                "13",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18"
+            ]
         },
         {
             "id": 237,
@@ -1101,7 +1681,11 @@
             "category_name": "Wormhole",
             "target_class": "1",
             "extra": null,
-            "spawn_areas": ["h", "l", "n"]
+            "spawn_areas": [
+                "h",
+                "l",
+                "n"
+            ]
         },
         {
             "id": 82,
@@ -1111,7 +1695,9 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n"]
+            "spawn_areas": [
+                "n"
+            ]
         },
         {
             "id": 83,
@@ -1121,7 +1707,9 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n"]
+            "spawn_areas": [
+                "n"
+            ]
         },
         {
             "id": 84,
@@ -1131,7 +1719,9 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n"]
+            "spawn_areas": [
+                "n"
+            ]
         },
         {
             "id": 85,
@@ -1141,7 +1731,9 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n"]
+            "spawn_areas": [
+                "n"
+            ]
         },
         {
             "id": 86,
@@ -1151,7 +1743,9 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n"]
+            "spawn_areas": [
+                "n"
+            ]
         },
         {
             "id": 87,
@@ -1161,7 +1755,9 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n"]
+            "spawn_areas": [
+                "n"
+            ]
         },
         {
             "id": 88,
@@ -1171,7 +1767,12 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 89,
@@ -1181,7 +1782,12 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 90,
@@ -1191,7 +1797,12 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 91,
@@ -1201,7 +1812,12 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 92,
@@ -1211,7 +1827,12 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 93,
@@ -1221,7 +1842,12 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 94,
@@ -1231,7 +1857,12 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 95,
@@ -1241,7 +1872,12 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 96,
@@ -1251,7 +1887,12 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 97,
@@ -1261,7 +1902,12 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 98,
@@ -1271,7 +1917,12 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 99,
@@ -1281,7 +1932,72 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
+        },
+        {
+            "id": 268,
+            "name": "Central Rogue Drone Command Center",
+            "signature": null,
+            "signature_category_id": 2,
+            "category_name": "Data Site",
+            "target_class": null,
+            "extra": null,
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
+        },
+        {
+            "id": 269,
+            "name": "Central Rogue Drone Data Mining Site",
+            "signature": null,
+            "signature_category_id": 2,
+            "category_name": "Data Site",
+            "target_class": null,
+            "extra": null,
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
+        },
+        {
+            "id": 270,
+            "name": "Central Rogue Drone Sparking Transmitter",
+            "signature": null,
+            "signature_category_id": 2,
+            "category_name": "Data Site",
+            "target_class": null,
+            "extra": null,
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
+        },
+        {
+            "id": 271,
+            "name": "Central Rogue Drone Survey Site",
+            "signature": null,
+            "signature_category_id": 2,
+            "category_name": "Data Site",
+            "target_class": null,
+            "extra": null,
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 100,
@@ -1291,7 +2007,12 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 101,
@@ -1301,7 +2022,12 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 102,
@@ -1311,7 +2037,12 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 103,
@@ -1321,7 +2052,12 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 104,
@@ -1331,7 +2067,12 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 105,
@@ -1341,7 +2082,12 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 106,
@@ -1351,7 +2097,12 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 107,
@@ -1361,7 +2112,12 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 119,
@@ -1371,7 +2127,9 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n"]
+            "spawn_areas": [
+                "n"
+            ]
         },
         {
             "id": 118,
@@ -1381,7 +2139,9 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n"]
+            "spawn_areas": [
+                "n"
+            ]
         },
         {
             "id": 117,
@@ -1391,7 +2151,9 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n"]
+            "spawn_areas": [
+                "n"
+            ]
         },
         {
             "id": 116,
@@ -1401,7 +2163,9 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n"]
+            "spawn_areas": [
+                "n"
+            ]
         },
         {
             "id": 111,
@@ -1411,7 +2175,9 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["h"]
+            "spawn_areas": [
+                "h"
+            ]
         },
         {
             "id": 110,
@@ -1421,7 +2187,9 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["h"]
+            "spawn_areas": [
+                "h"
+            ]
         },
         {
             "id": 109,
@@ -1431,7 +2199,9 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["h"]
+            "spawn_areas": [
+                "h"
+            ]
         },
         {
             "id": 108,
@@ -1441,7 +2211,9 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["h"]
+            "spawn_areas": [
+                "h"
+            ]
         },
         {
             "id": 115,
@@ -1451,7 +2223,9 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["l"]
+            "spawn_areas": [
+                "l"
+            ]
         },
         {
             "id": 114,
@@ -1461,7 +2235,9 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["l"]
+            "spawn_areas": [
+                "l"
+            ]
         },
         {
             "id": 113,
@@ -1471,7 +2247,9 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["l"]
+            "spawn_areas": [
+                "l"
+            ]
         },
         {
             "id": 112,
@@ -1481,7 +2259,9 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["l"]
+            "spawn_areas": [
+                "l"
+            ]
         },
         {
             "id": 123,
@@ -1491,7 +2271,15 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13"
+            ]
         },
         {
             "id": 122,
@@ -1501,7 +2289,15 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13"
+            ]
         },
         {
             "id": 121,
@@ -1511,7 +2307,15 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13"
+            ]
         },
         {
             "id": 120,
@@ -1521,7 +2325,15 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13"
+            ]
         },
         {
             "id": 134,
@@ -1531,7 +2343,9 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["6"]
+            "spawn_areas": [
+                "6"
+            ]
         },
         {
             "id": 135,
@@ -1541,7 +2355,9 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["6"]
+            "spawn_areas": [
+                "6"
+            ]
         },
         {
             "id": 128,
@@ -1551,7 +2367,9 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["3"]
+            "spawn_areas": [
+                "3"
+            ]
         },
         {
             "id": 130,
@@ -1561,7 +2379,9 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["4"]
+            "spawn_areas": [
+                "4"
+            ]
         },
         {
             "id": 132,
@@ -1571,7 +2391,9 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["5"]
+            "spawn_areas": [
+                "5"
+            ]
         },
         {
             "id": 129,
@@ -1581,7 +2403,9 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["3"]
+            "spawn_areas": [
+                "3"
+            ]
         },
         {
             "id": 133,
@@ -1591,7 +2415,9 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["5"]
+            "spawn_areas": [
+                "5"
+            ]
         },
         {
             "id": 131,
@@ -1601,7 +2427,9 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["4"]
+            "spawn_areas": [
+                "4"
+            ]
         },
         {
             "id": 124,
@@ -1611,7 +2439,9 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1"]
+            "spawn_areas": [
+                "1"
+            ]
         },
         {
             "id": 126,
@@ -1621,7 +2451,9 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["2"]
+            "spawn_areas": [
+                "2"
+            ]
         },
         {
             "id": 125,
@@ -1631,7 +2463,9 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1"]
+            "spawn_areas": [
+                "1"
+            ]
         },
         {
             "id": 127,
@@ -1641,7 +2475,9 @@
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["2"]
+            "spawn_areas": [
+                "2"
+            ]
         },
         {
             "id": 80,
@@ -1651,7 +2487,9 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["6"]
+            "spawn_areas": [
+                "6"
+            ]
         },
         {
             "id": 81,
@@ -1661,7 +2499,9 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["6"]
+            "spawn_areas": [
+                "6"
+            ]
         },
         {
             "id": 78,
@@ -1671,7 +2511,9 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["5"]
+            "spawn_areas": [
+                "5"
+            ]
         },
         {
             "id": 79,
@@ -1681,7 +2523,9 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["5"]
+            "spawn_areas": [
+                "5"
+            ]
         },
         {
             "id": 76,
@@ -1691,7 +2535,9 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["4"]
+            "spawn_areas": [
+                "4"
+            ]
         },
         {
             "id": 77,
@@ -1701,7 +2547,9 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["4"]
+            "spawn_areas": [
+                "4"
+            ]
         },
         {
             "id": 74,
@@ -1711,7 +2559,9 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["3"]
+            "spawn_areas": [
+                "3"
+            ]
         },
         {
             "id": 75,
@@ -1721,7 +2571,9 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["3"]
+            "spawn_areas": [
+                "3"
+            ]
         },
         {
             "id": 70,
@@ -1731,7 +2583,9 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1"]
+            "spawn_areas": [
+                "1"
+            ]
         },
         {
             "id": 72,
@@ -1741,7 +2595,9 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["2"]
+            "spawn_areas": [
+                "2"
+            ]
         },
         {
             "id": 73,
@@ -1751,7 +2607,9 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["2"]
+            "spawn_areas": [
+                "2"
+            ]
         },
         {
             "id": 71,
@@ -1761,7 +2619,9 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1"]
+            "spawn_areas": [
+                "1"
+            ]
         },
         {
             "id": 50,
@@ -1771,7 +2631,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 51,
@@ -1781,7 +2646,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 52,
@@ -1791,7 +2661,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 53,
@@ -1801,7 +2676,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 54,
@@ -1811,7 +2691,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 55,
@@ -1821,7 +2706,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 56,
@@ -1831,7 +2721,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 57,
@@ -1841,7 +2736,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 58,
@@ -1851,7 +2751,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 59,
@@ -1861,7 +2766,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 60,
@@ -1871,7 +2781,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 61,
@@ -1881,7 +2796,72 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
+        },
+        {
+            "id": 264,
+            "name": "Ruined Rogue Drone Crystal Quarry",
+            "signature": null,
+            "signature_category_id": 3,
+            "category_name": "Relic Site",
+            "target_class": null,
+            "extra": null,
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
+        },
+        {
+            "id": 265,
+            "name": "Ruined Rogue Drone Monument Site",
+            "signature": null,
+            "signature_category_id": 3,
+            "category_name": "Relic Site",
+            "target_class": null,
+            "extra": null,
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
+        },
+        {
+            "id": 266,
+            "name": "Ruined Rogue Drone Science Outpost",
+            "signature": null,
+            "signature_category_id": 3,
+            "category_name": "Relic Site",
+            "target_class": null,
+            "extra": null,
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
+        },
+        {
+            "id": 267,
+            "name": "Ruined Rogue Drone Temple Site",
+            "signature": null,
+            "signature_category_id": 3,
+            "category_name": "Relic Site",
+            "target_class": null,
+            "extra": null,
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 62,
@@ -1891,7 +2871,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 63,
@@ -1901,7 +2886,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 64,
@@ -1911,7 +2901,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 65,
@@ -1921,7 +2916,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 66,
@@ -1931,7 +2931,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 67,
@@ -1941,7 +2946,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 68,
@@ -1951,7 +2961,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 69,
@@ -1961,7 +2976,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 43,
@@ -1971,7 +2991,10 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["17", "18"]
+            "spawn_areas": [
+                "17",
+                "18"
+            ]
         },
         {
             "id": 22,
@@ -1981,7 +3004,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["6"]
+            "spawn_areas": [
+                "6"
+            ]
         },
         {
             "id": 21,
@@ -1991,7 +3016,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["6"]
+            "spawn_areas": [
+                "6"
+            ]
         },
         {
             "id": 17,
@@ -2001,7 +3028,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["5"]
+            "spawn_areas": [
+                "5"
+            ]
         },
         {
             "id": 18,
@@ -2011,7 +3040,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["5"]
+            "spawn_areas": [
+                "5"
+            ]
         },
         {
             "id": 33,
@@ -2021,7 +3052,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["14"]
+            "spawn_areas": [
+                "14"
+            ]
         },
         {
             "id": 38,
@@ -2031,7 +3064,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["15"]
+            "spawn_areas": [
+                "15"
+            ]
         },
         {
             "id": 42,
@@ -2041,7 +3076,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["16"]
+            "spawn_areas": [
+                "16"
+            ]
         },
         {
             "id": 25,
@@ -2051,7 +3088,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["12"]
+            "spawn_areas": [
+                "12"
+            ]
         },
         {
             "id": 26,
@@ -2061,7 +3100,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["12"]
+            "spawn_areas": [
+                "12"
+            ]
         },
         {
             "id": 9,
@@ -2071,7 +3112,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["3"]
+            "spawn_areas": [
+                "3"
+            ]
         },
         {
             "id": 13,
@@ -2081,7 +3124,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["4"]
+            "spawn_areas": [
+                "4"
+            ]
         },
         {
             "id": 14,
@@ -2091,7 +3136,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["4"]
+            "spawn_areas": [
+                "4"
+            ]
         },
         {
             "id": 46,
@@ -2101,7 +3148,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["17"]
+            "spawn_areas": [
+                "17"
+            ]
         },
         {
             "id": 37,
@@ -2111,7 +3160,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["15"]
+            "spawn_areas": [
+                "15"
+            ]
         },
         {
             "id": 49,
@@ -2121,7 +3172,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["18"]
+            "spawn_areas": [
+                "18"
+            ]
         },
         {
             "id": 15,
@@ -2131,7 +3184,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["4"]
+            "spawn_areas": [
+                "4"
+            ]
         },
         {
             "id": 29,
@@ -2141,7 +3196,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["14"]
+            "spawn_areas": [
+                "14"
+            ]
         },
         {
             "id": 31,
@@ -2151,7 +3208,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["14"]
+            "spawn_areas": [
+                "14"
+            ]
         },
         {
             "id": 19,
@@ -2161,7 +3220,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["5"]
+            "spawn_areas": [
+                "5"
+            ]
         },
         {
             "id": 10,
@@ -2171,7 +3232,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["3"]
+            "spawn_areas": [
+                "3"
+            ]
         },
         {
             "id": 45,
@@ -2181,7 +3244,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["17"]
+            "spawn_areas": [
+                "17"
+            ]
         },
         {
             "id": 1,
@@ -2191,7 +3256,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1"]
+            "spawn_areas": [
+                "1"
+            ]
         },
         {
             "id": 2,
@@ -2201,7 +3268,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1"]
+            "spawn_areas": [
+                "1"
+            ]
         },
         {
             "id": 5,
@@ -2211,7 +3280,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["2"]
+            "spawn_areas": [
+                "2"
+            ]
         },
         {
             "id": 6,
@@ -2221,7 +3292,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["2"]
+            "spawn_areas": [
+                "2"
+            ]
         },
         {
             "id": 3,
@@ -2231,7 +3304,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1"]
+            "spawn_areas": [
+                "1"
+            ]
         },
         {
             "id": 27,
@@ -2241,7 +3316,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["12"]
+            "spawn_areas": [
+                "12"
+            ]
         },
         {
             "id": 20,
@@ -2251,7 +3328,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["5"]
+            "spawn_areas": [
+                "5"
+            ]
         },
         {
             "id": 44,
@@ -2261,7 +3340,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["17"]
+            "spawn_areas": [
+                "17"
+            ]
         },
         {
             "id": 39,
@@ -2271,7 +3352,10 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["16", "18"]
+            "spawn_areas": [
+                "16",
+                "18"
+            ]
         },
         {
             "id": 8,
@@ -2281,7 +3365,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["2"]
+            "spawn_areas": [
+                "2"
+            ]
         },
         {
             "id": 48,
@@ -2291,7 +3377,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["18"]
+            "spawn_areas": [
+                "18"
+            ]
         },
         {
             "id": 32,
@@ -2301,7 +3389,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["14"]
+            "spawn_areas": [
+                "14"
+            ]
         },
         {
             "id": 41,
@@ -2311,7 +3401,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["16"]
+            "spawn_areas": [
+                "16"
+            ]
         },
         {
             "id": 40,
@@ -2321,7 +3413,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["16"]
+            "spawn_areas": [
+                "16"
+            ]
         },
         {
             "id": 16,
@@ -2331,7 +3425,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["4"]
+            "spawn_areas": [
+                "4"
+            ]
         },
         {
             "id": 11,
@@ -2341,7 +3437,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["3"]
+            "spawn_areas": [
+                "3"
+            ]
         },
         {
             "id": 36,
@@ -2351,7 +3449,10 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["15", "16"]
+            "spawn_areas": [
+                "15",
+                "16"
+            ]
         },
         {
             "id": 47,
@@ -2361,7 +3462,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["18"]
+            "spawn_areas": [
+                "18"
+            ]
         },
         {
             "id": 23,
@@ -2371,7 +3474,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["6"]
+            "spawn_areas": [
+                "6"
+            ]
         },
         {
             "id": 28,
@@ -2381,7 +3486,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["12"]
+            "spawn_areas": [
+                "12"
+            ]
         },
         {
             "id": 4,
@@ -2391,7 +3498,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1"]
+            "spawn_areas": [
+                "1"
+            ]
         },
         {
             "id": 24,
@@ -2401,7 +3510,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["6"]
+            "spawn_areas": [
+                "6"
+            ]
         },
         {
             "id": 12,
@@ -2411,7 +3522,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["3"]
+            "spawn_areas": [
+                "3"
+            ]
         },
         {
             "id": 7,
@@ -2421,7 +3534,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["2"]
+            "spawn_areas": [
+                "2"
+            ]
         },
         {
             "id": 35,
@@ -2431,7 +3546,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["15"]
+            "spawn_areas": [
+                "15"
+            ]
         },
         {
             "id": 30,
@@ -2441,7 +3558,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["14"]
+            "spawn_areas": [
+                "14"
+            ]
         },
         {
             "id": 34,
@@ -2451,7 +3570,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["15"]
+            "spawn_areas": [
+                "15"
+            ]
         },
         {
             "id": 136,
@@ -2461,7 +3582,14 @@
             "category_name": "Gas Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
         },
         {
             "id": 141,
@@ -2471,7 +3599,12 @@
             "category_name": "Gas Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["3", "4", "5", "6"]
+            "spawn_areas": [
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
         },
         {
             "id": 143,
@@ -2481,7 +3614,10 @@
             "category_name": "Gas Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["5", "6"]
+            "spawn_areas": [
+                "5",
+                "6"
+            ]
         },
         {
             "id": 138,
@@ -2491,7 +3627,14 @@
             "category_name": "Gas Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
         },
         {
             "id": 140,
@@ -2501,7 +3644,14 @@
             "category_name": "Gas Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
         },
         {
             "id": 139,
@@ -2511,7 +3661,14 @@
             "category_name": "Gas Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
         },
         {
             "id": 137,
@@ -2521,7 +3678,14 @@
             "category_name": "Gas Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
         },
         {
             "id": 142,
@@ -2531,7 +3695,12 @@
             "category_name": "Gas Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["3", "4", "5", "6"]
+            "spawn_areas": [
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
         },
         {
             "id": 144,
@@ -2541,7 +3710,10 @@
             "category_name": "Gas Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["5", "6"]
+            "spawn_areas": [
+                "5",
+                "6"
+            ]
         },
         {
             "id": 148,
@@ -2551,7 +3723,13 @@
             "category_name": "Ore Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5"
+            ]
         },
         {
             "id": 146,
@@ -2561,7 +3739,14 @@
             "category_name": "Ore Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
         },
         {
             "id": 153,
@@ -2571,7 +3756,9 @@
             "category_name": "Ore Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["5"]
+            "spawn_areas": [
+                "5"
+            ]
         },
         {
             "id": 151,
@@ -2581,7 +3768,11 @@
             "category_name": "Ore Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["3", "4", "5"]
+            "spawn_areas": [
+                "3",
+                "4",
+                "5"
+            ]
         },
         {
             "id": 149,
@@ -2591,7 +3782,11 @@
             "category_name": "Ore Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1", "2", "5"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "5"
+            ]
         },
         {
             "id": 145,
@@ -2601,7 +3796,14 @@
             "category_name": "Ore Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
         },
         {
             "id": 154,
@@ -2611,7 +3813,10 @@
             "category_name": "Ore Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["5", "6"]
+            "spawn_areas": [
+                "5",
+                "6"
+            ]
         },
         {
             "id": 155,
@@ -2621,7 +3826,9 @@
             "category_name": "Ore Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["13"]
+            "spawn_areas": [
+                "13"
+            ]
         },
         {
             "id": 156,
@@ -2631,7 +3838,9 @@
             "category_name": "Ore Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["13"]
+            "spawn_areas": [
+                "13"
+            ]
         },
         {
             "id": 150,
@@ -2641,7 +3850,11 @@
             "category_name": "Ore Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1", "2", "5"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "5"
+            ]
         },
         {
             "id": 147,
@@ -2651,7 +3864,14 @@
             "category_name": "Ore Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
         },
         {
             "id": 152,
@@ -2661,7 +3881,11 @@
             "category_name": "Ore Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["3", "4", "5"]
+            "spawn_areas": [
+                "3",
+                "4",
+                "5"
+            ]
         }
     ]
 }

@@ -121,6 +121,10 @@ final class SignatureTypeSeeder extends Seeder
             ['name' => 'Ruined Serpentis Monument Site', 'spawn_areas' => [SolarsystemClass::N, SolarsystemClass::C1, SolarsystemClass::C2, SolarsystemClass::C3]],
             ['name' => 'Ruined Serpentis Science Outpost', 'spawn_areas' => [SolarsystemClass::N, SolarsystemClass::C1, SolarsystemClass::C2, SolarsystemClass::C3]],
             ['name' => 'Ruined Serpentis Temple Site', 'spawn_areas' => [SolarsystemClass::N, SolarsystemClass::C1, SolarsystemClass::C2, SolarsystemClass::C3]],
+            ['name' => 'Ruined Rogue Drone Crystal Quarry', 'spawn_areas' => [SolarsystemClass::N, SolarsystemClass::C1, SolarsystemClass::C2, SolarsystemClass::C3]],
+            ['name' => 'Ruined Rogue Drone Monument Site', 'spawn_areas' => [SolarsystemClass::N, SolarsystemClass::C1, SolarsystemClass::C2, SolarsystemClass::C3]],
+            ['name' => 'Ruined Rogue Drone Science Outpost', 'spawn_areas' => [SolarsystemClass::N, SolarsystemClass::C1, SolarsystemClass::C2, SolarsystemClass::C3]],
+            ['name' => 'Ruined Rogue Drone Temple Site', 'spawn_areas' => [SolarsystemClass::N, SolarsystemClass::C1, SolarsystemClass::C2, SolarsystemClass::C3]],
             // Class-specific relic sites
             ['name' => 'Forgotten Perimeter Coronation Platform', 'spawn_areas' => [SolarsystemClass::C1]],
             ['name' => 'Forgotten Perimeter Power Array', 'spawn_areas' => [SolarsystemClass::C1]],
@@ -176,6 +180,10 @@ final class SignatureTypeSeeder extends Seeder
             ['name' => 'Central Serpentis Data Mining Site', 'spawn_areas' => [SolarsystemClass::N, SolarsystemClass::C1, SolarsystemClass::C2, SolarsystemClass::C3]],
             ['name' => 'Central Serpentis Sparking Transmitter', 'spawn_areas' => [SolarsystemClass::N, SolarsystemClass::C1, SolarsystemClass::C2, SolarsystemClass::C3]],
             ['name' => 'Central Serpentis Survey Site', 'spawn_areas' => [SolarsystemClass::N, SolarsystemClass::C1, SolarsystemClass::C2, SolarsystemClass::C3]],
+            ['name' => 'Central Rogue Drone Command Center', 'spawn_areas' => [SolarsystemClass::N, SolarsystemClass::C1, SolarsystemClass::C2, SolarsystemClass::C3]],
+            ['name' => 'Central Rogue Drone Data Mining Site', 'spawn_areas' => [SolarsystemClass::N, SolarsystemClass::C1, SolarsystemClass::C2, SolarsystemClass::C3]],
+            ['name' => 'Central Rogue Drone Sparking Transmitter', 'spawn_areas' => [SolarsystemClass::N, SolarsystemClass::C1, SolarsystemClass::C2, SolarsystemClass::C3]],
+            ['name' => 'Central Rogue Drone Survey Site', 'spawn_areas' => [SolarsystemClass::N, SolarsystemClass::C1, SolarsystemClass::C2, SolarsystemClass::C3]],
             // Ghost sites
             ['name' => 'Lesser Serpentis Covert Research Facility', 'spawn_areas' => [SolarsystemClass::H]],
             ['name' => 'Lesser Sansha Covert Research Facility', 'spawn_areas' => [SolarsystemClass::H]],
