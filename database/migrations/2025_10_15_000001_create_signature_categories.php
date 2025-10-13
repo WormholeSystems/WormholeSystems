@@ -25,7 +25,7 @@ return new class extends Migration
         });
 
         // Seed signature_categories
-        Artisan::call('db:seed', ['--class' => SignatureCategorySeeder::class]);
+        Artisan::call('db:seed', ['--class' => SignatureCategorySeeder::class, '--force' => true]);
 
         // Add signature_category_id to signatures table
         Schema::table('signatures', function (Blueprint $table): void {

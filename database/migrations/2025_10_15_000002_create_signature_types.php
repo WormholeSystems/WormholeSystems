@@ -34,7 +34,7 @@ return new class extends Migration
         });
 
         // Seed signature_types
-        Artisan::call('db:seed', ['--class' => SignatureTypeSeeder::class]);
+        Artisan::call('db:seed', ['--class' => SignatureTypeSeeder::class, '--force' => true]);
 
         // Add signature_type_id to signatures table
         Schema::table('signatures', function (Blueprint $table): void {
