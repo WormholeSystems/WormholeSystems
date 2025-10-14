@@ -41,6 +41,7 @@ final class SignatureResource extends JsonResource
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'wormhole' => $this->wormhole?->toResource(WormholeResource::class),
+            'map_connection' => $this->whenLoaded('mapConnection', fn () => $this->mapConnection?->toResource(MapConnectionResource::class)),
         ];
     }
 }

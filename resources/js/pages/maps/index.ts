@@ -48,4 +48,5 @@ export type TShowMapProps = {
     shortest_path?: TShortestPath | null;
     ignored_systems: number[];
     closest_systems?: TClosestSystems | null;
+    tracking_origin?: TMapSolarSystem | null;
 };

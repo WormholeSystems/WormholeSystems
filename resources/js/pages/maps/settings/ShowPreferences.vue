@@ -37,6 +37,12 @@ function handleKillmailFilterChange(value: AcceptableValue) {
         updateMapUserSettings({ killmail_filter: value });
     }
 }
+
+function handlePromtForSignatureChange(value: boolean | 'indeterminate') {
+    if (typeof value === 'boolean') {
+        updateMapUserSettings({ prompt_for_signature_enabled: value });
+    }
+}
 </script>
 
 <template>
@@ -62,6 +68,16 @@ function handleKillmailFilterChange(value: AcceptableValue) {
                             <div class="text-sm text-muted-foreground">Currently broadcasting your location to this map</div>
                         </div>
                         <Checkbox :model-value="map_user_settings.is_tracking" @update:model-value="handleToggleActiveTracking" />
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div class="space-y-0.5">
+                            <Label class="text-sm font-medium">Prompt for Signature</Label>
+                            <div class="text-sm text-muted-foreground">
+                                Determines if you are prompted to select the signature you jumped through when entering a new system
+                            </div>
+                        </div>
+                        <Checkbox :model-value="map_user_settings.prompt_for_signature_enabled" @update:model-value="handlePromtForSignatureChange" />
                     </div>
 
                     <div class="space-y-3">

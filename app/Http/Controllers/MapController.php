@@ -95,6 +95,8 @@ final class MapController extends Controller
             'limit' => $request->integer('limit', 15),
         ];
 
+        $tracking_origin = Inertia::optional(fn (): ?JsonResource => $this->getTrackingOrigin($request, $map));
+
         return Inertia::render('maps/ShowMap', [
             'map' => $map->toResource(MapResource::class),
             'solarsystems' => $solarsystems,
@@ -111,6 +113,7 @@ final class MapController extends Controller
             'ignored_systems' => fn (): array => $this->getIgnoredSystems(),
             'shortest_path' => $shortest_path,
             'closest_systems' => $closest_systems,
+            'tracking_origin' => $tracking_origin,
         ]);
     }
 
@@ -437,5 +440,28 @@ final class MapController extends Controller
             'route' => $route,
             'jumps' => count($route),
         ];
+    }
+
+    /**
+     * Get signatures for the tracking origin solarsystem
+     *
+     * @throws Throwable
+     */
+    private function getTrackingOrigin(Request $request, Map $map): ?JsonResource
+    {
+        $origin_map_solarsystem_id = $request->integer('origin_map_solarsystem_id');
+
+        if (! $origin_map_solarsystem_id) {
+            return null;
+        }
+
+        return $map->mapSolarsystems()
+            ->where('map_solarsystems.id', $origin_map_solarsystem_id)
+            ->with([
+                'signatures' => fn ($query) => $query
+                    ->whereHas('signatureCategory', fn (Builder $q) => $q->where('name', 'Wormhole'))
+                    ->with(['signatureType', 'signatureCategory', 'wormhole', 'mapConnection']),
+            ])
+            ->first()->toResource(MapSolarsystemResource::class);
     }
 }

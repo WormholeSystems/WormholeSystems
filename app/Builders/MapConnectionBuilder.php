@@ -31,4 +31,20 @@ final class MapConnectionBuilder extends Builder
     {
         return $this->where('lifetime', '!=', LifetimeStatus::Critical);
     }
+
+    public function connectsSolarsystemsInMap(int $map_id, int $first_solarsystem_id, int $second_solarsystem_id): self
+    {
+        return $this->whereRelation('map', 'id', $map_id)
+            ->where(
+                fn (Builder $query) => $query
+                    ->where(fn (Builder $query) => $query
+                        ->whereRelation('fromMapSolarsystem', 'solarsystem_id', $first_solarsystem_id)
+                        ->whereRelation('toMapSolarsystem', 'solarsystem_id', $second_solarsystem_id)
+                    )
+                    ->orWhere(fn (Builder $query) => $query
+                        ->whereRelation('fromMapSolarsystem', 'solarsystem_id', $second_solarsystem_id)
+                        ->whereRelation('toMapSolarsystem', 'solarsystem_id', $first_solarsystem_id)
+                    )
+            );
+    }
 }
