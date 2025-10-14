@@ -98,7 +98,7 @@ useOnClient(() =>
                     <MapSearch :map :search :solarsystems v-if="hasWriteAccess" />
                     <div class="absolute top-4 right-4 flex gap-2">
                         <LocationVisibility :map_user_settings="map_user_settings" :key="character?.id" v-if="hasWriteAccess" />
-                        <Tracker :map_user_settings="map_user_settings" :character :map :key="character?.id" v-if="hasWriteAccess" />
+                        <Tracker :character :map :key="character?.id" v-if="hasWriteAccess" />
                         <Tooltip>
                             <TooltipTrigger>
                                 <Button variant="outline" size="icon" as-child>

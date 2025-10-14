@@ -231,6 +231,7 @@ export type TSignature = {
     created_at: string;
     updated_at: string;
     wormhole: TWormhole | null;
+    map_connection: TMapConnection | null;
 };
 
 export type TMapSolarsystemStatus = 'active' | 'unscanned' | 'unknown' | 'friendly' | 'hostile' | 'empty';
@@ -280,6 +281,7 @@ export type TMapUserSetting = {
     security_penalty: number;
     killmail_filter: 'all' | 'jspace' | 'kspace';
     introduction_confirmed_at: string | null;
+    prompt_for_signature_enabled: boolean;
 };
 
 export type TShipHistory = {

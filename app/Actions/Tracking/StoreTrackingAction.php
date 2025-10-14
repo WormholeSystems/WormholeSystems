@@ -6,12 +6,16 @@ namespace App\Actions\Tracking;
 
 use App\Actions\MapConnections\CreateMapConnectionAction;
 use App\Actions\MapSolarsystem\StoreMapSolarsystemAction;
+use App\Actions\Signatures\UpdateSignatureAction;
+use App\Data\SignatureData;
+use App\Data\TrackingData;
 use App\Enums\LifetimeStatus;
 use App\Enums\MassStatus;
 use App\Enums\ShipSize;
 use App\Models\Map;
 use App\Models\MapConnection;
 use App\Models\MapSolarsystem;
+use App\Models\Signature;
 use App\Models\Solarsystem;
 use App\Utilities\WormholeConnectionClassifier;
 use Illuminate\Container\Attributes\Config;
@@ -34,6 +38,7 @@ final readonly class StoreTrackingAction
         private WormholeConnectionClassifier $connectionClassifier,
         private StoreMapSolarsystemAction $storeMapSolarsystemAction,
         private CreateMapConnectionAction $storeMapConnectionRequest,
+        private UpdateSignatureAction $updateSignatureAction,
         #[Config('map.max_size.x')]
         private int $max_x,
         #[Config('map.max_size.y')]
@@ -45,21 +50,23 @@ final readonly class StoreTrackingAction
     /**
      * @throws Throwable
      */
-    public function handle(array $data): void
+    public function handle(TrackingData $data): void
     {
         DB::transaction(function () use ($data): void {
-            $from_map_solarsystem_id = $data['from_map_solarsystem_id'];
-            $to_solarsystem_id = $data['to_solarsystem_id'];
-
             $origin = MapSolarsystem::query()
                 ->lockForUpdate()
-                ->findOrFail($from_map_solarsystem_id);
+                ->findOrFail($data->from_map_solarsystem_id);
             $to_solarsystem = Solarsystem::query()
                 ->lockForUpdate()
-                ->findOrFail($to_solarsystem_id);
+                ->findOrFail($data->to_solarsystem_id);
 
             if ($this->isSolarsystemOnMap($origin->map, $to_solarsystem)) {
-                // If the target system is already on the map, we do not create a new connection.
+                /* If the target system is already on the map,
+                * we do not create a new connection, as it should
+                * already exist. We just update the signature if provided.
+                */
+                $this->updateExistingConnection($origin, $to_solarsystem, $data);
+
                 return;
             }
 
@@ -88,16 +95,23 @@ final readonly class StoreTrackingAction
                 ]
             );
 
-            $this->storeMapConnectionRequest->handle(
+            $connection = $this->storeMapConnectionRequest->handle(
                 [
-                    'from_map_solarsystem_id' => $from_map_solarsystem_id,
+                    'from_map_solarsystem_id' => $data->from_map_solarsystem_id,
                     'to_map_solarsystem_id' => $new_map_solarsystem->id,
-                    'wormhole_id' => $data['wormhole_id'] ?? null,
-                    'mass_status' => $data['mass_status'] ?? MassStatus::Fresh,
+                    'wormhole_id' => null,
+                    'mass_status' => MassStatus::Fresh,
                     'ship_size' => $ship_size ?? ShipSize::Large,
-                    'lifetime' => $data['lifetime'] ?? LifetimeStatus::Healthy,
+                    'lifetime' => LifetimeStatus::Healthy,
                 ]
             );
+
+            // Link the signature to the connection if provided
+            if ($data->signature_id) {
+                Signature::query()
+                    ->where('id', $data->signature_id)
+                    ->update(['map_connection_id' => $connection->id]);
+            }
 
         }, 10);
     }
@@ -250,5 +264,32 @@ final readonly class StoreTrackingAction
             ->where('from_solarsystem_id', $from->id)
             ->where('to_solarsystem_id', $to->id)
             ->exists();
+    }
+
+    /**
+     * @throws Throwable
+     */
+    private function updateExistingConnection(
+        MapSolarsystem $origin,
+        Solarsystem $to_solarsystem,
+        TrackingData $data,
+    ): void {
+
+        $connection = MapConnection::query()->connectsSolarsystemsInMap($origin->map_id, $origin->solarsystem_id, $to_solarsystem->id)
+            ->first();
+
+        if (! $connection instanceof MapConnection) {
+            return;
+        }
+
+        $signature = Signature::query()->find($data->signature_id);
+
+        if (! $signature instanceof Signature) {
+            return;
+        }
+
+        $this->updateSignatureAction->handle($signature, SignatureData::from([
+            'map_connection_id' => $connection->id,
+        ]));
     }
 }

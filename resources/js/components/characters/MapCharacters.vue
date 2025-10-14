@@ -60,7 +60,9 @@ function isCovertOps(character: TCharacter) {
                             <span>Location</span>
                         </div>
                         <TransitionGroup name="list">
-                            <Character v-for="character in sorted_characters" :key="character.id" :character />
+                            <div class="contents" v-for="character in sorted_characters" :key="character.id">
+                                <Character :character />
+                            </div>
                         </TransitionGroup>
                         <div v-if="!sorted_characters?.length" class="col-span-full p-2 text-center text-muted-foreground">No characters found</div>
                     </div>

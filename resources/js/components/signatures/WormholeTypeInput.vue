@@ -4,9 +4,10 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSepa
 import type { TSignatureType } from '@/types/models';
 import { computed, shallowRef } from 'vue';
 
-const { wormhole_options } = defineProps<{
+const { wormhole_options, current_class } = defineProps<{
     can_write: boolean;
     wormhole_options: TSignatureType[];
+    current_class: string | number | null;
 }>();
 
 const model = defineModel<number | null>({
@@ -14,11 +15,11 @@ const model = defineModel<number | null>({
 });
 
 const k162_options = computed<TSignatureType[]>(() => {
-    return wormhole_options.filter((option: TSignatureType) => option.signature === 'K162');
+    return wormhole_options.filter((option: TSignatureType) => option.signature === 'K162').filter(filterByCurrentClass);
 });
 
 const wormholes = computed<TSignatureType[]>(() => {
-    return wormhole_options.filter((option: TSignatureType) => option.signature !== 'K162');
+    return wormhole_options.filter((option: TSignatureType) => option.signature !== 'K162').filter(filterByCurrentClass);
 });
 
 const selected_signature = computed(() => {
@@ -26,6 +27,13 @@ const selected_signature = computed(() => {
 });
 
 const open = shallowRef(false);
+
+function filterByCurrentClass(option: TSignatureType) {
+    if (!current_class) {
+        return true;
+    }
+    return option.target_class === current_class.toString();
+}
 </script>
 
 <template>

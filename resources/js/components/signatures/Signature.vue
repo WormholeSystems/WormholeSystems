@@ -13,10 +13,10 @@ import {
     DropdownMenuRadioGroup,
     DropdownMenuRadioItem,
     DropdownMenuSeparator,
-    DropdownMenuTrigger,
+    DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { deleteSignature, TProcessedConnection, updateSignature } from '@/composables/map';
+import { deleteSignature, getSolarsystemClass, TProcessedConnection, updateSignature } from '@/composables/map';
 import { useSolarsystemClass } from '@/composables/map/composables/useSolarsystemClass';
 import { Data } from '@/composables/map/utils/data';
 import useHasWritePermission from '@/composables/useHasWritePermission';
@@ -98,6 +98,11 @@ const isWormhole = computed(() => {
     return signature.signature_category_id === wormholeCategoryId.value;
 });
 
+const current_class = computed(() => {
+    if (!selected_connection.value?.target) return null;
+    return getSolarsystemClass(selected_connection.value.target);
+});
+
 function handleChange(data: Record<any, any>) {
     updateSignature(signature, data);
 }
@@ -107,8 +112,7 @@ function handleDelete() {
 }
 
 function handleCategoryChange(value: AcceptableValue) {
-    const categoryId = value as number;
-    const signature_category_id = categoryId;
+    const signature_category_id = value as number;
     const signature_type_id = null; // Clear type when category changes
     const map_connection_id = null;
     handleChange({
@@ -193,6 +197,7 @@ function handleMassStatusChange(mass_status: string) {
                 @update:model-value="handleTypeChange"
                 :can_write="can_write"
                 :wormhole_options="sortedAvailableTypes"
+                :current_class="current_class"
             />
             <SignatureTypeInput
                 v-else
