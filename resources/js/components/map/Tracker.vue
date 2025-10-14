@@ -53,6 +53,7 @@ const targetSolarsystemName = computed(() => character?.status?.solarsystem?.nam
         :target-solarsystem-name="targetSolarsystemName"
         :signatures="signatures"
         @select-signature="handleSelectSignature"
+        @skip="() => handleSelectSignature(null)"
     />
 </template>
 

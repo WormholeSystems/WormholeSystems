@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import WormholeOption from '@/components/signatures/WormholeOption.vue';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Data } from '@/composables/map/utils/data';
@@ -33,6 +40,7 @@ const open = defineModel<boolean>('open', { required: true });
 
 const emit = defineEmits<{
     selectSignature: [signatureId: number | null];
+    skip: [];
 }>();
 
 const selectedSignatureId = ref<number | null>(null);
@@ -50,6 +58,7 @@ function handleConfirm() {
 }
 
 function handleCancel() {
+    emit('skip');
     open.value = false;
 }
 
