@@ -15,10 +15,19 @@ const { character, map } = defineProps<{
 
 usePing(map);
 
-const { toggle, is_tracking, is_tracking_allowed, can_track, signatures, show_signature_modal, handleSelectSignature, origin_map_solarsystem } =
-    useTracking();
+const {
+    toggle,
+    is_tracking,
+    is_tracking_allowed,
+    can_track,
+    signatures,
+    show_signature_modal,
+    handleSelectSignature,
+    origin_map_solarsystem,
+    target_solarsystem,
+} = useTracking();
 
-const targetSolarsystemName = computed(() => character?.status?.solarsystem?.name || null);
+const targetSolarsystemName = computed(() => target_solarsystem.value?.name || character?.status?.solarsystem?.name || null);
 </script>
 
 <template>

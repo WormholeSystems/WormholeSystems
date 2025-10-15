@@ -49,4 +49,5 @@ export type TShowMapProps = {
     ignored_systems: number[];
     closest_systems?: TClosestSystems | null;
     tracking_origin?: TMapSolarSystem | null;
+    tracking_target?: TSolarsystem | null;
 };

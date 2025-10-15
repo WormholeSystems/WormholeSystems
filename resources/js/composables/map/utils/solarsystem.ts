@@ -1,4 +1,4 @@
-import { TMapSolarSystem } from '@/types/models';
+import { TMapSolarSystem, TSolarsystemClass, TStringedSolarsystemClass } from '@/types/models';
 import { mapState } from '../state';
 import { TDataMapSolarSystem, WithIsSelected } from '../types';
 
@@ -42,4 +42,10 @@ export function applyScale(system: TDataMapSolarSystem): TDataMapSolarSystem {
             y: scale * system.position.y,
         },
     };
+}
+
+export function toStringedSolarsystemClass(target_class: TSolarsystemClass | null): TStringedSolarsystemClass | null {
+    if (target_class === null) return null;
+
+    return String(target_class) as TStringedSolarsystemClass;
 }

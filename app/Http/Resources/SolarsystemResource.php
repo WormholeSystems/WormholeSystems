@@ -27,6 +27,7 @@ final class SolarsystemResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'type' => $this->type,
             'slug' => $this->slug,
             'constellation' => $this->constellation->toResource(ConstellationResource::class),
             'region' => $this->region->toResource(RegionResource::class),
