@@ -13,16 +13,16 @@ import {
     DropdownMenuRadioGroup,
     DropdownMenuRadioItem,
     DropdownMenuSeparator,
-    DropdownMenuTrigger
+    DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { deleteSignature, getSolarsystemClass, TProcessedConnection, updateSignature } from '@/composables/map';
+import { deleteSignature, getSolarsystemClass, toStringedSolarsystemClass, TProcessedConnection, updateSignature } from '@/composables/map';
 import { useSolarsystemClass } from '@/composables/map/composables/useSolarsystemClass';
 import { Data } from '@/composables/map/utils/data';
 import useHasWritePermission from '@/composables/useHasWritePermission';
 import { getTypesByCategory, signatureCategories } from '@/const/signatures';
 import { formatDateToISO } from '@/lib/utils';
-import { TMapSolarSystem, TSignature } from '@/types/models';
+import { TMapSolarSystem, TSignature, TSolarsystemClass } from '@/types/models';
 import { UTCDate } from '@date-fns/utc';
 import { syncRefs } from '@vueuse/core';
 import { MoreVertical } from 'lucide-vue-next';
@@ -60,26 +60,30 @@ const solarsystem_class = useSolarsystemClass(selected_map_solarsystem);
 const availableTypes = computed(() => {
     if (!signature.signature_category_id) return [];
 
-    return getTypesByCategory(signature.signature_category_id).filter((type) => type.spawn_areas?.includes(solarsystem_class.value.toString()));
+    return getTypesByCategory(signature.signature_category_id).filter((type) =>
+        type.spawn_areas?.includes(toStringedSolarsystemClass(solarsystem_class.value)!),
+    );
 });
 
 // Helper function to get sort order for target class
-const getClassSortOrder = (targetClass: string | null): number => {
-    if (!targetClass) return 999;
+const getClassSortOrder = (target_class: TSolarsystemClass | null): number => {
+    if (!target_class) return 999;
+
+    const stringed_target_class = toStringedSolarsystemClass(target_class)!;
 
     // Known space first, in order: H, L, N
-    if (targetClass === 'h') return 1;
-    if (targetClass === 'l') return 2;
-    if (targetClass === 'n') return 3;
+    if (stringed_target_class === 'h') return 1;
+    if (stringed_target_class === 'l') return 2;
+    if (stringed_target_class === 'n') return 3;
 
     // Wormhole space (C1-C18)
-    if (/^\d+$/.test(targetClass)) {
-        return 10 + parseInt(targetClass);
+    if (/^\d+$/.test(stringed_target_class)) {
+        return 10 + parseInt(stringed_target_class);
     }
 
     // Special classes
-    if (targetClass === 'p') return 200; // Pochven
-    if (targetClass === 'unknown') return 300;
+    if (stringed_target_class === 'p') return 200; // Pochven
+    if (stringed_target_class === 'unknown') return 300;
 
     return 999;
 };

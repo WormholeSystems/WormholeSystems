@@ -1,8 +1,9 @@
-import { createMapSolarsystem, createTracking, getSolarsystemClass, map_solarsystems, updateMapUserSettings } from '@/composables/map';
+import { createMapSolarsystem, createTracking, map_solarsystems, updateMapUserSettings } from '@/composables/map';
+import { getSecurityClass } from '@/composables/map/utils/security';
 import { useActiveMapCharacter } from '@/composables/useActiveMapCharacter';
 import { useMapUserSettings } from '@/composables/useMapUserSettings';
-import { useOriginMapSolarsystem } from '@/composables/useOriginMapSolarsystem';
-import { TSignature } from '@/types/models';
+import { useTrackingSystems } from '@/composables/useTrackingSystems';
+import { TSignature, TSolarsystem, TSolarsystemClass } from '@/types/models';
 import { computed, onMounted, ref, watch } from 'vue';
 
 export function useTracking() {
@@ -13,14 +14,12 @@ export function useTracking() {
     const is_tracking_allowed = computed(() => map_user_settings.value.tracking_allowed);
     const can_track = computed(() => character.value && map_user_settings.value.tracking_allowed);
 
-    const { origin_map_solarsystem, update } = useOriginMapSolarsystem();
+    const { origin_map_solarsystem, target_solarsystem, update } = useTrackingSystems();
 
     const show_signature_modal = ref(false);
-    const target_solarsystem_id = ref<number | null>(null);
-    const target_solarsystem = computed(() => map_solarsystems.value.find((s) => s.solarsystem_id === target_solarsystem_id.value) || null);
     const signatures = computed(() => origin_map_solarsystem.value?.signatures?.toSorted(sortSignatures).filter(isPossibleSignature));
     const existing_connection = computed(() => {
-        const map_solarsystem = map_solarsystems.value.find((s) => s.solarsystem_id === target_solarsystem_id.value);
+        const map_solarsystem = map_solarsystems.value.find((s) => s.solarsystem_id === target_solarsystem.value?.id);
         if (!map_solarsystem) return null;
         return (
             signatures.value?.find(
@@ -52,8 +51,7 @@ export function useTracking() {
         const old_map_solarsystem = map_solarsystems.value.find((s) => s.solarsystem_id === old_solarsystem_id);
         if (!old_map_solarsystem) return;
         if (old_map_solarsystem.solarsystem_id === new_solarsystem_id) return;
-        target_solarsystem_id.value = new_solarsystem_id;
-        update(old_map_solarsystem.id, performJump);
+        update(old_map_solarsystem.id, new_solarsystem_id, performJump);
     }
 
     function sortSignatures(a: TSignature, b: TSignature) {
@@ -63,19 +61,24 @@ export function useTracking() {
         return a.signature_id?.localeCompare(b.signature_id);
     }
 
+    function getTargetSolarsystemClass(system: TSolarsystem): TSolarsystemClass {
+        if (system.class) return system.class;
+        return getSecurityClass(system.security);
+    }
+
     function isPossibleSignature(signature: TSignature): boolean {
         if (!signature.signature_type_id) return true;
         if (!target_solarsystem.value) return true;
-        const solarsystem_class = getSolarsystemClass(target_solarsystem.value);
+        const solarsystem_class = getTargetSolarsystemClass(target_solarsystem.value);
         if (!solarsystem_class) return true;
-        if (signature.signature_type?.target_class === solarsystem_class) return true;
+        if (signature.signature_type?.target_class === String(solarsystem_class)) return true;
         return signature.signature_type?.target_class === null;
     }
 
     function performJump() {
         if (existing_connection.value?.map_connection_id) return;
         if (!signatures.value?.length || !map_user_settings.value.prompt_for_signature_enabled)
-            return createTracking(origin_map_solarsystem.value!.id, target_solarsystem_id.value!);
+            return createTracking(origin_map_solarsystem.value!.id, target_solarsystem.value!.id);
 
         show_signature_modal.value = true;
     }
@@ -103,7 +106,7 @@ export function useTracking() {
 
     function handleSelectSignature(signature_id: number | null) {
         show_signature_modal.value = false;
-        createTracking(origin_map_solarsystem.value!.id, target_solarsystem_id.value!, signature_id);
+        createTracking(origin_map_solarsystem.value!.id, target_solarsystem.value!.id, signature_id);
     }
 
     return {
@@ -115,5 +118,6 @@ export function useTracking() {
         show_signature_modal,
         handleSelectSignature,
         origin_map_solarsystem,
+        target_solarsystem,
     };
 }

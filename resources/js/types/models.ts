@@ -17,7 +17,7 @@ export type TMapSolarSystem = {
     name: string;
     alias: string;
     occupier_alias: string;
-    class: number;
+    class: TWormholeClass | null;
     effect: TWormholeEffectName | null;
     effects: TWormholeEffect[];
     map_id: number;
@@ -73,7 +73,7 @@ export type TSolarsystem = {
     region: TRegion | null;
     constellation: TConstellation | null;
     security: number;
-    class: number;
+    class: TWormholeClass | null;
     effect: TWormholeEffectName | null;
     sovereignty: TSovereignty | null;
 };
@@ -202,15 +202,20 @@ export type TSignatureCategory = {
     updated_at: string;
 };
 
+export type TWormholeClass = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18;
+export type TKSpaceClass = 'n' | 'l' | 'h' | 'p';
+export type TSolarsystemClass = TWormholeClass | TKSpaceClass | 'unknown';
+export type TStringedSolarsystemClass = `${TSolarsystemClass}`;
+
 export type TSignatureType = {
     id: number;
     name: string;
     signature: string;
     signature_category_id: number;
     category_name: string;
-    target_class: string | null;
+    target_class: TSolarsystemClass | null;
     extra: string | null;
-    spawn_areas: string[] | null;
+    spawn_areas: TStringedSolarsystemClass[] | null;
     created_at?: string;
     updated_at?: string;
 };

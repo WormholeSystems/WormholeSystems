@@ -96,6 +96,7 @@ final class MapController extends Controller
         ];
 
         $tracking_origin = Inertia::optional(fn (): ?JsonResource => $this->getTrackingOrigin($request, $map));
+        $tracking_target = Inertia::optional(fn (): ?JsonResource => $this->getTrackingTarget($request));
 
         return Inertia::render('maps/ShowMap', [
             'map' => $map->toResource(MapResource::class),
@@ -114,6 +115,7 @@ final class MapController extends Controller
             'shortest_path' => $shortest_path,
             'closest_systems' => $closest_systems,
             'tracking_origin' => $tracking_origin,
+            'tracking_target' => $tracking_target,
         ]);
     }
 
@@ -463,5 +465,29 @@ final class MapController extends Controller
                     ->with(['signatureType', 'signatureCategory', 'wormhole', 'mapConnection']),
             ])
             ->first()->toResource(MapSolarsystemResource::class);
+    }
+
+    /**
+     * Get the target solarsystem for tracking
+     *
+     * @throws Throwable
+     */
+    private function getTrackingTarget(Request $request): ?JsonResource
+    {
+        $target_solarsystem_id = $request->integer('target_solarsystem_id');
+
+        if (! $target_solarsystem_id) {
+            return null;
+        }
+
+        return Solarsystem::query()
+            ->with([
+                'sovereignty' => ['alliance', 'corporation', 'faction'],
+                'wormholeSystem.effect',
+                'constellation',
+                'region',
+            ])
+            ->find($target_solarsystem_id)
+            ?->toResource(SolarsystemResource::class);
     }
 }
