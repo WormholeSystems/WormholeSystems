@@ -30,6 +30,7 @@ final class SignatureResource extends JsonResource
             'map_solarsystem_id' => $this->map_solarsystem_id,
             'signature_type_id' => $this->signature_type_id,
             'signature_category_id' => $this->signature_category_id,
+            'raw_type_name' => $this->raw_type_name,
             'signature_type' => $this->signatureType,
             'signature_category' => $this->signatureCategory,
             'map_connection_id' => $this->map_connection_id,

@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int|null $wormhole_id
  * @property int|null $signature_type_id
  * @property int|null $signature_category_id
+ * @property string|null $raw_type_name
  * @property MassStatus|null $mass_status
  * @property LifetimeStatus $lifetime
  * @property DateTimeImmutable|string|null $lifetime_updated_at

@@ -227,6 +227,7 @@ export type TSignature = {
     signature_id: string | null;
     signature_type_id: number | null;
     signature_category_id: number | null;
+    raw_type_name: string | null;
     signature_type: TSignatureType | null;
     signature_category: TSignatureCategory | null;
     mass_status: TMassStatus | null;

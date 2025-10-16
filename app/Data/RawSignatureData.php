@@ -18,6 +18,7 @@ final class RawSignatureData extends Data
         public ?int $signature_type_id = null,
         #[Exists(table: 'signature_categories', column: 'id')]
         public ?int $signature_category_id = null,
+        public ?string $raw_type_name = null,
     ) {}
 
 }

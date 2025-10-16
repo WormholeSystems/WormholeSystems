@@ -107,6 +107,16 @@ const current_class = computed(() => {
     return getSolarsystemClass(selected_connection.value.target);
 });
 
+const is_scanned = computed(() => {
+    if (!signature.signature_id) return false;
+    if (!signature.signature_category_id) return false;
+    return !(!signature.signature_type_id && !signature.raw_type_name);
+});
+
+const is_incomplete = computed(() => {
+    return Boolean((signature.signature_id && signature.signature_category) || signature.signature_type_id || signature.raw_type_name);
+});
+
 function handleChange(data: Record<any, any>) {
     updateSignature(signature, data);
 }
@@ -169,8 +179,8 @@ function handleMassStatusChange(mass_status: string) {
         <div class="flex items-center gap-2">
             <div
                 class="size-2 shrink-0 rounded-full bg-red-500 data-incomplete:bg-amber-500 data-scanned:bg-green-500"
-                :data-scanned="Data(Boolean(signature.signature_id && signature.signature_category_id && signature.signature_type_id))"
-                :data-incomplete="Data(Boolean(signature_id && (signature.signature_category_id || signature.signature_type_id)))"
+                :data-scanned="Data(is_scanned)"
+                :data-incomplete="Data(is_incomplete)"
             />
             <SignatureIdInput
                 v-model="signature_id"
@@ -210,6 +220,7 @@ function handleMassStatusChange(mass_status: string) {
                 :can_write="can_write"
                 :options="sortedAvailableTypes"
                 :category="signature.signature_category?.name"
+                :raw-type-name="signature.raw_type_name"
             />
         </div>
 
