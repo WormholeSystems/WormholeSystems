@@ -21,6 +21,7 @@ use App\Http\Controllers\MapSolarsystemController;
 use App\Http\Controllers\MapUserSettingController;
 use App\Http\Controllers\PasteSignatureController;
 use App\Http\Controllers\PingController;
+use App\Http\Controllers\PreferredCharacterController;
 use App\Http\Controllers\ScopeController;
 use App\Http\Controllers\SignatureController;
 use App\Http\Controllers\StatisticsController;
@@ -72,6 +73,8 @@ Route::middleware('auth')->group(function () {
 
     Route::put('user-characters/{character}', [UserCharacterController::class, 'update'])->name('user-characters.update');
     Route::delete('user-characters/{character}', [UserCharacterController::class, 'delete'])->name('user-characters.delete');
+
+    Route::post('preferred-character/{character}', [PreferredCharacterController::class, 'store'])->name('preferred-character.store');
 
     Route::post('tracking', [TrackingController::class, 'store'])->name('tracking.store');
 

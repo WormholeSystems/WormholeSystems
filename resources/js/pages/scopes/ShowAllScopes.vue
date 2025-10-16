@@ -1,18 +1,22 @@
 <script setup lang="ts">
 import CharacterImage from '@/components/images/CharacterImage.vue';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/AppLayout.vue';
 
 // Import custom icons
+import PreferredCharacterController from '@/actions/App/Http/Controllers/PreferredCharacterController';
 import ScopeController from '@/actions/App/Http/Controllers/ScopeController';
 import CheckIcon from '@/components/icons/CheckIcon.vue';
-import { Link } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 
 interface Character {
     id: number;
     name: string;
     esi_scopes: string[];
+    is_preferred: boolean;
 }
 
 interface Props {
@@ -48,6 +52,10 @@ const managedScopes = [
 function hasScope(character: Character, scopeName: string): boolean {
     return character.esi_scopes.includes(scopeName);
 }
+
+function setPreferredCharacter(character: Character): void {
+    router.post(PreferredCharacterController.store(character).url);
+}
 </script>
 
 <template>
@@ -66,7 +74,18 @@ function hasScope(character: Character, scopeName: string): boolean {
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-3">
                                 <CharacterImage :character_id="character.id" :character_name="character.name" class="size-10 rounded-full" />
-                                <CardTitle>{{ character.name }}</CardTitle>
+                                <div class="flex items-center gap-2">
+                                    <CardTitle>{{ character.name }}</CardTitle>
+                                    <Badge v-if="character.is_preferred" variant="secondary">Preferred</Badge>
+                                    <Tooltip v-else>
+                                        <TooltipTrigger as-child>
+                                            <Button variant="outline" size="sm" @click="setPreferredCharacter(character)"> Set as preferred </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Make this character the preferred one for all future sessions</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </div>
                             </div>
                             <Button v-if="managedScopes.some((scope) => !hasScope(character, scope.scope))" size="sm" as-child>
                                 <a :href="ScopeController.show({ query: { scopes: managedScopes.map((scope) => scope.scope).join(',') } }).url">

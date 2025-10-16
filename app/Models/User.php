@@ -8,6 +8,7 @@ use Carbon\CarbonImmutable;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -19,7 +20,9 @@ use Laravel\Sanctum\HasApiTokens;
  *
  * @property int $id
  * @property string $name
+ * @property int|null $preferred_character_id
  * @property Character|null $active_character
+ * @property-read Character|null $preferredCharacter
  * @property-read Collection<int,Character> $characters
  * @property-read Collection<int,MapUserSetting> $mapUserSettings
  * @property-read string|CarbonImmutable $created_at
@@ -38,10 +41,17 @@ final class User extends Authenticatable
                 return $this->active_character;
             }
 
+            // First, check session for active character
             $active_character_id = Session::get(self::SESSION_ACTIVE_CHARACTER_ID);
+
+            // If no session, use the preferred character from database
+            if (! $active_character_id && $this->preferred_character_id) {
+                $active_character_id = $this->preferred_character_id;
+            }
 
             $character = null;
             if (! $active_character_id) {
+                // Fall back to first character
                 $character = $this->characters->first();
                 if (! $character) {
                     auth()->logout();
@@ -51,7 +61,7 @@ final class User extends Authenticatable
                 $this->active_character = $character;
             }
 
-            return $character ?? $this->characters->find(Session::get(self::SESSION_ACTIVE_CHARACTER_ID));
+            return $character ?? $this->characters->find($active_character_id);
         }
         set {
             if ($value instanceof Character) {
@@ -90,6 +100,16 @@ final class User extends Authenticatable
             ->unique()
             ->values()
             ->toArray();
+    }
+
+    /**
+     * Get the preferred character for the user.
+     *
+     * @return BelongsTo<Character, $this>
+     */
+    public function preferredCharacter(): BelongsTo
+    {
+        return $this->belongsTo(Character::class, 'preferred_character_id');
     }
 
     /**

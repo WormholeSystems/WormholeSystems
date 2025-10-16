@@ -33,6 +33,7 @@ final class CharacterResource extends JsonResource
             'status' => $this->whenLoaded('characterStatus', fn () => $this->characterStatus?->toResource(CharacterStatusResource::class)),
             'route' => $this->whenHas('route', fn () => $this->route),
             'esi_scopes' => $this->whenLoaded('esiScopes', fn () => $this->esiScopes->map(fn (EsiScope $scope) => $scope->name)),
+            'is_preferred' => $request->user()?->preferred_character_id === $this->id,
         ];
     }
 }
