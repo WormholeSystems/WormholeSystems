@@ -26,6 +26,7 @@ final class StoreSignatureAction
             $signature_category_id = $data->signature_category_id instanceof Optional ? null : $data->signature_category_id;
             $signature_type_id = $data->signature_type_id instanceof Optional ? null : $data->signature_type_id;
             $map_connection_id = $data->map_connection_id instanceof Optional ? null : $data->map_connection_id;
+            $raw_type_name = $data->raw_type_name instanceof Optional ? null : $data->raw_type_name;
             $wormhole_id = $this->getWormholeId($signature_type_id);
 
             $signature = $mapSolarsystem->signatures()->create([
@@ -34,6 +35,7 @@ final class StoreSignatureAction
                 'signature_category_id' => $signature_category_id,
                 'signature_type_id' => $signature_type_id,
                 'wormhole_id' => $wormhole_id,
+                'raw_type_name' => $raw_type_name,
             ]);
 
             broadcast(new SignatureCreatedEvent($mapSolarsystem->map_id))->toOthers();

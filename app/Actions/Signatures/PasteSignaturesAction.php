@@ -43,6 +43,7 @@ final readonly class PasteSignaturesAction
                     'signature_id' => $signature->signature_id,
                     'signature_category_id' => $signature->signature_category_id,
                     'signature_type_id' => $signature->signature_type_id,
+                    'raw_type_name' => $signature->raw_type_name,
                 ])
             ));
 
@@ -50,7 +51,9 @@ final readonly class PasteSignaturesAction
                 $existing_signature = $this->getExistingSignature($existing_signatures, $signature->signature_id);
 
                 $signature_category_id = $signature->signature_category_id ?? $existing_signature->signature_category_id;
-                $signature_type_id = $signature->signature_type_id ?? $existing_signature->signature_type_id;
+
+                $signature_type_id = $this->resolveSignatureTypeId($signature, $existing_signature);
+                $raw_type_name = $this->resolveRawTypeName($signature, $existing_signature);
 
                 $map_connection_id = $this->getNewMapConnectionId($signature_category_id, $existing_signature->map_connection_id);
 
@@ -61,6 +64,7 @@ final readonly class PasteSignaturesAction
                     'signature_type_id' => $signature_type_id,
                     'map_connection_id' => $map_connection_id,
                     'wormhole_id' => $wormhole_id,
+                    'raw_type_name' => $raw_type_name,
                 ]);
             });
         });
@@ -97,5 +101,35 @@ final readonly class PasteSignaturesAction
         $type = SignatureType::query()->find($signature_type_id);
 
         return $type?->wormhole?->id;
+    }
+
+    /**
+     * Resolve signature type ID with mutual exclusivity.
+     *
+     * Returns null if raw_type_name is present (temporary event site),
+     * otherwise returns the new or existing type ID.
+     */
+    private function resolveSignatureTypeId(RawSignatureData $signature, Signature $existingSignature): ?int
+    {
+        if ($signature->raw_type_name !== null) {
+            return null;
+        }
+
+        return $signature->signature_type_id ?? $existingSignature->signature_type_id;
+    }
+
+    /**
+     * Resolve raw type name with mutual exclusivity.
+     *
+     * Returns null if signature_type_id is present (known type from database),
+     * otherwise returns the new or existing raw type name.
+     */
+    private function resolveRawTypeName(RawSignatureData $signature, Signature $existingSignature): ?string
+    {
+        if ($signature->signature_type_id !== null) {
+            return null;
+        }
+
+        return $signature->raw_type_name ?? $existingSignature->raw_type_name;
     }
 }

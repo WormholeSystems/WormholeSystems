@@ -30,6 +30,7 @@ final class NewSignatureData extends Data
         public LifetimeStatus|Optional $lifetime,
         #[WithCast(DateTimeInterfaceCast::class)]
         public DateTimeImmutable|Optional|null $lifetime_updated_at,
+        public string|Optional|null $raw_type_name,
     ) {}
 
     public static function rules(): array
@@ -43,6 +44,7 @@ final class NewSignatureData extends Data
             'lifetime_updated_at' => ['nullable', 'sometimes', "date_format:Y-m-d\TH:i:sP"],
             'mass_status' => ['nullable', 'sometimes', Rule::enum(MassStatus::class)],
             'ship_size' => ['nullable', 'sometimes', Rule::enum(ShipSize::class)],
+            'raw_type_name' => ['nullable', 'sometimes', 'string', 'max:255'],
         ];
     }
 

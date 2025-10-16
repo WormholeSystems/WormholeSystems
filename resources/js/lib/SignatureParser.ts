@@ -7,6 +7,7 @@ export type TRawSignature = {
     signature_id: string;
     signature_category_id: number | null;
     signature_type_id: number | null;
+    raw_type_name: string | null;
     created_at?: string;
 };
 
@@ -39,10 +40,15 @@ class SignatureParser {
         const signature_category = this.getCategory(category_name);
         const signature_type = this.getType(signature_category, type_name);
 
+        // Store the raw type name if we have a category but no matching type
+        // This captures temporary event sites that aren't in the database
+        const raw_type_name = signature_category && !signature_type && type_name?.trim() ? type_name.trim() : null;
+
         return {
             signature_id: signature_id.trim(),
             signature_category_id: signature_category?.id || null,
             signature_type_id: signature_type?.id || null,
+            raw_type_name,
             created_at: new UTCDate().toISOString(),
         };
     }
