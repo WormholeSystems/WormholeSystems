@@ -13,6 +13,7 @@ use App\Models\SignatureCategory;
 use App\Models\SignatureType;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Spatie\LaravelData\Optional;
 use Throwable;
 
 final readonly class PasteSignaturesAction
@@ -134,6 +135,10 @@ final readonly class PasteSignaturesAction
             return null;
         }
 
-        return $signature->raw_type_name ?? $existingSignature->raw_type_name;
+        if ($signature->raw_type_name === null || $signature->raw_type_name === Optional::class) {
+            return $existingSignature->raw_type_name;
+        }
+
+        return $signature->raw_type_name;
     }
 }
