@@ -17,10 +17,14 @@ use Throwable;
 
 final readonly class PasteSignaturesAction
 {
+    private SignatureCategory $wormholeCategory;
+
     public function __construct(
         public StoreSignatureAction $storeSignatureAction,
         public UpdateSignatureAction $updateSignatureAction,
-    ) {}
+    ) {
+        $this->wormholeCategory = SignatureCategory::query()->firstWhere('code', \App\Enums\SignatureCategory::Wormhole);
+    }
 
     /**
      * Execute the action.
@@ -111,15 +115,11 @@ final readonly class PasteSignaturesAction
      */
     private function resolveSignatureTypeId(RawSignatureData $signature, Signature $existingSignature): ?int
     {
-        if ($signature->signature_type_id) {
-            return $signature->signature_type_id;
-        }
-
-        if ($this->resolveRawTypeName($signature, $existingSignature) !== null) {
+        if ($signature->signature_category_id !== $this->wormholeCategory->id && $signature->raw_type_name !== null) {
             return null;
         }
 
-        return $existingSignature->signature_type_id;
+        return $signature->signature_type_id ?? $existingSignature->signature_type_id;
     }
 
     /**
@@ -130,7 +130,7 @@ final readonly class PasteSignaturesAction
      */
     private function resolveRawTypeName(RawSignatureData $signature, Signature $existingSignature): ?string
     {
-        if ($signature->signature_type_id !== null) {
+        if ($signature->signature_category_id === $this->wormholeCategory->id) {
             return null;
         }
 
