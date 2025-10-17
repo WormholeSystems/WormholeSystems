@@ -111,11 +111,15 @@ final readonly class PasteSignaturesAction
      */
     private function resolveSignatureTypeId(RawSignatureData $signature, Signature $existingSignature): ?int
     {
-        if ($signature->raw_type_name !== null) {
+        if ($signature->signature_type_id) {
+            return $signature->signature_type_id;
+        }
+
+        if ($this->resolveRawTypeName($signature, $existingSignature) !== null) {
             return null;
         }
 
-        return $signature->signature_type_id ?? $existingSignature->signature_type_id;
+        return $existingSignature->signature_type_id;
     }
 
     /**
