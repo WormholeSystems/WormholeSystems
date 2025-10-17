@@ -11,7 +11,7 @@ export function pasteSignatures(map_solarsystem_id: number, signatures: TRawSign
                 signature_id: signature.signature_id,
                 signature_category_id: signature.signature_category_id,
                 signature_type_id: signature.signature_type_id,
-                raw_type_name: signature.signature_type_id ? signature.signature_type_id : undefined,
+                raw_type_name: !signature.signature_type_id ? signature.raw_type_name : undefined,
             })),
         },
         {
