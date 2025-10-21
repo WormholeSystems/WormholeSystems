@@ -288,6 +288,9 @@ export type TMapUserSetting = {
     killmail_filter: 'all' | 'jspace' | 'kspace';
     introduction_confirmed_at: string | null;
     prompt_for_signature_enabled: boolean;
+    layout_config_sm?: any | null;
+    layout_config_md?: any | null;
+    layout_config_lg?: any | null;
 };
 
 export type TShipHistory = {

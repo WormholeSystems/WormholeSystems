@@ -27,6 +27,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|KillmailFilter $killmail_filter
  * @property CarbonImmutable|string|null $introduction_confirmed_at
  * @property bool $prompt_for_signature_enabled
+ * @property array|null $layout_config_sm
+ * @property array|null $layout_config_md
+ * @property array|null $layout_config_lg
  * @property CarbonImmutable|string $created_at
  * @property CarbonImmutable|string $updated_at
  */
@@ -67,6 +70,9 @@ final class MapUserSetting extends Model
             'route_use_evescout' => 'boolean',
             'introduction_confirmed_at' => 'immutable_datetime',
             'prompt_for_signature_enabled' => 'boolean',
+            'layout_config_sm' => 'array',
+            'layout_config_md' => 'array',
+            'layout_config_lg' => 'array',
         ];
     }
 }

@@ -115,13 +115,10 @@ function onScroll(event: WheelEvent) {
 </script>
 
 <template>
-    <div class="relative">
+    <div class="relative h-full w-full overflow-hidden rounded-lg border bg-card">
         <div
             :data-scroll-locked="scroll_locked"
-            class="relative w-full overflow-y-scroll rounded-lg border bg-neutral-50 data-[scroll-locked=true]:overflow-hidden dark:bg-neutral-900/50"
-            :style="{
-                height: `${layout.map_height}px`,
-            }"
+            class="relative h-full w-full overflow-scroll bg-neutral-50 data-[scroll-locked=true]:overflow-hidden dark:bg-neutral-900/50"
             @wheel="onScroll"
         >
             <ContextMenu @update:open="onOpenChange">
