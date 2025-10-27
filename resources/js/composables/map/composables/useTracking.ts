@@ -106,7 +106,8 @@ export function useTracking() {
 
     function handleSelectSignature(signature_id: number | null) {
         show_signature_modal.value = false;
-        createTracking(origin_map_solarsystem.value!.id, target_solarsystem.value!.id, signature_id);
+        if (!origin_map_solarsystem.value || !target_solarsystem.value) return;
+        createTracking(origin_map_solarsystem.value.id, target_solarsystem.value.id, signature_id);
     }
 
     return {
