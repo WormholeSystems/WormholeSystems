@@ -11,8 +11,6 @@ use Session;
 
 final class MapScopeController extends Controller
 {
-    public function __construct() {}
-
     /**
      * Grant scopes and redirect back to the specific map
      */

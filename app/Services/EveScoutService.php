@@ -94,7 +94,7 @@ final class EveScoutService
                 )
                 ->when(! $allow_eol, fn ($collection) =>
                     // Filter out EOL connections (< 4 hours remaining) when EOL is not allowed
-                    $collection->filter(function ($signature): bool {
+                    $collection->filter(function (array $signature): bool {
                         $remaining_hours = $signature['remaining_hours'] ?? null;
 
                         if ($remaining_hours === null) {

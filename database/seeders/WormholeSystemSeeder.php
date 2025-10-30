@@ -25,7 +25,7 @@ final class WormholeSystemSeeder extends Seeder
             throw new RuntimeException('Wormhole system CSV file not found: '.self::csv);
         }
 
-        $data = array_map('str_getcsv', file(self::csv));
+        $data = array_map(str_getcsv(...), file(self::csv));
 
         if ($data === []) {
             throw new RuntimeException('No data found in wormhole system CSV file: '.self::csv);
