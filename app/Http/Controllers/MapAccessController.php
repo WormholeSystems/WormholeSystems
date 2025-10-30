@@ -24,8 +24,6 @@ use Throwable;
 
 final class MapAccessController extends Controller
 {
-    public function __construct() {}
-
     /**
      * @throws Throwable
      */

@@ -30,9 +30,6 @@ final class GetSolarsystemKills extends zKillboardRequest
         if (is_null($data)) {
             return [];
         }
-        if ($data === []) {
-            return [];
-        }
 
         return $data;
     }

@@ -32,7 +32,7 @@ final class SolarsystemClassArrayCast implements CastsAttributes
         }
 
         return array_map(
-            fn (string $class) => SolarsystemClass::from($class),
+            SolarsystemClass::from(...),
             $decoded
         );
     }
