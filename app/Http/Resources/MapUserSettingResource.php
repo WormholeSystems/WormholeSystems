@@ -34,6 +34,7 @@ final class MapUserSettingResource extends JsonResource
             'killmail_filter' => $this->killmail_filter,
             'introduction_confirmed_at' => $this->introduction_confirmed_at?->toISOString(),
             'prompt_for_signature_enabled' => $this->prompt_for_signature_enabled,
+            'layout_breakpoints' => $this->layout_breakpoints,
         ];
     }
 }

@@ -7,6 +7,7 @@ import Autopilot from '@/components/autopilot/Autopilot.vue';
 import MapCharacters from '@/components/characters/MapCharacters.vue';
 import QuestionIcon from '@/components/icons/QuestionIcon.vue';
 import LayoutEditor from '@/components/layout/LayoutEditor.vue';
+import LayoutEditorToolbar from '@/components/layout/LayoutEditorToolbar.vue';
 import MapKillmails from '@/components/map-killmails/MapKillmails.vue';
 import LocationVisibility from '@/components/map/LocationVisibility.vue';
 import MapComponent from '@/components/map/MapComponent.vue';
@@ -19,9 +20,10 @@ import SolarsystemDetails from '@/components/solarsystem/SolarsystemDetails.vue'
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useActiveMapCharacter } from '@/composables/useActiveMapCharacter';
-import { useMapLayout } from '@/composables/useMapLayout';
+import { useDisableTextSelection } from '@/composables/useDisableTextSelection';
 import useHasWritePermission from '@/composables/useHasWritePermission';
 import useIsMapOwner from '@/composables/useIsMapOwner';
+import { useMapLayout } from '@/composables/useMapLayout';
 import { useOnClient } from '@/composables/useOnClient';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SeoHead from '@/layouts/SeoHead.vue';
@@ -30,7 +32,7 @@ import { Link, router, usePage } from '@inertiajs/vue3';
 import { echo } from '@laravel/echo-vue';
 import { GridItem, GridLayout } from 'grid-layout-plus';
 import { Settings } from 'lucide-vue-next';
-import { computed, onMounted, onUnmounted } from 'vue';
+import { computed, ref } from 'vue';
 
 const {
     map,
@@ -50,13 +52,13 @@ const hasWriteAccess = useHasWritePermission();
 const isOwner = useIsMapOwner();
 const page = usePage();
 
-// Initialize layout management
-const layout = useMapLayout(map_user_settings);
+// Initialize layout management with reactive getter
+const layout = useMapLayout(() => map_user_settings);
 
 // Helper function to get layout item props
 const getLayoutItem = (id: string) => {
     return computed(() => {
-        const item = layout.currentLayout.value.items.find((i) => i.i === id);
+        const item = layout.currentLayoutItems.value.find((i) => i.i === id);
         return item || { x: 0, y: 0, w: 1, h: 1, i: id };
     });
 };
@@ -89,105 +91,33 @@ useOnClient(() =>
 );
 
 // Prevent text selection during drag/resize operations
-let isDragging = false;
-let isResizing = false;
+const isDragging = ref(false);
+const isResizing = ref(false);
 
-const preventSelection = (e: Event) => {
-    if (isDragging || isResizing) {
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-    }
-};
+// Prevent text selection when in edit mode AND (dragging OR resizing)
+const shouldPreventSelection = computed(() => {
+    return layout.isEditMode.value && (isDragging.value || isResizing.value);
+});
 
-const disableSelection = () => {
-    const style = document.documentElement.style;
-    style.userSelect = 'none';
-    style.webkitUserSelect = 'none';
-    (style as any)['mozUserSelect'] = 'none';
-    (style as any)['msUserSelect'] = 'none';
-    document.body.classList.add('no-select');
-};
-
-const enableSelection = () => {
-    const style = document.documentElement.style;
-    style.userSelect = '';
-    style.webkitUserSelect = '';
-    (style as any)['mozUserSelect'] = '';
-    (style as any)['msUserSelect'] = '';
-    document.body.classList.remove('no-select');
-};
+// Use text selection disabling for drag/resize operations
+useDisableTextSelection(shouldPreventSelection);
 
 const handleDragStart = () => {
-    isDragging = true;
-    disableSelection();
+    isDragging.value = true;
 };
 
 const handleDragEnd = () => {
-    isDragging = false;
-    enableSelection();
+    isDragging.value = false;
 };
 
 const handleResizeStart = () => {
-    isResizing = true;
-    disableSelection();
-    document.body.style.cursor = 'se-resize';
+    console.log('resize start');
+    isResizing.value = true;
 };
 
 const handleResizeEnd = () => {
-    isResizing = false;
-    enableSelection();
-    document.body.style.cursor = '';
+    isResizing.value = false;
 };
-
-onMounted(() => {
-    // Aggressive prevention of all selection events
-    const forcePreventSelection = (e: Event) => {
-        if (layout.isEditMode.value) {
-            e.preventDefault();
-            e.stopPropagation();
-            e.stopImmediatePropagation();
-            return false;
-        }
-        return true;
-    };
-
-    document.addEventListener('selectstart', forcePreventSelection, true);
-    document.addEventListener('dragstart', forcePreventSelection, true);
-    
-    document.addEventListener('mousedown', (e) => {
-        if (layout.isEditMode.value) {
-            const target = e.target as HTMLElement;
-            if (target.classList.contains('vue-resizable-handle') || 
-                target.closest('.vue-grid-item') ||
-                target.closest('.vue-grid-layout')) {
-                e.preventDefault();
-                disableSelection();
-            }
-        }
-    }, true);
-    
-    document.addEventListener('mousemove', (e) => {
-        if (layout.isEditMode.value && (isDragging || isResizing)) {
-            e.preventDefault();
-            if (window.getSelection) {
-                window.getSelection()?.removeAllRanges();
-            }
-        }
-    }, true);
-    
-    document.addEventListener('mouseup', () => {
-        if (!isDragging && !isResizing) {
-            enableSelection();
-        }
-    }, true);
-});
-
-onUnmounted(() => {
-    document.removeEventListener('selectstart', preventSelection, true);
-    document.removeEventListener('dragstart', preventSelection, true);
-    enableSelection();
-});
 </script>
 
 <template>
@@ -207,17 +137,12 @@ onUnmounted(() => {
         />
 
         <div class="space-y-4 p-4">
-            <!-- Layout Controls -->
-            <div class="flex items-center justify-between">
-                <div class="flex-1"></div>
-                <LayoutEditor :layout="layout" />
-            </div>
-
             <!-- Grid Layout Container -->
             <GridLayout
-                v-model:layout="layout.currentLayout.value.items"
-                :col-num="layout.currentLayout.value.cols"
-                :row-height="layout.currentLayout.value.rowHeight"
+                :ref="layout.gridLayoutRef"
+                :layout="layout.currentLayoutItems.value"
+                :col-num="layout.currentLayoutCols.value"
+                :row-height="layout.currentLayoutRowHeight.value"
                 :is-draggable="layout.isEditMode.value"
                 :is-resizable="layout.isEditMode.value"
                 :vertical-compact="true"
@@ -230,7 +155,7 @@ onUnmounted(() => {
                 @item-resized="handleResizeEnd"
             >
                 <!-- Map Section -->
-                <GridItem v-bind="getLayoutItem('map').value">
+                <GridItem v-bind="getLayoutItem('map').value" @resize="handleResizeStart" @resized="handleResizeEnd">
                     <MapComponent :map :config />
                     <MapSearch :map :search :solarsystems v-if="hasWriteAccess" />
                     <div class="absolute top-4 right-4 z-40 flex gap-2">
@@ -252,7 +177,7 @@ onUnmounted(() => {
                 </GridItem>
 
                 <!-- Solarsystem Details Section -->
-                <GridItem v-bind="getLayoutItem('solarsystem').value">
+                <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-bind="getLayoutItem('solarsystem').value">
                     <div class="h-full overflow-auto rounded-lg border bg-card">
                         <SolarsystemDetails
                             v-if="selected_map_solarsystem"
@@ -269,45 +194,47 @@ onUnmounted(() => {
                 </GridItem>
 
                 <!-- Signatures Section -->
-                <GridItem v-if="selected_map_solarsystem" v-bind="getLayoutItem('signatures').value">
+                <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-bind="getLayoutItem('signatures').value">
                     <div class="h-full overflow-auto rounded-lg border bg-card">
                         <Signatures :map :map_solarsystem="selected_map_solarsystem" />
                     </div>
                 </GridItem>
 
                 <!-- Audits Section -->
-                <GridItem
-                    v-if="selected_map_solarsystem && selected_map_solarsystem.audits && !has_guest_access"
-                    v-bind="getLayoutItem('audits').value"
-                >
+                <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-if="!has_guest_access" v-bind="getLayoutItem('audits').value">
                     <div class="h-full overflow-auto rounded-lg border bg-card">
-                        <Audits :audits="selected_map_solarsystem?.audits" />
+                        <Audits :audits="selected_map_solarsystem?.audits ?? []" />
                     </div>
                 </GridItem>
 
                 <!-- Ship History Section -->
-                <GridItem v-if="!has_guest_access" v-bind="getLayoutItem('ship-history').value">
+                <GridItem
+                    @resize="handleResizeStart"
+                    @resized="handleResizeEnd"
+                    v-if="!has_guest_access"
+                    v-bind="getLayoutItem('ship-history').value"
+                >
                     <div class="h-full overflow-auto rounded-lg border bg-card">
                         <ShipHistory />
                     </div>
                 </GridItem>
 
                 <!-- Map Characters Section -->
-                <GridItem v-if="map_characters" v-bind="getLayoutItem('characters').value">
+                <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-if="map_characters" v-bind="getLayoutItem('characters').value">
                     <div class="h-full overflow-auto rounded-lg border bg-card">
                         <MapCharacters :map_characters />
                     </div>
                 </GridItem>
 
                 <!-- Killmails Section -->
-                <GridItem v-bind="getLayoutItem('killmails').value">
+                <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-bind="getLayoutItem('killmails').value">
                     <div class="h-full overflow-auto rounded-lg border bg-card">
                         <MapKillmails :map_killmails="map_killmails" :map_id="map.id" :map_user_settings="map_user_settings" />
                     </div>
                 </GridItem>
 
                 <!-- Autopilot Section -->
-                <GridItem v-bind="getLayoutItem('autopilot').value">
+                <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-bind="getLayoutItem('autopilot').value">
                     <div class="h-full overflow-auto rounded-lg border bg-card">
                         <Autopilot
                             :map_route_solarsystems
@@ -324,109 +251,9 @@ onUnmounted(() => {
                 </GridItem>
             </GridLayout>
         </div>
+
+        <!-- Layout Edit Controls -->
+        <LayoutEditor :layout="layout" />
+        <LayoutEditorToolbar :layout="layout" />
     </AppLayout>
 </template>
-
-<style>
-/* Global no-select class */
-body.no-select,
-body.no-select * {
-    user-select: none !important;
-    -webkit-user-select: none !important;
-    -moz-user-select: none !important;
-    -ms-user-select: none !important;
-}
-</style>
-
-<style scoped>
-/* Grid Layout Base Styles */
-:deep(.vue-grid-layout) {
-    position: relative;
-    transition: height 0.3s ease;
-}
-
-:deep(.vue-grid-item) {
-    transition: all 0.2s ease;
-    touch-action: none;
-    position: absolute;
-}
-
-:deep(.vue-grid-item.cssTransforms) {
-    transition-property: transform, opacity;
-}
-
-:deep(.vue-grid-item.resizing) {
-    transition: none;
-    z-index: 100;
-    will-change: width, height;
-}
-
-:deep(.vue-grid-item.vue-draggable-dragging) {
-    transition: none;
-    z-index: 200;
-    will-change: transform;
-    opacity: 0.8;
-}
-
-:deep(.vue-grid-item.vue-grid-placeholder) {
-    background: hsl(var(--primary) / 0.2);
-    border: 2px dashed hsl(var(--primary));
-    border-radius: 0.5rem;
-    opacity: 0.7;
-    transition-duration: 0.1s;
-    z-index: 2;
-}
-
-:deep(.vue-grid-item > .vue-resizable-handle) {
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    cursor: se-resize;
-}
-
-:deep(.vue-grid-item > .vue-resizable-handle::after) {
-    content: '';
-    position: absolute;
-    right: 3px;
-    bottom: 3px;
-    width: 8px;
-    height: 8px;
-    border-right: 3px solid hsl(var(--primary));
-    border-bottom: 3px solid hsl(var(--primary));
-    opacity: 0;
-    transition: opacity 0.2s ease;
-}
-
-:deep(.vue-grid-item:hover > .vue-resizable-handle::after) {
-    opacity: 0.6;
-}
-
-:deep(.vue-grid-item > .vue-resizable-handle:hover::after) {
-    opacity: 1;
-}
-
-/* Grid item borders when draggable */
-:deep(.vue-grid-item.vue-draggable) {
-    cursor: move;
-}
-
-:deep(.vue-grid-item.vue-draggable:hover) {
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-}
-
-:deep(.vue-grid-item.static) {
-    cursor: default;
-}
-
-:deep(.vue-grid-item .no-drag) {
-    cursor: auto;
-}
-
-:deep(.vue-grid-item .minMax) {
-    font-size: 12px;
-}
-
-:deep(.vue-grid-item .add) {
-    cursor: pointer;
-}
-</style>

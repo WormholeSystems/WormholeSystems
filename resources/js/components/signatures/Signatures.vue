@@ -3,6 +3,7 @@ import PasteIcon from '@/components/icons/PasteIcon.vue';
 import PlusIcon from '@/components/icons/PlusIcon.vue';
 import TrashIcon from '@/components/icons/TrashIcon.vue';
 import Signature from '@/components/signatures/Signature.vue';
+import SignaturesEmptyState from '@/components/signatures/SignaturesEmptyState.vue';
 import SortHeader from '@/components/signatures/SortHeader.vue';
 import { Button } from '@/components/ui/button';
 import { CardAction, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,10 +15,10 @@ import { usePasteSignatures } from '@/composables/map/composables/usePasteSignat
 import { useSortableSignatures } from '@/composables/map/composables/useSortedSignatures';
 import useHasWritePermission from '@/composables/useHasWritePermission';
 import { TMapSolarSystem } from '@/types/models';
-import { computed, toRef } from 'vue';
+import { computed } from 'vue';
 
-const { map_solarsystem } = defineProps<{
-    map_solarsystem: TMapSolarSystem;
+const props = defineProps<{
+    map_solarsystem: TMapSolarSystem | null;
 }>();
 
 const { connections } = useSignatures();
@@ -25,7 +26,7 @@ const { connections } = useSignatures();
 const can_write = useHasWritePermission();
 
 const { signatures, pasted_signatures, deleted_signatures, deleteMissingSignatures, pasteSignatures } = usePasteSignatures(
-    toRef(() => map_solarsystem),
+    () => props.map_solarsystem,
 );
 
 const { sortPreferences, sorted, updateSortPreferences } = useSortableSignatures(signatures);
@@ -60,12 +61,17 @@ function handleSort(column: string) {
 }
 
 function createNewSignature() {
-    createSignature(map_solarsystem.id);
+    if (!props.map_solarsystem) return;
+    createSignature(props.map_solarsystem.id);
 }
 </script>
 
 <template>
-    <MapPanel class="overflow-hidden">
+    <!-- Empty state when no system selected -->
+    <SignaturesEmptyState v-if="!map_solarsystem" />
+
+    <!-- Signatures list when system is selected -->
+    <MapPanel v-else class="overflow-hidden">
         <CardHeader>
             <CardTitle
                 >Signatures

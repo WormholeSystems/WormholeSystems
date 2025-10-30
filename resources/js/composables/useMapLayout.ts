@@ -1,137 +1,214 @@
 import { updateMapUserSettings } from '@/composables/map/actions/updateMapUserSettings';
-import { Breakpoint, BreakpointConfig, BREAKPOINT_OPTIONS, BREAKPOINT_WIDTHS, DEFAULT_LAYOUT_CONFIGS, LayoutConfig, LayoutConfigs, LayoutItem } from '@/types/layout';
+import { DEFAULT_BREAKPOINTS } from '@/const/layoutDefaults';
+import { BreakpointDefinition, BreakpointsConfig, LayoutItem } from '@/types/layout';
 import { TMapUserSetting } from '@/types/models';
-import { useBreakpoints } from '@vueuse/core';
-import { computed, ComputedRef, ref, Ref, watch } from 'vue';
+import { useWindowSize } from '@vueuse/core';
+import { computed, type ComputedRef, type MaybeRefOrGetter, nextTick, type Ref, ref, toValue, watch } from 'vue';
 
 export interface UseMapLayoutReturn {
-    currentBreakpoint: ComputedRef<Breakpoint>;
-    selectedBreakpoint: Ref<Breakpoint>;
+    // Atomic refs
     isEditMode: Ref<boolean>;
-    currentLayout: ComputedRef<LayoutConfig>;
-    breakpointOptions: BreakpointConfig[];
+    selectedBreakpointKey: Ref<string>;
+    breakpoints: Ref<BreakpointsConfig>;
+    gridLayoutRef: Ref<any>;
+
+    // Computed properties
+    currentBreakpointKey: ComputedRef<string>;
+    sortedBreakpoints: ComputedRef<BreakpointDefinition[]>;
+    currentLayoutItems: ComputedRef<LayoutItem[]>;
+    currentLayoutCols: ComputedRef<number>;
+    currentLayoutRowHeight: ComputedRef<number>;
+
+    // Methods
     updateLayout: (items: LayoutItem[]) => void;
-    saveLayout: () => Promise<void>;
+    saveLayout: () => void;
     resetLayout: () => void;
+    revertChanges: () => void;
     toggleEditMode: () => void;
-    setBreakpoint: (breakpoint: Breakpoint) => void;
+    setBreakpoint: (key: string) => void;
+    addBreakpoint: (breakpoint: BreakpointDefinition) => void;
+    removeBreakpoint: (key: string) => void;
+    refreshLayout: () => void;
 }
 
-export function useMapLayout(mapUserSettings: TMapUserSetting): UseMapLayoutReturn {
-    // Initialize breakpoints with VueUse
-    const breakpoints = useBreakpoints({
-        sm: BREAKPOINT_WIDTHS.sm,
-        md: BREAKPOINT_WIDTHS.md,
-        lg: BREAKPOINT_WIDTHS.lg,
-    });
+export function useMapLayout(mapUserSettings: MaybeRefOrGetter<TMapUserSetting>): UseMapLayoutReturn {
+    const { width: windowWidth } = useWindowSize();
 
-    // Current breakpoint based on screen size
-    const currentBreakpoint = computed<Breakpoint>(() => {
-        if (breakpoints.isGreater('lg')) {
-            return 'lg';
-        }
-        if (breakpoints.isGreater('md')) {
-            return 'md';
-        }
-        return 'sm';
-    });
-
-    // Selected breakpoint for editing (user can manually choose which to edit)
-    const selectedBreakpoint = ref<Breakpoint>(currentBreakpoint.value);
+    // Atomic refs
     const isEditMode = ref(false);
+    const breakpoints = ref<BreakpointsConfig>(loadBreakpoints(toValue(mapUserSettings)));
+    const gridLayoutRef = ref<any>(null);
 
-    // Load saved layouts or use defaults
-    const layoutConfigs = ref<LayoutConfigs>(loadLayoutConfigs(mapUserSettings));
-
-    // Current layout based on selected breakpoint (in edit mode) or current breakpoint
-    const currentLayout = computed<LayoutConfig>(() => {
-        const breakpoint = isEditMode.value ? selectedBreakpoint.value : currentBreakpoint.value;
-        return layoutConfigs.value[breakpoint];
+    // Sorted breakpoints
+    const sortedBreakpoints = computed(() => {
+        return Object.values(breakpoints.value).sort((a, b) => a.minWidth - b.minWidth);
     });
 
-    // Update selected breakpoint when current breakpoint changes (if not in edit mode)
-    watch(currentBreakpoint, (newBreakpoint) => {
-        if (!isEditMode.value) {
-            selectedBreakpoint.value = newBreakpoint;
+    // Detect current breakpoint based on window width
+    const currentBreakpointKey = computed(() => {
+        const sorted = sortedBreakpoints.value;
+        for (let i = sorted.length - 1; i >= 0; i--) {
+            if (windowWidth.value >= sorted[i].minWidth) {
+                return sorted[i].key;
+            }
         }
+        return sorted[0]?.key || 'sm';
     });
 
-    // Update the current layout items
+    // Initialize selected breakpoint to current one
+    const selectedBreakpointKey = ref(currentBreakpointKey.value);
+
+    // Active breakpoint (selected in edit mode, otherwise current)
+    const activeBreakpointKey = computed(() => {
+        return isEditMode.value ? selectedBreakpointKey.value : currentBreakpointKey.value;
+    });
+
+    // Current layout properties from active breakpoint
+    const currentLayoutItems = computed(() => {
+        const breakpoint = breakpoints.value[activeBreakpointKey.value];
+        return breakpoint?.items || [];
+    });
+
+    const currentLayoutCols = computed(() => {
+        return breakpoints.value[activeBreakpointKey.value]?.cols || 1;
+    });
+
+    const currentLayoutRowHeight = computed(() => {
+        return breakpoints.value[activeBreakpointKey.value]?.rowHeight || 100;
+    });
+
+    // Watch for window resize and update selected breakpoint when not editing
+    watch(
+        currentBreakpointKey,
+        (newKey) => {
+            if (!isEditMode.value) {
+                selectedBreakpointKey.value = newKey;
+            }
+        },
+        { flush: 'post' },
+    );
+
+    function refreshLayout() {
+        nextTick(() => {
+            if (gridLayoutRef.value?.layoutUpdate) {
+                gridLayoutRef.value.layoutUpdate();
+            }
+        });
+    }
+
     function updateLayout(items: LayoutItem[]) {
-        const breakpoint = isEditMode.value ? selectedBreakpoint.value : currentBreakpoint.value;
-        layoutConfigs.value[breakpoint] = {
-            ...layoutConfigs.value[breakpoint],
+        const key = activeBreakpointKey.value;
+        breakpoints.value[key] = {
+            ...breakpoints.value[key],
             items,
         };
     }
 
-    // Save layout to backend
-    async function saveLayout() {
-        const data: Partial<TMapUserSetting> = {
-            layout_config_sm: layoutConfigs.value.sm,
-            layout_config_md: layoutConfigs.value.md,
-            layout_config_lg: layoutConfigs.value.lg,
-        };
+    function saveLayout() {
+        updateMapUserSettings(
+            toValue(mapUserSettings),
+            {
+                layout_breakpoints: breakpoints.value,
+            },
+            ['map_user_settings'],
+        );
 
-        await updateMapUserSettings(mapUserSettings, data);
+        isEditMode.value = false;
     }
 
-    // Reset layout to defaults
     function resetLayout() {
-        const breakpoint = isEditMode.value ? selectedBreakpoint.value : currentBreakpoint.value;
-        layoutConfigs.value[breakpoint] = JSON.parse(JSON.stringify(DEFAULT_LAYOUT_CONFIGS[breakpoint]));
+        const key = activeBreakpointKey.value;
+        const defaultBreakpoint = DEFAULT_BREAKPOINTS[key];
+        if (defaultBreakpoint) {
+            breakpoints.value[key] = structuredClone(defaultBreakpoint);
+            refreshLayout();
+        }
     }
 
-    // Toggle edit mode
+    function revertChanges() {
+        breakpoints.value = loadBreakpoints(toValue(mapUserSettings));
+        console.log('Reverted layout changes, current breakpoints:', breakpoints.value);
+        refreshLayout();
+    }
+
     function toggleEditMode() {
         isEditMode.value = !isEditMode.value;
         if (isEditMode.value) {
-            // When entering edit mode, select the current breakpoint
-            selectedBreakpoint.value = currentBreakpoint.value;
+            selectedBreakpointKey.value = currentBreakpointKey.value;
         }
     }
 
-    // Manually set the selected breakpoint
-    function setBreakpoint(breakpoint: Breakpoint) {
-        selectedBreakpoint.value = breakpoint;
+    function setBreakpoint(key: string) {
+        selectedBreakpointKey.value = key;
+        refreshLayout();
+    }
+
+    function addBreakpoint(breakpoint: BreakpointDefinition) {
+        breakpoints.value[breakpoint.key] = breakpoint;
+    }
+
+    function removeBreakpoint(key: string) {
+        if (Object.keys(breakpoints.value).length <= 1) return;
+
+        delete breakpoints.value[key];
+
+        if (selectedBreakpointKey.value === key) {
+            selectedBreakpointKey.value = sortedBreakpoints.value[0]?.key || 'sm';
+        }
     }
 
     return {
-        currentBreakpoint,
-        selectedBreakpoint,
         isEditMode,
-        currentLayout,
-        breakpointOptions: BREAKPOINT_OPTIONS,
+        selectedBreakpointKey,
+        breakpoints,
+        gridLayoutRef,
+        currentBreakpointKey,
+        sortedBreakpoints,
+        currentLayoutItems,
+        currentLayoutCols,
+        currentLayoutRowHeight,
         updateLayout,
         saveLayout,
         resetLayout,
+        revertChanges,
         toggleEditMode,
         setBreakpoint,
+        addBreakpoint,
+        removeBreakpoint,
+        refreshLayout,
     };
 }
 
-// Helper function to load layout configs from map user settings
-function loadLayoutConfigs(mapUserSettings: TMapUserSetting): LayoutConfigs {
-    const configs: LayoutConfigs = {
-        sm: mapUserSettings.layout_config_sm || JSON.parse(JSON.stringify(DEFAULT_LAYOUT_CONFIGS.sm)),
-        md: mapUserSettings.layout_config_md || JSON.parse(JSON.stringify(DEFAULT_LAYOUT_CONFIGS.md)),
-        lg: mapUserSettings.layout_config_lg || JSON.parse(JSON.stringify(DEFAULT_LAYOUT_CONFIGS.lg)),
-    };
+// Helper function to load breakpoints from map user settings
+function loadBreakpoints(mapUserSettings: TMapUserSetting) {
+    // If saved breakpoints exist, use them
+    if (mapUserSettings.layout_breakpoints && typeof mapUserSettings.layout_breakpoints === 'object') {
+        const saved = mapUserSettings.layout_breakpoints as Record<string, any>;
+        const breakpoints: BreakpointsConfig = {};
 
-    // Ensure all required fields exist
-    Object.keys(configs).forEach((key) => {
-        const breakpoint = key as Breakpoint;
-        if (!configs[breakpoint].cols) {
-            configs[breakpoint].cols = DEFAULT_LAYOUT_CONFIGS[breakpoint].cols;
+        // Load each saved breakpoint
+        for (const [key, data] of Object.entries(saved)) {
+            breakpoints[key] = {
+                key: data.key || key,
+                label: data.label || key,
+                minWidth: data.minWidth || 0,
+                description: data.description,
+                cols: data.cols || 1,
+                rowHeight: data.rowHeight || 100,
+                items: Array.isArray(data.items) ? data.items : [],
+            };
         }
-        if (!configs[breakpoint].rowHeight) {
-            configs[breakpoint].rowHeight = DEFAULT_LAYOUT_CONFIGS[breakpoint].rowHeight;
-        }
-        if (!configs[breakpoint].items || !Array.isArray(configs[breakpoint].items)) {
-            configs[breakpoint].items = DEFAULT_LAYOUT_CONFIGS[breakpoint].items;
-        }
-    });
 
-    return configs;
+        // Ensure we have at least the default breakpoints
+        for (const [key, defaultBp] of Object.entries(DEFAULT_BREAKPOINTS)) {
+            if (!breakpoints[key]) {
+                breakpoints[key] = structuredClone(defaultBp);
+            }
+        }
+
+        return breakpoints;
+    }
+
+    // Fallback to defaults
+    return structuredClone(DEFAULT_BREAKPOINTS);
 }
-

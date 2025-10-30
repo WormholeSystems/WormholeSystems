@@ -3,20 +3,22 @@ import { useIsUsingInput } from '@/composables/map/composables/useIsUsingInput';
 import { signatureParser, TRawSignature } from '@/lib/SignatureParser';
 import { TMapSolarSystem, TSignature } from '@/types/models';
 import { useEventListener } from '@vueuse/core';
-import { computed, ref, Ref, watch } from 'vue';
+import { computed, type MaybeRefOrGetter, ref, toValue, watch } from 'vue';
 import { toast } from 'vue-sonner';
 
-export function usePasteSignatures(map_solarsystem: Ref<TMapSolarSystem>) {
+export function usePasteSignatures(map_solarsystem: MaybeRefOrGetter<TMapSolarSystem | null>) {
     const is_using_input = useIsUsingInput();
 
-    const signatures_with_status = computed(() =>
-        map_solarsystem.value.signatures!.map((sig) => ({
+    const signatures_with_status = computed(() => {
+        const system = toValue(map_solarsystem);
+        if (!system?.signatures) return [];
+        return system.signatures.map((sig) => ({
             ...sig,
             deleted: isSignatureDeleted(sig),
             new: isSignatureNew(sig),
             updated: isSignatureUpdated(sig),
-        })),
-    );
+        }));
+    });
 
     const pasted_signatures = ref<Partial<TSignature>[] | null>();
     const new_signatures = computed(() => {
@@ -40,14 +42,14 @@ export function usePasteSignatures(map_solarsystem: Ref<TMapSolarSystem>) {
     });
 
     watch(
-        () => map_solarsystem.value.id,
+        () => toValue(map_solarsystem)?.id,
         () => {
             pasted_signatures.value = null;
         },
     );
 
     useEventListener('paste', (event) => {
-        if (is_using_input.value) {
+        if (is_using_input.value || !toValue(map_solarsystem)) {
             return;
         }
         event.preventDefault();
@@ -81,23 +83,29 @@ export function usePasteSignatures(map_solarsystem: Ref<TMapSolarSystem>) {
     }
 
     function getNewSignatures(parsed_signatures: Partial<TSignature>[]) {
+        const system = toValue(map_solarsystem);
+        if (!system?.signatures) return [];
         return parsed_signatures.filter((signature) => {
-            return !map_solarsystem.value.signatures!.some((existing_signature) => {
+            return !system.signatures!.some((existing_signature) => {
                 return existing_signature.signature_id === signature.signature_id;
             });
         });
     }
 
     function getUpdatedSignatures(parsed_signatures: Partial<TSignature>[]) {
+        const system = toValue(map_solarsystem);
+        if (!system?.signatures) return [];
         return parsed_signatures.filter((signature) => {
-            return map_solarsystem.value.signatures!.some((existing_signature) => {
+            return system.signatures!.some((existing_signature) => {
                 return existing_signature.signature_id === signature.signature_id;
             });
         });
     }
 
     function getDeletedSignatures(parsed_signatures: Partial<TSignature>[]) {
-        return map_solarsystem.value.signatures!.filter((signature) => {
+        const system = toValue(map_solarsystem);
+        if (!system?.signatures) return [];
+        return system.signatures.filter((signature) => {
             return !parsed_signatures.some((parsed_signature) => parsed_signature.signature_id === signature.signature_id);
         });
     }
@@ -113,16 +121,20 @@ export function usePasteSignatures(map_solarsystem: Ref<TMapSolarSystem>) {
     }
 
     function deleteMissingSignatures(with_solarsystems = false) {
+        const system = toValue(map_solarsystem);
+        if (!system) return;
         deleteSignatures(
-            map_solarsystem.value.id,
+            system.id,
             deleted_signatures.value.map((signature) => signature.id),
             with_solarsystems,
         );
     }
 
     function processSignatures(signatures: TRawSignature[]) {
+        const system = toValue(map_solarsystem);
+        if (!system) return;
         pasted_signatures.value = signatures;
-        pasteSignatures(map_solarsystem.value.id, signatures);
+        pasteSignatures(system.id, signatures);
     }
 
     async function handlePasteSignatures() {

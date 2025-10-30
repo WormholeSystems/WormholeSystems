@@ -30,7 +30,7 @@ function removeBackgroundImage() {
 </script>
 
 <template>
-    <div class="absolute left-0 bottom-0 z-30 flex overflow-hidden rounded-tr-lg border bg-neutral-100 dark:bg-neutral-900">
+    <div class="absolute bottom-0 left-0 z-30 flex overflow-hidden rounded-tr-lg border bg-neutral-100 dark:bg-neutral-900">
         <Popover>
             <PopoverTrigger as-child>
                 <Button variant="ghost" size="icon" class="h-8 w-8 text-muted-foreground" title="Background Image">

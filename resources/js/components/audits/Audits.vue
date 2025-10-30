@@ -5,8 +5,8 @@ import MapPanel from '@/components/ui/map-panel/MapPanel.vue';
 import MapPanelContent from '@/components/ui/map-panel/MapPanelContent.vue';
 import { TAudit } from '@/types/models';
 
-defineProps<{
-    audits: TAudit[];
+const { audits = [] } = defineProps<{
+    audits?: TAudit[];
 }>();
 </script>
 
