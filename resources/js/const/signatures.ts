@@ -63,5 +63,3 @@ export function getTypesByCategory(categoryId: number): TSignatureType[] {
 export function getTypesByCategoryName(categoryName: string): TSignatureType[] {
     return signatureTypesByCategoryName[categoryName] || [];
 }
-
-

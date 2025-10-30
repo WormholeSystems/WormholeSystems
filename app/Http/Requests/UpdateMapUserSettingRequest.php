@@ -43,9 +43,7 @@ final class UpdateMapUserSettingRequest extends FormRequest
             'killmail_filter' => ['nullable', 'string', Rule::enum(KillmailFilter::class)],
             'introduction_confirmed_at' => ['nullable', 'string', 'date'],
             'prompt_for_signature_enabled' => ['nullable', 'boolean'],
-            'layout_config_sm' => ['nullable', 'array'],
-            'layout_config_md' => ['nullable', 'array'],
-            'layout_config_lg' => ['nullable', 'array'],
+            'layout_breakpoints' => ['nullable', 'array'],
         ];
     }
 }

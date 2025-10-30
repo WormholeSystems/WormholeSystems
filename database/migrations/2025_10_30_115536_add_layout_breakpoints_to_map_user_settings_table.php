@@ -14,9 +14,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('map_user_settings', function (Blueprint $table): void {
-            $table->json('layout_config_sm')->nullable();
-            $table->json('layout_config_md')->nullable();
-            $table->json('layout_config_lg')->nullable();
+            $table->json('layout_breakpoints')->nullable();
         });
     }
 
@@ -26,11 +24,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('map_user_settings', function (Blueprint $table): void {
-            $table->dropColumn([
-                'layout_config_sm',
-                'layout_config_md',
-                'layout_config_lg',
-            ]);
+            $table->dropColumn('layout_breakpoints');
         });
     }
 };
