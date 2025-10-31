@@ -86,6 +86,7 @@ final class HandleInertiaRequests extends Middleware
 
         $characters_with_missing_scopes = $this->user->characters()
             ->doesntHaveTokenWithTrackingScopes()
+            ->with(['corporation', 'alliance', 'faction'])
             ->get();
 
         return $characters_with_missing_scopes->toResourceCollection(CharacterResource::class);

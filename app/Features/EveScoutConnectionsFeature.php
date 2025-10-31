@@ -68,6 +68,8 @@ final readonly class EveScoutConnectionsFeature implements ProvidesInertiaProper
             $theraId = Solarsystem::query()->where('name', 'Thera')->value('id');
             $turnurId = Solarsystem::query()->where('name', 'Turnur')->value('id');
 
+            // Build route requests for all systems (excluding Thera and Turnur)
+            $routeRequests = [];
             foreach ($system_ids as $systemId) {
                 if ($systemId === $theraId) {
                     continue;
@@ -75,13 +77,18 @@ final readonly class EveScoutConnectionsFeature implements ProvidesInertiaProper
                 if ($systemId === $turnurId) {
                     continue;
                 }
-                try {
-                    $route = $this->routeService->findRoute($fromSystemId, $systemId, $routeOptions);
+                $routeRequests[$systemId] = ['from' => $fromSystemId, 'to' => $systemId];
+            }
+
+            // Calculate all routes in one batched operation
+            try {
+                $routes = $this->routeService->findMultipleRoutes($routeRequests, $routeOptions);
+                foreach ($routes as $systemId => $route) {
                     // Route includes origin, so jumps = count - 1
                     $jumpsMap[$systemId] = $route !== [] ? count($route) - 1 : null;
-                } catch (Throwable) {
-                    $jumpsMap[$systemId] = null;
                 }
+            } catch (Throwable) {
+                // If batch fails, leave jumpsMap empty
             }
         }
 
