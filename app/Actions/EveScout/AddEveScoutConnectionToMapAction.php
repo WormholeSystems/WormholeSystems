@@ -395,9 +395,23 @@ final readonly class AddEveScoutConnectionToMapAction
             ->first();
 
         if ($existingSignature) {
-            // Update the connection ID if not set
+            // Update the signature with latest data
+            $updateData = [];
+
             if ($existingSignature->map_connection_id === null) {
-                $existingSignature->update(['map_connection_id' => $mapConnectionId]);
+                $updateData['map_connection_id'] = $mapConnectionId;
+            }
+
+            if ($signatureTypeId !== null && $existingSignature->signature_type_id === null) {
+                $updateData['signature_type_id'] = $signatureTypeId;
+            }
+
+            if ($signatureCategoryId !== null && $existingSignature->signature_category_id === null) {
+                $updateData['signature_category_id'] = $signatureCategoryId;
+            }
+
+            if ($updateData !== []) {
+                $existingSignature->update($updateData);
             }
 
             return;
