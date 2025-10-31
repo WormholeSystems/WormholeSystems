@@ -111,7 +111,6 @@ const handleDragEnd = () => {
 };
 
 const handleResizeStart = () => {
-    console.log('resize start');
     isResizing.value = true;
 };
 
