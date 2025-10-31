@@ -56,6 +56,73 @@ final readonly class RouteService
     }
 
     /**
+     * Find multiple routes at once with batched enrichment
+     *
+     * @param  array<array{from: int, to: int}>  $routeRequests  Array of from/to pairs
+     * @param  RouteOptions  $options  Routing options (same for all routes)
+     * @return array<int|string, array> Keyed array of routes (key can be custom or numeric)
+     */
+    public function findMultipleRoutes(array $routeRequests, RouteOptions $options): array
+    {
+        $connections = $this->prepareConnections($options);
+        $ignoredSystems = $options->ignoredSystems ?? [];
+
+        // Apply ignored systems filter if needed
+        if ($ignoredSystems !== []) {
+            $connections = $this->connectionRepo->filterConnectionsExcludingSystems($connections, $ignoredSystems);
+        }
+
+        // Calculate all paths first
+        $paths = [];
+        foreach ($routeRequests as $key => $request) {
+            $path = $this->pathfinder->findShortestPath($request['from'], $request['to'], $connections, $options);
+            $paths[$key] = $path;
+        }
+
+        // Collect all unique system IDs from all paths
+        $allSystemIds = collect($paths)
+            ->flatten()
+            ->unique()
+            ->filter()
+            ->values()
+            ->toArray();
+
+        if ($allSystemIds === []) {
+            return array_map(fn (): array => [], $paths);
+        }
+
+        // Fetch all solarsystems in one query
+        $solarsystems = Solarsystem::query()
+            ->with([
+                'sovereignty' => ['alliance', 'corporation', 'faction'],
+                'wormholeSystem.effect',
+                'constellation',
+                'region',
+            ])
+            ->whereIn('id', $allSystemIds)
+            ->get()
+            ->keyBy('id');
+
+        // Enrich all routes using the cached solarsystem data
+        $enrichedRoutes = [];
+        foreach ($paths as $key => $path) {
+            if ($path === []) {
+                $enrichedRoutes[$key] = [];
+
+                continue;
+            }
+
+            $enrichedRoutes[$key] = collect($path)
+                ->map(fn (int $id) => $solarsystems->get($id)?->toResource(SolarsystemResource::class))
+                ->filter()
+                ->values()
+                ->toArray();
+        }
+
+        return $enrichedRoutes;
+    }
+
+    /**
      * Find the closest systems matching a given condition
      *
      * @param  int  $fromId  Starting system ID

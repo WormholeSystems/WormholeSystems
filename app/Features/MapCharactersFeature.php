@@ -43,33 +43,55 @@ final readonly class MapCharactersFeature implements ProvidesInertiaProperties
      */
     private function getMapCharacters(): ResourceCollection
     {
-        return Character::query()
+        $characters = Character::query()
             ->hasTokenWithTrackingScopes()
-            ->with('characterStatus')
+            ->with([
+                'characterStatus',
+                'corporation',
+                'alliance',
+                'faction',
+            ])
             ->tap(new UserAllowedMapTracking($this->map))
             ->tap(new CharacterHasMapAccess($this->map, without_guests: true))
             ->tap(new CharacterIsOnline)
-            ->get()
-            ->map(function (Character $character): Character {
-                if (! $this->selectedMapSolarsystem instanceof MapSolarsystem) {
-                    return $character;
-                }
+            ->get();
 
-                $character->route = $this->getFastestRoute(
-                    $this->selectedMapSolarsystem->solarsystem_id ?? 0,
-                    $character->characterStatus->solarsystem_id ?? 0
-                );
+        if (! $this->selectedMapSolarsystem instanceof MapSolarsystem) {
+            return $characters->toResourceCollection(CharacterResource::class);
+        }
+
+        // Build route requests for all characters
+        $routeRequests = [];
+        foreach ($characters as $character) {
+            if ($character->characterStatus && $character->characterStatus->solarsystem_id) {
+                $routeRequests[$character->id] = [
+                    'from' => $this->selectedMapSolarsystem->solarsystem_id,
+                    'to' => $character->characterStatus->solarsystem_id,
+                ];
+            }
+        }
+
+        // Calculate all routes in one batched operation
+        $routes = [];
+        if ($routeRequests !== []) {
+            $routes = $this->routeService->findMultipleRoutes($routeRequests, $this->getRouteOptions());
+        }
+
+        // Attach routes to characters
+        return $characters
+            ->map(function (Character $character) use ($routes): Character {
+                $character->route = $routes[$character->id] ?? [];
 
                 return $character;
             })
             ->toResourceCollection(CharacterResource::class);
     }
 
-    private function getFastestRoute(int $start_solarsystem_id, int $destination_solarsystem_id): array
+    private function getRouteOptions(): RouteOptions
     {
         $ignored_systems = Session::get('ignored_systems', []);
 
-        $options = new RouteOptions(
+        return new RouteOptions(
             allowEol: $this->mapUserSetting->route_allow_eol,
             massStatus: $this->mapUserSetting->route_allow_mass_status,
             allowEveScout: $this->mapUserSetting->route_use_evescout,
@@ -78,7 +100,5 @@ final readonly class MapCharactersFeature implements ProvidesInertiaProperties
             routePreference: $this->mapUserSetting->route_preference ?? RoutePreference::Shorter,
             securityPenalty: $this->mapUserSetting->security_penalty ?? 50,
         );
-
-        return $this->routeService->findRoute($start_solarsystem_id, $destination_solarsystem_id, $options);
     }
 }
