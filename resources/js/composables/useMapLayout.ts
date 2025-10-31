@@ -127,7 +127,6 @@ export function useMapLayout(mapUserSettings: MaybeRefOrGetter<TMapUserSetting>)
 
     function revertChanges() {
         breakpoints.value = loadBreakpoints(toValue(mapUserSettings));
-        console.log('Reverted layout changes, current breakpoints:', breakpoints.value);
         refreshLayout();
     }
 
