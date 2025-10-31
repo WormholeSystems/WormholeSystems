@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BulkSignatureController;
 use App\Http\Controllers\EveController;
+use App\Http\Controllers\EveScoutConnectionController;
 use App\Http\Controllers\IgnoreListController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\LoginController;
@@ -67,6 +68,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('map-connections', MapConnectionController::class)->only(['store', 'update', 'destroy']);
     Route::put('map-selection', [MapSelectionController::class, 'update'])->name('map-selection.update');
     Route::delete('map-selection', [MapSelectionController::class, 'destroy'])->name('map-selection.destroy');
+
+    Route::post('eve-scout-connections', [EveScoutConnectionController::class, 'store'])->name('eve-scout-connections.store');
 
     Route::resource('map-solarsystems.signatures', SignatureController::class)->only(['store', 'update', 'destroy'])->shallow();
     Route::resource('paste-signatures', PasteSignatureController::class)->only(['store']);

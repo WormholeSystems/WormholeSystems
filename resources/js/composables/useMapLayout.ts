@@ -198,10 +198,19 @@ function loadBreakpoints(mapUserSettings: TMapUserSetting) {
             };
         }
 
-        // Ensure we have at least the default breakpoints
+        // Ensure we have at least the default breakpoints and merge new default items
         for (const [key, defaultBp] of Object.entries(DEFAULT_BREAKPOINTS)) {
             if (!breakpoints[key]) {
+                // No saved breakpoint for this key, use default
                 breakpoints[key] = structuredClone(defaultBp);
+            } else {
+                // Merge in any new default items that don't exist in saved layout
+                const savedItemIds = new Set(breakpoints[key].items.map((item) => item.i));
+                const newItems = defaultBp.items.filter((item) => !savedItemIds.has(item.i));
+
+                if (newItems.length > 0) {
+                    breakpoints[key].items = [...breakpoints[key].items, ...structuredClone(newItems)];
+                }
             }
         }
 

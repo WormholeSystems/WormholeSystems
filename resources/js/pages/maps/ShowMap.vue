@@ -5,6 +5,7 @@ import MapSettingsController from '@/actions/App/Http/Controllers/MapSettingsCon
 import Audits from '@/components/audits/Audits.vue';
 import Autopilot from '@/components/autopilot/Autopilot.vue';
 import MapCharacters from '@/components/characters/MapCharacters.vue';
+import EveScoutConnections from '@/components/eve-scout/EveScoutConnections.vue';
 import QuestionIcon from '@/components/icons/QuestionIcon.vue';
 import LayoutEditor from '@/components/layout/LayoutEditor.vue';
 import LayoutEditorToolbar from '@/components/layout/LayoutEditorToolbar.vue';
@@ -45,6 +46,7 @@ const {
     map_characters,
     closest_systems,
     has_guest_access,
+    eve_scout_connections,
 } = defineProps<TShowMapProps>();
 
 const character = useActiveMapCharacter();
@@ -246,6 +248,13 @@ const handleResizeEnd = () => {
                             :ignored_systems
                             :closest_systems
                         />
+                    </div>
+                </GridItem>
+
+                <!-- EVE Scout Connections Section -->
+                <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-bind="getLayoutItem('eve-scout').value">
+                    <div class="h-full overflow-auto rounded-lg border bg-card">
+                        <EveScoutConnections :eve_scout_connections />
                     </div>
                 </GridItem>
             </GridLayout>

@@ -7,7 +7,6 @@ import MapRouteSolarsystems from '@/components/autopilot/MapRouteSolarsystems.vu
 import ShortestPathDialog from '@/components/autopilot/shortest-path/ShortestPathDialog.vue';
 import RouteIcon from '@/components/icons/RouteIcon.vue';
 import SearchIcon from '@/components/icons/SearchIcon.vue';
-import Spinner from '@/components/icons/Spinner.vue';
 import { Button } from '@/components/ui/button';
 import { CardAction, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import MapPanel from '@/components/ui/map-panel/MapPanel.vue';
@@ -18,7 +17,6 @@ import useHasWritePermission from '@/composables/useHasWritePermission';
 import useUser from '@/composables/useUser';
 import { TClosestSystems, TShortestPath } from '@/pages/maps';
 import { TCharacter, TMap, TMapRouteSolarsystem, TMapSolarSystem, TSolarsystem } from '@/types/models';
-import { Deferred } from '@inertiajs/vue3';
 import { vElementHover } from '@vueuse/components';
 import { computed } from 'vue';
 
@@ -117,15 +115,7 @@ function handleSolarsystemHover(hovered: boolean) {
                     :character-status="characterStatus"
                     v-if="activeCharacter && characterStatus"
                 />
-                <Deferred data="map_route_solarsystems">
-                    <template #fallback>
-                        <div class="flex items-center justify-center gap-2 py-3 text-xs text-muted-foreground">
-                            <Spinner class="size-3 animate-spin" />
-                            <span>Loading routes...</span>
-                        </div>
-                    </template>
-                    <MapRouteSolarsystems v-if="map_route_solarsystems" :map_route_solarsystems="map_route_solarsystems" />
-                </Deferred>
+                <MapRouteSolarsystems v-if="map_route_solarsystems" :map_route_solarsystems="map_route_solarsystems" />
             </template>
             <template v-else>
                 <div class="flex flex-col items-center justify-center gap-4 py-8 text-center text-muted-foreground">

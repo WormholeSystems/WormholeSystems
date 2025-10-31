@@ -1,4 +1,5 @@
 import { TLayout } from '@/composables/useLayout';
+import { TEveScoutConnection } from '@/types/eve-scout';
 import { TMapConfig } from '@/types/map';
 import { TCharacter, TKillmail, TMap, TMapRouteSolarsystem, TMapSolarSystem, TMapUserSetting, TShipHistory, TSolarsystem } from '@/types/models';
 
@@ -50,4 +51,5 @@ export type TShowMapProps = {
     closest_systems?: TClosestSystems | null;
     tracking_origin?: TMapSolarSystem | null;
     tracking_target?: TSolarsystem | null;
+    eve_scout_connections?: TEveScoutConnection[];
 };
