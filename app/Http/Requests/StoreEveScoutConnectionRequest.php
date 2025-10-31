@@ -7,6 +7,7 @@ namespace App\Http\Requests;
 use App\Models\Map;
 use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 final class StoreEveScoutConnectionRequest extends FormRequest
@@ -26,13 +27,13 @@ final class StoreEveScoutConnectionRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array|string>
      */
     public function rules(): array
     {
         return [
             'map_id' => ['required', 'integer', 'exists:maps,id'],
-            'special_system_id' => ['required', 'integer', 'exists:solarsystems,id'],
+            'solarsystem_name' => ['required', 'in:Thera,Turnur'],
         ];
     }
 }

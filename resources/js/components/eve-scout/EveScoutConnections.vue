@@ -32,16 +32,11 @@ const description = computed(() => {
 });
 
 function addAllToMap(specialSystem: string) {
-    const connections = specialSystem === 'Thera' ? theraConnections.value : turnurConnections.value;
-    const specialSystemData = connections[0]?.in_system.name === specialSystem ? connections[0]?.in_system : connections[0]?.out_system;
-
-    if (!specialSystemData || connections.length === 0) return;
-
     router.post(
         EveScoutConnections.store().url,
         {
             map_id: map.value.id,
-            special_system_id: specialSystemData.id,
+            solarsystem_name: specialSystem === 'Thera' ? 'Thera' : 'Turnur',
         },
         {
             preserveState: true,

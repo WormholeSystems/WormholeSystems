@@ -62,8 +62,9 @@ final readonly class AddEveScoutConnectionToMapAction
      *
      * @throws Throwable
      */
-    public function handle(Map $map, int $origin_system_id): void
+    public function handle(Map $map, Solarsystem $solarsystem): void
     {
+        $origin_system_id = $solarsystem->id;
         DB::transaction(function () use ($map, $origin_system_id): void {
             // Step 1: Fetch fresh connections from EVE Scout
             $all_connections = $this->eveScoutService->getWormholeConnections();
