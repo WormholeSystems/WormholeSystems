@@ -48,7 +48,7 @@ export function useNewConnection(
                 onSuccess: () => {
                     store.origin = null; // Reset origin after successful connection creation
                 },
-                only: ['map', 'selected_map_solarsystem'],
+                only: ['map', 'selected_map_solarsystem', 'eve_scout_connections'],
             },
         );
     }

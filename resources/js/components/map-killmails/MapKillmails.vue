@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import SettingsIcon from '@/components/icons/SettingsIcon.vue';
 import Killmail from '@/components/map-killmails/Killmail.vue';
-import KillmailPlaceholder from '@/components/map-killmails/KillmailPlaceholder.vue';
 import { Button } from '@/components/ui/button';
 import { CardAction, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -12,7 +11,7 @@ import { getMapChannelName } from '@/const/channels';
 import { KillmailReceivedEvent } from '@/const/events';
 import MapUserSettings from '@/routes/map-user-settings';
 import { TKillmail, TMapUserSetting } from '@/types/models';
-import { Deferred, router } from '@inertiajs/vue3';
+import { router } from '@inertiajs/vue3';
 import { useEcho } from '@laravel/echo-vue';
 
 const { map_killmails, map_id, map_user_settings } = defineProps<{
@@ -82,15 +81,10 @@ useOnClient(() =>
                             <span>Time</span>
                             <span class="hidden text-right @lg:block">Value</span>
                         </div>
-                        <Deferred data="map_killmails">
-                            <TransitionGroup name="list">
-                                <Killmail v-for="killmail in map_killmails" :key="killmail.id" :killmail="killmail" />
-                            </TransitionGroup>
-                            <div v-if="!map_killmails?.length" class="col-span-full p-2 text-center text-muted-foreground">No killmails found</div>
-                            <template #fallback>
-                                <KillmailPlaceholder />
-                            </template>
-                        </Deferred>
+                        <TransitionGroup name="list">
+                            <Killmail v-for="killmail in map_killmails" :key="killmail.id" :killmail="killmail" />
+                        </TransitionGroup>
+                        <div v-if="!map_killmails?.length" class="col-span-full p-2 text-center text-muted-foreground">No killmails found</div>
                     </div>
                 </div>
             </div>

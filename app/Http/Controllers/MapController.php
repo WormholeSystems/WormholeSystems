@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\Map\CreateMapAction;
 use App\Actions\Map\UpdateMapAction;
+use App\Features\EveScoutConnectionsFeature;
 use App\Features\MapCharactersFeature;
 use App\Features\MapClosestSystemsFeature;
 use App\Features\MapKillmailsFeature;
@@ -23,6 +24,7 @@ use App\Http\Resources\MapResource;
 use App\Models\Map;
 use App\Models\User;
 use App\Scopes\WithVisibleSolarsystems;
+use App\Services\EveScoutService;
 use App\Services\RouteService;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Database\Eloquent\Builder;
@@ -38,6 +40,7 @@ final class MapController extends Controller
     public function __construct(
         #[CurrentUser] private readonly User $user,
         private readonly RouteService $route_service,
+        private readonly EveScoutService $eve_scout_service,
     ) {}
 
     /**
@@ -100,6 +103,12 @@ final class MapController extends Controller
             $request->integer('origin_map_solarsystem_id') ?: null,
             $request->integer('target_solarsystem_id') ?: null
         );
+        $eveScoutConnectionsFeature = new EveScoutConnectionsFeature(
+            $this->eve_scout_service,
+            $this->route_service,
+            $map,
+            $selectionFeature->getSelectedMapSolarsystem()
+        );
 
         return Inertia::render('maps/ShowMap', [
             'map' => $map->toResource(MapResource::class),
@@ -115,6 +124,7 @@ final class MapController extends Controller
             $shortestPathFeature,
             $closestSystemsFeature,
             $trackingFeature,
+            $eveScoutConnectionsFeature,
         ]);
     }
 

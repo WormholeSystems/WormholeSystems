@@ -13,7 +13,6 @@ use App\Models\Solarsystem;
 use App\Services\RouteOptions;
 use App\Services\RouteService;
 use Illuminate\Support\Facades\Session;
-use Inertia\Inertia;
 use Inertia\ProvidesInertiaProperties;
 use Inertia\RenderContext;
 use Throwable;
@@ -30,7 +29,7 @@ final readonly class MapRouteFeature implements ProvidesInertiaProperties
     public function toInertiaProperties(RenderContext $context): array
     {
         return [
-            'map_route_solarsystems' => Inertia::defer(fn (): array => $this->getMapRouteSolarsystems()),
+            'map_route_solarsystems' => $this->getMapRouteSolarsystems(...),
         ];
     }
 

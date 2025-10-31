@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Data\EveScoutConnectionData;
 use Exception;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -21,16 +23,16 @@ final class EveScoutService
      * Get current wormhole signatures from EVE Scout API
      *
      * @param  bool  $allow_eol  Whether to include EOL connections (< 4 hours remaining)
-     * @return array<array{in_system_id: int, out_system_id: int, in_signature: string, out_signature: string, wormhole_type: string, life: string, mass: string, remaining_hours: float|null, created_at: string|null}>
+     * @return Collection<int, EveScoutConnectionData>
      */
-    public function getWormholeConnections(bool $allow_eol = true): array
+    public function getWormholeConnections(bool $allow_eol = true): Collection
     {
         $cache_key = self::CACHE_KEY.'_eol_'.($allow_eol ? '1' : '0');
 
         return Cache::remember(
             $cache_key,
             self::CACHE_EXPIRATION_SECONDS,
-            fn (): array => $this->fetchWormholeConnections($allow_eol)
+            fn (): Collection => $this->fetchWormholeConnections($allow_eol)
         );
     }
 
@@ -46,8 +48,8 @@ final class EveScoutService
         $routingConnections = [];
 
         foreach ($connections as $connection) {
-            $from = $connection['in_system_id'];
-            $to = $connection['out_system_id'];
+            $from = $connection->in_system_id;
+            $to = $connection->out_system_id;
 
             // Add bidirectional connections
             if (! isset($routingConnections[$from])) {
@@ -69,7 +71,7 @@ final class EveScoutService
      *
      * @param  bool  $allow_eol  Whether to include EOL connections (< 4 hours remaining)
      */
-    private function fetchWormholeConnections(bool $allow_eol = true): array
+    private function fetchWormholeConnections(bool $allow_eol = true): Collection
     {
         try {
             $response = Http::timeout(10)
@@ -108,7 +110,7 @@ final class EveScoutService
                         // Only include connections with 4+ hours remaining (not EOL)
                         return (float) $remaining_hours >= 4.0;
                     }))
-                ->map(fn ($signature): array => [
+                ->map(fn ($signature): EveScoutConnectionData => EveScoutConnectionData::from([
                     'in_system_id' => $signature['in_system_id'],
                     'out_system_id' => $signature['out_system_id'],
                     'in_signature' => $signature['in_signature'] ?? '',
@@ -118,9 +120,8 @@ final class EveScoutService
                     'mass' => $signature['mass'] ?? 'unknown',
                     'remaining_hours' => $signature['remaining_hours'] ?? null,
                     'created_at' => $signature['created_at'] ?? null,
-                ])
-                ->values()
-                ->toArray();
+                ]))
+                ->values();
 
         } catch (Exception $e) {
             Log::error('EVE Scout API error', [

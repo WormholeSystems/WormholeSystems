@@ -21,6 +21,7 @@ export const DEFAULT_BREAKPOINTS: BreakpointsConfig = {
             { i: 'characters', x: 0, y: 19, w: 1, h: 2, minH: 1, static: false },
             { i: 'killmails', x: 0, y: 21, w: 1, h: 3, minH: 2, static: false },
             { i: 'autopilot', x: 0, y: 24, w: 1, h: 4, minH: 2, static: false },
+            { i: 'eve-scout', x: 0, y: 28, w: 1, h: 3, minH: 2, static: false },
         ],
     },
     sm: {
@@ -39,6 +40,7 @@ export const DEFAULT_BREAKPOINTS: BreakpointsConfig = {
             { i: 'characters', x: 0, y: 17, w: 1, h: 2, minH: 1, static: false },
             { i: 'killmails', x: 1, y: 17, w: 1, h: 3, minH: 2, static: false },
             { i: 'autopilot', x: 0, y: 19, w: 2, h: 4, minH: 2, static: false },
+            { i: 'eve-scout', x: 0, y: 23, w: 2, h: 3, minH: 2, static: false },
         ],
     },
     md: {
@@ -57,6 +59,7 @@ export const DEFAULT_BREAKPOINTS: BreakpointsConfig = {
             { i: 'characters', x: 2, y: 8, w: 2, h: 2, minH: 1, static: false },
             { i: 'killmails', x: 2, y: 10, w: 2, h: 3, minH: 2, static: false },
             { i: 'autopilot', x: 2, y: 13, w: 2, h: 4, minH: 2, static: false },
+            { i: 'eve-scout', x: 2, y: 17, w: 2, h: 3, minH: 2, static: false },
         ],
     },
     lg: {
@@ -75,6 +78,7 @@ export const DEFAULT_BREAKPOINTS: BreakpointsConfig = {
             { i: 'characters', x: 4, y: 8, w: 3, h: 2, minH: 1, static: false },
             { i: 'killmails', x: 4, y: 10, w: 3, h: 3, minH: 2, static: false },
             { i: 'autopilot', x: 7, y: 8, w: 3, h: 4, minH: 2, static: false },
+            { i: 'eve-scout', x: 4, y: 13, w: 3, h: 3, minH: 2, static: false },
         ],
     },
 };

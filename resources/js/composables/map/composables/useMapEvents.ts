@@ -79,7 +79,7 @@ export function useMapEvents(map: MaybeRefOrGetter<TMap>) {
     useOnClient(() =>
         useEcho(map_channel_name.value, [MapConnectionCreatedEvent, MapConnectionDeletedEvent, MapConnectionUpdatedEvent], () => {
             router.reload({
-                only: ['selected_map_solarsystem', 'map_route_solarsystems'],
+                only: ['selected_map_solarsystem', 'map_route_solarsystems', 'eve_scout_connections'],
             });
         }),
     );
