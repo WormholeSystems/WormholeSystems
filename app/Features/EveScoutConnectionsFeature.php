@@ -27,7 +27,7 @@ final readonly class EveScoutConnectionsFeature implements ProvidesInertiaProper
     public function toInertiaProperties(RenderContext $context): array
     {
         return [
-            'eve_scout_connections' => $this->getEveScoutConnections(),
+            'eve_scout_connections' => $this->getEveScoutConnections(...),
         ];
     }
 
