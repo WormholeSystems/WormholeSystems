@@ -57,7 +57,7 @@ return new class extends Migration
 
         // Remove old category and name columns
         Schema::table('signatures', function (Blueprint $table): void {
-            $table->dropColumn(['category', 'name']);
+            $table->dropColumn(['category']);
         });
     }
 
