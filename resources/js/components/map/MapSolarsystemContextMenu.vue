@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { CharacterImage } from '@/components/images';
+import CopyNameMenu from '@/components/map/CopyNameMenu.vue';
 import {
     ContextMenu,
     ContextMenuContent,
@@ -112,6 +113,8 @@ const options: TMapSolarsystemStatus[] = ['unknown', 'friendly', 'hostile', 'act
                     </ContextMenuItem>
                 </ContextMenuSubContent>
             </ContextMenuSub>
+            <ContextMenuSeparator />
+            <CopyNameMenu :map_solarsystem="map_solarsystem" />
             <template v-if="!map_solarsystem.pinned && can_write">
                 <ContextMenuSeparator />
                 <ContextMenuItem @select="handleRemoveFromMap"> Remove </ContextMenuItem>
