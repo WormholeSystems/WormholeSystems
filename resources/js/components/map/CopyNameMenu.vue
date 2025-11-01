@@ -27,7 +27,7 @@ function copyNameToClipboard(value?: string) {
 
 <template>
     <ContextMenuSub>
-        <ContextMenuSubTrigger>Add waypoint</ContextMenuSubTrigger>
+        <ContextMenuSubTrigger>Copy name</ContextMenuSubTrigger>
         <ContextMenuSubContent>
             <ContextMenuItem @select="copyNameToClipboard()">
                 {{ default_name }}
