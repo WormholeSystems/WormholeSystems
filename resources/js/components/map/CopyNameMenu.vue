@@ -1,10 +1,5 @@
 <script setup lang="ts">
-import {
-    ContextMenuItem,
-    ContextMenuSub,
-    ContextMenuSubContent,
-    ContextMenuSubTrigger
-} from '@/components/ui/context-menu';
+import { ContextMenuItem, ContextMenuSub, ContextMenuSubContent, ContextMenuSubTrigger } from '@/components/ui/context-menu';
 import { TMapSolarSystem } from '@/types/models';
 import { computed } from 'vue';
 import { toast } from 'vue-sonner';
