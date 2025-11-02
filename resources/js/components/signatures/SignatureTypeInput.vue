@@ -27,7 +27,7 @@ const selected_option = computed(() => {
         <SelectTrigger class="w-full text-xs">
             <span v-if="hasRawTypeName" class="text-foreground">{{ rawTypeName }}</span>
             <SelectValue v-else placeholder="Type">
-                <span>{{ selected_option?.name }}</span>
+                <span v-if="selected_option">{{ selected_option?.name }}</span>
             </SelectValue>
         </SelectTrigger>
         <SelectContent>
