@@ -16,13 +16,19 @@ const model = defineModel<number | null>({
 const hasRawTypeName = computed(() => !model.value && rawTypeName);
 
 const open = ref(false);
+
+const selected_option = computed(() => {
+    return options.find((option) => option.id === model.value) || null;
+});
 </script>
 
 <template>
     <Select v-model="model" :disabled="!can_write || !options.length" v-model:open="open">
         <SelectTrigger class="w-full text-xs">
             <span v-if="hasRawTypeName" class="text-foreground">{{ rawTypeName }}</span>
-            <SelectValue v-else placeholder="Type" />
+            <SelectValue v-else placeholder="Type">
+                <span>{{ selected_option?.name }}</span>
+            </SelectValue>
         </SelectTrigger>
         <SelectContent>
             <template v-if="open">
