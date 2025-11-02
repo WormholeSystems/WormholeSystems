@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $ship_type_id
  * @property int $ship_item_id
  * @property bool $is_online
+ * @property CarbonImmutable|null $event_queued_at
  * @property CarbonImmutable|null $last_online_at
  * @property CarbonImmutable|null $online_last_checked_at
  * @property CarbonImmutable|null $location_last_checked_at
@@ -76,6 +77,7 @@ final class CharacterStatus extends Model
     protected function casts(): array
     {
         return [
+            'event_queued_at' => 'immutable_datetime',
             'last_online_at' => 'immutable_datetime',
             'online_last_checked_at' => 'immutable_datetime',
             'location_last_checked_at' => 'immutable_datetime',
