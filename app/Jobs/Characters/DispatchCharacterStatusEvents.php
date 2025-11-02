@@ -16,26 +16,23 @@ final class DispatchCharacterStatusEvents implements ShouldQueue
     use Queueable;
 
     /**
-     * Create a new job instance.
-     */
-    public function __construct(public string $since)
-    {
-        //
-    }
-
-    /**
      * Execute the job.
      */
     public function handle(): void
     {
-        // Get all characters that were updated since the batch started
+        // Get all characters where events need to be dispatched
         $updated_character_ids = CharacterStatus::query()
-            ->where('updated_at', '>=', $this->since)
+            ->whereNotNull('event_queued_at')
             ->pluck('character_id');
 
         if ($updated_character_ids->isEmpty()) {
             return;
         }
+
+        // Reset the event_queued_at for processed characters
+        CharacterStatus::query()
+            ->whereNotNull('event_queued_at')
+            ->update(['event_queued_at' => null]);
 
         Map::query()
             ->whereHas('mapUserSettings', fn (Builder $query) => $query

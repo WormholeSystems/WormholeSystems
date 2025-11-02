@@ -28,36 +28,41 @@ final class UpdateCharacterOnlineStatus implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(Esi $esi): ?int
+    public function handle(Esi $esi): void
     {
         $characterStatus = CharacterStatus::query()->find($this->character_status_id);
 
         if ($characterStatus === null) {
-            return null;
+            return;
         }
 
         try {
             $request = $esi->getOnline($characterStatus->character);
         } catch (Throwable) {
-            return null;
+            return;
         }
 
         if ($request->failed()) {
-            return null;
+            return;
         }
 
         $online_status_changed = $characterStatus->is_online !== $request->data->online;
+
+        if ($online_status_changed) {
+            $characterStatus->update([
+                'is_online' => $request->data->online,
+                'last_online_at' => $request->data->online ? now() : $characterStatus->last_online_at,
+                'online_last_checked_at' => now(),
+                'event_queued_at' => now(),
+            ]);
+
+            return;
+        }
 
         $characterStatus->update([
             'is_online' => $request->data->online,
             'last_online_at' => $request->data->online ? now() : $characterStatus->last_online_at,
             'online_last_checked_at' => now(),
         ]);
-
-        if ($online_status_changed) {
-            return $characterStatus->character_id;
-        }
-
-        return null;
     }
 }

@@ -35,24 +35,24 @@ final class UpdateCharacterLocation implements ShouldQueue
      * @throws Throwable
      * @throws ConnectionException
      */
-    public function handle(Esi $esi, UpdateShipHistoryAction $action): ?int
+    public function handle(Esi $esi, UpdateShipHistoryAction $action): void
     {
         $characterStatus = CharacterStatus::query()->find($this->character_status_id);
 
         if ($characterStatus === null) {
-            return null;
+            return;
         }
 
         $location_request = $esi->getLocation($characterStatus->character);
 
         if ($location_request->failed()) {
-            return null;
+            return;
         }
 
         $ship_request = $esi->getShip($characterStatus->character);
 
         if ($ship_request->failed()) {
-            return null;
+            return;
         }
 
         $location = $location_request->data;
@@ -78,9 +78,8 @@ final class UpdateCharacterLocation implements ShouldQueue
         );
 
         if ($characterStatus->wasChanged()) {
-            return $characterStatus->character_id;
+            // Mark that event should be dispatched
+            $characterStatus->update(['event_queued_at' => now()]);
         }
-
-        return null;
     }
 }

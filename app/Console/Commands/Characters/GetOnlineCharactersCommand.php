@@ -53,14 +53,13 @@ final class GetOnlineCharactersCommand extends AppCommand
 
         $this->info(sprintf('Dispatching jobs for %d characters...', $characters->count()));
 
-        $startTime = now()->toIso8601String();
         $jobs = $characters->map(fn (CharacterStatus $characterStatus): UpdateCharacterOnlineStatus => new UpdateCharacterOnlineStatus($characterStatus->id));
 
         $batch = Bus::batch($jobs->all())
             ->name('Update Character Online Status')
-            ->finally(function (Batch $batch) use ($startTime): void {
+            ->finally(function (Batch $batch): void {
                 // Dispatch a job to handle event dispatching after all character updates are complete
-                DispatchCharacterStatusEvents::dispatch($startTime);
+                DispatchCharacterStatusEvents::dispatch();
             })
             ->dispatch();
 
