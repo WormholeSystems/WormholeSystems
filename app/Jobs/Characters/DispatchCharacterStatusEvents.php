@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Jobs\Characters;
 
 use App\Events\Characters\CharacterStatusUpdatedEvent;
-use App\Models\Character;
 use App\Models\CharacterStatus;
 use App\Models\Map;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Queue\Queueable;
 
 final class DispatchCharacterStatusEvents implements ShouldQueue
@@ -37,18 +37,13 @@ final class DispatchCharacterStatusEvents implements ShouldQueue
             return;
         }
 
-        $characters = Character::query()
-            ->whereIn('id', $updated_character_ids)
-            ->get();
-
-        $accessible_ids = $characters->map(fn (Character $character): array => [
-            $character->id,
-            $character->corporation_id,
-            $character->alliance_id,
-        ])->flatten()->whereNotNull()->unique()->values();
-
         Map::query()
-            ->whereHas('mapAccessors', fn ($query) => $query->whereIn('accessible_id', $accessible_ids))
+            ->whereHas('mapUserSettings', fn (Builder $query) => $query
+                ->where('tracking_allowed', true)
+                ->whereHas('user.characters', fn (Builder $query) => $query->whereIn('id', $updated_character_ids))
+            )
+            ->select('maps.id')
+            ->lazy()
             ->each(fn (Map $map) => CharacterStatusUpdatedEvent::dispatch($map->id));
     }
 }
