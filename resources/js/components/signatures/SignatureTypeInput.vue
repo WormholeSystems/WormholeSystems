@@ -3,10 +3,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { TSignatureType } from '@/types/models';
 import { computed, ref } from 'vue';
 
-const { options, rawTypeName } = defineProps<{
+const { options, rawTypeName, category } = defineProps<{
     can_write: boolean;
     options: TSignatureType[];
     rawTypeName?: string | null;
+    category?: string;
 }>();
 
 const model = defineModel<number | null>({
@@ -23,7 +24,7 @@ const selected_option = computed(() => {
 </script>
 
 <template>
-    <Select v-model="model" :disabled="!can_write || !options.length" v-model:open="open">
+    <Select v-model="model" :disabled="!can_write || !category" v-model:open="open">
         <SelectTrigger class="w-full text-xs">
             <span v-if="hasRawTypeName" class="text-foreground">{{ rawTypeName }}</span>
             <SelectValue v-else placeholder="Type">
@@ -35,6 +36,7 @@ const selected_option = computed(() => {
                 <SelectItem v-for="option in options" :key="option.id" :value="option.id">
                     {{ option.name }}
                 </SelectItem>
+                <SelectItem v-if="!options.length" :value="null"> Unknown </SelectItem>
             </template>
         </SelectContent>
     </Select>
