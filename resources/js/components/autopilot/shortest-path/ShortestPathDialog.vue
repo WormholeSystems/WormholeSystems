@@ -14,15 +14,14 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useIgnoreList } from '@/composables/useIgnoreList';
 import { usePath } from '@/composables/usePath';
 import { useSearch } from '@/composables/useSearch';
-import { TShortestPathDialogProps } from '@/pages/maps';
-import { TMapSolarSystem, TSolarsystem } from '@/types/models';
+import { TSelectedMapSolarsystem, TShortestPathDialogProps, TSolarsystem } from '@/pages/maps';
 import { router } from '@inertiajs/vue3';
 import { vElementHover } from '@vueuse/components';
 import { computed, ref, watch } from 'vue';
 
 const props = defineProps<
     TShortestPathDialogProps & {
-        selected_map_solarsystem?: TMapSolarSystem | null;
+        selected_map_solarsystem?: TSelectedMapSolarsystem | null;
     }
 >();
 
@@ -192,7 +191,7 @@ watch(
                                     </div>
                                     <div class="flex justify-center">
                                         <SolarsystemSovereignty v-if="system.sovereignty" :sovereignty="system.sovereignty" />
-                                        <SolarsystemEffect v-else-if="system.effect" :effect="system.effect" />
+                                        <SolarsystemEffect v-else-if="system.effect" :effect="system.effect.name" />
                                     </div>
                                     <div class="min-w-0 truncate text-sm text-muted-foreground">
                                         {{ system.region?.name }}
@@ -288,7 +287,7 @@ watch(
                                         <TableCell>
                                             <div class="flex justify-center">
                                                 <SolarsystemSovereignty v-if="system.sovereignty" :sovereignty="system.sovereignty" />
-                                                <SolarsystemEffect v-else-if="system.effect" :effect="system.effect" />
+                                                <SolarsystemEffect v-else-if="system.effect" :effect="system.effect.name" />
                                             </div>
                                         </TableCell>
                                         <TableCell>

@@ -1,5 +1,5 @@
+import { TMapConnection } from '@/pages/maps';
 import MapConnections from '@/routes/map-connections';
-import { TMapConnection } from '@/types/models';
 import { router } from '@inertiajs/vue3';
 
 export function deleteMapConnection(map_connection: TMapConnection) {

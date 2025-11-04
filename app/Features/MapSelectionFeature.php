@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Features;
 
 use App\Enums\Permission;
-use App\Http\Resources\MapSolarsystemResource;
+use App\Http\Resources\SelectedMapSolarsystemResource;
 use App\Models\Map;
 use App\Models\MapSolarsystem;
 use App\Models\User;
@@ -17,34 +17,25 @@ use Throwable;
 
 final readonly class MapSelectionFeature implements ProvidesInertiaProperties
 {
-    private ?MapSolarsystem $selectedSolarsystem;
-
     public function __construct(
         private Map $map,
         private User $user,
-        private ?int $selected_map_solarsystem_id,
-    ) {
-        $this->selectedSolarsystem = $this->getSelectedSolarsystem();
-    }
+        private ?MapSolarsystem $solarsystem = null,
+    ) {}
 
     public function toInertiaProperties(RenderContext $context): array
     {
         return [
-            'selected_map_solarsystem' => fn (): ?JsonResource => $this->selectedSolarsystem?->toResource(MapSolarsystemResource::class),
+            'selected_map_solarsystem' => $this->getSelectedSolarsystem(...),
         ];
-    }
-
-    public function getSelectedMapSolarsystem(): ?MapSolarsystem
-    {
-        return $this->selectedSolarsystem;
     }
 
     /**
      * @throws Throwable
      */
-    private function getSelectedSolarsystem(): ?MapSolarsystem
+    private function getSelectedSolarsystem(): ?JsonResource
     {
-        if ($this->selected_map_solarsystem_id === null || $this->selected_map_solarsystem_id === 0) {
+        if (! $this->solarsystem instanceof MapSolarsystem) {
             return null;
         }
 
@@ -53,7 +44,8 @@ final readonly class MapSelectionFeature implements ProvidesInertiaProperties
         return $this->map->mapSolarsystems()
             ->with('signatures', 'wormholes')
             ->when(! $isGuest, fn ($query) => $query->with('audits', fn (Relation $query) => $query->latest()))
-            ->findOrFail($this->selected_map_solarsystem_id)
-            ->hideNotes($isGuest);
+            ->findOrFail($this->solarsystem->id)
+            ->hideNotes($isGuest)
+            ->toResource(SelectedMapSolarsystemResource::class);
     }
 }

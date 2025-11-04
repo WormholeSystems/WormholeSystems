@@ -11,7 +11,7 @@ use App\Enums\Permission;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreMapSolarsystemRequest;
 use App\Http\Requests\UpdateMapSolarsystemRequest;
-use App\Http\Resources\MapSolarsystemResource;
+use App\Http\Resources\SelectedMapSolarsystemResource;
 use App\Models\MapSolarsystem;
 use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
@@ -39,7 +39,7 @@ final class MapSolarsystemController extends Controller
         $mapSolarsystem->hideNotes($isGuest);
 
         return response()->json([
-            'data' => $mapSolarsystem->toResource(MapSolarsystemResource::class),
+            'data' => $mapSolarsystem->toResource(SelectedMapSolarsystemResource::class),
         ]);
     }
 

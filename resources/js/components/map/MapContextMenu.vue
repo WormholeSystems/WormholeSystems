@@ -22,9 +22,8 @@ import {
     useMapSolarsystems,
 } from '@/composables/map';
 import { useSearch } from '@/composables/useSearch';
-import { TShowMapProps } from '@/pages/maps';
+import { TShowMapProps, TSolarsystem } from '@/pages/maps';
 import { AppPageProps } from '@/types';
-import { TSolarsystem } from '@/types/models';
 import { usePage } from '@inertiajs/vue3';
 import { Position } from '@vueuse/core';
 import { computed, ref } from 'vue';

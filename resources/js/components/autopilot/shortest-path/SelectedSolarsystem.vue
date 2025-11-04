@@ -2,7 +2,7 @@
 import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue';
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import { Label } from '@/components/ui/label';
-import { TSolarsystem } from '@/types/models';
+import { TSolarsystem } from '@/pages/maps';
 
 const { solarsystem } = defineProps<{ solarsystem: TSolarsystem | null }>();
 </script>

@@ -9,7 +9,7 @@ use App\Actions\MapAccess\DeleteMapAccessAction;
 use App\Actions\MapAccess\UpdateMapAccessAction;
 use App\Enums\Permission;
 use App\Http\Requests\UpdateMapAccessRequest;
-use App\Http\Resources\MapResource;
+use App\Http\Resources\MapInfoResource;
 use App\Models\Alliance;
 use App\Models\Corporation;
 use App\Models\Map;
@@ -92,7 +92,7 @@ final class MapAccessController extends Controller
             ->get();
 
         return Inertia::render('maps/settings/ShowAccess', [
-            'map' => $map->toResource(MapResource::class),
+            'map' => $map->toResource(MapInfoResource::class),
             'entities' => $entities,
             'entitiesWithAccess' => $entitiesWithAccess,
             'search' => $search,

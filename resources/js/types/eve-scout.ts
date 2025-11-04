@@ -1,4 +1,4 @@
-import { TSolarsystem } from '@/types/models';
+import { TSolarsystem } from '@/pages/maps';
 
 export type TEveScoutConnection = {
     in_system: TSolarsystem;

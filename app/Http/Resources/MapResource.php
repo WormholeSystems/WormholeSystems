@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Http\Resources;
 
 use App\Models\Map;
-use App\Models\MapUserSetting;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Throwable;
@@ -28,30 +27,12 @@ final class MapResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'slug' => $this->slug,
-            'map_solarsystems' => $this->whenLoaded('mapSolarsystems', fn () => $this->mapSolarsystems->toResourceCollection(MapSolarsystemResource::class)),
-            'map_connections' => $this->whenLoaded('mapConnections', fn () => $this->mapConnections->toResourceCollection(MapConnectionResource::class)),
-            'map_solarsystems_count' => $this->whenCounted('mapSolarsystems', fn () => $this->map_solarsystems_count),
-            'map_user_setting' => $this->handleUserSetting(),
-            'owner' => $this->mapOwner->accessible->toResource(CharacterResource::class),
+            'map_solarsystems' => $this->mapSolarsystems->toResourceCollection(MapSolarsystemResource::class),
+            'map_connections' => $this->mapConnections->toResourceCollection(MapConnectionResource::class),
+            'owner' => [
+                'id' => $this->mapOwner->id,
+                'character_name' => $this->mapOwner->accessible->name,
+            ],
         ];
-    }
-
-    /**
-     * Handle the user setting for the map.
-     *
-     * @throws Throwable
-     */
-    private function handleUserSetting(): JsonResource
-    {
-        if ($this->mapUserSetting) {
-            return $this->mapUserSetting->toResource(MapUserSettingResource::class);
-        }
-
-        $user_setting = MapUserSetting::query()->updateOrCreate([
-            'user_id' => auth()->id(),
-            'map_id' => $this->id,
-        ]);
-
-        return $user_setting->toResource(MapUserSettingResource::class);
     }
 }

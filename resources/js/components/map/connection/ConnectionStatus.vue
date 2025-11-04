@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useNowUTC } from '@/composables/useNowUTC';
-import { TMapConnection } from '@/types/models';
+import { TMapConnection } from '@/pages/maps';
 import { UTCDate } from '@date-fns/utc';
 import { differenceInDays, differenceInHours, differenceInMinutes, format, formatDistanceStrict, max, min } from 'date-fns';
 import { computed } from 'vue';
@@ -74,7 +74,7 @@ const createdAgo = computed(() => getTimeAgo(createdDate.value));
 const updatedAgo = computed(() => getTimeAgo(updatedDate.value));
 
 const lifetimeDate = computed(() => {
-    return props.connection.lifetime_updated_at ? new UTCDate(props.connection.lifetime_updated_at) : null;
+    return props.connection.lifetime_status_updated_at ? new UTCDate(props.connection.lifetime_status_updated_at) : null;
 });
 
 const lifetimeAt = computed(() => {
@@ -89,7 +89,7 @@ const lifetimeAgo = computed(() => {
 });
 
 const lifetimeDisplay = computed(() => {
-    switch (props.connection.lifetime) {
+    switch (props.connection.lifetime_status) {
         case 'healthy':
             return 'Healthy';
         case 'eol':
@@ -109,13 +109,10 @@ const lifetimeDisplay = computed(() => {
             <div class="col-span-full grid grid-cols-subgrid">
                 <span>Lifetime</span>
                 <span
-                    class="text-right"
-                    :class="{
-                        'text-purple-500': connection.lifetime === 'eol',
-                        'text-red-500': connection.lifetime === 'critical',
-                    }"
+                    class="text-right data-lifetime-status=critical:text-red-500 data-lifetime-status=eol:text-purple-500"
+                    :data-lifetime-status="connection.lifetime_status"
                 >
-                    <template v-if="lifetimeAt && connection.lifetime !== 'healthy'">
+                    <template v-if="lifetimeAt && connection.lifetime_status !== 'healthy'">
                         <Tooltip>
                             <TooltipTrigger as-child>
                                 <span class="cursor-help">{{ lifetimeDisplay }}</span>
@@ -129,12 +126,8 @@ const lifetimeDisplay = computed(() => {
             <div class="col-span-full grid grid-cols-subgrid">
                 <span>Mass Status</span>
                 <span
-                    class="text-right capitalize"
-                    :class="{
-                        'text-green-500': connection.mass_status === 'fresh',
-                        'text-yellow-500': connection.mass_status === 'reduced',
-                        'text-red-500': connection.mass_status === 'critical',
-                    }"
+                    :data-mass-status="connection.mass_status"
+                    class="text-right capitalize data-mass-status=critical:text-red-500 data-mass-status=fresh:text-green-500 data-mass-status=reduced:text-yellow-500"
                 >
                     {{ massStatusDisplay }}
                 </span>

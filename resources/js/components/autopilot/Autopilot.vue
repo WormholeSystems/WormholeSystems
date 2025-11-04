@@ -15,8 +15,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useMapSolarsystems } from '@/composables/map';
 import useHasWritePermission from '@/composables/useHasWritePermission';
 import useUser from '@/composables/useUser';
-import { TClosestSystems, TShortestPath } from '@/pages/maps';
-import { TCharacter, TMap, TMapRouteSolarsystem, TMapSolarSystem, TSolarsystem } from '@/types/models';
+import { TClosestSystems, TMap, TSelectedMapSolarsystem, TShortestPath, TSolarsystem } from '@/pages/maps';
+import { TCharacter, TMapRouteSolarsystem } from '@/types/models';
 import { vElementHover } from '@vueuse/components';
 import { computed } from 'vue';
 
@@ -25,7 +25,7 @@ const { map_route_solarsystems, map, solarsystems, map_characters, selected_map_
         map: TMap;
         solarsystems: TSolarsystem[];
         map_route_solarsystems?: TMapRouteSolarsystem[];
-        selected_map_solarsystem?: TMapSolarSystem | null;
+        selected_map_solarsystem?: TSelectedMapSolarsystem | null;
         map_characters: TCharacter[] | null;
         shortest_path?: TShortestPath | null;
         ignored_systems: number[];
@@ -57,9 +57,9 @@ function handleSolarsystemHover(hovered: boolean) {
                     See how far you have to travel from
                     <b v-element-hover="handleSolarsystemHover">
                         <span v-if="selected_map_solarsystem.alias">
-                            <span class="text-primary">{{ selected_map_solarsystem.alias }}</span> {{ selected_map_solarsystem.name }}
+                            <span class="text-primary">{{ selected_map_solarsystem.alias }}</span> {{ selected_map_solarsystem.solarsystem.name }}
                         </span>
-                        <span v-else class="text-primary">{{ selected_map_solarsystem.name }}</span>
+                        <span v-else class="text-primary">{{ selected_map_solarsystem.solarsystem.name }}</span>
                     </b>
                 </template>
                 <template v-else> Select a solarsystem to see routes, or use the shortest path finder</template>

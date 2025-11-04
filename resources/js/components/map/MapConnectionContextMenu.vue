@@ -11,7 +11,8 @@ import {
 } from '@/components/ui/context-menu';
 import { deleteMapConnection, updateMapConnection } from '@/composables/map';
 import { formatDateToISO } from '@/lib/utils';
-import { TLifetimeStatus, TMapConnection, TMassStatus, TShipSize } from '@/types/models';
+import { TMapConnection } from '@/pages/maps';
+import { TLifetimeStatus, TMassStatus, TShipSize } from '@/types/models';
 import { UTCDate } from '@date-fns/utc';
 
 const { map_connection } = defineProps<{
@@ -43,7 +44,7 @@ function handleLifetimeChange(lifetime: TLifetimeStatus | string) {
         <ContextMenuSub>
             <ContextMenuSubTrigger>Lifetime</ContextMenuSubTrigger>
             <ContextMenuSubContent>
-                <ContextMenuRadioGroup :model-value="map_connection.lifetime" @update:model-value="handleLifetimeChange">
+                <ContextMenuRadioGroup :model-value="map_connection.lifetime_status" @update:model-value="handleLifetimeChange">
                     <ContextMenuRadioItem value="healthy" class="flex items-center justify-between gap-2">
                         <span class="flex items-center gap-2">
                             <span class="inline-block size-2 rounded-full bg-neutral-500" />

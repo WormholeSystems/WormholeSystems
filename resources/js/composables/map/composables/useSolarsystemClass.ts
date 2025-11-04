@@ -1,11 +1,12 @@
 import { getSecurityClass } from '@/composables/map';
-import { TMapSolarSystem, TSolarsystemClass } from '@/types/models';
+import { TMapSolarsystem } from '@/pages/maps';
+import { TSolarsystemClass } from '@/types/models';
 import { computed, MaybeRefOrGetter, toValue } from 'vue';
 
-export function useSolarsystemClass(solarsystem: MaybeRefOrGetter<TMapSolarSystem>) {
+export function useSolarsystemClass(solarsystem: MaybeRefOrGetter<TMapSolarsystem>) {
     return computed<TSolarsystemClass>(() => {
         const system = toValue(solarsystem);
-        if (system.class) return system.class as TSolarsystemClass;
+        if (system.solarsystem.class) return system.solarsystem.class as TSolarsystemClass;
 
         return getSecurityClass(system.solarsystem!.security) as TSolarsystemClass;
     });

@@ -1,6 +1,6 @@
 import { useMap } from '@/composables/useMap';
 import { useSelectedMapSolarsystem } from '@/composables/useSelectedMapSolarsystem';
-import { TMapSolarSystem } from '@/types/models';
+import { TMapSolarsystem } from '@/pages/maps';
 import { computed } from 'vue';
 import { TProcessedConnection } from '../types';
 
@@ -8,7 +8,7 @@ export function useSignatures() {
     const map = useMap();
     const selected_map_solarsystem = useSelectedMapSolarsystem();
 
-    const solarsystem_class = computed(() => selected_map_solarsystem.value?.class);
+    const solarsystem_class = computed(() => selected_map_solarsystem.value?.solarsystem.class);
     const solarsystem_security = computed(() => selected_map_solarsystem.value?.solarsystem?.security);
 
     const map_solarsystems = computed(() => {
@@ -17,7 +17,7 @@ export function useSignatures() {
                 acc[system.id] = system;
                 return acc;
             },
-            {} as Record<number, TMapSolarSystem>,
+            {} as Record<number, TMapSolarsystem>,
         );
     });
 

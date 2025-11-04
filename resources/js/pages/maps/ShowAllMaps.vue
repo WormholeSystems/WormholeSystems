@@ -8,13 +8,13 @@ import { Input } from '@/components/ui/input';
 import { useSearch } from '@/composables/useSearch';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SeoHead from '@/layouts/SeoHead.vue';
-import { TMap } from '@/types/models';
+import { TMapSummary } from '@/pages/maps/index';
 import { Link } from '@inertiajs/vue3';
 import { SearchIcon } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 const { maps } = defineProps<{
-    maps: TMap[];
+    maps: TMapSummary[];
 }>();
 
 const search = useSearch('search', ['maps']);

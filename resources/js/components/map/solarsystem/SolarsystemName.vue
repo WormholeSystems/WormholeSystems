@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { TMapSolarSystem } from '@/types/models';
+import { TMapSolarsystem } from '@/pages/maps';
 
 defineProps<{
-    map_solarsystem: TMapSolarSystem;
+    map_solarsystem: TMapSolarsystem;
 }>();
 </script>
 

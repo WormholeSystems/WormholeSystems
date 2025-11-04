@@ -25,16 +25,16 @@ final readonly class MapCharactersFeature implements ProvidesInertiaProperties
 {
     public function __construct(
         private Map $map,
-        private bool $canViewCharacters,
-        private ?MapSolarsystem $selectedMapSolarsystem,
-        private MapUserSetting $mapUserSetting,
-        private RouteService $routeService,
+        private bool $can_view_characters,
+        private ?MapSolarsystem $selected_map_solarsystem,
+        private MapUserSetting $map_user_settings,
+        private RouteService $route_service,
     ) {}
 
     public function toInertiaProperties(RenderContext $context): array
     {
         return [
-            'map_characters' => fn (): ?ResourceCollection => $this->canViewCharacters ? $this->getMapCharacters() : null,
+            'map_characters' => fn (): ?ResourceCollection => $this->can_view_characters ? $this->getMapCharacters() : null,
         ];
     }
 
@@ -56,7 +56,7 @@ final readonly class MapCharactersFeature implements ProvidesInertiaProperties
             ->tap(new CharacterIsOnline)
             ->get();
 
-        if (! $this->selectedMapSolarsystem instanceof MapSolarsystem) {
+        if (! $this->selected_map_solarsystem instanceof MapSolarsystem) {
             return $characters->toResourceCollection(CharacterResource::class);
         }
 
@@ -65,7 +65,7 @@ final readonly class MapCharactersFeature implements ProvidesInertiaProperties
         foreach ($characters as $character) {
             if ($character->characterStatus && $character->characterStatus->solarsystem_id) {
                 $routeRequests[$character->id] = [
-                    'from' => $this->selectedMapSolarsystem->solarsystem_id,
+                    'from' => $this->selected_map_solarsystem->solarsystem_id,
                     'to' => $character->characterStatus->solarsystem_id,
                 ];
             }
@@ -74,7 +74,7 @@ final readonly class MapCharactersFeature implements ProvidesInertiaProperties
         // Calculate all routes in one batched operation
         $routes = [];
         if ($routeRequests !== []) {
-            $routes = $this->routeService->findMultipleRoutes($routeRequests, $this->getRouteOptions());
+            $routes = $this->route_service->findMultipleRoutes($routeRequests, $this->getRouteOptions());
         }
 
         // Attach routes to characters
@@ -92,13 +92,13 @@ final readonly class MapCharactersFeature implements ProvidesInertiaProperties
         $ignored_systems = Session::get('ignored_systems', []);
 
         return new RouteOptions(
-            allowEol: $this->mapUserSetting->route_allow_eol,
-            massStatus: $this->mapUserSetting->route_allow_mass_status,
-            allowEveScout: $this->mapUserSetting->route_use_evescout,
+            allowEol: $this->map_user_settings->route_allow_eol,
+            massStatus: $this->map_user_settings->route_allow_mass_status,
+            allowEveScout: $this->map_user_settings->route_use_evescout,
             map: $this->map,
             ignoredSystems: $ignored_systems,
-            routePreference: $this->mapUserSetting->route_preference ?? RoutePreference::Shorter,
-            securityPenalty: $this->mapUserSetting->security_penalty ?? 50,
+            routePreference: $this->map_user_settings->route_preference ?? RoutePreference::Shorter,
+            securityPenalty: $this->map_user_settings->security_penalty ?? 50,
         );
     }
 }

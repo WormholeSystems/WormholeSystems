@@ -22,7 +22,8 @@ import { Data } from '@/composables/map/utils/data';
 import useHasWritePermission from '@/composables/useHasWritePermission';
 import { getTypesByCategory, signatureCategories } from '@/const/signatures';
 import { formatDateToISO } from '@/lib/utils';
-import { TMapSolarSystem, TSignature, TSolarsystemClass } from '@/types/models';
+import { TSelectedMapSolarsystem } from '@/pages/maps';
+import { TSignature, TSolarsystemClass } from '@/types/models';
 import { UTCDate } from '@date-fns/utc';
 import { syncRefs } from '@vueuse/core';
 import { MoreVertical } from 'lucide-vue-next';
@@ -36,7 +37,7 @@ const { signature, unconnected_connections, connected_connections, selected_map_
     is_updated?: boolean;
     unconnected_connections: TProcessedConnection[];
     connected_connections: TProcessedConnection[];
-    selected_map_solarsystem: TMapSolarSystem;
+    selected_map_solarsystem: TSelectedMapSolarsystem;
 }>();
 
 const original = toRef(() => signature.signature_id || '');

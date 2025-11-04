@@ -95,4 +95,12 @@ final class MapConnection extends Model
     {
         return $this->hasMany(Signature::class);
     }
+
+    /**
+     * The wormhole associated with this connection.
+     */
+    public function wormhole(): BelongsTo
+    {
+        return $this->belongsTo(Wormhole::class);
+    }
 }

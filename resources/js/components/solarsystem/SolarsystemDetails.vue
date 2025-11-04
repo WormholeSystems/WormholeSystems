@@ -16,15 +16,16 @@ import MapPanelContent from '@/components/ui/map-panel/MapPanelContent.vue';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import useHasWritePermission from '@/composables/useHasWritePermission';
+import { TMap, TSelectedMapSolarsystem } from '@/pages/maps';
 import MapSolarsystems from '@/routes/map-solarsystems';
-import { TMap, TMapRouteSolarsystem, TMapSolarSystem } from '@/types/models';
+import { TMapRouteSolarsystem } from '@/types/models';
 import { Deferred, Link, useForm } from '@inertiajs/vue3';
 import markdownit from 'markdown-it';
 import attr from 'markdown-it-link-attributes';
 import { computed, ref, watch } from 'vue';
 
 const { map_solarsystem, map_route_solarsystems, hide_notes } = defineProps<{
-    map_solarsystem: TMapSolarSystem;
+    map_solarsystem: TSelectedMapSolarsystem;
     map_route_solarsystems?: TMapRouteSolarsystem[];
     map: TMap;
     hide_notes?: boolean;
@@ -50,8 +51,8 @@ const md = markdownit({
 
 const dotlan_link = computed(() => {
     const region = map_solarsystem.solarsystem?.region?.name.replace(' ', '_');
-    const name = map_solarsystem.name.replace(' ', '_');
-    if (map_solarsystem.class) {
+    const name = map_solarsystem.solarsystem.name.replace(' ', '_');
+    if (map_solarsystem.solarsystem.class) {
         return `https://evemaps.dotlan.net/system/${name}`;
     }
 
@@ -98,14 +99,14 @@ watch(
             <div class="flex items-start justify-between gap-4">
                 <div class="min-w-0 flex-1">
                     <CardTitle class="flex items-center gap-2 text-xl">
-                        <SolarsystemClass :wormhole_class="map_solarsystem.class" v-if="map_solarsystem.class" />
+                        <SolarsystemClass :wormhole_class="map_solarsystem.solarsystem.class" v-if="map_solarsystem.solarsystem.class" />
                         <SecurityStatus
                             :security="map_solarsystem.solarsystem?.security"
                             v-else-if="map_solarsystem.solarsystem?.security !== undefined"
                         />
-                        <span class="truncate">{{ map_solarsystem.name }}</span>
-                        <div v-if="map_solarsystem.wormholes?.length" class="flex gap-1">
-                            <Popover v-for="wormhole in map_solarsystem.wormholes" :key="wormhole.id">
+                        <span class="truncate">{{ map_solarsystem.solarsystem.name }}</span>
+                        <div v-if="map_solarsystem.solarsystem.statics?.length" class="flex gap-1">
+                            <Popover v-for="wormhole in map_solarsystem.solarsystem.statics" :key="wormhole.id">
                                 <PopoverTrigger>
                                     <span
                                         :data-leads-to="wormhole.leads_to"
@@ -134,7 +135,7 @@ watch(
                                 </PopoverContent>
                             </Popover>
                         </div>
-                        <SolarsystemEffect :effect="map_solarsystem.effect" :effects="map_solarsystem.effects" v-if="map_solarsystem.effect" />
+                        <SolarsystemEffect :effect="map_solarsystem.solarsystem.effect" v-if="map_solarsystem.solarsystem.effect" />
                     </CardTitle>
 
                     <div class="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
@@ -169,8 +170,8 @@ watch(
                         <span>Dotlan</span>
                     </a>
                     <a
-                        v-if="map_solarsystem.class"
-                        :href="`https://anoik.is/systems/${map_solarsystem.name}`"
+                        v-if="map_solarsystem.solarsystem.class"
+                        :href="`https://anoik.is/systems/${map_solarsystem.solarsystem.name}`"
                         target="_blank"
                         class="flex items-center gap-1 text-muted-foreground transition-colors hover:text-foreground"
                         rel="noopener"

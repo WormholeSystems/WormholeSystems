@@ -7,16 +7,19 @@ namespace App\Http\Resources;
 use App\Models\MapSolarsystem;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Throwable;
 
 /**
  * @mixin MapSolarsystem
  */
-final class MapSolarsystemResource extends JsonResource
+final class SelectedMapSolarsystemResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
      *
      * @return array<string, mixed>
+     *
+     * @throws Throwable
      */
     public function toArray(Request $request): array
     {
@@ -27,13 +30,13 @@ final class MapSolarsystemResource extends JsonResource
             'alias' => $this->alias,
             'status' => $this->status,
             'occupier_alias' => $this->occupier_alias,
+            'notes' => $this->notes,
             'position' => $this->getPositionArray(),
-            'pinned' => $this->pinned,
+            'is_pinned' => $this->pinned,
             'solarsystem' => $this->solarsystem->toResource(SolarsystemResource::class),
-            'signatures_count' => $this->signatures_count,
-            'wormhole_signatures_count' => $this->wormhole_signatures_count,
-            'map_connections_count' => $this->map_connections_count,
-            'signatures' => $this->whenLoaded('signatures', fn () => $this->signatures->toResourceCollection(MapSignatureResource::class)),
+            'map_connections' => $this->mapConnections->toResourceCollection(MapConnectionResource::class),
+            'signatures' => $this->signatures->toResourceCollection(SignatureResource::class),
+            'audits' => $this->audits->toResourceCollection(AuditResource::class),
         ];
     }
 

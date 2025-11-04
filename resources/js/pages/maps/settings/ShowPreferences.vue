@@ -4,13 +4,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import SettingsLayout from '@/layouts/SettingsLayout.vue';
+import { TMapSummary } from '@/pages/maps';
 import MapUserSettings from '@/routes/map-user-settings';
-import { TMap, TMapUserSetting } from '@/types/models';
+import { TMapUserSetting } from '@/types/models';
 import { router } from '@inertiajs/vue3';
 import { AcceptableValue } from 'reka-ui';
 
 const { map, map_user_settings } = defineProps<{
-    map: TMap;
+    map: TMapSummary;
     map_user_settings: TMapUserSetting;
 }>();
 

@@ -1,11 +1,11 @@
 import { useSelectedMapSolarsystem } from '@/composables/useSelectedMapSolarsystem';
+import { TMapSolarsystem } from '@/pages/maps';
 import MapSolarsystems from '@/routes/map-solarsystems';
-import { TMapSolarSystem } from '@/types/models';
 import { router } from '@inertiajs/vue3';
 import { mapState } from '../state';
 
 export function updateMapSolarsystem(
-    map_solarsystem: TMapSolarSystem,
+    map_solarsystem: TMapSolarsystem,
     data: {
         position_x?: number;
         position_y?: number;

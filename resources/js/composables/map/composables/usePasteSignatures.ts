@@ -1,12 +1,13 @@
 import { deleteSignatures, pasteSignatures } from '@/composables/map';
 import { useIsUsingInput } from '@/composables/map/composables/useIsUsingInput';
 import { signatureParser, TRawSignature } from '@/lib/SignatureParser';
-import { TMapSolarSystem, TSignature } from '@/types/models';
+import { TSelectedMapSolarsystem } from '@/pages/maps';
+import { TSignature } from '@/types/models';
 import { useEventListener } from '@vueuse/core';
 import { computed, type MaybeRefOrGetter, ref, toValue, watch } from 'vue';
 import { toast } from 'vue-sonner';
 
-export function usePasteSignatures(map_solarsystem: MaybeRefOrGetter<TMapSolarSystem | null>) {
+export function usePasteSignatures(map_solarsystem: MaybeRefOrGetter<TSelectedMapSolarsystem | null>) {
     const is_using_input = useIsUsingInput();
 
     const signatures_with_status = computed(() => {

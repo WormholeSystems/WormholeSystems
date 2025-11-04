@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useIgnoreList } from '@/composables/useIgnoreList';
 import { usePath } from '@/composables/usePath';
-import { TSolarsystem } from '@/types/models';
+import { TSolarsystem } from '@/pages/maps';
 import { vElementHover } from '@vueuse/components';
 import { PopoverClose } from 'reka-ui';
 import { computed } from 'vue';
@@ -114,7 +114,7 @@ function onHover(hovered: boolean) {
                                     <TableCell class="h-auto p-1">
                                         <div class="flex justify-center">
                                             <SolarsystemSovereignty v-if="solarsystem.sovereignty" :sovereignty="solarsystem.sovereignty" />
-                                            <SolarsystemEffect v-else-if="solarsystem.effect" :effect="solarsystem.effect" />
+                                            <SolarsystemEffect v-else-if="solarsystem.effect" :effect="solarsystem.effect.name" />
                                         </div>
                                     </TableCell>
                                     <TableCell class="h-auto p-1">

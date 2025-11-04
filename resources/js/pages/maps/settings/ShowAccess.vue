@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useSearch } from '@/composables/useSearch';
 import SettingsLayout from '@/layouts/SettingsLayout.vue';
-import { TMap } from '@/types/models';
+import { TMapSummary } from '@/pages/maps';
 import { router } from '@inertiajs/vue3';
 
 type TEntity = {
@@ -22,7 +22,7 @@ type TEntity = {
 };
 
 const { map, entities, entitiesWithAccess } = defineProps<{
-    map: TMap;
+    map: TMapSummary;
     entities: TEntity[];
     entitiesWithAccess: TEntity[];
 }>();

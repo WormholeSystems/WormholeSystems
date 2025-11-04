@@ -83,7 +83,7 @@ final class EveScoutService
                     'body' => $response->body(),
                 ]);
 
-                return [];
+                return collect();
             }
 
             $data = $response->json();
@@ -129,7 +129,7 @@ final class EveScoutService
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            return [];
+            return collect();
         }
     }
 }

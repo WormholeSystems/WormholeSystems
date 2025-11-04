@@ -17,10 +17,11 @@ import { deleteMapSolarsystem, updateMapSolarsystem } from '@/composables/map';
 import useHasWritePermission from '@/composables/useHasWritePermission';
 import useUser from '@/composables/useUser';
 import { useWaypoint } from '@/composables/useWaypoint';
-import { TMapSolarSystem, TMapSolarsystemStatus } from '@/types/models';
+import { TMapSolarsystem } from '@/pages/maps';
+import { TMapSolarsystemStatus } from '@/types/models';
 
 const { map_solarsystem } = defineProps<{
-    map_solarsystem: TMapSolarSystem;
+    map_solarsystem: TMapSolarsystem;
 }>();
 
 const user = useUser();
@@ -86,7 +87,7 @@ const options: TMapSolarsystemStatus[] = ['unknown', 'friendly', 'hostile', 'act
                     </ContextMenuItem>
                 </ContextMenuSubContent>
             </ContextMenuSub>
-            <ContextMenuSub v-if="!map_solarsystem.class">
+            <ContextMenuSub v-if="!map_solarsystem.solarsystem.class">
                 <ContextMenuSubTrigger>Set destination</ContextMenuSubTrigger>
                 <ContextMenuSubContent>
                     <ContextMenuItem
@@ -100,7 +101,7 @@ const options: TMapSolarsystemStatus[] = ['unknown', 'friendly', 'hostile', 'act
                 </ContextMenuSubContent>
             </ContextMenuSub>
 
-            <ContextMenuSub v-if="!map_solarsystem.class">
+            <ContextMenuSub v-if="!map_solarsystem.solarsystem.class">
                 <ContextMenuSubTrigger>Add waypoint</ContextMenuSubTrigger>
                 <ContextMenuSubContent>
                     <ContextMenuItem

@@ -1,5 +1,6 @@
+import { TMapConnection } from '@/pages/maps';
 import MapConnections from '@/routes/map-connections';
-import { TLifetimeStatus, TMapConnection, TMassStatus, TShipSize } from '@/types/models';
+import { TLifetimeStatus, TMassStatus, TShipSize } from '@/types/models';
 import { router } from '@inertiajs/vue3';
 
 export function updateMapConnection(

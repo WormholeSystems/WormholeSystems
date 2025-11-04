@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\MapResource;
+use App\Http\Resources\MapInfoResource;
 use App\Models\Map;
 use App\Models\MapUserSetting;
 use App\Models\User;
@@ -32,7 +32,7 @@ final class MapRoutingSettingsController extends Controller
         $settings = $this->getMapUserSettings($map->id);
 
         return Inertia::render('maps/settings/ShowRouting', [
-            'map' => $map->toResource(MapResource::class),
+            'map' => $map->toResource(MapInfoResource::class),
             'map_user_settings' => $settings->toResource(),
             'is_owner' => Gate::allows('delete', $map),
             'has_write_access' => Gate::allows('update', $map),

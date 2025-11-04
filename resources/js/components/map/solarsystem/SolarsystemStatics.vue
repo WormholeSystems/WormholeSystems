@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { TWormhole } from '@/types/models';
+import { TStatic } from '@/pages/maps';
 
-defineProps<{
-    statics: TWormhole[];
+const { statics } = defineProps<{
+    statics: TStatic[];
 }>();
 </script>
 

@@ -16,7 +16,7 @@ import {
     SignatureDeletedEvent,
     SignatureUpdatedEvent,
 } from '@/const/events';
-import { TMap } from '@/types/models';
+import { TMap } from '@/pages/maps';
 import { router } from '@inertiajs/vue3';
 import { useEcho } from '@laravel/echo-vue';
 import { computed, MaybeRefOrGetter, toRef } from 'vue';

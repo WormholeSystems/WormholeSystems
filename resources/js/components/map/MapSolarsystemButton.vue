@@ -36,7 +36,7 @@ const open = ref(false);
 
 const extra_connections_count = computed(() => {
     const connections_count = map_solarsystem.wormhole_signatures_count ?? 0;
-    const mapped_connections_count = map_solarsystem.map_connections?.length ?? 0;
+    const mapped_connections_count = map_solarsystem.map_connections_count ?? 0;
     return Math.max(0, connections_count - mapped_connections_count);
 });
 
@@ -64,7 +64,7 @@ function handleSubmit() {
         @drag.prevent
     >
         <div class="row-start-1 grid grid-cols-[auto_1fr_auto] items-center justify-center gap-x-1 px-2">
-            <SolarsystemClass :security="map_solarsystem.solarsystem!.security" :wormhole_class="map_solarsystem.class" />
+            <SolarsystemClass :security="map_solarsystem.solarsystem!.security" :wormhole_class="map_solarsystem.solarsystem.class" />
             <Popover :open="open" @update:open="(value) => open && (open = value)">
                 <PopoverAnchor>
                     <SolarsystemName :map_solarsystem="map_solarsystem" />
@@ -82,10 +82,13 @@ function handleSubmit() {
                 <SatelliteDish v-if="map_solarsystem.signatures_count" class="size-[14px] text-amber-500" />
                 <HasExtraConnections v-if="extra_connections_count" :extra_connections_count="extra_connections_count" />
                 <SolarsystemSovereignty v-if="map_solarsystem.solarsystem?.sovereignty" :sovereignty="map_solarsystem.solarsystem.sovereignty" />
-                <SolarsystemEffect :effect="map_solarsystem.effect" :effects="map_solarsystem.effects" v-if="map_solarsystem.effect" />
+                <SolarsystemEffect :effect="map_solarsystem.solarsystem.effect" v-if="map_solarsystem.solarsystem.effect" />
             </div>
-            <SolarsystemRegion :region="map_solarsystem.solarsystem?.region" v-if="map_solarsystem.solarsystem?.region && !map_solarsystem.class" />
-            <SolarsystemStatics v-else-if="map_solarsystem.statics" :statics="map_solarsystem.statics" />
+            <SolarsystemRegion
+                :region="map_solarsystem.solarsystem?.region"
+                v-if="map_solarsystem.solarsystem?.region && !map_solarsystem.solarsystem.class"
+            />
+            <SolarsystemStatics v-else-if="map_solarsystem.solarsystem.statics" :statics="map_solarsystem.solarsystem.statics" />
         </div>
         <SolarsystemPilots v-if="pilots.length" :pilots />
     </div>

@@ -7,8 +7,8 @@ import { Combobox, ComboboxAnchor, ComboboxEmpty, ComboboxGroup, ComboboxInput, 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useSearch } from '@/composables/useSearch';
+import { TMap, TSolarsystem } from '@/pages/maps';
 import MapRouteSolarsystems from '@/routes/map-route-solarsystems';
-import { TMap, TSolarsystem } from '@/types/models';
 import { router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 

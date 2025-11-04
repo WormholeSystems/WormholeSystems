@@ -1,99 +1,19 @@
 // TSignatureCategory now defined in this file
 
-export type TMap = {
-    id: number;
-    name: string;
-    slug: string;
-    map_solarsystems?: TMapSolarSystem[];
-    map_connections?: TMapConnection[];
-    map_solarsystems_count?: number;
-    map_user_setting?: TMapUserSetting;
-    owner: TCharacter;
-};
+import { TMapConnection, TSolarsystem, TWormhole } from '@/pages/maps';
 
-export type TMapSolarSystem = {
-    id: number;
-    solarsystem_id: number;
-    name: string;
-    alias: string;
-    occupier_alias: string;
-    class: TWormholeClass | null;
-    effect: TWormholeEffectName | null;
-    effects: TWormholeEffect[];
-    map_id: number;
-    position: {
-        x: number;
-        y: number;
-    } | null;
-    status: TMapSolarsystemStatus | null;
-    solarsystem: TSolarsystem | null;
-    statics: TWormhole[] | null;
-    pinned: boolean;
-    signatures: TSignature[] | null;
-    signatures_count?: number;
-    wormhole_signatures_count?: number;
-    notes: string | null;
-    map_connections: TMapConnection[] | null;
-    audits: TAudit[] | null;
-    wormholes?: TWormhole[];
-};
-
-export type TMapConnection = {
-    id: number;
-    map_id: number;
-    from_map_solarsystem_id: number;
-    to_map_solarsystem_id: number;
-    wormhole: TWormhole | null;
-    ship_size: TShipSize;
-    mass_status: TMassStatus;
-    lifetime: TLifetimeStatus;
-    lifetime_updated_at: string | null;
-    created_at: string;
-    updated_at: string;
-    signatures: TSignature[] | null;
-};
-
-export type TWormhole = {
-    id: number;
-    name: string;
-    total_mass: number;
-    maximum_jump_mass: number;
-    ship_size: string;
-    maximum_lifetime: number;
-    leads_to: string;
-    type_id: number;
-    created_at: string;
-    updated_at: string;
-};
-
-export type TSolarsystem = {
-    id: number;
-    name: string;
-    type: 'eve' | 'wormhole' | 'abyssal';
-    region: TRegion | null;
-    constellation: TConstellation | null;
-    security: number;
-    class: TWormholeClass | null;
-    effect: TWormholeEffectName | null;
-    sovereignty: TSovereignty | null;
-};
+export type TSolarsystemType = 'eve' | 'wormhole' | 'abyssal';
 
 export type TRegion = {
     id: number;
     name: string;
 };
 
-export type TConstellation = {
-    id: number;
-    name: string;
-    region_id: number;
-};
-
 export type TWormholeEffectName = 'Pulsar' | 'Cataclysmic Variable' | 'Magnetar' | 'Red Giant' | 'Wolf-Rayet Star' | 'Black Hole';
 
 export type TWormholeEffect = {
     id: number;
-    name: TWormholeEffectName;
+    name: string;
     type: 'Buff' | 'Debuff';
     strength: string;
 };

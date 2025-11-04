@@ -1,8 +1,8 @@
-import { TMapSolarSystem } from '@/types/models';
-import { mapState, map_solarsystems, map_solarsystems_selected } from '../state';
+import { TMapSolarsystem } from '@/pages/maps';
+import { map_solarsystems, map_solarsystems_selected, mapState } from '../state';
 
 export function useMapSolarsystems() {
-    function setSystemPosition(system: TMapSolarSystem, raw_x: number, raw_y: number) {
+    function setSystemPosition(system: TMapSolarsystem, raw_x: number, raw_y: number) {
         const system_state = mapState.map_solarsystems.find((s) => s.id === system.id);
         if (!system_state) return;
         const x = raw_x;

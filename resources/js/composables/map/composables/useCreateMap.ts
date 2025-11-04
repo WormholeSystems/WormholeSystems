@@ -1,7 +1,7 @@
 import { applyScale, getConnectionWithSourceAndTarget, getHoveredState, getSelectedState } from '@/composables/map';
 import { TLayout } from '@/composables/useLayout';
+import { TMap } from '@/pages/maps';
 import { TMapConfig } from '@/types/map';
-import { TMap } from '@/types/models';
 import { MaybeRefOrGetter, toValue, watchEffect } from 'vue';
 import { mapState } from '../state';
 

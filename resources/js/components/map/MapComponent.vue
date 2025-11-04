@@ -13,8 +13,8 @@ import { useMapEvents } from '@/composables/map/composables/useMapEvents';
 import useHasWritePermission from '@/composables/useHasWritePermission';
 import { useLayout } from '@/composables/useLayout';
 import { useMapBackground } from '@/composables/useMapBackground';
+import { TMap } from '@/pages/maps';
 import { TMapConfig } from '@/types/map';
-import { TMap } from '@/types/models';
 import { Position, useMagicKeys, whenever } from '@vueuse/core';
 import { computed, ref, useTemplateRef } from 'vue';
 

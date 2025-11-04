@@ -3,7 +3,8 @@ import { getSecurityClass } from '@/composables/map/utils/security';
 import { useActiveMapCharacter } from '@/composables/useActiveMapCharacter';
 import { useMapUserSettings } from '@/composables/useMapUserSettings';
 import { useTrackingSystems } from '@/composables/useTrackingSystems';
-import { TSignature, TSolarsystem, TSolarsystemClass } from '@/types/models';
+import { TSolarsystem } from '@/pages/maps';
+import { TSignature, TSolarsystemClass } from '@/types/models';
 import { computed, onMounted, ref, watch } from 'vue';
 
 export function useTracking() {

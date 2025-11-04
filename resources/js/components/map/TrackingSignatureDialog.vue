@@ -8,13 +8,14 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { updateMapUserSettings } from '@/composables/map';
 import { Data } from '@/composables/map/utils/data';
 import { useMapUserSettings } from '@/composables/useMapUserSettings';
-import { TMapSolarSystem, TSignature } from '@/types/models';
+import { TMapSolarsystem } from '@/pages/maps';
+import { TSignature } from '@/types/models';
 import { UTCDate } from '@date-fns/utc';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { computed, ref, watch } from 'vue';
 
 const props = defineProps<{
-    originMapSolarsystem: TMapSolarSystem | null;
+    originMapSolarsystem: TMapSolarsystem | null;
     targetSolarsystemName: string | null;
     signatures: TSignature[] | null | undefined;
 }>();
@@ -77,7 +78,7 @@ function formatDate(date: string) {
             <DialogHeader>
                 <DialogTitle>Which signature did you jump?</DialogTitle>
                 <DialogDescription>
-                    You jumped from <strong>{{ originMapSolarsystem.name }}</strong> to <strong>{{ targetSolarsystemName }}</strong
+                    You jumped from <strong>{{ originMapSolarsystem.solarsystem.name }}</strong> to <strong>{{ targetSolarsystemName }}</strong
                     >. Please select which wormhole connection you used.
                 </DialogDescription>
             </DialogHeader>

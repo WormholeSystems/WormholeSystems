@@ -88,7 +88,7 @@ function onRouteHover(hovered: boolean) {
                 <Button variant="secondary" v-element-hover="onRouteHover" class="h-auto min-h-8 justify-start truncate">
                     <span v-if="map_solarsystem && map_solarsystem.alias" class="flex items-center gap-2 truncate">
                         <span class="truncate">{{ map_solarsystem.alias }}</span>
-                        <span class="truncate text-muted-foreground">{{ map_solarsystem.name }}</span>
+                        <span class="truncate text-muted-foreground">{{ map_solarsystem.solarsystem.name }}</span>
                         <span v-if="is_docked" class="text-xs text-muted-foreground">(Docked)</span>
                         <span v-else-if="is_scanner" class="text-xs text-amber-500">(Scanner)</span>
                     </span>
