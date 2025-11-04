@@ -49,6 +49,7 @@ final readonly class MapTrackingFeature implements ProvidesInertiaProperties
                     ->whereHas('signatureCategory', fn (Builder $q) => $q->where('name', 'Wormhole'))
                     ->with(['signatureType', 'signatureCategory', 'wormhole', 'mapConnection']),
             ])
+            ->withCount('signatures', 'wormholeSignatures', 'mapConnections')
             ->first()?->toResource(MapSolarsystemResource::class);
     }
 
