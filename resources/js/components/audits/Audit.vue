@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { CharacterImage } from '@/components/images';
 import { useSelectedMapSolarsystem } from '@/composables/useSelectedMapSolarsystem';
-import { TAudit, TMapSolarSystem } from '@/types/models';
+import { TMapSolarsystem } from '@/pages/maps';
+import { TAudit } from '@/types/models';
 import { UTCDate } from '@date-fns/utc';
 import { useNow } from '@vueuse/core';
 import { differenceInDays, differenceInHours, differenceInMinutes, format } from 'date-fns';
@@ -42,7 +43,7 @@ function truncateNotes(notes: string = ''): string {
 }
 
 const updated_values = computed(() => {
-    const column = Object.keys(audit.new_values).at(0) as keyof (TMapSolarSystem & {
+    const column = Object.keys(audit.new_values).at(0) as keyof (TMapSolarsystem & {
         position_x: number;
         position_y: number;
     });
@@ -60,7 +61,9 @@ const updated_values = computed(() => {
     }
 
     if (column === 'pinned') {
-        return audit.new_values.pinned ? `pinned ${selectedMapSolarsystem.value?.name}` : `unpinned ${selectedMapSolarsystem.value?.name}`;
+        return audit.new_values.pinned
+            ? `pinned ${selectedMapSolarsystem.value?.solarsystem.name}`
+            : `unpinned ${selectedMapSolarsystem.value?.solarsystem.name}`;
     }
 
     if (column === 'notes') {
@@ -124,13 +127,15 @@ const actor = computed(() => {
             <div v-else class="flex size-6 items-center justify-center rounded-lg bg-muted text-muted-foreground">S</div>
         </div>
         <span class="inline-block truncate" v-if="action === 'added'"
-            ><span class="text-neutral-900 dark:text-neutral-100">{{ actor }}</span> added {{ selectedMapSolarsystem?.name }} to the map
+            ><span class="text-neutral-900 dark:text-neutral-100">{{ actor }}</span> added {{ selectedMapSolarsystem?.solarsystem.name }} to the map
         </span>
         <span class="inline-block truncate" v-else-if="action === 'removed'"
-            ><span class="text-neutral-900 dark:text-neutral-100">{{ actor }}</span> removed {{ selectedMapSolarsystem?.name }} from the map
+            ><span class="text-neutral-900 dark:text-neutral-100">{{ actor }}</span> removed {{ selectedMapSolarsystem?.solarsystem.name }} from the
+            map
         </span>
         <span class="inline-block truncate" v-else-if="action === 'moved'"
-            ><span class="text-neutral-900 dark:text-neutral-100">{{ actor }}</span> moved {{ selectedMapSolarsystem?.name }} to a new position
+            ><span class="text-neutral-900 dark:text-neutral-100">{{ actor }}</span> moved {{ selectedMapSolarsystem?.solarsystem.name }} to a new
+            position
         </span>
         <span class="inline-block truncate" v-else-if="action === 'updated'">
             <span class="text-neutral-900 dark:text-neutral-100">{{ actor }}</span>

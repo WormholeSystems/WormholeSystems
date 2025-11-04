@@ -8,13 +8,13 @@ import useHasWritePermission from '@/composables/useHasWritePermission';
 import useIsMapOwner from '@/composables/useIsMapOwner';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SeoHead from '@/layouts/SeoHead.vue';
-import { TMap } from '@/types/models';
+import { TMapSummary } from '@/pages/maps';
 import { Link, usePage } from '@inertiajs/vue3';
 import { ArrowLeft, Route, Settings, User, Users } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 interface Props {
-    map: TMap;
+    map: TMapSummary;
     title: string;
     description?: string;
 }

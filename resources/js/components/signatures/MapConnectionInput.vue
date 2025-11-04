@@ -45,11 +45,11 @@ function isNotFilterable(type: TSignatureType | null): type is null {
         <SelectTrigger class="w-full text-xs">
             <SelectValue as-child>
                 <template v-if="selected">
-                    <SolarsystemClass :wormhole_class="selected.target.class" :security="selected.target.solarsystem?.security" />
-                    <span class="mr-auto truncate" v-if="!selected.target!.alias">{{ selected.target.name }}</span>
+                    <SolarsystemClass :wormhole_class="selected.target.solarsystem.class" :security="selected.target.solarsystem?.security" />
+                    <span class="mr-auto truncate" v-if="!selected.target!.alias">{{ selected.target.solarsystem.name }}</span>
                     <span class="mr-auto truncate" v-else>
                         <span class="mr-1">{{ selected.target?.alias }}</span>
-                        <span class="text-muted-foreground">{{ selected.target.name }}</span>
+                        <span class="text-muted-foreground">{{ selected.target.solarsystem.name }}</span>
                     </span>
                 </template>
                 <template v-else>

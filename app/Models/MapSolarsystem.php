@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Builders\MapSolarsystemBuilder;
 use App\Collections\MapSolarsystemCollection;
 use App\Enums\MapSolarsystemStatus;
+use App\Relations\HasManyMapConnections;
 use Database\Factories\MapSolarsystemFactory;
 use Illuminate\Database\Eloquent\Attributes\CollectedBy;
 use Illuminate\Database\Eloquent\Attributes\UseEloquentBuilder;
@@ -36,8 +37,10 @@ use Staudenmeir\EloquentHasManyDeep\HasRelationships;
  * @property bool $pinned
  * @property-read int|null $signatures_count
  * @property-read int|null $wormhole_signatures_count
+ * @property-read int|null $map_connections_count
  * @property-read Solarsystem $solarsystem
  * @property-read Map $map
+ * @property-read Collection<int,MapConnection> $mapConnections
  * @property-read Collection<int,MapConnection> $connectionsTo
  * @property-read Collection<int,MapConnection> $connectionsFrom
  * @property-read WormholeSystem|null $wormholeSystem
@@ -59,16 +62,16 @@ final class MapSolarsystem extends Model implements \OwenIt\Auditing\Contracts\A
     use HasRelationships;
 
     /**
-     * @var Collection<int,MapConnection>|null
+     * Get all connections where this solar system is either the source or destination.
      */
-    public ?Collection $connections {
-        get {
-            $mergedConnections = $this->connectionsTo->merge($this->connectionsFrom);
+    public function mapConnections(): HasManyMapConnections
+    {
+        $instance = $this->newRelatedInstance(MapConnection::class);
 
-            $this->setRelation('connections', $mergedConnections);
-
-            return $mergedConnections;
-        }
+        return new HasManyMapConnections(
+            $instance->newQuery(),
+            $this,
+        );
     }
 
     /**
@@ -85,22 +88,6 @@ final class MapSolarsystem extends Model implements \OwenIt\Auditing\Contracts\A
     public function map(): BelongsTo
     {
         return $this->belongsTo(Map::class);
-    }
-
-    /**
-     * @return HasMany<MapConnection,$this>
-     */
-    public function connectionsTo(): HasMany
-    {
-        return $this->hasMany(MapConnection::class, 'from_map_solarsystem_id');
-    }
-
-    /**
-     * @return HasMany<MapConnection,$this>
-     */
-    public function connectionsFrom(): HasMany
-    {
-        return $this->hasMany(MapConnection::class, 'to_map_solarsystem_id');
     }
 
     /**

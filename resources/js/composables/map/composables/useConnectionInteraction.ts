@@ -1,5 +1,5 @@
 import { useMapConnections, useMapMouse } from '@/composables/map';
-import { TMapConnection } from '@/types/models';
+import { TMapConnection } from '@/pages/maps';
 import { Position } from '@vueuse/core';
 import { computed, ref } from 'vue';
 

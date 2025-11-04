@@ -4,7 +4,7 @@ import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import { Combobox, ComboboxAnchor, ComboboxEmpty, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxList } from '@/components/ui/combobox';
 import { createMapSolarsystem } from '@/composables/map';
 import { useSearch } from '@/composables/useSearch';
-import { TMap, TSolarsystem } from '@/types/models';
+import { TMap, TSolarsystem } from '@/pages/maps';
 import { computed } from 'vue';
 
 const { map, solarsystems } = defineProps<{

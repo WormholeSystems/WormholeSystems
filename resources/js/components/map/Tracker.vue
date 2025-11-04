@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useTracking } from '@/composables/map/composables/useTracking';
 import { usePing } from '@/composables/usePing';
-import { TCharacter, TMap } from '@/types/models';
+import { TMap } from '@/pages/maps';
+import { TCharacter } from '@/types/models';
 import { computed } from 'vue';
 
 const { character, map } = defineProps<{

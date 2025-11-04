@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { PopoverContent } from '@/components/ui/popover';
-import { TMapConnection, TMapSolarSystem } from '@/types/models';
+import { TMapConnection, TMapSolarsystem } from '@/pages/maps';
 import { computed } from 'vue';
 import ConnectionStatus from './connection/ConnectionStatus.vue';
 import SignatureSection from './connection/SignatureSection.vue';
@@ -8,8 +8,8 @@ import WormholeProperties from './connection/WormholeProperties.vue';
 
 const { connection } = defineProps<{
     connection: TMapConnection & {
-        source: TMapSolarSystem;
-        target: TMapSolarSystem;
+        source: TMapSolarsystem;
+        target: TMapSolarsystem;
     };
 }>();
 

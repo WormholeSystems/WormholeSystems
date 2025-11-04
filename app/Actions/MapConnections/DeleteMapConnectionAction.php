@@ -44,7 +44,7 @@ final readonly class DeleteMapConnectionAction
             return;
         }
 
-        if ($mapSolarsystem->connectionsTo()->count() === 0 && $mapSolarsystem->connectionsFrom()->count() === 0) {
+        if (! $mapSolarsystem->mapConnections()->exists()) {
             $this->deleteMapSolarsystemAction->handle($mapSolarsystem);
         }
     }

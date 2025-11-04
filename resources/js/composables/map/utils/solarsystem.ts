@@ -1,8 +1,9 @@
-import { TMapSolarSystem, TSolarsystemClass, TStringedSolarsystemClass } from '@/types/models';
+import { TMapSolarsystem } from '@/pages/maps';
+import { TSolarsystemClass, TStringedSolarsystemClass } from '@/types/models';
 import { mapState } from '../state';
 import { TDataMapSolarSystem, WithIsSelected } from '../types';
 
-export function getSelectedState(system: TMapSolarSystem): WithIsSelected<TMapSolarSystem> {
+export function getSelectedState(system: TMapSolarsystem): WithIsSelected<TMapSolarsystem> {
     if (!mapState.selection) return { ...system, is_selected: false };
     if (!mapState.selection.end) return { ...system, is_selected: false };
 
@@ -27,7 +28,7 @@ export function getSelectedState(system: TMapSolarSystem): WithIsSelected<TMapSo
     return { ...system, is_selected };
 }
 
-export function getHoveredState(system: WithIsSelected<TMapSolarSystem>): TDataMapSolarSystem {
+export function getHoveredState(system: WithIsSelected<TMapSolarsystem>): TDataMapSolarSystem {
     const is_hovered = mapState.hovered_solarsystem_id === system.id;
     return { ...system, is_hovered };
 }

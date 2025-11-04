@@ -8,6 +8,7 @@ use App\Enums\RoutePreference;
 use App\Http\Resources\SolarsystemResource;
 use App\Models\Map;
 use App\Models\MapRouteSolarsystem;
+use App\Models\MapSolarsystem;
 use App\Models\MapUserSetting;
 use App\Models\Solarsystem;
 use App\Services\RouteOptions;
@@ -21,7 +22,7 @@ final readonly class MapRouteFeature implements ProvidesInertiaProperties
 {
     public function __construct(
         private Map $map,
-        private ?int $selected_map_solarsystem_id,
+        private ?MapSolarsystem $selected_map_solarsystem,
         private MapUserSetting $mapUserSetting,
         private RouteService $routeService,
     ) {}
@@ -38,7 +39,7 @@ final readonly class MapRouteFeature implements ProvidesInertiaProperties
      */
     private function getMapRouteSolarsystems(): array
     {
-        if ($this->selected_map_solarsystem_id === null || $this->selected_map_solarsystem_id === 0) {
+        if (! $this->selected_map_solarsystem instanceof MapSolarsystem) {
             return [];
         }
 
@@ -46,7 +47,7 @@ final readonly class MapRouteFeature implements ProvidesInertiaProperties
             ->whereIn('id', fn ($query) => $query
                 ->from('map_solarsystems')
                 ->select('solarsystem_id')
-                ->where('id', $this->selected_map_solarsystem_id)
+                ->where('id', $this->selected_map_solarsystem->id)
             )
             ->value('id');
 

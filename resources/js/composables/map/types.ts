@@ -1,5 +1,5 @@
+import { TMap, TMapConnection, TMapSolarsystem } from '@/pages/maps';
 import { TMapConfig } from '@/types/map';
-import { TMap, TMapConnection, TMapSolarSystem } from '@/types/models';
 
 export type Coordinates = {
     x: number;
@@ -28,10 +28,10 @@ export type WithHovered<T> = T & {
     is_hovered: boolean;
 };
 
-export type TDataMapSolarSystem = WithIsSelected<WithHovered<TMapSolarSystem>>;
+export type TDataMapSolarSystem = WithIsSelected<WithHovered<TMapSolarsystem>>;
 
 export type TProcessedConnection = TMapConnection & {
-    source: TMapSolarSystem;
-    target: TMapSolarSystem;
+    source: TMapSolarsystem;
+    target: TMapSolarsystem;
     is_on_route?: boolean;
 };

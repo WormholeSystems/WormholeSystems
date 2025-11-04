@@ -182,7 +182,7 @@ final readonly class StoreTrackingAction
      */
     private function getLatestChildConnection(MapSolarsystem $mapSolarsystem): ?MapConnection
     {
-        return $mapSolarsystem->connections->sortByDesc('created_at')
+        return $mapSolarsystem->mapConnections->sortByDesc('created_at')
             ->filter(fn (MapConnection $mapConnection): bool => $this->excludeConnectionsToParent($mapConnection, $mapSolarsystem))
             ->first();
     }

@@ -14,15 +14,14 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useSearch } from '@/composables/useSearch';
-import { TClosestSystem, TClosestSystems } from '@/pages/maps';
-import { TMap, TMapSolarSystem, TSolarsystem } from '@/types/models';
+import { TClosestSystem, TClosestSystems, TMap, TSelectedMapSolarsystem, TSolarsystem } from '@/pages/maps';
 import { router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
 const { solarsystems, closest_systems } = defineProps<{
     map: TMap;
     solarsystems: TSolarsystem[];
-    selected_map_solarsystem?: TMapSolarSystem | null;
+    selected_map_solarsystem?: TSelectedMapSolarsystem | null;
     closest_systems?: TClosestSystems | null;
 }>();
 
@@ -308,7 +307,7 @@ function handleLimitChange(limit: number) {
                                                 />
                                                 <SolarsystemEffect
                                                     v-else-if="result.solarsystem.effect"
-                                                    :effect="result.solarsystem.effect"
+                                                    :effect="result.solarsystem.effect.name"
                                                     class="ml-auto"
                                                 />
                                             </div>

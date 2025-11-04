@@ -1,18 +1,18 @@
+import { TMapSolarsystem } from '@/pages/maps';
 import MapConnections from '@/routes/map-connections';
-import { TMapSolarSystem } from '@/types/models';
 import { router } from '@inertiajs/vue3';
 import { MaybeRefOrGetter, useEventListener } from '@vueuse/core';
 import { computed, reactive, toValue } from 'vue';
 
 const store = reactive<{
-    origin: TMapSolarSystem | null;
+    origin: TMapSolarsystem | null;
 }>({
     origin: null,
 });
 
 export function useNewConnection(
     handle?: MaybeRefOrGetter<HTMLElement | null>,
-    map_solarsystem?: MaybeRefOrGetter<TMapSolarSystem>,
+    map_solarsystem?: MaybeRefOrGetter<TMapSolarsystem>,
     container?: MaybeRefOrGetter<HTMLElement>,
 ) {
     const origin = computed(() => store.origin);
@@ -53,12 +53,12 @@ export function useNewConnection(
         );
     }
 
-    function getMaximumShipSizeForConnection(from: TMapSolarSystem, to: TMapSolarSystem): string | undefined {
-        const classes = [from.class, to.class].filter((c) => c !== null && c !== undefined);
+    function getMaximumShipSizeForConnection(from: TMapSolarsystem, to: TMapSolarsystem): string | undefined {
+        const classes = [from.solarsystem.class, to.solarsystem.class].filter((c) => c !== null && c !== undefined);
         if (classes.includes(1)) return 'medium';
 
         // Check if Turnur connects to JSpace
-        const names = [from.name, to.name];
+        const names = [from.solarsystem.name, to.solarsystem.name];
         if (names.includes('Turnur') && classes.length) return 'medium';
 
         // Check if Thera connects to Highsec

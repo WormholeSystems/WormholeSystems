@@ -1,5 +1,5 @@
 import { usePath } from '@/composables/usePath';
-import { TMapConnection } from '@/types/models';
+import { TMapConnection } from '@/pages/maps';
 import { mapState } from '../state';
 import { TProcessedConnection } from '../types';
 

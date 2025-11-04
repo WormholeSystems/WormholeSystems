@@ -6,13 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import useIsMapOwner from '@/composables/useIsMapOwner';
 import SettingsLayout from '@/layouts/SettingsLayout.vue';
+import { TMapSummary } from '@/pages/maps';
 import { destroy, update } from '@/routes/maps';
-import { TMap } from '@/types/models';
 import { router, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
 const { map } = defineProps<{
-    map: TMap;
+    map: TMapSummary;
 }>();
 
 const user_is_owner = useIsMapOwner();

@@ -1,5 +1,5 @@
 import PingController from '@/actions/App/Http/Controllers/PingController';
-import { TMap } from '@/types/models';
+import { TMap } from '@/pages/maps';
 import { useFetch, useIntervalFn } from '@vueuse/core';
 import { MaybeRefOrGetter, toValue } from 'vue';
 

@@ -113,7 +113,7 @@ final readonly class RouteService
             }
 
             $enrichedRoutes[$key] = collect($path)
-                ->map(fn (int $id) => $solarsystems->get($id)?->toResource(SolarsystemResource::class))
+                ->map(static fn (int $id) => $solarsystems->get($id)?->toResource(SolarsystemResource::class))
                 ->filter()
                 ->values()
                 ->toArray();
@@ -179,7 +179,7 @@ final readonly class RouteService
 
         // Convert to ClosestSystemResult DTOs and then to arrays
         return $sortedDistances
-            ->map(function ($distance) use ($solarsystems): ?ClosestSystemResult {
+            ->map(static function ($distance) use ($solarsystems): ?ClosestSystemResult {
                 $solarsystem = $solarsystems->get($distance->targetSystemId);
                 if (! $solarsystem instanceof Solarsystem) {
                     return null;
@@ -244,7 +244,7 @@ final readonly class RouteService
             ->keyBy('id');
 
         return collect($path)
-            ->map(fn (int $id) => $solarsystems->get($id)?->toResource(SolarsystemResource::class))
+            ->map(static fn (int $id) => $solarsystems->get($id)?->toResource(SolarsystemResource::class))
             ->filter()
             ->values()
             ->toArray();

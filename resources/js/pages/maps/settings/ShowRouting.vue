@@ -5,14 +5,15 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import SettingsLayout from '@/layouts/SettingsLayout.vue';
+import { TMapSummary } from '@/pages/maps';
 import MapUserSettings from '@/routes/map-user-settings';
-import { TMap, TMapUserSetting, TRoutePreference } from '@/types/models';
+import { TMapUserSetting, TRoutePreference } from '@/types/models';
 import { router } from '@inertiajs/vue3';
 import { AcceptableValue } from 'reka-ui';
 import { ref, watch } from 'vue';
 
 const { map, map_user_settings } = defineProps<{
-    map: TMap;
+    map: TMapSummary;
     map_user_settings: TMapUserSetting;
 }>();
 

@@ -60,7 +60,7 @@ const updated_date_formatted = computed(() => {
 });
 
 const lifetime_date = computed(() => {
-    const lifetimeTime = signature.lifetime_updated_at || selected_connection?.lifetime_updated_at;
+    const lifetimeTime = signature.lifetime_updated_at || selected_connection?.lifetime_status_updated_at;
     return lifetimeTime ? new UTCDate(lifetimeTime) : null;
 });
 
@@ -72,7 +72,7 @@ const lifetime_ago = computed(() => {
 });
 
 const lifetime_display = computed(() => {
-    const lifetime = signature.lifetime !== 'healthy' ? signature.lifetime : selected_connection?.lifetime;
+    const lifetime = signature.lifetime !== 'healthy' ? signature.lifetime : selected_connection?.lifetime_status;
     switch (lifetime) {
         case 'eol':
             return 'End of Life (<4h)';
@@ -84,7 +84,7 @@ const lifetime_display = computed(() => {
 });
 
 const current_lifetime = computed(() => {
-    return signature.lifetime !== 'healthy' ? signature.lifetime : selected_connection?.lifetime || 'healthy';
+    return signature.lifetime !== 'healthy' ? signature.lifetime : selected_connection?.lifetime_status || 'healthy';
 });
 </script>
 

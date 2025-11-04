@@ -14,11 +14,11 @@ import { createSignature, useSignatures } from '@/composables/map';
 import { usePasteSignatures } from '@/composables/map/composables/usePasteSignatures';
 import { useSortableSignatures } from '@/composables/map/composables/useSortedSignatures';
 import useHasWritePermission from '@/composables/useHasWritePermission';
-import { TMapSolarSystem } from '@/types/models';
+import { TSelectedMapSolarsystem } from '@/pages/maps';
 import { computed } from 'vue';
 
 const props = defineProps<{
-    map_solarsystem: TMapSolarSystem | null;
+    map_solarsystem: TSelectedMapSolarsystem | null;
 }>();
 
 const { connections } = useSignatures();

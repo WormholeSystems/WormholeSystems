@@ -30,7 +30,7 @@ const display_class = computed(() => {
         </span>
         <span
             :data-class="wormhole.target_class"
-            class="text-muted-foreground data-[class='1']:text-c1 data-[class='2']:text-c2 data-[class='3']:text-c3 data-[class='4']:text-c4 data-[class='5']:text-c5 data-[class='6']:text-c6 data-[class=h]:text-hs data-[class=l]:text-ls data-[class=n]:text-ns"
+            class="text-muted-foreground data-[class=1]:text-c1 data-[class=2]:text-c2 data-[class=3]:text-c3 data-[class=4]:text-c4 data-[class=5]:text-c5 data-[class=6]:text-c6 data-[class=h]:text-hs data-[class=l]:text-ls data-[class=n]:text-ns"
         >
             {{ display_class }}
         </span>

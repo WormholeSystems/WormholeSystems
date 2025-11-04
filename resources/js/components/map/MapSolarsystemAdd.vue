@@ -5,15 +5,13 @@ import { Combobox, ComboboxAnchor, ComboboxEmpty, ComboboxGroup, ComboboxInput, 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { createMapSolarsystem } from '@/composables/map';
 import { useSearch } from '@/composables/useSearch';
-import { TShowMapProps } from '@/pages/maps';
-import { AppPageProps } from '@/types';
-import { TSolarsystem } from '@/types/models';
-import { usePage } from '@inertiajs/vue3';
+import { useShowMap } from '@/composables/useShowMap';
+import { TSolarsystem } from '@/pages/maps';
 import { computed, ref } from 'vue';
 
 const search = useSearch('search', ['solarsystems']);
 
-const page = usePage<AppPageProps<TShowMapProps>>();
+const page = useShowMap();
 
 const adding = ref(false);
 

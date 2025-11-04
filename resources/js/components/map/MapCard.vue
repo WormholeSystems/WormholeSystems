@@ -15,13 +15,13 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
+import { TMapSummary } from '@/pages/maps';
 import MapUserSettings from '@/routes/map-user-settings';
-import { TMap } from '@/types/models';
 import { Link } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
 const { map } = defineProps<{
-    map: TMap;
+    map: TMapSummary;
 }>();
 
 const open = ref(false);

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import MapConnection from '@/components/map/MapConnection.vue';
 import { useMapConnections, useMapMouse, useNewConnection, useSelection } from '@/composables/map';
-import { TMapConnection } from '@/types/models';
+import { TMapConnection } from '@/pages/maps';
 import { useEventListener } from '@vueuse/core';
 import { ref, useTemplateRef } from 'vue';
 
@@ -76,7 +76,7 @@ function getConnectionExtra(connection: TMapConnection): string {
                 :to="map_connection.target.position!"
                 :extra="getConnectionExtra(map_connection)"
                 :mass_status="map_connection.mass_status"
-                :lifetime="map_connection.lifetime"
+                :lifetime="map_connection.lifetime_status"
                 :is_highlighted="map_connection.is_on_route"
                 @connection-context-menu="(event) => emit('connectionContextMenu', event, map_connection)"
                 @connection-click="(event) => emit('connectionClick', event, map_connection)"

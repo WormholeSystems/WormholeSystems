@@ -1,5 +1,5 @@
+import { TMapInfo } from '@/pages/maps';
 import { AppPageProps } from '@/types';
-import { TMap } from '@/types/models';
 import { usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import useUser from './useUser';
@@ -7,7 +7,7 @@ import useUser from './useUser';
 export default function useIsMapOwner() {
     const page = usePage<
         AppPageProps<{
-            map: TMap;
+            map: TMapInfo;
         }>
     >();
 

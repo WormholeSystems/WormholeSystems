@@ -20,14 +20,17 @@ use App\Features\MapTrackingFeature;
 use App\Features\ShipHistoryFeature;
 use App\Http\Requests\StoreMapRequest;
 use App\Http\Requests\UpdateMapRequest;
+use App\Http\Resources\MapCardResource;
 use App\Http\Resources\MapResource;
 use App\Models\Map;
+use App\Models\MapSolarsystem;
 use App\Models\User;
 use App\Scopes\WithVisibleSolarsystems;
 use App\Services\EveScoutService;
 use App\Services\RouteService;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -49,10 +52,17 @@ final class MapController extends Controller
     public function show(Request $request, Map $map): Response
     {
         Gate::authorize('view', $map);
-
         $map = Map::query()
+            ->with([
+                'mapSolarsystems' => fn (Relation $query): Relation => $query->withCount('signatures', 'wormholeSignatures', 'mapConnections'),
+            ])
             ->tap(new WithVisibleSolarsystems)
             ->findOrFail($map->id);
+
+        $selected_map_solarsystem = $this->getSelectedMapSolarsystem(
+            $request->input('map_solarsystem_id'),
+            $map,
+        );
 
         // Initialize feature classes
         $settingsFeature = new MapSettingsFeature($this->user, $map->id);
@@ -61,7 +71,7 @@ final class MapController extends Controller
         $selectionFeature = new MapSelectionFeature(
             $map,
             $this->user,
-            $request->integer('map_solarsystem_id')
+            $selected_map_solarsystem,
         );
 
         $can_view_characters = Gate::allows('viewCharacters', $map);
@@ -72,14 +82,14 @@ final class MapController extends Controller
         $charactersFeature = new MapCharactersFeature(
             $map,
             $can_view_characters,
-            $selectionFeature->getSelectedMapSolarsystem(),
+            $selected_map_solarsystem,
             $settings,
             $this->route_service
         );
         $shipHistoryFeature = new ShipHistoryFeature($this->user, $can_view_characters);
         $routeFeature = new MapRouteFeature(
             $map,
-            $request->integer('map_solarsystem_id'),
+            $selected_map_solarsystem,
             $settings,
             $this->route_service
         );
@@ -107,7 +117,7 @@ final class MapController extends Controller
             $this->eve_scout_service,
             $this->route_service,
             $map,
-            $selectionFeature->getSelectedMapSolarsystem()
+            $selected_map_solarsystem,
         );
 
         return Inertia::render('maps/ShowMap', [
@@ -144,7 +154,7 @@ final class MapController extends Controller
                 ])
                 ->with('mapUserSetting')
                 ->get()
-                ->toResourceCollection(MapResource::class),
+                ->toResourceCollection(MapCardResource::class),
             'search' => $search->toString(),
         ]);
     }
@@ -180,5 +190,17 @@ final class MapController extends Controller
         $map->delete();
 
         return to_route('home')->notify('Map deleted successfully.', 'You have successfully deleted the map.');
+    }
+
+    /**
+     * Get the selected map solarsystem based on the provided ID.
+     */
+    private function getSelectedMapSolarsystem(null|string|int $selected_map_solarsystem_id, Map $map): ?MapSolarsystem
+    {
+        if ($selected_map_solarsystem_id === null) {
+            return null;
+        }
+
+        return $map->mapSolarsystems()->findOrFail((int) $selected_map_solarsystem_id);
     }
 }

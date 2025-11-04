@@ -1,7 +1,7 @@
 import { useSelectedMapSolarsystem } from '@/composables/useSelectedMapSolarsystem';
+import { TMapSolarsystem } from '@/pages/maps';
 import MapSelection from '@/routes/map-selection';
 import MapSolarsystems from '@/routes/map-solarsystems';
-import { TMapSolarSystem } from '@/types/models';
 import { router } from '@inertiajs/vue3';
 import { MaybeRefOrGetter, useDraggable, useEventListener } from '@vueuse/core';
 import { computed, shallowRef, toValue, watchEffect } from 'vue';
@@ -10,7 +10,7 @@ import { useSelection } from './useSelection';
 import { useMapSolarsystems } from './useSolarsystems';
 
 export function useMapSolarsystem(
-    system: MaybeRefOrGetter<TMapSolarSystem>,
+    system: MaybeRefOrGetter<TMapSolarsystem>,
     element: MaybeRefOrGetter<HTMLElement | null>,
     handle?: MaybeRefOrGetter<HTMLElement | null>,
 ) {

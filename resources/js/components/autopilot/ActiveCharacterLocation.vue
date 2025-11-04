@@ -4,7 +4,8 @@ import RoutePopover from '@/components/autopilot/RoutePopover.vue';
 import { CharacterImage } from '@/components/images';
 import { Button } from '@/components/ui/button';
 import { usePath } from '@/composables/usePath';
-import { TCharacter, TCharacterStatus, TSolarsystem } from '@/types/models';
+import { TSolarsystem } from '@/pages/maps';
+import { TCharacter, TCharacterStatus } from '@/types/models';
 import { vElementHover } from '@vueuse/components';
 import TypeImage from '../images/TypeImage.vue';
 

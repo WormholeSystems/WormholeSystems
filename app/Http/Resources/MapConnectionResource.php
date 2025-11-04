@@ -25,18 +25,15 @@ final class MapConnectionResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'map_id' => $this->map_id,
             'from_map_solarsystem_id' => $this->from_map_solarsystem_id,
             'to_map_solarsystem_id' => $this->to_map_solarsystem_id,
-            'wormhole_id' => $this->wormhole_id,
             'mass_status' => $this->mass_status,
-            'connected_at' => $this->connected_at,
+            'lifetime_status' => $this->lifetime,
+            'lifetime_status_updated_at' => $this->lifetime_updated_at,
+            'signatures' => $this->signatures->toResourceCollection(MapSignatureResource::class),
             'ship_size' => $this->ship_size,
-            'lifetime' => $this->lifetime,
-            'lifetime_updated_at' => $this->lifetime_updated_at,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
-            'signatures' => $this->signatures->toResourceCollection(SignatureResource::class),
         ];
     }
 }

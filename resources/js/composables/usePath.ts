@@ -1,4 +1,4 @@
-import { TSolarsystem } from '@/types/models';
+import { TSolarsystem } from '@/pages/maps';
 import { readonly, ref } from 'vue';
 
 const path = ref<TSolarsystem[] | null>(null);
