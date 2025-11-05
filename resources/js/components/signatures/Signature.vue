@@ -115,7 +115,7 @@ const is_scanned = computed(() => {
 });
 
 const is_incomplete = computed(() => {
-    return Boolean((signature.signature_id && signature.category) || signature.signature_type_id || signature.raw_type_name);
+    return Boolean((signature.signature_id && signature.signature_category) || signature.signature_type_id || signature.raw_type_name);
 });
 
 function handleChange(data: Record<any, any>) {
@@ -220,14 +220,14 @@ function handleMassStatusChange(mass_status: string) {
                 @update:model-value="handleTypeChange"
                 :can_write="can_write"
                 :options="sortedAvailableTypes"
-                :category="signature.category?.name"
+                :category="signature.signature_category?.name"
                 :raw-type-name="signature.raw_type_name"
             />
         </div>
 
         <div v-if="isWormhole">
             <MapConnectionInput
-                :type="signature.type"
+                :type="signature.signature_type"
                 :selected="selected_connection"
                 :unconnected_connections="unconnected_connections"
                 :connected_connections="connected_connections"
@@ -236,7 +236,7 @@ function handleMassStatusChange(mass_status: string) {
             />
         </div>
 
-        <SignatureTimeDetails :category="signature.category?.name" :selected_connection="selected_connection" :signature="signature" />
+        <SignatureTimeDetails :category="signature.signature_category?.name" :selected_connection="selected_connection" :signature="signature" />
 
         <!-- Actions Dropdown -->
         <div class="text-right">
@@ -247,7 +247,7 @@ function handleMassStatusChange(mass_status: string) {
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                    <template v-if="signature.category?.name === 'Wormhole'">
+                    <template v-if="signature.signature_category?.name === 'Wormhole'">
                         <!-- Mass Status Options -->
                         <DropdownMenuRadioGroup :model-value="signature.mass_status || 'unknown'" @update:model-value="handleMassStatusChange">
                             <DropdownMenuRadioItem value="fresh">

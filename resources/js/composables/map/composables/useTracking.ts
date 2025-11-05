@@ -72,8 +72,8 @@ export function useTracking() {
         if (!target_solarsystem.value) return true;
         const solarsystem_class = getTargetSolarsystemClass(target_solarsystem.value);
         if (!solarsystem_class) return true;
-        if (signature.type?.target_class === String(solarsystem_class)) return true;
-        return signature.type?.target_class === null;
+        if (signature.signature_type?.target_class === String(solarsystem_class)) return true;
+        return signature.signature_type?.target_class === null;
     }
 
     function performJump() {

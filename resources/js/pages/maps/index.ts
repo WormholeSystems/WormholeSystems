@@ -65,7 +65,7 @@ export type TShowMapProps = {
     shortest_path?: TShortestPath | null;
     ignored_systems: number[];
     closest_systems?: TClosestSystems | null;
-    tracking_origin?: TMapSolarsystem | null;
+    tracking_origin?: TSelectedMapSolarsystem | null;
     tracking_target?: TSolarsystem | null;
     eve_scout_connections?: TEveScoutConnection[];
 };
@@ -187,8 +187,8 @@ export type TTailoredSignature = {
     target_class: TSolarsystemClass | null;
     extra: string | null;
     wormhole: TWormhole | null;
-    category: TSignatureCategory | null;
-    type: TSignatureType | null;
+    signature_category: TSignatureCategory | null;
+    signature_type: TSignatureType | null;
     raw_type_name: string;
     created_at: string;
     updated_at: string;
