@@ -19,14 +19,14 @@ export function useTracking() {
 
     const show_signature_modal = ref(false);
     const signatures = computed(() => origin_map_solarsystem.value?.signatures?.toSorted(sortSignatures).filter(isPossibleSignature));
+    const existing_map_solarsystem = computed(() => map_solarsystems.value.find((s) => s.solarsystem_id === target_solarsystem.value?.id));
     const existing_connection = computed(() => {
-        const map_solarsystem = map_solarsystems.value.find((s) => s.solarsystem_id === target_solarsystem.value?.id);
-        if (!map_solarsystem) return null;
+        if (!existing_map_solarsystem.value) return null;
         return (
             signatures.value?.find(
                 (s) =>
-                    s.map_connection?.to_map_solarsystem_id === map_solarsystem.id ||
-                    s.map_connection?.from_map_solarsystem_id === map_solarsystem.id,
+                    s.map_connection?.to_map_solarsystem_id === existing_map_solarsystem.value?.id ||
+                    s.map_connection?.from_map_solarsystem_id === existing_map_solarsystem.value?.id,
             ) || null
         );
     });
@@ -78,8 +78,9 @@ export function useTracking() {
 
     function performJump() {
         if (existing_connection.value?.map_connection_id) return;
-        if (!signatures.value?.length || !map_user_settings.value.prompt_for_signature_enabled)
+        if (!signatures.value?.length || !map_user_settings.value.prompt_for_signature_enabled) {
             return createTracking(origin_map_solarsystem.value!.id, target_solarsystem.value!.id);
+        }
 
         show_signature_modal.value = true;
     }
