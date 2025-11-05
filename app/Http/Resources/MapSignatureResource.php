@@ -27,13 +27,14 @@ final class MapSignatureResource extends JsonResource
             'extra' => $this->signatureType?->extra,
             'wormhole' => $this->wormhole?->toResource(WormholeResource::class),
             'category' => $this->getSignatureCategory(),
-            'type' => $this->getSignatureType(),
+            'type' => $this->signatureType?->toResource(SignatureTypeResource::class),
             'raw_type_name' => $this->getRawTypeName(),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'lifetime_status' => $this->lifetime,
             'lifetime_status_updated_at' => $this->lifetime_updated_at,
             'mass_status' => $this->mass_status,
+            'map_connection_id' => $this->map_connection_id,
         ];
     }
 

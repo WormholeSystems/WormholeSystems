@@ -148,8 +148,8 @@ export type TSignature = {
     signature_type_id: number | null;
     signature_category_id: number | null;
     raw_type_name: string | null;
-    signature_type: TSignatureType | null;
-    signature_category: TSignatureCategory | null;
+    type: TSignatureType | null;
+    category: TSignatureCategory | null;
     mass_status: TMassStatus | null;
     ship_size: TShipSize | null;
     lifetime: TLifetimeStatus;

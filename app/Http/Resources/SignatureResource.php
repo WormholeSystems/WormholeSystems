@@ -29,7 +29,7 @@ final class SignatureResource extends JsonResource
             'signature_type_id' => $this->signature_type_id,
             'signature_category_id' => $this->signature_category_id,
             'raw_type_name' => $this->unless($this->signature_type_id !== null, $this->raw_type_name),
-            'signature_type' => $this->signatureType,
+            'signature_type' => $this->signatureType?->toResource(SignatureTypeResource::class),
             'signature_category' => $this->signatureCategory,
             'map_connection_id' => $this->map_connection_id,
             'wormhole_id' => $this->wormhole_id,
