@@ -24,10 +24,10 @@ export function useSortableSignatures<T extends TSignature>(signatures: Ref<T[]>
                 primaryComparison = compareNullableStrings(a.signature_id, b.signature_id);
                 break;
             case 'category':
-                primaryComparison = compareNullableStrings(a.category?.name ?? null, b.category?.name ?? null);
+                primaryComparison = compareNullableStrings(a.signature_category?.name ?? null, b.signature_category?.name ?? null);
                 break;
             case 'type':
-                primaryComparison = compareNullableStrings(a.type?.name ?? null, b.type?.name ?? null);
+                primaryComparison = compareNullableStrings(a.signature_type?.name ?? null, b.signature_type?.name ?? null);
                 break;
             default:
                 primaryComparison = 0;

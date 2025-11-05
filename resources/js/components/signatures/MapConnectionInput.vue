@@ -1,16 +1,7 @@
 <script setup lang="ts">
 import ConnectionOption from '@/components/signatures/ConnectionOption.vue';
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
-import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectLabel,
-    SelectSeparator,
-    SelectTrigger,
-    SelectValue
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getSolarsystemClass, TProcessedConnection } from '@/composables/map';
 import { TSignatureType } from '@/types/models';
 import { computed, ref } from 'vue';

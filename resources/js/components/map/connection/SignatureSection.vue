@@ -13,7 +13,9 @@ defineProps<{
         <div class="grid grid-cols-2 divide-y truncate text-xs text-muted-foreground *:py-1">
             <div class="col-span-full grid grid-cols-subgrid">
                 <span>Type</span>
-                <span class="text-right">{{ signature.wormhole?.name || signature.type?.name || signature.raw_type_name || 'Unknown' }}</span>
+                <span class="text-right">{{
+                    signature.wormhole?.name || signature.signature_type?.name || signature.raw_type_name || 'Unknown'
+                }}</span>
             </div>
             <div class="col-span-full grid grid-cols-subgrid">
                 <span>Signature ID</span>

@@ -29,7 +29,7 @@ const filtered = computed(() => {
 
     return props.signatures.filter((s) => {
         const sig = (s.signature_id || '').toLocaleLowerCase();
-        const type = (s.type?.name || '').toLocaleLowerCase();
+        const type = (s.signature_type?.name || '').toLocaleLowerCase();
         const rawType = (s.raw_type_name || '').toLocaleLowerCase();
         return sig.includes(search.value) || type.includes(search.value) || rawType.includes(search.value);
     });
@@ -104,7 +104,7 @@ function formatDate(date: string) {
                     >
                         <RadioGroupItem :value="option.id" />
                         <div class="font-medium">{{ option.signature_id }}</div>
-                        <WormholeOption :wormhole="option.type" v-if="option.type" />
+                        <WormholeOption :wormhole="option.signature_type" v-if="option.signature_type" />
                         <div class="text-muted-foreground" v-else-if="option.raw_type_name">{{ option.raw_type_name }}</div>
                         <div class="text-muted-foreground" v-else-if="option.map_connection_id">Already connected</div>
                         <div class="text-muted-foreground" v-else>Unknown</div>
