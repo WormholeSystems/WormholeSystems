@@ -1,13 +1,22 @@
 <script setup lang="ts">
 import ConnectionOption from '@/components/signatures/ConnectionOption.vue';
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectLabel,
+    SelectSeparator,
+    SelectTrigger,
+    SelectValue
+} from '@/components/ui/select';
 import { getSolarsystemClass, TProcessedConnection } from '@/composables/map';
 import { TSignatureType } from '@/types/models';
 import { computed, ref } from 'vue';
 
 const { type, unconnected_connections, connected_connections } = defineProps<{
-    type: TSignatureType | null;
+    type: TSignatureType | null | undefined;
     selected: TProcessedConnection | null;
     unconnected_connections: TProcessedConnection[];
     connected_connections: TProcessedConnection[];
@@ -33,8 +42,8 @@ const filtered_connected_connections = computed(() => {
     return connected_connections.filter((connection) => type.target_class === getSolarsystemClass(connection.target).toString());
 });
 
-function isNotFilterable(type: TSignatureType | null): type is null {
-    if (type === null) return true;
+function isNotFilterable(type: TSignatureType | null | undefined): type is null | undefined {
+    if (!type) return true;
     if (type.target_class === null) return true;
     return type.target_class === 'unknown';
 }

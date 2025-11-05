@@ -50,18 +50,6 @@ final class MapSignatureResource extends JsonResource
         ];
     }
 
-    private function getSignatureType(): ?array
-    {
-        if ($this->signatureType === null) {
-            return null;
-        }
-
-        return [
-            'id' => $this->signatureType->id,
-            'name' => $this->signatureType->name,
-        ];
-    }
-
     private function getRawTypeName(): ?string
     {
         if ($this->signatureType !== null) {
