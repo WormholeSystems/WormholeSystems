@@ -195,6 +195,7 @@ export type TTailoredSignature = {
     lifetime_status: TLifetimeStatus | null;
     lifetime_status_updated_at: string | null;
     mass_status: TMassStatus | null;
+    map_connection_id: number | null;
 };
 
 export type TSelectedMapSolarsystem = TMapSolarsystem & {
