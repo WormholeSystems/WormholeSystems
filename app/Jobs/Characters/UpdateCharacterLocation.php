@@ -10,6 +10,7 @@ use Illuminate\Bus\Batchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use NicolasKion\Esi\DTO\Location;
 use NicolasKion\Esi\DTO\Ship;
 use NicolasKion\Esi\Esi;
@@ -81,5 +82,15 @@ final class UpdateCharacterLocation implements ShouldQueue
             // Mark that event should be dispatched
             $characterStatus->update(['event_queued_at' => now()]);
         }
+    }
+
+    /**
+     * Get the middleware the job should pass through.
+     *
+     * @return array<int, object>
+     */
+    public function middleware(): array
+    {
+        return [new WithoutOverlapping((string) $this->character_status_id)->dontRelease()->expireAfter(60)];
     }
 }

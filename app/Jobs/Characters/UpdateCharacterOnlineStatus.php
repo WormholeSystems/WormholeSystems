@@ -8,6 +8,7 @@ use App\Models\CharacterStatus;
 use Illuminate\Bus\Batchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use NicolasKion\Esi\Esi;
 use Throwable;
 
@@ -64,5 +65,15 @@ final class UpdateCharacterOnlineStatus implements ShouldQueue
             'last_online_at' => $request->data->online ? now() : $characterStatus->last_online_at,
             'online_last_checked_at' => now(),
         ]);
+    }
+
+    /**
+     * Get the middleware the job should pass through.
+     *
+     * @return array<int, object>
+     */
+    public function middleware(): array
+    {
+        return [new WithoutOverlapping((string) $this->character_status_id)->dontRelease()->expireAfter(60)];
     }
 }

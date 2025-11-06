@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Schedule;
 
 Schedule::command(GetServerStatusCommand::class)->runInBackground()->everyMinute()->withoutOverlapping();
 Schedule::command(GetOnlineCharactersCommand::class)->runInBackground()->everyThirtySeconds()->withoutOverlapping()->notDuringDowntime();
-Schedule::command(GetOnlineCharacterLocationsCommand::class)->runInBackground()->everyTenSeconds()->withoutOverlapping()->notDuringDowntime();
+Schedule::command(GetOnlineCharacterLocationsCommand::class)->runInBackground()->everyFiveSeconds()->withoutOverlapping()->notDuringDowntime();
 Schedule::command(GetSovereigntiesCommand::class)->runInBackground()->daily()->at('15:00')->withoutOverlapping()->notDuringDowntime();
 Schedule::command(CheckConnectionAgeCommand::class)->runInBackground()->everyTenMinutes()->withoutOverlapping();
 Schedule::command(DeleteOldSignaturesCommand::class)->runInBackground()->everyTenMinutes()->withoutOverlapping();
