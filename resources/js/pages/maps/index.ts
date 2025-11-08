@@ -184,6 +184,7 @@ export type TWormhole = {
 export type TTailoredSignature = {
     id: number;
     signature_id: string;
+    map_solarsystem_id: number;
     target_class: TSolarsystemClass | null;
     extra: string | null;
     wormhole: TWormhole | null;

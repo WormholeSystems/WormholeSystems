@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CopyConnectionNameMenu from '@/components/map/CopyConnectionNameMenu.vue';
 import {
     ContextMenuContent,
     ContextMenuItem,
@@ -9,14 +10,13 @@ import {
     ContextMenuSubContent,
     ContextMenuSubTrigger,
 } from '@/components/ui/context-menu';
-import { deleteMapConnection, updateMapConnection } from '@/composables/map';
+import { deleteMapConnection, TProcessedConnection, updateMapConnection } from '@/composables/map';
 import { formatDateToISO } from '@/lib/utils';
-import { TMapConnection } from '@/pages/maps';
 import { TLifetimeStatus, TMassStatus, TShipSize } from '@/types/models';
 import { UTCDate } from '@date-fns/utc';
 
 const { map_connection } = defineProps<{
-    map_connection: TMapConnection;
+    map_connection: TProcessedConnection;
 }>();
 
 function handleRemoveFromMap() {
@@ -97,6 +97,8 @@ function handleLifetimeChange(lifetime: TLifetimeStatus | string) {
                 </ContextMenuRadioGroup>
             </ContextMenuSubContent>
         </ContextMenuSub>
+        <ContextMenuSeparator />
+        <CopyConnectionNameMenu :map_connection="map_connection" />
         <ContextMenuSeparator />
         <ContextMenuItem @click="handleRemoveFromMap"> Remove connection</ContextMenuItem>
     </ContextMenuContent>
