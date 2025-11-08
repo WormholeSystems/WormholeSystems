@@ -48,7 +48,7 @@ const unconnected_connections = computed(() => {
 });
 
 function handleSort(column: string) {
-    const sortColumn = column as 'id' | 'category' | 'type';
+    const sortColumn = column as 'id' | 'category' | 'type' | 'age';
     let newDirection: 'asc' | 'desc';
 
     if (sortPreferences.value.column === sortColumn) {
@@ -136,7 +136,13 @@ function createNewSignature() {
                             @sort="handleSort"
                         />
                         <div class="text-left">Connection</div>
-                        <div class="text-left">Age</div>
+                        <SortHeader
+                            label="Age"
+                            column="age"
+                            :is-current-column="sortPreferences.column === 'age'"
+                            :current-direction="sortPreferences.direction"
+                            @sort="handleSort"
+                        />
                         <div></div>
                     </div>
                     <Signature
