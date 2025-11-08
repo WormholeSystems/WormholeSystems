@@ -23,6 +23,7 @@ final class MapSignatureResource extends JsonResource
         return [
             'id' => $this->id,
             'signature_id' => $this->signature_id,
+            'map_solarsystem_id' => $this->map_solarsystem_id,
             'target_class' => $this->signatureType?->target_class,
             'extra' => $this->signatureType?->extra,
             'wormhole' => $this->wormhole?->toResource(WormholeResource::class),
