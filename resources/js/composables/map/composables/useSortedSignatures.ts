@@ -16,6 +16,14 @@ export function useSortableSignatures<T extends TSignature>(signatures: Ref<T[]>
         return a.localeCompare(b);
     }
 
+    function getModifiedDate(signature: TSignature): string {
+        // For wormholes, use created_at; for others, use updated_at
+        if (signature.signature_category?.name === 'Wormhole') {
+            return signature.created_at;
+        }
+        return signature.updated_at;
+    }
+
     function getSortComparison(a: TSignature, b: TSignature): number {
         let primaryComparison: number;
 
@@ -28,6 +36,12 @@ export function useSortableSignatures<T extends TSignature>(signatures: Ref<T[]>
                 break;
             case 'type':
                 primaryComparison = compareNullableStrings(a.signature_type?.name ?? null, b.signature_type?.name ?? null);
+                break;
+            case 'age':
+                // Compare dates - newer signatures should be "less than" older ones for ascending sort
+                const aDate = new Date(getModifiedDate(a)).getTime();
+                const bDate = new Date(getModifiedDate(b)).getTime();
+                primaryComparison = bDate - aDate; // Reverse comparison so newer = smaller (comes first in asc)
                 break;
             default:
                 primaryComparison = 0;
