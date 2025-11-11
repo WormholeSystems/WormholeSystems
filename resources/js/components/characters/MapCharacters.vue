@@ -51,21 +51,19 @@ function isCovertOps(character: TCharacter) {
             <CardDescription> See what characters are flying and where they are located in the map solarsystems. </CardDescription>
         </CardHeader>
         <MapPanelContent inner-class="border-0 bg-transparent">
-            <div class="relative max-h-200 overflow-x-hidden overflow-y-scroll mask-b-from-90% mask-alpha pr-1">
-                <div class="@container rounded-lg border bg-white dark:bg-neutral-900/40">
-                    <div class="grid grid-cols-[auto_auto_auto] gap-x-2 text-xs">
-                        <div class="col-span-full grid grid-cols-subgrid border-b bg-muted/50 px-2 py-1.5 text-xs font-medium text-muted-foreground">
-                            <span>Pilot</span>
-                            <span>Ship</span>
-                            <span>Location</span>
-                        </div>
-                        <TransitionGroup name="list">
-                            <div class="contents" v-for="character in sorted_characters" :key="character.id">
-                                <Character :character />
-                            </div>
-                        </TransitionGroup>
-                        <div v-if="!sorted_characters?.length" class="col-span-full p-2 text-center text-muted-foreground">No characters found</div>
+            <div class="@container rounded-lg border bg-white dark:bg-neutral-900/40">
+                <div class="grid grid-cols-[auto_auto_auto] gap-x-2 text-xs">
+                    <div class="col-span-full grid grid-cols-subgrid border-b bg-muted/50 px-2 py-1.5 text-xs font-medium text-muted-foreground">
+                        <span>Pilot</span>
+                        <span>Ship</span>
+                        <span>Location</span>
                     </div>
+                    <TransitionGroup name="list">
+                        <div class="contents" v-for="character in sorted_characters" :key="character.id">
+                            <Character :character />
+                        </div>
+                    </TransitionGroup>
+                    <div v-if="!sorted_characters?.length" class="col-span-full p-2 text-center text-muted-foreground">No characters found</div>
                 </div>
             </div>
         </MapPanelContent>

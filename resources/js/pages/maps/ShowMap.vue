@@ -179,33 +179,27 @@ const handleResizeEnd = () => {
 
                 <!-- Solarsystem Details Section -->
                 <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-bind="getLayoutItem('solarsystem').value">
-                    <div class="h-full overflow-auto rounded-lg border bg-card">
-                        <SolarsystemDetails
-                            v-if="selected_map_solarsystem"
-                            :map_solarsystem="selected_map_solarsystem"
-                            :map
-                            :map_route_solarsystems
-                            :hide_notes="has_guest_access"
-                        />
-                        <div class="flex h-full flex-col items-center justify-center gap-8 p-8 text-neutral-700" v-else>
-                            <QuestionIcon class="text-4xl" />
-                            <p class="text-center">Select a solarsystem to see more details</p>
-                        </div>
+                    <SolarsystemDetails
+                        v-if="selected_map_solarsystem"
+                        :map_solarsystem="selected_map_solarsystem"
+                        :map
+                        :map_route_solarsystems
+                        :hide_notes="has_guest_access"
+                    />
+                    <div class="flex h-full flex-col items-center justify-center gap-8 rounded-lg border bg-card p-8 text-neutral-700" v-else>
+                        <QuestionIcon class="text-4xl" />
+                        <p class="text-center">Select a solarsystem to see more details</p>
                     </div>
                 </GridItem>
 
                 <!-- Signatures Section -->
                 <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-bind="getLayoutItem('signatures').value">
-                    <div class="h-full overflow-auto rounded-lg border bg-card">
-                        <Signatures :map :map_solarsystem="selected_map_solarsystem" />
-                    </div>
+                    <Signatures :map :map_solarsystem="selected_map_solarsystem" />
                 </GridItem>
 
                 <!-- Audits Section -->
                 <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-if="!has_guest_access" v-bind="getLayoutItem('audits').value">
-                    <div class="h-full overflow-auto rounded-lg border bg-card">
-                        <Audits :audits="selected_map_solarsystem?.audits ?? []" />
-                    </div>
+                    <Audits :audits="selected_map_solarsystem?.audits ?? []" />
                 </GridItem>
 
                 <!-- Ship History Section -->
@@ -215,47 +209,37 @@ const handleResizeEnd = () => {
                     v-if="!has_guest_access"
                     v-bind="getLayoutItem('ship-history').value"
                 >
-                    <div class="h-full overflow-auto rounded-lg border bg-card">
-                        <ShipHistory />
-                    </div>
+                    <ShipHistory />
                 </GridItem>
 
                 <!-- Map Characters Section -->
                 <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-if="map_characters" v-bind="getLayoutItem('characters').value">
-                    <div class="h-full overflow-auto rounded-lg border bg-card">
-                        <MapCharacters :map_characters />
-                    </div>
+                    <MapCharacters :map_characters />
                 </GridItem>
 
                 <!-- Killmails Section -->
                 <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-bind="getLayoutItem('killmails').value">
-                    <div class="h-full overflow-auto rounded-lg border bg-card">
-                        <MapKillmails :map_killmails="map_killmails" :map_id="map.id" :map_user_settings="map_user_settings" />
-                    </div>
+                    <MapKillmails :map_killmails="map_killmails" :map_id="map.id" :map_user_settings="map_user_settings" />
                 </GridItem>
 
                 <!-- Autopilot Section -->
                 <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-bind="getLayoutItem('autopilot').value">
-                    <div class="h-full overflow-auto rounded-lg border bg-card">
-                        <Autopilot
-                            :map_route_solarsystems
-                            :map
-                            :solarsystems
-                            :selected_map_solarsystem
-                            :map_characters="map_characters"
-                            :map_user_settings
-                            :shortest_path
-                            :ignored_systems
-                            :closest_systems
-                        />
-                    </div>
+                    <Autopilot
+                        :map_route_solarsystems
+                        :map
+                        :solarsystems
+                        :selected_map_solarsystem
+                        :map_characters="map_characters"
+                        :map_user_settings
+                        :shortest_path
+                        :ignored_systems
+                        :closest_systems
+                    />
                 </GridItem>
 
                 <!-- EVE Scout Connections Section -->
                 <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-bind="getLayoutItem('eve-scout').value">
-                    <div class="h-full overflow-auto rounded-lg border bg-card">
-                        <EveScoutConnections :eve_scout_connections />
-                    </div>
+                    <EveScoutConnections :eve_scout_connections />
                 </GridItem>
             </GridLayout>
         </div>
