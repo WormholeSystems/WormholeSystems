@@ -70,22 +70,20 @@ useOnClient(() =>
             </CardAction>
         </CardHeader>
         <MapPanelContent inner-class="border-0 bg-transparent">
-            <div class="relative max-h-100 overflow-x-hidden overflow-y-scroll mask-b-from-90% mask-alpha pr-1">
-                <div class="@container rounded-lg border bg-white dark:bg-neutral-900/40">
-                    <div class="grid grid-cols-[auto_auto_auto_auto_auto_auto] gap-x-2 text-xs">
-                        <div class="col-span-full grid grid-cols-subgrid border-b bg-muted/50 px-2 py-1.5 text-xs font-medium text-muted-foreground">
-                            <span>Victim</span>
-                            <span>Attacker</span>
-                            <span>Location</span>
-                            <span class="hidden @lg:block">Sov</span>
-                            <span>Time</span>
-                            <span class="hidden text-right @lg:block">Value</span>
-                        </div>
-                        <TransitionGroup name="list">
-                            <Killmail v-for="killmail in map_killmails" :key="killmail.id" :killmail="killmail" />
-                        </TransitionGroup>
-                        <div v-if="!map_killmails?.length" class="col-span-full p-2 text-center text-muted-foreground">No killmails found</div>
+            <div class="@container rounded-lg border bg-white dark:bg-neutral-900/40">
+                <div class="grid grid-cols-[auto_auto_auto_auto_auto_auto] gap-x-2 text-xs">
+                    <div class="col-span-full grid grid-cols-subgrid border-b bg-muted/50 px-2 py-1.5 text-xs font-medium text-muted-foreground">
+                        <span>Victim</span>
+                        <span>Attacker</span>
+                        <span>Location</span>
+                        <span class="hidden @lg:block">Sov</span>
+                        <span>Time</span>
+                        <span class="hidden text-right @lg:block">Value</span>
                     </div>
+                    <TransitionGroup name="list">
+                        <Killmail v-for="killmail in map_killmails" :key="killmail.id" :killmail="killmail" />
+                    </TransitionGroup>
+                    <div v-if="!map_killmails?.length" class="col-span-full p-2 text-center text-muted-foreground">No killmails found</div>
                 </div>
             </div>
         </MapPanelContent>
