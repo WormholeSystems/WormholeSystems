@@ -71,7 +71,7 @@ function createNewSignature() {
     <SignaturesEmptyState v-if="!map_solarsystem" />
 
     <!-- Signatures list when system is selected -->
-    <MapPanel v-else class="overflow-hidden">
+    <MapPanel v-else class="overflow-x-hidden">
         <CardHeader>
             <CardTitle
                 >Signatures
