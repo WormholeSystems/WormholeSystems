@@ -5,7 +5,7 @@ import MapPanelContent from '@/components/ui/map-panel/MapPanelContent.vue';
 </script>
 
 <template>
-    <MapPanel class="overflow-hidden">
+    <MapPanel>
         <CardHeader>
             <CardTitle>Signatures</CardTitle>
             <CardDescription> All the signatures in this solarsystem. You can paste, copy and clear signatures here. </CardDescription>

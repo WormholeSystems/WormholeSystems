@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 </script>
 
 <template>
-  <Card class="h-full overflow-auto bg-neutral-50 pb-0 dark:bg-background">
+  <Card class="h-full overflow-y-auto bg-neutral-50 pb-0 dark:bg-background">
       <slot />
   </Card>
 </template>
