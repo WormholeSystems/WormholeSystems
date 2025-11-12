@@ -28,13 +28,6 @@ export type TShortestPath = {
     jumps: number;
 };
 
-export type TShortestPathDialogProps = {
-    map: TMap;
-    solarsystems: TSolarsystem[];
-    shortest_path?: TShortestPath | null;
-    ignored_systems: number[];
-};
-
 export type TClosestSystem = {
     solarsystem: TSolarsystem;
     jumps: number;
@@ -48,6 +41,12 @@ export type TClosestSystems = {
     limit: number;
 };
 
+export type TMapNavigation = {
+    destinations: TMapRouteSolarsystem[];
+    closest_systems: TClosestSystems;
+    shortest_path: TShortestPath | null;
+};
+
 export type TShowMapProps = {
     map: TMap;
     search: string;
@@ -56,15 +55,13 @@ export type TShowMapProps = {
     selected_map_solarsystem: TSelectedMapSolarsystem | null;
     map_killmails?: TKillmail[];
     map_characters: TCharacter[] | null;
-    map_route_solarsystems?: TMapRouteSolarsystem[];
+    map_navigation: TMapNavigation;
     ship_history: TShipHistory[] | null;
     has_write_access: boolean;
     has_guest_access: boolean;
     layout: TLayout;
     map_user_settings: TMapUserSetting;
-    shortest_path?: TShortestPath | null;
     ignored_systems: number[];
-    closest_systems?: TClosestSystems | null;
     tracking_origin?: TSelectedMapSolarsystem | null;
     tracking_target?: TSolarsystem | null;
     eve_scout_connections?: TEveScoutConnection[];

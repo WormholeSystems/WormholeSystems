@@ -12,10 +12,10 @@ import MapRouteSolarsystems from '@/routes/map-route-solarsystems';
 import { router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
-const { map, solarsystems, map_route_solarsystems } = defineProps<{
+const { map, solarsystems, map_navigation } = defineProps<{
     map: TMap;
     solarsystems: TSolarsystem[];
-    map_route_solarsystems?: { solarsystem: TSolarsystem }[];
+    map_navigation?: { solarsystem: TSolarsystem }[];
 }>();
 
 const search = useSearch('search', ['solarsystems']);
@@ -23,11 +23,11 @@ const search = useSearch('search', ['solarsystems']);
 const adding = ref(false);
 
 const new_solarsystems = computed(() => {
-    return solarsystems.filter((solarsystem) => !map_route_solarsystems?.some((route) => route.solarsystem.id === solarsystem.id));
+    return solarsystems.filter((solarsystem) => !map_navigation?.some((route) => route.solarsystem.id === solarsystem.id));
 });
 
 const existing_solarsystems = computed(() => {
-    return solarsystems.filter((solarsystem) => map_route_solarsystems?.some((route) => route.solarsystem.id === solarsystem.id));
+    return solarsystems.filter((solarsystem) => map_navigation?.some((route) => route.solarsystem.id === solarsystem.id));
 });
 
 function handleSolarsystemSelect(solarsystem: TSolarsystem) {

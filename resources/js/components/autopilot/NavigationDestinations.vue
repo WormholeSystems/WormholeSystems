@@ -6,15 +6,15 @@ import { useLocalStorage } from '@vueuse/core';
 import { ArrowDown, ArrowUp } from 'lucide-vue-next';
 import { computed } from 'vue';
 
-const { map_route_solarsystems } = defineProps<{
-    map_route_solarsystems: TMapRouteSolarsystem[];
+const { destinations } = defineProps<{
+    destinations: TMapRouteSolarsystem[];
 }>();
 
 type SortColumn = 'system' | 'jumps' | 'region';
 type SortDirection = 'asc' | 'desc';
 
-const sortColumn = useLocalStorage<SortColumn>('autopilot-sort-column', 'system');
-const sortDirection = useLocalStorage<SortDirection>('autopilot-sort-direction', 'asc');
+const sortColumn = useLocalStorage<SortColumn>('navigation-destinations-sort-column', 'system');
+const sortDirection = useLocalStorage<SortDirection>('navigation-destinations-sort-direction', 'asc');
 
 function handleSort(column: SortColumn) {
     if (sortColumn.value === column) {
@@ -26,7 +26,7 @@ function handleSort(column: SortColumn) {
 }
 
 const sorted = computed(() => {
-    return map_route_solarsystems.toSorted((a, b) => {
+    return destinations.toSorted((a, b) => {
         let comparison = 0;
 
         switch (sortColumn.value) {

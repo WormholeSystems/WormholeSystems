@@ -17,7 +17,7 @@ export function useIgnoreList() {
                 ...options,
                 preserveScroll: true,
                 preserveState: true,
-                only: ['map_characters', 'map_route_solarsystems', 'ignored_systems', 'shortest_path'],
+                only: ['map_characters', 'map_navigation', 'ignored_systems', 'shortest_path'],
             },
         );
     }
@@ -27,7 +27,7 @@ export function useIgnoreList() {
             ...options,
             preserveScroll: true,
             preserveState: true,
-            only: ['map_characters', 'map_route_solarsystems', 'ignored_systems', 'shortest_path'],
+            only: ['map_characters', 'map_navigation', 'ignored_systems', 'shortest_path'],
         });
     }
 

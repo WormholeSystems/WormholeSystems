@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/context-menu';
 import { deleteMapSolarsystem, updateMapSolarsystem } from '@/composables/map';
 import useHasWritePermission from '@/composables/useHasWritePermission';
+import { useNavigationSystems } from '@/composables/useNavigationSystems';
 import useUser from '@/composables/useUser';
 import { useWaypoint } from '@/composables/useWaypoint';
 import { TMapSolarsystem } from '@/pages/maps';
@@ -29,6 +30,8 @@ const user = useUser();
 const can_write = useHasWritePermission();
 
 const setWaypoint = useWaypoint();
+
+const { setFromSystem, setToSystem } = useNavigationSystems();
 
 function handleTogglePin() {
     updateMapSolarsystem(map_solarsystem, { pinned: !map_solarsystem.pinned });
@@ -68,6 +71,9 @@ const options: TMapSolarsystemStatus[] = ['unknown', 'friendly', 'hostile', 'act
                     </ContextMenuRadioGroup>
                 </ContextMenuSubContent>
             </ContextMenuSub>
+
+            <ContextMenuSeparator />
+
             <ContextMenuSub>
                 <ContextMenuSubTrigger>External</ContextMenuSubTrigger>
                 <ContextMenuSubContent>
@@ -120,6 +126,16 @@ const options: TMapSolarsystemStatus[] = ['unknown', 'friendly', 'hostile', 'act
                 <ContextMenuSeparator />
                 <ContextMenuItem @select="handleRemoveFromMap"> Remove </ContextMenuItem>
             </template>
+
+            <ContextMenuSeparator />
+
+            <ContextMenuSub>
+                <ContextMenuSubTrigger>Route planner</ContextMenuSubTrigger>
+                <ContextMenuSubContent>
+                    <ContextMenuItem @select="setFromSystem(map_solarsystem.solarsystem_id)">Set as origin</ContextMenuItem>
+                    <ContextMenuItem @select="setToSystem(map_solarsystem.solarsystem_id)">Set as destination</ContextMenuItem>
+                </ContextMenuSubContent>
+            </ContextMenuSub>
         </ContextMenuContent>
     </ContextMenu>
 </template>

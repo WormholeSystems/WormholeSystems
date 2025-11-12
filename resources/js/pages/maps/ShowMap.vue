@@ -3,7 +3,7 @@ import MapAccessController from '@/actions/App/Http/Controllers/MapAccessControl
 import MapPreferencesController from '@/actions/App/Http/Controllers/MapPreferencesController';
 import MapSettingsController from '@/actions/App/Http/Controllers/MapSettingsController';
 import Audits from '@/components/audits/Audits.vue';
-import Autopilot from '@/components/autopilot/Autopilot.vue';
+import NavigationPanel from '@/components/autopilot/NavigationPanel.vue';
 import MapCharacters from '@/components/characters/MapCharacters.vue';
 import EveScoutConnections from '@/components/eve-scout/EveScoutConnections.vue';
 import QuestionIcon from '@/components/icons/QuestionIcon.vue';
@@ -38,13 +38,12 @@ import { computed, ref } from 'vue';
 const {
     map,
     selected_map_solarsystem,
+    solarsystems,
     map_killmails,
-    map_route_solarsystems,
+    map_navigation,
     map_user_settings,
-    shortest_path,
     ignored_systems,
     map_characters,
-    closest_systems,
     has_guest_access,
     eve_scout_connections,
 } = defineProps<TShowMapProps>();
@@ -183,7 +182,7 @@ const handleResizeEnd = () => {
                         v-if="selected_map_solarsystem"
                         :map_solarsystem="selected_map_solarsystem"
                         :map
-                        :map_route_solarsystems
+                        :map_navigation="map_navigation.destinations"
                         :hide_notes="has_guest_access"
                     />
                     <div class="flex h-full flex-col items-center justify-center gap-8 rounded-lg border bg-card p-8 text-neutral-700" v-else>
@@ -222,19 +221,9 @@ const handleResizeEnd = () => {
                     <MapKillmails :map_killmails="map_killmails" :map_id="map.id" :map_user_settings="map_user_settings" />
                 </GridItem>
 
-                <!-- Autopilot Section -->
+                <!-- Navigation Section -->
                 <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-bind="getLayoutItem('autopilot').value">
-                    <Autopilot
-                        :map_route_solarsystems
-                        :map
-                        :solarsystems
-                        :selected_map_solarsystem
-                        :map_characters="map_characters"
-                        :map_user_settings
-                        :shortest_path
-                        :ignored_systems
-                        :closest_systems
-                    />
+                    <NavigationPanel :map_navigation :map :solarsystems :selected_map_solarsystem :map_characters="map_characters" :ignored_systems />
                 </GridItem>
 
                 <!-- EVE Scout Connections Section -->

@@ -47,7 +47,7 @@ function togglePinned() {
         {
             preserveScroll: true,
             preserveState: true,
-            only: ['map_route_solarsystems'],
+            only: ['map_navigation'],
         },
     );
 }
@@ -56,7 +56,7 @@ function removeRoute() {
     router.delete(MapRouteSolarsystems.destroy(map_route.id).url, {
         preserveScroll: true,
         preserveState: true,
-        only: ['map_route_solarsystems'],
+        only: ['map_navigation'],
     });
 }
 </script>
