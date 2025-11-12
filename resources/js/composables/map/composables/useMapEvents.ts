@@ -56,7 +56,7 @@ export function useMapEvents(map: MaybeRefOrGetter<TMap>) {
     useOnClient(() =>
         useEcho(getMapChannelName(map_ref.value.id), [MapRouteSolarsystemsUpdatedEvent], () => {
             router.reload({
-                only: ['map_route_solarsystems'],
+                only: ['map_navigation'],
             });
         }),
     );
@@ -79,7 +79,7 @@ export function useMapEvents(map: MaybeRefOrGetter<TMap>) {
     useOnClient(() =>
         useEcho(map_channel_name.value, [MapConnectionCreatedEvent, MapConnectionDeletedEvent, MapConnectionUpdatedEvent], () => {
             router.reload({
-                only: ['selected_map_solarsystem', 'map_route_solarsystems', 'eve_scout_connections'],
+                only: ['selected_map_solarsystem', 'map_navigation', 'eve_scout_connections'],
             });
         }),
     );

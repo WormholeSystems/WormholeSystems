@@ -8,14 +8,12 @@ use App\Actions\Map\CreateMapAction;
 use App\Actions\Map\UpdateMapAction;
 use App\Features\EveScoutConnectionsFeature;
 use App\Features\MapCharactersFeature;
-use App\Features\MapClosestSystemsFeature;
 use App\Features\MapKillmailsFeature;
+use App\Features\MapNavigationFeature;
 use App\Features\MapPermissionsFeature;
-use App\Features\MapRouteFeature;
 use App\Features\MapSearchFeature;
 use App\Features\MapSelectionFeature;
 use App\Features\MapSettingsFeature;
-use App\Features\MapShortestPathFeature;
 use App\Features\MapTrackingFeature;
 use App\Features\ShipHistoryFeature;
 use App\Http\Requests\StoreMapRequest;
@@ -87,26 +85,16 @@ final class MapController extends Controller
             $this->route_service
         );
         $shipHistoryFeature = new ShipHistoryFeature($this->user, $can_view_characters);
-        $routeFeature = new MapRouteFeature(
+        $navigationFeature = new MapNavigationFeature(
             $map,
             $selected_map_solarsystem,
             $settings,
-            $this->route_service
-        );
-        $shortestPathFeature = new MapShortestPathFeature(
-            $request->integer('from_solarsystem_id') ?: null,
-            $request->integer('to_solarsystem_id') ?: null,
-            $settings,
-            $map,
-            $this->route_service
-        );
-        $closestSystemsFeature = new MapClosestSystemsFeature(
+            $this->route_service,
             $request->string('from_system'),
             $request->string('condition', 'observatories'),
             $request->integer('limit', 15),
-            $settings,
-            $map,
-            $this->route_service
+            $request->integer('from_solarsystem_id') ?: null,
+            $request->integer('to_solarsystem_id') ?: null,
         );
         $trackingFeature = new MapTrackingFeature(
             $map,
@@ -130,9 +118,7 @@ final class MapController extends Controller
             $killmailsFeature,
             $charactersFeature,
             $shipHistoryFeature,
-            $routeFeature,
-            $shortestPathFeature,
-            $closestSystemsFeature,
+            $navigationFeature,
             $trackingFeature,
             $eveScoutConnectionsFeature,
         ]);

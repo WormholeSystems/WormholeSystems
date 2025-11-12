@@ -9,7 +9,7 @@ const { security = 0, wormhole_class } = defineProps<{
     <span
         v-if="wormhole_class"
         :data-class="wormhole_class"
-        class="col-start-1 row-start-1 data-[class=1]:text-c1 data-[class=2]:text-c2 data-[class=3]:text-c3 data-[class=4]:text-c4 data-[class=5]:text-c5 data-[class=6]:text-c6"
+        class="data-[class=1]:text-c1 data-[class=2]:text-c2 data-[class=3]:text-c3 data-[class=4]:text-c4 data-[class=5]:text-c5 data-[class=6]:text-c6"
     >
         C{{ wormhole_class }}
     </span>

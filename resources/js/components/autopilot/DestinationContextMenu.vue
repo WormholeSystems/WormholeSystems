@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/context-menu';
 import { createMapSolarsystem, useMapSolarsystems } from '@/composables/map';
 import useHasWritePermission from '@/composables/useHasWritePermission';
+import { useNavigationSystems } from '@/composables/useNavigationSystems';
 import useUser from '@/composables/useUser';
 import { useWaypoint } from '@/composables/useWaypoint';
 import { computed } from 'vue';
@@ -25,6 +26,8 @@ const user = useUser();
 const setWaypoint = useWaypoint();
 
 const { map_solarsystems } = useMapSolarsystems();
+
+const { setFromSystem, setToSystem } = useNavigationSystems();
 
 const already_on_map = computed(() => {
     return map_solarsystems.value.some((map_solarsystem) => map_solarsystem.solarsystem_id === solarsystem_id);
@@ -66,6 +69,16 @@ const can_write = useHasWritePermission();
                 <ContextMenuSeparator />
                 <ContextMenuItem @select="createMapSolarsystem(solarsystem_id)">Add to map</ContextMenuItem>
             </template>
+
+            <ContextMenuSeparator />
+
+            <ContextMenuSub>
+                <ContextMenuSubTrigger>Route planner</ContextMenuSubTrigger>
+                <ContextMenuSubContent>
+                    <ContextMenuItem @select="setFromSystem(solarsystem_id)">Set as origin</ContextMenuItem>
+                    <ContextMenuItem @select="setToSystem(solarsystem_id)">Set as destination</ContextMenuItem>
+                </ContextMenuSubContent>
+            </ContextMenuSub>
         </ContextMenuContent>
     </ContextMenu>
 </template>

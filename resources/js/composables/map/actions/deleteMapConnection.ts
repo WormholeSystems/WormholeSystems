@@ -6,6 +6,6 @@ export function deleteMapConnection(map_connection: TMapConnection) {
     return router.delete(MapConnections.destroy(map_connection.id).url, {
         preserveScroll: true,
         preserveState: true,
-        only: ['map', 'map_route_solarsystems'],
+        only: ['map', 'map_navigation'],
     });
 }

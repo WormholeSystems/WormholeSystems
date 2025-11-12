@@ -24,16 +24,16 @@ import markdownit from 'markdown-it';
 import attr from 'markdown-it-link-attributes';
 import { computed, ref, watch } from 'vue';
 
-const { map_solarsystem, map_route_solarsystems, hide_notes } = defineProps<{
+const { map_solarsystem, map_navigation, hide_notes } = defineProps<{
     map_solarsystem: TSelectedMapSolarsystem;
-    map_route_solarsystems?: TMapRouteSolarsystem[];
+    map_navigation?: TMapRouteSolarsystem[];
     map: TMap;
     hide_notes?: boolean;
 }>();
 
 const can_write = useHasWritePermission();
 
-const pinned = computed(() => map_route_solarsystems?.filter((m) => m.is_pinned));
+const pinned = computed(() => map_navigation?.filter((m) => m.is_pinned));
 
 const editing = ref(false);
 const statistics = ref(false);
@@ -183,7 +183,7 @@ watch(
             </div>
 
             <div class="mt-4" v-if="pinned?.length">
-                <Deferred data="map_route_solarsystems">
+                <Deferred data="map_navigation">
                     <template #fallback>
                         <div class="flex items-center gap-2 text-xs text-muted-foreground">
                             <Spinner class="size-3 animate-spin" />
