@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\Map\CreateMapAction;
 use App\Actions\Map\UpdateMapAction;
+use App\Enums\KillmailFilter;
 use App\Features\EveScoutConnectionsFeature;
 use App\Features\MapCharactersFeature;
 use App\Features\MapKillmailsFeature;
@@ -76,7 +77,7 @@ final class MapController extends Controller
 
         $permissionsFeature = new MapPermissionsFeature($map, $this->user);
         $searchFeature = new MapSearchFeature($request->string('search'));
-        $killmailsFeature = new MapKillmailsFeature($map, $settings->killmail_filter);
+        $killmailsFeature = new MapKillmailsFeature($map, $settings->killmail_filter ?? KillmailFilter::All);
         $charactersFeature = new MapCharactersFeature(
             $map,
             $can_view_characters,
