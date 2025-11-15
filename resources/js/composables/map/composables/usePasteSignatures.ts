@@ -1,5 +1,6 @@
 import { deleteSignatures, pasteSignatures } from '@/composables/map';
 import { useIsUsingInput } from '@/composables/map/composables/useIsUsingInput';
+import { useActiveMapCharacter } from '@/composables/useActiveMapCharacter';
 import { signatureParser, TRawSignature } from '@/lib/SignatureParser';
 import { TSelectedMapSolarsystem } from '@/pages/maps';
 import { TSignature } from '@/types/models';
@@ -9,6 +10,10 @@ import { toast } from 'vue-sonner';
 
 export function usePasteSignatures(map_solarsystem: MaybeRefOrGetter<TSelectedMapSolarsystem | null>) {
     const is_using_input = useIsUsingInput();
+    const character = useActiveMapCharacter();
+
+    const pending_signatures = ref<TRawSignature[] | null>(null);
+    const show_system_mismatch_warning = ref(false);
 
     const signatures_with_status = computed(() => {
         const system = toValue(map_solarsystem);
@@ -131,11 +136,36 @@ export function usePasteSignatures(map_solarsystem: MaybeRefOrGetter<TSelectedMa
         );
     }
 
-    function processSignatures(signatures: TRawSignature[]) {
+    function processSignatures(signatures: TRawSignature[], skipWarning = false) {
         const system = toValue(map_solarsystem);
         if (!system) return;
+
+        // Check if character's current location matches the target system
+        if (!skipWarning && character.value?.status?.solarsystem_id && character.value.status.solarsystem_id !== system.solarsystem_id) {
+            pending_signatures.value = signatures;
+            show_system_mismatch_warning.value = true;
+            return;
+        }
+
         pasted_signatures.value = signatures;
         pasteSignatures(system.id, signatures);
+    }
+
+    function confirmPasteInDifferentSystem() {
+        if (!pending_signatures.value) return;
+        const system = toValue(map_solarsystem);
+        if (!system) return;
+
+        pasted_signatures.value = pending_signatures.value;
+        pasteSignatures(system.id, pending_signatures.value);
+
+        pending_signatures.value = null;
+        show_system_mismatch_warning.value = false;
+    }
+
+    function cancelPaste() {
+        pending_signatures.value = null;
+        show_system_mismatch_warning.value = false;
     }
 
     async function handlePasteSignatures() {
@@ -155,5 +185,8 @@ export function usePasteSignatures(map_solarsystem: MaybeRefOrGetter<TSelectedMa
         deleted_signatures,
         pasteSignatures: handlePasteSignatures,
         deleteMissingSignatures,
+        show_system_mismatch_warning,
+        confirmPasteInDifferentSystem,
+        cancelPaste,
     };
 }

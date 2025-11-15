@@ -2,6 +2,7 @@
 import PasteIcon from '@/components/icons/PasteIcon.vue';
 import PlusIcon from '@/components/icons/PlusIcon.vue';
 import TrashIcon from '@/components/icons/TrashIcon.vue';
+import PasteSignatureWarningDialog from '@/components/signatures/PasteSignatureWarningDialog.vue';
 import Signature from '@/components/signatures/Signature.vue';
 import SignaturesEmptyState from '@/components/signatures/SignaturesEmptyState.vue';
 import SortHeader from '@/components/signatures/SortHeader.vue';
@@ -13,6 +14,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { createSignature, useSignatures } from '@/composables/map';
 import { usePasteSignatures } from '@/composables/map/composables/usePasteSignatures';
 import { useSortableSignatures } from '@/composables/map/composables/useSortedSignatures';
+import { useActiveMapCharacter } from '@/composables/useActiveMapCharacter';
 import useHasWritePermission from '@/composables/useHasWritePermission';
 import { TSelectedMapSolarsystem } from '@/pages/maps';
 import { computed } from 'vue';
@@ -25,9 +27,18 @@ const { connections } = useSignatures();
 
 const can_write = useHasWritePermission();
 
-const { signatures, pasted_signatures, deleted_signatures, deleteMissingSignatures, pasteSignatures } = usePasteSignatures(
-    () => props.map_solarsystem,
-);
+const character = useActiveMapCharacter();
+
+const {
+    signatures,
+    pasted_signatures,
+    deleted_signatures,
+    deleteMissingSignatures,
+    pasteSignatures,
+    show_system_mismatch_warning,
+    confirmPasteInDifferentSystem,
+    cancelPaste,
+} = usePasteSignatures(() => props.map_solarsystem);
 
 const { sortPreferences, sorted, updateSortPreferences } = useSortableSignatures(signatures);
 
@@ -71,7 +82,7 @@ function createNewSignature() {
     <SignaturesEmptyState v-if="!map_solarsystem" />
 
     <!-- Signatures list when system is selected -->
-    <MapPanel v-else class="overflow-x-hidden">
+    <MapPanel v-if="map_solarsystem" class="overflow-x-hidden">
         <CardHeader>
             <CardTitle
                 >Signatures
@@ -161,6 +172,15 @@ function createNewSignature() {
             </div>
         </MapPanelContent>
     </MapPanel>
+
+    <!-- Warning dialog for pasting in different system -->
+    <PasteSignatureWarningDialog
+        v-model:open="show_system_mismatch_warning"
+        :target-system="map_solarsystem"
+        :character="character"
+        @confirm="confirmPasteInDifferentSystem"
+        @cancel="cancelPaste"
+    />
 </template>
 
 <style scoped>
