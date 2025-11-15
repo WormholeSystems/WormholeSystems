@@ -141,4 +141,23 @@ final readonly class ConnectionRepository
 
         return $filtered;
     }
+
+    /**
+     * Create a set of wormhole connection keys from connection array
+     * Returns an array with keys like "1234-5678" for quick lookup
+     */
+    public function getWormholeConnectionSet(array $connections): array
+    {
+        $wormholeSet = [];
+
+        foreach ($connections as $from => $targets) {
+            foreach ($targets as $to) {
+                // Use consistent key format (smaller ID first)
+                $key = $from < $to ? "{$from}-{$to}" : "{$to}-{$from}";
+                $wormholeSet[$key] = true;
+            }
+        }
+
+        return $wormholeSet;
+    }
 }

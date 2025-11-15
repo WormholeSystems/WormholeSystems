@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import DestinationContextMenu from '@/components/autopilot/DestinationContextMenu.vue';
+import ExtraWormholeIcon from '@/components/icons/ExtraWormholeIcon.vue';
 import TimesIcon from '@/components/icons/TimesIcon.vue';
 import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue';
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
@@ -90,6 +91,7 @@ function onHover(hovered: boolean) {
                                 <TableHead class="h-auto p-1">Region</TableHead>
                                 <TableHead class="h-auto w-8 p-1"></TableHead>
                                 <TableHead class="h-auto w-8 p-1"></TableHead>
+                                <TableHead class="h-auto w-8 p-1"></TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -115,6 +117,16 @@ function onHover(hovered: boolean) {
                                         <div class="flex justify-center">
                                             <SolarsystemSovereignty v-if="solarsystem.sovereignty" :sovereignty="solarsystem.sovereignty" />
                                             <SolarsystemEffect v-else-if="solarsystem.effect" :effect="solarsystem.effect.name" />
+                                        </div>
+                                    </TableCell>
+                                    <TableCell class="h-auto p-1">
+                                        <div class="flex justify-center">
+                                            <Tooltip v-if="route && index < route.length - 1 && route[index + 1].connection_type === 'wormhole'">
+                                                <TooltipTrigger as-child>
+                                                    <ExtraWormholeIcon class="size-3.5 text-amber-500" />
+                                                </TooltipTrigger>
+                                                <TooltipContent>Take wormhole to {{ route[index + 1].name }}</TooltipContent>
+                                            </Tooltip>
                                         </div>
                                     </TableCell>
                                     <TableCell class="h-auto p-1">

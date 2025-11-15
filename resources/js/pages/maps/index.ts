@@ -107,6 +107,7 @@ export type TSolarsystem = {
     sovereignty: TSovereignty | null;
     statics: TStatic[] | null;
     effect: TEffect | null;
+    connection_type?: 'stargate' | 'wormhole' | null;
 };
 
 export type TRegion = {

@@ -2,6 +2,7 @@
 import DestinationContextMenu from '@/components/autopilot/DestinationContextMenu.vue';
 import QuickSelectButtons from '@/components/autopilot/QuickSelectButtons.vue';
 import SystemComboboxList from '@/components/autopilot/SystemComboboxList.vue';
+import ExtraWormholeIcon from '@/components/icons/ExtraWormholeIcon.vue';
 import TimesIcon from '@/components/icons/TimesIcon.vue';
 import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue';
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
@@ -234,7 +235,11 @@ watch(
     </div>
 
     <!-- Route Results -->
-    <div v-if="route.length > 0" v-element-hover="onRouteHover" class="grid grid-cols-[auto_auto_1fr_auto_auto] rounded-lg border bg-card text-sm">
+    <div
+        v-if="route.length > 0"
+        v-element-hover="onRouteHover"
+        class="grid grid-cols-[auto_auto_1fr_auto_auto_auto] rounded-lg border bg-card text-sm"
+    >
         <DestinationContextMenu v-for="(system, index) in route" :key="system.id" :solarsystem_id="system.id">
             <div
                 class="col-span-full grid grid-cols-subgrid items-center gap-2 border-b px-2.5 py-1.5 transition-colors last:border-b-0 hover:bg-accent/50"
@@ -252,6 +257,14 @@ watch(
                 <div class="flex items-center justify-center">
                     <SolarsystemSovereignty v-if="system.sovereignty" :sovereignty="system.sovereignty" />
                     <SolarsystemEffect v-else-if="system.effect" :effect="system.effect.name" />
+                </div>
+                <div class="flex items-center justify-center">
+                    <Tooltip v-if="index < route.length - 1 && route[index + 1].connection_type === 'wormhole'">
+                        <TooltipTrigger as-child>
+                            <ExtraWormholeIcon class="size-3.5 text-amber-500" />
+                        </TooltipTrigger>
+                        <TooltipContent>Take wormhole to {{ route[index + 1].name }}</TooltipContent>
+                    </Tooltip>
                 </div>
                 <div class="flex items-center justify-center">
                     <Tooltip v-if="route && index !== 0 && index !== route.length - 1">

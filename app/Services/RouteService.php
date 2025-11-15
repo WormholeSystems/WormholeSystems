@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\DTO\ClosestSystemResult;
-use App\Http\Resources\SolarsystemResource;
 use App\Models\Map;
 use App\Models\Solarsystem;
 use App\Services\Routing\ConnectionRepository;
 use App\Services\Routing\PathfindingService;
 use App\Services\Routing\RouteCostCalculator;
 use Closure;
+use Illuminate\Support\Collection;
 
 final readonly class RouteService
 {
@@ -36,7 +36,7 @@ final readonly class RouteService
      */
     public function findRoute(int $fromId, int $toId, RouteOptions $options): array
     {
-        $connections = $this->prepareConnections($options);
+        [$connections, $wormholeConnections] = $this->prepareConnections($options);
         $ignoredSystems = $options->ignoredSystems ?? [];
 
         // Apply ignored systems filter if needed
@@ -51,8 +51,8 @@ final readonly class RouteService
             return [];
         }
 
-        // Enrich with solarsystem data
-        return $this->enrichRouteWithSolarsystemData($path);
+        // Enrich with solarsystem data and connection types
+        return $this->enrichRouteWithSolarsystemData($path, $wormholeConnections);
     }
 
     /**
@@ -64,7 +64,7 @@ final readonly class RouteService
      */
     public function findMultipleRoutes(array $routeRequests, RouteOptions $options): array
     {
-        $connections = $this->prepareConnections($options);
+        [$connections, $wormholeConnections] = $this->prepareConnections($options);
         $ignoredSystems = $options->ignoredSystems ?? [];
 
         // Apply ignored systems filter if needed
@@ -112,11 +112,7 @@ final readonly class RouteService
                 continue;
             }
 
-            $enrichedRoutes[$key] = collect($path)
-                ->map(static fn (int $id) => $solarsystems->get($id)?->toResource(SolarsystemResource::class))
-                ->filter()
-                ->values()
-                ->toArray();
+            $enrichedRoutes[$key] = $this->enrichPathWithConnectionTypes($path, $solarsystems, $wormholeConnections);
         }
 
         return $enrichedRoutes;
@@ -137,7 +133,7 @@ final readonly class RouteService
         Closure $condition,
         int $limit = 15
     ): array {
-        $connections = $this->prepareConnections($options);
+        [$connections] = $this->prepareConnections($options);
         $ignoredSystems = $options->ignoredSystems ?? [];
 
         // Get all systems matching the condition
@@ -199,10 +195,13 @@ final readonly class RouteService
 
     /**
      * Prepare connection graph based on route options
+     *
+     * @return array{0: array, 1: array} [connections, wormholeConnections]
      */
     private function prepareConnections(RouteOptions $options): array
     {
         $connections = $this->connectionRepo->getBaseConnections();
+        $wormholeConnections = [];
 
         // Merge map-specific connections
         if ($options->map instanceof Map) {
@@ -212,21 +211,28 @@ final readonly class RouteService
                 $options->massStatus
             );
             $connections = $this->connectionRepo->mergeConnections($connections, $mapConnections);
+
+            // Track wormhole connections
+            $wormholeConnections = $this->connectionRepo->getWormholeConnectionSet($mapConnections);
         }
 
         // Merge EVE Scout connections
         if ($options->allowEveScout) {
             $eveScoutConnections = $this->connectionRepo->getEveScoutConnections($options->allowEol);
             $connections = $this->connectionRepo->mergeConnections($connections, $eveScoutConnections);
+
+            // EVE Scout connections are all wormholes
+            $eveScoutWormholes = $this->connectionRepo->getWormholeConnectionSet($eveScoutConnections);
+            $wormholeConnections = array_merge($wormholeConnections, $eveScoutWormholes);
         }
 
-        return $connections;
+        return [$connections, $wormholeConnections];
     }
 
     /**
-     * Enrich route path with solarsystem data
+     * Enrich route path with solarsystem data and connection types
      */
-    private function enrichRouteWithSolarsystemData(array $path): array
+    private function enrichRouteWithSolarsystemData(array $path, array $wormholeConnections): array
     {
         if ($path === []) {
             return [];
@@ -243,10 +249,37 @@ final readonly class RouteService
             ->get()
             ->keyBy('id');
 
+        return $this->enrichPathWithConnectionTypes($path, $solarsystems, $wormholeConnections);
+    }
+
+    /**
+     * Enrich a path with connection type information
+     */
+    private function enrichPathWithConnectionTypes(array $path, Collection $solarsystems, array $wormholeConnections): array
+    {
         return collect($path)
-            ->map(static fn (int $id) => $solarsystems->get($id)?->toResource(SolarsystemResource::class))
+            ->map(fn (int $toId, $index): ?Solarsystem => $this->addConnectionType(
+                $index > 0 ? $path[$index - 1] : 0,
+                $toId,
+                $wormholeConnections,
+                $solarsystems
+            ))
             ->filter()
             ->values()
             ->toArray();
+    }
+
+    private function addConnectionType(int $fromId, int $toId, array $wormholeConnections, Collection $solarsystems): ?Solarsystem
+    {
+        $solarsystem = $solarsystems->get($toId);
+        if (! $solarsystem instanceof Solarsystem) {
+            return null;
+        }
+
+        // Set connection type based on how we arrived at this system
+        $connectionKey = $fromId < $toId ? "$fromId-$toId" : "$toId-$fromId";
+        $solarsystem->connection_type = isset($wormholeConnections[$connectionKey]) ? 'wormhole' : 'stargate';
+
+        return $solarsystem;
     }
 }
