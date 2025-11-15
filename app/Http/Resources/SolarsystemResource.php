@@ -48,6 +48,7 @@ final class SolarsystemResource extends JsonResource
                 ]
             )->values(),
             'effect' => $this->getWormholeEffects(),
+            'connection_type' => $this->whenHas('connection_type'),
         ];
     }
 

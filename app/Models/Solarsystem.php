@@ -27,6 +27,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property float $pos_z
  * @property string $type
  * @property bool $has_jove_observatory
+ * @property string|null $connection_type
  * @property-read string|CarbonImmutable $created_at
  * @property-read string|CarbonImmutable $updated_at
  * @property-read Constellation $constellation
