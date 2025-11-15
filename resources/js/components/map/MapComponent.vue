@@ -7,7 +7,15 @@ import MapOptions from '@/components/map/MapOptions.vue';
 import MapSolarsystem from '@/components/map/MapSolarsystem.vue';
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { Popover, PopoverAnchor } from '@/components/ui/popover';
-import { deleteSelectedMapSolarsystems, useCreateMap, useMapGrid, useMapMouse, useMapScale, useMapSolarsystems } from '@/composables/map';
+import {
+    deleteSelectedMapSolarsystems,
+    useCreateMap,
+    useMapGrid,
+    useMapMouse,
+    useMapPanning,
+    useMapScale,
+    useMapSolarsystems,
+} from '@/composables/map';
 import { useConnectionInteraction } from '@/composables/map/composables/useConnectionInteraction';
 import { useMapEvents } from '@/composables/map/composables/useMapEvents';
 import useHasWritePermission from '@/composables/useHasWritePermission';
@@ -24,6 +32,7 @@ const { map, config } = defineProps<{
 }>();
 
 const container = useTemplateRef('map-container');
+const scrollable_container = useTemplateRef('scrollable-container');
 
 const scroll_locked = ref(false);
 
@@ -60,6 +69,8 @@ const { scale } = useMapScale();
 const mouse = useMapMouse();
 
 const { backgroundImageUrl } = useMapBackground();
+
+const { handleMouseDown, handleMouseMove, handleMouseUp, handleMouseLeave, handleContextMenu } = useMapPanning(scrollable_container);
 
 const mapContainerStyle = computed(() => {
     const baseStyle = {
@@ -117,9 +128,15 @@ function onScroll(event: WheelEvent) {
 <template>
     <div class="relative h-full w-full overflow-hidden rounded-lg border bg-card">
         <div
+            ref="scrollable-container"
             :data-scroll-locked="scroll_locked"
             class="relative h-full w-full overflow-scroll bg-neutral-50 data-[scroll-locked=true]:overflow-hidden dark:bg-neutral-900/50"
             @wheel="onScroll"
+            @mousedown="handleMouseDown"
+            @mousemove="handleMouseMove"
+            @mouseup="handleMouseUp"
+            @mouseleave="handleMouseLeave"
+            @contextmenu="handleContextMenu"
         >
             <ContextMenu @update:open="onOpenChange">
                 <ContextMenuTrigger>

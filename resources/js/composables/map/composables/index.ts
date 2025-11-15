@@ -4,6 +4,7 @@ export * from './useDragging';
 export * from './useMapContainer';
 export * from './useMapGrid';
 export * from './useMapMouse';
+export * from './useMapPanning';
 export * from './useMapScale';
 export * from './useNewConnection';
 export * from './usePilotsInMapSolarsystem';
