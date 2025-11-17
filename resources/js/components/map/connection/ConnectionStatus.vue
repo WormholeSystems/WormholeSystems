@@ -136,18 +136,18 @@ const lifetimeDisplay = computed(() => {
                 <span>Created</span>
                 <Tooltip>
                     <TooltipTrigger as-child>
-                        <span class="cursor-help text-right">{{ createdAt }}</span>
+                        <span class="cursor-help text-right">{{ createdAgo }}</span>
                     </TooltipTrigger>
-                    <TooltipContent>{{ createdAgo }}</TooltipContent>
+                    <TooltipContent>{{ createdAt }}</TooltipContent>
                 </Tooltip>
             </div>
             <div class="col-span-full grid grid-cols-subgrid">
                 <span>Updated</span>
                 <Tooltip>
                     <TooltipTrigger as-child>
-                        <span class="cursor-help text-right">{{ updatedAt }}</span>
+                        <span class="cursor-help text-right">{{ updatedAgo }}</span>
                     </TooltipTrigger>
-                    <TooltipContent>{{ updatedAgo }}</TooltipContent>
+                    <TooltipContent>{{ updatedAt }}</TooltipContent>
                 </Tooltip>
             </div>
         </div>
