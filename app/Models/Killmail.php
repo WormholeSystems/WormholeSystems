@@ -21,7 +21,7 @@ use Staudenmeir\EloquentJsonRelations\HasJsonRelationships;
  * @property-read string|CarbonImmutable $updated_at
  * @property-read Fluent $data
  * @property-read Fluent $zkb
- * @property-read Type $shipType
+ * @property-read Type|null $shipType
  * @property-read Solarsystem $solarsystem
  */
 final class Killmail extends Model

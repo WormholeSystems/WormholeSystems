@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import DestinationContextMenu from '@/components/autopilot/DestinationContextMenu.vue';
+import QuestionIcon from '@/components/icons/QuestionIcon.vue';
 import Affiliation from '@/components/map-killmails/Affiliation.vue';
 import AttackerImage from '@/components/map-killmails/AttackerImage.vue';
 import VictimImage from '@/components/map-killmails/VictimImage.vue';
@@ -64,9 +65,10 @@ const total_worth = computed(() => {
         <DestinationContextMenu :solarsystem_id="killmail.solarsystem.id">
             <div class="contents">
                 <div class="flex gap-x-2">
-                    <a :href="`https://zkillboard.com/kill/${killmail.id}/`" target="_blank" rel="noopener noreferrer">
+                    <a :href="`https://zkillboard.com/kill/${killmail.id}/`" target="_blank" rel="noopener noreferrer" v-if="killmail.ship_type">
                         <TypeImage class="size-6 rounded-lg" :type_id="killmail.ship_type.id" :type_name="killmail.ship_type.name" />
                     </a>
+                    <QuestionIcon v-else class="size-6 rounded-lg text-muted-foreground" />
                     <a :href="`https://zkillboard.com/character/${killmail.data.victim.character_id}/`" target="_blank" rel="noopener noreferrer">
                         <VictimImage class="size-6 overflow-hidden rounded-lg" :victim="killmail.data.victim" />
                     </a>

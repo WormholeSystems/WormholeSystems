@@ -29,7 +29,7 @@ final class KillmailResource extends JsonResource
             'time' => $this->time,
             'data' => $this->data,
             'zkb' => $this->zkb,
-            'ship_type' => $this->shipType->toResource(TypeResource::class),
+            'ship_type' => $this->shipType?->toResource(TypeResource::class),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

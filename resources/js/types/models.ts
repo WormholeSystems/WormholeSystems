@@ -54,7 +54,7 @@ export type TKillmail = {
     id: number;
     hash: string;
     solarsystem: TSolarsystem;
-    ship_type: TType;
+    ship_type: TType | null;
     data: TRawKillmail;
     zkb: TzKillboard;
     time: string;
