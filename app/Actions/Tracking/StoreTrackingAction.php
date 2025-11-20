@@ -8,7 +8,6 @@ use App\Actions\MapConnections\CreateMapConnectionAction;
 use App\Actions\MapConnections\UpdateMapConnectionAction;
 use App\Actions\MapSolarsystem\StoreMapSolarsystemAction;
 use App\Actions\Signatures\UpdateSignatureAction;
-use App\Data\MapConnectionData;
 use App\Data\SignatureData;
 use App\Data\TrackingData;
 use App\Enums\LifetimeStatus;
@@ -99,36 +98,28 @@ final readonly class StoreTrackingAction
                 ]
             );
 
+            $signature = Signature::query()->find($data->signature_id);
+
+            $mass_status = $this->getMassStatusForSignature($signature);
+            $lifetime_status = $this->getLifetimeStatusForSignature($signature);
+
             $connection = $this->storeMapConnectionRequest->handle(
                 [
                     'from_map_solarsystem_id' => $data->from_map_solarsystem_id,
                     'to_map_solarsystem_id' => $new_map_solarsystem->id,
                     'wormhole_id' => null,
-                    'mass_status' => MassStatus::Fresh,
+                    'mass_status' => $mass_status,
                     'ship_size' => $ship_size ?? ShipSize::Large,
-                    'lifetime' => LifetimeStatus::Healthy,
+                    'lifetime' => $lifetime_status,
                 ]
             );
 
             // Link the signature to the connection if provided
             if ($data->signature_id) {
-                $signature = $origin->signatures()->find($data->signature_id);
-
-                if (! $signature instanceof Signature) {
-                    return;
-                }
-
-                $signature->map_connection_id = $connection->id;
-                $signature->save();
-
-                // If the signature is marked as eol or critical, we want to update the connection status too
-                $this->updateMapConnectionAction->handle(
-                    $connection,
-                    MapConnectionData::from([
-                        'mass_status' => $signature->mass_status,
-                        'lifetime' => $signature->lifetime,
-                    ])
-                );
+                Signature::query()->where('id', $data->signature_id)
+                    ->update([
+                        'map_connection_id' => $connection->id,
+                    ]);
             }
 
         }, 10);
@@ -267,5 +258,23 @@ final readonly class StoreTrackingAction
         $this->updateSignatureAction->handle($signature, SignatureData::from([
             'map_connection_id' => $connection->id,
         ]));
+    }
+
+    private function getMassStatusForSignature(?Signature $signature): MassStatus
+    {
+        if (! $signature instanceof Signature) {
+            return MassStatus::Fresh;
+        }
+
+        return $signature->mass_status;
+    }
+
+    private function getLifetimeStatusForSignature(?Signature $signature): LifetimeStatus
+    {
+        if (! $signature instanceof Signature) {
+            return LifetimeStatus::Healthy;
+        }
+
+        return $signature->lifetime;
     }
 }
