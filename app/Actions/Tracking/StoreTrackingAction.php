@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Actions\Tracking;
 
 use App\Actions\MapConnections\CreateMapConnectionAction;
+use App\Actions\MapConnections\UpdateMapConnectionAction;
 use App\Actions\MapSolarsystem\StoreMapSolarsystemAction;
 use App\Actions\Signatures\UpdateSignatureAction;
+use App\Data\MapConnectionData;
 use App\Data\SignatureData;
 use App\Data\TrackingData;
 use App\Enums\LifetimeStatus;
@@ -40,6 +42,7 @@ final readonly class StoreTrackingAction
         private StoreMapSolarsystemAction $storeMapSolarsystemAction,
         private CreateMapConnectionAction $storeMapConnectionRequest,
         private UpdateSignatureAction $updateSignatureAction,
+        private UpdateMapConnectionAction $updateMapConnectionAction,
         #[Config('map.max_size.x')]
         private int $max_x,
         #[Config('map.max_size.y')]
@@ -109,9 +112,23 @@ final readonly class StoreTrackingAction
 
             // Link the signature to the connection if provided
             if ($data->signature_id) {
-                Signature::query()
-                    ->where('id', $data->signature_id)
-                    ->update(['map_connection_id' => $connection->id]);
+                $signature = $new_map_solarsystem->signatures()->find($data->signature_id);
+
+                if (! $signature instanceof Signature) {
+                    return;
+                }
+
+                $signature->map_connection_id = $connection->id;
+                $signature->save();
+
+                // If the signature is marked as eol or critical, we want to update the connection status too
+                $this->updateMapConnectionAction->handle(
+                    $connection,
+                    MapConnectionData::from([
+                        'mass_status' => $signature->mass_status,
+                        'lifetime' => $signature->lifetime,
+                    ])
+                );
             }
 
         }, 10);
