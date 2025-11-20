@@ -112,7 +112,7 @@ final readonly class StoreTrackingAction
 
             // Link the signature to the connection if provided
             if ($data->signature_id) {
-                $signature = $new_map_solarsystem->signatures()->find($data->signature_id);
+                $signature = $origin->signatures()->find($data->signature_id);
 
                 if (! $signature instanceof Signature) {
                     return;
