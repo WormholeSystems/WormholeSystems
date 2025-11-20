@@ -266,7 +266,7 @@ final readonly class StoreTrackingAction
             return MassStatus::Fresh;
         }
 
-        return $signature->mass_status;
+        return $signature->mass_status ?? MassStatus::Fresh;
     }
 
     private function getLifetimeStatusForSignature(?Signature $signature): LifetimeStatus
@@ -275,6 +275,6 @@ final readonly class StoreTrackingAction
             return LifetimeStatus::Healthy;
         }
 
-        return $signature->lifetime;
+        return $signature->lifetime ?? LifetimeStatus::Healthy;
     }
 }
