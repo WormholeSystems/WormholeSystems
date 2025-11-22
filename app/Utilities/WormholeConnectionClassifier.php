@@ -17,12 +17,12 @@ final class WormholeConnectionClassifier
         $classes = collect([$from->wormholeSystem?->class, $to->wormholeSystem?->class])
             ->filter(fn ($c): bool => $c !== null);
 
-        if ($classes->contains(SolarsystemClass::C1->value)) {
-            return ShipSize::Medium;
-        }
-
         if ($classes->contains(SolarsystemClass::C13->value)) {
             return ShipSize::Frigate;
+        }
+
+        if ($classes->contains(SolarsystemClass::C1->value)) {
+            return ShipSize::Medium;
         }
 
         // Check if Turnur connects to JSpace
