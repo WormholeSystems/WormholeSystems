@@ -10,6 +10,7 @@ import QuestionIcon from '@/components/icons/QuestionIcon.vue';
 import LayoutEditor from '@/components/layout/LayoutEditor.vue';
 import LayoutEditorToolbar from '@/components/layout/LayoutEditorToolbar.vue';
 import MapKillmails from '@/components/map-killmails/MapKillmails.vue';
+import ActiveCharacterWarning from '@/components/map/ActiveCharacterWarning.vue';
 import LocationVisibility from '@/components/map/LocationVisibility.vue';
 import MapComponent from '@/components/map/MapComponent.vue';
 import MapIntroduction from '@/components/map/MapIntroduction.vue';
@@ -45,6 +46,7 @@ const {
     ignored_systems,
     map_characters,
     has_guest_access,
+    active_character_has_access,
     eve_scout_connections,
 } = defineProps<TShowMapProps>();
 
@@ -52,6 +54,9 @@ const character = useActiveMapCharacter();
 const hasWriteAccess = useHasWritePermission();
 const isOwner = useIsMapOwner();
 const page = usePage();
+
+// Show warning when the active character is not on the map's access list
+const showActiveCharacterWarning = computed(() => !active_character_has_access);
 
 // Initialize layout management with reactive getter
 const layout = useMapLayout(() => map_user_settings);
@@ -136,103 +141,102 @@ const handleResizeEnd = () => {
             :mapSlug="map.slug"
         />
 
-        <div class="space-y-4 p-4">
-            <!-- Grid Layout Container -->
-            <GridLayout
-                :ref="layout.gridLayoutRef"
-                :layout="layout.currentLayoutItems.value"
-                :col-num="layout.currentLayoutCols.value"
-                :row-height="layout.currentLayoutRowHeight.value"
-                :is-draggable="layout.isEditMode.value"
-                :is-resizable="layout.isEditMode.value"
-                :vertical-compact="true"
-                :use-css-transforms="true"
-                :margin="[16, 16]"
-                @layout-updated="layout.updateLayout"
-                @item-move="handleDragStart"
-                @item-moved="handleDragEnd"
-                @item-resize="handleResizeStart"
-                @item-resized="handleResizeEnd"
-            >
-                <!-- Map Section -->
-                <GridItem v-bind="getLayoutItem('map').value" @resize="handleResizeStart" @resized="handleResizeEnd">
-                    <MapComponent :map :config />
-                    <MapSearch :map :search :solarsystems v-if="hasWriteAccess" />
-                    <div class="absolute top-4 right-4 z-40 flex gap-2">
-                        <LocationVisibility :map_user_settings="map_user_settings" :key="character?.id" v-if="hasWriteAccess" />
-                        <Tracker :character :map :key="character?.id" v-if="hasWriteAccess" />
-                        <Tooltip>
-                            <TooltipTrigger>
-                                <Button variant="outline" size="icon" as-child>
-                                    <Link :href="settingsUrl">
-                                        <Settings class="h-4 w-4" />
-                                    </Link>
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom">
-                                <p class="text-sm">Settings</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </div>
-                </GridItem>
+        <!-- Active Character Access Warning -->
+        <ActiveCharacterWarning
+            v-if="showActiveCharacterWarning"
+            :character-name="page.props.auth?.user?.active_character?.name ?? ''"
+            :has-write-access="hasWriteAccess"
+            :map-slug="map.slug"
+        />
+        <!-- Grid Layout Container -->
+        <GridLayout
+            :ref="layout.gridLayoutRef"
+            :layout="layout.currentLayoutItems.value"
+            :col-num="layout.currentLayoutCols.value"
+            :row-height="layout.currentLayoutRowHeight.value"
+            :is-draggable="layout.isEditMode.value"
+            :is-resizable="layout.isEditMode.value"
+            :vertical-compact="true"
+            :use-css-transforms="true"
+            :margin="[16, 16]"
+            @layout-updated="layout.updateLayout"
+            @item-move="handleDragStart"
+            @item-moved="handleDragEnd"
+            @item-resize="handleResizeStart"
+            @item-resized="handleResizeEnd"
+        >
+            <!-- Map Section -->
+            <GridItem v-bind="getLayoutItem('map').value" @resize="handleResizeStart" @resized="handleResizeEnd">
+                <MapComponent :map :config />
+                <MapSearch :map :search :solarsystems v-if="hasWriteAccess" />
+                <div class="absolute top-4 right-4 z-40 flex gap-2">
+                    <LocationVisibility :map_user_settings="map_user_settings" :key="character?.id" v-if="hasWriteAccess" />
+                    <Tracker :character :map :key="character?.id" v-if="hasWriteAccess" />
+                    <Tooltip>
+                        <TooltipTrigger>
+                            <Button variant="outline" size="icon" as-child>
+                                <Link :href="settingsUrl">
+                                    <Settings class="h-4 w-4" />
+                                </Link>
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">
+                            <p class="text-sm">Settings</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </div>
+            </GridItem>
 
-                <!-- Solarsystem Details Section -->
-                <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-bind="getLayoutItem('solarsystem').value">
-                    <SolarsystemDetails
-                        v-if="selected_map_solarsystem"
-                        :map_solarsystem="selected_map_solarsystem"
-                        :map
-                        :map_navigation="map_navigation.destinations"
-                        :hide_notes="has_guest_access"
-                    />
-                    <div class="flex h-full flex-col items-center justify-center gap-8 rounded-lg border bg-card p-8 text-neutral-700" v-else>
-                        <QuestionIcon class="text-4xl" />
-                        <p class="text-center">Select a solarsystem to see more details</p>
-                    </div>
-                </GridItem>
+            <!-- Solarsystem Details Section -->
+            <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-bind="getLayoutItem('solarsystem').value">
+                <SolarsystemDetails
+                    v-if="selected_map_solarsystem"
+                    :map_solarsystem="selected_map_solarsystem"
+                    :map
+                    :map_navigation="map_navigation.destinations"
+                    :hide_notes="has_guest_access"
+                />
+                <div class="flex h-full flex-col items-center justify-center gap-8 rounded-lg border bg-card p-8 text-neutral-700" v-else>
+                    <QuestionIcon class="text-4xl" />
+                    <p class="text-center">Select a solarsystem to see more details</p>
+                </div>
+            </GridItem>
 
-                <!-- Signatures Section -->
-                <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-bind="getLayoutItem('signatures').value">
-                    <Signatures :map :map_solarsystem="selected_map_solarsystem" />
-                </GridItem>
+            <!-- Signatures Section -->
+            <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-bind="getLayoutItem('signatures').value">
+                <Signatures :map :map_solarsystem="selected_map_solarsystem" />
+            </GridItem>
 
-                <!-- Audits Section -->
-                <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-if="!has_guest_access" v-bind="getLayoutItem('audits').value">
-                    <Audits :audits="selected_map_solarsystem?.audits ?? []" />
-                </GridItem>
+            <!-- Audits Section -->
+            <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-if="!has_guest_access" v-bind="getLayoutItem('audits').value">
+                <Audits :audits="selected_map_solarsystem?.audits ?? []" />
+            </GridItem>
 
-                <!-- Ship History Section -->
-                <GridItem
-                    @resize="handleResizeStart"
-                    @resized="handleResizeEnd"
-                    v-if="!has_guest_access"
-                    v-bind="getLayoutItem('ship-history').value"
-                >
-                    <ShipHistory />
-                </GridItem>
+            <!-- Ship History Section -->
+            <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-if="!has_guest_access" v-bind="getLayoutItem('ship-history').value">
+                <ShipHistory />
+            </GridItem>
 
-                <!-- Map Characters Section -->
-                <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-if="map_characters" v-bind="getLayoutItem('characters').value">
-                    <MapCharacters :map_characters />
-                </GridItem>
+            <!-- Map Characters Section -->
+            <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-if="map_characters" v-bind="getLayoutItem('characters').value">
+                <MapCharacters :map_characters />
+            </GridItem>
 
-                <!-- Killmails Section -->
-                <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-bind="getLayoutItem('killmails').value">
-                    <MapKillmails :map_killmails="map_killmails" :map_id="map.id" :map_user_settings="map_user_settings" />
-                </GridItem>
+            <!-- Killmails Section -->
+            <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-bind="getLayoutItem('killmails').value">
+                <MapKillmails :map_killmails="map_killmails" :map_id="map.id" :map_user_settings="map_user_settings" />
+            </GridItem>
 
-                <!-- Navigation Section -->
-                <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-bind="getLayoutItem('autopilot').value">
-                    <NavigationPanel :map_navigation :map :solarsystems :selected_map_solarsystem :map_characters="map_characters" :ignored_systems />
-                </GridItem>
+            <!-- Navigation Section -->
+            <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-bind="getLayoutItem('autopilot').value">
+                <NavigationPanel :map_navigation :map :solarsystems :selected_map_solarsystem :map_characters="map_characters" :ignored_systems />
+            </GridItem>
 
-                <!-- EVE Scout Connections Section -->
-                <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-bind="getLayoutItem('eve-scout').value">
-                    <EveScoutConnections :eve_scout_connections />
-                </GridItem>
-            </GridLayout>
-        </div>
-
+            <!-- EVE Scout Connections Section -->
+            <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-bind="getLayoutItem('eve-scout').value">
+                <EveScoutConnections :eve_scout_connections />
+            </GridItem>
+        </GridLayout>
         <!-- Layout Edit Controls -->
         <LayoutEditor :layout="layout" />
         <LayoutEditorToolbar :layout="layout" />

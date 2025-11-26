@@ -59,6 +59,7 @@ export type TShowMapProps = {
     ship_history: TShipHistory[] | null;
     has_write_access: boolean;
     has_guest_access: boolean;
+    active_character_has_access: boolean;
     layout: TLayout;
     map_user_settings: TMapUserSetting;
     ignored_systems: number[];
