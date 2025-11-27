@@ -9,6 +9,7 @@ use App\Models\WormholeStatic;
 use App\Utilities\CCPRounding;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Throwable;
 
 use function collect;
 
@@ -21,6 +22,8 @@ final class SolarsystemResource extends JsonResource
      * Transform the resource into an array.
      *
      * @return array<string, mixed>
+     *
+     * @throws Throwable
      */
     public function toArray(Request $request): array
     {
@@ -49,6 +52,7 @@ final class SolarsystemResource extends JsonResource
             )->values(),
             'effect' => $this->getWormholeEffects(),
             'connection_type' => $this->whenHas('connection_type'),
+            'position2D' => $this->getPosition2dArray(),
         ];
     }
 
@@ -85,6 +89,18 @@ final class SolarsystemResource extends JsonResource
             'id' => $this->wormholeSystem->effect->id,
             'name' => $this->wormholeSystem->effect->name,
             'effects' => $buffs,
+        ];
+    }
+
+    private function getPosition2dArray(): ?array
+    {
+        if ($this->pos_2d_x === null || $this->pos_2d_y === null) {
+            return null;
+        }
+
+        return [
+            'x' => $this->pos_2d_x,
+            'y' => $this->pos_2d_y,
         ];
     }
 }

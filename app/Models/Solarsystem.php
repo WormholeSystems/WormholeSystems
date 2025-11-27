@@ -25,6 +25,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property float $pos_x
  * @property float $pos_y
  * @property float $pos_z
+ * @property float|null $pos_2d_x
+ * @property float|null $pos_2d_y
  * @property string $type
  * @property bool $has_jove_observatory
  * @property string|null $connection_type

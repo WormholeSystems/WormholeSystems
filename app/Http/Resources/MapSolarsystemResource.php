@@ -7,6 +7,7 @@ namespace App\Http\Resources;
 use App\Models\MapSolarsystem;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Throwable;
 
 /**
  * @mixin MapSolarsystem
@@ -17,6 +18,8 @@ final class MapSolarsystemResource extends JsonResource
      * Transform the resource into an array.
      *
      * @return array<string, mixed>
+     *
+     * @throws Throwable
      */
     public function toArray(Request $request): array
     {

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "9b7652e0069976e4c56eaccf480722fe",
+    "content-hash": "6325ddde0e263cf3a2b7596b3857b3fa",
     "packages": [
         {
             "name": "brick/math",
@@ -1526,16 +1526,16 @@
         },
         {
             "name": "inertiajs/inertia-laravel",
-            "version": "v2.0.10",
+            "version": "v2.0.11",
             "source": {
                 "type": "git",
                 "url": "https://github.com/inertiajs/inertia-laravel.git",
-                "reference": "07da425d58a3a0e3ace9c296e67bd897a6e47009"
+                "reference": "041e148b3228407b5abe584a4f02df2651ab4d85"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/inertiajs/inertia-laravel/zipball/07da425d58a3a0e3ace9c296e67bd897a6e47009",
-                "reference": "07da425d58a3a0e3ace9c296e67bd897a6e47009",
+                "url": "https://api.github.com/repos/inertiajs/inertia-laravel/zipball/041e148b3228407b5abe584a4f02df2651ab4d85",
+                "reference": "041e148b3228407b5abe584a4f02df2651ab4d85",
                 "shasum": ""
             },
             "require": {
@@ -1590,9 +1590,9 @@
             ],
             "support": {
                 "issues": "https://github.com/inertiajs/inertia-laravel/issues",
-                "source": "https://github.com/inertiajs/inertia-laravel/tree/v2.0.10"
+                "source": "https://github.com/inertiajs/inertia-laravel/tree/v2.0.11"
             },
-            "time": "2025-09-28T21:21:36+00:00"
+            "time": "2025-11-26T23:07:12+00:00"
         },
         {
             "name": "knuckleswtf/scribe",
@@ -1777,16 +1777,16 @@
         },
         {
             "name": "laravel/framework",
-            "version": "v12.40.1",
+            "version": "v12.40.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/framework.git",
-                "reference": "2e986acbf9acf62cba13400bc23c4d639bf188b9"
+                "reference": "1ccd99220b474500e672b373f32bd709ec38de50"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/framework/zipball/2e986acbf9acf62cba13400bc23c4d639bf188b9",
-                "reference": "2e986acbf9acf62cba13400bc23c4d639bf188b9",
+                "url": "https://api.github.com/repos/laravel/framework/zipball/1ccd99220b474500e672b373f32bd709ec38de50",
+                "reference": "1ccd99220b474500e672b373f32bd709ec38de50",
                 "shasum": ""
             },
             "require": {
@@ -1992,7 +1992,7 @@
                 "issues": "https://github.com/laravel/framework/issues",
                 "source": "https://github.com/laravel/framework"
             },
-            "time": "2025-11-25T16:16:33+00:00"
+            "time": "2025-11-26T19:24:25+00:00"
         },
         {
             "name": "laravel/horizon",
@@ -2722,16 +2722,16 @@
         },
         {
             "name": "league/commonmark",
-            "version": "2.7.1",
+            "version": "2.8.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/thephpleague/commonmark.git",
-                "reference": "10732241927d3971d28e7ea7b5712721fa2296ca"
+                "reference": "4efa10c1e56488e658d10adf7b7b7dcd19940bfb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/thephpleague/commonmark/zipball/10732241927d3971d28e7ea7b5712721fa2296ca",
-                "reference": "10732241927d3971d28e7ea7b5712721fa2296ca",
+                "url": "https://api.github.com/repos/thephpleague/commonmark/zipball/4efa10c1e56488e658d10adf7b7b7dcd19940bfb",
+                "reference": "4efa10c1e56488e658d10adf7b7b7dcd19940bfb",
                 "shasum": ""
             },
             "require": {
@@ -2768,7 +2768,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "2.8-dev"
+                    "dev-main": "2.9-dev"
                 }
             },
             "autoload": {
@@ -2825,7 +2825,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-07-20T12:47:49+00:00"
+            "time": "2025-11-26T21:48:24+00:00"
         },
         {
             "name": "league/config",
@@ -3851,16 +3851,16 @@
         },
         {
             "name": "nicolaskion/sde",
-            "version": "v0.2.2",
+            "version": "v0.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/NicolasKion/SDE.git",
-                "reference": "63424845c0b91b77cfcc071b036e9751c2319ab8"
+                "reference": "27f1ee98d80f9a279131a102adf37b8e74838b75"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/NicolasKion/SDE/zipball/63424845c0b91b77cfcc071b036e9751c2319ab8",
-                "reference": "63424845c0b91b77cfcc071b036e9751c2319ab8",
+                "url": "https://api.github.com/repos/NicolasKion/SDE/zipball/27f1ee98d80f9a279131a102adf37b8e74838b75",
+                "reference": "27f1ee98d80f9a279131a102adf37b8e74838b75",
                 "shasum": ""
             },
             "require": {
@@ -3910,7 +3910,7 @@
             ],
             "support": {
                 "issues": "https://github.com/NicolasKion/SDE/issues",
-                "source": "https://github.com/NicolasKion/SDE/tree/v0.2.2"
+                "source": "https://github.com/NicolasKion/SDE/tree/v0.3"
             },
             "funding": [
                 {
@@ -3926,7 +3926,7 @@
                     "type": "patreon"
                 }
             ],
-            "time": "2025-11-26T13:42:18+00:00"
+            "time": "2025-11-27T12:32:23+00:00"
         },
         {
             "name": "nikic/php-parser",
@@ -11723,16 +11723,16 @@
         },
         {
             "name": "laravel/boost",
-            "version": "v1.8.2",
+            "version": "v1.8.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/boost.git",
-                "reference": "cf57ba510df44e0d4ed2c1c91360477e92d7d644"
+                "reference": "26572e858e67334952779c0110ca4c378a44d28d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/boost/zipball/cf57ba510df44e0d4ed2c1c91360477e92d7d644",
-                "reference": "cf57ba510df44e0d4ed2c1c91360477e92d7d644",
+                "url": "https://api.github.com/repos/laravel/boost/zipball/26572e858e67334952779c0110ca4c378a44d28d",
+                "reference": "26572e858e67334952779c0110ca4c378a44d28d",
                 "shasum": ""
             },
             "require": {
@@ -11785,7 +11785,7 @@
                 "issues": "https://github.com/laravel/boost/issues",
                 "source": "https://github.com/laravel/boost"
             },
-            "time": "2025-11-20T18:13:17+00:00"
+            "time": "2025-11-26T14:12:52+00:00"
         },
         {
             "name": "laravel/mcp",
@@ -13648,16 +13648,16 @@
         },
         {
             "name": "revolt/event-loop",
-            "version": "v1.0.7",
+            "version": "v1.0.8",
             "source": {
                 "type": "git",
                 "url": "https://github.com/revoltphp/event-loop.git",
-                "reference": "09bf1bf7f7f574453efe43044b06fafe12216eb3"
+                "reference": "b6fc06dce8e9b523c9946138fa5e62181934f91c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/revoltphp/event-loop/zipball/09bf1bf7f7f574453efe43044b06fafe12216eb3",
-                "reference": "09bf1bf7f7f574453efe43044b06fafe12216eb3",
+                "url": "https://api.github.com/repos/revoltphp/event-loop/zipball/b6fc06dce8e9b523c9946138fa5e62181934f91c",
+                "reference": "b6fc06dce8e9b523c9946138fa5e62181934f91c",
                 "shasum": ""
             },
             "require": {
@@ -13714,9 +13714,9 @@
             ],
             "support": {
                 "issues": "https://github.com/revoltphp/event-loop/issues",
-                "source": "https://github.com/revoltphp/event-loop/tree/v1.0.7"
+                "source": "https://github.com/revoltphp/event-loop/tree/v1.0.8"
             },
-            "time": "2025-01-25T19:27:39+00:00"
+            "time": "2025-08-27T21:33:23+00:00"
         },
         {
             "name": "sebastian/cli-parser",
