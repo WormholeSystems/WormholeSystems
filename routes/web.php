@@ -28,6 +28,7 @@ use App\Http\Controllers\SignatureController;
 use App\Http\Controllers\StatisticsController;
 use App\Http\Controllers\TokenManagementController;
 use App\Http\Controllers\TrackingController;
+use App\Http\Controllers\UniverseMapController;
 use App\Http\Controllers\UserCharacterController;
 use App\Http\Controllers\WaypointController;
 use Illuminate\Support\Facades\Route;
@@ -39,6 +40,8 @@ Route::get('eve', [EveController::class, 'show'])->name('eve.show');
 Route::get('eve/callback', [EveController::class, 'store'])->name('eve.store');
 
 Route::middleware('auth')->group(function () {
+
+    Route::get('universe-map', [UniverseMapController::class, 'show'])->name('universe-map.show');
 
     Route::get('maps/{map}/ping', [PingController::class, 'show'])->name('maps.ping');
 

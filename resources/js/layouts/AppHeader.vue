@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import MapController from '@/actions/App/Http/Controllers/MapController';
 import ScopeController from '@/actions/App/Http/Controllers/ScopeController';
+import UniverseMapController from '@/actions/App/Http/Controllers/UniverseMapController';
 import DiscordIcon from '@/components/icons/DiscordIcon.vue';
 import { CharacterImage } from '@/components/images';
 import ServerStatus from '@/components/server-status/ServerStatus.vue';
@@ -17,7 +18,7 @@ import { home } from '@/routes';
 import type { AppPageProps, NavItem } from '@/types';
 import { TCharacter } from '@/types/models';
 import { Link, usePage } from '@inertiajs/vue3';
-import { AlertTriangle, LayoutGrid, Menu, Shield } from 'lucide-vue-next';
+import { AlertTriangle, Globe2, LayoutGrid, Menu, Shield } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 const page = usePage<
@@ -38,6 +39,11 @@ const mainNavItems: NavItem[] = [
         title: 'Maps',
         href: MapController.index().url,
         icon: LayoutGrid,
+    },
+    {
+        title: 'Universe',
+        href: UniverseMapController.show().url,
+        icon: Globe2,
     },
     {
         title: 'Discord',
