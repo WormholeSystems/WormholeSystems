@@ -76,7 +76,7 @@ export function usePasteSignatures(map_solarsystem: MaybeRefOrGetter<TSelectedMa
     function isSignatureDeleted(signature: Partial<TSignature>) {
         return Boolean(
             pasted_signatures.value &&
-                !pasted_signatures.value.some((pasted_signature) => pasted_signature.signature_id === signature.signature_id && !pasted_signature.id),
+            !pasted_signatures.value.some((pasted_signature) => pasted_signature.signature_id === signature.signature_id && !pasted_signature.id),
         );
     }
 

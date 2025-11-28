@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { TUniverseBounds, TUniverseConnection, TUniverseSolarsystem } from '@/types/universe-map';
-import { useElementSize, useThrottleFn } from '@vueuse/core';
+import { useElementSize, useMagicKeys, useThrottleFn, whenever } from '@vueuse/core';
 import { Delaunay } from 'd3-delaunay';
+import { Eraser, PenTool, Square } from 'lucide-vue-next';
 import { computed, onMounted, onUnmounted, ref, shallowRef, useTemplateRef, watch } from 'vue';
 
 const props = defineProps<{
@@ -12,6 +13,11 @@ const props = defineProps<{
 
 const scale = defineModel<number>('scale', { default: 0.5 });
 const panOffset = defineModel<{ x: number; y: number }>('panOffset', { default: () => ({ x: 0, y: 0 }) });
+
+const emit = defineEmits<{
+    'system-click': [system: TUniverseSolarsystem];
+    'system-contextmenu': [system: TUniverseSolarsystem, position: { x: number; y: number }];
+}>();
 
 // Image cache for sovereignty logos
 const imageCache = new Map<string, HTMLImageElement | null>();
@@ -59,15 +65,157 @@ function loadImage(url: string): HTMLImageElement | null {
 
 const containerRef = useTemplateRef<HTMLDivElement>('container');
 const canvasRef = useTemplateRef<HTMLCanvasElement>('canvas');
+const intelInputRef = useTemplateRef<HTMLInputElement>('intelInputRef');
 const { width: containerWidth, height: containerHeight } = useElementSize(containerRef);
 
 // Track hovered system for tooltip
 const hoveredSystem = shallowRef<TUniverseSolarsystem | null>(null);
 const tooltipPosition = ref({ x: 0, y: 0 });
 
+// Highlight state for focused systems
+const highlightedRegionId = ref<number | null>(null);
+const highlightedConstellationId = ref<number | null>(null);
+const highlightedSystemId = ref<number | null>(null);
+
 // Panning state
 const isPanning = ref(false);
 const lastMousePosition = ref({ x: 0, y: 0 });
+const mouseDownPosition = ref<{ x: number; y: number; worldX: number; worldY: number } | null>(null);
+
+// Animation state
+let animationFrameId: number | null = null;
+
+function animateTo(targetScale: number, targetPanX: number, targetPanY: number, duration = 400) {
+    // Cancel any existing animation
+    if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+    }
+
+    const startScale = scale.value;
+    const startPanX = panOffset.value.x;
+    const startPanY = panOffset.value.y;
+    const startTime = performance.now();
+
+    // Easing function (easeOutCubic)
+    const ease = (t: number) => 1 - Math.pow(1 - t, 3);
+
+    function animate(currentTime: number) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const easedProgress = ease(progress);
+
+        scale.value = startScale + (targetScale - startScale) * easedProgress;
+        panOffset.value = {
+            x: startPanX + (targetPanX - startPanX) * easedProgress,
+            y: startPanY + (targetPanY - startPanY) * easedProgress,
+        };
+
+        if (progress < 1) {
+            animationFrameId = requestAnimationFrame(animate);
+        } else {
+            animationFrameId = null;
+        }
+
+        requestDraw();
+    }
+
+    animationFrameId = requestAnimationFrame(animate);
+}
+
+// Intel/Annotation system
+type TAnnotation = {
+    id: string;
+    type: 'rect' | 'polygon';
+    // For rect
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
+    // For polygon
+    points?: { x: number; y: number }[];
+    text: string;
+    color: string;
+};
+
+type TDrawMode = 'rect' | 'polygon' | 'eraser';
+
+const isDrawingMode = ref(false);
+const drawMode = ref<TDrawMode>('rect');
+const isDrawing = ref(false);
+const drawStart = ref({ x: 0, y: 0 });
+const drawCurrent = ref({ x: 0, y: 0 });
+const polygonPoints = ref<{ x: number; y: number }[]>([]);
+const editingAnnotation = ref<TAnnotation | null>(null);
+const hoveredAnnotation = ref<TAnnotation | null>(null);
+const annotationColors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899'];
+const selectedColor = ref(annotationColors[4]); // Default blue
+
+// Load annotations from localStorage
+const STORAGE_KEY = 'universe-map-annotations';
+const annotations = ref<TAnnotation[]>([]);
+
+function loadAnnotations() {
+    try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+            annotations.value = JSON.parse(stored);
+        }
+    } catch (e) {
+        console.warn('Failed to load annotations from localStorage', e);
+    }
+}
+
+function saveAnnotations() {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(annotations.value));
+    } catch (e) {
+        console.warn('Failed to save annotations to localStorage', e);
+    }
+}
+
+// Watch for annotation changes and save
+watch(annotations, saveAnnotations, { deep: true });
+
+// Check if point is inside annotation
+function isPointInAnnotation(px: number, py: number, ann: TAnnotation): boolean {
+    if (ann.type === 'rect' && ann.x !== undefined && ann.y !== undefined && ann.width !== undefined && ann.height !== undefined) {
+        return px >= ann.x && px <= ann.x + ann.width && py >= ann.y && py <= ann.y + ann.height;
+    } else if (ann.type === 'polygon' && ann.points && ann.points.length >= 3) {
+        // Ray casting algorithm for polygon
+        let inside = false;
+        const points = ann.points;
+        for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+            const xi = points[i].x,
+                yi = points[i].y;
+            const xj = points[j].x,
+                yj = points[j].y;
+            if (yi > py !== yj > py && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi) {
+                inside = !inside;
+            }
+        }
+        return inside;
+    }
+    return false;
+}
+
+// Get annotation centroid for label positioning
+function getAnnotationCenter(ann: TAnnotation): { x: number; y: number } {
+    if (ann.type === 'rect' && ann.x !== undefined && ann.y !== undefined && ann.width !== undefined && ann.height !== undefined) {
+        return { x: ann.x + ann.width / 2, y: ann.y };
+    } else if (ann.type === 'polygon' && ann.points && ann.points.length >= 3) {
+        // Find top-center of bounding box
+        let minX = Infinity,
+            maxX = -Infinity,
+            minY = Infinity;
+        for (const p of ann.points) {
+            if (p.x < minX) minX = p.x;
+            if (p.x > maxX) maxX = p.x;
+            if (p.y < minY) minY = p.y;
+        }
+        return { x: (minX + maxX) / 2, y: minY };
+    }
+    return { x: 0, y: 0 };
+}
 
 // Canvas DPR for sharp rendering
 const dpr = ref(typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1);
@@ -353,8 +501,11 @@ function draw() {
         drawSystem(ctx, system, x, y, lod);
     }
 
-    // Draw region labels last (overlay everything)
+    // Draw region labels
     drawRegionLabels(ctx, lod);
+
+    // Draw annotations (intel markers)
+    drawAnnotations(ctx);
 
     ctx.restore();
 
@@ -541,6 +692,14 @@ function getSovInfo(system: TUniverseSolarsystem): { name: string; type: 'allian
     return null;
 }
 
+// Check if a system is highlighted
+function isSystemHighlighted(system: TUniverseSolarsystem): boolean {
+    if (highlightedSystemId.value === system.id) return true;
+    if (highlightedConstellationId.value === system.constellation_id) return true;
+    if (highlightedRegionId.value === system.region_id) return true;
+    return false;
+}
+
 // Draw a single system
 function drawSystem(
     ctx: CanvasRenderingContext2D,
@@ -550,7 +709,30 @@ function drawSystem(
     lod: 'micro' | 'minimal' | 'simple' | 'detailed',
 ) {
     const isHovered = hoveredSystem.value?.id === system.id;
+    const isHighlighted = isSystemHighlighted(system);
     const secColor = getSecurityColor(system);
+
+    // Draw highlight ring first (behind the system)
+    if (isHighlighted) {
+        ctx.strokeStyle = '#facc15'; // yellow-400
+        ctx.lineWidth = 2 / scale.value;
+        ctx.globalAlpha = 0.8;
+        ctx.beginPath();
+
+        if (lod === 'micro') {
+            ctx.arc(x, y, 4, 0, Math.PI * 2);
+        } else if (lod === 'minimal') {
+            ctx.arc(x, y, 6, 0, Math.PI * 2);
+        } else {
+            // Match the rectangular shape of the system box
+            const boxWidth = lod === 'simple' ? 40 : 50;
+            const boxHeight = lod === 'simple' ? 10 : 14;
+            const padding = 3;
+            ctx.roundRect(x - boxWidth / 2 - padding, y - boxHeight / 2 - padding, boxWidth + padding * 2, boxHeight + padding * 2, 4);
+        }
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+    }
 
     if (lod === 'micro') {
         // Tiny colored dot at very low zoom
@@ -811,17 +993,109 @@ function handleWheel(event: WheelEvent) {
     requestDraw();
 }
 
-// Handle mouse down for panning
+// Handle mouse down for panning, drawing, or selection
 function handleMouseDown(event: MouseEvent) {
+    // Prevent default for middle mouse button (browser auto-scroll)
+    if (event.button === 1) {
+        event.preventDefault();
+    }
+
     if (event.button === 0 || event.button === 1) {
-        isPanning.value = true;
-        lastMousePosition.value = { x: event.clientX, y: event.clientY };
+        const rect = containerRef.value?.getBoundingClientRect();
+        if (!rect) return;
+
+        const worldX = (event.clientX - rect.left - panOffset.value.x) / scale.value;
+        const worldY = (event.clientY - rect.top - panOffset.value.y) / scale.value;
+
+        // Track mouse down position for click detection
+        if (event.button === 0) {
+            mouseDownPosition.value = { x: event.clientX, y: event.clientY, worldX, worldY };
+        }
+
+        // Middle mouse button always pans
+        if (event.button === 1) {
+            isPanning.value = true;
+            lastMousePosition.value = { x: event.clientX, y: event.clientY };
+            return;
+        }
+
+        if (isDrawingMode.value && event.button === 0) {
+            if (drawMode.value === 'eraser') {
+                // Delete annotation under cursor
+                for (const ann of annotations.value) {
+                    if (isPointInAnnotation(worldX, worldY, ann)) {
+                        deleteAnnotation(ann.id);
+                        break;
+                    }
+                }
+            } else if (drawMode.value === 'rect') {
+                // Start drawing rectangle
+                isDrawing.value = true;
+                drawStart.value = { x: worldX, y: worldY };
+                drawCurrent.value = { x: worldX, y: worldY };
+            } else if (drawMode.value === 'polygon') {
+                // Add point to polygon
+                polygonPoints.value.push({ x: worldX, y: worldY });
+                drawCurrent.value = { x: worldX, y: worldY }; // Initialize current to prevent line flash
+                requestDraw();
+            }
+        } else if (event.button === 0) {
+            // Pan mode
+            isPanning.value = true;
+            lastMousePosition.value = { x: event.clientX, y: event.clientY };
+        }
         event.preventDefault();
     }
 }
 
-// Handle mouse move for panning and hover detection
+// Handle double click to finish polygon
+function handleDoubleClick(event: MouseEvent) {
+    if (isDrawingMode.value && drawMode.value === 'polygon' && polygonPoints.value.length >= 3) {
+        const newAnnotation: TAnnotation = {
+            id: Date.now().toString(),
+            type: 'polygon',
+            points: [...polygonPoints.value],
+            text: '',
+            color: selectedColor.value,
+        };
+        annotations.value.push(newAnnotation);
+        editingAnnotation.value = newAnnotation;
+        polygonPoints.value = [];
+        requestDraw();
+    }
+}
+
+// Handle right click context menu
+function handleContextMenu(event: MouseEvent) {
+    // Always prevent default browser context menu on the canvas
+    event.preventDefault();
+
+    // Don't show our context menu in drawing mode
+    if (isDrawingMode.value) return;
+
+    const rect = containerRef.value?.getBoundingClientRect();
+    if (!rect) return;
+
+    // Transform mouse coordinates to canvas world coordinates (same as handleMouseMove)
+    const worldX = (event.clientX - rect.left - panOffset.value.x) / scale.value;
+    const worldY = (event.clientY - rect.top - panOffset.value.y) / scale.value;
+
+    // Check if we clicked on a system
+    const system = findSystemAtPoint(worldX, worldY);
+    if (system) {
+        emit('system-contextmenu', system, { x: event.clientX, y: event.clientY });
+    }
+}
+
+// Handle mouse move for panning, drawing, and hover detection
 const handleMouseMove = useThrottleFn((event: MouseEvent) => {
+    const rect = containerRef.value?.getBoundingClientRect();
+    if (!rect) return;
+
+    const worldX = (event.clientX - rect.left - panOffset.value.x) / scale.value;
+    const worldY = (event.clientY - rect.top - panOffset.value.y) / scale.value;
+
+    // Panning takes priority
     if (isPanning.value) {
         const deltaX = event.clientX - lastMousePosition.value.x;
         const deltaY = event.clientY - lastMousePosition.value.y;
@@ -833,22 +1107,43 @@ const handleMouseMove = useThrottleFn((event: MouseEvent) => {
 
         lastMousePosition.value = { x: event.clientX, y: event.clientY };
         hoveredSystem.value = null;
+        hoveredAnnotation.value = null;
+        requestDraw();
+    } else if (isDrawing.value && isDrawingMode.value && drawMode.value === 'rect') {
+        // Update rectangle drawing preview
+        drawCurrent.value = { x: worldX, y: worldY };
+        requestDraw();
+    } else if (isDrawingMode.value && drawMode.value === 'polygon' && polygonPoints.value.length > 0) {
+        // Update polygon drawing preview
+        drawCurrent.value = { x: worldX, y: worldY };
         requestDraw();
     } else {
-        // Hit detection for hover
-        const rect = containerRef.value?.getBoundingClientRect();
-        if (!rect) return;
+        // Check annotation hover (only in intel mode)
+        if (isDrawingMode.value) {
+            let foundAnnotation: TAnnotation | null = null;
+            for (const ann of annotations.value) {
+                if (isPointInAnnotation(worldX, worldY, ann)) {
+                    foundAnnotation = ann;
+                    break;
+                }
+            }
 
-        const mouseX = (event.clientX - rect.left - panOffset.value.x) / scale.value;
-        const mouseY = (event.clientY - rect.top - panOffset.value.y) / scale.value;
+            if (hoveredAnnotation.value !== foundAnnotation) {
+                hoveredAnnotation.value = foundAnnotation;
+                requestDraw();
+            }
+        } else if (hoveredAnnotation.value) {
+            hoveredAnnotation.value = null;
+            requestDraw();
+        }
 
-        // Find system under cursor (adaptive hit radius based on zoom)
+        // Hit detection for system hover
         const hitRadius = Math.max(30, 15 / scale.value);
         let found: TUniverseSolarsystem | null = null;
 
         for (const { system, x, y } of visibleSystems.value) {
-            const dx = mouseX - x;
-            const dy = mouseY - y;
+            const dx = worldX - x;
+            const dy = worldY - y;
             if (Math.abs(dx) < hitRadius && Math.abs(dy) < hitRadius / 2) {
                 found = system;
                 tooltipPosition.value = { x: event.clientX - rect.left, y: event.clientY - rect.top };
@@ -864,12 +1159,60 @@ const handleMouseMove = useThrottleFn((event: MouseEvent) => {
 }, 16);
 
 // Handle mouse up
-function handleMouseUp() {
+function handleMouseUp(event: MouseEvent) {
+    const wasClick =
+        mouseDownPosition.value && Math.abs(event.clientX - mouseDownPosition.value.x) < 5 && Math.abs(event.clientY - mouseDownPosition.value.y) < 5;
+
+    if (isDrawing.value && isDrawingMode.value) {
+        // Finish drawing
+        isDrawing.value = false;
+
+        const x = Math.min(drawStart.value.x, drawCurrent.value.x);
+        const y = Math.min(drawStart.value.y, drawCurrent.value.y);
+        const width = Math.abs(drawCurrent.value.x - drawStart.value.x);
+        const height = Math.abs(drawCurrent.value.y - drawStart.value.y);
+
+        // Only create annotation if it has some size
+        if (width > 10 && height > 10) {
+            const newAnnotation: TAnnotation = {
+                id: Date.now().toString(),
+                type: 'rect',
+                x,
+                y,
+                width,
+                height,
+                text: '',
+                color: selectedColor.value,
+            };
+            annotations.value.push(newAnnotation);
+            editingAnnotation.value = newAnnotation;
+        }
+        requestDraw();
+    } else if (wasClick && !isDrawingMode.value && mouseDownPosition.value) {
+        // Check if clicked on a system
+        const system = findSystemAtPoint(mouseDownPosition.value.worldX, mouseDownPosition.value.worldY);
+        if (system) {
+            // Highlight the clicked system
+            highlightedRegionId.value = null;
+            highlightedConstellationId.value = null;
+            highlightedSystemId.value = system.id;
+            emit('system-click', system);
+            requestDraw();
+        } else {
+            // Clicked on empty space - clear highlights
+            highlightedRegionId.value = null;
+            highlightedConstellationId.value = null;
+            highlightedSystemId.value = null;
+            requestDraw();
+        }
+    }
+
     isPanning.value = false;
+    mouseDownPosition.value = null;
 }
 
 // Center map to fit all content
-function centerMap() {
+function centerMap(animate = false) {
     const container = containerRef.value;
     if (!container || props.solarsystems.length === 0) return;
 
@@ -890,18 +1233,27 @@ function centerMap() {
     const fitScale = Math.min(scaleX, scaleY) * 0.9; // 90% to add margin
 
     const newScale = Math.max(0.02, Math.min(1, fitScale));
-    scale.value = newScale;
 
     // Center the map
     const centerX = (rect.width - wWidth * newScale) / 2;
     const centerY = (rect.height - wHeight * newScale) / 2;
 
-    panOffset.value = { x: centerX, y: centerY };
-    requestDraw();
+    if (animate) {
+        animateTo(newScale, centerX, centerY);
+    } else {
+        scale.value = newScale;
+        panOffset.value = { x: centerX, y: centerY };
+        requestDraw();
+    }
 }
 
 // Focus on a specific region (zoom and center)
 function focusOnRegion(regionId: number | null) {
+    // Set highlight state
+    highlightedRegionId.value = regionId;
+    highlightedConstellationId.value = null;
+    highlightedSystemId.value = null;
+
     const container = containerRef.value;
     if (!container) return;
 
@@ -910,7 +1262,7 @@ function focusOnRegion(regionId: number | null) {
 
     // If no region selected, show all
     if (regionId === null) {
-        centerMap();
+        centerMap(true); // Animate to show all
         return;
     }
 
@@ -950,21 +1302,401 @@ function focusOnRegion(regionId: number | null) {
     const centerX = rect.width / 2 - regionCenterX * newScale;
     const centerY = rect.height / 2 - regionCenterY * newScale;
 
-    panOffset.value = { x: centerX, y: centerY };
+    animateTo(newScale, centerX, centerY);
+}
+
+// Focus on a specific constellation (zoom and center)
+function focusOnConstellation(constellationId: number) {
+    // Set highlight state
+    highlightedRegionId.value = null;
+    highlightedConstellationId.value = constellationId;
+    highlightedSystemId.value = null;
+
+    const container = containerRef.value;
+    if (!container) return;
+
+    const rect = container.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+
+    // Find all systems in this constellation
+    const constellationSystems = systemPositions.value.filter(({ system }) => system.constellation_id === constellationId);
+
+    if (constellationSystems.length === 0) return;
+
+    // Calculate bounds of the constellation
+    let minX = Infinity,
+        maxX = -Infinity,
+        minY = Infinity,
+        maxY = -Infinity;
+    for (const { x, y } of constellationSystems) {
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+    }
+
+    const constellationWidth = maxX - minX;
+    const constellationHeight = maxY - minY;
+    const padding = 50;
+
+    // Calculate scale to fit the constellation
+    const scaleX = rect.width / (constellationWidth + padding * 2);
+    const scaleY = rect.height / (constellationHeight + padding * 2);
+    const fitScale = Math.min(scaleX, scaleY) * 0.85;
+
+    const newScale = Math.max(0.1, Math.min(5, fitScale));
+    scale.value = newScale;
+
+    // Center on the constellation
+    const centerX = rect.width / 2 - ((minX + maxX) / 2) * newScale;
+    const centerY = rect.height / 2 - ((minY + maxY) / 2) * newScale;
+
+    animateTo(newScale, centerX, centerY);
+}
+
+// Focus on a specific system (zoom and center)
+function focusOnSystem(systemId: number) {
+    // Set highlight state
+    highlightedRegionId.value = null;
+    highlightedConstellationId.value = null;
+    highlightedSystemId.value = systemId;
+
+    const container = containerRef.value;
+    if (!container) return;
+
+    const rect = container.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+
+    // Find the system
+    const systemData = systemPositions.value.find(({ system }) => system.id === systemId);
+
+    if (!systemData) return;
+
+    // Find all systems in the same constellation to determine zoom level
+    const constellationSystems = systemPositions.value.filter(({ system }) => system.constellation_id === systemData.system.constellation_id);
+
+    // Calculate bounds of the constellation
+    let minX = Infinity,
+        maxX = -Infinity,
+        minY = Infinity,
+        maxY = -Infinity;
+    for (const { x, y } of constellationSystems) {
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+    }
+
+    const constellationWidth = maxX - minX;
+    const constellationHeight = maxY - minY;
+    const padding = 50;
+
+    // Calculate scale to fit the constellation (same as focusOnConstellation)
+    const scaleX = rect.width / (constellationWidth + padding * 2);
+    const scaleY = rect.height / (constellationHeight + padding * 2);
+    const fitScale = Math.min(scaleX, scaleY) * 0.85;
+
+    const newScale = Math.max(0.1, Math.min(5, fitScale));
+
+    // Center on the specific system (not constellation center)
+    const centerX = rect.width / 2 - systemData.x * newScale;
+    const centerY = rect.height / 2 - systemData.y * newScale;
+
+    animateTo(newScale, centerX, centerY);
+}
+
+// Draw annotations on the canvas
+function drawAnnotations(ctx: CanvasRenderingContext2D) {
+    // Determine LOD for annotations
+    const annLod: 'minimal' | 'simple' | 'detailed' = scale.value < 0.08 ? 'minimal' : scale.value < 0.25 ? 'simple' : 'detailed';
+
+    // Draw saved annotations
+    for (const ann of annotations.value) {
+        const isHovered = isDrawingMode.value && hoveredAnnotation.value?.id === ann.id;
+        const center = getAnnotationCenter(ann);
+
+        // Minimal LOD: just a colored marker
+        if (annLod === 'minimal') {
+            ctx.fillStyle = ann.color;
+            ctx.beginPath();
+            ctx.arc(center.x, center.y, 8 / scale.value, 0, Math.PI * 2);
+            ctx.fill();
+            continue;
+        }
+
+        const lineWidth = 2 / scale.value;
+
+        // Measure text (only at detailed LOD)
+        let textWidth = 0;
+        const labelPadding = 6 / scale.value;
+        const fontSize = Math.max(10, 14 / scale.value);
+
+        if (ann.text && annLod === 'detailed') {
+            ctx.font = `600 ${fontSize}px system-ui, sans-serif`;
+            textWidth = ctx.measureText(ann.text).width + labelPadding * 2;
+        }
+
+        // Semi-transparent fill
+        ctx.fillStyle = ann.color + (isHovered ? '18' : '12');
+        ctx.beginPath();
+
+        if (ann.type === 'rect' && ann.x !== undefined && ann.y !== undefined && ann.width !== undefined && ann.height !== undefined) {
+            ctx.rect(ann.x, ann.y, ann.width, ann.height);
+        } else if (ann.type === 'polygon' && ann.points && ann.points.length >= 3) {
+            ctx.moveTo(ann.points[0].x, ann.points[0].y);
+            for (let i = 1; i < ann.points.length; i++) {
+                ctx.lineTo(ann.points[i].x, ann.points[i].y);
+            }
+            ctx.closePath();
+        }
+        ctx.fill();
+
+        // Draw dashed border
+        ctx.strokeStyle = ann.color;
+        ctx.lineWidth = lineWidth;
+        ctx.setLineDash([8 / scale.value, 4 / scale.value]);
+
+        if (ann.type === 'rect' && ann.x !== undefined && ann.y !== undefined && ann.width !== undefined && ann.height !== undefined) {
+            if (ann.text && textWidth > 0 && annLod === 'detailed') {
+                const gapStart = center.x - textWidth / 2;
+                const gapEnd = center.x + textWidth / 2;
+
+                ctx.beginPath();
+                ctx.moveTo(ann.x, ann.y);
+                ctx.lineTo(gapStart, ann.y);
+                ctx.moveTo(gapEnd, ann.y);
+                ctx.lineTo(ann.x + ann.width, ann.y);
+                ctx.lineTo(ann.x + ann.width, ann.y + ann.height);
+                ctx.lineTo(ann.x, ann.y + ann.height);
+                ctx.lineTo(ann.x, ann.y);
+                ctx.stroke();
+            } else {
+                ctx.beginPath();
+                ctx.rect(ann.x, ann.y, ann.width, ann.height);
+                ctx.stroke();
+            }
+        } else if (ann.type === 'polygon' && ann.points && ann.points.length >= 3) {
+            ctx.beginPath();
+            ctx.moveTo(ann.points[0].x, ann.points[0].y);
+            for (let i = 1; i < ann.points.length; i++) {
+                ctx.lineTo(ann.points[i].x, ann.points[i].y);
+            }
+            ctx.closePath();
+            ctx.stroke();
+        }
+
+        ctx.setLineDash([]);
+
+        // Draw text label (only at detailed LOD)
+        if (ann.text && annLod === 'detailed') {
+            ctx.fillStyle = '#0a0a0a';
+            ctx.fillRect(center.x - textWidth / 2, center.y - fontSize / 2 - 2 / scale.value, textWidth, fontSize + 4 / scale.value);
+
+            ctx.fillStyle = ann.color;
+            ctx.font = `600 ${fontSize}px system-ui, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(ann.text, center.x, center.y);
+        }
+    }
+
+    // Draw current polygon being drawn
+    if (isDrawingMode.value && drawMode.value === 'polygon' && polygonPoints.value.length > 0) {
+        ctx.strokeStyle = selectedColor.value;
+        ctx.lineWidth = 2 / scale.value;
+        ctx.setLineDash([8 / scale.value, 4 / scale.value]);
+
+        ctx.beginPath();
+        ctx.moveTo(polygonPoints.value[0].x, polygonPoints.value[0].y);
+        for (let i = 1; i < polygonPoints.value.length; i++) {
+            ctx.lineTo(polygonPoints.value[i].x, polygonPoints.value[i].y);
+        }
+        ctx.lineTo(drawCurrent.value.x, drawCurrent.value.y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Draw points
+        ctx.fillStyle = selectedColor.value;
+        for (const p of polygonPoints.value) {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 4 / scale.value, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    // Draw current drawing preview
+    if (isDrawing.value && isDrawingMode.value) {
+        const x = Math.min(drawStart.value.x, drawCurrent.value.x);
+        const y = Math.min(drawStart.value.y, drawCurrent.value.y);
+        const width = Math.abs(drawCurrent.value.x - drawStart.value.x);
+        const height = Math.abs(drawCurrent.value.y - drawStart.value.y);
+
+        ctx.fillStyle = selectedColor.value + '30';
+        ctx.strokeStyle = selectedColor.value;
+        ctx.lineWidth = 2 / scale.value;
+        ctx.setLineDash([8 / scale.value, 4 / scale.value]);
+
+        ctx.beginPath();
+        ctx.rect(x, y, width, height);
+        ctx.fill();
+        ctx.stroke();
+        ctx.setLineDash([]);
+    }
+}
+
+// Toggle drawing mode
+function toggleDrawingMode() {
+    isDrawingMode.value = !isDrawingMode.value;
+    if (!isDrawingMode.value) {
+        isDrawing.value = false;
+        polygonPoints.value = [];
+    }
+}
+
+// Delete an annotation
+function deleteAnnotation(id: string) {
+    annotations.value = annotations.value.filter((a) => a.id !== id);
     requestDraw();
 }
 
+// Find system at canvas world coordinates (after Y inversion)
+function findSystemAtPoint(canvasWorldX: number, canvasWorldY: number): TUniverseSolarsystem | null {
+    // System box dimensions (must match drawSolarsystem)
+    const lod: 'micro' | 'minimal' | 'simple' | 'detailed' =
+        scale.value < 0.03 ? 'micro' : scale.value < 0.08 ? 'minimal' : scale.value < 0.25 ? 'simple' : 'detailed';
+
+    // At micro/minimal LOD, use a larger hit area
+    const hitRadius = lod === 'micro' ? 15 : lod === 'minimal' ? 10 : 0;
+    const boxWidth = lod === 'simple' ? 40 : 50;
+    const boxHeight = lod === 'simple' ? 10 : 14;
+    const halfW = boxWidth / 2;
+    const halfH = boxHeight / 2;
+
+    // Use transformed positions (which have Y inverted)
+    for (const { system, x, y } of systemPositions.value) {
+        if (hitRadius > 0) {
+            // Circle hit test for minimal views
+            const dx = canvasWorldX - x;
+            const dy = canvasWorldY - y;
+            if (dx * dx + dy * dy <= hitRadius * hitRadius) {
+                return system;
+            }
+        } else {
+            // Rectangle hit test for detailed views
+            if (canvasWorldX >= x - halfW && canvasWorldX <= x + halfW && canvasWorldY >= y - halfH && canvasWorldY <= y + halfH) {
+                return system;
+            }
+        }
+    }
+    return null;
+}
+
+// Clear all annotations
+function clearAnnotations() {
+    annotations.value = [];
+    requestDraw();
+}
+
+// Save annotation text
+function saveAnnotationText(text: string) {
+    if (editingAnnotation.value) {
+        editingAnnotation.value.text = text;
+        editingAnnotation.value = null;
+        requestDraw();
+    }
+}
+
+// Cancel annotation editing
+function cancelAnnotationEdit() {
+    if (editingAnnotation.value && !editingAnnotation.value.text) {
+        // Remove annotation if no text was added
+        deleteAnnotation(editingAnnotation.value.id);
+    }
+    editingAnnotation.value = null;
+}
+
+// Handle keyboard shortcuts with useMagicKeys
+const { escape } = useMagicKeys();
+
+whenever(escape, () => {
+    if (isDrawingMode.value) {
+        // First check if there's an active drawing to cancel
+        if (isDrawing.value || polygonPoints.value.length > 0) {
+            // Cancel current drawing but stay in intel mode
+            polygonPoints.value = [];
+            isDrawing.value = false;
+            requestDraw();
+        } else {
+            // No active drawing, exit intel mode
+            isDrawingMode.value = false;
+        }
+    }
+});
+
 // Expose methods for parent components
+// Clear system selection/highlight
+function clearSystemSelection() {
+    highlightedSystemId.value = null;
+    requestDraw();
+}
+
+// Animated zoom towards center of screen
+function zoomIn() {
+    const newScale = Math.min(5, scale.value * 1.2);
+    const centerX = containerWidth.value / 2;
+    const centerY = containerHeight.value / 2;
+    
+    const scaleRatio = newScale / scale.value;
+    const newPanX = centerX - (centerX - panOffset.value.x) * scaleRatio;
+    const newPanY = centerY - (centerY - panOffset.value.y) * scaleRatio;
+    
+    animateTo(newScale, newPanX, newPanY, 150);
+}
+
+function zoomOut() {
+    const newScale = Math.max(0.02, scale.value / 1.2);
+    const centerX = containerWidth.value / 2;
+    const centerY = containerHeight.value / 2;
+    
+    const scaleRatio = newScale / scale.value;
+    const newPanX = centerX - (centerX - panOffset.value.x) * scaleRatio;
+    const newPanY = centerY - (centerY - panOffset.value.y) * scaleRatio;
+    
+    animateTo(newScale, newPanX, newPanY, 150);
+}
+
 defineExpose({
     centerMap,
     focusOnRegion,
+    focusOnConstellation,
+    focusOnSystem,
+    clearSystemSelection,
+    zoomIn,
+    zoomOut,
+    toggleDrawingMode,
+    clearAnnotations,
+    isDrawingMode,
+    drawMode,
+    annotations,
+    selectedColor,
+    annotationColors,
 });
 
 // Track if we've centered the map initially
 const hasCentered = ref(false);
 
 // Watch for changes that require redraw
-watch([containerWidth, containerHeight], () => requestDraw());
+watch([containerWidth, containerHeight, scale, panOffset], () => requestDraw());
+
+// Focus intel input when editing annotation
+watch(editingAnnotation, (ann) => {
+    if (ann) {
+        // Use nextTick to ensure the input is rendered
+        setTimeout(() => {
+            intelInputRef.value?.focus();
+        }, 50);
+    }
+});
 
 // Preload sovereignty logos for visible systems
 watch(
@@ -982,6 +1714,7 @@ watch(
 
 // Initialize
 onMounted(() => {
+    loadAnnotations();
     startRenderLoop();
     requestDraw();
 });
@@ -1006,45 +1739,29 @@ watch(
 <template>
     <div
         ref="container"
-        class="relative h-full w-full cursor-grab overflow-hidden active:cursor-grabbing"
+        class="relative h-full w-full overflow-hidden"
+        :class="[
+            isDrawingMode
+                ? drawMode === 'eraser'
+                    ? hoveredAnnotation
+                        ? 'cursor-pointer'
+                        : 'cursor-crosshair'
+                    : 'cursor-crosshair'
+                : isPanning
+                  ? 'cursor-grabbing'
+                  : 'cursor-grab',
+        ]"
         @wheel.prevent="handleWheel"
         @mousedown="handleMouseDown"
         @mousemove="handleMouseMove"
         @mouseup="handleMouseUp"
         @mouseleave="handleMouseUp"
+        @dblclick="handleDoubleClick"
+        @auxclick.prevent
+        @contextmenu.prevent="handleContextMenu"
     >
         <!-- Canvas -->
         <canvas ref="canvas" class="block h-full w-full" />
-
-        <!-- Tooltip -->
-        <div
-            v-if="hoveredSystem"
-            class="pointer-events-none absolute z-50 max-w-xs rounded-lg border border-neutral-700 bg-neutral-900/95 px-3 py-2 text-xs shadow-xl backdrop-blur-sm"
-            :style="{
-                left: Math.min(tooltipPosition.x + 12, containerWidth - 200) + 'px',
-                top: Math.min(tooltipPosition.y + 12, containerHeight - 100) + 'px',
-            }"
-        >
-            <div class="font-semibold text-white">{{ hoveredSystem.name }}</div>
-            <div class="mt-1 text-neutral-400">
-                <span v-if="hoveredSystem.class" class="text-cyan-400">C{{ hoveredSystem.class }}</span>
-                <span
-                    v-else
-                    :class="hoveredSystem.security >= 0.5 ? 'text-green-500' : hoveredSystem.security >= 0.1 ? 'text-orange-500' : 'text-red-500'"
-                >
-                    {{ hoveredSystem.security.toFixed(2) }}
-                </span>
-                <span class="mx-1">•</span>
-                {{ hoveredSystem.constellation.name }}
-            </div>
-            <div class="text-neutral-500">{{ hoveredSystem.region.name }}</div>
-            <div v-if="hoveredSystem.sovereignty?.alliance" class="mt-1 text-blue-400">
-                {{ hoveredSystem.sovereignty.alliance.name }} [{{ hoveredSystem.sovereignty.alliance.ticker }}]
-            </div>
-            <div v-else-if="hoveredSystem.sovereignty?.faction" class="mt-1 text-amber-400">
-                {{ hoveredSystem.sovereignty.faction.name }}
-            </div>
-        </div>
 
         <!-- Controls hint -->
         <div class="absolute right-4 bottom-4 rounded-lg bg-black/60 px-3 py-2 text-xs text-neutral-400 backdrop-blur-sm">
@@ -1052,6 +1769,49 @@ watch(
                 <span>Scroll to zoom</span>
                 <span class="text-neutral-600">|</span>
                 <span>Drag to pan</span>
+            </div>
+        </div>
+
+        <!-- Drawing mode indicator -->
+        <div
+            v-if="isDrawingMode"
+            class="absolute top-4 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white backdrop-blur-sm"
+            :class="drawMode === 'eraser' ? 'bg-red-500/90' : 'bg-blue-500/90'"
+        >
+            <Square v-if="drawMode === 'rect'" class="h-4 w-4" />
+            <PenTool v-else-if="drawMode === 'polygon'" class="h-4 w-4" />
+            <Eraser v-else class="h-4 w-4" />
+            <span v-if="drawMode === 'rect'">Click and drag to draw a rectangle</span>
+            <span v-else-if="drawMode === 'polygon'">Click to add points, double-click to finish</span>
+            <span v-else>Click on an annotation to delete it</span>
+        </div>
+
+        <!-- Annotation text input popup -->
+        <div
+            v-if="editingAnnotation"
+            class="absolute top-1/2 left-1/2 z-50 -translate-x-1/2 -translate-y-1/2 rounded-xl border border-neutral-700 bg-neutral-900 p-4 shadow-2xl"
+            @mousedown.stop
+            @mouseup.stop
+            @click.stop
+        >
+            <div class="mb-3 text-sm font-medium text-neutral-200">Add Intel Note</div>
+            <input
+                ref="intelInputRef"
+                type="text"
+                v-model="editingAnnotation.text"
+                @keyup.enter="saveAnnotationText(editingAnnotation.text)"
+                @keyup.escape="cancelAnnotationEdit"
+                class="w-64 rounded-lg border border-neutral-600 bg-neutral-800 px-3 py-2 text-sm text-white placeholder-neutral-500 focus:border-blue-500 focus:outline-none"
+                placeholder="Enter intel note..."
+            />
+            <div class="mt-3 flex justify-end gap-2">
+                <button @click="cancelAnnotationEdit" class="rounded-lg px-3 py-1.5 text-xs text-neutral-400 hover:bg-neutral-800">Cancel</button>
+                <button
+                    @click="saveAnnotationText(editingAnnotation.text)"
+                    class="rounded-lg bg-blue-600 px-3 py-1.5 text-xs text-white hover:bg-blue-500"
+                >
+                    Save
+                </button>
             </div>
         </div>
     </div>

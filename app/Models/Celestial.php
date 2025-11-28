@@ -81,4 +81,24 @@ final class Celestial extends Model
     {
         return $this->hasMany(Station::class, 'parent_id');
     }
+
+    /**
+     * Child celestials (e.g., moons orbiting a planet).
+     *
+     * @return HasMany<Celestial,$this>
+     */
+    public function children(): HasMany
+    {
+        return $this->hasMany(self::class, 'parent_id');
+    }
+
+    /**
+     * Moons orbiting this celestial (filtered children with group_id 8).
+     *
+     * @return HasMany<Celestial,$this>
+     */
+    public function moons(): HasMany
+    {
+        return $this->hasMany(self::class, 'parent_id')->where('group_id', 8);
+    }
 }

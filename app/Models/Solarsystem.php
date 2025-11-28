@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Attributes\UseEloquentBuilder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
@@ -41,6 +42,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property-read Collection<int,MapSolarsystem> $mapSolarsystems
  * @property-read Collection<int,MapRouteSolarsystem> $mapRouteSolarsystems
  * @property-read Collection<int,Killmail> $killmails
+ * @property-read Collection<int,Solarsystem> $adjacentSystems
  */
 #[UseEloquentBuilder(SolarsystemBuilder::class)]
 final class Solarsystem extends Model
@@ -125,5 +127,51 @@ final class Solarsystem extends Model
     public function killmails(): HasMany
     {
         return $this->hasMany(Killmail::class, 'solarsystem_id');
+    }
+
+    /**
+     * Adjacent systems connected via stargates (outgoing connections).
+     *
+     * @return BelongsToMany<Solarsystem,$this>
+     */
+    public function adjacentSystemsTo(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            self::class,
+            'solarsystem_connections',
+            'from_solarsystem_id',
+            'to_solarsystem_id'
+        );
+    }
+
+    /**
+     * Adjacent systems connected via stargates (incoming connections).
+     *
+     * @return BelongsToMany<Solarsystem,$this>
+     */
+    public function adjacentSystemsFrom(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            self::class,
+            'solarsystem_connections',
+            'to_solarsystem_id',
+            'from_solarsystem_id'
+        );
+    }
+
+    /**
+     * Get all adjacent systems (both directions).
+     *
+     * @return Collection<int,Solarsystem>
+     */
+    public function getAdjacentSystemsAttribute(): Collection
+    {
+        return $this->adjacentSystemsTo()
+            ->with('region')
+            ->get()
+            ->merge($this->adjacentSystemsFrom()->with('region')->get())
+            ->unique('id')
+            ->sortBy('name')
+            ->values();
     }
 }

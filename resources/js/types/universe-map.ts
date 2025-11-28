@@ -61,9 +61,50 @@ export type TUniverseConnection = {
     regional: boolean;
 };
 
+export type TUniversePlanet = {
+    id: number;
+    name: string;
+    type: string | null;
+    type_id: number | null;
+    moons: { id: number; name: string }[];
+};
+
+export type TUniverseAdjacentSystem = {
+    id: number;
+    name: string;
+    security: number;
+    region_id: number;
+    region_name: string;
+};
+
+export type TUniverseSystemDetails = {
+    id: number;
+    name: string;
+    security: number;
+    type: string;
+    region: { id: number; name: string };
+    constellation: { id: number; name: string };
+    sovereignty: TUniverseSovereignty | null;
+    wormhole_class: string | null;
+    adjacent_systems: TUniverseAdjacentSystem[];
+    planets: TUniversePlanet[];
+    moons_count: number;
+    belts: { id: number; name: string }[];
+    stargates: { id: number; name: string }[];
+    stations: { id: number; name: string; type: string | null }[];
+    killmails: {
+        id: number;
+        time: string;
+        ship_type: string | null;
+        ship_type_id: number | null;
+        zkb: { totalValue: number };
+    }[];
+};
+
 export type TUniverseMapProps = {
     solarsystems: TUniverseSolarsystem[];
     connections: TUniverseConnection[];
     regions: TUniverseRegion[];
     bounds: TUniverseBounds;
+    selectedSystemDetails?: TUniverseSystemDetails | null;
 };
