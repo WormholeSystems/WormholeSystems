@@ -418,7 +418,63 @@ const regionData = computed(() => {
         });
     }
 
-    return { boundaryEdges, labels };
+    return { boundaryEdges, labels, delaunay, voronoi, positions };
+});
+
+// Compute constellation boundary lines (reuse Voronoi from regionData)
+const constellationBoundaryEdges = computed(() => {
+    const data = regionData.value;
+    if (!data) return [];
+
+    const { delaunay, voronoi, positions } = data;
+    const edges: { x1: number; y1: number; x2: number; y2: number }[] = [];
+
+    // Iterate over all Delaunay edges
+    for (let i = 0; i < positions.length; i++) {
+        const constellationI = positions[i].system.constellation_id;
+        const regionI = positions[i].system.region_id;
+
+        for (const j of delaunay.neighbors(i)) {
+            if (j <= i) continue; // Avoid duplicate edges
+
+            const constellationJ = positions[j].system.constellation_id;
+            const regionJ = positions[j].system.region_id;
+
+            // If different constellations but SAME region (don't duplicate region boundaries)
+            if (constellationI !== constellationJ && regionI === regionJ) {
+                const cellI = voronoi.cellPolygon(i);
+                const cellJ = voronoi.cellPolygon(j);
+                if (!cellI || !cellJ) continue;
+
+                // Find shared edge
+                for (let a = 0; a < cellI.length; a++) {
+                    const p1 = cellI[a];
+                    const p2 = cellI[(a + 1) % cellI.length];
+
+                    for (let b = 0; b < cellJ.length; b++) {
+                        const q1 = cellJ[b];
+                        const q2 = cellJ[(b + 1) % cellJ.length];
+
+                        if (
+                            (Math.abs(p1[0] - q2[0]) < 0.1 &&
+                                Math.abs(p1[1] - q2[1]) < 0.1 &&
+                                Math.abs(p2[0] - q1[0]) < 0.1 &&
+                                Math.abs(p2[1] - q1[1]) < 0.1) ||
+                            (Math.abs(p1[0] - q1[0]) < 0.1 &&
+                                Math.abs(p1[1] - q1[1]) < 0.1 &&
+                                Math.abs(p2[0] - q2[0]) < 0.1 &&
+                                Math.abs(p2[1] - q2[1]) < 0.1)
+                        ) {
+                            edges.push({ x1: p1[0], y1: p1[1], x2: p2[0], y2: p2[1] });
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return edges;
 });
 
 // Get systems visible in viewport (culling)
@@ -492,6 +548,9 @@ function draw() {
     // Draw region outlines first (background layer)
     drawRegionOutlines(ctx);
 
+    // Draw constellation outlines (more subtle, between region and connections)
+    drawConstellationOutlines(ctx);
+
     // Draw connections (so they appear behind systems)
     drawConnections(ctx, lod);
 
@@ -534,6 +593,27 @@ function drawStars(ctx: CanvasRenderingContext2D, width: number, height: number)
 }
 
 // Draw dotted region boundary lines
+function drawConstellationOutlines(ctx: CanvasRenderingContext2D) {
+    const edges = constellationBoundaryEdges.value;
+    if (edges.length === 0) return;
+
+    // Draw constellation boundaries as dotted lines (more visible but still lighter than regions)
+    const screenLineWidth = 1.5;
+    const worldLineWidth = screenLineWidth / scale.value;
+    const dashScale = 1 / scale.value;
+    ctx.setLineDash([4 * dashScale, 4 * dashScale]);
+    ctx.strokeStyle = 'rgba(115, 115, 115, 0.3)'; // neutral-500, same color as regions but lower opacity
+    ctx.lineWidth = worldLineWidth;
+
+    ctx.beginPath();
+    for (const edge of edges) {
+        ctx.moveTo(edge.x1, edge.y1);
+        ctx.lineTo(edge.x2, edge.y2);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+}
+
 function drawRegionOutlines(ctx: CanvasRenderingContext2D) {
     const data = regionData.value;
     if (!data) return;
