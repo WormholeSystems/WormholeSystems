@@ -204,7 +204,7 @@ const handleResizeEnd = () => {
 
             <!-- Signatures Section -->
             <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-bind="getLayoutItem('signatures').value">
-                <Signatures :map :map_solarsystem="selected_map_solarsystem" />
+                <Signatures :map_solarsystem="selected_map_solarsystem" />
             </GridItem>
 
             <!-- Audits Section -->
