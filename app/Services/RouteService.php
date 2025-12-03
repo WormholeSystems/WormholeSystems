@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\DTO\ClosestSystemResult;
+use App\Http\Resources\SolarsystemResource;
 use App\Models\Map;
 use App\Models\Solarsystem;
 use App\Services\Routing\ConnectionRepository;
 use App\Services\Routing\PathfindingService;
 use App\Services\Routing\RouteCostCalculator;
 use Closure;
+use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Collection;
 
 final readonly class RouteService
@@ -34,7 +36,7 @@ final readonly class RouteService
     /**
      * Find the fastest route with session-based system exclusions
      */
-    public function findRoute(int $fromId, int $toId, RouteOptions $options): array
+    public function findRoute(int $fromId, int $toId, RouteOptions $options): ResourceCollection
     {
         [$connections, $wormholeConnections] = $this->prepareConnections($options);
         $ignoredSystems = $options->ignoredSystems ?? [];
@@ -46,10 +48,6 @@ final readonly class RouteService
 
         // Find the shortest path
         $path = $this->pathfinder->findShortestPath($fromId, $toId, $connections, $options);
-
-        if ($path === []) {
-            return [];
-        }
 
         // Enrich with solarsystem data and connection types
         return $this->enrichRouteWithSolarsystemData($path, $wormholeConnections);
@@ -232,12 +230,8 @@ final readonly class RouteService
     /**
      * Enrich route path with solarsystem data and connection types
      */
-    private function enrichRouteWithSolarsystemData(array $path, array $wormholeConnections): array
+    private function enrichRouteWithSolarsystemData(array $path, array $wormholeConnections): ResourceCollection
     {
-        if ($path === []) {
-            return [];
-        }
-
         $solarsystems = Solarsystem::query()
             ->with([
                 'sovereignty' => ['alliance', 'corporation', 'faction'],
@@ -255,7 +249,7 @@ final readonly class RouteService
     /**
      * Enrich a path with connection type information
      */
-    private function enrichPathWithConnectionTypes(array $path, Collection $solarsystems, array $wormholeConnections): array
+    private function enrichPathWithConnectionTypes(array $path, Collection $solarsystems, array $wormholeConnections): ResourceCollection
     {
         return collect($path)
             ->map(fn (int $toId, $index): ?Solarsystem => $this->addConnectionType(
@@ -266,7 +260,7 @@ final readonly class RouteService
             ))
             ->filter()
             ->values()
-            ->toArray();
+            ->toResourceCollection(SolarsystemResource::class);
     }
 
     private function addConnectionType(int $fromId, int $toId, array $wormholeConnections, Collection $solarsystems): ?Solarsystem
