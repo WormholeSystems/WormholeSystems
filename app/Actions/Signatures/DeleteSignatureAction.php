@@ -41,7 +41,7 @@ final readonly class DeleteSignatureAction
     private function deleteMapConnection(Signature $signature, bool $remove_map_solarsystem = false): void
     {
         if ($signature->map_connection_id) {
-            if ($signature->mapConnection->signatures()->count() > 1) {
+            if ($signature->mapConnection->signatures()->where('map_solarsystem_id', $signature->map_solarsystem_id)->count() > 1) {
                 return;
             }
             $this->deleteMapConnectionAction->handle($signature->mapConnection, $remove_map_solarsystem);
