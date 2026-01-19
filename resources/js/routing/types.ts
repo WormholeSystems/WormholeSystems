@@ -61,26 +61,3 @@ export type WorkerInitPayload = {
     solarsystems: TStaticSolarsystem[];
     connections: TStaticConnections;
 };
-
-export type WorkerMessage = { type: 'init'; payload: WorkerInitPayload } | { type: 'compute'; payload: WorkerComputePayload };
-
-export type WorkerLogPayload = {
-    level: 'info' | 'warn' | 'error';
-    message: string;
-    data?: Record<string, unknown>;
-};
-
-export type WorkerLogMessage = {
-    type: 'log';
-    payload: WorkerLogPayload;
-};
-
-export type WorkerResponseMessage =
-    | {
-          type: 'responses';
-          payload: {
-              callId: string;
-              responses: (WorkerRouteResult | WorkerClosestResult)[];
-          };
-      }
-    | WorkerLogMessage;
