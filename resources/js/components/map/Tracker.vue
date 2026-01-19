@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useTracking } from '@/composables/map/composables/useTracking';
 import { usePing } from '@/composables/usePing';
+import { useStaticSolarsystem } from '@/composables/useStaticSolarsystems';
 import { TMap } from '@/pages/maps';
 import { TCharacter } from '@/types/models';
 import { computed } from 'vue';
@@ -28,7 +29,8 @@ const {
     target_solarsystem,
 } = useTracking();
 
-const targetSolarsystemName = computed(() => target_solarsystem.value?.name || character?.status?.solarsystem?.name || null);
+const currentSolarsystem = useStaticSolarsystem(() => character?.status?.solarsystem_id ?? null);
+const targetSolarsystemName = computed(() => target_solarsystem.value?.name || currentSolarsystem.value?.name || null);
 </script>
 
 <template>
@@ -52,7 +54,7 @@ const targetSolarsystemName = computed(() => target_solarsystem.value?.name || c
             <template v-else>
                 <p class="text-sm">Tracking</p>
                 <p class="text-xs text-muted-foreground">{{ is_tracking ? 'Enabled' : 'Disabled' }} - Automatically track solarsystem changes</p>
-                <p class="text-xs text-muted-foreground">Current Solarsystem: {{ character?.status?.solarsystem?.name || 'Unknown' }}</p>
+                <p class="text-xs text-muted-foreground">Current Solarsystem: {{ currentSolarsystem?.name || 'Unknown' }}</p>
             </template>
         </TooltipContent>
     </Tooltip>

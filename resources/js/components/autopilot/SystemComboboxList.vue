@@ -3,17 +3,17 @@ import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue'
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import SolarsystemEffect from '@/components/solarsystem/SolarsystemEffect.vue';
 import { ComboboxEmpty, ComboboxItem, ComboboxList } from '@/components/ui/combobox';
-import { TSolarsystem } from '@/pages/maps';
+import type { TStaticSolarsystem } from '@/types/static-data';
 
 const { solarsystems } = defineProps<{
-    solarsystems: TSolarsystem[];
+    solarsystems: TStaticSolarsystem[];
 }>();
 
 const emit = defineEmits<{
-    select: [system: TSolarsystem];
+    select: [system: TStaticSolarsystem];
 }>();
 
-function handleSelect(system: TSolarsystem) {
+function handleSelect(system: TStaticSolarsystem) {
     emit('select', system);
 }
 </script>
@@ -37,8 +37,11 @@ function handleSelect(system: TSolarsystem) {
                     <span class="text-muted-foreground"> · {{ system.region?.name }}</span>
                 </div>
                 <div class="flex justify-center">
-                    <SolarsystemSovereignty v-if="system.sovereignty" :sovereignty="system.sovereignty" />
-                    <SolarsystemEffect v-else-if="system.effect" :effect="system.effect.name" />
+                    <SolarsystemSovereignty :sovereignty="system.sovereignty" :solarsystem-id="system.id">
+                        <template #fallback>
+                            <SolarsystemEffect v-if="system.effect" :effect="system.effect.name" />
+                        </template>
+                    </SolarsystemSovereignty>
                 </div>
             </ComboboxItem>
         </div>

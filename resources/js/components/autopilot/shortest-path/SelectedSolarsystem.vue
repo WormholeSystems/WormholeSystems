@@ -17,7 +17,7 @@ const { solarsystem } = defineProps<{ solarsystem: TSolarsystem | null }>();
             </div>
             <div class="text-sm text-muted-foreground">{{ solarsystem.region?.name }}</div>
             <div class="place-self-center">
-                <SolarsystemSovereignty v-if="solarsystem.sovereignty" :sovereignty="solarsystem.sovereignty" />
+                <SolarsystemSovereignty :sovereignty="solarsystem.sovereignty" :solarsystem-id="solarsystem.id" />
             </div>
         </div>
         <div v-else class="mt-1 text-sm text-muted-foreground">No system selected</div>

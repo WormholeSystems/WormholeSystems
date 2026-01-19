@@ -7,6 +7,7 @@ import VictimImage from '@/components/map-killmails/VictimImage.vue';
 import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue';
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import { useMapSolarsystems } from '@/composables/map';
+import { useStaticSolarsystem, useStaticSolarsystems } from '@/composables/useStaticSolarsystems';
 import { formatISK } from '@/lib/utils';
 import { TKillmail } from '@/types/models';
 import { UTCDate } from '@date-fns/utc';
@@ -21,6 +22,8 @@ const { killmail } = defineProps<{
 }>();
 
 const { map_solarsystems, setHoveredMapSolarsystem } = useMapSolarsystems();
+const { resolveSolarsystem } = useStaticSolarsystems();
+const staticSolarsystemRef = useStaticSolarsystem(() => killmail.solarsystem_id);
 
 function onHover(hovered: boolean) {
     if (map_solarsystem.value) {
@@ -29,8 +32,10 @@ function onHover(hovered: boolean) {
 }
 
 const map_solarsystem = computed(() => {
-    return map_solarsystems.value.find((solarsystem) => solarsystem.solarsystem_id === killmail.solarsystem.id);
+    return map_solarsystems.value.find((solarsystem) => solarsystem.solarsystem_id === killmail.solarsystem_id);
 });
+
+const staticSolarsystem = computed(() => staticSolarsystemRef.value ?? resolveSolarsystem(killmail.solarsystem_id));
 
 const final_blow = computed(() => {
     return killmail.data.attackers.find((attacker) => attacker.final_blow)!;
@@ -62,7 +67,7 @@ const total_worth = computed(() => {
 
 <template>
     <div class="col-span-full grid grid-cols-subgrid text-sm *:*:p-2" v-element-hover="onHover">
-        <DestinationContextMenu :solarsystem_id="killmail.solarsystem.id">
+        <DestinationContextMenu :solarsystem_id="staticSolarsystem.id">
             <div class="contents">
                 <div class="flex gap-x-2">
                     <a :href="`https://zkillboard.com/kill/${killmail.id}/`" target="_blank" rel="noopener noreferrer" v-if="killmail.ship_type">
@@ -82,19 +87,19 @@ const total_worth = computed(() => {
                 </div>
                 <div class="grid grid-cols-[1.5rem_1fr] items-center gap-1">
                     <div class="flex size-6 items-center justify-center">
-                        <SolarsystemClass :wormhole_class="killmail.solarsystem.class" :security="killmail.solarsystem.security" />
+                        <SolarsystemClass :wormhole_class="staticSolarsystem.class" :security="staticSolarsystem.security" />
                     </div>
                     <div v-if="map_solarsystem?.alias" class="truncate font-medium hover:text-accent-foreground">
-                        {{ map_solarsystem.alias }} <span class="text-muted-foreground">{{ killmail.solarsystem.name }}</span>
+                        {{ map_solarsystem.alias }} <span class="text-muted-foreground">{{ staticSolarsystem.name }}</span>
                     </div>
                     <div v-else class="font-medium hover:text-accent-foreground">
-                        {{ killmail.solarsystem.name }}
+                        {{ staticSolarsystem.name }}
                     </div>
                 </div>
                 <div class="hidden @lg:block">
                     <SolarsystemSovereignty
-                        v-if="killmail.solarsystem.sovereignty"
-                        :sovereignty="killmail.solarsystem.sovereignty"
+                        :sovereignty="staticSolarsystem.sovereignty"
+                        :solarsystem-id="staticSolarsystem.id"
                         class="size-6 flex-shrink-0"
                     />
                 </div>

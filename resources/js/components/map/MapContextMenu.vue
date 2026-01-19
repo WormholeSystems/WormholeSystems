@@ -21,10 +21,9 @@ import {
     organizeMapSolarsystems,
     useMapSolarsystems,
 } from '@/composables/map';
-import { useSearch } from '@/composables/useSearch';
-import { TShowMapProps, TSolarsystem } from '@/pages/maps';
-import { AppPageProps } from '@/types';
-import { usePage } from '@inertiajs/vue3';
+import { useShowMap } from '@/composables/useShowMap';
+import { useStaticData } from '@/composables/useStaticData';
+import { TStaticSolarsystem } from '@/types/static-data';
 import { Position } from '@vueuse/core';
 import { computed, ref } from 'vue';
 
@@ -36,27 +35,41 @@ const { map_solarsystems_selected } = useMapSolarsystems();
 
 const is_clearing_map = ref(false);
 
-const search = useSearch('search', ['solarsystems']);
+const page = useShowMap();
 
-const page = usePage<AppPageProps<TShowMapProps>>();
+const search = ref('');
+const { staticData, loadStaticData } = useStaticData();
+
+void loadStaticData();
 
 const adding = ref(false);
 
 const spacing = ref(0);
 
+const filteredSolarsystems = computed(() => {
+    const query = search.value.trim().toLowerCase();
+    if (!query) {
+        return [] as TStaticSolarsystem[];
+    }
+
+    const solarsystems = staticData.value?.solarsystems ?? [];
+
+    return solarsystems.filter((solarsystem) => solarsystem.name.toLowerCase().includes(query)).slice(0, 25);
+});
+
 const new_solarsystems = computed(() => {
-    return page.props.solarsystems.filter(
+    return filteredSolarsystems.value.filter(
         (solarsystem) => !page.props.map.map_solarsystems?.some((map_solarsystem) => map_solarsystem.solarsystem_id === solarsystem.id),
     );
 });
 
 const existing_solarsystems = computed(() => {
-    return page.props.solarsystems.filter((solarsystem) =>
+    return filteredSolarsystems.value.filter((solarsystem) =>
         page.props.map.map_solarsystems?.some((map_solarsystem) => map_solarsystem.solarsystem_id === solarsystem.id),
     );
 });
 
-function handleSolarsystemSelect(solarsystem: TSolarsystem) {
+function handleSolarsystemSelect(solarsystem: TStaticSolarsystem) {
     createMapSolarsystem(solarsystem.id, position);
     adding.value = false;
 }

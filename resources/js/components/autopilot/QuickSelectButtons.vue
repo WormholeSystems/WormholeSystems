@@ -1,26 +1,25 @@
 <script setup lang="ts">
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import { Button } from '@/components/ui/button';
-import { TSelectedMapSolarsystem, TSolarsystem } from '@/pages/maps';
-import { TMapRouteSolarsystem } from '@/types/models';
+import type { TResolvedMapRouteSolarsystem, TResolvedSelectedMapSolarsystem, TResolvedSolarsystem } from '@/pages/maps';
 import { MapPin, Navigation } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 const { selected_map_solarsystem, active_character_system, destinations } = defineProps<{
-    selected_map_solarsystem?: TSelectedMapSolarsystem | null;
-    active_character_system?: TSolarsystem | null;
-    destinations: TMapRouteSolarsystem[];
+    selected_map_solarsystem?: TResolvedSelectedMapSolarsystem | null;
+    active_character_system?: TResolvedSolarsystem | null;
+    destinations: TResolvedMapRouteSolarsystem[];
 }>();
 
 const emit = defineEmits<{
-    selectSystem: [system: TSolarsystem];
+    selectSystem: [system: TResolvedSolarsystem];
 }>();
 
 const pinnedDestinations = computed(() => {
     return destinations.filter((dest) => dest.is_pinned);
 });
 
-function handleSystemClick(system: TSolarsystem) {
+function handleSystemClick(system: TResolvedSolarsystem) {
     emit('selectSystem', system);
 }
 </script>

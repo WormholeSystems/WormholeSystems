@@ -1,8 +1,6 @@
-import { TSolarsystem } from '@/pages/maps';
-
 export type TEveScoutConnection = {
-    in_system: TSolarsystem;
-    out_system: TSolarsystem;
+    in_system_id: number;
+    out_system_id: number;
     in_signature: string;
     out_signature: string;
     wormhole_type: string;

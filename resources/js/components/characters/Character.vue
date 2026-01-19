@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMapSolarsystems } from '@/composables/map';
 import { usePath } from '@/composables/usePath';
+import { useStaticSolarsystem } from '@/composables/useStaticSolarsystems';
 import { TCharacter } from '@/types/models';
 import { vElementHover } from '@vueuse/components';
 import { computed } from 'vue';
@@ -16,6 +17,7 @@ const { character } = defineProps<{
 }>();
 
 const { map_solarsystems, setHoveredMapSolarsystem } = useMapSolarsystems();
+const statusSolarsystem = useStaticSolarsystem(() => character.status?.solarsystem_id ?? null);
 
 const { setPath } = usePath();
 
@@ -92,14 +94,14 @@ function onRouteHover(hovered: boolean) {
                         <span v-if="is_docked" class="text-xs text-muted-foreground">(Docked)</span>
                         <span v-else-if="is_scanner" class="text-xs text-amber-500">(Scanner)</span>
                     </span>
-                    <span v-else-if="character.status?.solarsystem" class="flex items-center gap-2">
-                        <span class="truncate">{{ character.status.solarsystem.name }}</span>
+                    <span v-else-if="statusSolarsystem" class="flex items-center gap-2">
+                        <span class="truncate">{{ statusSolarsystem.name }}</span>
                         <span v-if="is_docked" class="text-xs text-muted-foreground">(Docked)</span>
                         <span v-else-if="is_scanner" class="text-xs text-amber-500">(Scanner)</span>
                     </span>
                 </Button>
             </RoutePopover>
-            <span v-if="!map_solarsystem && !character.status?.solarsystem" class="text-muted-foreground">Unknown Location</span>
+            <span v-if="!map_solarsystem && !statusSolarsystem" class="text-muted-foreground">Unknown Location</span>
         </div>
     </DestinationContextMenu>
 </template>

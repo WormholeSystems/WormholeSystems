@@ -4,30 +4,44 @@ import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import { Combobox, ComboboxAnchor, ComboboxEmpty, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxList } from '@/components/ui/combobox';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { createMapSolarsystem } from '@/composables/map';
-import { useSearch } from '@/composables/useSearch';
 import { useShowMap } from '@/composables/useShowMap';
-import { TSolarsystem } from '@/pages/maps';
+import { useStaticData } from '@/composables/useStaticData';
+import { TStaticSolarsystem } from '@/types/static-data';
 import { computed, ref } from 'vue';
 
-const search = useSearch('search', ['solarsystems']);
+const search = ref('');
 
 const page = useShowMap();
+const { staticData, loadStaticData } = useStaticData();
+
+void loadStaticData();
 
 const adding = ref(false);
 
+const filteredSolarsystems = computed(() => {
+    const query = search.value.trim().toLowerCase();
+    if (!query) {
+        return [] as TStaticSolarsystem[];
+    }
+
+    const solarsystems = staticData.value?.solarsystems ?? [];
+
+    return solarsystems.filter((solarsystem) => solarsystem.name.toLowerCase().includes(query)).slice(0, 25);
+});
+
 const new_solarsystems = computed(() => {
-    return page.props.solarsystems.filter(
+    return filteredSolarsystems.value.filter(
         (solarsystem) => !page.props.map.map_solarsystems?.some((map_solarsystem) => map_solarsystem.solarsystem_id === solarsystem.id),
     );
 });
 
 const existing_solarsystems = computed(() => {
-    return page.props.solarsystems.filter((solarsystem) =>
+    return filteredSolarsystems.value.filter((solarsystem) =>
         page.props.map.map_solarsystems?.some((map_solarsystem) => map_solarsystem.solarsystem_id === solarsystem.id),
     );
 });
 
-function handleSolarsystemSelect(solarsystem: TSolarsystem) {
+function handleSolarsystemSelect(solarsystem: TStaticSolarsystem) {
     createMapSolarsystem(solarsystem.id);
 }
 </script>

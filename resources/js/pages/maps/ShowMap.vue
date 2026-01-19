@@ -27,9 +27,10 @@ import useHasWritePermission from '@/composables/useHasWritePermission';
 import useIsMapOwner from '@/composables/useIsMapOwner';
 import { useMapLayout } from '@/composables/useMapLayout';
 import { useOnClient } from '@/composables/useOnClient';
+import { useStaticSolarsystems } from '@/composables/useStaticSolarsystems';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SeoHead from '@/layouts/SeoHead.vue';
-import { TShowMapProps } from '@/pages/maps/index';
+import { TMap, TResolvedMapNavigation, TResolvedSelectedMapSolarsystem, TShowMapProps } from '@/pages/maps/index';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { echo } from '@laravel/echo-vue';
 import { GridItem, GridLayout } from 'grid-layout-plus';
@@ -39,8 +40,8 @@ import { computed, ref } from 'vue';
 const {
     map,
     selected_map_solarsystem,
-    solarsystems,
     map_killmails,
+
     map_navigation,
     map_user_settings,
     ignored_systems,
@@ -55,8 +56,54 @@ const hasWriteAccess = useHasWritePermission();
 const isOwner = useIsMapOwner();
 const page = usePage();
 
+const { resolveSolarsystem } = useStaticSolarsystems();
+
 // Show warning when the active character is not on the map's access list
 const showActiveCharacterWarning = computed(() => !active_character_has_access);
+
+const resolvedMap = computed<TMap>(() => {
+    const solarsystems = map.map_solarsystems?.map((mapSolarsystem) => {
+        const resolvedSolarsystem = resolveSolarsystem(mapSolarsystem.solarsystem_id);
+
+        return {
+            ...mapSolarsystem,
+            solarsystem: resolvedSolarsystem,
+        };
+    });
+
+    return {
+        ...map,
+        map_solarsystems: solarsystems ?? map.map_solarsystems,
+    };
+});
+
+const resolvedSelectedSolarsystem = computed<TResolvedSelectedMapSolarsystem | null>(() => {
+    if (!selected_map_solarsystem) {
+        return null;
+    }
+
+    const resolvedSolarsystem = resolveSolarsystem(selected_map_solarsystem.solarsystem_id);
+
+    return {
+        ...selected_map_solarsystem,
+        solarsystem: resolvedSolarsystem,
+    };
+});
+
+const resolvedMapNavigation = computed<TResolvedMapNavigation>(() => {
+    const destinations = map_navigation.destinations.map((destination) => {
+        const resolvedSolarsystem = resolveSolarsystem(destination.solarsystem_id);
+
+        return {
+            ...destination,
+            solarsystem: resolvedSolarsystem,
+        };
+    });
+
+    return {
+        destinations,
+    };
+});
 
 // Initialize layout management with reactive getter
 const layout = useMapLayout(() => map_user_settings);
@@ -167,11 +214,11 @@ const handleResizeEnd = () => {
         >
             <!-- Map Section -->
             <GridItem v-bind="getLayoutItem('map').value" @resize="handleResizeStart" @resized="handleResizeEnd">
-                <MapComponent :map :config />
-                <MapSearch :map :search :solarsystems v-if="hasWriteAccess" />
+                <MapComponent :map="resolvedMap" :config="config" />
+                <MapSearch :map="resolvedMap" v-if="hasWriteAccess" />
                 <div class="absolute top-4 right-4 z-40 flex gap-2">
                     <LocationVisibility :map_user_settings="map_user_settings" :key="character?.id" v-if="hasWriteAccess" />
-                    <Tracker :character :map :key="character?.id" v-if="hasWriteAccess" />
+                    <Tracker :character :map="resolvedMap" :key="character?.id" v-if="hasWriteAccess" />
                     <Tooltip>
                         <TooltipTrigger>
                             <Button variant="outline" size="icon" as-child>
@@ -190,10 +237,10 @@ const handleResizeEnd = () => {
             <!-- Solarsystem Details Section -->
             <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-bind="getLayoutItem('solarsystem').value">
                 <SolarsystemDetails
-                    v-if="selected_map_solarsystem"
-                    :map_solarsystem="selected_map_solarsystem"
-                    :map
-                    :map_navigation="map_navigation.destinations"
+                    v-if="resolvedSelectedSolarsystem"
+                    :map_solarsystem="resolvedSelectedSolarsystem"
+                    :map="resolvedMap"
+                    :map_navigation="resolvedMapNavigation.destinations"
                     :hide_notes="has_guest_access"
                 />
                 <div class="flex h-full flex-col items-center justify-center gap-8 rounded-lg border bg-card p-8 text-neutral-700" v-else>
@@ -204,12 +251,12 @@ const handleResizeEnd = () => {
 
             <!-- Signatures Section -->
             <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-bind="getLayoutItem('signatures').value">
-                <Signatures :map_solarsystem="selected_map_solarsystem" />
+                <Signatures :map_solarsystem="resolvedSelectedSolarsystem" />
             </GridItem>
 
             <!-- Audits Section -->
             <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-if="!has_guest_access" v-bind="getLayoutItem('audits').value">
-                <Audits :audits="selected_map_solarsystem?.audits ?? []" />
+                <Audits :audits="resolvedSelectedSolarsystem?.audits ?? []" />
             </GridItem>
 
             <!-- Ship History Section -->
@@ -229,7 +276,13 @@ const handleResizeEnd = () => {
 
             <!-- Navigation Section -->
             <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-bind="getLayoutItem('autopilot').value">
-                <NavigationPanel :map_navigation :map :solarsystems :selected_map_solarsystem :map_characters="map_characters" :ignored_systems />
+                <NavigationPanel
+                    :map_navigation="resolvedMapNavigation"
+                    :map="resolvedMap"
+                    :selected_map_solarsystem="resolvedSelectedSolarsystem"
+                    :map_characters="map_characters"
+                    :ignored_systems
+                />
             </GridItem>
 
             <!-- EVE Scout Connections Section -->

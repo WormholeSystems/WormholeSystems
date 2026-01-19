@@ -3,45 +3,89 @@ import AllianceLogo from '@/components/images/AllianceLogo.vue';
 import CorporationLogo from '@/components/images/CorporationLogo.vue';
 import FactionLogo from '@/components/images/FactionLogo.vue';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useSovereignty } from '@/composables/useSovereigntyData';
 import { cn } from '@/lib/utils';
 import { TSovereignty } from '@/types/models';
+import { computed } from 'vue';
 
-const { sovereignty, ...props } = defineProps<{
-    sovereignty: TSovereignty;
+const props = defineProps<{
+    sovereignty?: TSovereignty | null;
+    solarsystemId?: number;
     class?: string;
 }>();
+
+const sovereignty = useSovereignty(() => props.solarsystemId ?? null);
+
+const resolvedSovereignty = computed(() => {
+    if (props.sovereignty) {
+        return props.sovereignty;
+    }
+
+    if (!props.solarsystemId) {
+        return null;
+    }
+
+    return sovereignty.value ?? null;
+});
+
+const hasSovereignty = computed(() => {
+    return Boolean(resolvedSovereignty.value?.alliance || resolvedSovereignty.value?.corporation || resolvedSovereignty.value?.faction);
+});
+
+const sizeClass = computed(() => cn('size-4', props.class));
 </script>
 
 <template>
-    <Tooltip :delay-duration="500" v-if="sovereignty.alliance || sovereignty.corporation || sovereignty.faction">
+    <Tooltip :delay-duration="500" v-if="hasSovereignty">
         <TooltipTrigger as-child>
-            <div :class="cn('size-4', props.class)">
-                <AllianceLogo v-if="sovereignty.alliance" :alliance_id="sovereignty.alliance.id" :alliance_name="sovereignty.alliance.name" />
-                <CorporationLogo
-                    v-else-if="sovereignty.corporation"
-                    :corporation_id="sovereignty.corporation.id"
-                    :corporation_name="sovereignty.corporation.name"
+            <div :class="sizeClass">
+                <AllianceLogo
+                    v-if="resolvedSovereignty?.alliance"
+                    :alliance_id="resolvedSovereignty.alliance.id"
+                    :alliance_name="resolvedSovereignty.alliance.name"
                 />
-                <FactionLogo v-else-if="sovereignty.faction" :faction_id="sovereignty.faction.id" :faction_name="sovereignty.faction.name" />
+                <CorporationLogo
+                    v-else-if="resolvedSovereignty?.corporation"
+                    :corporation_id="resolvedSovereignty.corporation.id"
+                    :corporation_name="resolvedSovereignty.corporation.name"
+                />
+                <FactionLogo
+                    v-else-if="resolvedSovereignty?.faction"
+                    :faction_id="resolvedSovereignty.faction.id"
+                    :faction_name="resolvedSovereignty.faction.name"
+                />
             </div>
         </TooltipTrigger>
         <TooltipContent class="text-sm">
-            <div v-if="sovereignty.alliance" class="flex items-center gap-2">
-                <AllianceLogo :alliance_id="sovereignty.alliance.id" :alliance_name="sovereignty.alliance.name" class="size-6" />
-                <span class="text-sm">{{ sovereignty.alliance.name }}</span>
-                <span class="text-xs text-muted-foreground" v-if="sovereignty.alliance.ticker">({{ sovereignty.alliance.ticker }})</span>
+            <div v-if="resolvedSovereignty?.alliance" class="flex items-center gap-2">
+                <AllianceLogo :alliance_id="resolvedSovereignty.alliance.id" :alliance_name="resolvedSovereignty.alliance.name" class="size-6" />
+                <span class="text-sm">{{ resolvedSovereignty.alliance.name }}</span>
+                <span class="text-xs text-muted-foreground" v-if="resolvedSovereignty.alliance.ticker"
+                    >({{ resolvedSovereignty.alliance.ticker }})</span
+                >
             </div>
-            <div v-else-if="sovereignty.corporation" class="flex items-center gap-2">
-                <CorporationLogo :corporation_id="sovereignty.corporation.id" :corporation_name="sovereignty.corporation.name" class="size-6" />
-                <span class="text-sm">{{ sovereignty.corporation.name }}</span>
-                <span class="text-xs text-muted-foreground" v-if="sovereignty.corporation.ticker">({{ sovereignty.corporation.ticker }})</span>
+            <div v-else-if="resolvedSovereignty?.corporation" class="flex items-center gap-2">
+                <CorporationLogo
+                    :corporation_id="resolvedSovereignty.corporation.id"
+                    :corporation_name="resolvedSovereignty.corporation.name"
+                    class="size-6"
+                />
+                <span class="text-sm">{{ resolvedSovereignty.corporation.name }}</span>
+                <span class="text-xs text-muted-foreground" v-if="resolvedSovereignty.corporation.ticker"
+                    >({{ resolvedSovereignty.corporation.ticker }})</span
+                >
             </div>
-            <div v-else-if="sovereignty.faction" class="flex items-center gap-2">
-                <FactionLogo :faction_id="sovereignty.faction.id" :faction_name="sovereignty.faction.name" class="size-6" />
-                <span class="text-sm">{{ sovereignty.faction.name }}</span>
+            <div v-else-if="resolvedSovereignty?.faction" class="flex items-center gap-2">
+                <FactionLogo :faction_id="resolvedSovereignty.faction.id" :faction_name="resolvedSovereignty.faction.name" class="size-6" />
+                <span class="text-sm">{{ resolvedSovereignty.faction.name }}</span>
             </div>
         </TooltipContent>
     </Tooltip>
+    <template v-else>
+        <slot name="fallback">
+            <div :class="sizeClass"></div>
+        </slot>
+    </template>
 </template>
 
 <style scoped></style>

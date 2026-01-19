@@ -109,7 +109,7 @@ const lifetimeDisplay = computed(() => {
             <div class="col-span-full grid grid-cols-subgrid">
                 <span>Lifetime</span>
                 <span
-                    class="text-right data-lifetime-status=critical:text-red-500 data-lifetime-status=eol:text-purple-500"
+                    class="data-lifetime-status=critical:text-red-500 data-lifetime-status=eol:text-purple-500 text-right"
                     :data-lifetime-status="connection.lifetime_status"
                 >
                     <template v-if="lifetimeAt && connection.lifetime_status !== 'healthy'">
@@ -127,7 +127,7 @@ const lifetimeDisplay = computed(() => {
                 <span>Mass Status</span>
                 <span
                     :data-mass-status="connection.mass_status"
-                    class="text-right capitalize data-mass-status=critical:text-red-500 data-mass-status=fresh:text-green-500 data-mass-status=reduced:text-yellow-500"
+                    class="data-mass-status=critical:text-red-500 data-mass-status=fresh:text-green-500 data-mass-status=reduced:text-yellow-500 text-right capitalize"
                 >
                     {{ massStatusDisplay }}
                 </span>

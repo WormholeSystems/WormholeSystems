@@ -1,6 +1,6 @@
 // TSignatureCategory now defined in this file
 
-import { TMapConnection, TSolarsystem, TWormhole } from '@/pages/maps';
+import type { TMapConnection, TResolvedSolarsystem, TSolarsystem, TWormhole } from '@/pages/maps';
 
 export type TSolarsystemType = 'eve' | 'wormhole' | 'abyssal';
 
@@ -53,7 +53,7 @@ export type TFaction = {
 export type TKillmail = {
     id: number;
     hash: string;
-    solarsystem: TSolarsystem;
+    solarsystem_id: number;
     ship_type: TType | null;
     data: TRawKillmail;
     zkb: TzKillboard;
@@ -183,14 +183,15 @@ export type TCharacterStatus = {
     last_online_at: string | null;
     checked_last_online_at: string | null;
     checked_location_at: string | null;
-    solarsystem: TSolarsystem | null;
 };
 
 export type TMapRouteSolarsystem = {
     id: number;
-    solarsystem: TSolarsystem;
+    map_id: number;
+    solarsystem_id: number;
+    solarsystem?: TResolvedSolarsystem | null;
     is_pinned: boolean;
-    route: TSolarsystem[]; // Fastest route
+    route?: TResolvedSolarsystem[];
 };
 
 export type TMapUserSetting = {

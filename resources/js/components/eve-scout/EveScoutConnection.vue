@@ -1,14 +1,24 @@
 <script setup lang="ts">
 import DestinationContextMenu from '@/components/autopilot/DestinationContextMenu.vue';
+import RoutePopover from '@/components/autopilot/RoutePopover.vue';
 import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue';
 import SecurityStatus from '@/components/solarsystem/SecurityStatus.vue';
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import { Badge } from '@/components/ui/badge';
-import { TEveScoutConnection } from '@/types/eve-scout';
+import { Button } from '@/components/ui/button';
+import type { TResolvedSolarsystem } from '@/pages/maps';
+import type { TEveScoutConnection } from '@/types/eve-scout';
+import type { TStaticSolarsystem } from '@/types/static-data';
 import { computed } from 'vue';
 
+type TEveScoutConnectionWithSystems = TEveScoutConnection & {
+    in_system: TStaticSolarsystem;
+    out_system: TStaticSolarsystem;
+    route?: TResolvedSolarsystem[] | null;
+};
+
 const { connection, specialSystem } = defineProps<{
-    connection: TEveScoutConnection;
+    connection: TEveScoutConnectionWithSystems;
     specialSystem: string;
 }>();
 
@@ -52,14 +62,21 @@ const remainingHoursFormatted = computed(() => {
 
             <!-- Sovereignty -->
             <div class="flex items-center gap-1.5">
-                <SolarsystemSovereignty v-if="otherSystem.sovereignty" :sovereignty="otherSystem.sovereignty" class="size-3.5" />
-                <span v-else class="text-muted-foreground">-</span>
+                <SolarsystemSovereignty :sovereignty="otherSystem.sovereignty" :solarsystem-id="otherSystem.id" class="size-3.5">
+                    <template #fallback>
+                        <span class="text-muted-foreground">-</span>
+                    </template>
+                </SolarsystemSovereignty>
             </div>
 
             <!-- Jumps -->
-            <div class="text-center">
-                <span v-if="connection.jumps_from_selected !== null" class="text-muted-foreground">{{ connection.jumps_from_selected }}</span>
-                <span v-else class="text-muted-foreground">-</span>
+            <div class="flex justify-center">
+                <RoutePopover :route="connection.route ?? undefined">
+                    <Button variant="secondary" size="sm" class="h-5 px-1.5 font-mono text-xs">
+                        <span v-if="connection.jumps_from_selected !== null">{{ connection.jumps_from_selected }}</span>
+                        <span v-else>-</span>
+                    </Button>
+                </RoutePopover>
             </div>
 
             <!-- WH Type -->

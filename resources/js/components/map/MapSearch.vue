@@ -3,29 +3,43 @@ import SolarsystemEffect from '@/components/map/SolarsystemEffect.vue';
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import { Combobox, ComboboxAnchor, ComboboxEmpty, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxList } from '@/components/ui/combobox';
 import { createMapSolarsystem } from '@/composables/map';
-import { useSearch } from '@/composables/useSearch';
-import { TMap, TSolarsystem } from '@/pages/maps';
-import { computed } from 'vue';
+import { useStaticData } from '@/composables/useStaticData';
+import type { TMap } from '@/pages/maps';
+import type { TStaticSolarsystem } from '@/types/static-data';
+import { computed, ref } from 'vue';
 
-const { map, solarsystems } = defineProps<{
+const { map } = defineProps<{
     map: TMap;
-    solarsystems: TSolarsystem[];
 }>();
 
-const search = useSearch('search', ['solarsystems']);
+const search = ref('');
+const { staticData, loadStaticData } = useStaticData();
 
-function handleSolarsystemSelect(solarsystem: TSolarsystem) {
+void loadStaticData();
+
+function handleSolarsystemSelect(solarsystem: TStaticSolarsystem) {
     createMapSolarsystem(solarsystem.id);
 }
 
+const filteredSolarsystems = computed(() => {
+    const query = search.value.trim().toLowerCase();
+    if (!query) {
+        return [] as TStaticSolarsystem[];
+    }
+
+    const solarsystems = staticData.value?.solarsystems ?? [];
+
+    return solarsystems.filter((solarsystem) => solarsystem.name.toLowerCase().includes(query)).slice(0, 25);
+});
+
 const new_solarsystems = computed(() => {
-    return solarsystems.filter((solarsystem) => {
+    return filteredSolarsystems.value.filter((solarsystem) => {
         return !map.map_solarsystems?.some((map_solarsystem) => map_solarsystem.solarsystem_id === solarsystem.id);
     });
 });
 
 const existing_solarsystems = computed(() => {
-    return solarsystems.filter((solarsystem) => {
+    return filteredSolarsystems.value.filter((solarsystem) => {
         return map.map_solarsystems?.some((map_solarsystem) => map_solarsystem.solarsystem_id === solarsystem.id);
     });
 });
