@@ -31,9 +31,6 @@ export default defineConfig({
             origin: true,
             credentials: true,
         },
-        headers: {
-            'Cross-Origin-Resource-Policy': 'cross-origin',
-        },
     },
     plugins: [
         generateStaticDataPlugin(),
