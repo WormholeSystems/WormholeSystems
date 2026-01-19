@@ -10,6 +10,7 @@ use App\Models\Killmail;
 use App\Models\Map;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Resources\Json\ResourceCollection;
+use Inertia\Inertia;
 use Inertia\ProvidesInertiaProperties;
 use Inertia\RenderContext;
 use Throwable;
@@ -24,7 +25,7 @@ final readonly class MapKillmailsFeature implements ProvidesInertiaProperties
     public function toInertiaProperties(RenderContext $context): array
     {
         return [
-            'map_killmails' => $this->getMapKills(...),
+            'map_killmails' => Inertia::defer($this->getMapKills(...)),
         ];
     }
 
