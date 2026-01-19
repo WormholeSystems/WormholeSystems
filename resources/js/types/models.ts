@@ -1,6 +1,6 @@
 // TSignatureCategory now defined in this file
 
-import type { TMapConnection, TResolvedSolarsystem, TSolarsystem, TWormhole } from '@/pages/maps';
+import type { TMapConnection, TResolvedSolarsystem, TWormhole } from '@/pages/maps';
 
 export type TSolarsystemType = 'eve' | 'wormhole' | 'abyssal';
 
@@ -169,7 +169,7 @@ export type TCharacter = {
     alliance: TAlliance | null;
     faction: TFaction | null;
     status: TCharacterStatus | null;
-    route?: TSolarsystem[]; // Fastest route
+    route?: TResolvedSolarsystem[]; // Fastest route
     esi_scopes?: string[];
 };
 
