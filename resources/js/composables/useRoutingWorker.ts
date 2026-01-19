@@ -1,5 +1,6 @@
 import { useStaticData } from '@/composables/useStaticData';
 import type { WorkerClosestResult, WorkerComputePayload, WorkerInitPayload, WorkerResponseMessage, WorkerRouteResult } from '@/routing/types';
+import RoutingWorker from '@/workers/routingWorker?worker&inline';
 
 let workerClient: RoutingWorkerClient | null = null;
 let initPromise: Promise<void> | null = null;
@@ -15,13 +16,7 @@ class RoutingWorkerClient {
     }
 
     private async loadWorker(): Promise<Worker> {
-        const workerUrl = new URL('../workers/routingWorker.ts', import.meta.url);
-        const response = await fetch(workerUrl.toString(), { credentials: 'include' });
-        const script = await response.text();
-        const blob = new Blob([script], { type: 'application/javascript' });
-        const blobUrl = URL.createObjectURL(blob);
-        const worker = new Worker(blobUrl, { type: 'module' });
-        URL.revokeObjectURL(blobUrl);
+        const worker = new RoutingWorker();
 
         worker.addEventListener('message', (event: MessageEvent<WorkerResponseMessage>) => {
             if (event.data?.type === 'log') {
@@ -53,6 +48,14 @@ class RoutingWorkerClient {
 
             resolver(event.data.payload.responses);
             this.pending.delete(event.data.payload.callId);
+        });
+
+        worker.addEventListener('error', (event: Event) => {
+            console.error('[routing-worker] error', event);
+        });
+
+        worker.addEventListener('messageerror', (event: Event) => {
+            console.error('[routing-worker] message error', event);
         });
 
         this.worker = worker;
