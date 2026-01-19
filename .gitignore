@@ -35,6 +35,7 @@ frankenphp-worker.php
 /resources/js/wayfinder
 /resources/js/actions
 /resources/js/routes
+/resources/static/
 '
 .DS_Store
 /.cursor/
