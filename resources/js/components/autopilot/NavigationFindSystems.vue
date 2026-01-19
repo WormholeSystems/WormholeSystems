@@ -1,19 +1,21 @@
 <script setup lang="ts">
 import DestinationContextMenu from '@/components/autopilot/DestinationContextMenu.vue';
 import QuickSelectButtons from '@/components/autopilot/QuickSelectButtons.vue';
+import SystemComboboxList from '@/components/autopilot/SystemComboboxList.vue';
 import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue';
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import SolarsystemEffect from '@/components/solarsystem/SolarsystemEffect.vue';
 import { Button } from '@/components/ui/button';
 import { Combobox, ComboboxAnchor, ComboboxInput } from '@/components/ui/combobox';
 import { Label } from '@/components/ui/label';
-import { RadioGroupItem } from '@/components/ui/radio-group';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useClosestSystemsCalculator } from '@/composables/useClosestSystemsCalculator';
 import { useStaticSolarsystem, useStaticSolarsystems } from '@/composables/useStaticSolarsystems';
 import type { TMap, TResolvedMapRouteSolarsystem, TResolvedSelectedMapSolarsystem, TResolvedSolarsystem } from '@/pages/maps';
 import type { TCharacter, TCharacterStatus } from '@/types/models';
 import type { TStaticSolarsystem } from '@/types/static-data';
+import { ArrowDown, ArrowUp, X } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 
 const { map, solarsystems, selected_map_solarsystem, active_character, character_status, destinations, ignored_systems } = defineProps<{
@@ -135,7 +137,7 @@ function clearSystem() {
                             <span class="text-muted-foreground"> · {{ fromSystem.region?.name }}</span>
                         </div>
                         <Button variant="ghost" size="icon" @click="clearSystem" class="h-6 w-6 shrink-0">
-                            <TimesIcon class="size-3" />
+                            <X class="size-3" />
                         </Button>
                     </div>
                 </template>
@@ -155,7 +157,7 @@ function clearSystem() {
 
         <div v-if="fromSystem" class="mt-4 space-y-1.5">
             <div class="text-xs font-medium text-muted-foreground">Target Conditions</div>
-            <div class="flex flex-wrap gap-2">
+            <RadioGroup v-model="condition" class="flex flex-wrap gap-2">
                 <Label
                     v-for="option in conditionOptions"
                     :key="option.value"
@@ -165,7 +167,7 @@ function clearSystem() {
                     <RadioGroupItem :value="option.value" :id="option.value" class="focus-visible:ring-0" />
                     <span class="text-sm font-medium">{{ option.label }}</span>
                 </Label>
-            </div>
+            </RadioGroup>
         </div>
 
         <div v-if="fromSystem" class="flex items-center justify-between p-2">
