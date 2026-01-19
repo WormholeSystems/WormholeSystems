@@ -2,9 +2,28 @@ import { wayfinder } from '@laravel/vite-plugin-wayfinder';
 import tailwindcss from '@tailwindcss/vite';
 import vue from '@vitejs/plugin-vue';
 import laravel from 'laravel-vite-plugin';
+import { execSync } from 'node:child_process';
 import path from 'path';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+
+function generateStaticDataPlugin() {
+    const runGenerateStaticData = () => {
+        execSync('php artisan generate:static-data --no-interaction', {
+            stdio: 'inherit',
+        });
+    };
+
+    return {
+        name: 'generate-static-data',
+        buildStart() {
+            runGenerateStaticData();
+        },
+        configureServer() {
+            runGenerateStaticData();
+        },
+    };
+}
 
 export default defineConfig({
     server: {
@@ -14,6 +33,7 @@ export default defineConfig({
         },
     },
     plugins: [
+        generateStaticDataPlugin(),
         laravel({
             input: ['resources/js/app.ts'],
             ssr: 'resources/js/ssr.ts',
