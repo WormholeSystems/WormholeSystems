@@ -3,6 +3,7 @@ import Character from '@/components/characters/Character.vue';
 import { CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import MapPanel from '@/components/ui/map-panel/MapPanel.vue';
 import MapPanelContent from '@/components/ui/map-panel/MapPanelContent.vue';
+import { useActiveMapCharacter } from '@/composables/useActiveMapCharacter';
 import { useJumpCounts } from '@/composables/useJumpCounts';
 import { useStaticSolarsystems } from '@/composables/useStaticSolarsystems';
 import type { TMap, TResolvedSelectedMapSolarsystem, TResolvedSolarsystem } from '@/pages/maps';
@@ -17,6 +18,11 @@ const { map_characters, map, selected_map_solarsystem, ignored_systems } = defin
 }>();
 
 const { resolveSolarsystem } = useStaticSolarsystems();
+const activeCharacter = useActiveMapCharacter();
+
+const originSolarsystemId = computed(() => {
+    return activeCharacter.value?.status?.solarsystem_id ?? selected_map_solarsystem?.solarsystem_id ?? null;
+});
 
 const targetIds = computed(() => {
     const ids = new Set<number>();
@@ -32,7 +38,7 @@ const targetIds = computed(() => {
 });
 
 const { routesByTarget } = useJumpCounts({
-    fromId: computed(() => selected_map_solarsystem?.solarsystem_id ?? null),
+    fromId: originSolarsystemId,
     targets: targetIds,
     mapConnections: computed(() => map.map_connections ?? []),
     mapSolarsystems: computed(() => map.map_solarsystems ?? []),

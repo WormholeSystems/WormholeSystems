@@ -41,10 +41,20 @@ self.addEventListener('message', (event: MessageEvent<WorkerMessage>) => {
 function initializeStaticGraph(payload: WorkerInitPayload): void {
     staticSolarsystems = new Map(payload.solarsystems.map((system) => [system.id, system]));
     staticAdjacency = buildAdjacency(payload.connections, 'stargate');
+
+    // eslint-disable-next-line no-console
+    console.info('[routing-worker] init', {
+        solarsystems: staticSolarsystems.size,
+        connections: staticAdjacency.size,
+    });
 }
 
 function handleCompute(payload: WorkerComputePayload): void {
     if (!staticSolarsystems.size) {
+        // eslint-disable-next-line no-console
+        console.warn('[routing-worker] compute skipped: static graph not initialized', {
+            callId: payload.callId,
+        });
         postMessage({ type: 'responses', payload: { callId: payload.callId, responses: [] } });
         return;
     }
@@ -53,12 +63,31 @@ function handleCompute(payload: WorkerComputePayload): void {
     const eveScoutAdjacency = payload.settings.useEveScout ? buildAdjacency(payload.eveScoutConnections, 'evescout') : new Map<number, GraphEdge[]>();
     const ignoredSet = new Set<number>(payload.ignoredSystems.filter(Boolean));
 
+    // eslint-disable-next-line no-console
+    console.info('[routing-worker] compute', {
+        callId: payload.callId,
+        requests: payload.requests.length,
+        dynamicEdges: payload.dynamicConnections.length,
+        eveScoutEdges: payload.eveScoutConnections.length,
+        ignoredSystems: ignoredSet.size,
+        useEveScout: payload.settings.useEveScout,
+    });
+
     const responses = payload.requests.map((request) => {
         if (request.type === 'route') {
             return calculateRoute(request, payload.settings, dynamicAdjacency, eveScoutAdjacency, ignoredSet);
         }
 
         return calculateClosestSystems(request, payload.settings, dynamicAdjacency, eveScoutAdjacency, ignoredSet);
+    });
+
+    const emptyRoutes = responses.filter((response) => response.type === 'route' && response.route.length === 0).length;
+
+    // eslint-disable-next-line no-console
+    console.info('[routing-worker] computed', {
+        callId: payload.callId,
+        responses: responses.length,
+        emptyRoutes,
     });
 
     postMessage({ type: 'responses', payload: { callId: payload.callId, responses } });
