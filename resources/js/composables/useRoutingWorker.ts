@@ -24,6 +24,24 @@ class RoutingWorkerClient {
         URL.revokeObjectURL(blobUrl);
 
         worker.addEventListener('message', (event: MessageEvent<WorkerResponseMessage>) => {
+            if (event.data?.type === 'log') {
+                const { level, message, data } = event.data.payload;
+                const logPayload = data ? [message, data] : [message];
+
+                if (level === 'warn') {
+                    console.warn(...logPayload);
+                    return;
+                }
+
+                if (level === 'error') {
+                    console.error(...logPayload);
+                    return;
+                }
+
+                console.info(...logPayload);
+                return;
+            }
+
             if (event.data?.type !== 'responses') {
                 return;
             }
@@ -58,14 +76,21 @@ class RoutingWorkerClient {
     public async compute(payload: Omit<WorkerComputePayload, 'callId'>): Promise<(WorkerRouteResult | WorkerClosestResult)[]> {
         const worker = await this.getWorker();
         const callId = `call-${this.callCounter++}`;
+        const messagePayload = {
+            ...payload,
+            callId,
+        };
+
+        console.info('[routing-worker] post compute', {
+            callId,
+            requests: payload.requests.length,
+        });
+
         return new Promise((resolve) => {
             this.pending.set(callId, resolve);
             worker.postMessage({
                 type: 'compute',
-                payload: {
-                    ...payload,
-                    callId,
-                },
+                payload: messagePayload,
             });
         });
     }
@@ -80,6 +105,12 @@ export async function initializeRoutingWorker(): Promise<void> {
         initPromise = (async () => {
             const { loadStaticData } = useStaticData();
             const data = await loadStaticData();
+
+            console.info('[routing-worker] init payload', {
+                solarsystems: data.solarsystems.length,
+                connections: Object.keys(data.connections).length,
+            });
+
             await workerClient!.initialize({ solarsystems: data.solarsystems, connections: data.connections });
         })();
     }
