@@ -3,14 +3,50 @@ import Character from '@/components/characters/Character.vue';
 import { CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import MapPanel from '@/components/ui/map-panel/MapPanel.vue';
 import MapPanelContent from '@/components/ui/map-panel/MapPanelContent.vue';
+import { useJumpCounts } from '@/composables/useJumpCounts';
+import { useStaticSolarsystems } from '@/composables/useStaticSolarsystems';
+import type { TMap, TResolvedSelectedMapSolarsystem, TResolvedSolarsystem } from '@/pages/maps';
 import { TCharacter } from '@/types/models';
 import { computed } from 'vue';
 
-const { map_characters } = defineProps<{
+const { map_characters, map, selected_map_solarsystem, ignored_systems } = defineProps<{
     map_characters: TCharacter[];
+    map: TMap;
+    selected_map_solarsystem: TResolvedSelectedMapSolarsystem | null;
+    ignored_systems: number[];
 }>();
 
-const sorted_characters = computed(() => map_characters.toSorted(sortCharacters));
+const { resolveSolarsystem } = useStaticSolarsystems();
+
+const targetIds = computed(() => {
+    const ids = new Set<number>();
+
+    for (const character of map_characters) {
+        const targetId = character.status?.solarsystem_id;
+        if (targetId) {
+            ids.add(targetId);
+        }
+    }
+
+    return [...ids];
+});
+
+const { routesByTarget } = useJumpCounts({
+    fromId: computed(() => selected_map_solarsystem?.solarsystem_id ?? null),
+    targets: targetIds,
+    mapConnections: computed(() => map.map_connections ?? []),
+    mapSolarsystems: computed(() => map.map_solarsystems ?? []),
+    ignoredSystems: computed(() => ignored_systems ?? []),
+});
+
+const resolved_characters = computed(() =>
+    map_characters.map((character) => ({
+        ...character,
+        route: resolveRoute(character.status?.solarsystem_id ?? null),
+    })),
+);
+
+const sorted_characters = computed(() => resolved_characters.value.toSorted(sortCharacters));
 
 function sortCharacters(a: TCharacter, b: TCharacter) {
     if (a.status?.ship_type?.name === 'Capsule' && b.status?.ship_type?.name !== 'Capsule') {
@@ -41,6 +77,33 @@ function sortCharacters(a: TCharacter, b: TCharacter) {
 
 function isCovertOps(character: TCharacter) {
     return character.status?.ship_type?.group_id === 830;
+}
+
+function resolveRoute(targetId: number | null): TResolvedSolarsystem[] {
+    if (!targetId) {
+        return [];
+    }
+
+    const routeResult = routesByTarget.value.get(targetId);
+
+    if (!routeResult) {
+        return [];
+    }
+
+    return routeResult.route
+        .map<TResolvedSolarsystem | null>((step, index) => {
+            const solarsystem = resolveSolarsystem(step.id);
+
+            if (!solarsystem) {
+                return null;
+            }
+
+            return {
+                ...solarsystem,
+                connection_type: routeResult.route[index + 1]?.via ?? null,
+            };
+        })
+        .filter((entry): entry is TResolvedSolarsystem => entry !== null);
 }
 </script>
 

@@ -266,7 +266,7 @@ const handleResizeEnd = () => {
 
             <!-- Map Characters Section -->
             <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-if="map_characters" v-bind="getLayoutItem('characters').value">
-                <MapCharacters :map_characters />
+                <MapCharacters :map_characters :map="resolvedMap" :selected_map_solarsystem="resolvedSelectedSolarsystem" :ignored_systems />
             </GridItem>
 
             <!-- Killmails Section -->
