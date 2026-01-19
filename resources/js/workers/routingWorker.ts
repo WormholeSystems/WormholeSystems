@@ -25,6 +25,17 @@ const massStatusAllowList: Record<TMassStatus, Set<TMassStatus>> = {
 let staticSolarsystems: Map<number, TStaticSolarsystem> = new Map();
 let staticAdjacency: Map<number, GraphEdge[]> = new Map();
 
+function logWorker(level: 'info' | 'warn' | 'error', message: string, data?: Record<string, unknown>): void {
+    postMessage({
+        type: 'log',
+        payload: {
+            level,
+            message,
+            data,
+        },
+    });
+}
+
 self.addEventListener('message', (event: MessageEvent<WorkerMessage>) => {
     const message = event.data;
 
@@ -42,8 +53,7 @@ function initializeStaticGraph(payload: WorkerInitPayload): void {
     staticSolarsystems = new Map(payload.solarsystems.map((system) => [system.id, system]));
     staticAdjacency = buildAdjacency(payload.connections, 'stargate');
 
-    // eslint-disable-next-line no-console
-    console.info('[routing-worker] init', {
+    logWorker('info', '[routing-worker] init', {
         solarsystems: staticSolarsystems.size,
         connections: staticAdjacency.size,
     });
@@ -51,8 +61,7 @@ function initializeStaticGraph(payload: WorkerInitPayload): void {
 
 function handleCompute(payload: WorkerComputePayload): void {
     if (!staticSolarsystems.size) {
-        // eslint-disable-next-line no-console
-        console.warn('[routing-worker] compute skipped: static graph not initialized', {
+        logWorker('warn', '[routing-worker] compute skipped: static graph not initialized', {
             callId: payload.callId,
         });
         postMessage({ type: 'responses', payload: { callId: payload.callId, responses: [] } });
@@ -63,8 +72,7 @@ function handleCompute(payload: WorkerComputePayload): void {
     const eveScoutAdjacency = payload.settings.useEveScout ? buildAdjacency(payload.eveScoutConnections, 'evescout') : new Map<number, GraphEdge[]>();
     const ignoredSet = new Set<number>(payload.ignoredSystems.filter(Boolean));
 
-    // eslint-disable-next-line no-console
-    console.info('[routing-worker] compute', {
+    logWorker('info', '[routing-worker] compute', {
         callId: payload.callId,
         requests: payload.requests.length,
         dynamicEdges: payload.dynamicConnections.length,
@@ -83,8 +91,7 @@ function handleCompute(payload: WorkerComputePayload): void {
 
     const emptyRoutes = responses.filter((response) => response.type === 'route' && response.route.length === 0).length;
 
-    // eslint-disable-next-line no-console
-    console.info('[routing-worker] computed', {
+    logWorker('info', '[routing-worker] computed', {
         callId: payload.callId,
         responses: responses.length,
         emptyRoutes,
