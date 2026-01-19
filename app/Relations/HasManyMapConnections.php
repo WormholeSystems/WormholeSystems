@@ -31,16 +31,6 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 final class HasManyMapConnections extends Relation
 {
     /**
-     * Create a new HasManyMapConnections relation instance.
-     *
-     * @param  Builder<MapConnection>  $query
-     */
-    public function __construct(Builder $query, MapSolarsystem $parent)
-    {
-        parent::__construct($query, $parent);
-    }
-
-    /**
      * Set the base constraints on the relation query.
      */
     public function addConstraints(): void

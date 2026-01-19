@@ -7,7 +7,6 @@ namespace App\Providers;
 use App\DTO\CTA;
 use App\Models\ServerStatus;
 use App\Policies\PersonalAccessTokenPolicy;
-use App\Services\RouteService;
 use Carbon\CarbonImmutable;
 use Illuminate\Console\Scheduling\Event as ScheduledEvent;
 use Illuminate\Database\Eloquent\Model;
@@ -32,7 +31,7 @@ final class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton(RouteService::class);
+        //
     }
 
     /**

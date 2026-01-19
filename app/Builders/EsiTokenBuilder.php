@@ -19,11 +19,6 @@ use function array_map;
  */
 final class EsiTokenBuilder extends Builder
 {
-    public function __construct(\Illuminate\Database\Query\Builder $query)
-    {
-        parent::__construct($query);
-    }
-
     public function hasScopes(array $scopes): self
     {
         return $this->whereHas(

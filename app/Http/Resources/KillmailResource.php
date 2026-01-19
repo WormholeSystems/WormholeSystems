@@ -25,7 +25,7 @@ final class KillmailResource extends JsonResource
         return [
             'id' => $this->id,
             'hash' => $this->hash,
-            'solarsystem' => $this->solarsystem->toResource(SolarsystemResource::class),
+            'solarsystem_id' => $this->solarsystem_id,
             'time' => $this->time,
             'data' => $this->data,
             'zkb' => $this->zkb,

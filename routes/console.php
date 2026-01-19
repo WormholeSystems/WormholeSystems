@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Console\Commands\Characters\GetOnlineCharacterLocationsCommand;
 use App\Console\Commands\Characters\GetOnlineCharactersCommand;
 use App\Console\Commands\CheckConnectionAgeCommand;
+use App\Console\Commands\GenerateStaticDataCommand;
 use App\Console\Commands\GetServerStatusCommand;
 use App\Console\Commands\Killmails\GetKillmailsForLast90DaysCommand;
 use App\Console\Commands\Killmails\PurgeOldKillmailsCommand;
@@ -17,6 +18,7 @@ Schedule::command(GetServerStatusCommand::class)->runInBackground()->everyMinute
 Schedule::command(GetOnlineCharactersCommand::class)->runInBackground()->everyThirtySeconds()->withoutOverlapping()->notDuringDowntime();
 Schedule::command(GetOnlineCharacterLocationsCommand::class)->runInBackground()->everyFiveSeconds()->withoutOverlapping()->notDuringDowntime();
 Schedule::command(GetSovereigntiesCommand::class)->runInBackground()->daily()->at('15:00')->withoutOverlapping()->notDuringDowntime();
+Schedule::command(GenerateStaticDataCommand::class)->runInBackground()->daily()->withoutOverlapping()->notDuringDowntime();
 Schedule::command(CheckConnectionAgeCommand::class)->runInBackground()->everyTenMinutes()->withoutOverlapping();
 Schedule::command(DeleteOldSignaturesCommand::class)->runInBackground()->everyTenMinutes()->withoutOverlapping();
 Schedule::command(GetKillmailsForLast90DaysCommand::class)->runInBackground()->weekly();
