@@ -7,7 +7,7 @@ import VictimImage from '@/components/map-killmails/VictimImage.vue';
 import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue';
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import { useMapSolarsystems } from '@/composables/map';
-import { useStaticSolarsystem, useStaticSolarsystems } from '@/composables/useStaticSolarsystems';
+import { useStaticSolarsystems } from '@/composables/useStaticSolarsystems';
 import { formatISK } from '@/lib/utils';
 import { TKillmail } from '@/types/models';
 import { UTCDate } from '@date-fns/utc';
@@ -23,7 +23,6 @@ const { killmail } = defineProps<{
 
 const { map_solarsystems, setHoveredMapSolarsystem } = useMapSolarsystems();
 const { resolveSolarsystem } = useStaticSolarsystems();
-const staticSolarsystemRef = useStaticSolarsystem(() => killmail.solarsystem_id);
 
 function onHover(hovered: boolean) {
     if (map_solarsystem.value) {
@@ -35,7 +34,7 @@ const map_solarsystem = computed(() => {
     return map_solarsystems.value.find((solarsystem) => solarsystem.solarsystem_id === killmail.solarsystem_id);
 });
 
-const staticSolarsystem = computed(() => staticSolarsystemRef.value ?? resolveSolarsystem(killmail.solarsystem_id));
+const staticSolarsystem = computed(() => resolveSolarsystem(killmail.solarsystem_id));
 
 const final_blow = computed(() => {
     return killmail.data.attackers.find((attacker) => attacker.final_blow)!;
