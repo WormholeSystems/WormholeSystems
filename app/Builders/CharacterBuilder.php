@@ -20,11 +20,6 @@ use function array_map;
  */
 final class CharacterBuilder extends Builder
 {
-    public function __construct(\Illuminate\Database\Query\Builder $query)
-    {
-        parent::__construct($query);
-    }
-
     public function hasTokenWithScopes(array $scopes): self
     {
         return $this->whereHas(

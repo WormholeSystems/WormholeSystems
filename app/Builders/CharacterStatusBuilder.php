@@ -20,11 +20,6 @@ use function now;
  */
 final class CharacterStatusBuilder extends Builder
 {
-    public function __construct(\Illuminate\Database\Query\Builder $query)
-    {
-        parent::__construct($query);
-    }
-
     public function isOnline(?bool $is_online = true): self
     {
         return $this->where('is_online', $is_online);

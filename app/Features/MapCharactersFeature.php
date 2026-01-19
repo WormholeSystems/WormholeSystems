@@ -4,32 +4,20 @@ declare(strict_types=1);
 
 namespace App\Features;
 
-use App\Enums\RoutePreference;
 use App\Http\Resources\CharacterResource;
 use App\Models\Character;
 use App\Models\Map;
-use App\Models\MapSolarsystem;
-use App\Models\MapUserSetting;
 use App\Scopes\CharacterHasMapAccess;
 use App\Scopes\CharacterIsOnline;
 use App\Scopes\UserAllowedMapTracking;
-use App\Services\RouteOptions;
-use App\Services\RouteService;
 use Illuminate\Http\Resources\Json\ResourceCollection;
-use Illuminate\Support\Facades\Session;
 use Inertia\ProvidesInertiaProperties;
 use Inertia\RenderContext;
 use Throwable;
 
 final readonly class MapCharactersFeature implements ProvidesInertiaProperties
 {
-    public function __construct(
-        private Map $map,
-        private bool $can_view_characters,
-        private ?MapSolarsystem $selected_map_solarsystem,
-        private MapUserSetting $map_user_settings,
-        private RouteService $route_service,
-    ) {}
+    public function __construct(private Map $map, private bool $can_view_characters) {}
 
     public function toInertiaProperties(RenderContext $context): array
     {
@@ -43,7 +31,7 @@ final readonly class MapCharactersFeature implements ProvidesInertiaProperties
      */
     private function getMapCharacters(): ResourceCollection
     {
-        $characters = Character::query()
+        return Character::query()
             ->hasTokenWithTrackingScopes()
             ->with([
                 'characterStatus',
@@ -54,51 +42,7 @@ final readonly class MapCharactersFeature implements ProvidesInertiaProperties
             ->tap(new UserAllowedMapTracking($this->map))
             ->tap(new CharacterHasMapAccess($this->map, without_guests: true))
             ->tap(new CharacterIsOnline)
-            ->get();
-
-        if (! $this->selected_map_solarsystem instanceof MapSolarsystem) {
-            return $characters->toResourceCollection(CharacterResource::class);
-        }
-
-        // Build route requests for all characters
-        $routeRequests = [];
-        foreach ($characters as $character) {
-            if ($character->characterStatus && $character->characterStatus->solarsystem_id) {
-                $routeRequests[$character->id] = [
-                    'from' => $this->selected_map_solarsystem->solarsystem_id,
-                    'to' => $character->characterStatus->solarsystem_id,
-                ];
-            }
-        }
-
-        // Calculate all routes in one batched operation
-        $routes = [];
-        if ($routeRequests !== []) {
-            $routes = $this->route_service->findMultipleRoutes($routeRequests, $this->getRouteOptions());
-        }
-
-        // Attach routes to characters
-        return $characters
-            ->map(function (Character $character) use ($routes): Character {
-                $character->route = $routes[$character->id] ?? [];
-
-                return $character;
-            })
+            ->get()
             ->toResourceCollection(CharacterResource::class);
-    }
-
-    private function getRouteOptions(): RouteOptions
-    {
-        $ignored_systems = Session::get('ignored_systems', []);
-
-        return new RouteOptions(
-            allowEol: $this->map_user_settings->route_allow_eol,
-            massStatus: $this->map_user_settings->route_allow_mass_status,
-            allowEveScout: $this->map_user_settings->route_use_evescout,
-            map: $this->map,
-            ignoredSystems: $ignored_systems,
-            routePreference: $this->map_user_settings->route_preference ?? RoutePreference::Shorter,
-            securityPenalty: $this->map_user_settings->security_penalty ?? 50,
-        );
     }
 }

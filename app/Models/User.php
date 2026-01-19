@@ -33,7 +33,7 @@ final class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
 
-    protected const string SESSION_ACTIVE_CHARACTER_ID = 'active_character_id';
+    private const string SESSION_ACTIVE_CHARACTER_ID = 'active_character_id';
 
     public ?Character $active_character = null {
         get {

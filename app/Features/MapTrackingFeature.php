@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace App\Features;
 
 use App\Http\Resources\MapSolarsystemResource;
-use App\Http\Resources\SolarsystemResource;
 use App\Models\Map;
-use App\Models\Solarsystem;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Inertia\Inertia;
@@ -27,7 +25,7 @@ final readonly class MapTrackingFeature implements ProvidesInertiaProperties
     {
         return [
             'tracking_origin' => Inertia::optional(fn (): ?JsonResource => $this->getTrackingOrigin()),
-            'tracking_target' => Inertia::optional(fn (): ?JsonResource => $this->getTrackingTarget()),
+            'tracking_target' => Inertia::optional(fn (): ?array => $this->getTrackingTarget()),
         ];
     }
 
@@ -58,20 +56,12 @@ final readonly class MapTrackingFeature implements ProvidesInertiaProperties
      *
      * @throws Throwable
      */
-    private function getTrackingTarget(): ?JsonResource
+    private function getTrackingTarget(): ?array
     {
         if (! $this->target_solarsystem_id) {
             return null;
         }
 
-        return Solarsystem::query()
-            ->with([
-                'sovereignty' => ['alliance', 'corporation', 'faction'],
-                'wormholeSystem.effect',
-                'constellation',
-                'region',
-            ])
-            ->find($this->target_solarsystem_id)
-            ?->toResource(SolarsystemResource::class);
+        return ['solarsystem_id' => $this->target_solarsystem_id];
     }
 }

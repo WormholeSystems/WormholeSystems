@@ -12,7 +12,6 @@ use App\Features\MapCharactersFeature;
 use App\Features\MapKillmailsFeature;
 use App\Features\MapNavigationFeature;
 use App\Features\MapPermissionsFeature;
-use App\Features\MapSearchFeature;
 use App\Features\MapSelectionFeature;
 use App\Features\MapSettingsFeature;
 use App\Features\MapTrackingFeature;
@@ -26,7 +25,6 @@ use App\Models\MapSolarsystem;
 use App\Models\User;
 use App\Scopes\WithVisibleSolarsystems;
 use App\Services\EveScoutService;
-use App\Services\RouteService;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -41,7 +39,6 @@ final class MapController extends Controller
 {
     public function __construct(
         #[CurrentUser] private readonly User $user,
-        private readonly RouteService $route_service,
         private readonly EveScoutService $eve_scout_service,
     ) {}
 
@@ -54,6 +51,7 @@ final class MapController extends Controller
         $map = Map::query()
             ->with([
                 'mapSolarsystems' => fn (Relation $query): Relation => $query->withCount('signatures', 'wormholeSignatures', 'mapConnections'),
+                'mapRouteSolarsystems',
             ])
             ->tap(new WithVisibleSolarsystems)
             ->findOrFail($map->id);
@@ -76,45 +74,25 @@ final class MapController extends Controller
         $can_view_characters = Gate::allows('viewCharacters', $map);
 
         $permissionsFeature = new MapPermissionsFeature($map, $this->user);
-        $searchFeature = new MapSearchFeature($request->string('search'));
         $killmailsFeature = new MapKillmailsFeature($map, $settings->killmail_filter ?? KillmailFilter::All);
         $charactersFeature = new MapCharactersFeature(
             $map,
             $can_view_characters,
-            $selected_map_solarsystem,
-            $settings,
-            $this->route_service
         );
         $shipHistoryFeature = new ShipHistoryFeature($this->user, $can_view_characters);
-        $navigationFeature = new MapNavigationFeature(
-            $map,
-            $selected_map_solarsystem,
-            $settings,
-            $this->route_service,
-            $request->string('from_system'),
-            $request->string('condition', 'observatories'),
-            $request->integer('limit', 15),
-            $request->integer('from_solarsystem_id') ?: null,
-            $request->integer('to_solarsystem_id') ?: null,
-        );
+        $navigationFeature = new MapNavigationFeature($map);
         $trackingFeature = new MapTrackingFeature(
             $map,
             $request->integer('origin_map_solarsystem_id') ?: null,
             $request->integer('target_solarsystem_id') ?: null
         );
-        $eveScoutConnectionsFeature = new EveScoutConnectionsFeature(
-            $this->eve_scout_service,
-            $this->route_service,
-            $map,
-            $selected_map_solarsystem,
-        );
+        $eveScoutConnectionsFeature = new EveScoutConnectionsFeature($this->eve_scout_service);
 
         return Inertia::render('maps/ShowMap', [
             'map' => $map->toResource(MapResource::class),
             'config' => config('map'),
             $permissionsFeature,
             $settingsFeature,
-            $searchFeature,
             $selectionFeature,
             $killmailsFeature,
             $charactersFeature,
