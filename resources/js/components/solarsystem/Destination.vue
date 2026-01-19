@@ -5,11 +5,11 @@ import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue'
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import { Button } from '@/components/ui/button';
 import { usePath } from '@/composables/usePath';
-import { TMapRouteSolarsystem } from '@/types/models';
+import type { TResolvedMapRouteSolarsystem } from '@/pages/maps';
 import { vElementHover } from '@vueuse/components';
 
 const { destination } = defineProps<{
-    destination: TMapRouteSolarsystem;
+    destination: TResolvedMapRouteSolarsystem;
 }>();
 
 const { setPath } = usePath();
@@ -34,7 +34,7 @@ function onHover(hovered: boolean) {
 
             <span class="truncate text-xs font-medium">{{ destination.solarsystem.name }}</span>
 
-            <SolarsystemSovereignty v-if="destination.solarsystem.sovereignty" :sovereignty="destination.solarsystem.sovereignty" class="size-3" />
+            <SolarsystemSovereignty :sovereignty="destination.solarsystem.sovereignty" :solarsystem-id="destination.solarsystem.id" class="size-3" />
 
             <RoutePopover :route="destination.route">
                 <Button variant="secondary" size="sm" class="h-5 px-1.5 font-mono text-xs">

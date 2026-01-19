@@ -6,31 +6,45 @@ import { Button } from '@/components/ui/button';
 import { Combobox, ComboboxAnchor, ComboboxEmpty, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxList } from '@/components/ui/combobox';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useSearch } from '@/composables/useSearch';
-import { TMap, TSolarsystem } from '@/pages/maps';
+import { useStaticData } from '@/composables/useStaticData';
+import type { TMap, TResolvedMapRouteSolarsystem } from '@/pages/maps';
 import MapRouteSolarsystems from '@/routes/map-route-solarsystems';
+import { TStaticSolarsystem } from '@/types/static-data';
 import { router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
-const { map, solarsystems, map_navigation } = defineProps<{
+const { map, map_route_solarsystems } = defineProps<{
     map: TMap;
-    solarsystems: TSolarsystem[];
-    map_navigation?: { solarsystem: TSolarsystem }[];
+    map_route_solarsystems?: TResolvedMapRouteSolarsystem[];
 }>();
 
-const search = useSearch('search', ['solarsystems']);
+const search = ref('');
+const { staticData, loadStaticData } = useStaticData();
+
+void loadStaticData();
+
+const solarsystems = computed(() => staticData.value?.solarsystems ?? []);
 
 const adding = ref(false);
 
+const filteredSolarsystems = computed(() => {
+    const query = search.value.trim().toLowerCase();
+    if (!query) {
+        return [] as TStaticSolarsystem[];
+    }
+
+    return solarsystems.value.filter((solarsystem) => solarsystem.name.toLowerCase().includes(query)).slice(0, 25);
+});
+
 const new_solarsystems = computed(() => {
-    return solarsystems.filter((solarsystem) => !map_navigation?.some((route) => route.solarsystem.id === solarsystem.id));
+    return filteredSolarsystems.value.filter((solarsystem) => !map_route_solarsystems?.some((route) => route.solarsystem.id === solarsystem.id));
 });
 
 const existing_solarsystems = computed(() => {
-    return solarsystems.filter((solarsystem) => map_navigation?.some((route) => route.solarsystem.id === solarsystem.id));
+    return filteredSolarsystems.value.filter((solarsystem) => map_route_solarsystems?.some((route) => route.solarsystem.id === solarsystem.id));
 });
 
-function handleSolarsystemSelect(solarsystem: TSolarsystem) {
+function handleSolarsystemSelect(solarsystem: TStaticSolarsystem) {
     router.post(
         MapRouteSolarsystems.store().url,
         {

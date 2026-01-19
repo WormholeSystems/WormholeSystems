@@ -3,7 +3,6 @@ import DestinationContextMenu from '@/components/autopilot/DestinationContextMen
 import QuickSelectButtons from '@/components/autopilot/QuickSelectButtons.vue';
 import SystemComboboxList from '@/components/autopilot/SystemComboboxList.vue';
 import ExtraWormholeIcon from '@/components/icons/ExtraWormholeIcon.vue';
-import TimesIcon from '@/components/icons/TimesIcon.vue';
 import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue';
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import SolarsystemEffect from '@/components/solarsystem/SolarsystemEffect.vue';
@@ -12,146 +11,125 @@ import { Combobox, ComboboxAnchor, ComboboxInput } from '@/components/ui/combobo
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useIgnoreList } from '@/composables/useIgnoreList';
 import { usePath } from '@/composables/usePath';
-import { useSearch } from '@/composables/useSearch';
-import { TMap, TSelectedMapSolarsystem, TShortestPath, TSolarsystem } from '@/pages/maps';
-import { TCharacter, TCharacterStatus, TMapRouteSolarsystem } from '@/types/models';
-import { router } from '@inertiajs/vue3';
+import { useRouteCalculator } from '@/composables/useRouteCalculator';
+import { useStaticSolarsystem, useStaticSolarsystems } from '@/composables/useStaticSolarsystems';
+import type { TMap, TResolvedMapRouteSolarsystem, TResolvedSelectedMapSolarsystem, TResolvedSolarsystem } from '@/pages/maps';
+import type { ConnectionType } from '@/routing/types';
+import type { TCharacter, TCharacterStatus } from '@/types/models';
+import type { TStaticSolarsystem } from '@/types/static-data';
 import { vElementHover } from '@vueuse/components';
 import { X } from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
 
-const { solarsystems, shortest_path, selected_map_solarsystem, ignored_systems, active_character, character_status, destinations } = defineProps<{
+const { map, solarsystems, selected_map_solarsystem, ignored_systems, active_character, character_status, destinations } = defineProps<{
     map: TMap;
-    solarsystems: TSolarsystem[];
-    selected_map_solarsystem?: TSelectedMapSolarsystem | null;
-    shortest_path: TShortestPath | null;
+    solarsystems: TStaticSolarsystem[];
+    selected_map_solarsystem?: TResolvedSelectedMapSolarsystem | null;
     ignored_systems: number[];
     active_character?: TCharacter | null;
     character_status?: TCharacterStatus | null;
-    destinations: TMapRouteSolarsystem[];
+    destinations: TResolvedMapRouteSolarsystem[];
 }>();
 
-const fromSystem = ref<TSolarsystem | null>(null);
-const toSystem = ref<TSolarsystem | null>(null);
-const route = ref<TSolarsystem[]>([]);
-
-const { setPath } = usePath();
+const mapConnections = computed(() => map.map_connections ?? []);
+const mapSolarsystems = computed(() => map.map_solarsystems ?? []);
 const { ignoreSolarsystem, clearIgnoreList } = useIgnoreList();
+const { setPath } = usePath();
 
-const search = useSearch('search', ['solarsystems']);
+const search = ref('');
+const fromSystem = ref<TResolvedSolarsystem | null>(null);
+const toSystem = ref<TResolvedSolarsystem | null>(null);
 
-const canCalculate = computed(() => {
-    return fromSystem.value && toSystem.value && fromSystem.value.id !== toSystem.value.id;
+const { route: routeSteps, jumps: routeJumps } = useRouteCalculator({
+    fromId: computed(() => fromSystem.value?.id ?? null),
+    toId: computed(() => toSystem.value?.id ?? null),
+    ignoredSystems: computed(() => ignored_systems),
+    mapConnections,
+    mapSolarsystems,
 });
 
-const jumps = computed(() => {
-    return route.value.length > 0 ? route.value.length - 1 : 0;
-});
+const { resolveSolarsystem } = useStaticSolarsystems();
 
-const activeCharacterSystem = computed(() => {
-    if (!active_character || !character_status?.solarsystem) return null;
-    return character_status.solarsystem;
-});
+type RouteEntry = {
+    solarsystem: TStaticSolarsystem;
+    connection_type: ConnectionType | null;
+};
 
-function onRouteHover(hovered: boolean) {
-    if (hovered && route.value.length > 0) {
-        setPath(route.value);
-    } else {
-        setPath(null);
+const enrichedRoute = computed<RouteEntry[]>(() =>
+    routeSteps.value
+        .map((step, index) => {
+            const solarsystem = resolveSolarsystem(step.id);
+            if (!solarsystem) {
+                return null;
+            }
+
+            return {
+                solarsystem,
+                connection_type: routeSteps.value[index + 1]?.via ?? null,
+            } as RouteEntry;
+        })
+        .filter((entry): entry is RouteEntry => Boolean(entry)),
+);
+
+const routeSolarsystems = computed(() => enrichedRoute.value.map((entry) => entry.solarsystem));
+const hasRoute = computed(() => enrichedRoute.value.length > 0);
+const activeCharacterSystem = useStaticSolarsystem(() => (active_character ? (character_status?.solarsystem_id ?? null) : null));
+
+const filteredSolarsystems = computed(() => {
+    const query = search.value.trim().toLowerCase();
+    if (!query) {
+        return [] as TStaticSolarsystem[];
     }
-}
 
-function handleFromSystemSelect(system: TSolarsystem) {
+    return solarsystems.filter((solarsystem) => solarsystem.name.toLowerCase().includes(query)).slice(0, 25);
+});
+
+watch(
+    () => routeSolarsystems.value,
+    (value) => {
+        if (value.length > 0) {
+            setPath(value);
+            return;
+        }
+
+        setPath(null);
+    },
+    { immediate: true, deep: true },
+);
+
+function handleFromSystemSelect(system: TResolvedSolarsystem) {
     fromSystem.value = system;
     search.value = '';
-    route.value = [];
-
-    if (toSystem.value && system.id !== toSystem.value.id) {
-        calculateShortestPath();
-    }
 }
 
-function handleToSystemSelect(system: TSolarsystem) {
+function handleToSystemSelect(system: TResolvedSolarsystem) {
     toSystem.value = system;
     search.value = '';
-    route.value = [];
-
-    if (fromSystem.value && system.id !== fromSystem.value.id) {
-        calculateShortestPath();
-    }
 }
 
-function calculateShortestPath() {
-    if (!canCalculate.value) return;
-
-    router.reload({
-        data: {
-            from_solarsystem_id: fromSystem.value!.id,
-            to_solarsystem_id: toSystem.value!.id,
-        },
-        only: ['map_navigation', 'map_user_settings'],
-    });
+function onRouteHover(hovered: boolean) {
+    setPath(hovered ? routeSolarsystems.value : null);
 }
 
 function handleIgnoreSolarsystem(solarsystem_id: number) {
     ignoreSolarsystem(solarsystem_id, {
         only: ['map_navigation', 'ignored_systems'],
-        onSuccess() {
-            if (route.value.length > 0) {
-                setPath(route.value);
-            }
-        },
     });
 }
 
 function handleClearIgnoreList() {
     clearIgnoreList({
         only: ['map_navigation', 'ignored_systems'],
-        onSuccess() {
-            if (route.value.length > 0) {
-                setPath(route.value);
-            }
-        },
     });
 }
 
 function clearFrom() {
     fromSystem.value = null;
-    route.value = [];
-    router.reload({
-        data: {
-            from_solarsystem_id: null,
-            to_solarsystem_id: toSystem.value?.id || null,
-        },
-        only: ['map_navigation'],
-    });
 }
 
 function clearTo() {
     toSystem.value = null;
-    route.value = [];
-    router.reload({
-        data: {
-            from_solarsystem_id: fromSystem.value?.id || null,
-            to_solarsystem_id: null,
-        },
-        only: ['map_navigation'],
-    });
 }
-
-watch(
-    () => shortest_path,
-    (newShortestPath) => {
-        if (newShortestPath) {
-            route.value = newShortestPath.route;
-            fromSystem.value = newShortestPath.from_solarsystem;
-            toSystem.value = newShortestPath.to_solarsystem;
-        } else {
-            route.value = [];
-        }
-    },
-    { immediate: true },
-);
 </script>
 
 <template>
@@ -168,9 +146,12 @@ watch(
                             <span class="font-medium">{{ fromSystem.name }}</span>
                             <span class="text-muted-foreground"> · {{ fromSystem.region?.name }}</span>
                         </div>
-                        <SolarsystemSovereignty v-if="fromSystem.sovereignty" :sovereignty="fromSystem.sovereignty" class="shrink-0" />
-                        <SolarsystemEffect v-else-if="fromSystem.effect" :effect="fromSystem.effect.name" class="shrink-0" />
-                        <span v-else />
+                        <SolarsystemSovereignty :sovereignty="fromSystem.sovereignty" :solarsystem-id="fromSystem.id" class="shrink-0">
+                            <template #fallback>
+                                <SolarsystemEffect v-if="fromSystem.effect" :effect="fromSystem.effect.name" class="shrink-0" />
+                                <span v-else />
+                            </template>
+                        </SolarsystemSovereignty>
                         <Button variant="ghost" size="icon" @click="clearFrom" class="h-6 w-6 shrink-0">
                             <X class="size-3" />
                         </Button>
@@ -180,7 +161,7 @@ watch(
                     <ComboboxInput v-model="search" placeholder="Search system..." class="rounded-lg border" />
                 </template>
             </ComboboxAnchor>
-            <SystemComboboxList :solarsystems="solarsystems" @select="handleFromSystemSelect" />
+            <SystemComboboxList :solarsystems="filteredSolarsystems" @select="handleFromSystemSelect" />
         </Combobox>
         <QuickSelectButtons
             v-if="!fromSystem"
@@ -203,9 +184,12 @@ watch(
                             <span class="font-medium">{{ toSystem.name }}</span>
                             <span class="text-muted-foreground"> · {{ toSystem.region?.name }}</span>
                         </div>
-                        <SolarsystemSovereignty v-if="toSystem.sovereignty" :sovereignty="toSystem.sovereignty" class="shrink-0" />
-                        <SolarsystemEffect v-else-if="toSystem.effect" :effect="toSystem.effect.name" class="shrink-0" />
-                        <span v-else />
+                        <SolarsystemSovereignty :sovereignty="toSystem.sovereignty" :solarsystem-id="toSystem.id" class="shrink-0">
+                            <template #fallback>
+                                <SolarsystemEffect v-if="toSystem.effect" :effect="toSystem.effect.name" class="shrink-0" />
+                                <span v-else />
+                            </template>
+                        </SolarsystemSovereignty>
                         <Button variant="ghost" size="icon" @click="clearTo" class="h-6 w-6 shrink-0">
                             <X class="size-3" />
                         </Button>
@@ -215,7 +199,7 @@ watch(
                     <ComboboxInput v-model="search" placeholder="Search system..." class="rounded-lg border" />
                 </template>
             </ComboboxAnchor>
-            <SystemComboboxList :solarsystems="solarsystems" @select="handleToSystemSelect" />
+            <SystemComboboxList :solarsystems="filteredSolarsystems" @select="handleToSystemSelect" />
         </Combobox>
         <QuickSelectButtons
             v-if="!toSystem"
@@ -228,19 +212,15 @@ watch(
 
     <!-- Route Controls -->
     <div v-if="fromSystem && toSystem" class="flex items-center justify-between p-2">
-        <span v-if="route.length" class="text-sm text-muted-foreground">{{ jumps }} jumps</span>
+        <span v-if="hasRoute" class="text-sm text-muted-foreground">{{ routeJumps }} jumps</span>
         <Button v-if="ignored_systems.length > 0" variant="secondary" size="sm" @click="handleClearIgnoreList">
             Clear Ignored ({{ ignored_systems.length }})
         </Button>
     </div>
 
     <!-- Route Results -->
-    <div
-        v-if="route.length > 0"
-        v-element-hover="onRouteHover"
-        class="grid grid-cols-[auto_auto_1fr_auto_auto_auto] rounded-lg border bg-card text-sm"
-    >
-        <DestinationContextMenu v-for="(system, index) in route" :key="system.id" :solarsystem_id="system.id">
+    <div v-if="hasRoute" v-element-hover="onRouteHover" class="grid grid-cols-[auto_auto_1fr_auto_auto_auto] rounded-lg border bg-card text-sm">
+        <DestinationContextMenu v-for="(entry, index) in enrichedRoute" :key="entry.solarsystem.id" :solarsystem_id="entry.solarsystem.id">
             <div
                 class="col-span-full grid grid-cols-subgrid items-center gap-2 border-b px-2.5 py-1.5 transition-colors last:border-b-0 hover:bg-accent/50"
             >
@@ -248,29 +228,33 @@ watch(
                     {{ index + 1 }}
                 </div>
                 <div class="justify-self-center">
-                    <SolarsystemClass :wormhole_class="system.class" :security="system.security" />
+                    <SolarsystemClass :wormhole_class="entry.solarsystem.class" :security="entry.solarsystem.security" />
                 </div>
                 <div class="min-w-0 text-xs">
-                    <span class="font-medium">{{ system.name }}</span>
-                    <span class="text-muted-foreground"> · {{ system.region?.name }}</span>
+                    <span class="font-medium">{{ entry.solarsystem.name }}</span>
+                    <span class="text-muted-foreground"> · {{ entry.solarsystem.region?.name }}</span>
                 </div>
                 <div class="flex items-center justify-center">
-                    <SolarsystemSovereignty v-if="system.sovereignty" :sovereignty="system.sovereignty" />
-                    <SolarsystemEffect v-else-if="system.effect" :effect="system.effect.name" />
+                    <SolarsystemSovereignty :sovereignty="entry.solarsystem.sovereignty" :solarsystem-id="entry.solarsystem.id">
+                        <template #fallback>
+                            <SolarsystemEffect v-if="entry.solarsystem.effect" :effect="entry.solarsystem.effect.name" />
+                        </template>
+                    </SolarsystemSovereignty>
                 </div>
                 <div class="flex items-center justify-center">
-                    <Tooltip v-if="index < route.length - 1 && route[index + 1].connection_type === 'wormhole'">
+                    <Tooltip v-if="index < enrichedRoute.length - 1 && enrichedRoute[index + 1]?.connection_type === 'wormhole'">
                         <TooltipTrigger as-child>
                             <ExtraWormholeIcon class="size-3.5 text-amber-500" />
                         </TooltipTrigger>
-                        <TooltipContent>Take wormhole to {{ route[index + 1].name }}</TooltipContent>
+                        <TooltipContent> Take wormhole to {{ enrichedRoute[index + 1]?.solarsystem.name }} </TooltipContent>
                     </Tooltip>
                 </div>
+
                 <div class="flex items-center justify-center">
-                    <Tooltip v-if="route && index !== 0 && index !== route.length - 1">
+                    <Tooltip v-if="index !== 0 && index !== enrichedRoute.length - 1">
                         <TooltipTrigger as-child>
-                            <Button variant="ghost" size="icon" class="h-6 w-6" @click="handleIgnoreSolarsystem(system.id)">
-                                <TimesIcon class="h-3 w-3" />
+                            <Button variant="ghost" size="icon" class="h-6 w-6" @click="handleIgnoreSolarsystem(entry.solarsystem.id)">
+                                <X class="h-3 w-3" />
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent>Ignore this system</TooltipContent>

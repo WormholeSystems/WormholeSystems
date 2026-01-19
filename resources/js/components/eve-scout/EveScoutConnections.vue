@@ -7,22 +7,64 @@ import MapPanel from '@/components/ui/map-panel/MapPanel.vue';
 import MapPanelContent from '@/components/ui/map-panel/MapPanelContent.vue';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useJumpCounts } from '@/composables/useJumpCounts';
 import { useMap } from '@/composables/useMap';
 import { useSelectedMapSolarsystem } from '@/composables/useSelectedMapSolarsystem';
+import { useShowMap } from '@/composables/useShowMap';
+import { useStaticSolarsystems } from '@/composables/useStaticSolarsystems';
+import type { TResolvedSolarsystem } from '@/pages/maps';
 import EveScoutConnections from '@/routes/eve-scout-connections';
-import { TEveScoutConnection } from '@/types/eve-scout';
+import type { TEveScoutConnection } from '@/types/eve-scout';
+import type { TStaticSolarsystem } from '@/types/static-data';
 import { Deferred, router } from '@inertiajs/vue3';
 import { useLocalStorage } from '@vueuse/core';
 import { ArrowDown, ArrowUp, ExternalLink, Plus } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 
 const map = useMap();
+const page = useShowMap();
 
 const { eve_scout_connections } = defineProps<{
     eve_scout_connections?: TEveScoutConnection[];
 }>();
 
 const selectedMapSolarsystem = useSelectedMapSolarsystem();
+const { resolveSolarsystem } = useStaticSolarsystems();
+const ignoredSystems = computed(() => page.props.ignored_systems ?? []);
+
+const targetIds = computed(() => {
+    if (!eve_scout_connections?.length) {
+        return [] as number[];
+    }
+
+    const ids = new Set<number>();
+    eve_scout_connections.forEach((connection) => {
+        ids.add(connection.in_system_id);
+        ids.add(connection.out_system_id);
+    });
+
+    return Array.from(ids);
+});
+
+const { jumpsByTarget, routesByTarget } = useJumpCounts({
+    fromId: computed(() => selectedMapSolarsystem.value?.solarsystem_id ?? null),
+    targets: targetIds,
+    mapConnections: computed(() => map.value.map_connections ?? []),
+    mapSolarsystems: computed(() => map.value.map_solarsystems ?? []),
+    ignoredSystems,
+});
+
+const enrichedConnections = computed(() => {
+    if (!eve_scout_connections) {
+        return [] as TEnrichedEveScoutConnection[];
+    }
+
+    return eve_scout_connections.map((connection) => ({
+        ...connection,
+        in_system: resolveSolarsystem(connection.in_system_id),
+        out_system: resolveSolarsystem(connection.out_system_id),
+    }));
+});
 
 const description = computed(() => {
     if (selectedMapSolarsystem.value?.solarsystem?.name) {
@@ -49,16 +91,22 @@ function addAllToMap(specialSystem: string) {
 type SortColumn = 'system' | 'region' | 'sovereignty' | 'jumps' | 'type' | 'sig_in' | 'sig_out' | 'time';
 type SortDirection = 'asc' | 'desc';
 
+type TEnrichedEveScoutConnection = TEveScoutConnection & {
+    in_system: TStaticSolarsystem;
+    out_system: TStaticSolarsystem;
+    route?: TResolvedSolarsystem[] | null;
+};
+
 const theraSortColumn = ref<SortColumn>('system');
 const theraSortDirection = ref<SortDirection>('asc');
 const turnurSortColumn = ref<SortColumn>('system');
 const turnurSortDirection = ref<SortDirection>('asc');
 
-function getOtherSystem(connection: TEveScoutConnection, specialSystem: string) {
+function getOtherSystem(connection: TEnrichedEveScoutConnection, specialSystem: string) {
     return connection.in_system.name === specialSystem ? connection.out_system : connection.in_system;
 }
 
-function sortConnections(connections: TEveScoutConnection[], specialSystem: string, sortColumn: SortColumn, sortDirection: SortDirection) {
+function sortConnections(connections: TEnrichedEveScoutConnection[], specialSystem: string, sortColumn: SortColumn, sortDirection: SortDirection) {
     return [...connections].sort((a, b) => {
         const aSystem = getOtherSystem(a, specialSystem);
         const bSystem = getOtherSystem(b, specialSystem);
@@ -66,64 +114,101 @@ function sortConnections(connections: TEveScoutConnection[], specialSystem: stri
         let comparison = 0;
 
         switch (sortColumn) {
-            case 'system':
-                // First sort by security status/class
+            case 'system': {
                 const aIsWH = aSystem.class !== null;
                 const bIsWH = bSystem.class !== null;
 
                 if (aIsWH && bIsWH) {
-                    // Both are wormholes, sort by class
                     comparison = (aSystem.class || 0) - (bSystem.class || 0);
                 } else if (!aIsWH && !bIsWH) {
-                    // Both are k-space, sort by security
                     comparison = (bSystem.security || 0) - (aSystem.security || 0);
                 } else {
-                    // One is WH, one is k-space. K-space first
                     comparison = aIsWH ? 1 : -1;
                 }
 
-                // If security/class is same, sort by name
                 if (comparison === 0) {
                     comparison = aSystem.name.localeCompare(bSystem.name);
                 }
                 break;
+            }
             case 'region':
                 comparison = (aSystem.region?.name || '').localeCompare(bSystem.region?.name || '');
                 break;
-            case 'sovereignty':
+            case 'sovereignty': {
                 const aSov =
                     aSystem.sovereignty?.alliance?.name || aSystem.sovereignty?.corporation?.name || aSystem.sovereignty?.faction?.name || '';
                 const bSov =
                     bSystem.sovereignty?.alliance?.name || bSystem.sovereignty?.corporation?.name || bSystem.sovereignty?.faction?.name || '';
                 comparison = aSov.localeCompare(bSov);
                 break;
-            case 'jumps':
+            }
+            case 'jumps': {
                 const aJumps = a.jumps_from_selected ?? 999;
                 const bJumps = b.jumps_from_selected ?? 999;
                 comparison = aJumps - bJumps;
                 break;
+            }
             case 'type':
                 comparison = a.wormhole_type.localeCompare(b.wormhole_type);
                 break;
-            case 'sig_in':
+            case 'sig_in': {
                 const aInSig = a.in_system.name === specialSystem ? a.in_signature : a.out_signature;
                 const bInSig = b.in_system.name === specialSystem ? b.in_signature : b.out_signature;
                 comparison = aInSig.localeCompare(bInSig);
                 break;
-            case 'sig_out':
+            }
+            case 'sig_out': {
                 const aOutSig = a.in_system.name === specialSystem ? a.out_signature : a.in_signature;
                 const bOutSig = b.in_system.name === specialSystem ? b.out_signature : b.in_signature;
                 comparison = aOutSig.localeCompare(bOutSig);
                 break;
-            case 'time':
+            }
+            case 'time': {
                 const aTime = a.remaining_hours || 999;
                 const bTime = b.remaining_hours || 999;
                 comparison = aTime - bTime;
                 break;
+            }
         }
 
         return sortDirection === 'asc' ? comparison : -comparison;
     });
+}
+
+function resolveJumpCount(connection: TEnrichedEveScoutConnection, specialSystem: string): number | null {
+    if (!selectedMapSolarsystem.value) {
+        return null;
+    }
+
+    const otherSystem = getOtherSystem(connection, specialSystem);
+    return jumpsByTarget.value.get(otherSystem.id) ?? null;
+}
+
+function resolveRoute(connection: TEnrichedEveScoutConnection, specialSystem: string): TResolvedSolarsystem[] | null {
+    if (!selectedMapSolarsystem.value) {
+        return null;
+    }
+
+    const otherSystem = getOtherSystem(connection, specialSystem);
+    const routeResult = routesByTarget.value.get(otherSystem.id);
+
+    if (!routeResult) {
+        return null;
+    }
+
+    return routeResult.route
+        .map<TResolvedSolarsystem | null>((step, index) => {
+            const solarsystem = resolveSolarsystem(step.id);
+            if (!solarsystem) {
+                return null;
+            }
+
+            return {
+                ...solarsystem,
+                connection_type: routeResult.route[index + 1]?.via ?? null,
+            };
+        })
+        .filter((entry): entry is TResolvedSolarsystem => entry !== null);
 }
 
 function handleTheraSort(column: SortColumn) {
@@ -146,12 +231,26 @@ function handleTurnurSort(column: SortColumn) {
 
 // Filter and sort connections
 const theraConnections = computed(() => {
-    const filtered = eve_scout_connections?.filter((conn) => conn.in_system.name === 'Thera' || conn.out_system.name === 'Thera') || [];
+    const filtered = enrichedConnections.value
+        .filter((conn) => conn.in_system.name === 'Thera' || conn.out_system.name === 'Thera')
+        .map((connection) => ({
+            ...connection,
+            jumps_from_selected: resolveJumpCount(connection, 'Thera'),
+            route: resolveRoute(connection, 'Thera'),
+        }));
+
     return sortConnections(filtered, 'Thera', theraSortColumn.value, theraSortDirection.value);
 });
 
 const turnurConnections = computed(() => {
-    const filtered = eve_scout_connections?.filter((conn) => conn.in_system.name === 'Turnur' || conn.out_system.name === 'Turnur') || [];
+    const filtered = enrichedConnections.value
+        .filter((conn) => conn.in_system.name === 'Turnur' || conn.out_system.name === 'Turnur')
+        .map((connection) => ({
+            ...connection,
+            jumps_from_selected: resolveJumpCount(connection, 'Turnur'),
+            route: resolveRoute(connection, 'Turnur'),
+        }));
+
     return sortConnections(filtered, 'Turnur', turnurSortColumn.value, turnurSortDirection.value);
 });
 

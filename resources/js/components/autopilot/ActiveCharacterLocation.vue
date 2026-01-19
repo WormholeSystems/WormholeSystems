@@ -4,17 +4,20 @@ import RoutePopover from '@/components/autopilot/RoutePopover.vue';
 import { CharacterImage } from '@/components/images';
 import { Button } from '@/components/ui/button';
 import { usePath } from '@/composables/usePath';
+import { useStaticSolarsystem } from '@/composables/useStaticSolarsystems';
 import { TSolarsystem } from '@/pages/maps';
 import { TCharacter, TCharacterStatus } from '@/types/models';
 import { vElementHover } from '@vueuse/components';
 import TypeImage from '../images/TypeImage.vue';
 
-defineProps<{
+const { activeCharacter, characterStatus } = defineProps<{
     activeCharacter: TCharacter;
     characterStatus: TCharacterStatus;
 }>();
 
 const { setPath } = usePath();
+
+const statusSolarsystem = useStaticSolarsystem(() => characterStatus?.solarsystem_id ?? null);
 
 function handleHover(hovered: boolean, route: TSolarsystem[] | null) {
     if (hovered) {
@@ -49,7 +52,7 @@ function handleHover(hovered: boolean, route: TSolarsystem[] | null) {
                         class="size-3 rounded"
                     />
                     <span class="truncate">{{ characterStatus?.ship_name || characterStatus?.ship_type?.name || 'Unknown Ship' }}</span>
-                    <span v-if="characterStatus?.solarsystem" class="text-muted-foreground">• {{ characterStatus.solarsystem.name }}</span>
+                    <span v-if="statusSolarsystem" class="text-muted-foreground">• {{ statusSolarsystem.name }}</span>
                 </div>
             </div>
             <div v-if="activeCharacter?.route" class="flex-shrink-0">

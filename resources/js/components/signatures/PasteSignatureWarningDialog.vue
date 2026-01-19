@@ -1,15 +1,21 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { TSelectedMapSolarsystem } from '@/pages/maps';
+import { useStaticSolarsystem } from '@/composables/useStaticSolarsystems';
+import type { TResolvedSelectedMapSolarsystem } from '@/pages/maps';
 import { TCharacter } from '@/types/models';
+import { computed } from 'vue';
 
 const { targetSystem, character } = defineProps<{
-    targetSystem: TSelectedMapSolarsystem | null;
+    targetSystem: TResolvedSelectedMapSolarsystem | null;
     character: TCharacter | undefined;
 }>();
 
 const open = defineModel<boolean>('open', { required: true });
+
+const currentSolarsystem = useStaticSolarsystem(() => character?.status?.solarsystem_id ?? null);
+
+const currentSolarsystemName = computed(() => currentSolarsystem.value?.name ?? 'Unknown');
 
 const emit = defineEmits<{
     confirm: [];
@@ -39,8 +45,7 @@ function handleOpenChange(isOpen: boolean) {
                 <DialogDescription>
                     You are pasting signatures into
                     <strong class="text-foreground">{{ targetSystem.solarsystem.name }}</strong
-                    >, but your tracked character is currently in
-                    <strong class="text-foreground">{{ character.status?.solarsystem?.name || 'Unknown' }}</strong
+                    >, but your tracked character is currently in <strong class="text-foreground">{{ currentSolarsystemName }}</strong
                     >.
                 </DialogDescription>
             </DialogHeader>

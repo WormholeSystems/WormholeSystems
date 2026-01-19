@@ -5,6 +5,9 @@ import type { DefineComponent } from 'vue';
 import { createApp, h } from 'vue';
 import '../css/app.css';
 import { initializeTheme } from './composables/useAppearance';
+import { initializeRoutingWorker } from './composables/useRoutingWorker';
+import { preloadSovereigntyData } from './composables/useSovereigntyData';
+import { preloadStaticData } from './composables/useStaticData';
 
 configureEcho({
     broadcaster: 'reverb',
@@ -13,6 +16,10 @@ configureEcho({
 router.on('finish', () => {
     router.flushAll();
 });
+
+void preloadStaticData();
+void initializeRoutingWorker();
+void preloadSovereigntyData();
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 

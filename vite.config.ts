@@ -7,6 +7,12 @@ import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+    server: {
+        cors: {
+            origin: true,
+            credentials: true,
+        },
+    },
     plugins: [
         laravel({
             input: ['resources/js/app.ts'],

@@ -17,7 +17,7 @@ export function useIgnoreList() {
                 ...options,
                 preserveScroll: true,
                 preserveState: true,
-                only: ['map_characters', 'map_navigation', 'ignored_systems', 'shortest_path'],
+                only: ['map_characters', 'map_navigation', 'ignored_systems'],
             },
         );
     }
@@ -27,7 +27,7 @@ export function useIgnoreList() {
             ...options,
             preserveScroll: true,
             preserveState: true,
-            only: ['map_characters', 'map_navigation', 'ignored_systems', 'shortest_path'],
+            only: ['map_characters', 'map_navigation', 'ignored_systems'],
         });
     }
 

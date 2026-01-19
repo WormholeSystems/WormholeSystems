@@ -11,13 +11,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useIgnoreList } from '@/composables/useIgnoreList';
 import { usePath } from '@/composables/usePath';
-import { TSolarsystem } from '@/pages/maps';
+import type { TResolvedSolarsystem } from '@/pages/maps';
 import { vElementHover } from '@vueuse/components';
 import { PopoverClose } from 'reka-ui';
 import { computed } from 'vue';
 
 interface Props {
-    route?: TSolarsystem[];
+    route?: TResolvedSolarsystem[];
 }
 
 const props = defineProps<Props>();
@@ -59,10 +59,10 @@ function onHover(hovered: boolean) {
             <slot />
         </PopoverTrigger>
         <PopoverContent class="w-96 p-1">
-            <div class="" v-element-hover="onHover">
+            <div v-element-hover="onHover">
                 <div class="grid gap-2 p-3">
                     <div class="flex justify-between">
-                        <span class="">Route</span>
+                        <span>Route</span>
 
                         <PopoverClose as-child>
                             <Button variant="ghost">
@@ -115,8 +115,11 @@ function onHover(hovered: boolean) {
                                     </TableCell>
                                     <TableCell class="h-auto p-1">
                                         <div class="flex justify-center">
-                                            <SolarsystemSovereignty v-if="solarsystem.sovereignty" :sovereignty="solarsystem.sovereignty" />
-                                            <SolarsystemEffect v-else-if="solarsystem.effect" :effect="solarsystem.effect.name" />
+                                            <SolarsystemSovereignty :sovereignty="solarsystem.sovereignty" :solarsystem-id="solarsystem.id">
+                                                <template #fallback>
+                                                    <SolarsystemEffect v-if="solarsystem.effect" :effect="solarsystem.effect.name" />
+                                                </template>
+                                            </SolarsystemSovereignty>
                                         </div>
                                     </TableCell>
                                     <TableCell class="h-auto p-1">
@@ -142,7 +145,7 @@ function onHover(hovered: boolean) {
                                                         <TimesIcon class="h-2.5 w-2.5" />
                                                     </Button>
                                                 </TooltipTrigger>
-                                                <TooltipContent> Ignore this system</TooltipContent>
+                                                <TooltipContent>Ignore this system</TooltipContent>
                                             </Tooltip>
                                         </template>
                                     </TableCell>

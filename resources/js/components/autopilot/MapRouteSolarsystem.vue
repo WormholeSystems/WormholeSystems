@@ -9,25 +9,18 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import useHasWritePermission from '@/composables/useHasWritePermission';
 import { usePath } from '@/composables/usePath';
+import type { TResolvedMapRouteSolarsystem } from '@/pages/maps';
 import MapRouteSolarsystems from '@/routes/map-route-solarsystems';
-import { TMapRouteSolarsystem } from '@/types/models';
 import { router } from '@inertiajs/vue3';
 import { vElementHover } from '@vueuse/components';
-import { computed } from 'vue';
 
 const { map_route } = defineProps<{
-    map_route: TMapRouteSolarsystem;
+    map_route: TResolvedMapRouteSolarsystem;
 }>();
 
 const { setPath } = usePath();
 
 const can_write = useHasWritePermission();
-
-const has_sovereignty = computed(() => {
-    return Boolean(
-        map_route.solarsystem.sovereignty?.alliance || map_route.solarsystem.sovereignty?.corporation || map_route.solarsystem.sovereignty?.faction,
-    );
-});
 
 function onHover(hovered: boolean) {
     if (hovered) {
@@ -88,8 +81,7 @@ function removeRoute() {
                 {{ map_route.solarsystem.region?.name || '' }}
             </span>
 
-            <SolarsystemSovereignty v-if="has_sovereignty" :sovereignty="map_route.solarsystem.sovereignty!" class="size-6" />
-            <div v-else class="size-4"></div>
+            <SolarsystemSovereignty :sovereignty="map_route.solarsystem.sovereignty" :solarsystem-id="map_route.solarsystem.id" class="size-6" />
 
             <div v-if="can_write" class="flex justify-center gap-2">
                 <Tooltip>

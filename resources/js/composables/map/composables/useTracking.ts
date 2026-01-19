@@ -94,12 +94,12 @@ export function useTracking() {
     }
 
     function addCurrentSolarsystemIfNotOnMap() {
-        const active_solarsystem = character.value?.status?.solarsystem;
-        if (!active_solarsystem) return;
+        const active_solarsystem_id = character.value?.status?.solarsystem_id;
+        if (!active_solarsystem_id) return;
 
-        if (isSolarsystemInMap(active_solarsystem.id)) return;
+        if (isSolarsystemInMap(active_solarsystem_id)) return;
 
-        createMapSolarsystem(active_solarsystem.id);
+        createMapSolarsystem(active_solarsystem_id);
     }
 
     function isSolarsystemInMap(solarsystem_id: number): boolean {

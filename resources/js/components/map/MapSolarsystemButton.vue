@@ -32,6 +32,17 @@ const form = useForm<{
     occupier_alias: map_solarsystem.occupier_alias ?? '',
 });
 
+const resolvedSolarsystem = computed(() => ({
+    id: map_solarsystem.solarsystem?.id ?? map_solarsystem.solarsystem_id,
+    name: map_solarsystem.solarsystem?.name ?? map_solarsystem.alias ?? '',
+    security: map_solarsystem.solarsystem?.security ?? 0,
+    class: map_solarsystem.solarsystem?.class ?? null,
+    sovereignty: map_solarsystem.solarsystem?.sovereignty ?? null,
+    region: map_solarsystem.solarsystem?.region ?? null,
+    statics: map_solarsystem.solarsystem?.statics ?? null,
+    effect: map_solarsystem.solarsystem?.effect ?? null,
+}));
+
 const open = ref(false);
 
 const extra_connections_count = computed(() => {
@@ -64,7 +75,7 @@ function handleSubmit() {
         @drag.prevent
     >
         <div class="row-start-1 grid grid-cols-[auto_1fr_auto] items-center justify-center gap-x-1 px-2">
-            <SolarsystemClass :security="map_solarsystem.solarsystem!.security" :wormhole_class="map_solarsystem.solarsystem.class" />
+            <SolarsystemClass :security="resolvedSolarsystem.security" :wormhole_class="resolvedSolarsystem.class" />
             <Popover :open="open" @update:open="(value) => open && (open = value)">
                 <PopoverAnchor>
                     <SolarsystemName :map_solarsystem="map_solarsystem" />
@@ -81,14 +92,14 @@ function handleSubmit() {
                 <LockIcon v-if="map_solarsystem.pinned" class="size-[14px] text-muted-foreground" />
                 <SatelliteDish v-if="map_solarsystem.signatures_count" class="size-[14px] text-amber-500" />
                 <HasExtraConnections v-if="extra_connections_count" :extra_connections_count="extra_connections_count" />
-                <SolarsystemSovereignty v-if="map_solarsystem.solarsystem?.sovereignty" :sovereignty="map_solarsystem.solarsystem.sovereignty" />
-                <SolarsystemEffect :effect="map_solarsystem.solarsystem.effect" v-if="map_solarsystem.solarsystem.effect" />
+                <SolarsystemSovereignty :sovereignty="resolvedSolarsystem.sovereignty" :solarsystem-id="resolvedSolarsystem.id">
+                    <template #fallback>
+                        <SolarsystemEffect :effect="resolvedSolarsystem.effect" v-if="resolvedSolarsystem.effect" />
+                    </template>
+                </SolarsystemSovereignty>
             </div>
-            <SolarsystemRegion
-                :region="map_solarsystem.solarsystem?.region"
-                v-if="map_solarsystem.solarsystem?.region && !map_solarsystem.solarsystem.class"
-            />
-            <SolarsystemStatics v-else-if="map_solarsystem.solarsystem.statics" :statics="map_solarsystem.solarsystem.statics" />
+            <SolarsystemRegion :region="resolvedSolarsystem.region" v-if="resolvedSolarsystem.region && !resolvedSolarsystem.class" />
+            <SolarsystemStatics v-else-if="resolvedSolarsystem.statics" :statics="resolvedSolarsystem.statics" />
         </div>
         <SolarsystemPilots v-if="pilots.length" :pilots />
     </div>

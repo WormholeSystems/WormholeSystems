@@ -18,6 +18,7 @@ import {
     TWormholeClass,
     TWormholeEffectName,
 } from '@/types/models';
+import type { TStaticSolarsystem } from '@/types/static-data';
 
 export type TShortestPath = {
     from_solarsystem_id: number;
@@ -43,14 +44,10 @@ export type TClosestSystems = {
 
 export type TMapNavigation = {
     destinations: TMapRouteSolarsystem[];
-    closest_systems: TClosestSystems;
-    shortest_path: TShortestPath | null;
 };
 
 export type TShowMapProps = {
-    map: TMap;
-    search: string;
-    solarsystems: TSolarsystem[];
+    map: TServerMap;
     config: TMapConfig;
     selected_map_solarsystem: TSelectedMapSolarsystem | null;
     map_killmails?: TKillmail[];
@@ -64,23 +61,18 @@ export type TShowMapProps = {
     map_user_settings: TMapUserSetting;
     ignored_systems: number[];
     tracking_origin?: TSelectedMapSolarsystem | null;
-    tracking_target?: TSolarsystem | null;
+    tracking_target?: TTrackingTarget | null;
     eve_scout_connections?: TEveScoutConnection[];
 };
 
-export type TMap = {
-    id: number;
-    name: string;
-    slug: string;
-    map_solarsystems: TMapSolarsystem[];
-    map_connections: TMapConnection[];
+export type TTrackingTarget = {
+    solarsystem_id: number;
 };
 
-export type TMapSolarsystem = {
+export type TMapSolarsystemBase = {
     id: number;
     map_id: number;
     solarsystem_id: number;
-    solarsystem: TSolarsystem;
     alias: string | null;
     status: TMapSolarsystemStatus;
     occupier_alias: string | null;
@@ -96,6 +88,26 @@ export type TMapSolarsystem = {
     signatures?: TSignature[] | null;
 };
 
+export type TMapSolarsystem = TMapSolarsystemBase & {
+    solarsystem: TResolvedSolarsystem;
+};
+
+export type TServerMapSolarsystem = TMapSolarsystemBase & {
+    solarsystem?: TResolvedSolarsystem | null;
+};
+
+export type TMap = {
+    id: number;
+    name: string;
+    slug: string;
+    map_solarsystems: TMapSolarsystem[];
+    map_connections: TMapConnection[];
+};
+
+export type TServerMap = Omit<TMap, 'map_solarsystems'> & {
+    map_solarsystems: TServerMapSolarsystem[];
+};
+
 export type TSolarsystem = {
     id: number;
     name: string;
@@ -105,11 +117,14 @@ export type TSolarsystem = {
     security: number;
     type: TSolarsystemType;
     region: TRegion;
+    constellation?: TTailoredConstellation;
     sovereignty: TSovereignty | null;
     statics: TStatic[] | null;
     effect: TEffect | null;
-    connection_type?: 'stargate' | 'wormhole' | null;
+    connection_type?: 'stargate' | 'wormhole' | 'evescout' | null;
 };
+
+export type TResolvedSolarsystem = TStaticSolarsystem | TSolarsystem;
 
 export type TRegion = {
     id: number;
@@ -143,6 +158,10 @@ export type TFaction = {
 export type TStatic = {
     id: number;
     leads_to: string;
+    name: string;
+    maximum_lifetime: number;
+    maximum_jump_mass: number;
+    total_mass: number;
 };
 
 export type TEffect = {
@@ -198,15 +217,27 @@ export type TTailoredSignature = {
     map_connection_id: number | null;
 };
 
-export type TSelectedMapSolarsystem = TMapSolarsystem & {
+export type TSelectedMapSolarsystemBase = Omit<TMapSolarsystemBase, 'signatures'> & {
     notes: string | null;
     signatures: TSignature[];
     audits: TAudit[];
     map_connections: TMapConnection[];
-    solarsystem: TSolarsystem & {
-        constellation: TTailoredConstellation;
-        statics: TSelectedMapSolarsystemStatic[] | null;
-    };
+};
+
+export type TSelectedMapSolarsystem = TSelectedMapSolarsystemBase & {
+    solarsystem?: TResolvedSolarsystem | null;
+};
+
+export type TResolvedSelectedMapSolarsystem = TSelectedMapSolarsystemBase & {
+    solarsystem: TResolvedSolarsystem;
+};
+
+export type TResolvedMapRouteSolarsystem = Omit<TMapRouteSolarsystem, 'solarsystem'> & {
+    solarsystem: TResolvedSolarsystem;
+};
+
+export type TResolvedMapNavigation = {
+    destinations: TResolvedMapRouteSolarsystem[];
 };
 
 export type TSelectedMapSolarsystemStatic = {

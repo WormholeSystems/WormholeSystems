@@ -1,14 +1,45 @@
 <script setup lang="ts">
 import MapRouteSolarsystem from '@/components/autopilot/MapRouteSolarsystem.vue';
+import { useDestinationRoutes } from '@/composables/useDestinationRoutes';
 import useHasWritePermission from '@/composables/useHasWritePermission';
-import { TMapRouteSolarsystem } from '@/types/models';
+import { useMap } from '@/composables/useMap';
+import { useSelectedMapSolarsystem } from '@/composables/useSelectedMapSolarsystem';
+import { useStaticSolarsystems } from '@/composables/useStaticSolarsystems';
+import type { TResolvedMapRouteSolarsystem } from '@/pages/maps';
+import type { WorkerRouteStep } from '@/routing/types';
 import { useLocalStorage } from '@vueuse/core';
 import { ArrowDown, ArrowUp } from 'lucide-vue-next';
 import { computed } from 'vue';
 
-const { destinations } = defineProps<{
-    destinations: TMapRouteSolarsystem[];
+const { destinations, ignored_systems } = defineProps<{
+    destinations: TResolvedMapRouteSolarsystem[];
+    ignored_systems: number[];
 }>();
+
+const map = useMap();
+const selected = useSelectedMapSolarsystem();
+const { resolveSolarsystem } = useStaticSolarsystems();
+
+const { routesByDestination } = useDestinationRoutes({
+    fromId: computed(() => selected.value?.solarsystem_id ?? null),
+    destinations: computed(() => destinations),
+    mapConnections: computed(() => map.value.map_connections ?? []),
+    mapSolarsystems: computed(() => map.value.map_solarsystems ?? []),
+    ignoredSystems: computed(() => ignored_systems),
+});
+
+const resolvedDestinations = computed(() =>
+    destinations.map((destination) => {
+        const routeResult = routesByDestination.value.get(destination.id);
+        const route = routeResult?.route?.map((step: WorkerRouteStep) => resolveSolarsystem(step.id)) ?? [];
+
+        return {
+            ...destination,
+            solarsystem: destination.solarsystem ?? resolveSolarsystem(destination.solarsystem_id),
+            route,
+        } satisfies TResolvedMapRouteSolarsystem;
+    }),
+);
 
 type SortColumn = 'system' | 'jumps' | 'region';
 type SortDirection = 'asc' | 'desc';
@@ -26,36 +57,33 @@ function handleSort(column: SortColumn) {
 }
 
 const sorted = computed(() => {
-    return destinations.toSorted((a, b) => {
+    return resolvedDestinations.value.toSorted((a, b) => {
         let comparison = 0;
 
         switch (sortColumn.value) {
-            case 'system':
-                // First sort by security status/class
+            case 'system': {
                 const aIsWH = a.solarsystem.class !== null;
                 const bIsWH = b.solarsystem.class !== null;
 
                 if (aIsWH && bIsWH) {
-                    // Both are wormholes, sort by class
                     comparison = (a.solarsystem.class || 0) - (b.solarsystem.class || 0);
                 } else if (!aIsWH && !bIsWH) {
-                    // Both are k-space, sort by security
                     comparison = (b.solarsystem.security || 0) - (a.solarsystem.security || 0);
                 } else {
-                    // One is WH, one is k-space. K-space first
                     comparison = aIsWH ? 1 : -1;
                 }
 
-                // If security/class is same, sort by name
                 if (comparison === 0) {
                     comparison = a.solarsystem.name.localeCompare(b.solarsystem.name);
                 }
                 break;
-            case 'jumps':
+            }
+            case 'jumps': {
                 const aJumps = a.route ? a.route.length - 1 : 999;
                 const bJumps = b.route ? b.route.length - 1 : 999;
                 comparison = aJumps - bJumps;
                 break;
+            }
             case 'region':
                 comparison = (a.solarsystem.region?.name || '').localeCompare(b.solarsystem.region?.name || '');
                 break;

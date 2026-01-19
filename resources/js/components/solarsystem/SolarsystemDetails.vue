@@ -15,25 +15,54 @@ import MapPanel from '@/components/ui/map-panel/MapPanel.vue';
 import MapPanelContent from '@/components/ui/map-panel/MapPanelContent.vue';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
+import { useDestinationRoutes } from '@/composables/useDestinationRoutes';
 import useHasWritePermission from '@/composables/useHasWritePermission';
-import { TMap, TSelectedMapSolarsystem } from '@/pages/maps';
+import { useShowMap } from '@/composables/useShowMap';
+import { useStaticSolarsystems } from '@/composables/useStaticSolarsystems';
+import type { TMap, TResolvedMapRouteSolarsystem, TResolvedSelectedMapSolarsystem } from '@/pages/maps';
 import MapSolarsystems from '@/routes/map-solarsystems';
-import { TMapRouteSolarsystem } from '@/types/models';
 import { Deferred, Link, useForm } from '@inertiajs/vue3';
 import markdownit from 'markdown-it';
 import attr from 'markdown-it-link-attributes';
 import { computed, ref, watch } from 'vue';
 
-const { map_solarsystem, map_navigation, hide_notes } = defineProps<{
-    map_solarsystem: TSelectedMapSolarsystem;
-    map_navigation?: TMapRouteSolarsystem[];
+const { map_solarsystem, map_navigation, hide_notes, map } = defineProps<{
+    map_solarsystem: TResolvedSelectedMapSolarsystem;
+    map_navigation?: TResolvedMapRouteSolarsystem[];
     map: TMap;
     hide_notes?: boolean;
 }>();
 
 const can_write = useHasWritePermission();
+const page = useShowMap();
+const { resolveSolarsystem } = useStaticSolarsystems();
 
-const pinned = computed(() => map_navigation?.filter((m) => m.is_pinned));
+const { routesByDestination } = useDestinationRoutes({
+    fromId: () => map_solarsystem.solarsystem_id,
+    destinations: () => map_navigation ?? [],
+    mapConnections: () => map.map_connections ?? [],
+    mapSolarsystems: () => map.map_solarsystems ?? [],
+    ignoredSystems: () => page.props.ignored_systems ?? [],
+});
+
+const pinned = computed(() => {
+    if (!map_navigation?.length) {
+        return [] as TResolvedMapRouteSolarsystem[];
+    }
+
+    return map_navigation
+        .filter((route) => route.is_pinned)
+        .map((route) => {
+            const routeResult = routesByDestination.value.get(route.id);
+            const routeSteps = routeResult?.route?.map((step) => resolveSolarsystem(step.id)) ?? [];
+
+            return {
+                ...route,
+                solarsystem: route.solarsystem ?? resolveSolarsystem(route.solarsystem_id),
+                route: routeSteps,
+            } satisfies TResolvedMapRouteSolarsystem;
+        });
+});
 
 const editing = ref(false);
 const statistics = ref(false);
@@ -143,8 +172,8 @@ watch(
                         <span class="text-xs">•</span>
                         <span>{{ map_solarsystem.solarsystem?.constellation?.name }}</span>
                         <SolarsystemSovereignty
-                            v-if="map_solarsystem.solarsystem?.sovereignty"
-                            :sovereignty="map_solarsystem.solarsystem.sovereignty"
+                            :sovereignty="map_solarsystem.solarsystem?.sovereignty"
+                            :solarsystem-id="map_solarsystem.solarsystem.id"
                             class="ml-1"
                         />
                     </div>
