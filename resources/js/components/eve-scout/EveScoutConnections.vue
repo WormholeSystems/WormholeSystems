@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import EveScoutConnection from '@/components/eve-scout/EveScoutConnection.vue';
-import EveScoutConnectionPlaceholder from '@/components/eve-scout/EveScoutConnectionPlaceholder.vue';
-import { Button } from '@/components/ui/button';
-import { CardAction, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import MapPanel from '@/components/ui/map-panel/MapPanel.vue';
 import MapPanelContent from '@/components/ui/map-panel/MapPanelContent.vue';
+import MapPanelHeader from '@/components/ui/map-panel/MapPanelHeader.vue';
+import MapPanelHeaderActionButton from '@/components/ui/map-panel/MapPanelHeaderActionButton.vue';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useJumpCounts } from '@/composables/useJumpCounts';
@@ -16,8 +15,8 @@ import type { TResolvedSolarsystem } from '@/pages/maps';
 import EveScoutConnections from '@/routes/eve-scout-connections';
 import type { TEveScoutConnection } from '@/types/eve-scout';
 import type { TStaticSolarsystem } from '@/types/static-data';
-import { Deferred, router } from '@inertiajs/vue3';
-import { useLocalStorage } from '@vueuse/core';
+import { router, usePoll } from '@inertiajs/vue3';
+import { useLocalStorage, useNow } from '@vueuse/core';
 import { ArrowDown, ArrowUp, ExternalLink, Plus } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 
@@ -27,6 +26,38 @@ const page = useShowMap();
 const { eve_scout_connections } = defineProps<{
     eve_scout_connections?: TEveScoutConnection[];
 }>();
+
+const five_minutes_in_ms = 5 * 60 * 1000;
+
+// Refresh EVE Scout data every 5 minutes
+usePoll(five_minutes_in_ms, { only: ['eve_scout_connections'] });
+
+const now = useNow({ interval: 60_000 });
+
+function formatTimestamp(connections: TEveScoutConnection[], currentTime: Date): string | null {
+    if (!connections?.length) return null;
+
+    const mostRecent = connections.reduce(
+        (latest, conn) => {
+            if (!conn.created_at) return latest;
+            if (!latest) return conn.created_at;
+            return conn.created_at > latest ? conn.created_at : latest;
+        },
+        null as string | null,
+    );
+
+    if (!mostRecent) return null;
+
+    const date = new Date(mostRecent);
+    const diffMs = currentTime.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+
+    if (diffMins < 1) return 'just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return `${Math.floor(diffHours / 24)}d ago`;
+}
 
 const selectedMapSolarsystem = useSelectedMapSolarsystem();
 const { resolveSolarsystem } = useStaticSolarsystems();
@@ -64,13 +95,6 @@ const enrichedConnections = computed(() => {
         in_system: resolveSolarsystem(connection.in_system_id),
         out_system: resolveSolarsystem(connection.out_system_id),
     }));
-});
-
-const description = computed(() => {
-    if (selectedMapSolarsystem.value?.solarsystem?.name) {
-        return `Showing jump distances from ${selectedMapSolarsystem.value.solarsystem.name}`;
-    }
-    return 'Select a system on the map to see jump distances';
 });
 
 function addAllToMap(specialSystem: string) {
@@ -254,219 +278,168 @@ const turnurConnections = computed(() => {
     return sortConnections(filtered, 'Turnur', turnurSortColumn.value, turnurSortDirection.value);
 });
 
+const theraLastUpdated = computed(() => formatTimestamp(theraConnections.value, now.value));
+const turnurLastUpdated = computed(() => formatTimestamp(turnurConnections.value, now.value));
+
 const activeTab = useLocalStorage<'thera' | 'turnur'>('eve-scout-active-tab', 'thera');
 </script>
 
 <template>
     <MapPanel>
-        <CardHeader>
-            <CardTitle>EVE Scout Connections</CardTitle>
-            <CardDescription>{{ description }}</CardDescription>
-            <CardAction class="flex gap-2">
+        <MapPanelHeader>
+            Eve Scout
+            <span v-if="activeTab === 'thera' && theraLastUpdated" class="ml-2 text-muted-foreground/60">{{ theraLastUpdated }}</span>
+            <span v-if="activeTab === 'turnur' && turnurLastUpdated" class="ml-2 text-muted-foreground/60">{{ turnurLastUpdated }}</span>
+            <template #actions>
                 <Tooltip v-if="activeTab === 'thera' && theraConnections.length > 0">
                     <TooltipTrigger as-child>
-                        <Button @click="addAllToMap('Thera')" size="icon" variant="secondary">
+                        <MapPanelHeaderActionButton @click="addAllToMap('Thera')" size="icon">
                             <Plus class="size-4" />
-                        </Button>
+                        </MapPanelHeaderActionButton>
                     </TooltipTrigger>
                     <TooltipContent>Add all Thera connections to map</TooltipContent>
                 </Tooltip>
                 <Tooltip v-if="activeTab === 'turnur' && turnurConnections.length > 0">
                     <TooltipTrigger as-child>
-                        <Button @click="addAllToMap('Turnur')" size="icon" variant="secondary">
+                        <MapPanelHeaderActionButton @click="addAllToMap('Turnur')" size="icon">
                             <Plus class="size-4" />
-                        </Button>
+                        </MapPanelHeaderActionButton>
                     </TooltipTrigger>
                     <TooltipContent>Add all Turnur connections to map</TooltipContent>
                 </Tooltip>
                 <Tooltip>
                     <TooltipTrigger as-child>
-                        <Button variant="secondary" size="icon" as-child>
+                        <MapPanelHeaderActionButton size="icon" as-child>
                             <a href="https://www.eve-scout.com/" target="_blank" rel="noopener noreferrer">
                                 <ExternalLink class="size-4" />
                             </a>
-                        </Button>
+                        </MapPanelHeaderActionButton>
                     </TooltipTrigger>
                     <TooltipContent>View on EVE Scout</TooltipContent>
                 </Tooltip>
-            </CardAction>
-        </CardHeader>
-        <MapPanelContent inner-class="border-0 bg-transparent">
-            <div class="relative">
-                <Deferred data="eve_scout_connections">
-                    <Tabs v-model="activeTab" default-value="thera" class="w-full">
-                        <TabsList class="grid w-full grid-cols-2">
-                            <TabsTrigger value="thera">
-                                Thera
-                                <span v-if="theraConnections.length" class="ml-1.5 text-xs text-muted-foreground"
-                                    >({{ theraConnections.length }})</span
-                                >
-                            </TabsTrigger>
-                            <TabsTrigger value="turnur">
-                                Turnur
-                                <span v-if="turnurConnections.length" class="ml-1.5 text-xs text-muted-foreground"
-                                    >({{ turnurConnections.length }})</span
-                                >
-                            </TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="thera" class="mt-2">
-                            <div v-if="theraConnections.length" class="space-y-2">
-                                <div
-                                    class="grid grid-cols-[auto_auto_auto_auto_auto_auto_auto_auto] gap-2 rounded-lg border bg-white dark:bg-neutral-900/40"
-                                >
-                                    <!-- Table Header -->
-                                    <div
-                                        class="col-span-full grid grid-cols-subgrid items-center border-b bg-muted/50 px-2 py-1.5 text-xs font-medium text-muted-foreground"
-                                    >
-                                        <button @click="handleTheraSort('system')" class="flex items-center gap-1 hover:text-foreground">
-                                            <span>Destination</span>
-                                            <ArrowUp v-if="theraSortColumn === 'system' && theraSortDirection === 'asc'" class="size-3" />
-                                            <ArrowDown v-if="theraSortColumn === 'system' && theraSortDirection === 'desc'" class="size-3" />
-                                        </button>
-                                        <button @click="handleTheraSort('region')" class="flex items-center gap-1 hover:text-foreground">
-                                            <span>Region</span>
-                                            <ArrowUp v-if="theraSortColumn === 'region' && theraSortDirection === 'asc'" class="size-3" />
-                                            <ArrowDown v-if="theraSortColumn === 'region' && theraSortDirection === 'desc'" class="size-3" />
-                                        </button>
-                                        <button @click="handleTheraSort('sovereignty')" class="flex items-center gap-1 hover:text-foreground">
-                                            <span>Sovereignty</span>
-                                            <ArrowUp v-if="theraSortColumn === 'sovereignty' && theraSortDirection === 'asc'" class="size-3" />
-                                            <ArrowDown v-if="theraSortColumn === 'sovereignty' && theraSortDirection === 'desc'" class="size-3" />
-                                        </button>
-                                        <button
-                                            @click="handleTheraSort('jumps')"
-                                            class="flex items-center justify-center gap-1 hover:text-foreground"
-                                        >
-                                            <span>Jumps</span>
-                                            <ArrowUp v-if="theraSortColumn === 'jumps' && theraSortDirection === 'asc'" class="size-3" />
-                                            <ArrowDown v-if="theraSortColumn === 'jumps' && theraSortDirection === 'desc'" class="size-3" />
-                                        </button>
-                                        <button @click="handleTheraSort('type')" class="flex items-center justify-center gap-1 hover:text-foreground">
-                                            <span>WH</span>
-                                            <ArrowUp v-if="theraSortColumn === 'type' && theraSortDirection === 'asc'" class="size-3" />
-                                            <ArrowDown v-if="theraSortColumn === 'type' && theraSortDirection === 'desc'" class="size-3" />
-                                        </button>
-                                        <button
-                                            @click="handleTheraSort('sig_in')"
-                                            class="flex items-center justify-center gap-1 hover:text-foreground"
-                                        >
-                                            <span>In</span>
-                                            <ArrowUp v-if="theraSortColumn === 'sig_in' && theraSortDirection === 'asc'" class="size-3" />
-                                            <ArrowDown v-if="theraSortColumn === 'sig_in' && theraSortDirection === 'desc'" class="size-3" />
-                                        </button>
-                                        <button
-                                            @click="handleTheraSort('sig_out')"
-                                            class="flex items-center justify-center gap-1 hover:text-foreground"
-                                        >
-                                            <span>Out</span>
-                                            <ArrowUp v-if="theraSortColumn === 'sig_out' && theraSortDirection === 'asc'" class="size-3" />
-                                            <ArrowDown v-if="theraSortColumn === 'sig_out' && theraSortDirection === 'desc'" class="size-3" />
-                                        </button>
-                                        <button @click="handleTheraSort('time')" class="flex items-center justify-center gap-1 hover:text-foreground">
-                                            <span>Expires</span>
-                                            <ArrowUp v-if="theraSortColumn === 'time' && theraSortDirection === 'asc'" class="size-3" />
-                                            <ArrowDown v-if="theraSortColumn === 'time' && theraSortDirection === 'desc'" class="size-3" />
-                                        </button>
-                                    </div>
-                                    <!-- Table Body -->
-                                    <EveScoutConnection
-                                        v-for="connection in theraConnections"
-                                        :key="`${connection.in_signature}-${connection.out_signature}`"
-                                        :connection="connection"
-                                        special-system="Thera"
-                                    />
-                                </div>
-                            </div>
-                            <div v-else class="rounded-lg border bg-white p-4 text-center text-sm text-muted-foreground dark:bg-neutral-900/40">
-                                No Thera connections
-                            </div>
-                        </TabsContent>
-                        <TabsContent value="turnur" class="mt-2">
-                            <div v-if="turnurConnections.length" class="space-y-2">
-                                <div
-                                    class="grid grid-cols-[auto_auto_auto_auto_auto_auto_auto_auto] gap-2 rounded-lg border bg-white dark:bg-neutral-900/40"
-                                >
-                                    <!-- Table Header -->
-                                    <div
-                                        class="col-span-full grid grid-cols-subgrid items-center border-b bg-muted/50 px-2 py-1.5 text-xs font-medium text-muted-foreground"
-                                    >
-                                        <button @click="handleTurnurSort('system')" class="flex items-center gap-1 hover:text-foreground">
-                                            <span>Destination</span>
-                                            <ArrowUp v-if="turnurSortColumn === 'system' && turnurSortDirection === 'asc'" class="size-3" />
-                                            <ArrowDown v-if="turnurSortColumn === 'system' && turnurSortDirection === 'desc'" class="size-3" />
-                                        </button>
-                                        <button @click="handleTurnurSort('region')" class="flex items-center gap-1 hover:text-foreground">
-                                            <span>Region</span>
-                                            <ArrowUp v-if="turnurSortColumn === 'region' && turnurSortDirection === 'asc'" class="size-3" />
-                                            <ArrowDown v-if="turnurSortColumn === 'region' && turnurSortDirection === 'desc'" class="size-3" />
-                                        </button>
-                                        <button @click="handleTurnurSort('sovereignty')" class="flex items-center gap-1 hover:text-foreground">
-                                            <span>Sovereignty</span>
-                                            <ArrowUp v-if="turnurSortColumn === 'sovereignty' && turnurSortDirection === 'asc'" class="size-3" />
-                                            <ArrowDown v-if="turnurSortColumn === 'sovereignty' && turnurSortDirection === 'desc'" class="size-3" />
-                                        </button>
-                                        <button
-                                            @click="handleTurnurSort('jumps')"
-                                            class="flex items-center justify-center gap-1 hover:text-foreground"
-                                        >
-                                            <span>Jumps</span>
-                                            <ArrowUp v-if="turnurSortColumn === 'jumps' && turnurSortDirection === 'asc'" class="size-3" />
-                                            <ArrowDown v-if="turnurSortColumn === 'jumps' && turnurSortDirection === 'desc'" class="size-3" />
-                                        </button>
-                                        <button
-                                            @click="handleTurnurSort('type')"
-                                            class="flex items-center justify-center gap-1 hover:text-foreground"
-                                        >
-                                            <span>WH</span>
-                                            <ArrowUp v-if="turnurSortColumn === 'type' && turnurSortDirection === 'asc'" class="size-3" />
-                                            <ArrowDown v-if="turnurSortColumn === 'type' && turnurSortDirection === 'desc'" class="size-3" />
-                                        </button>
-                                        <button
-                                            @click="handleTurnurSort('sig_in')"
-                                            class="flex items-center justify-center gap-1 hover:text-foreground"
-                                        >
-                                            <span>In</span>
-                                            <ArrowUp v-if="turnurSortColumn === 'sig_in' && turnurSortDirection === 'asc'" class="size-3" />
-                                            <ArrowDown v-if="turnurSortColumn === 'sig_in' && turnurSortDirection === 'desc'" class="size-3" />
-                                        </button>
-                                        <button
-                                            @click="handleTurnurSort('sig_out')"
-                                            class="flex items-center justify-center gap-1 hover:text-foreground"
-                                        >
-                                            <span>Out</span>
-                                            <ArrowUp v-if="turnurSortColumn === 'sig_out' && turnurSortDirection === 'asc'" class="size-3" />
-                                            <ArrowDown v-if="turnurSortColumn === 'sig_out' && turnurSortDirection === 'desc'" class="size-3" />
-                                        </button>
-                                        <button
-                                            @click="handleTurnurSort('time')"
-                                            class="flex items-center justify-center gap-1 hover:text-foreground"
-                                        >
-                                            <span>Expires</span>
-                                            <ArrowUp v-if="turnurSortColumn === 'time' && turnurSortDirection === 'asc'" class="size-3" />
-                                            <ArrowDown v-if="turnurSortColumn === 'time' && turnurSortDirection === 'desc'" class="size-3" />
-                                        </button>
-                                    </div>
-                                    <!-- Table Body -->
-                                    <EveScoutConnection
-                                        v-for="connection in turnurConnections"
-                                        :key="`${connection.in_signature}-${connection.out_signature}`"
-                                        :connection="connection"
-                                        special-system="Turnur"
-                                    />
-                                </div>
-                            </div>
-                            <div v-else class="rounded-lg border bg-white p-4 text-center text-sm text-muted-foreground dark:bg-neutral-900/40">
-                                No Turnur connections
-                            </div>
-                        </TabsContent>
-                    </Tabs>
-                    <template #fallback>
-                        <div class="space-y-2 p-2">
-                            <EveScoutConnectionPlaceholder v-for="i in 3" :key="i" />
+            </template>
+        </MapPanelHeader>
+        <MapPanelContent>
+            <Tabs v-model="activeTab" default-value="thera" class="flex h-full flex-col">
+                <TabsList class="grid h-8 w-full shrink-0 grid-cols-2 rounded-none border-b border-border/50 bg-muted/20 p-0">
+                    <TabsTrigger
+                        value="thera"
+                        class="h-8 rounded-none border-r border-border/30 font-mono text-[10px] tracking-wider uppercase data-[state=active]:bg-muted/30 data-[state=active]:text-foreground data-[state=active]:shadow-none"
+                    >
+                        Thera
+                        <span v-if="theraConnections.length" class="ml-1 text-amber-400">{{ theraConnections.length }}</span>
+                    </TabsTrigger>
+                    <TabsTrigger
+                        value="turnur"
+                        class="h-8 rounded-none font-mono text-[10px] tracking-wider uppercase data-[state=active]:bg-muted/30 data-[state=active]:text-foreground data-[state=active]:shadow-none"
+                    >
+                        Turnur
+                        <span v-if="turnurConnections.length" class="ml-1 text-amber-400">{{ turnurConnections.length }}</span>
+                    </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="thera" class="mt-0 flex-1 overflow-y-auto">
+                    <div class="grid grid-cols-[1.5rem_auto_auto_1.25rem_2rem_auto_auto_auto_auto] gap-x-2">
+                        <div
+                            class="col-span-full grid grid-cols-subgrid border-b border-border/30 bg-muted/20 px-3 py-1.5 font-mono text-[10px] tracking-wider text-muted-foreground uppercase"
+                        >
+                            <span></span>
+                            <button @click="handleTheraSort('system')" class="flex items-center gap-1 hover:text-foreground">
+                                <span>System</span>
+                                <ArrowUp v-if="theraSortColumn === 'system' && theraSortDirection === 'asc'" class="size-3" />
+                                <ArrowDown v-if="theraSortColumn === 'system' && theraSortDirection === 'desc'" class="size-3" />
+                            </button>
+                            <button @click="handleTheraSort('region')" class="flex items-center gap-1 hover:text-foreground">
+                                <span>Region</span>
+                                <ArrowUp v-if="theraSortColumn === 'region' && theraSortDirection === 'asc'" class="size-3" />
+                                <ArrowDown v-if="theraSortColumn === 'region' && theraSortDirection === 'desc'" class="size-3" />
+                            </button>
+                            <span></span>
+                            <button @click="handleTheraSort('jumps')" class="flex items-center justify-end gap-1 hover:text-foreground">
+                                <span>J</span>
+                                <ArrowUp v-if="theraSortColumn === 'jumps' && theraSortDirection === 'asc'" class="size-3" />
+                                <ArrowDown v-if="theraSortColumn === 'jumps' && theraSortDirection === 'desc'" class="size-3" />
+                            </button>
+                            <button @click="handleTheraSort('sig_in')" class="flex items-center gap-1 hover:text-foreground">
+                                <span>In</span>
+                                <ArrowUp v-if="theraSortColumn === 'sig_in' && theraSortDirection === 'asc'" class="size-3" />
+                                <ArrowDown v-if="theraSortColumn === 'sig_in' && theraSortDirection === 'desc'" class="size-3" />
+                            </button>
+                            <button @click="handleTheraSort('sig_out')" class="flex items-center gap-1 hover:text-foreground">
+                                <span>Out</span>
+                                <ArrowUp v-if="theraSortColumn === 'sig_out' && theraSortDirection === 'asc'" class="size-3" />
+                                <ArrowDown v-if="theraSortColumn === 'sig_out' && theraSortDirection === 'desc'" class="size-3" />
+                            </button>
+                            <span>WH</span>
+                            <button @click="handleTheraSort('time')" class="flex items-center gap-1 hover:text-foreground">
+                                <span>TTL</span>
+                                <ArrowUp v-if="theraSortColumn === 'time' && theraSortDirection === 'asc'" class="size-3" />
+                                <ArrowDown v-if="theraSortColumn === 'time' && theraSortDirection === 'desc'" class="size-3" />
+                            </button>
                         </div>
-                    </template>
-                </Deferred>
-            </div>
+                        <EveScoutConnection
+                            v-for="connection in theraConnections"
+                            :key="`${connection.in_signature}-${connection.out_signature}`"
+                            :connection="connection"
+                            special-system="Thera"
+                        />
+                        <div v-if="!theraConnections.length" class="col-span-full flex h-full flex-col items-center justify-center gap-2 p-4">
+                            <p class="font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">No Thera connections</p>
+                        </div>
+                    </div>
+                </TabsContent>
+
+                <TabsContent value="turnur" class="mt-0 flex-1 overflow-y-auto">
+                    <div class="grid grid-cols-[1.5rem_auto_auto_1.25rem_2rem_auto_auto_auto_auto] gap-x-2">
+                        <div
+                            class="col-span-full grid grid-cols-subgrid border-b border-border/30 bg-muted/20 px-3 py-1.5 font-mono text-[10px] tracking-wider text-muted-foreground uppercase"
+                        >
+                            <span></span>
+                            <button @click="handleTurnurSort('system')" class="flex items-center gap-1 hover:text-foreground">
+                                <span>System</span>
+                                <ArrowUp v-if="turnurSortColumn === 'system' && turnurSortDirection === 'asc'" class="size-3" />
+                                <ArrowDown v-if="turnurSortColumn === 'system' && turnurSortDirection === 'desc'" class="size-3" />
+                            </button>
+                            <button @click="handleTurnurSort('region')" class="flex items-center gap-1 hover:text-foreground">
+                                <span>Region</span>
+                                <ArrowUp v-if="turnurSortColumn === 'region' && turnurSortDirection === 'asc'" class="size-3" />
+                                <ArrowDown v-if="turnurSortColumn === 'region' && turnurSortDirection === 'desc'" class="size-3" />
+                            </button>
+                            <span></span>
+                            <button @click="handleTurnurSort('jumps')" class="flex items-center justify-end gap-1 hover:text-foreground">
+                                <span>J</span>
+                                <ArrowUp v-if="turnurSortColumn === 'jumps' && turnurSortDirection === 'asc'" class="size-3" />
+                                <ArrowDown v-if="turnurSortColumn === 'jumps' && turnurSortDirection === 'desc'" class="size-3" />
+                            </button>
+                            <button @click="handleTurnurSort('sig_in')" class="flex items-center gap-1 hover:text-foreground">
+                                <span>In</span>
+                                <ArrowUp v-if="turnurSortColumn === 'sig_in' && turnurSortDirection === 'asc'" class="size-3" />
+                                <ArrowDown v-if="turnurSortColumn === 'sig_in' && turnurSortDirection === 'desc'" class="size-3" />
+                            </button>
+                            <button @click="handleTurnurSort('sig_out')" class="flex items-center gap-1 hover:text-foreground">
+                                <span>Out</span>
+                                <ArrowUp v-if="turnurSortColumn === 'sig_out' && turnurSortDirection === 'asc'" class="size-3" />
+                                <ArrowDown v-if="turnurSortColumn === 'sig_out' && turnurSortDirection === 'desc'" class="size-3" />
+                            </button>
+                            <span>WH</span>
+                            <button @click="handleTurnurSort('time')" class="flex items-center gap-1 hover:text-foreground">
+                                <span>TTL</span>
+                                <ArrowUp v-if="turnurSortColumn === 'time' && turnurSortDirection === 'asc'" class="size-3" />
+                                <ArrowDown v-if="turnurSortColumn === 'time' && turnurSortDirection === 'desc'" class="size-3" />
+                            </button>
+                        </div>
+                        <EveScoutConnection
+                            v-for="connection in turnurConnections"
+                            :key="`${connection.in_signature}-${connection.out_signature}`"
+                            :connection="connection"
+                            special-system="Turnur"
+                        />
+                        <div v-if="!turnurConnections.length" class="col-span-full flex h-full flex-col items-center justify-center gap-2 p-4">
+                            <p class="font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">No Turnur connections</p>
+                        </div>
+                    </div>
+                </TabsContent>
+            </Tabs>
         </MapPanelContent>
     </MapPanel>
 </template>

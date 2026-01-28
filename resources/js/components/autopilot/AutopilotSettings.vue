@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import SettingsIcon from '@/components/icons/SettingsIcon.vue';
-import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import MapPanelHeaderActionButton from '@/components/ui/map-panel/MapPanelHeaderActionButton.vue';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Slider } from '@/components/ui/slider';
@@ -69,9 +69,9 @@ function handleSecurityPenaltyCommit(value: number[]) {
         <PopoverTrigger>
             <Tooltip>
                 <TooltipTrigger as-child>
-                    <Button variant="secondary" size="icon">
+                    <MapPanelHeaderActionButton size="icon">
                         <SettingsIcon />
-                    </Button>
+                    </MapPanelHeaderActionButton>
                 </TooltipTrigger>
                 <TooltipContent>
                     <p>Autopilot settings</p>

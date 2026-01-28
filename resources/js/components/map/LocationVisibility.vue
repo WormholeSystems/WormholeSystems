@@ -19,9 +19,9 @@ function handleToggleVisibility() {
 <template>
     <Tooltip>
         <TooltipTrigger>
-            <Button @click="handleToggleVisibility" :variant="map_user_settings.tracking_allowed ? 'default' : 'secondary'" size="icon">
-                <Eye v-if="map_user_settings.tracking_allowed" class="h-4 w-4" />
-                <EyeOff v-else class="h-4 w-4" />
+            <Button @click="handleToggleVisibility" :variant="map_user_settings.tracking_allowed ? 'default' : 'ghost'" size="icon" class="size-7">
+                <Eye v-if="map_user_settings.tracking_allowed" class="size-4" />
+                <EyeOff v-else class="size-4" />
             </Button>
         </TooltipTrigger>
         <TooltipContent side="bottom">

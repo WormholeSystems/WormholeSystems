@@ -126,11 +126,11 @@ function onScroll(event: WheelEvent) {
 </script>
 
 <template>
-    <div class="relative h-full w-full overflow-hidden rounded-lg border bg-card">
+    <div class="relative h-full w-full overflow-hidden bg-card ring-1 ring-border ring-offset-[-0.5px]">
         <div
             ref="scrollable-container"
             :data-scroll-locked="scroll_locked"
-            class="relative h-full w-full overflow-scroll bg-neutral-50 data-[scroll-locked=true]:overflow-hidden dark:bg-neutral-900/50"
+            class="relative h-full w-full overflow-scroll bg-neutral-100 data-[scroll-locked=true]:overflow-hidden dark:bg-neutral-950"
             @wheel="onScroll"
             @mousedown="handleMouseDown"
             @mousemove="handleMouseMove"

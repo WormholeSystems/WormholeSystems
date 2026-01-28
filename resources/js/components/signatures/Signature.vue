@@ -172,14 +172,14 @@ function handleMassStatusChange(mass_status: string) {
 
 <template>
     <div
-        class="col-span-full grid grid-cols-subgrid items-center gap-x-1 px-2 py-2 hover:bg-muted/25 data-deleted:bg-red-500/10 data-new:bg-green-500/10 data-updated:bg-amber-500/15"
+        class="col-span-full grid grid-cols-subgrid items-center gap-x-1 border-b border-border/30 px-3 py-1 hover:bg-muted/30 data-deleted:bg-red-500/10 data-new:bg-green-500/10 data-updated:bg-amber-500/15"
         :data-deleted="Data(is_deleted)"
         :data-new="Data(is_new)"
         :data-updated="Data(is_updated)"
     >
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1.5">
             <div
-                class="size-2 shrink-0 rounded-full bg-red-500 data-incomplete:bg-amber-500 data-scanned:bg-green-500"
+                class="size-1.5 shrink-0 rounded-full bg-red-500 data-incomplete:bg-amber-500 data-scanned:bg-green-500"
                 :data-scanned="Data(is_scanned)"
                 :data-incomplete="Data(is_incomplete)"
             />
@@ -194,7 +194,7 @@ function handleMassStatusChange(mass_status: string) {
 
         <div>
             <Select :model-value="signature.signature_category_id" @update:modelValue="handleCategoryChange" :disabled="!can_write">
-                <SelectTrigger class="w-full text-xs">
+                <SelectTrigger class="h-6 w-full text-xs">
                     <SelectValue placeholder="Category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -238,12 +238,11 @@ function handleMassStatusChange(mass_status: string) {
 
         <SignatureTimeDetails :category="signature.signature_category?.name" :selected_connection="selected_connection" :signature="signature" />
 
-        <!-- Actions Dropdown -->
         <div class="text-right">
             <DropdownMenu v-if="can_write">
                 <DropdownMenuTrigger as-child>
-                    <Button variant="ghost" size="icon" class="text-muted-foreground">
-                        <MoreVertical class="h-4 w-4" />
+                    <Button variant="ghost" size="icon" class="size-5 text-muted-foreground">
+                        <MoreVertical class="size-3" />
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">

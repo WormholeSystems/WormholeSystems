@@ -97,34 +97,34 @@ const can_write = useHasWritePermission();
 </script>
 
 <template>
-    <div
-        :class="can_write ? 'grid-cols-[auto_1fr_auto_1fr_auto_auto]' : 'grid-cols-[auto_1fr_auto_1fr_auto]'"
-        class="grid gap-x-4 overflow-hidden rounded border bg-white text-xs dark:bg-neutral-900/40"
-    >
-        <div class="col-span-full grid grid-cols-subgrid border-b bg-muted/50 px-2 py-1.5 text-xs font-medium text-muted-foreground">
-            <div></div>
+    <div class="grid grid-cols-[1.5rem_auto_auto_1.25rem_2rem_auto] gap-x-2">
+        <div
+            class="col-span-full grid grid-cols-subgrid border-b border-border/30 bg-muted/20 px-3 py-1.5 font-mono text-[10px] tracking-wider text-muted-foreground uppercase"
+        >
+            <span></span>
             <button @click="handleSort('system')" class="flex items-center gap-1 hover:text-foreground">
                 <span>System</span>
                 <ArrowUp v-if="sortColumn === 'system' && sortDirection === 'asc'" class="size-3" />
                 <ArrowDown v-if="sortColumn === 'system' && sortDirection === 'desc'" class="size-3" />
-            </button>
-            <button @click="handleSort('jumps')" class="flex items-center justify-center gap-1 hover:text-foreground">
-                <span>Jumps</span>
-                <ArrowUp v-if="sortColumn === 'jumps' && sortDirection === 'asc'" class="size-3" />
-                <ArrowDown v-if="sortColumn === 'jumps' && sortDirection === 'desc'" class="size-3" />
             </button>
             <button @click="handleSort('region')" class="flex items-center gap-1 hover:text-foreground">
                 <span>Region</span>
                 <ArrowUp v-if="sortColumn === 'region' && sortDirection === 'asc'" class="size-3" />
                 <ArrowDown v-if="sortColumn === 'region' && sortDirection === 'desc'" class="size-3" />
             </button>
+            <span></span>
+            <button @click="handleSort('jumps')" class="flex items-center justify-end gap-1 hover:text-foreground">
+                <span>J</span>
+                <ArrowUp v-if="sortColumn === 'jumps' && sortDirection === 'asc'" class="size-3" />
+                <ArrowDown v-if="sortColumn === 'jumps' && sortDirection === 'desc'" class="size-3" />
+            </button>
+            <span v-if="can_write"></span>
         </div>
 
         <MapRouteSolarsystem v-for="route in sorted" :key="route.solarsystem.id" :map_route="route" />
 
-        <div v-if="!sorted?.length" class="col-span-full py-4 text-center text-muted-foreground">
-            <div class="mb-1 text-sm">🎯</div>
-            <div>No destinations</div>
+        <div v-if="!sorted?.length" class="col-span-full flex h-full flex-col items-center justify-center gap-2 p-4">
+            <p class="font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">Watchlist empty</p>
         </div>
     </div>
 </template>
