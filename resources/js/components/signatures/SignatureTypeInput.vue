@@ -25,18 +25,18 @@ const selected_option = computed(() => {
 
 <template>
     <Select v-model="model" :disabled="!can_write || !category" v-model:open="open">
-        <SelectTrigger class="w-full text-xs">
-            <span v-if="hasRawTypeName" class="text-foreground">{{ rawTypeName }}</span>
+        <SelectTrigger class="h-6 w-full text-xs">
+            <span v-if="hasRawTypeName" class="truncate text-foreground">{{ rawTypeName }}</span>
             <SelectValue v-else placeholder="Type">
-                <span v-if="selected_option">{{ selected_option?.name }}</span>
+                <span v-if="selected_option" class="truncate">{{ selected_option?.name }}</span>
             </SelectValue>
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent class="max-h-72">
             <template v-if="open">
-                <SelectItem v-for="option in options" :key="option.id" :value="option.id">
+                <SelectItem v-for="option in options" :key="option.id" :value="option.id" class="text-xs">
                     {{ option.name }}
                 </SelectItem>
-                <SelectItem v-if="!options.length" :value="null"> Unknown </SelectItem>
+                <SelectItem v-if="!options.length" :value="null" class="text-xs text-muted-foreground"> Unknown </SelectItem>
             </template>
         </SelectContent>
     </Select>

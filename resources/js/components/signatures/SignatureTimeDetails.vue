@@ -93,7 +93,7 @@ const current_lifetime = computed(() => {
         <TooltipTrigger
             :data-lifetime="current_lifetime"
             :data-mass="selected_connection?.mass_status || signature.mass_status"
-            class="time whitespace-nowrap text-neutral-500"
+            class="time font-mono text-xs whitespace-nowrap text-muted-foreground tabular-nums"
         >
             <span>
                 {{ modified_ago }}
