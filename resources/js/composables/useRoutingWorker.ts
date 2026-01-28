@@ -25,6 +25,9 @@ const massStatusAllowList: Record<TMassStatus, Set<TMassStatus>> = {
     critical: new Set(['fresh', 'reduced', 'critical']),
 };
 
+// Zarzakh uses Jovian stargates that require special access - don't route THROUGH it
+const ZARZAKH_SYSTEM_ID = 30100000;
+
 let staticSolarsystems: Map<number, TStaticSolarsystem> = new Map();
 let staticAdjacency: Map<number, GraphEdge[]> = new Map();
 
@@ -48,6 +51,8 @@ const engine: RoutingEngine = {
             ? buildAdjacency(payload.eveScoutConnections, 'evescout')
             : new Map<number, GraphEdge[]>();
         const ignoredSet = new Set<number>(payload.ignoredSystems.filter(Boolean));
+        // Zarzakh uses Jovian stargates - don't route THROUGH it (but TO/FROM is OK)
+        ignoredSet.add(ZARZAKH_SYSTEM_ID);
 
         return payload.requests.map((request) => {
             if (request.type === 'route') {
