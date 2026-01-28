@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import TrashIcon from '@/components/icons/TrashIcon.vue';
 import MapConnectionInput from '@/components/signatures/MapConnectionInput.vue';
-import SignatureIdInput from '@/components/signatures/SignatureIdInput.vue';
 import SignatureTimeDetails from '@/components/signatures/SignatureTimeDetails.vue';
 import SignatureTypeInput from '@/components/signatures/SignatureTypeInput.vue';
 import WormholeTypeInput from '@/components/signatures/WormholeTypeInput.vue';
@@ -28,7 +27,7 @@ import { UTCDate } from '@date-fns/utc';
 import { syncRefs } from '@vueuse/core';
 import { MoreVertical } from 'lucide-vue-next';
 import { AcceptableValue } from 'reka-ui';
-import { computed, ref, toRef } from 'vue';
+import { computed, nextTick, ref, toRef } from 'vue';
 
 const { signature, unconnected_connections, connected_connections, selected_map_solarsystem } = defineProps<{
     signature: TSignature;
@@ -42,10 +41,13 @@ const { signature, unconnected_connections, connected_connections, selected_map_
 
 const original = toRef(() => signature.signature_id || '');
 const signature_id = ref('');
-
 syncRefs(original, signature_id);
 
 const can_write = useHasWritePermission();
+
+// Inline editing state
+const editingId = ref(false);
+const idInputRef = ref<HTMLInputElement | null>(null);
 
 const selected_connection = computed(() => {
     return (
@@ -57,44 +59,31 @@ const selected_connection = computed(() => {
 
 const solarsystem_class = useSolarsystemClass(selected_map_solarsystem);
 
-// Get available types based on selected category and filter by spawn_areas for wormholes
 const availableTypes = computed(() => {
     if (!signature.signature_category_id) return [];
-
     return getTypesByCategory(signature.signature_category_id).filter((type) =>
         type.spawn_areas?.includes(toStringedSolarsystemClass(solarsystem_class.value)!),
     );
 });
 
-// Helper function to get sort order for target class
 const getClassSortOrder = (target_class: TSolarsystemClass | null): number => {
     if (!target_class) return 999;
-
     const stringed_target_class = toStringedSolarsystemClass(target_class)!;
-
-    // Known space first, in order: H, L, N
     if (stringed_target_class === 'h') return 1;
     if (stringed_target_class === 'l') return 2;
     if (stringed_target_class === 'n') return 3;
-
-    // Wormhole space (C1-C18)
     if (/^\d+$/.test(stringed_target_class)) {
         return 10 + parseInt(stringed_target_class);
     }
-
-    // Special classes
-    if (stringed_target_class === 'p') return 200; // Pochven
+    if (stringed_target_class === 'p') return 200;
     if (stringed_target_class === 'unknown') return 300;
-
     return 999;
 };
 
-// Sort available types by target class
 const sortedAvailableTypes = computed(() => {
     return availableTypes.value.toSorted((a, b) => getClassSortOrder(a.target_class) - getClassSortOrder(b.target_class));
 });
 
-// Get wormhole category ID for comparison
 const wormholeCategoryId = computed(() => {
     return signatureCategories.find((cat) => cat.name === 'Wormhole')?.id;
 });
@@ -108,17 +97,20 @@ const current_class = computed(() => {
     return getSolarsystemClass(selected_connection.value.target);
 });
 
-const is_scanned = computed(() => {
-    if (!signature.signature_id) return false;
-    if (!signature.signature_category_id) return false;
-    return !(!signature.signature_type_id && !signature.raw_type_name);
-});
+const categoryAbbrev: Record<string, string> = {
+    Wormhole: 'WH',
+    Data: 'Data',
+    Relic: 'Relic',
+    Ore: 'Ore',
+    Gas: 'Gas',
+    Combat: 'Combat',
+};
 
-const is_incomplete = computed(() => {
-    return Boolean((signature.signature_id && signature.signature_category) || signature.signature_type_id || signature.raw_type_name);
-});
+function getCategoryAbbrev(name?: string | null): string {
+    return name ? (categoryAbbrev[name] ?? name) : '—';
+}
 
-function handleChange(data: Record<any, any>) {
+function handleChange(data: Record<string, unknown>) {
     updateSignature(signature, data);
 }
 
@@ -127,34 +119,51 @@ function handleDelete() {
 }
 
 function handleCategoryChange(value: AcceptableValue) {
-    const signature_category_id = value as number;
-    const signature_type_id = null; // Clear type when category changes
-    const map_connection_id = null;
     handleChange({
-        signature_category_id,
-        signature_type_id,
-        map_connection_id,
+        signature_category_id: value as number,
+        signature_type_id: null,
+        map_connection_id: null,
     });
 }
 
 function handleTypeChange(value: AcceptableValue) {
-    const signature_type_id = value as number;
-    handleChange({
-        signature_type_id,
-    });
+    handleChange({ signature_type_id: value as number });
 }
 
 function handleMapConnectionChange(value: AcceptableValue) {
-    const map_connection_id = value as number | null;
-    handleChange({
-        map_connection_id,
+    handleChange({ map_connection_id: value as number | null });
+}
+
+function startEditId() {
+    if (!can_write.value) return;
+    signature_id.value = signature.signature_id || '';
+    editingId.value = true;
+    nextTick(() => {
+        idInputRef.value?.focus();
+        idInputRef.value?.select();
     });
 }
 
-function handleIDSubmit() {
-    handleChange({
-        signature_id: signature_id.value.toString().trim() || null,
-    });
+function handleIdInput(event: Event) {
+    const target = event.target as HTMLInputElement;
+    let value = target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    if (value.length >= 4) {
+        value = value.slice(0, 3) + '-' + value.slice(3, 6);
+    }
+    signature_id.value = value;
+}
+
+function saveId() {
+    const newId = signature_id.value.trim();
+    if (newId !== signature.signature_id) {
+        handleChange({ signature_id: newId || null });
+    }
+    editingId.value = false;
+}
+
+function cancelEditId() {
+    editingId.value = false;
+    signature_id.value = signature.signature_id || '';
 }
 
 function handleLifetimeChange(lifetime: string) {
@@ -172,40 +181,53 @@ function handleMassStatusChange(mass_status: string) {
 
 <template>
     <div
-        class="col-span-full grid grid-cols-subgrid items-center gap-x-1 border-b border-border/30 px-3 py-1 hover:bg-muted/30 data-deleted:bg-red-500/10 data-new:bg-green-500/10 data-updated:bg-amber-500/15"
+        class="flex items-center gap-2 border-b border-border/30 px-3 py-1.5 hover:bg-muted/30 data-deleted:bg-red-500/10 data-new:bg-green-500/10 data-updated:bg-amber-500/15"
         :data-deleted="Data(is_deleted)"
         :data-new="Data(is_new)"
         :data-updated="Data(is_updated)"
     >
-        <div class="flex items-center gap-1.5">
-            <div
-                class="size-1.5 shrink-0 rounded-full bg-red-500 data-incomplete:bg-amber-500 data-scanned:bg-green-500"
-                :data-scanned="Data(is_scanned)"
-                :data-incomplete="Data(is_incomplete)"
+        <!-- Signature ID -->
+        <div class="w-16 shrink-0">
+            <input
+                v-if="editingId"
+                ref="idInputRef"
+                :value="signature_id"
+                @input="handleIdInput"
+                @blur="saveId"
+                @keydown.enter="saveId"
+                @keydown.escape="cancelEditId"
+                class="h-6 w-full rounded border border-border/50 bg-background/50 px-1.5 font-mono text-xs uppercase focus:border-primary focus:outline-none"
+                maxlength="7"
+                placeholder="XXX-XXX"
             />
-            <SignatureIdInput
-                v-model="signature_id"
-                :disabled="!can_write"
-                @submit="handleIDSubmit"
-                :current-value="signature.signature_id"
-                class="font-mono text-xs"
-            />
+            <button
+                v-else
+                class="font-mono text-xs hover:text-amber-400"
+                :class="can_write ? 'cursor-pointer' : 'cursor-default'"
+                @click="startEditId"
+            >
+                {{ signature.signature_id || '---' }}
+            </button>
         </div>
 
-        <div>
+        <!-- Category -->
+        <div class="w-24 shrink-0">
             <Select :model-value="signature.signature_category_id" @update:modelValue="handleCategoryChange" :disabled="!can_write">
                 <SelectTrigger class="h-6 w-full text-xs">
-                    <SelectValue placeholder="Category" />
+                    <SelectValue placeholder="Category">
+                        {{ getCategoryAbbrev(signature.signature_category?.name) }}
+                    </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem v-for="category in signatureCategories" :key="category.id" :value="category.id">
+                    <SelectItem v-for="category in signatureCategories" :key="category.id" :value="category.id" class="text-xs">
                         {{ category.name }}
                     </SelectItem>
                 </SelectContent>
             </Select>
         </div>
 
-        <div :data-not-wormhole="Data(!isWormhole)" class="data-not-wormhole:col-span-2">
+        <!-- Type / Wormhole Info -->
+        <div class="min-w-0 flex-1">
             <WormholeTypeInput
                 v-if="isWormhole"
                 :model-value="signature.signature_type_id"
@@ -225,7 +247,8 @@ function handleMassStatusChange(mass_status: string) {
             />
         </div>
 
-        <div v-if="isWormhole">
+        <!-- Connection (only for wormholes) -->
+        <div v-if="isWormhole" class="min-w-0 flex-1">
             <MapConnectionInput
                 :type="signature.signature_type"
                 :selected="selected_connection"
@@ -236,32 +259,36 @@ function handleMassStatusChange(mass_status: string) {
             />
         </div>
 
-        <SignatureTimeDetails :category="signature.signature_category?.name" :selected_connection="selected_connection" :signature="signature" />
+        <!-- Age -->
+        <div class="w-10 shrink-0 text-right">
+            <SignatureTimeDetails :category="signature.signature_category?.name" :selected_connection="selected_connection" :signature="signature" />
+        </div>
 
-        <div class="text-right">
+        <!-- Actions -->
+        <div class="w-6 shrink-0">
             <DropdownMenu v-if="can_write">
                 <DropdownMenuTrigger as-child>
-                    <Button variant="ghost" size="icon" class="size-5 text-muted-foreground">
-                        <MoreVertical class="size-3" />
+                    <Button variant="ghost" size="icon" class="size-6 text-muted-foreground hover:text-foreground">
+                        <MoreVertical class="size-3.5" />
                     </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                    <template v-if="signature.signature_category?.name === 'Wormhole'">
+                <DropdownMenuContent align="end" class="w-44">
+                    <template v-if="isWormhole">
                         <!-- Mass Status Options -->
                         <DropdownMenuRadioGroup :model-value="signature.mass_status || 'unknown'" @update:model-value="handleMassStatusChange">
-                            <DropdownMenuRadioItem value="fresh">
+                            <DropdownMenuRadioItem value="fresh" class="text-xs">
                                 <span class="flex items-center gap-2">
                                     <span class="inline-block size-2 rounded-full bg-neutral-500" />
                                     Fresh Mass
                                 </span>
                             </DropdownMenuRadioItem>
-                            <DropdownMenuRadioItem value="reduced">
+                            <DropdownMenuRadioItem value="reduced" class="text-xs">
                                 <span class="flex items-center gap-2">
                                     <span class="inline-block size-2 rounded-full bg-amber-500" />
                                     Reduced Mass
                                 </span>
                             </DropdownMenuRadioItem>
-                            <DropdownMenuRadioItem value="critical">
+                            <DropdownMenuRadioItem value="critical" class="text-xs">
                                 <span class="flex items-center gap-2">
                                     <span class="inline-block size-2 rounded-full bg-red-500" />
                                     Critical Mass
@@ -273,25 +300,23 @@ function handleMassStatusChange(mass_status: string) {
 
                         <!-- Lifetime Options -->
                         <DropdownMenuRadioGroup :model-value="signature.lifetime" @update:model-value="handleLifetimeChange">
-                            <DropdownMenuRadioItem value="healthy" class="flex items-center justify-between gap-2">
+                            <DropdownMenuRadioItem value="healthy" class="text-xs">
                                 <span class="flex items-center gap-2">
                                     <span class="inline-block size-2 rounded-full bg-neutral-500" />
                                     Healthy
                                 </span>
                             </DropdownMenuRadioItem>
-                            <DropdownMenuRadioItem value="eol" class="flex items-center justify-between gap-2">
+                            <DropdownMenuRadioItem value="eol" class="text-xs">
                                 <span class="flex items-center gap-2">
                                     <span class="inline-block size-2 rounded-full bg-purple-500" />
                                     End of Life
                                 </span>
-                                <span class="text-muted-foreground">&lt; 4h</span>
                             </DropdownMenuRadioItem>
-                            <DropdownMenuRadioItem value="critical" class="flex items-center justify-between gap-2">
+                            <DropdownMenuRadioItem value="critical" class="text-xs">
                                 <span class="flex items-center gap-2">
                                     <span class="inline-block size-2 rounded-full bg-red-500" />
                                     Critical
                                 </span>
-                                <span class="text-muted-foreground">&lt; 1h</span>
                             </DropdownMenuRadioItem>
                         </DropdownMenuRadioGroup>
 
@@ -299,11 +324,9 @@ function handleMassStatusChange(mass_status: string) {
                     </template>
 
                     <!-- Delete Option -->
-                    <DropdownMenuItem @click="handleDelete" class="text-destructive focus:text-destructive">
-                        <span class="flex items-center gap-2">
-                            <TrashIcon class="text-destructive" />
-                            Delete Signature
-                        </span>
+                    <DropdownMenuItem @click="handleDelete" class="text-xs text-destructive focus:text-destructive">
+                        <TrashIcon class="mr-2 size-3.5" />
+                        Delete Signature
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>

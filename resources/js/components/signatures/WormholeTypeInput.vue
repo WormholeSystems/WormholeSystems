@@ -38,24 +38,24 @@ function filterByCurrentClass(option: TSignatureType) {
 
 <template>
     <Select v-model="model" :disabled="!can_write" v-model:open="open">
-        <SelectTrigger class="w-full text-xs">
+        <SelectTrigger class="h-6 w-full text-xs">
             <WormholeOption v-if="selected_signature" :wormhole="selected_signature" />
             <template v-else>
-                <span class="truncate">Type</span>
+                <span class="truncate text-muted-foreground">Type</span>
             </template>
         </SelectTrigger>
-        <SelectContent class="max-h-100">
+        <SelectContent class="max-h-72">
             <template v-if="open">
                 <SelectGroup>
-                    <SelectLabel class="text-muted-foreground">K162</SelectLabel>
-                    <SelectItem v-for="option in k162_options" :key="option.id" :value="option.id">
+                    <SelectLabel class="text-xs text-muted-foreground">K162</SelectLabel>
+                    <SelectItem v-for="option in k162_options" :key="option.id" :value="option.id" class="text-xs">
                         <WormholeOption :wormhole="option" />
                     </SelectItem>
                 </SelectGroup>
                 <SelectSeparator />
                 <SelectGroup>
-                    <SelectLabel class="text-muted-foreground">Wormholes</SelectLabel>
-                    <SelectItem v-for="option in wormholes" :key="option.id" :value="option.id">
+                    <SelectLabel class="text-xs text-muted-foreground">Wormholes</SelectLabel>
+                    <SelectItem v-for="option in wormholes" :key="option.id" :value="option.id" class="text-xs">
                         <WormholeOption :wormhole="option" />
                     </SelectItem>
                 </SelectGroup>

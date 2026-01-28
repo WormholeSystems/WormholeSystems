@@ -42,32 +42,31 @@ function isNotFilterable(type: TSignatureType | null | undefined): type is null 
 
 <template>
     <Select v-model:model-value="model" v-model:open="open">
-        <SelectTrigger class="w-full text-xs">
+        <SelectTrigger class="h-6 w-full text-xs">
             <SelectValue as-child>
                 <template v-if="selected">
-                    <SolarsystemClass :wormhole_class="selected.target.solarsystem.class" :security="selected.target.solarsystem?.security" />
-                    <span class="mr-auto truncate" v-if="!selected.target!.alias">{{ selected.target.solarsystem.name }}</span>
-                    <span class="mr-auto truncate" v-else>
-                        <span class="mr-1">{{ selected.target?.alias }}</span>
-                        <span class="text-muted-foreground">{{ selected.target.solarsystem.name }}</span>
+                    <span class="flex items-center gap-1">
+                        <SolarsystemClass :wormhole_class="selected.target.solarsystem.class" :security="selected.target.solarsystem?.security" />
+                        <span class="truncate" v-if="!selected.target!.alias">{{ selected.target.solarsystem.name }}</span>
+                        <span class="truncate" v-else>{{ selected.target?.alias }}</span>
                     </span>
                 </template>
                 <template v-else>
-                    <span class="truncate">Connection</span>
+                    <span class="truncate text-muted-foreground">Connection</span>
                 </template>
             </SelectValue>
         </SelectTrigger>
-        <SelectContent class="max-h-80">
+        <SelectContent class="max-h-72">
             <template v-if="open">
-                <SelectItem :value="null" text-value="Unknown connection"> Unknown connection</SelectItem>
+                <SelectItem :value="null" text-value="Unknown" class="text-xs"> Unknown </SelectItem>
                 <SelectGroup v-if="filtered_unconnected_connections.length > 0">
                     <SelectSeparator />
-                    <SelectLabel class="text-muted-foreground"> Unconnected solarsystems</SelectLabel>
+                    <SelectLabel class="text-xs text-muted-foreground">Connections</SelectLabel>
                     <ConnectionOption v-for="connection in filtered_unconnected_connections" :key="connection.id" :connection="connection" />
                 </SelectGroup>
                 <SelectGroup v-if="filtered_connected_connections.length > 0">
                     <SelectSeparator />
-                    <SelectLabel class="text-muted-foreground"> Connected solarsystems</SelectLabel>
+                    <SelectLabel class="text-xs text-muted-foreground">Connected</SelectLabel>
                     <ConnectionOption v-for="connection in filtered_connected_connections" :key="connection.id" :connection="connection" />
                 </SelectGroup>
             </template>

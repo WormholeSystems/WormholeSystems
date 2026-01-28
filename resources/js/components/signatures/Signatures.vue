@@ -5,7 +5,6 @@ import TrashIcon from '@/components/icons/TrashIcon.vue';
 import PasteSignatureWarningDialog from '@/components/signatures/PasteSignatureWarningDialog.vue';
 import Signature from '@/components/signatures/Signature.vue';
 import SignaturesEmptyState from '@/components/signatures/SignaturesEmptyState.vue';
-import SortHeader from '@/components/signatures/SortHeader.vue';
 import MapPanel from '@/components/ui/map-panel/MapPanel.vue';
 import MapPanelContent from '@/components/ui/map-panel/MapPanelContent.vue';
 import MapPanelHeader from '@/components/ui/map-panel/MapPanelHeader.vue';
@@ -17,6 +16,7 @@ import { useSortableSignatures } from '@/composables/map/composables/useSortedSi
 import { useActiveMapCharacter } from '@/composables/useActiveMapCharacter';
 import useHasWritePermission from '@/composables/useHasWritePermission';
 import type { TResolvedSelectedMapSolarsystem } from '@/pages/maps';
+import { ArrowDown, ArrowUp } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 const props = defineProps<{
@@ -58,17 +58,16 @@ const unconnected_connections = computed(() => {
     });
 });
 
-function handleSort(column: string) {
-    const sortColumn = column as 'id' | 'category' | 'type' | 'age';
+function handleSort(column: 'id' | 'category' | 'type' | 'age') {
     let newDirection: 'asc' | 'desc';
 
-    if (sortPreferences.value.column === sortColumn) {
+    if (sortPreferences.value.column === column) {
         newDirection = sortPreferences.value.direction === 'asc' ? 'desc' : 'asc';
     } else {
         newDirection = 'asc';
     }
 
-    updateSortPreferences(sortColumn, newDirection);
+    updateSortPreferences(column, newDirection);
 }
 
 function createNewSignature() {
@@ -120,41 +119,36 @@ function createNewSignature() {
             </template>
         </MapPanelHeader>
         <MapPanelContent>
-            <div class="grid grid-cols-[auto_1fr_1fr_1fr_auto_auto] gap-x-2 text-xs">
-                <div
-                    class="col-span-full grid grid-cols-subgrid border-b border-border/30 bg-muted/20 px-3 py-1.5 font-mono text-[10px] tracking-wider text-muted-foreground uppercase"
-                >
-                    <SortHeader
-                        label="ID"
-                        column="id"
-                        :is-current-column="sortPreferences.column === 'id'"
-                        :current-direction="sortPreferences.direction"
-                        @sort="handleSort"
-                    />
-                    <SortHeader
-                        label="Category"
-                        column="category"
-                        :is-current-column="sortPreferences.column === 'category'"
-                        :current-direction="sortPreferences.direction"
-                        @sort="handleSort"
-                    />
-                    <SortHeader
-                        label="Type"
-                        column="type"
-                        :is-current-column="sortPreferences.column === 'type'"
-                        :current-direction="sortPreferences.direction"
-                        @sort="handleSort"
-                    />
-                    <span>Conn</span>
-                    <SortHeader
-                        label="Age"
-                        column="age"
-                        :is-current-column="sortPreferences.column === 'age'"
-                        :current-direction="sortPreferences.direction"
-                        @sort="handleSort"
-                    />
-                    <span></span>
-                </div>
+            <!-- Header -->
+            <div
+                class="flex items-center gap-2 border-b border-border/30 bg-muted/20 px-3 py-1.5 font-mono text-[10px] tracking-wider text-muted-foreground uppercase"
+            >
+                <button class="flex w-16 shrink-0 items-center gap-1 hover:text-foreground" @click="handleSort('id')">
+                    <span>ID</span>
+                    <ArrowUp v-if="sortPreferences.column === 'id' && sortPreferences.direction === 'asc'" class="size-3" />
+                    <ArrowDown v-if="sortPreferences.column === 'id' && sortPreferences.direction === 'desc'" class="size-3" />
+                </button>
+                <button class="flex w-24 shrink-0 items-center gap-1 hover:text-foreground" @click="handleSort('category')">
+                    <span>Cat</span>
+                    <ArrowUp v-if="sortPreferences.column === 'category' && sortPreferences.direction === 'asc'" class="size-3" />
+                    <ArrowDown v-if="sortPreferences.column === 'category' && sortPreferences.direction === 'desc'" class="size-3" />
+                </button>
+                <button class="flex min-w-0 flex-1 items-center gap-1 hover:text-foreground" @click="handleSort('type')">
+                    <span>Type</span>
+                    <ArrowUp v-if="sortPreferences.column === 'type' && sortPreferences.direction === 'asc'" class="size-3" />
+                    <ArrowDown v-if="sortPreferences.column === 'type' && sortPreferences.direction === 'desc'" class="size-3" />
+                </button>
+                <span class="min-w-0 flex-1">Conn</span>
+                <button class="flex w-10 shrink-0 items-center justify-end gap-1 hover:text-foreground" @click="handleSort('age')">
+                    <span>Age</span>
+                    <ArrowUp v-if="sortPreferences.column === 'age' && sortPreferences.direction === 'asc'" class="size-3" />
+                    <ArrowDown v-if="sortPreferences.column === 'age' && sortPreferences.direction === 'desc'" class="size-3" />
+                </button>
+                <span class="w-6 shrink-0"></span>
+            </div>
+
+            <!-- Signature rows -->
+            <template v-if="sorted.length">
                 <Signature
                     v-for="signature in sorted"
                     :signature="signature"
@@ -166,9 +160,9 @@ function createNewSignature() {
                     :connected_connections="connected_connections"
                     :selected_map_solarsystem="map_solarsystem"
                 />
-                <div v-if="!signatures.length" class="col-span-full flex h-full flex-col items-center justify-center gap-2 p-4">
-                    <p class="font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">No signatures</p>
-                </div>
+            </template>
+            <div v-else class="flex h-full flex-col items-center justify-center gap-2 p-4">
+                <p class="font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">No signatures</p>
             </div>
         </MapPanelContent>
     </MapPanel>
@@ -182,5 +176,3 @@ function createNewSignature() {
         @cancel="cancelPaste"
     />
 </template>
-
-<style scoped></style>

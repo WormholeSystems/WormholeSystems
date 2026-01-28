@@ -6,11 +6,11 @@ import { SelectIcon, SelectTrigger, type SelectTriggerProps, useForwardProps } f
 import { cn } from '@/lib/utils';
 
 const props = withDefaults(
-    defineProps<SelectTriggerProps & { class?: HTMLAttributes['class'], size?: 'sm' | 'default' }>(),
-    { size: 'default' }
+    defineProps<SelectTriggerProps & { class?: HTMLAttributes['class']; size?: 'sm' | 'default'; hideIcon?: boolean }>(),
+    { size: 'default', hideIcon: false },
 );
 
-const delegatedProps = reactiveOmit(props, 'class', 'size');
+const delegatedProps = reactiveOmit(props, 'class', 'size', 'hideIcon');
 const forwardedProps = useForwardProps(delegatedProps);
 </script>
 
@@ -25,7 +25,7 @@ const forwardedProps = useForwardProps(delegatedProps);
     )"
     >
         <slot />
-        <SelectIcon as-child>
+        <SelectIcon v-if="!hideIcon" as-child>
             <ChevronDown class="size-4 opacity-50" />
         </SelectIcon>
     </SelectTrigger>
