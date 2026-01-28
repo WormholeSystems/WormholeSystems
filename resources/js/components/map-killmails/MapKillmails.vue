@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import SettingsIcon from '@/components/icons/SettingsIcon.vue';
 import Killmail from '@/components/map-killmails/Killmail.vue';
-import { Button } from '@/components/ui/button';
-import { CardAction, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import MapPanel from '@/components/ui/map-panel/MapPanel.vue';
 import MapPanelContent from '@/components/ui/map-panel/MapPanelContent.vue';
+import MapPanelHeader from '@/components/ui/map-panel/MapPanelHeader.vue';
+import MapPanelHeaderActionButton from '@/components/ui/map-panel/MapPanelHeaderActionButton.vue';
 import { useOnClient } from '@/composables/useOnClient';
 import { getMapChannelName } from '@/const/channels';
 import { KillmailReceivedEvent } from '@/const/events';
@@ -49,15 +49,15 @@ useOnClient(() =>
 
 <template>
     <MapPanel>
-        <CardHeader>
-            <CardTitle>Map killmails</CardTitle>
-            <CardDescription>See what is happening in your chain</CardDescription>
-            <CardAction>
+        <MapPanelHeader>
+            Killmails
+            <span v-if="map_killmails?.length" class="ml-1 text-amber-400">{{ map_killmails.length }}</span>
+            <template #actions>
                 <DropdownMenu>
                     <DropdownMenuTrigger as-child>
-                        <Button variant="secondary" size="icon">
+                        <MapPanelHeaderActionButton size="icon">
                             <SettingsIcon />
-                        </Button>
+                        </MapPanelHeaderActionButton>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
                         <DropdownMenuRadioGroup :model-value="map_user_settings.killmail_filter" @update:model-value="handleFilterChange">
@@ -67,23 +67,17 @@ useOnClient(() =>
                         </DropdownMenuRadioGroup>
                     </DropdownMenuContent>
                 </DropdownMenu>
-            </CardAction>
-        </CardHeader>
-        <MapPanelContent inner-class="border-0 bg-transparent">
-            <div class="@container rounded-lg border bg-white dark:bg-neutral-900/40">
-                <div class="grid grid-cols-[auto_auto_auto_auto_auto_auto] gap-x-2 text-xs">
-                    <div class="col-span-full grid grid-cols-subgrid border-b bg-muted/50 px-2 py-1.5 text-xs font-medium text-muted-foreground">
-                        <span>Victim</span>
-                        <span>Attacker</span>
-                        <span>Location</span>
-                        <span class="hidden @lg:block">Sov</span>
-                        <span>Time</span>
-                        <span class="hidden text-right @lg:block">Value</span>
-                    </div>
+            </template>
+        </MapPanelHeader>
+        <MapPanelContent>
+            <div class="@container">
+                <template v-if="map_killmails?.length">
                     <TransitionGroup name="list">
                         <Killmail v-for="killmail in map_killmails" :key="killmail.id" :killmail="killmail" />
                     </TransitionGroup>
-                    <div v-if="!map_killmails?.length" class="col-span-full p-2 text-center text-muted-foreground">No killmails found</div>
+                </template>
+                <div v-else class="flex h-full flex-col items-center justify-center gap-2 p-4">
+                    <p class="font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">No killmails</p>
                 </div>
             </div>
         </MapPanelContent>

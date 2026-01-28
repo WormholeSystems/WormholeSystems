@@ -1,40 +1,31 @@
 <script setup lang="ts">
-import MapAccessController from '@/actions/App/Http/Controllers/MapAccessController';
-import MapPreferencesController from '@/actions/App/Http/Controllers/MapPreferencesController';
-import MapSettingsController from '@/actions/App/Http/Controllers/MapSettingsController';
 import Audits from '@/components/audits/Audits.vue';
 import NavigationPanel from '@/components/autopilot/NavigationPanel.vue';
 import MapCharacters from '@/components/characters/MapCharacters.vue';
 import EveScoutConnections from '@/components/eve-scout/EveScoutConnections.vue';
-import QuestionIcon from '@/components/icons/QuestionIcon.vue';
-import LayoutEditor from '@/components/layout/LayoutEditor.vue';
 import LayoutEditorToolbar from '@/components/layout/LayoutEditorToolbar.vue';
 import MapKillmails from '@/components/map-killmails/MapKillmails.vue';
 import ActiveCharacterWarning from '@/components/map/ActiveCharacterWarning.vue';
-import LocationVisibility from '@/components/map/LocationVisibility.vue';
 import MapComponent from '@/components/map/MapComponent.vue';
 import MapIntroduction from '@/components/map/MapIntroduction.vue';
-import MapSearch from '@/components/map/MapSearch.vue';
-import Tracker from '@/components/map/Tracker.vue';
+import MapStatusBar from '@/components/map/MapStatusBar.vue';
 import ShipHistory from '@/components/ship-history/ShipHistory.vue';
 import Signatures from '@/components/signatures/Signatures.vue';
+import SignaturesEmptyState from '@/components/signatures/SignaturesEmptyState.vue';
 import SolarsystemDetails from '@/components/solarsystem/SolarsystemDetails.vue';
-import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useActiveMapCharacter } from '@/composables/useActiveMapCharacter';
+import SystemInfo from '@/components/solarsystem/SystemInfo.vue';
+import SystemInfoEmptyState from '@/components/solarsystem/SystemInfoEmptyState.vue';
 import { useDisableTextSelection } from '@/composables/useDisableTextSelection';
 import useHasWritePermission from '@/composables/useHasWritePermission';
-import useIsMapOwner from '@/composables/useIsMapOwner';
 import { useMapLayout } from '@/composables/useMapLayout';
 import { useOnClient } from '@/composables/useOnClient';
 import { useStaticSolarsystems } from '@/composables/useStaticSolarsystems';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SeoHead from '@/layouts/SeoHead.vue';
 import { TMap, TResolvedMapNavigation, TResolvedSelectedMapSolarsystem, TShowMapProps } from '@/pages/maps/index';
-import { Link, router, usePage } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 import { echo } from '@laravel/echo-vue';
 import { GridItem, GridLayout } from 'grid-layout-plus';
-import { Settings } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 
 const {
@@ -51,9 +42,7 @@ const {
     eve_scout_connections,
 } = defineProps<TShowMapProps>();
 
-const character = useActiveMapCharacter();
 const hasWriteAccess = useHasWritePermission();
-const isOwner = useIsMapOwner();
 const page = usePage();
 
 const { resolveSolarsystem } = useStaticSolarsystems();
@@ -123,18 +112,6 @@ const userScopes = computed(() => {
     return user.active_character.esi_scopes;
 });
 
-const settingsUrl = computed(() => {
-    if (isOwner.value) {
-        return MapSettingsController.show(map.slug).url;
-    }
-
-    if (hasWriteAccess.value) {
-        return MapAccessController.show(map.slug).url;
-    }
-
-    return MapPreferencesController.show(map.slug).url;
-});
-
 useOnClient(() =>
     router.on('before', (event) => {
         const id = echo().socketId();
@@ -195,6 +172,10 @@ const handleResizeEnd = () => {
             :has-write-access="hasWriteAccess"
             :map-slug="map.slug"
         />
+
+        <!-- Status Bar -->
+        <MapStatusBar :map="resolvedMap" :map_user_settings="map_user_settings" :layout="layout" />
+
         <!-- Grid Layout Container -->
         <GridLayout
             :ref="layout.gridLayoutRef"
@@ -205,7 +186,7 @@ const handleResizeEnd = () => {
             :is-resizable="layout.isEditMode.value"
             :vertical-compact="true"
             :use-css-transforms="true"
-            :margin="[16, 16]"
+            :margin="[0, 0]"
             @layout-updated="layout.updateLayout"
             @item-move="handleDragStart"
             @item-moved="handleDragEnd"
@@ -215,38 +196,18 @@ const handleResizeEnd = () => {
             <!-- Map Section -->
             <GridItem v-bind="getLayoutItem('map').value" @resize="handleResizeStart" @resized="handleResizeEnd">
                 <MapComponent :map="resolvedMap" :config="config" />
-                <MapSearch :map="resolvedMap" v-if="hasWriteAccess" />
-                <div class="absolute top-4 right-4 z-40 flex gap-2">
-                    <LocationVisibility :map_user_settings="map_user_settings" :key="character?.id" v-if="hasWriteAccess" />
-                    <Tracker :character :map="resolvedMap" :key="character?.id" v-if="hasWriteAccess" />
-                    <Tooltip>
-                        <TooltipTrigger>
-                            <Button variant="outline" size="icon" as-child>
-                                <Link :href="settingsUrl">
-                                    <Settings class="h-4 w-4" />
-                                </Link>
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom">
-                            <p class="text-sm">Settings</p>
-                        </TooltipContent>
-                    </Tooltip>
-                </div>
             </GridItem>
 
-            <!-- Solarsystem Details Section -->
-            <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-bind="getLayoutItem('solarsystem').value">
-                <SolarsystemDetails
-                    v-if="resolvedSelectedSolarsystem"
-                    :map_solarsystem="resolvedSelectedSolarsystem"
-                    :map="resolvedMap"
-                    :map_navigation="resolvedMapNavigation.destinations"
-                    :hide_notes="has_guest_access"
-                />
-                <div class="flex h-full flex-col items-center justify-center gap-8 rounded-lg border bg-card p-8 text-neutral-700" v-else>
-                    <QuestionIcon class="text-4xl" />
-                    <p class="text-center">Select a solarsystem to see more details</p>
-                </div>
+            <!-- System Info Section -->
+            <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-bind="getLayoutItem('system-info').value">
+                <SystemInfo v-if="resolvedSelectedSolarsystem" :map_solarsystem="resolvedSelectedSolarsystem" />
+                <SystemInfoEmptyState v-else />
+            </GridItem>
+
+            <!-- Notes Section -->
+            <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-if="!has_guest_access" v-bind="getLayoutItem('solarsystem').value">
+                <SolarsystemDetails v-if="resolvedSelectedSolarsystem" :map_solarsystem="resolvedSelectedSolarsystem" />
+                <SignaturesEmptyState v-else />
             </GridItem>
 
             <!-- Signatures Section -->
@@ -291,7 +252,6 @@ const handleResizeEnd = () => {
             </GridItem>
         </GridLayout>
         <!-- Layout Edit Controls -->
-        <LayoutEditor :layout="layout" />
         <LayoutEditorToolbar :layout="layout" />
     </AppLayout>
 </template>

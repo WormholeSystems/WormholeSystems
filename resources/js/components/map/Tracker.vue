@@ -36,8 +36,8 @@ const targetSolarsystemName = computed(() => target_solarsystem.value?.name || c
 <template>
     <Tooltip>
         <TooltipTrigger>
-            <Button @click="toggle" :variant="is_tracking ? 'default' : 'secondary'" :disabled="!can_track" size="icon">
-                <TrackingIcon />
+            <Button @click="toggle" :variant="is_tracking ? 'default' : 'ghost'" :disabled="!can_track" size="icon" class="size-7">
+                <TrackingIcon class="size-4" />
             </Button>
         </TooltipTrigger>
         <TooltipContent side="bottom">

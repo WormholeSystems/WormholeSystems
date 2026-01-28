@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import Character from '@/components/characters/Character.vue';
-import { CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import MapPanel from '@/components/ui/map-panel/MapPanel.vue';
 import MapPanelContent from '@/components/ui/map-panel/MapPanelContent.vue';
+import MapPanelHeader from '@/components/ui/map-panel/MapPanelHeader.vue';
 import { useActiveMapCharacter } from '@/composables/useActiveMapCharacter';
 import { useJumpCounts } from '@/composables/useJumpCounts';
 import { useStaticSolarsystems } from '@/composables/useStaticSolarsystems';
@@ -115,25 +115,23 @@ function resolveRoute(targetId: number | null): TResolvedSolarsystem[] {
 
 <template>
     <MapPanel>
-        <CardHeader>
-            <CardTitle>Characters</CardTitle>
-            <CardDescription> See what characters are flying and where they are located in the map solarsystems. </CardDescription>
-        </CardHeader>
-        <MapPanelContent inner-class="border-0 bg-transparent">
-            <div class="@container rounded-lg border bg-white dark:bg-neutral-900/40">
-                <div class="grid grid-cols-[auto_auto_auto] gap-x-2 text-xs">
-                    <div class="col-span-full grid grid-cols-subgrid border-b bg-muted/50 px-2 py-1.5 text-xs font-medium text-muted-foreground">
-                        <span>Pilot</span>
-                        <span>Ship</span>
-                        <span>Location</span>
+        <MapPanelHeader>
+            <span class="inline-flex items-center gap-2">
+                <span class="size-2 animate-pulse rounded-full bg-green-500" />
+                Pilots
+            </span>
+            <span class="ml-1 font-mono text-amber-400">{{ sorted_characters.length }}</span>
+        </MapPanelHeader>
+        <MapPanelContent>
+            <template v-if="sorted_characters?.length">
+                <TransitionGroup name="list">
+                    <div v-for="character in sorted_characters" :key="character.id">
+                        <Character :character />
                     </div>
-                    <TransitionGroup name="list">
-                        <div class="contents" v-for="character in sorted_characters" :key="character.id">
-                            <Character :character />
-                        </div>
-                    </TransitionGroup>
-                    <div v-if="!sorted_characters?.length" class="col-span-full p-2 text-center text-muted-foreground">No characters found</div>
-                </div>
+                </TransitionGroup>
+            </template>
+            <div v-else class="flex h-full flex-col items-center justify-center gap-2 p-4">
+                <p class="font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">No pilots online</p>
             </div>
         </MapPanelContent>
     </MapPanel>

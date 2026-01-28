@@ -131,36 +131,29 @@ const actor = computed(() => {
 </script>
 
 <template>
-    <div class="col-span-4 grid grid-cols-subgrid p-2 text-sm text-muted-foreground" :key="audit.id">
-        <div class="">
-            <CharacterImage
-                class="size-6 rounded-lg"
-                :character_id="audit.character.id"
-                :character_name="audit.character?.name"
-                v-if="audit.character"
-            />
-            <div v-else class="flex size-6 items-center justify-center rounded-lg bg-muted text-muted-foreground">S</div>
-        </div>
-        <span class="inline-block truncate" v-if="action === 'added'"
-            ><span class="text-neutral-900 dark:text-neutral-100">{{ actor }}</span> added
-            {{ resolvedSelectedSolarsystem?.solarsystem?.name ?? 'the system' }} to the map
+    <div class="flex items-center gap-2 border-b border-border/30 px-3 py-1.5 hover:bg-muted/30" :key="audit.id">
+        <CharacterImage
+            class="size-5 shrink-0 rounded"
+            :character_id="audit.character.id"
+            :character_name="audit.character?.name"
+            v-if="audit.character"
+        />
+        <div v-else class="flex size-5 shrink-0 items-center justify-center rounded bg-muted text-[10px] text-muted-foreground">S</div>
+
+        <span class="flex-1 truncate text-xs text-muted-foreground" v-if="action === 'added'">
+            <span class="text-foreground">{{ actor }}</span> added {{ resolvedSelectedSolarsystem?.solarsystem?.name ?? 'system' }}
         </span>
-        <span class="inline-block truncate" v-else-if="action === 'removed'"
-            ><span class="text-neutral-900 dark:text-neutral-100">{{ actor }}</span> removed
-            {{ resolvedSelectedSolarsystem?.solarsystem?.name ?? 'the system' }} from the map
+        <span class="flex-1 truncate text-xs text-muted-foreground" v-else-if="action === 'removed'">
+            <span class="text-foreground">{{ actor }}</span> removed {{ resolvedSelectedSolarsystem?.solarsystem?.name ?? 'system' }}
         </span>
-        <span class="inline-block truncate" v-else-if="action === 'moved'"
-            ><span class="text-neutral-900 dark:text-neutral-100">{{ actor }}</span> moved
-            {{ resolvedSelectedSolarsystem?.solarsystem?.name ?? 'the system' }} to a new position
+        <span class="flex-1 truncate text-xs text-muted-foreground" v-else-if="action === 'moved'">
+            <span class="text-foreground">{{ actor }}</span> moved {{ resolvedSelectedSolarsystem?.solarsystem?.name ?? 'system' }}
         </span>
-        <span class="inline-block truncate" v-else-if="action === 'updated'">
-            <span class="text-neutral-900 dark:text-neutral-100">{{ actor }}</span>
-            {{ updated_values }}</span
-        >
-        <span>
-            {{ formattedDate }}
+        <span class="flex-1 truncate text-xs text-muted-foreground" v-else-if="action === 'updated'">
+            <span class="text-foreground">{{ actor }}</span> {{ updated_values }}
         </span>
-        <span class="text-right text-muted-foreground">{{ timeAgo }}</span>
+
+        <span class="font-mono text-[10px] text-muted-foreground" :title="formattedDate">{{ timeAgo }}</span>
     </div>
 </template>
 

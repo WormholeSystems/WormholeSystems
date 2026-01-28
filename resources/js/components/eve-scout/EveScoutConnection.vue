@@ -2,10 +2,8 @@
 import DestinationContextMenu from '@/components/autopilot/DestinationContextMenu.vue';
 import RoutePopover from '@/components/autopilot/RoutePopover.vue';
 import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue';
-import SecurityStatus from '@/components/solarsystem/SecurityStatus.vue';
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import SolarsystemEffect from '@/components/solarsystem/SolarsystemEffect.vue';
 import type { TResolvedSolarsystem } from '@/pages/maps';
 import type { TEveScoutConnection } from '@/types/eve-scout';
 import type { TStaticSolarsystem } from '@/types/static-data';
@@ -49,54 +47,42 @@ const remainingHoursFormatted = computed(() => {
 
 <template>
     <DestinationContextMenu :solarsystem_id="otherSystem.id">
-        <div class="col-span-full grid grid-cols-subgrid items-center border-t px-2 py-1.5 text-xs hover:bg-muted/30">
-            <!-- System -->
-            <div class="flex min-w-0 items-center gap-1.5">
-                <SolarsystemClass v-if="otherSystem.class" :wormhole_class="otherSystem.class" class="shrink-0" />
-                <SecurityStatus v-else-if="otherSystem.security !== undefined" :security="otherSystem.security" class="shrink-0" />
-                <span class="truncate font-medium">{{ otherSystem.name }}</span>
-            </div>
+        <div class="col-span-full grid grid-cols-subgrid items-center border-b border-border/30 px-3 py-1.5 hover:bg-muted/30">
+            <SolarsystemClass :wormhole_class="otherSystem.class" :security="otherSystem.security" class="justify-self-center" />
 
-            <!-- Region -->
-            <div class="truncate text-muted-foreground">{{ otherSystem.region?.name || '-' }}</div>
+            <span class="truncate text-xs">{{ otherSystem.name }}</span>
 
-            <!-- Sovereignty -->
-            <div class="flex items-center gap-1.5">
-                <SolarsystemSovereignty :sovereignty="otherSystem.sovereignty" :solarsystem-id="otherSystem.id" class="size-3.5">
-                    <template #fallback>
-                        <span class="text-muted-foreground">-</span>
-                    </template>
-                </SolarsystemSovereignty>
-            </div>
+            <span class="truncate text-[10px] text-muted-foreground">{{ otherSystem.region?.name || '' }}</span>
 
-            <!-- Jumps -->
-            <div class="flex justify-center">
-                <RoutePopover :route="connection.route ?? undefined">
-                    <Button variant="secondary" size="sm" class="h-5 px-1.5 font-mono text-xs">
-                        <span v-if="connection.jumps_from_selected !== null">{{ connection.jumps_from_selected }}</span>
-                        <span v-else>-</span>
-                    </Button>
-                </RoutePopover>
-            </div>
+            <SolarsystemSovereignty :sovereignty="otherSystem.sovereignty" :solarsystem-id="otherSystem.id" class="size-4 justify-self-center">
+                <template #fallback>
+                    <SolarsystemEffect v-if="otherSystem.effect" :effect="otherSystem.effect.name" />
+                </template>
+            </SolarsystemSovereignty>
 
-            <!-- WH Type -->
-            <div class="flex justify-center">
-                <Badge variant="outline" class="h-5 px-1.5 font-mono text-xs">{{ connection.wormhole_type }}</Badge>
-            </div>
+            <RoutePopover :route="connection.route ?? undefined">
+                <span
+                    v-if="connection.jumps_from_selected !== null"
+                    class="cursor-pointer font-mono text-xs font-medium"
+                    :class="{
+                        'text-green-400': connection.jumps_from_selected < 8,
+                        'text-amber-400': connection.jumps_from_selected >= 8 && connection.jumps_from_selected < 15,
+                        'text-red-400': connection.jumps_from_selected >= 15,
+                    }"
+                >
+                    {{ connection.jumps_from_selected }}j
+                </span>
+                <span v-else class="font-mono text-[10px] text-muted-foreground/60">--</span>
+            </RoutePopover>
 
-            <!-- Sig In -->
-            <div class="text-center font-mono text-muted-foreground">{{ specialSignature }}</div>
+            <span class="font-mono text-[10px] text-muted-foreground">{{ specialSignature }}</span>
 
-            <!-- Sig Out -->
-            <div class="text-center font-mono text-muted-foreground">{{ otherSignature }}</div>
+            <span class="font-mono text-[10px] text-muted-foreground">{{ otherSignature }}</span>
 
-            <!-- Time -->
-            <div class="flex justify-center">
-                <Badge v-if="remainingHoursFormatted" variant="secondary" class="h-5 px-1.5 text-xs">
-                    {{ remainingHoursFormatted }}
-                </Badge>
-                <span v-else class="text-muted-foreground">-</span>
-            </div>
+            <span class="font-mono text-[10px] text-muted-foreground">{{ connection.wormhole_type }}</span>
+
+            <span v-if="remainingHoursFormatted" class="font-mono text-[10px] text-muted-foreground">{{ remainingHoursFormatted }}</span>
+            <span v-else class="font-mono text-[10px] text-muted-foreground/60">--</span>
         </div>
     </DestinationContextMenu>
 </template>

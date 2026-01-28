@@ -6,10 +6,10 @@ import PasteSignatureWarningDialog from '@/components/signatures/PasteSignatureW
 import Signature from '@/components/signatures/Signature.vue';
 import SignaturesEmptyState from '@/components/signatures/SignaturesEmptyState.vue';
 import SortHeader from '@/components/signatures/SortHeader.vue';
-import { Button } from '@/components/ui/button';
-import { CardAction, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import MapPanel from '@/components/ui/map-panel/MapPanel.vue';
 import MapPanelContent from '@/components/ui/map-panel/MapPanelContent.vue';
+import MapPanelHeader from '@/components/ui/map-panel/MapPanelHeader.vue';
+import MapPanelHeaderActionButton from '@/components/ui/map-panel/MapPanelHeaderActionButton.vue';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { createSignature, useSignatures } from '@/composables/map';
 import { usePasteSignatures } from '@/composables/map/composables/usePasteSignatures';
@@ -83,92 +83,92 @@ function createNewSignature() {
 
     <!-- Signatures list when system is selected -->
     <MapPanel v-if="map_solarsystem" class="overflow-x-hidden">
-        <CardHeader>
-            <CardTitle
-                >Signatures
-                <span class="text-muted-foreground" v-if="signatures.length">({{ signatures.length }})</span>
-            </CardTitle>
-            <CardDescription> All the signatures in this solarsystem. You can paste, copy and clear signatures here. </CardDescription>
-
-            <CardAction class="flex gap-2" v-if="can_write">
+        <MapPanelHeader>
+            Signatures
+            <span v-if="signatures.length" class="ml-1 text-amber-400">{{ signatures.length }}</span>
+            <template #actions v-if="can_write">
                 <Tooltip v-if="pasted_signatures">
                     <TooltipTrigger as-child>
-                        <Button v-if="pasted_signatures" @click="pasted_signatures = null" variant="secondary"> Unselect </Button>
+                        <MapPanelHeaderActionButton v-if="pasted_signatures" @click="pasted_signatures = null"> Unselect </MapPanelHeaderActionButton>
                     </TooltipTrigger>
                     <TooltipContent> Unselect signatures</TooltipContent>
                 </Tooltip>
                 <Tooltip v-if="deleted_signatures.length > 0">
                     <TooltipTrigger as-child>
-                        <Button @click="deleteMissingSignatures(true)" variant="destructive" size="icon"> <TrashIcon /> </Button>
+                        <MapPanelHeaderActionButton @click="deleteMissingSignatures(true)" variant="destructive" size="icon">
+                            <TrashIcon />
+                        </MapPanelHeaderActionButton>
                     </TooltipTrigger>
                     <TooltipContent> Delete missing signatures and their connections </TooltipContent>
                 </Tooltip>
                 <Tooltip>
                     <TooltipTrigger as-child>
-                        <Button @click="pasteSignatures" variant="secondary" size="icon">
+                        <MapPanelHeaderActionButton @click="pasteSignatures" size="icon">
                             <PasteIcon />
-                        </Button>
+                        </MapPanelHeaderActionButton>
                     </TooltipTrigger>
                     <TooltipContent> Paste signatures from clipboard (Ctrl/Cmd + V)</TooltipContent>
                 </Tooltip>
                 <Tooltip>
                     <TooltipTrigger as-child>
-                        <Button @click="createNewSignature" variant="secondary" size="icon">
+                        <MapPanelHeaderActionButton @click="createNewSignature" size="icon">
                             <PlusIcon />
-                        </Button>
+                        </MapPanelHeaderActionButton>
                     </TooltipTrigger>
                     <TooltipContent> Create new signature</TooltipContent>
                 </Tooltip>
-            </CardAction>
-        </CardHeader>
+            </template>
+        </MapPanelHeader>
         <MapPanelContent>
-            <div class="overflow-hidden rounded-lg border">
-                <div class="grid grid-cols-[auto_1fr_1fr_1fr_auto_auto] gap-x-2 divide-y">
-                    <div class="col-span-full grid grid-cols-subgrid border-b bg-muted/50 px-2 py-1.5 text-xs font-medium text-muted-foreground">
-                        <SortHeader
-                            label="ID"
-                            column="id"
-                            :is-current-column="sortPreferences.column === 'id'"
-                            :current-direction="sortPreferences.direction"
-                            @sort="handleSort"
-                        />
-                        <SortHeader
-                            label="Category"
-                            column="category"
-                            :is-current-column="sortPreferences.column === 'category'"
-                            :current-direction="sortPreferences.direction"
-                            @sort="handleSort"
-                        />
-                        <SortHeader
-                            label="Type"
-                            column="type"
-                            :is-current-column="sortPreferences.column === 'type'"
-                            :current-direction="sortPreferences.direction"
-                            @sort="handleSort"
-                        />
-                        <div class="text-left">Connection</div>
-                        <SortHeader
-                            label="Age"
-                            column="age"
-                            :is-current-column="sortPreferences.column === 'age'"
-                            :current-direction="sortPreferences.direction"
-                            @sort="handleSort"
-                        />
-                        <div></div>
-                    </div>
-                    <Signature
-                        v-for="signature in sorted"
-                        :signature="signature"
-                        :key="signature.id"
-                        :is_deleted="signature.deleted"
-                        :is_new="signature.new"
-                        :is_updated="signature.updated"
-                        :unconnected_connections="unconnected_connections"
-                        :connected_connections="connected_connections"
-                        :selected_map_solarsystem="map_solarsystem"
+            <div class="grid grid-cols-[auto_1fr_1fr_1fr_auto_auto] gap-x-2 text-xs">
+                <div
+                    class="col-span-full grid grid-cols-subgrid border-b border-border/30 bg-muted/20 px-3 py-1.5 font-mono text-[10px] tracking-wider text-muted-foreground uppercase"
+                >
+                    <SortHeader
+                        label="ID"
+                        column="id"
+                        :is-current-column="sortPreferences.column === 'id'"
+                        :current-direction="sortPreferences.direction"
+                        @sort="handleSort"
                     />
+                    <SortHeader
+                        label="Category"
+                        column="category"
+                        :is-current-column="sortPreferences.column === 'category'"
+                        :current-direction="sortPreferences.direction"
+                        @sort="handleSort"
+                    />
+                    <SortHeader
+                        label="Type"
+                        column="type"
+                        :is-current-column="sortPreferences.column === 'type'"
+                        :current-direction="sortPreferences.direction"
+                        @sort="handleSort"
+                    />
+                    <span>Conn</span>
+                    <SortHeader
+                        label="Age"
+                        column="age"
+                        :is-current-column="sortPreferences.column === 'age'"
+                        :current-direction="sortPreferences.direction"
+                        @sort="handleSort"
+                    />
+                    <span></span>
                 </div>
-                <div v-if="!signatures.length" class="p-4 text-center text-sm text-muted-foreground">No signatures found</div>
+                <Signature
+                    v-for="signature in sorted"
+                    :signature="signature"
+                    :key="signature.id"
+                    :is_deleted="signature.deleted"
+                    :is_new="signature.new"
+                    :is_updated="signature.updated"
+                    :unconnected_connections="unconnected_connections"
+                    :connected_connections="connected_connections"
+                    :selected_map_solarsystem="map_solarsystem"
+                />
+                <div v-if="!signatures.length" class="col-span-full flex h-full flex-col items-center justify-center gap-2 p-4">
+                    <p class="font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">No signatures</p>
+                </div>
             </div>
         </MapPanelContent>
     </MapPanel>
@@ -183,8 +183,4 @@ function createNewSignature() {
     />
 </template>
 
-<style scoped>
-tr:has([data-status='new']) {
-    background-color: var(--color-red-100);
-}
-</style>
+<style scoped></style>

@@ -2,9 +2,9 @@
 import PlusIcon from '@/components/icons/PlusIcon.vue';
 import SolarsystemEffect from '@/components/map/SolarsystemEffect.vue';
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
-import { Button } from '@/components/ui/button';
 import { Combobox, ComboboxAnchor, ComboboxEmpty, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxList } from '@/components/ui/combobox';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import MapPanelHeaderActionButton from '@/components/ui/map-panel/MapPanelHeaderActionButton.vue';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useStaticData } from '@/composables/useStaticData';
 import type { TMap, TResolvedMapRouteSolarsystem } from '@/pages/maps';
@@ -67,9 +67,9 @@ function handleSolarsystemSelect(solarsystem: TStaticSolarsystem) {
         <Tooltip>
             <DialogTrigger as-child>
                 <TooltipTrigger as-child>
-                    <Button variant="secondary" size="icon">
+                    <MapPanelHeaderActionButton size="icon">
                         <PlusIcon />
-                    </Button>
+                    </MapPanelHeaderActionButton>
                 </TooltipTrigger>
             </DialogTrigger>
             <TooltipContent> Add Solarsystem</TooltipContent>
