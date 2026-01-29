@@ -62,11 +62,11 @@ export function convertEveScoutConnections(connections: TEveScoutConnection[] | 
 
 function normalizeMassStatus(raw?: string | null): TMassStatus {
     const normalized = raw?.toLowerCase();
-    if (normalized === 'fresh') {
+    if (!normalized || normalized === 'unknown' || normalized === 'fresh' || normalized === 'stable') {
         return 'fresh';
     }
 
-    if (normalized === 'reduced') {
+    if (normalized === 'reduced' || normalized === 'destab') {
         return 'reduced';
     }
 

@@ -242,11 +242,25 @@ function clearTo() {
                     </SolarsystemSovereignty>
                 </div>
                 <div class="flex items-center justify-center">
-                    <Tooltip v-if="index < enrichedRoute.length - 1 && enrichedRoute[index + 1]?.connection_type === 'wormhole'">
+                    <Tooltip
+                        v-if="
+                            index < enrichedRoute.length - 1 &&
+                            (enrichedRoute[index]?.connection_type === 'wormhole' || enrichedRoute[index]?.connection_type === 'evescout')
+                        "
+                    >
                         <TooltipTrigger as-child>
-                            <ExtraWormholeIcon class="size-3.5 text-amber-500" />
+                            <ExtraWormholeIcon
+                                class="size-3.5"
+                                :class="enrichedRoute[index]?.connection_type === 'evescout' ? 'text-blue-400' : 'text-amber-500'"
+                            />
                         </TooltipTrigger>
-                        <TooltipContent> Take wormhole to {{ enrichedRoute[index + 1]?.solarsystem.name }} </TooltipContent>
+                        <TooltipContent>
+                            {{
+                                enrichedRoute[index]?.connection_type === 'evescout'
+                                    ? `EVE Scout to ${enrichedRoute[index + 1]?.solarsystem.name}`
+                                    : `Take wormhole to ${enrichedRoute[index + 1]?.solarsystem.name}`
+                            }}
+                        </TooltipContent>
                     </Tooltip>
                 </div>
 

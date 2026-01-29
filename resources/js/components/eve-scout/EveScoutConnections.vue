@@ -63,7 +63,8 @@ const selectedMapSolarsystem = useSelectedMapSolarsystem();
 const { resolveSolarsystem } = useStaticSolarsystems();
 const ignoredSystems = computed(() => page.props.ignored_systems ?? []);
 
-const targetIds = computed(() => {
+// Collect all unique target IDs and classify them
+const allTargetIds = computed(() => {
     if (!eve_scout_connections?.length) {
         return [] as number[];
     }
@@ -77,13 +78,84 @@ const targetIds = computed(() => {
     return Array.from(ids);
 });
 
-const { jumpsByTarget, routesByTarget } = useJumpCounts({
+// WH targets: both Thera and Turnur allowed as midpoints (full EVE Scout routing)
+const whTargetIds = computed(() => allTargetIds.value.filter((id) => resolveSolarsystem(id).class !== null));
+
+// K-space targets per tab: only the OTHER special system is allowed as midpoint
+// (Thera tab blocks Thera, Turnur tab blocks Turnur)
+function getKspaceTargetsForTab(specialSystem: string) {
+    return computed(() => {
+        const ids = new Set<number>();
+        for (const conn of eve_scout_connections ?? []) {
+            const inSystem = resolveSolarsystem(conn.in_system_id);
+            const outSystem = resolveSolarsystem(conn.out_system_id);
+            const isSpecial = inSystem.name === specialSystem || outSystem.name === specialSystem;
+            if (!isSpecial) continue;
+            const other = inSystem.name === specialSystem ? outSystem : inSystem;
+            if (other.class === null) ids.add(other.id);
+        }
+        return [...ids];
+    });
+}
+
+function getSpecialSystemId(specialSystem: string) {
+    return computed(() => {
+        for (const conn of eve_scout_connections ?? []) {
+            const inSystem = resolveSolarsystem(conn.in_system_id);
+            const outSystem = resolveSolarsystem(conn.out_system_id);
+            if (inSystem.name === specialSystem) return inSystem.id;
+            if (outSystem.name === specialSystem) return outSystem.id;
+        }
+        return null;
+    });
+}
+
+const theraKspaceTargetIds = getKspaceTargetsForTab('Thera');
+const turnurKspaceTargetIds = getKspaceTargetsForTab('Turnur');
+const theraSystemId = getSpecialSystemId('Thera');
+const turnurSystemId = getSpecialSystemId('Turnur');
+
+const sharedParams = {
     fromId: computed(() => selectedMapSolarsystem.value?.solarsystem_id ?? null),
-    targets: targetIds,
     mapConnections: computed(() => map.value.map_connections ?? []),
     mapSolarsystems: computed(() => map.value.map_solarsystems ?? []),
+};
+
+// WH: full EVE Scout routing, no blocking
+const { jumpsByTarget: whJumps, routesByTarget: whRoutes } = useJumpCounts({
+    ...sharedParams,
+    targets: whTargetIds,
     ignoredSystems,
+    includeEveScout: true,
 });
+
+// Thera k-space: EVE Scout enabled, block Thera as midpoint (Turnur shortcuts OK)
+const { jumpsByTarget: theraKspaceJumps, routesByTarget: theraKspaceRoutes } = useJumpCounts({
+    ...sharedParams,
+    targets: theraKspaceTargetIds,
+    ignoredSystems: computed(() => {
+        const base = page.props.ignored_systems ?? [];
+        return theraSystemId.value ? [...base, theraSystemId.value] : [...base];
+    }),
+    includeEveScout: true,
+});
+
+// Turnur k-space: EVE Scout enabled, block Turnur as midpoint (Thera shortcuts OK)
+const { jumpsByTarget: turnurKspaceJumps, routesByTarget: turnurKspaceRoutes } = useJumpCounts({
+    ...sharedParams,
+    targets: turnurKspaceTargetIds,
+    ignoredSystems: computed(() => {
+        const base = page.props.ignored_systems ?? [];
+        return turnurSystemId.value ? [...base, turnurSystemId.value] : [...base];
+    }),
+    includeEveScout: true,
+});
+
+// Merge results per tab
+const theraJumpsByTarget = computed(() => new Map([...theraKspaceJumps.value, ...whJumps.value]));
+const theraRoutesByTarget = computed(() => new Map([...theraKspaceRoutes.value, ...whRoutes.value]));
+const turnurJumpsByTarget = computed(() => new Map([...turnurKspaceJumps.value, ...whJumps.value]));
+const turnurRoutesByTarget = computed(() => new Map([...turnurKspaceRoutes.value, ...whRoutes.value]));
 
 const enrichedConnections = computed(() => {
     if (!eve_scout_connections) {
@@ -205,7 +277,8 @@ function resolveJumpCount(connection: TEnrichedEveScoutConnection, specialSystem
     }
 
     const otherSystem = getOtherSystem(connection, specialSystem);
-    return jumpsByTarget.value.get(otherSystem.id) ?? null;
+    const jumps = specialSystem === 'Thera' ? theraJumpsByTarget.value : turnurJumpsByTarget.value;
+    return jumps.get(otherSystem.id) ?? null;
 }
 
 function resolveRoute(connection: TEnrichedEveScoutConnection, specialSystem: string): TResolvedSolarsystem[] | null {
@@ -214,7 +287,8 @@ function resolveRoute(connection: TEnrichedEveScoutConnection, specialSystem: st
     }
 
     const otherSystem = getOtherSystem(connection, specialSystem);
-    const routeResult = routesByTarget.value.get(otherSystem.id);
+    const routes = specialSystem === 'Thera' ? theraRoutesByTarget.value : turnurRoutesByTarget.value;
+    const routeResult = routes.get(otherSystem.id);
 
     if (!routeResult) {
         return null;

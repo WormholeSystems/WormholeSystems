@@ -13,6 +13,7 @@ type UseJumpCountsParams = {
     mapConnections: MaybeRefOrGetter<TMapConnection[]>;
     mapSolarsystems: MaybeRefOrGetter<TMapSolarsystem[]>;
     ignoredSystems: MaybeRefOrGetter<number[]>;
+    includeEveScout?: MaybeRefOrGetter<boolean>;
 };
 
 export function useJumpCounts(params: UseJumpCountsParams) {
@@ -23,12 +24,19 @@ export function useJumpCounts(params: UseJumpCountsParams) {
     const routesByTarget = ref(new Map<number, WorkerRouteResult>());
     const isLoading = ref(false);
 
+    const useEveScout = computed(() => {
+        if (params.includeEveScout !== undefined) {
+            return toValue(params.includeEveScout) && mapUserSettings.value.route_use_evescout;
+        }
+        return mapUserSettings.value.route_use_evescout;
+    });
+
     const routingSettings = computed(() => ({
         routePreference: mapUserSettings.value.route_preference,
         securityPenalty: mapUserSettings.value.security_penalty,
         allowEol: mapUserSettings.value.route_allow_eol,
         massStatus: mapUserSettings.value.route_allow_mass_status,
-        useEveScout: mapUserSettings.value.route_use_evescout,
+        useEveScout: useEveScout.value,
     }));
 
     watch(
@@ -39,6 +47,7 @@ export function useJumpCounts(params: UseJumpCountsParams) {
             () => toValue(params.mapSolarsystems),
             () => toValue(params.ignoredSystems),
             () => routingSettings.value,
+            () => eveScoutConnections.value,
         ],
         async () => {
             const fromId = toValue(params.fromId);
@@ -58,9 +67,7 @@ export function useJumpCounts(params: UseJumpCountsParams) {
                 const dynamicConnections = convertMapConnectionsToWorkerEdges(toValue(params.mapConnections), toValue(params.mapSolarsystems)).map(
                     (edge) => ({ ...edge }),
                 );
-                const scoutConnections = convertEveScoutConnections(eveScoutConnections.value, mapUserSettings.value.route_use_evescout).map(
-                    (edge) => ({ ...edge }),
-                );
+                const scoutConnections = convertEveScoutConnections(eveScoutConnections.value, useEveScout.value).map((edge) => ({ ...edge }));
                 const ignored = [...(toValue(params.ignoredSystems) ?? [])];
                 const settings = { ...routingSettings.value };
                 const requests = targets.map((targetId, index) => ({
