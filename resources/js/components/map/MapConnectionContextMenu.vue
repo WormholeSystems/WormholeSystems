@@ -14,6 +14,7 @@ import { deleteMapConnection, TProcessedConnection, updateMapConnection } from '
 import { formatDateToISO } from '@/lib/utils';
 import { TLifetimeStatus, TMassStatus, TShipSize } from '@/types/models';
 import { UTCDate } from '@date-fns/utc';
+import type { AcceptableValue } from 'reka-ui';
 
 const { map_connection } = defineProps<{
     map_connection: TProcessedConnection;
@@ -23,15 +24,15 @@ function handleRemoveFromMap() {
     deleteMapConnection(map_connection);
 }
 
-function handleStatusChange(mass_status: TMassStatus | string) {
-    updateMapConnection(map_connection, { mass_status });
+function handleStatusChange(mass_status: AcceptableValue) {
+    updateMapConnection(map_connection, { mass_status: mass_status as TMassStatus });
 }
 
-function handleShipSizeChange(ship_size: TShipSize | string) {
-    updateMapConnection(map_connection, { ship_size });
+function handleShipSizeChange(ship_size: AcceptableValue) {
+    updateMapConnection(map_connection, { ship_size: ship_size as TShipSize });
 }
 
-function handleLifetimeChange(lifetime: TLifetimeStatus | string) {
+function handleLifetimeChange(lifetime: AcceptableValue) {
     updateMapConnection(map_connection, {
         lifetime: lifetime as TLifetimeStatus,
         lifetime_updated_at: formatDateToISO(new UTCDate()),
