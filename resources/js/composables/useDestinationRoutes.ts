@@ -38,6 +38,7 @@ export function useDestinationRoutes(params: UseDestinationRoutesParams) {
             () => toValue(params.mapSolarsystems),
             () => toValue(params.ignoredSystems),
             () => routingSettings.value,
+            () => eveScoutConnections.value,
         ],
         async () => {
             const fromId = toValue(params.fromId);
