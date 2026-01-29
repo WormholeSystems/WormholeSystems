@@ -20,6 +20,7 @@ import useUser from '@/composables/useUser';
 import { useWaypoint } from '@/composables/useWaypoint';
 import { TMapSolarsystem } from '@/pages/maps';
 import { TMapSolarsystemStatus } from '@/types/models';
+import type { AcceptableValue } from 'reka-ui';
 
 const { map_solarsystem } = defineProps<{
     map_solarsystem: TMapSolarsystem;
@@ -41,8 +42,8 @@ function handleRemoveFromMap() {
     deleteMapSolarsystem(map_solarsystem);
 }
 
-function handleStatusChange(status: string) {
-    updateMapSolarsystem(map_solarsystem, { status });
+function handleStatusChange(status: AcceptableValue) {
+    updateMapSolarsystem(map_solarsystem, { status: status as string });
 }
 
 const options: TMapSolarsystemStatus[] = ['unknown', 'friendly', 'hostile', 'active', 'unscanned', 'empty'];

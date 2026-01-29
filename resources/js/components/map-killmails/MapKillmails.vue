@@ -13,6 +13,7 @@ import MapUserSettings from '@/routes/map-user-settings';
 import { TKillmail, TMapUserSetting } from '@/types/models';
 import { router } from '@inertiajs/vue3';
 import { useEcho } from '@laravel/echo-vue';
+import type { AcceptableValue } from 'reka-ui';
 
 const { map_killmails, map_id, map_user_settings } = defineProps<{
     map_killmails?: TKillmail[];
@@ -24,11 +25,11 @@ type KillmailReceivedEvent = {
     killmail: TKillmail;
 };
 
-function handleFilterChange(value: 'all' | 'jspace' | 'kspace' | string) {
+function handleFilterChange(value: AcceptableValue) {
     router.put(
         MapUserSettings.update(map_user_settings.id).url,
         {
-            killmail_filter: value,
+            killmail_filter: value as string,
         },
         {
             only: ['map_killmails', 'map_user_settings'],

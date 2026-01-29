@@ -166,16 +166,16 @@ function cancelEditId() {
     signature_id.value = signature.signature_id || '';
 }
 
-function handleLifetimeChange(lifetime: string) {
+function handleLifetimeChange(lifetime: AcceptableValue) {
     handleChange({
-        lifetime: lifetime,
+        lifetime: lifetime as string,
         lifetime_updated_at: formatDateToISO(new UTCDate()),
     });
 }
 
-function handleMassStatusChange(mass_status: string) {
+function handleMassStatusChange(mass_status: AcceptableValue) {
     const value = mass_status === 'unknown' ? null : mass_status;
-    handleChange({ mass_status: value });
+    handleChange({ mass_status: value as string | null });
 }
 </script>
 
