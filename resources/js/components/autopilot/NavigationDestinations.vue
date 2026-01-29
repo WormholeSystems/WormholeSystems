@@ -6,7 +6,6 @@ import { useMap } from '@/composables/useMap';
 import { useSelectedMapSolarsystem } from '@/composables/useSelectedMapSolarsystem';
 import { useStaticSolarsystems } from '@/composables/useStaticSolarsystems';
 import type { TResolvedMapRouteSolarsystem } from '@/pages/maps';
-import type { WorkerRouteStep } from '@/routing/types';
 import { useLocalStorage } from '@vueuse/core';
 import { ArrowDown, ArrowUp } from 'lucide-vue-next';
 import { computed } from 'vue';
@@ -31,7 +30,11 @@ const { routesByDestination } = useDestinationRoutes({
 const resolvedDestinations = computed(() =>
     destinations.map((destination) => {
         const routeResult = routesByDestination.value.get(destination.id);
-        const route = routeResult?.route?.map((step: WorkerRouteStep) => resolveSolarsystem(step.id)) ?? [];
+        const route =
+            routeResult?.route?.map((step, index) => ({
+                ...resolveSolarsystem(step.id),
+                connection_type: routeResult.route[index + 1]?.via ?? null,
+            })) ?? [];
 
         return {
             ...destination,

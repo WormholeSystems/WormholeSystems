@@ -107,11 +107,22 @@ function onHover(hovered: boolean) {
                                     <SolarsystemEffect v-if="solarsystem.effect" :effect="solarsystem.effect.name" />
                                 </template>
                             </SolarsystemSovereignty>
-                            <Tooltip v-if="route && index < route.length - 1 && route[index + 1].connection_type === 'wormhole'">
+                            <Tooltip
+                                v-if="
+                                    route &&
+                                    index < route.length - 1 &&
+                                    (route[index].connection_type === 'wormhole' || route[index].connection_type === 'evescout')
+                                "
+                            >
                                 <TooltipTrigger as-child>
-                                    <ExtraWormholeIcon class="size-3.5 shrink-0 text-amber-500" />
+                                    <ExtraWormholeIcon
+                                        class="size-3.5 shrink-0"
+                                        :class="route[index].connection_type === 'evescout' ? 'text-blue-400' : 'text-amber-500'"
+                                    />
                                 </TooltipTrigger>
-                                <TooltipContent side="left">Wormhole</TooltipContent>
+                                <TooltipContent side="left">
+                                    {{ route[index].connection_type === 'evescout' ? 'EVE Scout' : 'Wormhole' }}
+                                </TooltipContent>
                             </Tooltip>
                             <span v-else class="size-3.5 shrink-0"></span>
                             <button
