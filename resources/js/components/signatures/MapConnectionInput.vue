@@ -44,16 +44,21 @@ function isNotFilterable(type: TSignatureType | null | undefined): type is null 
     <Select v-model:model-value="model" v-model:open="open">
         <SelectTrigger class="h-6 w-full text-xs">
             <SelectValue as-child>
-                <template v-if="selected">
-                    <span class="flex items-center gap-1">
-                        <SolarsystemClass :wormhole_class="selected.target.solarsystem.class" :security="selected.target.solarsystem?.security" />
-                        <span class="truncate" v-if="!selected.target!.alias">{{ selected.target.solarsystem.name }}</span>
-                        <span class="truncate" v-else>{{ selected.target?.alias }}</span>
+                <span>
+                    <span v-if="selected" class="inline-flex items-center gap-1">
+                        <SolarsystemClass
+                            :wormhole_class="selected.target.solarsystem.class"
+                            :security="selected.target.solarsystem?.security"
+                            class="w-5 shrink-0 text-center"
+                        />
+                        <span v-if="selected.target.alias" class="shrink-0 font-medium">{{ selected.target.alias }}</span>
+                        <span class="truncate text-muted-foreground" :class="{ '!text-foreground': !selected.target.alias }">
+                            {{ selected.target.solarsystem.name }}
+                        </span>
+                        <span class="shrink-0 text-muted-foreground/60">{{ selected.target.solarsystem.region?.name }}</span>
                     </span>
-                </template>
-                <template v-else>
-                    <span class="truncate text-muted-foreground">Connection</span>
-                </template>
+                    <span v-else class="truncate text-muted-foreground">Connection</span>
+                </span>
             </SelectValue>
         </SelectTrigger>
         <SelectContent class="max-h-72">
