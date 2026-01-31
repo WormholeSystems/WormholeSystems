@@ -33,7 +33,12 @@ final readonly class MapKillmailsFeature implements ProvidesInertiaProperties
      */
     private function getMapKills(): ResourceCollection
     {
-        return Killmail::query()->with('shipType')
+        return Killmail::query()
+            ->with([
+                'shipType',
+                'victimCorporation:id,name,ticker',
+                'victimAlliance:id,name,ticker',
+            ])
             ->whereIn('solarsystem_id', $this->map->mapSolarsystems->pluck('solarsystem_id'))
             ->when($this->filter === KillmailFilter::KSpace, fn (Builder $query) => $query->whereRelation('solarsystem', 'type', 'eve'))
             ->when($this->filter === KillmailFilter::JSpace, fn (Builder $query) => $query->whereRelation('solarsystem', 'type', 'wormhole'))

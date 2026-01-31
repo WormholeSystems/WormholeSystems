@@ -50,6 +50,12 @@ export type TFaction = {
     name: string;
 };
 
+export type TKillmailAffiliation = {
+    id: number;
+    name: string;
+    ticker: string;
+};
+
 export type TKillmail = {
     id: number;
     hash: string;
@@ -57,6 +63,8 @@ export type TKillmail = {
     ship_type: TType | null;
     data: TRawKillmail;
     zkb: TzKillboard;
+    victim_corporation: TKillmailAffiliation | null;
+    victim_alliance: TKillmailAffiliation | null;
     time: string;
 };
 

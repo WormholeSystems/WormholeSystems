@@ -30,6 +30,8 @@ final class KillmailResource extends JsonResource
             'data' => $this->data,
             'zkb' => $this->zkb,
             'ship_type' => $this->shipType?->toResource(TypeResource::class),
+            'victim_corporation' => $this->victimCorporation?->only(['id', 'name', 'ticker']),
+            'victim_alliance' => $this->victimAlliance?->only(['id', 'name', 'ticker']),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

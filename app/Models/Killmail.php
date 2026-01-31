@@ -23,6 +23,8 @@ use Staudenmeir\EloquentJsonRelations\HasJsonRelationships;
  * @property-read Fluent $zkb
  * @property-read Type|null $shipType
  * @property-read Solarsystem $solarsystem
+ * @property-read Corporation|null $victimCorporation
+ * @property-read Alliance|null $victimAlliance
  */
 final class Killmail extends Model
 {
@@ -49,10 +51,26 @@ final class Killmail extends Model
     }
 
     /**
-     * @return BelongsTo<Type,$this>
+     * @return BelongsTo<Type, $this>
      */
     public function shipType(): BelongsTo
     {
         return $this->belongsTo(Type::class, 'data->victim->ship_type_id', 'id');
+    }
+
+    /**
+     * @return BelongsTo<Corporation, $this>
+     */
+    public function victimCorporation(): BelongsTo
+    {
+        return $this->belongsTo(Corporation::class, 'data->victim->corporation_id', 'id');
+    }
+
+    /**
+     * @return BelongsTo<Alliance, $this>
+     */
+    public function victimAlliance(): BelongsTo
+    {
+        return $this->belongsTo(Alliance::class, 'data->victim->alliance_id', 'id');
     }
 }

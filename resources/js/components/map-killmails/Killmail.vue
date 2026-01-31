@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import DestinationContextMenu from '@/components/autopilot/DestinationContextMenu.vue';
 import QuestionIcon from '@/components/icons/QuestionIcon.vue';
+import { AllianceLogo, CharacterImage, CorporationLogo } from '@/components/images';
 import VictimImage from '@/components/map-killmails/VictimImage.vue';
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import { useMapSolarsystems } from '@/composables/map';
@@ -55,31 +56,110 @@ const total_worth = computed(() => {
     if (!killmail.zkb?.totalValue) return 'N/A';
     return formatISK(killmail.zkb.totalValue);
 });
+
+const attackerCount = computed(() => killmail.data.attackers.length);
+
+const attackerCountClass = computed(() => {
+    if (killmail.zkb?.awox) return 'text-purple-400';
+    if (killmail.zkb?.npc) return 'text-red-400';
+    if (killmail.zkb?.solo) return 'text-amber-400';
+    return 'text-muted-foreground';
+});
+
+const victimTicker = computed(() => {
+    return killmail.victim_alliance?.ticker ?? killmail.victim_corporation?.ticker ?? null;
+});
+
+const finalBlow = computed(() => killmail.data.attackers.find((a) => a.final_blow) ?? null);
 </script>
 
 <template>
     <DestinationContextMenu :solarsystem_id="staticSolarsystem.id">
-        <div class="flex items-center gap-2 border-b border-border/30 px-3 py-1.5 hover:bg-muted/30" v-element-hover="onHover">
-            <a :href="`https://zkillboard.com/kill/${killmail.id}/`" target="_blank" rel="noopener noreferrer" v-if="killmail.ship_type">
+        <div
+            class="col-span-full grid grid-cols-subgrid items-center border-b border-border/30 px-3 py-1.5 hover:bg-muted/30"
+            v-element-hover="onHover"
+        >
+            <!-- Victim info -->
+            <a
+                v-if="killmail.ship_type"
+                class="block size-5"
+                :href="`https://zkillboard.com/kill/${killmail.id}/`"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
                 <TypeImage class="size-5 rounded" :type_id="killmail.ship_type.id" :type_name="killmail.ship_type.name" />
             </a>
             <QuestionIcon v-else class="size-5 rounded text-muted-foreground" />
 
-            <a :href="`https://zkillboard.com/character/${killmail.data.victim.character_id}/`" target="_blank" rel="noopener noreferrer">
+            <a
+                class="block size-5"
+                :href="`https://zkillboard.com/character/${killmail.data.victim.character_id}/`"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
                 <VictimImage class="size-5 overflow-hidden rounded" :victim="killmail.data.victim" />
             </a>
 
-            <div class="flex min-w-0 flex-1 items-center gap-1.5">
-                <SolarsystemClass :wormhole_class="staticSolarsystem.class" :security="staticSolarsystem.security" class="shrink-0" />
-                <span v-if="map_solarsystem?.alias" class="truncate text-xs">
-                    <span class="font-mono font-medium">{{ map_solarsystem.alias }}</span>
-                </span>
-                <span v-else class="truncate font-mono text-xs">{{ staticSolarsystem.name }}</span>
-            </div>
+            <AllianceLogo
+                v-if="killmail.victim_alliance"
+                class="size-5 overflow-hidden rounded"
+                :alliance_id="killmail.victim_alliance.id"
+                :alliance_name="killmail.victim_alliance.name"
+            />
+            <CorporationLogo
+                v-else-if="killmail.victim_corporation"
+                class="size-5 overflow-hidden rounded"
+                :corporation_id="killmail.victim_corporation.id"
+                :corporation_name="killmail.victim_corporation.name"
+            />
+            <span v-else />
+
+            <span v-if="victimTicker" class="truncate font-mono text-[10px] text-muted-foreground">[{{ victimTicker }}]</span>
+            <span v-else />
+
+            <!-- Location -->
+            <SolarsystemClass :wormhole_class="staticSolarsystem.class" :security="staticSolarsystem.security" class="justify-self-center" />
+
+            <span v-if="map_solarsystem?.alias" class="truncate font-mono text-xs font-medium">{{ map_solarsystem.alias }}</span>
+            <span v-else class="truncate font-mono text-xs">{{ staticSolarsystem.name }}</span>
+
+            <span class="truncate text-[10px] text-muted-foreground">{{ staticSolarsystem.region?.name }}</span>
+
+            <!-- Attacker info -->
+            <a
+                v-if="finalBlow?.ship_type_id"
+                class="block size-5"
+                :href="`https://zkillboard.com/kill/${killmail.id}/`"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                <TypeImage class="size-5 rounded" :type_id="finalBlow.ship_type_id" type_name="Final Blow Ship" />
+            </a>
+            <span v-else />
+
+            <a
+                v-if="finalBlow?.character_id"
+                class="block size-5"
+                :href="`https://zkillboard.com/character/${finalBlow.character_id}/`"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                <CharacterImage class="size-5 overflow-hidden rounded" :character_id="finalBlow.character_id" character_name="Final Blow" />
+            </a>
+            <CorporationLogo
+                v-else-if="finalBlow?.corporation_id"
+                class="size-5 overflow-hidden rounded"
+                :corporation_id="finalBlow.corporation_id"
+                corporation_name="Final Blow"
+            />
+            <span v-else />
+
+            <span class="text-right font-mono text-[10px] font-medium" :class="attackerCountClass">{{ attackerCount }}</span>
+
+            <!-- Meta -->
+            <span class="text-right font-mono text-[10px] text-muted-foreground">{{ total_worth }}</span>
 
             <span class="font-mono text-[10px] text-muted-foreground">{{ time_ago }}</span>
-
-            <span class="hidden font-mono text-[10px] text-muted-foreground @lg:block">{{ total_worth }}</span>
         </div>
     </DestinationContextMenu>
 </template>
