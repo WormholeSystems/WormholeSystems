@@ -17,7 +17,7 @@ const { map_characters, map, selected_map_solarsystem, ignored_systems } = defin
     ignored_systems: number[];
 }>();
 
-const { resolveSolarsystem } = useStaticSolarsystems();
+const { resolveSolarsystem, getSolarsystemById } = useStaticSolarsystems();
 const activeCharacter = useActiveMapCharacter();
 
 const originSolarsystemId = computed(() => {
@@ -49,6 +49,7 @@ const resolved_characters = computed(() =>
     map_characters.map((character) => ({
         ...character,
         route: resolveRoute(character.status?.solarsystem_id ?? null),
+        static_solarsystem: getSolarsystemById(character.status?.solarsystem_id),
     })),
 );
 
@@ -124,11 +125,27 @@ function resolveRoute(targetId: number | null): TResolvedSolarsystem[] {
         </MapPanelHeader>
         <MapPanelContent>
             <template v-if="sorted_characters?.length">
-                <TransitionGroup name="list">
-                    <div v-for="character in sorted_characters" :key="character.id">
-                        <Character :character />
+                <div class="grid grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)_auto_minmax(0,1fr)_auto_minmax(0,1fr)] text-sm">
+                    <div
+                        class="col-span-full grid grid-cols-subgrid items-center gap-2 border-b border-border/50 bg-muted/50 px-3 py-1.5 font-mono text-[10px] tracking-wider text-muted-foreground uppercase"
+                    >
+                        <div></div>
+                        <div>Pilot</div>
+                        <div>Ship</div>
+                        <div></div>
+                        <div>Location</div>
+                        <div></div>
+                        <div class="text-right">Jumps</div>
                     </div>
-                </TransitionGroup>
+                    <TransitionGroup name="list">
+                        <Character
+                            v-for="character in sorted_characters"
+                            :key="character.id"
+                            :character="character"
+                            :static_solarsystem="character.static_solarsystem"
+                        />
+                    </TransitionGroup>
+                </div>
             </template>
             <div v-else class="flex h-full flex-col items-center justify-center gap-2 p-4">
                 <p class="font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">No pilots online</p>
