@@ -10,17 +10,21 @@ const props = defineProps<ToasterProps>();
     <Sonner
         class="toaster group"
         v-bind="props"
+        :close-button="true"
         :toastOptions="{
             unstyled: true,
             classes: {
-                'toast': 'dark:bg-neutral-950 bg-white text-neutral-500 border text-sm border-border p-4 rounded-lg shadow-lg',
-                title: 'text-base font-semibold dark:text-neutral-100 text-neutral-800',
-                description: 'text-sm mt-2',
+                toast: 'bg-card text-foreground border border-border/50 border-l-2 border-l-muted-foreground text-sm px-4 py-3 shadow-lg flex items-start gap-3 relative',
+                title: 'text-sm font-medium text-foreground',
+                description: 'text-xs text-muted-foreground mt-1',
                 icon: 'hidden',
-                closeButton: 'hidden',
-                actionButton: cn(buttonVariants({variant: 'default'}), 'mt-4')
+                closeButton: 'absolute top-2 right-2 size-5 flex items-center justify-center text-muted-foreground/60 hover:text-foreground transition-colors',
+                actionButton: cn(buttonVariants({variant: 'default', size: 'sm'}), 'mt-3'),
+                success: 'border-l-green-500',
+                error: 'border-l-red-500',
+                warning: 'border-l-amber-500',
+                info: 'border-l-blue-500',
             }
         }"
-        descriptionClass="text-neutral-400"
     />
 </template>

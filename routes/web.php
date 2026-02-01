@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\AboutController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BulkSignatureController;
 use App\Http\Controllers\EveController;
@@ -34,6 +35,7 @@ use App\Http\Controllers\WaypointController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [LandingController::class, 'index'])->name('landing')->middleware('guest');
+Route::get('about', [AboutController::class, 'index'])->name('about');
 Route::get('login', [LoginController::class, 'show'])->name('login');
 Route::get('auth', [AuthController::class, 'show'])->name('auth');
 Route::get('eve', [EveController::class, 'show'])->name('eve.show');

@@ -26,10 +26,27 @@ export function useNotifications() {
         () => page.props.notification,
         (notification) => {
             if (notification) {
-                toast(notification.title, {
+                const options = {
                     description: notification.message,
                     action: getToastAction(notification.action),
-                });
+                };
+
+                switch (notification.type) {
+                    case 'success':
+                        toast.success(notification.title, options);
+                        break;
+                    case 'error':
+                        toast.error(notification.title, options);
+                        break;
+                    case 'warning':
+                        toast.warning(notification.title, options);
+                        break;
+                    case 'info':
+                        toast.info(notification.title, options);
+                        break;
+                    default:
+                        toast(notification.title, options);
+                }
             }
         },
         { deep: true, immediate: true },

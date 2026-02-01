@@ -7,7 +7,7 @@ useNotifications();
 </script>
 
 <template>
-    <Toaster position="top-right" />
+    <Toaster position="top-center" />
 </template>
 
 <style scoped></style>
