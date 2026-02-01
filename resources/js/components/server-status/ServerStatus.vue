@@ -18,7 +18,7 @@ const intl_compact = new Intl.NumberFormat('en-US', {
 </script>
 
 <template>
-    <div class="flex items-center gap-4 rounded-lg border p-2 px-4" v-if="status">
+    <div class="flex items-center gap-3 font-mono text-xs text-muted-foreground" v-if="status">
         <span
             :data-online="status.players > 0"
             :data-vip="status.vip"
@@ -27,7 +27,7 @@ const intl_compact = new Intl.NumberFormat('en-US', {
         <span>{{ now_formatted }}</span>
         <Tooltip>
             <TooltipTrigger>
-                <span class="text-neutral-500">{{ intl_compact.format(status.players) }} </span>
+                <span class="text-muted-foreground/60">{{ intl_compact.format(status.players) }} </span>
             </TooltipTrigger>
             <TooltipContent>
                 Players online: <span class="font-semibold">{{ status.players.toLocaleString() }}</span>
