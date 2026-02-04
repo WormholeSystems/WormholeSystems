@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console\Commands\Killmails;
 
+use App\Actions\EnsureOrganisationExistsAction;
 use App\Console\Commands\AppCommand;
 use App\Models\Killmail;
 use Carbon\CarbonImmutable;
@@ -11,6 +12,8 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
+
+use function Laravel\Prompts\progress;
 
 final class GetKillmailsForDayCommand extends AppCommand
 {
@@ -33,7 +36,7 @@ final class GetKillmailsForDayCommand extends AppCommand
      *
      * @throws ConnectionException
      */
-    public function handle(): int
+    public function handle(EnsureOrganisationExistsAction $ensureOrganisationExistsAction): int
     {
         $date = CarbonImmutable::parse($this->argument('date'));
 
@@ -61,7 +64,7 @@ final class GetKillmailsForDayCommand extends AppCommand
 
         $this->extractKillmails($local_file);
 
-        $this->processKillmails();
+        $this->processKillmails($ensureOrganisationExistsAction);
 
         Storage::delete($local_file);
         Storage::deleteDirectory('killmails/killmails');
@@ -111,28 +114,41 @@ final class GetKillmailsForDayCommand extends AppCommand
 
     }
 
-    private function processKillmails(): void
+    private function processKillmails(EnsureOrganisationExistsAction $ensureOrganisationExistsAction): void
     {
         $files = Storage::files('killmails/killmails');
-        foreach ($files as $file) {
-            $this->info(sprintf('Processing %s', $file));
-            $content = Storage::json($file);
-            if (! $content) {
-                $this->info(sprintf('Failed to read %s, skipping', $file));
 
-                continue;
-            }
-            Killmail::query()->firstOrCreate([
-                'id' => $content['killmail_id'],
-                'hash' => $content['killmail_hash'],
-            ],
-                [
-                    'time' => $content['killmail_time'],
-                    'solarsystem_id' => $content['solar_system_id'],
-                    'data' => $content,
-                    'zkb' => [],
-                ]
-            );
+        if (empty($files)) {
+            $this->info('No killmail files to process.');
+
+            return;
         }
+
+        progress(
+            label: 'Processing killmails...',
+            steps: $files,
+            callback: function (string $file) use ($ensureOrganisationExistsAction): void {
+                $content = Storage::json($file);
+                if (! $content) {
+                    return;
+                }
+
+                Killmail::query()->firstOrCreate(
+                    [
+                        'id' => $content['killmail_id'],
+                        'hash' => $content['killmail_hash'],
+                    ],
+                    [
+                        'time' => $content['killmail_time'],
+                        'solarsystem_id' => $content['solar_system_id'],
+                        'data' => $content,
+                        'zkb' => [],
+                    ]
+                );
+
+                $ensureOrganisationExistsAction->ensureCorporationExists($content['victim']['corporation_id'] ?? null);
+                $ensureOrganisationExistsAction->ensureAllianceExists($content['victim']['alliance_id'] ?? null);
+            },
+        );
     }
 }
