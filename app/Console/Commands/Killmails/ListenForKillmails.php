@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console\Commands\Killmails;
 
+use App\Actions\EnsureOrganisationExistsAction;
 use App\Console\Commands\AppCommand;
 use App\Events\Killmails\KillmailReceivedEvent;
 use App\Http\Integrations\zKillboard\DTO\RedisQKillmail;
@@ -45,6 +46,7 @@ final class ListenForKillmails extends AppCommand
     public function __construct(
         private readonly zKillboard $zKillboard,
         private readonly Esi $esi,
+        private readonly EnsureOrganisationExistsAction $ensureOrganisationExistsAction,
         #[Config('services.zkillboard.identifier')] private readonly string $identifier,
         #[Config('services.zkillboard.max_age_days')] private readonly int $max_age_days,
     ) {
@@ -94,6 +96,9 @@ final class ListenForKillmails extends AppCommand
             }
 
             $redisQKillmail = $this->processKillmail($redisQKillmail, $esi_killmail);
+
+            $this->ensureOrganisationExistsAction->ensureCorporationExists($esi_killmail->victim->corporation_id);
+            $this->ensureOrganisationExistsAction->ensureAllianceExists($esi_killmail->victim->alliance_id);
 
             $this->notifyMaps($redisQKillmail);
 
