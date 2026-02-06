@@ -7,6 +7,7 @@ import path from 'path';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function generateStaticDataPlugin() {
     const runGenerateStaticData = () => {
         execSync('php artisan generate:static-data --no-interaction', {
@@ -33,7 +34,7 @@ export default defineConfig({
         },
     },
     plugins: [
-        generateStaticDataPlugin(),
+        // generateStaticDataPlugin(), // Inactive until container build process is updated to run this command
         laravel({
             input: ['resources/js/app.ts'],
             ssr: 'resources/js/ssr.ts',

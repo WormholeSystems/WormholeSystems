@@ -40,3 +40,4 @@ frankenphp-worker.php
 .DS_Store
 /.cursor/
 /.junie/
+tests/Browser/Screenshots/
