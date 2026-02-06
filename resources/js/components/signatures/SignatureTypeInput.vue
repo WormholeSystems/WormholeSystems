@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { getTypeById } from '@/const/signatures';
 import { TSignatureType } from '@/types/models';
 import { computed, ref } from 'vue';
 
@@ -19,7 +20,8 @@ const hasRawTypeName = computed(() => !model.value && rawTypeName);
 const open = ref(false);
 
 const selected_option = computed(() => {
-    return options.find((option) => option.id === model.value) || null;
+    if (!model.value) return null;
+    return options.find((option) => option.id === model.value) ?? getTypeById(model.value) ?? null;
 });
 </script>
 
