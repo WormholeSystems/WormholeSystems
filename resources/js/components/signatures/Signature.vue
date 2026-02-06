@@ -25,9 +25,9 @@ import type { TResolvedSelectedMapSolarsystem } from '@/pages/maps';
 import { TSignature, TSolarsystemClass } from '@/types/models';
 import { UTCDate } from '@date-fns/utc';
 import { syncRefs } from '@vueuse/core';
-import { MoreVertical } from 'lucide-vue-next';
+import { Cloud, Database, Fan, Gem, Landmark, MoreVertical, Swords } from 'lucide-vue-next';
 import { AcceptableValue } from 'reka-ui';
-import { computed, nextTick, ref, toRef } from 'vue';
+import { type Component, computed, nextTick, ref, toRef } from 'vue';
 
 const { signature, unconnected_connections, connected_connections, selected_map_solarsystem } = defineProps<{
     signature: TSignature;
@@ -99,11 +99,29 @@ const current_class = computed(() => {
 
 const categoryAbbrev: Record<string, string> = {
     Wormhole: 'WH',
-    Data: 'Data',
-    Relic: 'Relic',
-    Ore: 'Ore',
-    Gas: 'Gas',
-    Combat: 'Combat',
+    'Data Site': 'Data',
+    'Relic Site': 'Relic',
+    'Ore Site': 'Ore',
+    'Gas Site': 'Gas',
+    'Combat Site': 'Combat',
+};
+
+const categoryIcon: Record<string, Component> = {
+    Wormhole: Fan,
+    'Data Site': Database,
+    'Relic Site': Landmark,
+    'Ore Site': Gem,
+    'Gas Site': Cloud,
+    'Combat Site': Swords,
+};
+
+const categoryColor: Record<string, string> = {
+    Wormhole: 'text-sky-400',
+    'Data Site': 'text-cyan-400',
+    'Relic Site': 'text-amber-400',
+    'Combat Site': 'text-green-400',
+    'Gas Site': 'text-orange-400',
+    'Ore Site': 'text-yellow-400',
 };
 
 function getCategoryAbbrev(name?: string | null): string {
@@ -215,12 +233,22 @@ function handleMassStatusChange(mass_status: AcceptableValue) {
             <Select :model-value="signature.signature_category_id" @update:modelValue="handleCategoryChange" :disabled="!can_write">
                 <SelectTrigger class="h-6 w-full text-xs">
                     <SelectValue placeholder="Category">
-                        {{ getCategoryAbbrev(signature.signature_category?.name) }}
+                        <span class="flex items-center gap-1">
+                            <component
+                                :is="categoryIcon[signature.signature_category?.name ?? '']"
+                                class="size-3 shrink-0"
+                                :class="categoryColor[signature.signature_category?.name ?? '']"
+                            />
+                            {{ getCategoryAbbrev(signature.signature_category?.name) }}
+                        </span>
                     </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                     <SelectItem v-for="category in signatureCategories" :key="category.id" :value="category.id" class="text-xs">
-                        {{ category.name }}
+                        <span class="flex items-center gap-1.5">
+                            <component :is="categoryIcon[category.name]" class="size-3 shrink-0" :class="categoryColor[category.name]" />
+                            {{ category.name }}
+                        </span>
                     </SelectItem>
                 </SelectContent>
             </Select>

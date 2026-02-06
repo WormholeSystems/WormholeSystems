@@ -42,15 +42,22 @@ final readonly class PasteSignaturesAction
             $new_signatures = $signatures->filter(fn (RawSignatureData $signature): bool => $existing_signatures->firstWhere('signature_id', $signature->signature_id) === null);
             $updated_signatures = $signatures->filter(fn (RawSignatureData $signature): bool => $existing_signatures->firstWhere('signature_id', $signature->signature_id) !== null);
 
-            $new_signatures->each(fn (RawSignatureData $signature): Signature => $this->storeSignatureAction->handle(
-                $map_solarsystem,
-                NewSignatureData::from([
+            $new_signatures->each(function (RawSignatureData $signature) use ($map_solarsystem): Signature {
+                $data = [
                     'signature_id' => $signature->signature_id,
                     'signature_category_id' => $signature->signature_category_id,
                     'signature_type_id' => $signature->signature_type_id,
-                    'raw_type_name' => $signature->raw_type_name,
-                ])
-            ));
+                ];
+
+                if (! ($signature->raw_type_name instanceof Optional)) {
+                    $data['raw_type_name'] = $signature->raw_type_name;
+                }
+
+                return $this->storeSignatureAction->handle(
+                    $map_solarsystem,
+                    NewSignatureData::from($data)
+                );
+            });
 
             $updated_signatures->each(function (RawSignatureData $signature) use ($existing_signatures): void {
                 $existing_signature = $this->getExistingSignature($existing_signatures, $signature->signature_id);
@@ -116,7 +123,9 @@ final readonly class PasteSignaturesAction
      */
     private function resolveSignatureTypeId(RawSignatureData $signature, Signature $existingSignature): ?int
     {
-        if ($signature->signature_category_id !== $this->wormholeCategory->id && $signature->raw_type_name !== null) {
+        $has_raw_type_name = ! ($signature->raw_type_name instanceof Optional) && $signature->raw_type_name !== null;
+
+        if ($signature->signature_category_id !== $this->wormholeCategory->id && $has_raw_type_name) {
             return null;
         }
 
@@ -135,7 +144,7 @@ final readonly class PasteSignaturesAction
             return null;
         }
 
-        if ($signature->raw_type_name === null || $signature->raw_type_name === Optional::class) {
+        if ($signature->raw_type_name instanceof Optional || $signature->raw_type_name === null) {
             return $existingSignature->raw_type_name;
         }
 
