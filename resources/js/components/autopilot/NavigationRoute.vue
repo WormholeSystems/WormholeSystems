@@ -1,13 +1,11 @@
 <script setup lang="ts">
 import DestinationContextMenu from '@/components/autopilot/DestinationContextMenu.vue';
-import QuickSelectButtons from '@/components/autopilot/QuickSelectButtons.vue';
 import SystemComboboxList from '@/components/autopilot/SystemComboboxList.vue';
 import ExtraWormholeIcon from '@/components/icons/ExtraWormholeIcon.vue';
 import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue';
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import SolarsystemEffect from '@/components/solarsystem/SolarsystemEffect.vue';
-import { Button } from '@/components/ui/button';
-import { Combobox, ComboboxAnchor, ComboboxInput } from '@/components/ui/combobox';
+import { Combobox, ComboboxAnchor } from '@/components/ui/combobox';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useIgnoreList } from '@/composables/useIgnoreList';
 import { usePath } from '@/composables/usePath';
@@ -18,7 +16,8 @@ import type { ConnectionType } from '@/routing/types';
 import type { TCharacter, TCharacterStatus } from '@/types/models';
 import type { TStaticSolarsystem } from '@/types/static-data';
 import { vElementHover } from '@vueuse/components';
-import { X } from 'lucide-vue-next';
+import { ArrowUpDown, MapPin, Navigation, Search, X } from 'lucide-vue-next';
+import { ComboboxInput as RekaComboboxInput } from 'reka-ui';
 import { computed, ref, watch } from 'vue';
 
 const { map, solarsystems, selected_map_solarsystem, ignored_systems, active_character, character_status, destinations } = defineProps<{
@@ -75,6 +74,10 @@ const routeSolarsystems = computed(() => enrichedRoute.value.map((entry) => entr
 const hasRoute = computed(() => enrichedRoute.value.length > 0);
 const activeCharacterSystem = useStaticSolarsystem(() => (active_character ? (character_status?.solarsystem_id ?? null) : null));
 
+const pinnedDestinations = computed(() => destinations.filter((dest) => dest.is_pinned).slice(0, 3));
+
+const hasQuickPicks = computed(() => selected_map_solarsystem?.solarsystem || activeCharacterSystem.value || pinnedDestinations.value.length > 0);
+
 const filteredSolarsystems = computed(() => {
     const query = search.value.trim().toLowerCase();
     if (!query) {
@@ -123,6 +126,12 @@ function handleClearIgnoreList() {
     });
 }
 
+function swapSystems() {
+    const temp = fromSystem.value;
+    fromSystem.value = toSystem.value;
+    toSystem.value = temp;
+}
+
 function clearFrom() {
     fromSystem.value = null;
 }
@@ -133,114 +142,199 @@ function clearTo() {
 </script>
 
 <template>
-    <div class="bg-card p-6 pt-2">
-        <div class="mb-1.5">
-            <span class="text-xs font-medium text-muted-foreground">From</span>
-        </div>
+    <!-- From system bar -->
+    <div class="border-b border-border/30 px-3 py-2">
         <Combobox>
             <ComboboxAnchor class="w-full">
                 <template v-if="fromSystem">
-                    <div class="flex items-center-safe gap-2 rounded-lg border p-2">
-                        <SolarsystemClass :wormhole_class="fromSystem.class" :security="fromSystem.security" class="shrink-0" />
-                        <div class="min-w-0 flex-1 text-xs">
-                            <span class="font-medium">{{ fromSystem.name }}</span>
-                            <span class="text-muted-foreground"> · {{ fromSystem.region?.name }}</span>
-                        </div>
+                    <div class="flex h-8 items-center gap-1.5 rounded-md bg-muted/30 px-2">
+                        <span class="font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">From</span>
+                        <SolarsystemClass :wormhole_class="fromSystem.class" :security="fromSystem.security" class="shrink-0 text-xs" />
+                        <span class="min-w-0 flex-1 truncate text-sm">
+                            {{ fromSystem.name }}
+                            <span class="text-xs text-muted-foreground">· {{ fromSystem.region?.name }}</span>
+                        </span>
                         <SolarsystemSovereignty :sovereignty="fromSystem.sovereignty" :solarsystem-id="fromSystem.id" class="shrink-0">
                             <template #fallback>
                                 <SolarsystemEffect v-if="fromSystem.effect" :effect="fromSystem.effect.name" class="shrink-0" />
                                 <span v-else />
                             </template>
                         </SolarsystemSovereignty>
-                        <Button variant="ghost" size="icon" @click="clearFrom" class="h-6 w-6 shrink-0">
+                        <button class="shrink-0 text-muted-foreground/40 hover:text-foreground" @click="clearFrom">
                             <X class="size-3" />
-                        </Button>
+                        </button>
                     </div>
                 </template>
                 <template v-else>
-                    <ComboboxInput v-model="search" placeholder="Search system..." class="rounded-lg border" />
+                    <div class="flex items-center gap-2 rounded-md bg-muted/30 px-2">
+                        <Search class="size-3.5 shrink-0 text-muted-foreground/40" />
+                        <RekaComboboxInput
+                            v-model="search"
+                            placeholder="From system..."
+                            class="h-8 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/40"
+                        />
+                    </div>
                 </template>
             </ComboboxAnchor>
             <SystemComboboxList :solarsystems="filteredSolarsystems" @select="handleFromSystemSelect" />
         </Combobox>
-        <QuickSelectButtons
-            v-if="!fromSystem"
-            :selected_map_solarsystem="selected_map_solarsystem"
-            :active_character_system="activeCharacterSystem"
-            :destinations="destinations"
-            @select-system="handleFromSystemSelect"
-        />
-
-        <!-- To System -->
-        <div class="mt-4 mb-1.5">
-            <span class="text-xs font-medium text-muted-foreground">To</span>
+        <div v-if="hasQuickPicks" class="mt-1.5 flex flex-wrap gap-1.5">
+            <button
+                v-if="selected_map_solarsystem?.solarsystem"
+                class="inline-flex items-center gap-1.5 rounded-md border border-border/40 bg-muted/30 px-2 py-1 text-xs transition-colors hover:bg-muted/60"
+                @click="handleFromSystemSelect(selected_map_solarsystem.solarsystem)"
+            >
+                <SolarsystemClass
+                    :wormhole_class="selected_map_solarsystem.solarsystem.class"
+                    :security="selected_map_solarsystem.solarsystem.security"
+                    class="shrink-0 text-[10px]"
+                />
+                <span>{{ selected_map_solarsystem.solarsystem.name }}</span>
+                <MapPin class="size-3 shrink-0 text-muted-foreground" />
+            </button>
+            <button
+                v-if="activeCharacterSystem"
+                class="inline-flex items-center gap-1.5 rounded-md border border-border/40 bg-muted/30 px-2 py-1 text-xs transition-colors hover:bg-muted/60"
+                @click="handleFromSystemSelect(activeCharacterSystem)"
+            >
+                <SolarsystemClass
+                    :wormhole_class="activeCharacterSystem.class"
+                    :security="activeCharacterSystem.security"
+                    class="shrink-0 text-[10px]"
+                />
+                <span>{{ activeCharacterSystem.name }}</span>
+                <Navigation class="size-3 shrink-0 text-muted-foreground" />
+            </button>
+            <button
+                v-for="dest in pinnedDestinations"
+                :key="dest.id"
+                class="inline-flex items-center gap-1.5 rounded-md border border-border/40 bg-muted/30 px-2 py-1 text-xs transition-colors hover:bg-muted/60"
+                @click="handleFromSystemSelect(dest.solarsystem)"
+            >
+                <SolarsystemClass :wormhole_class="dest.solarsystem.class" :security="dest.solarsystem.security" class="shrink-0 text-[10px]" />
+                <span>{{ dest.solarsystem.name }}</span>
+            </button>
         </div>
+    </div>
+
+    <!-- Swap button -->
+    <div class="flex justify-center border-b border-border/30 py-0.5">
+        <button class="inline-flex items-center gap-1 text-muted-foreground/40 transition-colors hover:text-foreground" @click="swapSystems">
+            <ArrowUpDown class="size-3" />
+            <span class="font-mono text-[10px] tracking-wider uppercase">Swap</span>
+        </button>
+    </div>
+
+    <!-- To system bar -->
+    <div class="border-b border-border/30 px-3 py-2">
         <Combobox>
             <ComboboxAnchor class="w-full">
                 <template v-if="toSystem">
-                    <div class="flex items-center-safe gap-2 rounded-lg border p-2">
-                        <SolarsystemClass :wormhole_class="toSystem.class" :security="toSystem.security" class="shrink-0" />
-                        <div class="min-w-0 flex-1 text-xs">
-                            <span class="font-medium">{{ toSystem.name }}</span>
-                            <span class="text-muted-foreground"> · {{ toSystem.region?.name }}</span>
-                        </div>
+                    <div class="flex h-8 items-center gap-1.5 rounded-md bg-muted/30 px-2">
+                        <span class="font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">To</span>
+                        <SolarsystemClass :wormhole_class="toSystem.class" :security="toSystem.security" class="shrink-0 text-xs" />
+                        <span class="min-w-0 flex-1 truncate text-sm">
+                            {{ toSystem.name }}
+                            <span class="text-xs text-muted-foreground">· {{ toSystem.region?.name }}</span>
+                        </span>
                         <SolarsystemSovereignty :sovereignty="toSystem.sovereignty" :solarsystem-id="toSystem.id" class="shrink-0">
                             <template #fallback>
                                 <SolarsystemEffect v-if="toSystem.effect" :effect="toSystem.effect.name" class="shrink-0" />
                                 <span v-else />
                             </template>
                         </SolarsystemSovereignty>
-                        <Button variant="ghost" size="icon" @click="clearTo" class="h-6 w-6 shrink-0">
+                        <button class="shrink-0 text-muted-foreground/40 hover:text-foreground" @click="clearTo">
                             <X class="size-3" />
-                        </Button>
+                        </button>
                     </div>
                 </template>
                 <template v-else>
-                    <ComboboxInput v-model="search" placeholder="Search system..." class="rounded-lg border" />
+                    <div class="flex items-center gap-2 rounded-md bg-muted/30 px-2">
+                        <Search class="size-3.5 shrink-0 text-muted-foreground/40" />
+                        <RekaComboboxInput
+                            v-model="search"
+                            placeholder="To system..."
+                            class="h-8 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/40"
+                        />
+                    </div>
                 </template>
             </ComboboxAnchor>
             <SystemComboboxList :solarsystems="filteredSolarsystems" @select="handleToSystemSelect" />
         </Combobox>
-        <QuickSelectButtons
-            v-if="!toSystem"
-            :selected_map_solarsystem="selected_map_solarsystem"
-            :active_character_system="activeCharacterSystem"
-            :destinations="destinations"
-            @select-system="handleToSystemSelect"
-        />
-    </div>
-
-    <!-- Route Controls -->
-    <div v-if="fromSystem && toSystem" class="flex items-center justify-between p-2">
-        <span v-if="hasRoute" class="text-sm text-muted-foreground">{{ routeJumps }} jumps</span>
-        <Button v-if="ignored_systems.length > 0" variant="secondary" size="sm" @click="handleClearIgnoreList">
-            Clear Ignored ({{ ignored_systems.length }})
-        </Button>
-    </div>
-
-    <!-- Route Results -->
-    <div v-if="hasRoute" v-element-hover="onRouteHover" class="grid grid-cols-[auto_auto_1fr_auto_auto_auto] rounded-lg border bg-card text-sm">
-        <DestinationContextMenu v-for="(entry, index) in enrichedRoute" :key="entry.solarsystem.id" :solarsystem_id="entry.solarsystem.id">
-            <div
-                class="col-span-full grid grid-cols-subgrid items-center gap-2 border-b px-2.5 py-1.5 transition-colors last:border-b-0 hover:bg-accent/50"
+        <div v-if="hasQuickPicks" class="mt-1.5 flex flex-wrap gap-1.5">
+            <button
+                v-if="selected_map_solarsystem?.solarsystem"
+                class="inline-flex items-center gap-1.5 rounded-md border border-border/40 bg-muted/30 px-2 py-1 text-xs transition-colors hover:bg-muted/60"
+                @click="handleToSystemSelect(selected_map_solarsystem.solarsystem)"
             >
-                <div class="flex items-center justify-center text-xs font-medium text-muted-foreground">
-                    {{ index + 1 }}
-                </div>
-                <div class="justify-self-center">
-                    <SolarsystemClass :wormhole_class="entry.solarsystem.class" :security="entry.solarsystem.security" />
-                </div>
-                <div class="min-w-0 text-xs">
-                    <span class="font-medium">{{ entry.solarsystem.name }}</span>
-                    <span class="text-muted-foreground"> · {{ entry.solarsystem.region?.name }}</span>
-                </div>
-                <div class="flex items-center justify-center">
-                    <SolarsystemSovereignty :sovereignty="entry.solarsystem.sovereignty" :solarsystem-id="entry.solarsystem.id">
-                        <template #fallback>
-                            <SolarsystemEffect v-if="entry.solarsystem.effect" :effect="entry.solarsystem.effect.name" />
-                        </template>
-                    </SolarsystemSovereignty>
-                </div>
+                <SolarsystemClass
+                    :wormhole_class="selected_map_solarsystem.solarsystem.class"
+                    :security="selected_map_solarsystem.solarsystem.security"
+                    class="shrink-0 text-[10px]"
+                />
+                <span>{{ selected_map_solarsystem.solarsystem.name }}</span>
+                <MapPin class="size-3 shrink-0 text-muted-foreground" />
+            </button>
+            <button
+                v-if="activeCharacterSystem"
+                class="inline-flex items-center gap-1.5 rounded-md border border-border/40 bg-muted/30 px-2 py-1 text-xs transition-colors hover:bg-muted/60"
+                @click="handleToSystemSelect(activeCharacterSystem)"
+            >
+                <SolarsystemClass
+                    :wormhole_class="activeCharacterSystem.class"
+                    :security="activeCharacterSystem.security"
+                    class="shrink-0 text-[10px]"
+                />
+                <span>{{ activeCharacterSystem.name }}</span>
+                <Navigation class="size-3 shrink-0 text-muted-foreground" />
+            </button>
+            <button
+                v-for="dest in pinnedDestinations"
+                :key="dest.id"
+                class="inline-flex items-center gap-1.5 rounded-md border border-border/40 bg-muted/30 px-2 py-1 text-xs transition-colors hover:bg-muted/60"
+                @click="handleToSystemSelect(dest.solarsystem)"
+            >
+                <SolarsystemClass :wormhole_class="dest.solarsystem.class" :security="dest.solarsystem.security" class="shrink-0 text-[10px]" />
+                <span>{{ dest.solarsystem.name }}</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Route info bar -->
+    <div v-if="fromSystem && toSystem" class="flex items-center justify-between border-b border-border/30 px-3 py-1.5">
+        <span v-if="hasRoute" class="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">{{ routeJumps }} jumps</span>
+        <button
+            v-if="ignored_systems.length > 0"
+            class="font-mono text-[10px] text-muted-foreground hover:text-foreground"
+            @click="handleClearIgnoreList"
+        >
+            Clear {{ ignored_systems.length }} ignored
+        </button>
+    </div>
+
+    <!-- Route results -->
+    <div v-if="hasRoute" v-element-hover="onRouteHover" class="grid grid-cols-[1.5rem_1.5rem_auto_1.25rem_1rem_1.25rem] gap-x-2">
+        <DestinationContextMenu v-for="(entry, index) in enrichedRoute" :key="entry.solarsystem.id" :solarsystem_id="entry.solarsystem.id">
+            <div class="col-span-full grid grid-cols-subgrid items-center border-b border-border/30 px-3 py-1 hover:bg-muted/30">
+                <span class="text-center font-mono text-[10px] text-muted-foreground/60">{{ index + 1 }}</span>
+
+                <SolarsystemClass :wormhole_class="entry.solarsystem.class" :security="entry.solarsystem.security" class="justify-self-center" />
+
+                <span class="min-w-0 truncate text-xs">
+                    {{ entry.solarsystem.name }}
+                    <span class="text-[10px] text-muted-foreground">· {{ entry.solarsystem.region?.name }}</span>
+                </span>
+
+                <SolarsystemSovereignty
+                    :sovereignty="entry.solarsystem.sovereignty"
+                    :solarsystem-id="entry.solarsystem.id"
+                    class="size-4 justify-self-center"
+                >
+                    <template #fallback>
+                        <SolarsystemEffect v-if="entry.solarsystem.effect" :effect="entry.solarsystem.effect.name" />
+                    </template>
+                </SolarsystemSovereignty>
+
                 <div class="flex items-center justify-center">
                     <Tooltip
                         v-if="
@@ -265,24 +359,24 @@ function clearTo() {
                 </div>
 
                 <div class="flex items-center justify-center">
-                    <Tooltip v-if="index !== 0 && index !== enrichedRoute.length - 1">
-                        <TooltipTrigger as-child>
-                            <Button variant="ghost" size="icon" class="h-6 w-6" @click="handleIgnoreSolarsystem(entry.solarsystem.id)">
-                                <X class="h-3 w-3" />
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Ignore this system</TooltipContent>
-                    </Tooltip>
+                    <button
+                        v-if="index !== 0 && index !== enrichedRoute.length - 1"
+                        class="text-muted-foreground/40 hover:text-destructive"
+                        @click.stop="handleIgnoreSolarsystem(entry.solarsystem.id)"
+                    >
+                        <X class="size-3" />
+                    </button>
                 </div>
             </div>
         </DestinationContextMenu>
     </div>
-    <div v-else-if="fromSystem && toSystem" class="flex items-center justify-center py-6 text-sm text-muted-foreground">
-        No route found between the selected systems.
+
+    <!-- Empty states -->
+    <div v-else-if="fromSystem && toSystem" class="flex h-full flex-col items-center justify-center p-4">
+        <p class="font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">No route found</p>
     </div>
-    <div v-else class="flex flex-col items-center justify-center gap-2 py-6 text-center text-sm text-muted-foreground">
-        <p>Select both a starting system and destination to calculate the shortest path.</p>
-        <p v-if="selected_map_solarsystem || activeCharacterSystem" class="text-xs">Use the quick select buttons above to get started.</p>
+    <div v-else class="flex h-full flex-col items-center justify-center p-4">
+        <p class="font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">Select origin and destination</p>
     </div>
 </template>
 

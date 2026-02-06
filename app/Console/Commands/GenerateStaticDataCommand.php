@@ -6,8 +6,10 @@ namespace App\Console\Commands;
 
 use App\Models\Constellation;
 use App\Models\Region;
+use App\Models\Service;
 use App\Models\Solarsystem;
 use App\Models\Sovereignty;
+use App\Models\Station;
 use App\Models\WormholeStatic;
 use App\Utilities\CCPRounding;
 use Illuminate\Console\Command;
@@ -19,6 +21,12 @@ use function collect;
 
 final class GenerateStaticDataCommand extends Command
 {
+    private const int SERVICE_SECURITY_OFFICE = 27;
+
+    private const int CORPORATION_CONCORD = 1000125;
+
+    private const int CORPORATION_DED = 1000137;
+
     protected $signature = 'generate:static-data';
 
     protected $description = 'Generate static data files for client-side routing';
@@ -61,6 +69,20 @@ final class GenerateStaticDataCommand extends Command
             ->values()
             ->all();
 
+        // Build services lookup (id → name)
+        $services = Service::query()
+            ->orderBy('id')
+            ->get()
+            ->map(fn (Service $service): array => [
+                'id' => $service->id,
+                'name' => $service->name,
+            ])
+            ->values()
+            ->all();
+
+        // Build solarsystem → services mapping
+        $solarsystemServices = $this->computeSolarsystemServices();
+
         $solarsystems = Solarsystem::query()
             ->withCount('stations')
             ->with([
@@ -71,7 +93,7 @@ final class GenerateStaticDataCommand extends Command
             ])
             ->orderBy('id')
             ->get()
-            ->map(fn (Solarsystem $solarsystem): array => $this->formatSolarsystem($solarsystem))
+            ->map(fn (Solarsystem $solarsystem): array => $this->formatSolarsystem($solarsystem, $solarsystemServices))
             ->values()
             ->all();
 
@@ -96,6 +118,7 @@ final class GenerateStaticDataCommand extends Command
         $this->writePlainJson("{$resourcesPath}/constellations.json", $constellations);
         $this->writePlainJson("{$resourcesPath}/solarsystems.json", $solarsystems);
         $this->writePlainJson("{$resourcesPath}/connections.json", $connections);
+        $this->writePlainJson("{$resourcesPath}/services.json", $services);
         $this->writeCompressedJson("{$storagePath}/sovereignty.json.gz", $sovereignties);
 
         $this->info("✓ Static data written to {$resourcesPath}");
@@ -104,7 +127,10 @@ final class GenerateStaticDataCommand extends Command
         return Command::SUCCESS;
     }
 
-    private function formatSolarsystem(Solarsystem $solarsystem): array
+    /**
+     * @param  array<int, int[]>  $solarsystemServices
+     */
+    private function formatSolarsystem(Solarsystem $solarsystem, array $solarsystemServices): array
     {
         return [
             'id' => $solarsystem->id,
@@ -124,6 +150,7 @@ final class GenerateStaticDataCommand extends Command
             ],
             'has_jove_observatory' => $solarsystem->has_jove_observatory,
             'has_stations' => $solarsystem->stations_count > 0,
+            'services' => $solarsystemServices[$solarsystem->id] ?? [],
             'statics' => $solarsystem->wormholeSystem?->wormholeStatics?->map(
                 static fn (WormholeStatic $static): array => [
                     'id' => $static->wormhole->id,
@@ -137,7 +164,6 @@ final class GenerateStaticDataCommand extends Command
             'effect' => $this->getWormholeEffects($solarsystem),
             'position2D' => $this->getPosition2dArray($solarsystem),
         ];
-
     }
 
     private function formatSovereignty(Sovereignty $sovereignty): array
@@ -186,6 +212,73 @@ final class GenerateStaticDataCommand extends Command
             'id' => $sovereignty->faction->id,
             'name' => $sovereignty->faction->name,
         ];
+    }
+
+    /**
+     * Compute services available in each solarsystem based on stations.
+     *
+     * The SDE lists Security Office (27) on many operation types, but per CCP docs
+     * only lowsec CONCORD/DED stations actually provide this service.
+     *
+     * @return array<int, int[]> Map of solarsystem_id => array of service IDs
+     */
+    private function computeSolarsystemServices(): array
+    {
+        $solarsystemServices = [];
+
+        $securityBySolarsystem = Solarsystem::query()
+            ->pluck('security', 'id')
+            ->all();
+
+        Station::query()
+            ->whereNotNull('operation_id')
+            ->with('operation.services')
+            ->chunk(1000, function ($stations) use (&$solarsystemServices, $securityBySolarsystem): void {
+                foreach ($stations as $station) {
+                    $solarsystemId = $station->solarsystem_id;
+                    $security = $securityBySolarsystem[$solarsystemId] ?? 1.0;
+
+                    $services = $station->operation->services
+                        ->filter(fn (Service $service): bool => $this->isServiceAvailable($service->id, $station->owner_id, $security))
+                        ->pluck('id')
+                        ->all();
+
+                    if (empty($services)) {
+                        continue;
+                    }
+
+                    if (! isset($solarsystemServices[$solarsystemId])) {
+                        $solarsystemServices[$solarsystemId] = [];
+                    }
+
+                    $solarsystemServices[$solarsystemId] = array_values(
+                        array_unique(array_merge($solarsystemServices[$solarsystemId], $services))
+                    );
+                }
+            });
+
+        // Sort service IDs for consistency
+        foreach (array_keys($solarsystemServices) as $id) {
+            sort($solarsystemServices[$id]);
+        }
+
+        return $solarsystemServices;
+    }
+
+    /**
+     * Check if a service is actually available at a station.
+     *
+     * Security Office (27) is only available at lowsec CONCORD (1000125) / DED (1000137) stations.
+     */
+    private function isServiceAvailable(int $serviceId, ?int $ownerId, float $security): bool
+    {
+        if ($serviceId === self::SERVICE_SECURITY_OFFICE) {
+            $rounded = CCPRounding::roundSecurity($security);
+
+            return $rounded < 0.5 && in_array($ownerId, [self::CORPORATION_CONCORD, self::CORPORATION_DED], true);
+        }
+
+        return true;
     }
 
     private function getWormholeEffects(Solarsystem $solarsystem): ?array

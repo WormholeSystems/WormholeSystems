@@ -203,10 +203,14 @@ function calculateClosestSystems(
     ignored: Set<number>,
 ): WorkerClosestResult {
     const visited = new Set<number>(ignored);
+    const previous = new Map<number, number | null>();
+    const viaMap = new Map<number, ConnectionType | null>();
     const queue = new PriorityQueue<{ id: number; jumps: number }>();
     const results: WorkerClosestSystem[] = [];
 
     visited.add(request.fromId);
+    previous.set(request.fromId, null);
+    viaMap.set(request.fromId, null);
     queue.push({ id: request.fromId, jumps: 0 }, 0);
 
     while (!queue.isEmpty() && results.length < request.limit) {
@@ -242,6 +246,8 @@ function calculateClosestSystems(
 
             if (!visited.has(neighbor.to)) {
                 visited.add(neighbor.to);
+                previous.set(neighbor.to, currentId);
+                viaMap.set(neighbor.to, neighbor.type);
                 queue.push({ id: neighbor.to, jumps: nextJumps }, nextCost);
 
                 if (matchesCondition(targetNode, request.condition)) {
@@ -249,6 +255,7 @@ function calculateClosestSystems(
                         solarsystem_id: neighbor.to,
                         jumps: nextJumps,
                         cost: nextCost,
+                        route: reconstructRoute(neighbor.to, previous, viaMap),
                     });
 
                     if (results.length >= request.limit) {
@@ -260,6 +267,19 @@ function calculateClosestSystems(
     }
 
     return { id: request.id, type: 'closest', results };
+}
+
+function reconstructRoute(targetId: number, previous: Map<number, number | null>, viaMap: Map<number, ConnectionType | null>): WorkerRouteStep[] {
+    const path: WorkerRouteStep[] = [];
+    let node: number | null = targetId;
+
+    while (node !== null) {
+        path.push({ id: node, via: viaMap.get(node) ?? null });
+        node = previous.get(node) ?? null;
+    }
+
+    path.reverse();
+    return path;
 }
 
 function getNeighbors(nodeId: number, dynamicAdj: Map<number, GraphEdge[]>, eveScoutAdj: Map<number, GraphEdge[]>): GraphEdge[] {
@@ -324,6 +344,15 @@ function getEdgeCost(settings: RoutingSettings, security: number, _type: Connect
 }
 
 function matchesCondition(system: TStaticSolarsystem, condition: string): boolean {
+    // Handle service conditions (e.g., "service_10" for service ID 10)
+    if (condition.startsWith('service_')) {
+        const serviceId = parseInt(condition.substring(8), 10);
+        if (!Number.isNaN(serviceId)) {
+            return system.services?.includes(serviceId) ?? false;
+        }
+        return false;
+    }
+
     switch (condition) {
         case 'observatories':
             return Boolean(system.has_jove_observatory);

@@ -17,10 +17,16 @@ export type TStaticConstellation = {
     };
 };
 
+export type TStaticService = {
+    id: number;
+    name: string;
+};
+
 export type TStaticSolarsystem = TSolarsystem & {
     sovereignty: TSovereignty | null;
     has_jove_observatory: boolean;
     has_stations: boolean;
+    services: number[];
 };
 
 export type TStaticConnections = Record<number, number[]>;
@@ -30,4 +36,5 @@ export type TStaticData = {
     constellations: TStaticConstellation[];
     solarsystems: TStaticSolarsystem[];
     connections: TStaticConnections;
+    services: TStaticService[];
 };

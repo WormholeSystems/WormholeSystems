@@ -40,6 +40,7 @@ export function useStaticSolarsystems() {
         effect: null,
         has_jove_observatory: false,
         has_stations: false,
+        services: [],
         connection_type: null,
     });
 

@@ -29,7 +29,7 @@
         "laravel/tinker": "^2.10.1",
         "laravel/wayfinder": "^0.1.6",
         "nicolaskion/eve": "^0.2",
-        "nicolaskion/sde": "^0.3",
+        "nicolaskion/sde": "^0.4",
         "owen-it/laravel-auditing": "^14.0",
         "socialiteproviders/eveonline": "^4.3",
         "spatie/laravel-data": "^4.17",
@@ -108,5 +108,6 @@
         }
     },
     "minimum-stability": "stable",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "repositories": {}
 }

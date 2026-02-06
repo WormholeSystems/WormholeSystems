@@ -36,6 +36,7 @@ export type WorkerClosestSystem = {
     solarsystem_id: number;
     jumps: number;
     cost: number;
+    route: WorkerRouteStep[];
 };
 
 export type WorkerClosestResult = {

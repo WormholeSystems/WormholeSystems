@@ -19,6 +19,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int|null $parent_id
  * @property int $type_id
  * @property int $group_id
+ * @property int|null $operation_id
+ * @property int|null $owner_id
  * @property-read string|CarbonImmutable $created_at
  * @property-read string|CarbonImmutable $updated_at
  * @property-read Solarsystem $solarsystem
@@ -27,6 +29,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read Type $type
  * @property-read Group $group
  * @property-read Region $region
+ * @property-read StationOperation|null $operation
+ * @property-read Corporation|null $owner
  */
 final class Station extends Model
 {
@@ -78,5 +82,21 @@ final class Station extends Model
     public function region(): BelongsTo
     {
         return $this->belongsTo(Region::class);
+    }
+
+    /**
+     * @return BelongsTo<StationOperation,$this>
+     */
+    public function operation(): BelongsTo
+    {
+        return $this->belongsTo(StationOperation::class, 'operation_id');
+    }
+
+    /**
+     * @return BelongsTo<Corporation,$this>
+     */
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(Corporation::class, 'owner_id');
     }
 }
