@@ -6,6 +6,7 @@ export * from './useMapGrid';
 export * from './useMapMouse';
 export * from './useMapPanning';
 export * from './useMapScale';
+export * from './useMapScrollbars';
 export * from './useNewConnection';
 export * from './usePilotsInMapSolarsystem';
 export * from './useSelection';

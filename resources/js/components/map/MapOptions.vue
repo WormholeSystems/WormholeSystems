@@ -30,10 +30,10 @@ function removeBackgroundImage() {
 </script>
 
 <template>
-    <div class="absolute bottom-0 left-0 z-30 flex overflow-hidden rounded-tr-lg border bg-neutral-100 dark:bg-neutral-900">
+    <div class="absolute right-3 bottom-3 z-30 flex items-center gap-0.5 rounded-full bg-white/60 px-1 dark:bg-neutral-800/60">
         <Popover>
             <PopoverTrigger as-child>
-                <Button variant="ghost" size="icon" class="h-8 w-8 text-muted-foreground" title="Background Image">
+                <Button variant="ghost" size="icon" class="h-8 w-8 rounded-full text-neutral-600 dark:text-neutral-400" title="Background Image">
                     <BackgroundImageIcon />
                 </Button>
             </PopoverTrigger>
@@ -49,11 +49,11 @@ function removeBackgroundImage() {
                 </div>
             </PopoverContent>
         </Popover>
-        <span class="flex h-8 items-center px-2 text-muted-foreground">{{ (scale * 100).toFixed(0) + '%' }}</span>
-        <Button variant="ghost" size="icon" class="h-8 w-8" @click="setScale(scale - 0.1)">
+        <span class="flex h-8 items-center px-1 text-neutral-600 dark:text-neutral-400">{{ (scale * 100).toFixed(0) + '%' }}</span>
+        <Button variant="ghost" size="icon" class="h-8 w-8 rounded-full text-neutral-600 dark:text-neutral-400" @click="setScale(scale - 0.1)">
             <MinusIcon />
         </Button>
-        <Button variant="ghost" size="icon" class="h-8 w-8" @click="setScale(scale + 0.1)">
+        <Button variant="ghost" size="icon" class="h-8 w-8 rounded-full text-neutral-600 dark:text-neutral-400" @click="setScale(scale + 0.1)">
             <PlusIcon />
         </Button>
     </div>

@@ -4,6 +4,7 @@ import MapConnectionDetails from '@/components/map/MapConnectionDetails.vue';
 import MapConnections from '@/components/map/MapConnections.vue';
 import MapContextMenu from '@/components/map/MapContextMenu.vue';
 import MapOptions from '@/components/map/MapOptions.vue';
+import MapScrollbar from '@/components/map/MapScrollbar.vue';
 import MapSolarsystem from '@/components/map/MapSolarsystem.vue';
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { Popover, PopoverAnchor } from '@/components/ui/popover';
@@ -14,6 +15,7 @@ import {
     useMapMouse,
     useMapPanning,
     useMapScale,
+    useMapScrollbars,
     useMapSolarsystems,
 } from '@/composables/map';
 import { useConnectionInteraction } from '@/composables/map/composables/useConnectionInteraction';
@@ -33,8 +35,6 @@ const { map, config } = defineProps<{
 
 const container = useTemplateRef('map-container');
 const scrollable_container = useTemplateRef('scrollable-container');
-
-const scroll_locked = ref(false);
 
 const { layout } = useLayout();
 
@@ -72,6 +72,23 @@ const { backgroundImageUrl } = useMapBackground();
 
 const { handleMouseDown, handleMouseMove, handleMouseUp, handleMouseLeave, handleContextMenu } = useMapPanning(scrollable_container);
 
+const {
+    scrollbars_visible,
+    has_vertical,
+    has_horizontal,
+    v_thumb_size,
+    v_thumb_offset,
+    v_track_height,
+    h_thumb_size,
+    h_thumb_offset,
+    h_track_width,
+    scrollbar_size,
+    onThumbMousedown,
+    onTrackMousedown,
+    onScrollAreaEnter,
+    onScrollAreaMousemove,
+} = useMapScrollbars(scrollable_container);
+
 const mapContainerStyle = computed(() => {
     const baseStyle = {
         backgroundSize: `${grid_size.value * scale.value}px ${grid_size.value * scale.value}px`,
@@ -107,31 +124,17 @@ function onOpenChange(open: boolean) {
 
     opened_at.value = mouse.value;
 }
-
-let timeout: ReturnType<typeof setTimeout> | null = null;
-
-function onScroll(event: WheelEvent) {
-    if (event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) {
-        return;
-    }
-    scroll_locked.value = true;
-    if (timeout) {
-        clearTimeout(timeout);
-    }
-    timeout = setTimeout(() => {
-        scroll_locked.value = false;
-        timeout = null;
-    }, 500);
-}
 </script>
 
 <template>
-    <div class="relative h-full w-full overflow-hidden bg-card ring-1 ring-border ring-offset-[-0.5px]">
+    <div
+        class="relative h-full w-full overflow-hidden bg-card ring-1 ring-border ring-offset-[-0.5px]"
+        @mouseenter="onScrollAreaEnter"
+        @mousemove="onScrollAreaMousemove"
+    >
         <div
             ref="scrollable-container"
-            :data-scroll-locked="scroll_locked"
-            class="relative h-full w-full overflow-scroll bg-neutral-100 data-[scroll-locked=true]:overflow-hidden dark:bg-neutral-950"
-            @wheel="onScroll"
+            class="relative h-full w-full overflow-hidden bg-neutral-100 dark:bg-neutral-950"
             @mousedown="handleMouseDown"
             @mousemove="handleMouseMove"
             @mouseup="handleMouseUp"
@@ -152,6 +155,28 @@ function onScroll(event: WheelEvent) {
                 />
             </ContextMenu>
         </div>
+        <MapScrollbar
+            v-if="has_vertical"
+            orientation="vertical"
+            :thumb_size="v_thumb_size"
+            :thumb_offset="v_thumb_offset"
+            :visible="scrollbars_visible"
+            :track_size="v_track_height"
+            :scrollbar_size="scrollbar_size"
+            @track-mousedown="onTrackMousedown('vertical', $event)"
+            @thumb-mousedown="onThumbMousedown('vertical', $event)"
+        />
+        <MapScrollbar
+            v-if="has_horizontal"
+            orientation="horizontal"
+            :thumb_size="h_thumb_size"
+            :thumb_offset="h_thumb_offset"
+            :visible="scrollbars_visible"
+            :track_size="h_track_width"
+            :scrollbar_size="scrollbar_size"
+            @track-mousedown="onTrackMousedown('horizontal', $event)"
+            @thumb-mousedown="onThumbMousedown('horizontal', $event)"
+        />
         <MapOptions :config />
     </div>
     <Popover v-model:open="connection_popover_open" :key="selected_connection?.id" v-if="selected_connection">
