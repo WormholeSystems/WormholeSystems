@@ -74,11 +74,12 @@ const finalBlow = computed(() => killmail.data.attackers.find((a) => a.final_blo
 </script>
 
 <template>
-    <DestinationContextMenu :solarsystem_id="staticSolarsystem.id">
-        <div
-            class="col-span-full grid grid-cols-subgrid items-center border-b border-border/30 px-3 py-1.5 hover:bg-muted/30"
-            v-element-hover="onHover"
-        >
+    <div class="col-span-full grid grid-cols-subgrid">
+        <DestinationContextMenu :solarsystem_id="staticSolarsystem.id">
+            <div
+                class="col-span-full grid grid-cols-subgrid items-center border-b border-border/30 px-3 py-1.5 hover:bg-muted/30"
+                v-element-hover="onHover"
+            >
             <!-- Victim info -->
             <a
                 v-if="killmail.ship_type"
@@ -160,8 +161,9 @@ const finalBlow = computed(() => killmail.data.attackers.find((a) => a.final_blo
             <span class="text-right font-mono text-[10px] text-muted-foreground">{{ total_worth }}</span>
 
             <span class="font-mono text-[10px] text-muted-foreground">{{ time_ago }}</span>
-        </div>
-    </DestinationContextMenu>
+            </div>
+        </DestinationContextMenu>
+    </div>
 </template>
 
 <style scoped></style>

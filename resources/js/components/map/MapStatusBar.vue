@@ -17,8 +17,9 @@ import type { TMap } from '@/pages/maps';
 import type { TMapUserSetting } from '@/types/models';
 import { Link } from '@inertiajs/vue3';
 import { useConnectionStatus } from '@laravel/echo-vue';
+import { ConnectionStatus } from 'laravel-echo';
 import { Eye, EyeOff, LayoutGrid, Map as MapIcon, Settings, Wifi, WifiOff } from 'lucide-vue-next';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import MapSearch from './MapSearch.vue';
 import TrackingSignatureDialog from './TrackingSignatureDialog.vue';
 
@@ -34,7 +35,8 @@ usePing(map);
 const character = useActiveMapCharacter();
 const hasWriteAccess = useHasWritePermission();
 const isOwner = useIsMapOwner();
-const connectionStatus = useConnectionStatus();
+const echoStatus = typeof window !== 'undefined' ? useConnectionStatus() : ref<ConnectionStatus>('connected');
+const connectionStatus = computed(() => echoStatus.value);
 
 // Get pilot's current location
 const currentSolarsystem = useStaticSolarsystem(() => character.value?.status?.solarsystem_id ?? null);
