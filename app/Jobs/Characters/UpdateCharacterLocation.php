@@ -11,6 +11,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Support\Facades\Log;
 use NicolasKion\Esi\DTO\Location;
 use NicolasKion\Esi\DTO\Ship;
 use NicolasKion\Esi\Esi;
@@ -47,12 +48,16 @@ final class UpdateCharacterLocation implements ShouldQueue
         $location_request = $esi->getLocation($characterStatus->character);
 
         if ($location_request->failed()) {
+            Log::info(sprintf('Failed to fetch location for character %d', $characterStatus->character_id), (array) $location_request);
+
             return;
         }
 
         $ship_request = $esi->getShip($characterStatus->character);
 
         if ($ship_request->failed()) {
+            Log::info(sprintf('Failed to fetch ship for character %d', $characterStatus->character_id), (array) $ship_request);
+
             return;
         }
 
