@@ -47,7 +47,7 @@
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 
-        <!-- Open Graph / Social Media tags are handled by SeoHead.vue component -->
+    <!-- Open Graph / Social Media tags are handled by SeoHead.vue component -->
 
     <!-- Icons -->
     <!-- Light mode favicons -->
@@ -64,7 +64,7 @@
     <!-- PWA Manifest -->
     <link rel="manifest" href="/build/manifest.webmanifest">
 
-    @vite(['resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"])
+    @vite(['resources/js/app.ts', "resources/js/pages/{$page['component']}.vue", 'resources/css/app.css'])
     @inertiaHead
 </head>
 <body class="font-sans antialiased">
