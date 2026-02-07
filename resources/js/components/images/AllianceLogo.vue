@@ -8,13 +8,13 @@ const {
     alliance_name,
 } = defineProps<{
     alliance_id: number;
-    alliance_name: string;
+    alliance_name: string | null;
     size?: TImageSize;
 }>();
 </script>
 
 <template>
-    <EsiImage :path="`alliances/${alliance_id}/logo`" :alt="alliance_name" :size />
+    <EsiImage :path="`alliances/${alliance_id}/logo`" :alt="alliance_name ?? 'Alliance'" :size />
 </template>
 
 <style scoped></style>

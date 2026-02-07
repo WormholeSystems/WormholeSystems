@@ -9,6 +9,10 @@ const sovereigntyMap = shallowRef<Record<number, TSovereignty> | null>(null);
 let loadPromise: Promise<Record<number, TSovereignty>> | null = null;
 
 async function loadSovereigntyData(): Promise<Record<number, TSovereignty>> {
+    if (typeof window === 'undefined') {
+        return {};
+    }
+
     if (sovereigntyMap.value) {
         return sovereigntyMap.value;
     }
