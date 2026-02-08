@@ -2,7 +2,6 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "prebuild": "php artisan generate:static-data --no-interaction",
         "build": "vue-tsc && vite build",
         "build:ssr": "vite build && vite build --ssr",
         "dev": "vite",
