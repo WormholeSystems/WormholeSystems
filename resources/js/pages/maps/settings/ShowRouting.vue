@@ -7,7 +7,7 @@ import { Slider } from '@/components/ui/slider';
 import SettingsLayout from '@/layouts/SettingsLayout.vue';
 import { TMapSummary } from '@/pages/maps';
 import MapUserSettings from '@/routes/map-user-settings';
-import { TMapUserSetting, TRoutePreference } from '@/types/models';
+import { TLifetimeStatus, TMapUserSetting, TRoutePreference } from '@/types/models';
 import { router } from '@inertiajs/vue3';
 import { AcceptableValue } from 'reka-ui';
 import { ref, watch } from 'vue';
@@ -36,10 +36,12 @@ function updateMapUserSettings(settings: Partial<TMapUserSetting>) {
     });
 }
 
-function handleToggleEol(value: boolean | 'indeterminate') {
-    updateMapUserSettings({
-        route_allow_eol: value === true,
-    });
+function handleLifetimeStatusChange(value: AcceptableValue) {
+    if (typeof value === 'string' && (value === 'critical' || value === 'eol' || value === 'healthy')) {
+        updateMapUserSettings({
+            route_allow_lifetime_status: value as TLifetimeStatus,
+        });
+    }
 }
 
 function handleToggleEveScout(value: boolean | 'indeterminate') {
@@ -88,14 +90,19 @@ function handleSecurityPenaltyCommit(value: number[]) {
                     <CardDescription>Configure how routes are calculated for this map</CardDescription>
                 </CardHeader>
                 <CardContent class="space-y-6">
-                    <div class="flex items-center justify-between">
-                        <div class="space-y-0.5">
-                            <Label class="text-sm font-medium">Allow End of Life Connections</Label>
-                            <div class="text-sm text-muted-foreground">
-                                Include wormhole connections that are near end of life in route calculations
-                            </div>
-                        </div>
-                        <Checkbox :model-value="map_user_settings.route_allow_eol" @update:model-value="handleToggleEol" />
+                    <div class="space-y-3">
+                        <Label class="text-sm font-medium">Lifetime Status Filter</Label>
+                        <Select :model-value="map_user_settings.route_allow_lifetime_status" @update:model-value="handleLifetimeStatusChange">
+                            <SelectTrigger class="w-full">
+                                <SelectValue placeholder="Select lifetime status filter" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="critical">All Connections</SelectItem>
+                                <SelectItem value="eol">Healthy & EOL</SelectItem>
+                                <SelectItem value="healthy">Healthy Only</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <div class="text-sm text-muted-foreground">Set the minimum lifetime for connections to include in route calculations</div>
                     </div>
 
                     <div class="flex items-center justify-between">
@@ -135,8 +142,8 @@ function handleSecurityPenaltyCommit(value: number[]) {
                         </Select>
                         <div class="text-sm text-muted-foreground">
                             <strong>Shorter:</strong> Find routes with the fewest jumps<br />
-                            <strong>Safer:</strong> Prefer high-security space, penalize low/null security systems<br />
-                            <strong>Less Secure:</strong> Prefer low-security space, penalize high/null security systems
+                            <strong>Safer:</strong> Prefer high-security space, avoid low-sec and null-sec<br />
+                            <strong>Less Secure:</strong> Prefer low-security space, avoid high-sec and null-sec
                         </div>
                     </div>
 
