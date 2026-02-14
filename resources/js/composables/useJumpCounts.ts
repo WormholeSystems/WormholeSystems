@@ -1,11 +1,9 @@
-import { convertEveScoutConnections, convertMapConnectionsToWorkerEdges } from '@/composables/routing/utils';
-import { useEveScoutConnections } from '@/composables/useEveScoutConnections';
-import { useMapUserSettings } from '@/composables/useMapUserSettings';
-import { getRoutingWorkerClient } from '@/composables/useRoutingWorker';
+import { useRoutingSetup } from '@/composables/routing/useRoutingSetup';
+import { findRoute, initializeRouting } from '@/composables/useRoutingWorker';
 import type { TMapConnection, TMapSolarsystem } from '@/pages/maps';
-import type { WorkerRouteResult } from '@/routing/types';
+import type { RouteResult } from '@/routing/types';
 import type { MaybeRefOrGetter } from 'vue';
-import { computed, ref, toValue, watch } from 'vue';
+import { ref, toValue, watch } from 'vue';
 
 type UseJumpCountsParams = {
     fromId: MaybeRefOrGetter<number | null>;
@@ -17,27 +15,15 @@ type UseJumpCountsParams = {
 };
 
 export function useJumpCounts(params: UseJumpCountsParams) {
-    const mapUserSettings = useMapUserSettings();
-    const eveScoutConnections = useEveScoutConnections();
-
-    const jumpsByTarget = ref(new Map<number, number>());
-    const routesByTarget = ref(new Map<number, WorkerRouteResult>());
-    const isLoading = ref(false);
-
-    const useEveScout = computed(() => {
-        if (params.includeEveScout !== undefined) {
-            return toValue(params.includeEveScout) && mapUserSettings.value.route_use_evescout;
-        }
-        return mapUserSettings.value.route_use_evescout;
+    const { routingSettings, convertedEveScoutConnections, getConnections } = useRoutingSetup({
+        mapConnections: params.mapConnections,
+        mapSolarsystems: params.mapSolarsystems,
+        includeEveScout: params.includeEveScout,
     });
 
-    const routingSettings = computed(() => ({
-        routePreference: mapUserSettings.value.route_preference,
-        securityPenalty: mapUserSettings.value.security_penalty,
-        allowEol: mapUserSettings.value.route_allow_eol,
-        massStatus: mapUserSettings.value.route_allow_mass_status,
-        useEveScout: useEveScout.value,
-    }));
+    const jumpsByTarget = ref(new Map<number, number>());
+    const routesByTarget = ref(new Map<number, RouteResult>());
+    const isLoading = ref(false);
 
     watch(
         [
@@ -47,7 +33,7 @@ export function useJumpCounts(params: UseJumpCountsParams) {
             () => toValue(params.mapSolarsystems),
             () => toValue(params.ignoredSystems),
             () => routingSettings.value,
-            () => eveScoutConnections.value,
+            () => convertedEveScoutConnections.value,
         ],
         async () => {
             const fromId = toValue(params.fromId);
@@ -63,40 +49,18 @@ export function useJumpCounts(params: UseJumpCountsParams) {
             isLoading.value = true;
 
             try {
-                const worker = await getRoutingWorkerClient();
-                const dynamicConnections = convertMapConnectionsToWorkerEdges(toValue(params.mapConnections), toValue(params.mapSolarsystems)).map(
-                    (edge) => ({ ...edge }),
-                );
-                const scoutConnections = convertEveScoutConnections(eveScoutConnections.value, useEveScout.value).map((edge) => ({ ...edge }));
-                const ignored = [...(toValue(params.ignoredSystems) ?? [])];
-                const settings = { ...routingSettings.value };
-                const requests = targets.map((targetId, index) => ({
-                    id: `${index}-${targetId}`,
-                    type: 'route' as const,
-                    fromId,
-                    toId: targetId,
-                }));
+                await initializeRouting();
 
-                const responses = await worker.compute({
-                    settings,
-                    dynamicConnections,
-                    eveScoutConnections: scoutConnections,
-                    ignoredSystems: ignored,
-                    requests,
-                });
+                const { dynamicConnections, eveScoutConnections } = getConnections();
+                const settings = { ...routingSettings.value };
+                const ignored = [...(toValue(params.ignoredSystems) ?? [])];
 
                 const jumpsMap = new Map<number, number>();
-                const routesMap = new Map<number, WorkerRouteResult>();
-                for (const response of responses) {
-                    if (response.type !== 'route') {
-                        continue;
-                    }
-
-                    const targetId = parseInt(response.id.split('-').pop() ?? '', 10);
-                    if (!Number.isNaN(targetId)) {
-                        jumpsMap.set(targetId, response.jumps);
-                        routesMap.set(targetId, response);
-                    }
+                const routesMap = new Map<number, RouteResult>();
+                for (const targetId of targets) {
+                    const result = findRoute(settings, fromId, targetId, dynamicConnections, eveScoutConnections, ignored);
+                    jumpsMap.set(targetId, result.jumps);
+                    routesMap.set(targetId, result);
                 }
 
                 jumpsByTarget.value = jumpsMap;

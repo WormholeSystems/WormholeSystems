@@ -1,11 +1,9 @@
-import { convertEveScoutConnections, convertMapConnectionsToWorkerEdges } from '@/composables/routing/utils';
-import { useEveScoutConnections } from '@/composables/useEveScoutConnections';
-import { useMapUserSettings } from '@/composables/useMapUserSettings';
-import { getRoutingWorkerClient } from '@/composables/useRoutingWorker';
+import { useRoutingSetup } from '@/composables/routing/useRoutingSetup';
+import { findRoute, initializeRouting } from '@/composables/useRoutingWorker';
 import type { TMapConnection, TMapSolarsystem } from '@/pages/maps';
-import type { WorkerRouteStep } from '@/routing/types';
+import type { RouteStep } from '@/routing/types';
 import type { MaybeRefOrGetter } from 'vue';
-import { computed, ref, toValue, watch } from 'vue';
+import { ref, toValue, watch } from 'vue';
 
 type UseRouteCalculatorParams = {
     fromId: MaybeRefOrGetter<number | null>;
@@ -16,24 +14,12 @@ type UseRouteCalculatorParams = {
 };
 
 export function useRouteCalculator(params: UseRouteCalculatorParams) {
-    const mapUserSettings = useMapUserSettings();
-    const eveScoutConnections = useEveScoutConnections();
+    const { routingSettings, convertedConnections, convertedEveScoutConnections, getConnections } = useRoutingSetup({
+        mapConnections: params.mapConnections,
+        mapSolarsystems: params.mapSolarsystems,
+    });
 
-    const convertedConnections = computed(() => convertMapConnectionsToWorkerEdges(toValue(params.mapConnections), toValue(params.mapSolarsystems)));
-
-    const convertedEveScoutConnections = computed(() =>
-        convertEveScoutConnections(eveScoutConnections.value, mapUserSettings.value.route_use_evescout),
-    );
-
-    const routingSettings = computed(() => ({
-        routePreference: mapUserSettings.value.route_preference,
-        securityPenalty: mapUserSettings.value.security_penalty,
-        allowEol: mapUserSettings.value.route_allow_eol,
-        massStatus: mapUserSettings.value.route_allow_mass_status,
-        useEveScout: mapUserSettings.value.route_use_evescout,
-    }));
-
-    const route = ref<WorkerRouteStep[]>([]);
+    const route = ref<RouteStep[]>([]);
     const jumps = ref(0);
     const cost = ref(0);
     const isLoading = ref(false);
@@ -65,36 +51,20 @@ export function useRouteCalculator(params: UseRouteCalculatorParams) {
             isLoading.value = true;
 
             try {
-                const worker = await getRoutingWorkerClient();
-                const ignored = [...(toValue(params.ignoredSystems) ?? [])];
-                const settings = { ...routingSettings.value };
-                const dynamicConnections = convertedConnections.value.map((edge) => ({ ...edge }));
-                const eveScoutConnections = convertedEveScoutConnections.value.map((edge) => ({ ...edge }));
-                const requests = [{ id: `${activeRequest}-route`, type: 'route' as const, fromId: from, toId: to }];
+                await initializeRouting();
 
-                const responses = await worker.compute({
-                    settings,
-                    dynamicConnections,
-                    eveScoutConnections,
-                    ignoredSystems: ignored,
-                    requests,
-                });
+                const { dynamicConnections, eveScoutConnections } = getConnections();
+                const result = findRoute({ ...routingSettings.value }, from, to, dynamicConnections, eveScoutConnections, [
+                    ...(toValue(params.ignoredSystems) ?? []),
+                ]);
 
                 if (activeRequest !== requestCounter) {
                     return;
                 }
 
-                const response = responses.find((item) => item.type === 'route');
-                if (!response) {
-                    route.value = [];
-                    jumps.value = 0;
-                    cost.value = 0;
-                    return;
-                }
-
-                route.value = response.route;
-                jumps.value = response.jumps;
-                cost.value = response.cost;
+                route.value = result.route;
+                jumps.value = result.jumps;
+                cost.value = result.cost;
             } catch {
                 route.value = [];
                 jumps.value = 0;
