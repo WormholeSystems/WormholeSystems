@@ -1,12 +1,12 @@
 import type { TMapConnection, TMapSolarsystem } from '@/pages/maps';
-import type { WorkerConnection } from '@/routing/types';
+import type { RoutingConnection } from '@/routing/types';
 import type { TEveScoutConnection } from '@/types/eve-scout';
 import type { TLifetimeStatus, TMassStatus } from '@/types/models';
 
 export function convertMapConnectionsToWorkerEdges(
     mapConnections: TMapConnection[] | undefined | null,
     mapSolarsystems: TMapSolarsystem[] | undefined | null,
-): WorkerConnection[] {
+): RoutingConnection[] {
     if (!mapConnections?.length || !mapSolarsystems?.length) {
         return [];
     }
@@ -14,7 +14,7 @@ export function convertMapConnectionsToWorkerEdges(
     const lookup = new Map<number, number>();
     mapSolarsystems.forEach((system) => lookup.set(system.id, system.solarsystem_id));
 
-    const edges: WorkerConnection[] = [];
+    const edges: RoutingConnection[] = [];
 
     for (const connection of mapConnections) {
         const from = lookup.get(connection.from_map_solarsystem_id);
@@ -36,12 +36,12 @@ export function convertMapConnectionsToWorkerEdges(
     return edges;
 }
 
-export function convertEveScoutConnections(connections: TEveScoutConnection[] | undefined, include: boolean): WorkerConnection[] {
+export function convertEveScoutConnections(connections: TEveScoutConnection[] | undefined, include: boolean): RoutingConnection[] {
     if (!include || !connections?.length) {
         return [];
     }
 
-    const edges: WorkerConnection[] = [];
+    const edges: RoutingConnection[] = [];
 
     for (const connection of connections) {
         if (!connection.in_system_id || !connection.out_system_id) {

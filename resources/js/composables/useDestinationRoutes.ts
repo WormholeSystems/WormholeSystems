@@ -1,11 +1,9 @@
-import { convertEveScoutConnections, convertMapConnectionsToWorkerEdges } from '@/composables/routing/utils';
-import { useEveScoutConnections } from '@/composables/useEveScoutConnections';
-import { useMapUserSettings } from '@/composables/useMapUserSettings';
-import { getRoutingWorkerClient } from '@/composables/useRoutingWorker';
+import { useRoutingSetup } from '@/composables/routing/useRoutingSetup';
+import { findRoute, initializeRouting } from '@/composables/useRoutingWorker';
 import type { TMapConnection, TMapSolarsystem, TResolvedMapRouteSolarsystem } from '@/pages/maps';
-import type { WorkerRouteResult } from '@/routing/types';
+import type { RouteResult } from '@/routing/types';
 import type { MaybeRefOrGetter } from 'vue';
-import { computed, ref, toValue, watch } from 'vue';
+import { ref, toValue, watch } from 'vue';
 
 type UseDestinationRoutesParams = {
     fromId: MaybeRefOrGetter<number | null>;
@@ -16,19 +14,13 @@ type UseDestinationRoutesParams = {
 };
 
 export function useDestinationRoutes(params: UseDestinationRoutesParams) {
-    const mapUserSettings = useMapUserSettings();
-    const eveScoutConnections = useEveScoutConnections();
+    const { routingSettings, convertedEveScoutConnections, getConnections } = useRoutingSetup({
+        mapConnections: params.mapConnections,
+        mapSolarsystems: params.mapSolarsystems,
+    });
 
-    const routesByDestination = ref(new Map<number, WorkerRouteResult>());
+    const routesByDestination = ref(new Map<number, RouteResult>());
     const isLoading = ref(false);
-
-    const routingSettings = computed(() => ({
-        routePreference: mapUserSettings.value.route_preference,
-        securityPenalty: mapUserSettings.value.security_penalty,
-        allowEol: mapUserSettings.value.route_allow_eol,
-        massStatus: mapUserSettings.value.route_allow_mass_status,
-        useEveScout: mapUserSettings.value.route_use_evescout,
-    }));
 
     watch(
         [
@@ -38,7 +30,7 @@ export function useDestinationRoutes(params: UseDestinationRoutesParams) {
             () => toValue(params.mapSolarsystems),
             () => toValue(params.ignoredSystems),
             () => routingSettings.value,
-            () => eveScoutConnections.value,
+            () => convertedEveScoutConnections.value,
         ],
         async () => {
             const fromId = toValue(params.fromId);
@@ -53,40 +45,16 @@ export function useDestinationRoutes(params: UseDestinationRoutesParams) {
             isLoading.value = true;
 
             try {
-                const worker = await getRoutingWorkerClient();
-                const dynamicConnections = convertMapConnectionsToWorkerEdges(toValue(params.mapConnections), toValue(params.mapSolarsystems)).map(
-                    (edge) => ({ ...edge }),
-                );
-                const scoutConnections = convertEveScoutConnections(eveScoutConnections.value, mapUserSettings.value.route_use_evescout).map(
-                    (edge) => ({ ...edge }),
-                );
-                const ignored = [...(toValue(params.ignoredSystems) ?? [])];
+                await initializeRouting();
+
+                const { dynamicConnections, eveScoutConnections } = getConnections();
                 const settings = { ...routingSettings.value };
-                const requests = destinations.map((destination) => ({
-                    id: `${destination.id}-route`,
-                    type: 'route' as const,
-                    fromId,
-                    toId: destination.solarsystem_id,
-                }));
+                const ignored = [...(toValue(params.ignoredSystems) ?? [])];
 
-                const responses = await worker.compute({
-                    settings,
-                    dynamicConnections,
-                    eveScoutConnections: scoutConnections,
-                    ignoredSystems: ignored,
-                    requests,
-                });
-
-                const routeMap = new Map<number, WorkerRouteResult>();
-                for (const response of responses) {
-                    if (response.type !== 'route') {
-                        continue;
-                    }
-
-                    const destinationId = Number(response.id.split('-')[0]);
-                    if (!Number.isNaN(destinationId)) {
-                        routeMap.set(destinationId, response);
-                    }
+                const routeMap = new Map<number, RouteResult>();
+                for (const destination of destinations) {
+                    const result = findRoute(settings, fromId, destination.solarsystem_id, dynamicConnections, eveScoutConnections, ignored);
+                    routeMap.set(destination.id, result);
                 }
 
                 routesByDestination.value = routeMap;

@@ -1,11 +1,9 @@
-import { convertEveScoutConnections, convertMapConnectionsToWorkerEdges } from '@/composables/routing/utils';
-import { useEveScoutConnections } from '@/composables/useEveScoutConnections';
-import { useMapUserSettings } from '@/composables/useMapUserSettings';
-import { getRoutingWorkerClient } from '@/composables/useRoutingWorker';
+import { useRoutingSetup } from '@/composables/routing/useRoutingSetup';
+import { findClosestSystems, initializeRouting } from '@/composables/useRoutingWorker';
 import type { TMapConnection, TMapSolarsystem } from '@/pages/maps';
-import type { WorkerClosestSystem } from '@/routing/types';
+import type { ClosestSystem } from '@/routing/types';
 import type { MaybeRefOrGetter } from 'vue';
-import { computed, ref, toValue, watch } from 'vue';
+import { ref, toValue, watch } from 'vue';
 
 type UseClosestSystemsParams = {
     fromId: MaybeRefOrGetter<number | null>;
@@ -17,24 +15,12 @@ type UseClosestSystemsParams = {
 };
 
 export function useClosestSystemsCalculator(params: UseClosestSystemsParams) {
-    const mapUserSettings = useMapUserSettings();
-    const eveScoutConnections = useEveScoutConnections();
+    const { routingSettings, convertedConnections, convertedEveScoutConnections, getConnections } = useRoutingSetup({
+        mapConnections: params.mapConnections,
+        mapSolarsystems: params.mapSolarsystems,
+    });
 
-    const convertedConnections = computed(() => convertMapConnectionsToWorkerEdges(toValue(params.mapConnections), toValue(params.mapSolarsystems)));
-
-    const convertedEveScoutConnections = computed(() =>
-        convertEveScoutConnections(eveScoutConnections.value, mapUserSettings.value.route_use_evescout),
-    );
-
-    const routingSettings = computed(() => ({
-        routePreference: mapUserSettings.value.route_preference,
-        securityPenalty: mapUserSettings.value.security_penalty,
-        allowEol: mapUserSettings.value.route_allow_eol,
-        massStatus: mapUserSettings.value.route_allow_mass_status,
-        useEveScout: mapUserSettings.value.route_use_evescout,
-    }));
-
-    const results = ref<WorkerClosestSystem[]>([]);
+    const results = ref<ClosestSystem[]>([]);
     const isLoading = ref(false);
 
     let requestCounter = 0;
@@ -64,27 +50,24 @@ export function useClosestSystemsCalculator(params: UseClosestSystemsParams) {
             isLoading.value = true;
 
             try {
-                const worker = await getRoutingWorkerClient();
-                const ignored = [...(toValue(params.ignoredSystems) ?? [])];
-                const settings = { ...routingSettings.value };
-                const dynamicConnections = convertedConnections.value.map((edge) => ({ ...edge }));
-                const eveScoutConnections = convertedEveScoutConnections.value.map((edge) => ({ ...edge }));
-                const requests = [{ id: `${activeRequest}-closest`, type: 'closest' as const, fromId: from, condition, limit }];
+                await initializeRouting();
 
-                const responses = await worker.compute({
-                    settings,
+                const { dynamicConnections, eveScoutConnections } = getConnections();
+                const closestResults = findClosestSystems(
+                    { ...routingSettings.value },
+                    from,
+                    condition,
+                    limit,
                     dynamicConnections,
                     eveScoutConnections,
-                    ignoredSystems: ignored,
-                    requests,
-                });
+                    [...(toValue(params.ignoredSystems) ?? [])],
+                );
 
                 if (activeRequest !== requestCounter) {
                     return;
                 }
 
-                const response = responses.find((item) => item.type === 'closest');
-                results.value = response?.results ?? [];
+                results.value = closestResults;
             } catch {
                 results.value = [];
             } finally {

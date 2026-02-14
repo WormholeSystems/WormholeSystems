@@ -6,12 +6,12 @@ export type ConnectionType = 'stargate' | 'wormhole' | 'evescout';
 export type RoutingSettings = {
     routePreference: TRoutePreference;
     securityPenalty: number;
-    allowEol: boolean;
+    lifetimeStatus: TLifetimeStatus;
     massStatus: TMassStatus;
     useEveScout: boolean;
 };
 
-export type WorkerConnection = {
+export type RoutingConnection = {
     from: number;
     to: number;
     type: ConnectionType;
@@ -19,46 +19,25 @@ export type WorkerConnection = {
     lifetimeStatus?: TLifetimeStatus;
 };
 
-export type WorkerRouteStep = {
+export type RouteStep = {
     id: number;
     via: ConnectionType | null;
 };
 
-export type WorkerRouteResult = {
-    id: string;
-    type: 'route';
-    route: WorkerRouteStep[];
+export type RouteResult = {
+    route: RouteStep[];
     jumps: number;
     cost: number;
 };
 
-export type WorkerClosestSystem = {
+export type ClosestSystem = {
     solarsystem_id: number;
     jumps: number;
     cost: number;
-    route: WorkerRouteStep[];
+    route: RouteStep[];
 };
 
-export type WorkerClosestResult = {
-    id: string;
-    type: 'closest';
-    results: WorkerClosestSystem[];
-};
-
-export type WorkerRequest =
-    | { id: string; type: 'route'; fromId: number; toId: number }
-    | { id: string; type: 'closest'; fromId: number; condition: string; limit: number };
-
-export type WorkerComputePayload = {
-    callId: string;
-    settings: RoutingSettings;
-    dynamicConnections: WorkerConnection[];
-    eveScoutConnections: WorkerConnection[];
-    ignoredSystems: number[];
-    requests: WorkerRequest[];
-};
-
-export type WorkerInitPayload = {
+export type RoutingInitPayload = {
     solarsystems: TStaticSolarsystem[];
     connections: TStaticConnections;
 };

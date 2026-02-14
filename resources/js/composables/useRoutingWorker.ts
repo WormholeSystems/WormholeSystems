@@ -1,23 +1,12 @@
 import { useStaticData } from '@/composables/useStaticData';
-import type {
-    ConnectionType,
-    RoutingSettings,
-    WorkerClosestResult,
-    WorkerClosestSystem,
-    WorkerComputePayload,
-    WorkerConnection,
-    WorkerInitPayload,
-    WorkerRequest,
-    WorkerRouteResult,
-    WorkerRouteStep,
-} from '@/routing/types';
-import type { TMassStatus } from '@/types/models';
+import type { ClosestSystem, ConnectionType, RouteResult, RouteStep, RoutingConnection, RoutingSettings } from '@/routing/types';
+import type { TLifetimeStatus, TMassStatus } from '@/types/models';
 import type { TStaticSolarsystem } from '@/types/static-data';
 
-let routingEngine: RoutingEngine | null = null;
 let initPromise: Promise<void> | null = null;
 
-type GraphEdge = WorkerConnection;
+let staticSolarsystems: Map<number, TStaticSolarsystem> = new Map();
+let staticAdjacency: Map<number, RoutingConnection[]> = new Map();
 
 const massStatusAllowList: Record<TMassStatus, Set<TMassStatus>> = {
     fresh: new Set(['fresh']),
@@ -25,47 +14,199 @@ const massStatusAllowList: Record<TMassStatus, Set<TMassStatus>> = {
     critical: new Set(['fresh', 'reduced', 'critical']),
 };
 
+const lifetimeStatusAllowList: Record<TLifetimeStatus, Set<TLifetimeStatus>> = {
+    healthy: new Set(['healthy']),
+    eol: new Set(['healthy', 'eol']),
+    critical: new Set(['healthy', 'eol', 'critical']),
+};
+
 // Zarzakh uses Jovian stargates that require special access - don't route THROUGH it
 const ZARZAKH_SYSTEM_ID = 30100000;
 
-let staticSolarsystems: Map<number, TStaticSolarsystem> = new Map();
-let staticAdjacency: Map<number, GraphEdge[]> = new Map();
+export async function initializeRouting(): Promise<void> {
+    if (!initPromise) {
+        initPromise = (async () => {
+            const { loadStaticData } = useStaticData();
+            const data = await loadStaticData();
+            staticSolarsystems = new Map(data.solarsystems.map((system) => [system.id, system]));
+            staticAdjacency = buildAdjacency(data.connections, 'stargate');
+        })();
+    }
 
-type RoutingEngine = {
-    initialize: (payload: WorkerInitPayload) => Promise<void>;
-    compute: (payload: Omit<WorkerComputePayload, 'callId'>) => Promise<(WorkerRouteResult | WorkerClosestResult)[]>;
-};
+    await initPromise;
+}
 
-const engine: RoutingEngine = {
-    async initialize(payload) {
-        staticSolarsystems = new Map(payload.solarsystems.map((system) => [system.id, system]));
-        staticAdjacency = buildAdjacency(payload.connections, 'stargate');
-    },
-    async compute(payload) {
-        if (!staticSolarsystems.size) {
-            return [];
+export function findRoute(
+    settings: RoutingSettings,
+    fromId: number,
+    toId: number,
+    dynamicConnections: RoutingConnection[],
+    eveScoutConnections: RoutingConnection[],
+    ignoredSystems: number[],
+): RouteResult {
+    if (!staticSolarsystems.size) {
+        return { route: [], jumps: 0, cost: 0 };
+    }
+
+    const dynamicAdj = buildAdjacency(dynamicConnections, 'wormhole');
+    const eveScoutAdj = settings.useEveScout ? buildAdjacency(eveScoutConnections, 'evescout') : new Map<number, RoutingConnection[]>();
+    const ignored = buildIgnoredSet(ignoredSystems);
+
+    const distances = new Map<number, number>();
+    const previous = new Map<number, number | null>();
+    const via = new Map<number, ConnectionType | null>();
+    const queue = new PriorityQueue<number>();
+
+    distances.set(fromId, 0);
+    previous.set(fromId, null);
+    via.set(fromId, null);
+    queue.push(fromId, 0);
+
+    while (!queue.isEmpty()) {
+        const current = queue.pop();
+        if (!current) {
+            break;
         }
 
-        const dynamicAdjacency = buildAdjacency(payload.dynamicConnections, 'wormhole');
-        const eveScoutAdjacency = payload.settings.useEveScout
-            ? buildAdjacency(payload.eveScoutConnections, 'evescout')
-            : new Map<number, GraphEdge[]>();
-        const ignoredSet = new Set<number>(payload.ignoredSystems.filter(Boolean));
-        // Zarzakh uses Jovian stargates - don't route THROUGH it (but TO/FROM is OK)
-        ignoredSet.add(ZARZAKH_SYSTEM_ID);
+        const currentId = current.value;
+        const currentCost = current.priority;
 
-        return payload.requests.map((request) => {
-            if (request.type === 'route') {
-                return calculateRoute(request, payload.settings, dynamicAdjacency, eveScoutAdjacency, ignoredSet);
+        if (currentId === toId) {
+            break;
+        }
+
+        if (currentCost > (distances.get(currentId) ?? Infinity)) {
+            continue;
+        }
+
+        for (const neighbor of getNeighbors(currentId, dynamicAdj, eveScoutAdj)) {
+            if (neighbor.type === 'evescout' && !settings.useEveScout) {
+                continue;
             }
 
-            return calculateClosestSystems(request, payload.settings, dynamicAdjacency, eveScoutAdjacency, ignoredSet);
-        });
-    },
-};
+            if (isIgnoredNode(neighbor.to, fromId, toId, ignored)) {
+                continue;
+            }
 
-function buildAdjacency(connections: Record<number, number[]> | WorkerConnection[], typeOverride: ConnectionType): Map<number, GraphEdge[]> {
-    const adjacency = new Map<number, GraphEdge[]>();
+            if (!isEdgeAllowed(neighbor, settings)) {
+                continue;
+            }
+
+            const targetNode = staticSolarsystems.get(neighbor.to);
+            if (!targetNode) {
+                continue;
+            }
+
+            const edgeCost = getEdgeCost(settings, targetNode);
+            const newCost = currentCost + edgeCost;
+
+            if (newCost < (distances.get(neighbor.to) ?? Infinity)) {
+                distances.set(neighbor.to, newCost);
+                previous.set(neighbor.to, currentId);
+                via.set(neighbor.to, neighbor.type);
+                queue.push(neighbor.to, newCost);
+            }
+        }
+    }
+
+    if (!distances.has(toId)) {
+        return { route: [], jumps: 0, cost: 0 };
+    }
+
+    const path = reconstructRoute(toId, previous, via);
+
+    return {
+        route: path,
+        jumps: Math.max(0, path.length - 1),
+        cost: Number(distances.get(toId) ?? 0),
+    };
+}
+
+export function findClosestSystems(
+    settings: RoutingSettings,
+    fromId: number,
+    condition: string,
+    limit: number,
+    dynamicConnections: RoutingConnection[],
+    eveScoutConnections: RoutingConnection[],
+    ignoredSystems: number[],
+): ClosestSystem[] {
+    if (!staticSolarsystems.size) {
+        return [];
+    }
+
+    const dynamicAdj = buildAdjacency(dynamicConnections, 'wormhole');
+    const eveScoutAdj = settings.useEveScout ? buildAdjacency(eveScoutConnections, 'evescout') : new Map<number, RoutingConnection[]>();
+    const ignored = buildIgnoredSet(ignoredSystems);
+
+    const visited = new Set<number>(ignored);
+    const previous = new Map<number, number | null>();
+    const viaMap = new Map<number, ConnectionType | null>();
+    const queue = new PriorityQueue<{ id: number; jumps: number }>();
+    const results: ClosestSystem[] = [];
+
+    visited.add(fromId);
+    previous.set(fromId, null);
+    viaMap.set(fromId, null);
+    queue.push({ id: fromId, jumps: 0 }, 0);
+
+    while (!queue.isEmpty() && results.length < limit) {
+        const current = queue.pop();
+        if (!current) {
+            break;
+        }
+
+        const { id: currentId, jumps } = current.value;
+        const currentCost = current.priority;
+
+        for (const neighbor of getNeighbors(currentId, dynamicAdj, eveScoutAdj)) {
+            if (neighbor.type === 'evescout' && !settings.useEveScout) {
+                continue;
+            }
+
+            if (isIgnoredNode(neighbor.to, fromId, undefined, ignored)) {
+                continue;
+            }
+
+            if (!isEdgeAllowed(neighbor, settings)) {
+                continue;
+            }
+
+            const targetNode = staticSolarsystems.get(neighbor.to);
+            if (!targetNode) {
+                continue;
+            }
+
+            const nextCost = currentCost + getEdgeCost(settings, targetNode);
+            const nextJumps = jumps + 1;
+
+            if (!visited.has(neighbor.to)) {
+                visited.add(neighbor.to);
+                previous.set(neighbor.to, currentId);
+                viaMap.set(neighbor.to, neighbor.type);
+                queue.push({ id: neighbor.to, jumps: nextJumps }, nextCost);
+
+                if (matchesCondition(targetNode, condition)) {
+                    results.push({
+                        solarsystem_id: neighbor.to,
+                        jumps: nextJumps,
+                        cost: nextCost,
+                        route: reconstructRoute(neighbor.to, previous, viaMap),
+                    });
+
+                    if (results.length >= limit) {
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    return results;
+}
+
+function buildAdjacency(connections: Record<number, number[]> | RoutingConnection[], typeOverride: ConnectionType): Map<number, RoutingConnection[]> {
+    const adjacency = new Map<number, RoutingConnection[]>();
 
     if (Array.isArray(connections)) {
         for (const edge of connections) {
@@ -84,7 +225,7 @@ function buildAdjacency(connections: Record<number, number[]> | WorkerConnection
                 continue;
             }
 
-            const edge: GraphEdge = {
+            const edge: RoutingConnection = {
                 from: fromId,
                 to: toId,
                 type: typeOverride,
@@ -97,7 +238,7 @@ function buildAdjacency(connections: Record<number, number[]> | WorkerConnection
     return adjacency;
 }
 
-function addEdge(map: Map<number, GraphEdge[]>, from: number, to: number, edge: GraphEdge): void {
+function addEdge(map: Map<number, RoutingConnection[]>, from: number, to: number, edge: RoutingConnection): void {
     const existing = map.get(from);
     if (existing) {
         existing.push(edge);
@@ -107,183 +248,18 @@ function addEdge(map: Map<number, GraphEdge[]>, from: number, to: number, edge: 
     map.set(from, [edge]);
 }
 
-function calculateRoute(
-    request: WorkerRequest & { type: 'route' },
-    settings: RoutingSettings,
-    dynamicAdj: Map<number, GraphEdge[]>,
-    eveScoutAdj: Map<number, GraphEdge[]>,
-    ignored: Set<number>,
-): WorkerRouteResult {
-    const distances = new Map<number, number>();
-    const previous = new Map<number, number | null>();
-    const via = new Map<number, ConnectionType | null>();
-    const queue = new PriorityQueue<number>();
-
-    distances.set(request.fromId, 0);
-    previous.set(request.fromId, null);
-    via.set(request.fromId, null);
-    queue.push(request.fromId, 0);
-
-    while (!queue.isEmpty()) {
-        const current = queue.pop();
-        if (!current) {
-            break;
-        }
-
-        const currentId = current.value;
-        const currentCost = current.priority;
-
-        if (currentId === request.toId) {
-            break;
-        }
-
-        if (currentCost > (distances.get(currentId) ?? Infinity)) {
-            continue;
-        }
-
-        const neighbors = getNeighbors(currentId, dynamicAdj, eveScoutAdj);
-        for (const neighbor of neighbors) {
-            if (neighbor.type === 'evescout' && !settings.useEveScout) {
-                continue;
-            }
-
-            if (isIgnoredNode(neighbor.to, request, ignored)) {
-                continue;
-            }
-
-            const targetNode = staticSolarsystems.get(neighbor.to);
-            if (!targetNode) {
-                continue;
-            }
-
-            if (!isEdgeAllowed(neighbor, settings)) {
-                continue;
-            }
-
-            const edgeCost = getEdgeCost(settings, targetNode.security, neighbor.type);
-            const newCost = currentCost + edgeCost;
-
-            if (newCost < (distances.get(neighbor.to) ?? Infinity)) {
-                distances.set(neighbor.to, newCost);
-                previous.set(neighbor.to, currentId);
-                via.set(neighbor.to, neighbor.type);
-                queue.push(neighbor.to, newCost);
-            }
-        }
-    }
-
-    if (!distances.has(request.toId)) {
-        return { id: request.id, type: 'route', route: [], jumps: 0, cost: 0 };
-    }
-
-    const path: WorkerRouteStep[] = [];
-    let node: number | null = request.toId;
-
-    while (node !== null) {
-        path.push({ id: node, via: via.get(node) ?? null });
-        node = previous.get(node) ?? null;
-    }
-
-    path.reverse();
-
-    return {
-        id: request.id,
-        type: 'route',
-        route: path,
-        jumps: Math.max(0, path.length - 1),
-        cost: Number(distances.get(request.toId) ?? 0),
-    };
+function buildIgnoredSet(ignoredSystems: number[]): Set<number> {
+    const ignored = new Set<number>(ignoredSystems.filter(Boolean));
+    ignored.add(ZARZAKH_SYSTEM_ID);
+    return ignored;
 }
 
-function calculateClosestSystems(
-    request: WorkerRequest & { type: 'closest' },
-    settings: RoutingSettings,
-    dynamicAdj: Map<number, GraphEdge[]>,
-    eveScoutAdj: Map<number, GraphEdge[]>,
-    ignored: Set<number>,
-): WorkerClosestResult {
-    const visited = new Set<number>(ignored);
-    const previous = new Map<number, number | null>();
-    const viaMap = new Map<number, ConnectionType | null>();
-    const queue = new PriorityQueue<{ id: number; jumps: number }>();
-    const results: WorkerClosestSystem[] = [];
-
-    visited.add(request.fromId);
-    previous.set(request.fromId, null);
-    viaMap.set(request.fromId, null);
-    queue.push({ id: request.fromId, jumps: 0 }, 0);
-
-    while (!queue.isEmpty() && results.length < request.limit) {
-        const current = queue.pop();
-        if (!current) {
-            break;
-        }
-
-        const { id: currentId, jumps } = current.value;
-        const currentCost = current.priority;
-
-        const neighbors = getNeighbors(currentId, dynamicAdj, eveScoutAdj);
-        for (const neighbor of neighbors) {
-            if (neighbor.type === 'evescout' && !settings.useEveScout) {
-                continue;
-            }
-
-            if (isIgnoredNode(neighbor.to, request, ignored)) {
-                continue;
-            }
-
-            if (!isEdgeAllowed(neighbor, settings)) {
-                continue;
-            }
-
-            const targetNode = staticSolarsystems.get(neighbor.to);
-            if (!targetNode) {
-                continue;
-            }
-
-            const nextCost = currentCost + getEdgeCost(settings, targetNode.security, neighbor.type);
-            const nextJumps = jumps + 1;
-
-            if (!visited.has(neighbor.to)) {
-                visited.add(neighbor.to);
-                previous.set(neighbor.to, currentId);
-                viaMap.set(neighbor.to, neighbor.type);
-                queue.push({ id: neighbor.to, jumps: nextJumps }, nextCost);
-
-                if (matchesCondition(targetNode, request.condition)) {
-                    results.push({
-                        solarsystem_id: neighbor.to,
-                        jumps: nextJumps,
-                        cost: nextCost,
-                        route: reconstructRoute(neighbor.to, previous, viaMap),
-                    });
-
-                    if (results.length >= request.limit) {
-                        break;
-                    }
-                }
-            }
-        }
-    }
-
-    return { id: request.id, type: 'closest', results };
-}
-
-function reconstructRoute(targetId: number, previous: Map<number, number | null>, viaMap: Map<number, ConnectionType | null>): WorkerRouteStep[] {
-    const path: WorkerRouteStep[] = [];
-    let node: number | null = targetId;
-
-    while (node !== null) {
-        path.push({ id: node, via: viaMap.get(node) ?? null });
-        node = previous.get(node) ?? null;
-    }
-
-    path.reverse();
-    return path;
-}
-
-function getNeighbors(nodeId: number, dynamicAdj: Map<number, GraphEdge[]>, eveScoutAdj: Map<number, GraphEdge[]>): GraphEdge[] {
-    const neighbors: GraphEdge[] = [];
+function getNeighbors(
+    nodeId: number,
+    dynamicAdj: Map<number, RoutingConnection[]>,
+    eveScoutAdj: Map<number, RoutingConnection[]>,
+): RoutingConnection[] {
+    const neighbors: RoutingConnection[] = [];
 
     const staticNeighbors = staticAdjacency.get(nodeId);
     if (staticNeighbors) {
@@ -303,12 +279,12 @@ function getNeighbors(nodeId: number, dynamicAdj: Map<number, GraphEdge[]>, eveS
     return neighbors;
 }
 
-function isEdgeAllowed(edge: GraphEdge, settings: RoutingSettings): boolean {
+function isEdgeAllowed(edge: RoutingConnection, settings: RoutingSettings): boolean {
     if (edge.type === 'stargate') {
         return true;
     }
 
-    if (!settings.allowEol && edge.lifetimeStatus === 'eol') {
+    if (edge.lifetimeStatus && !lifetimeStatusAllowList[settings.lifetimeStatus].has(edge.lifetimeStatus)) {
         return false;
     }
 
@@ -319,32 +295,56 @@ function isEdgeAllowed(edge: GraphEdge, settings: RoutingSettings): boolean {
     return true;
 }
 
-function isIgnoredNode(nodeId: number, request: { fromId: number; toId?: number }, ignored: Set<number>): boolean {
-    if (nodeId === request.fromId || (request.toId !== undefined && nodeId === request.toId)) {
+function isIgnoredNode(nodeId: number, fromId: number, toId: number | undefined, ignored: Set<number>): boolean {
+    if (nodeId === fromId || (toId !== undefined && nodeId === toId)) {
         return false;
     }
 
     return ignored.has(nodeId);
 }
 
-function getEdgeCost(settings: RoutingSettings, security: number, _type: ConnectionType): number {
-    let cost = 1;
-
+function getEdgeCost(settings: RoutingSettings, targetSystem: TStaticSolarsystem): number {
     if (settings.routePreference === 'shorter') {
-        return cost;
+        return 1;
     }
 
-    const penalty = Math.max(0, Math.min(100, settings.securityPenalty)) / 100;
-    const clampedSecurity = Math.max(0, Math.min(1, security));
-    const directional = settings.routePreference === 'safer' ? 1 - clampedSecurity : clampedSecurity;
+    const penaltyCost = Math.exp(0.15 * settings.securityPenalty);
+    const security = targetSystem.security;
 
-    cost += directional * penalty;
+    if (settings.routePreference === 'safer') {
+        if (security <= 0.0) {
+            return 2 * penaltyCost;
+        }
+        if (security < 0.45) {
+            return penaltyCost;
+        }
+        return 0.9;
+    }
 
-    return cost;
+    // less_secure
+    if (security <= 0.0) {
+        return 2 * penaltyCost;
+    }
+    if (security < 0.45) {
+        return 0.9;
+    }
+    return penaltyCost;
+}
+
+function reconstructRoute(targetId: number, previous: Map<number, number | null>, viaMap: Map<number, ConnectionType | null>): RouteStep[] {
+    const path: RouteStep[] = [];
+    let node: number | null = targetId;
+
+    while (node !== null) {
+        path.push({ id: node, via: viaMap.get(node) ?? null });
+        node = previous.get(node) ?? null;
+    }
+
+    path.reverse();
+    return path;
 }
 
 function matchesCondition(system: TStaticSolarsystem, condition: string): boolean {
-    // Handle service conditions (e.g., "service_10" for service ID 10)
     if (condition.startsWith('service_')) {
         const serviceId = parseInt(condition.substring(8), 10);
         if (!Number.isNaN(serviceId)) {
@@ -436,30 +436,4 @@ class PriorityQueue<T> {
         this.items[a] = this.items[b];
         this.items[b] = temp;
     }
-}
-
-export async function initializeRoutingWorker(): Promise<void> {
-    if (!routingEngine) {
-        routingEngine = engine;
-    }
-
-    if (!initPromise) {
-        initPromise = (async () => {
-            const { loadStaticData } = useStaticData();
-            const data = await loadStaticData();
-            await routingEngine!.initialize({ solarsystems: data.solarsystems, connections: data.connections });
-        })();
-    }
-
-    await initPromise;
-}
-
-export async function getRoutingWorkerClient(): Promise<RoutingEngine> {
-    await initializeRoutingWorker();
-
-    if (!routingEngine) {
-        throw new Error('Routing engine is not initialized');
-    }
-
-    return routingEngine;
 }
