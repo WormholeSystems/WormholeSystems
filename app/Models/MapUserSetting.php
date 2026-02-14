@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\KillmailFilter;
+use App\Enums\LifetimeStatus;
 use App\Enums\MassStatus;
 use App\Enums\RoutePreference;
 use Carbon\CarbonImmutable;
@@ -19,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $map_id
  * @property bool $tracking_allowed
  * @property bool $is_tracking
- * @property bool $route_allow_eol
+ * @property string|LifetimeStatus $route_allow_lifetime_status
  * @property bool $route_use_evescout
  * @property string|MassStatus $route_allow_mass_status
  * @property string|RoutePreference $route_preference
@@ -60,7 +61,7 @@ final class MapUserSetting extends Model
             'updated_at' => 'immutable_datetime',
             'tracking_allowed' => 'boolean',
             'is_tracking' => 'boolean',
-            'route_allow_eol' => 'boolean',
+            'route_allow_lifetime_status' => LifetimeStatus::class,
             'route_allow_mass_status' => MassStatus::class,
             'route_preference' => RoutePreference::class,
             'security_penalty' => 'integer',

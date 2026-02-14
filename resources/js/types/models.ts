@@ -209,7 +209,7 @@ export type TMapUserSetting = {
     tracking_allowed: boolean;
     is_tracking: boolean;
     has_write_access: boolean;
-    route_allow_eol: boolean;
+    route_allow_lifetime_status: TLifetimeStatus;
     route_allow_mass_status: TMassStatus;
     route_use_evescout: boolean;
     route_preference: TRoutePreference;

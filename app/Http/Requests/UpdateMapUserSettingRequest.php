@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Enums\KillmailFilter;
+use App\Enums\LifetimeStatus;
 use App\Enums\MassStatus;
 use App\Enums\RoutePreference;
 use App\Models\MapUserSetting;
@@ -35,7 +36,7 @@ final class UpdateMapUserSettingRequest extends FormRequest
         return [
             'tracking_allowed' => ['boolean'],
             'is_tracking' => ['boolean'],
-            'route_allow_eol' => ['boolean'],
+            'route_allow_lifetime_status' => ['nullable', 'string', Rule::enum(LifetimeStatus::class)],
             'route_allow_mass_status' => ['nullable', 'string', Rule::enum(MassStatus::class)],
             'route_use_evescout' => ['boolean'],
             'route_preference' => ['nullable', 'string', Rule::enum(RoutePreference::class)],
