@@ -150,6 +150,16 @@ export function findClosestSystems(
     viaMap.set(fromId, null);
     queue.push({ id: fromId, jumps: 0 }, 0);
 
+    const startSystem = staticSolarsystems.get(fromId);
+    if (startSystem && matchesCondition(startSystem, condition)) {
+        results.push({
+            solarsystem_id: fromId,
+            jumps: 0,
+            cost: 0,
+            route: [{ id: fromId, via: null }],
+        });
+    }
+
     while (!queue.isEmpty() && results.length < limit) {
         const current = queue.pop();
         if (!current) {
