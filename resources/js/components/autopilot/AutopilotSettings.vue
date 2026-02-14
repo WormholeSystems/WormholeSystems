@@ -9,7 +9,7 @@ import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { updateMapUserSettings } from '@/composables/map';
 import { useMapUserSettings } from '@/composables/useMapUserSettings';
-import { TMassStatus } from '@/types/models';
+import { TLifetimeStatus, TMassStatus } from '@/types/models';
 import { ref, watch } from 'vue';
 
 const map_user_settings = useMapUserSettings();
@@ -23,9 +23,9 @@ watch(
     },
 );
 
-function handleToggleEol(value: boolean | 'indeterminate') {
+function handleLifetimeStatusChange(value: string) {
     updateMapUserSettings(map_user_settings.value, {
-        route_allow_eol: value === true,
+        route_allow_lifetime_status: value as TLifetimeStatus,
     });
 }
 
@@ -80,13 +80,24 @@ function handleSecurityPenaltyCommit(value: number[]) {
         </PopoverTrigger>
         <PopoverContent class="w-80 p-3">
             <div class="grid auto-cols-[auto_1fr_auto] gap-x-1 gap-y-1">
-                <h4 class="col-span-3 text-xs text-muted-foreground">Wormholes</h4>
-                <div class="col-span-3 grid grid-cols-subgrid">
-                    <Checkbox :model-value="map_user_settings.route_allow_eol" @update:model-value="handleToggleEol" id="eol-checkbox" />
-                    <label for="eol-checkbox" class="cursor-pointer text-xs font-medium"> Allow EOL </label>
+                <h4 class="col-span-3 text-xs text-muted-foreground">Wormhole Lifetime</h4>
+                <RadioGroup
+                    :model-value="map_user_settings.route_allow_lifetime_status"
+                    @update:model-value="handleLifetimeStatusChange"
+                    class="col-span-3 grid grid-cols-subgrid gap-1"
+                >
+                    <RadioGroupItem value="critical" id="lifetime-critical" />
+                    <Label for="lifetime-critical" class="cursor-pointer text-xs font-medium">Critical</Label>
+                    <span class="text-xs text-muted-foreground">&lt; 1 hour</span>
+                    <RadioGroupItem value="eol" id="lifetime-eol" />
+                    <Label for="lifetime-eol" class="cursor-pointer text-xs font-medium">End of Life</Label>
                     <span class="text-xs text-muted-foreground">&lt; 4 hours</span>
-                </div>
+                    <RadioGroupItem value="healthy" id="lifetime-healthy" />
+                    <Label for="lifetime-healthy" class="cursor-pointer text-xs font-medium">Healthy Only</Label>
+                    <span class="text-xs text-muted-foreground">&gt; 4 hours</span>
+                </RadioGroup>
 
+                <h4 class="col-span-3 mt-2 text-xs text-muted-foreground">Wormhole Mass</h4>
                 <RadioGroup
                     :model-value="map_user_settings.route_allow_mass_status"
                     @update:model-value="handleToggleMass"
