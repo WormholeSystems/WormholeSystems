@@ -11,7 +11,7 @@ import { getMapChannelName } from '@/const/channels';
 import { KillmailReceivedEvent } from '@/const/events';
 import MapUserSettings from '@/routes/map-user-settings';
 import { TKillmail, TMapUserSetting } from '@/types/models';
-import { router } from '@inertiajs/vue3';
+import { Deferred, router } from '@inertiajs/vue3';
 import { useEcho } from '@laravel/echo-vue';
 import type { AcceptableValue } from 'reka-ui';
 
@@ -71,18 +71,25 @@ useOnClient(() =>
             </template>
         </MapPanelHeader>
         <MapPanelContent>
-            <div class="@container">
-                <template v-if="map_killmails?.length">
-                    <div class="grid grid-cols-[1.25rem_1.25rem_1.25rem_auto_1.25rem_auto_auto_1.25rem_1.25rem_2rem_auto_auto] gap-x-2">
-                        <TransitionGroup name="list">
-                            <Killmail v-for="killmail in map_killmails" :key="killmail.id" :killmail="killmail" />
-                        </TransitionGroup>
+            <Deferred data="map_killmails">
+                <div class="@container">
+                    <template v-if="map_killmails?.length">
+                        <div class="grid grid-cols-[1.25rem_1.25rem_1.25rem_auto_1.25rem_auto_auto_1.25rem_1.25rem_2rem_auto_auto] gap-x-2">
+                            <TransitionGroup name="list">
+                                <Killmail v-for="killmail in map_killmails" :key="killmail.id" :killmail="killmail" />
+                            </TransitionGroup>
+                        </div>
+                    </template>
+                    <div v-else class="flex h-full flex-col items-center justify-center gap-2 p-4">
+                        <p class="font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">No killmails</p>
+                    </div>
+                </div>
+                <template #fallback>
+                    <div class="flex h-full animate-pulse items-center justify-center gap-2 p-4">
+                        <p class="font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">Loading killmails...</p>
                     </div>
                 </template>
-                <div v-else class="flex h-full flex-col items-center justify-center gap-2 p-4">
-                    <p class="font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">No killmails</p>
-                </div>
-            </div>
+            </Deferred>
         </MapPanelContent>
     </MapPanel>
 </template>
