@@ -32,7 +32,7 @@ const shipHistory = computed(() => page.props.ship_history ?? []);
 
 <template>
     <MapPanel>
-        <MapPanelHeader>
+        <MapPanelHeader card-id="ship-history">
             Ship History
             <span v-if="shipHistory.length" class="ml-1 text-amber-400">{{ shipHistory.length }}</span>
         </MapPanelHeader>

@@ -116,7 +116,7 @@ function resolveRoute(targetId: number | null): TResolvedSolarsystem[] {
 
 <template>
     <MapPanel>
-        <MapPanelHeader>
+        <MapPanelHeader card-id="characters">
             <span class="inline-flex items-center gap-2">
                 <span class="size-2 animate-pulse rounded-full bg-green-500" />
                 Pilots

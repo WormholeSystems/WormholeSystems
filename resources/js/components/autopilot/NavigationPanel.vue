@@ -58,7 +58,7 @@ const activeTab = ref('destinations');
 
 <template>
     <MapPanel>
-        <MapPanelHeader>
+        <MapPanelHeader card-id="autopilot">
             Navigation
             <span class="ml-2 text-muted-foreground/60">{{ routePreferenceLabel }}</span>
             <template #actions>
