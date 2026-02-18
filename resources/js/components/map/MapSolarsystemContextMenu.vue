@@ -94,7 +94,7 @@ const options: TMapSolarsystemStatus[] = ['unknown', 'friendly', 'hostile', 'act
                     </ContextMenuItem>
                 </ContextMenuSubContent>
             </ContextMenuSub>
-            <ContextMenuSub v-if="!map_solarsystem.solarsystem.class">
+            <ContextMenuSub v-if="user && !map_solarsystem.solarsystem.class">
                 <ContextMenuSubTrigger>Set destination</ContextMenuSubTrigger>
                 <ContextMenuSubContent>
                     <ContextMenuItem
@@ -108,7 +108,7 @@ const options: TMapSolarsystemStatus[] = ['unknown', 'friendly', 'hostile', 'act
                 </ContextMenuSubContent>
             </ContextMenuSub>
 
-            <ContextMenuSub v-if="!map_solarsystem.solarsystem.class">
+            <ContextMenuSub v-if="user && !map_solarsystem.solarsystem.class">
                 <ContextMenuSubTrigger>Add waypoint</ContextMenuSubTrigger>
                 <ContextMenuSubContent>
                     <ContextMenuItem
