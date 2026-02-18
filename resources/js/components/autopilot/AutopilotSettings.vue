@@ -9,10 +9,12 @@ import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { updateMapUserSettings } from '@/composables/map';
 import { useMapUserSettings } from '@/composables/useMapUserSettings';
+import { useShowMap } from '@/composables/useShowMap';
 import { TLifetimeStatus, TMassStatus } from '@/types/models';
 import { ref, watch } from 'vue';
 
 const map_user_settings = useMapUserSettings();
+const page = useShowMap();
 
 const localSecurityPenalty = ref(map_user_settings.value.security_penalty);
 
@@ -24,26 +26,26 @@ watch(
 );
 
 function handleLifetimeStatusChange(value: string) {
-    updateMapUserSettings(map_user_settings.value, {
+    updateMapUserSettings(page.props.map.slug, {
         route_allow_lifetime_status: value as TLifetimeStatus,
     });
 }
 
 function handleToggleMass(value: string) {
-    updateMapUserSettings(map_user_settings.value, {
+    updateMapUserSettings(page.props.map.slug, {
         route_allow_mass_status: value as TMassStatus,
     });
 }
 
 function handleToggleEveScout(value: boolean | 'indeterminate') {
-    updateMapUserSettings(map_user_settings.value, {
+    updateMapUserSettings(page.props.map.slug, {
         route_use_evescout: value === true,
     });
 }
 
 function handleRoutePreferenceChange(value: string) {
     if (value === 'shorter' || value === 'safer' || value === 'less_secure') {
-        updateMapUserSettings(map_user_settings.value, {
+        updateMapUserSettings(page.props.map.slug, {
             route_preference: value,
         });
     }
@@ -57,7 +59,7 @@ function handleSecurityPenaltyChange(value: number[] | undefined) {
 
 function handleSecurityPenaltyCommit(value: number[]) {
     if (value[0] !== undefined) {
-        updateMapUserSettings(map_user_settings.value, {
+        updateMapUserSettings(page.props.map.slug, {
             security_penalty: value[0],
         });
     }

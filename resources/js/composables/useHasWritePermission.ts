@@ -1,15 +1,9 @@
-import { AppPageProps } from '@/types';
-import { usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import usePermission from '@/composables/usePermission';
 
+/**
+ * @deprecated Use usePermission().canEdit instead
+ */
 export default function useHasWritePermission() {
-    const page = usePage<
-        AppPageProps<{
-            has_write_access?: boolean;
-        }>
-    >();
-
-    return computed(() => {
-        return page.props.has_write_access === true;
-    });
+    const { canEdit } = usePermission();
+    return canEdit;
 }

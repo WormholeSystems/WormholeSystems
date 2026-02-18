@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useJumpCounts } from '@/composables/useJumpCounts';
 import { useMap } from '@/composables/useMap';
+import usePermission from '@/composables/usePermission';
 import { useSelectedMapSolarsystem } from '@/composables/useSelectedMapSolarsystem';
 import { useShowMap } from '@/composables/useShowMap';
 import { useStaticSolarsystems } from '@/composables/useStaticSolarsystems';
@@ -22,6 +23,7 @@ import { computed, ref } from 'vue';
 
 const map = useMap();
 const page = useShowMap();
+const { canEdit } = usePermission();
 
 const { eve_scout_connections } = defineProps<{
     eve_scout_connections?: TEveScoutConnection[];
@@ -365,7 +367,7 @@ const activeTab = useLocalStorage<'thera' | 'turnur'>('eve-scout-active-tab', 't
             <span v-if="activeTab === 'thera' && theraLastUpdated" class="ml-2 text-muted-foreground/60">{{ theraLastUpdated }}</span>
             <span v-if="activeTab === 'turnur' && turnurLastUpdated" class="ml-2 text-muted-foreground/60">{{ turnurLastUpdated }}</span>
             <template #actions>
-                <Tooltip v-if="activeTab === 'thera' && theraConnections.length > 0">
+                <Tooltip v-if="canEdit && activeTab === 'thera' && theraConnections.length > 0">
                     <TooltipTrigger as-child>
                         <MapPanelHeaderActionButton @click="addAllToMap('Thera')" size="icon">
                             <Plus class="size-4" />
@@ -373,7 +375,7 @@ const activeTab = useLocalStorage<'thera' | 'turnur'>('eve-scout-active-tab', 't
                     </TooltipTrigger>
                     <TooltipContent>Add all Thera connections to map</TooltipContent>
                 </Tooltip>
-                <Tooltip v-if="activeTab === 'turnur' && turnurConnections.length > 0">
+                <Tooltip v-if="canEdit && activeTab === 'turnur' && turnurConnections.length > 0">
                     <TooltipTrigger as-child>
                         <MapPanelHeaderActionButton @click="addAllToMap('Turnur')" size="icon">
                             <Plus class="size-4" />

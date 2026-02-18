@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { deleteSignature, getSolarsystemClass, toStringedSolarsystemClass, TProcessedConnection, updateSignature } from '@/composables/map';
 import { useSolarsystemClass } from '@/composables/map/composables/useSolarsystemClass';
 import { Data } from '@/composables/map/utils/data';
-import useHasWritePermission from '@/composables/useHasWritePermission';
+import usePermission from '@/composables/usePermission';
 import { getTypesByCategory, signatureCategories } from '@/const/signatures';
 import { formatDateToISO } from '@/lib/utils';
 import type { TResolvedSelectedMapSolarsystem } from '@/pages/maps';
@@ -43,7 +43,7 @@ const original = toRef(() => signature.signature_id || '');
 const signature_id = ref('');
 syncRefs(original, signature_id);
 
-const can_write = useHasWritePermission();
+const { canEdit: can_write } = usePermission();
 
 // Inline editing state
 const editingId = ref(false);
@@ -283,6 +283,7 @@ function handleMassStatusChange(mass_status: AcceptableValue) {
                 :unconnected_connections="unconnected_connections"
                 :connected_connections="connected_connections"
                 :model-value="signature.map_connection_id"
+                :disabled="!can_write"
                 @update:model-value="handleMapConnectionChange"
             />
         </div>

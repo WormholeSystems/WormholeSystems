@@ -203,12 +203,11 @@ export type TMapRouteSolarsystem = {
 };
 
 export type TMapUserSetting = {
-    id: number;
-    user_id: number;
+    id: number | null;
+    user_id: number | null;
     map_id: number;
     tracking_allowed: boolean;
     is_tracking: boolean;
-    has_write_access: boolean;
     route_allow_lifetime_status: TLifetimeStatus;
     route_allow_mass_status: TMassStatus;
     route_use_evescout: boolean;

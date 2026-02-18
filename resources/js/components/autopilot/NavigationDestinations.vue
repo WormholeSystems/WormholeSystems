@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import MapRouteSolarsystem from '@/components/autopilot/MapRouteSolarsystem.vue';
 import { useDestinationRoutes } from '@/composables/useDestinationRoutes';
-import useHasWritePermission from '@/composables/useHasWritePermission';
 import { useMap } from '@/composables/useMap';
+import usePermission from '@/composables/usePermission';
 import { useSelectedMapSolarsystem } from '@/composables/useSelectedMapSolarsystem';
 import { useStaticSolarsystems } from '@/composables/useStaticSolarsystems';
 import type { TResolvedMapRouteSolarsystem } from '@/pages/maps';
@@ -96,7 +96,7 @@ const sorted = computed(() => {
     });
 });
 
-const can_write = useHasWritePermission();
+const { canEdit: can_write } = usePermission();
 </script>
 
 <template>

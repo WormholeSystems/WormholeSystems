@@ -4,8 +4,7 @@ import MapPreferencesController from '@/actions/App/Http/Controllers/MapPreferen
 import MapRoutingSettingsController from '@/actions/App/Http/Controllers/MapRoutingSettingsController';
 import MapSettingsController from '@/actions/App/Http/Controllers/MapSettingsController';
 import { Button } from '@/components/ui/button';
-import useHasWritePermission from '@/composables/useHasWritePermission';
-import useIsMapOwner from '@/composables/useIsMapOwner';
+import usePermission from '@/composables/usePermission';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SeoHead from '@/layouts/SeoHead.vue';
 import { TMapSummary } from '@/pages/maps';
@@ -22,14 +21,13 @@ interface Props {
 const props = defineProps<Props>();
 
 const page = usePage();
-const hasWriteAccess = useHasWritePermission();
-const isOwner = useIsMapOwner();
+const { canManageAccess } = usePermission();
 
 const navigationItems = computed(() => {
     const items = [];
 
-    // General - Owner only
-    if (isOwner.value) {
+    // General - Manager+ only
+    if (canManageAccess.value) {
         items.push({
             name: 'General',
             href: MapSettingsController.show(props.map.slug),
@@ -46,8 +44,8 @@ const navigationItems = computed(() => {
         description: 'Personal tracking and filters',
     });
 
-    // Access - Write access only
-    if (hasWriteAccess.value) {
+    // Access - Manager+ only
+    if (canManageAccess.value) {
         items.push({
             name: 'Access',
             href: MapAccessController.show(props.map.slug),

@@ -4,15 +4,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import useIsMapOwner from '@/composables/useIsMapOwner';
 import SettingsLayout from '@/layouts/SettingsLayout.vue';
 import { TMapSummary } from '@/pages/maps';
 import { destroy, update } from '@/routes/maps';
 import { router, useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { Check, Copy, Globe, Link2, Link2Off } from 'lucide-vue-next';
+import { computed, ref } from 'vue';
 
-const { map } = defineProps<{
+const { map, is_public, share_token } = defineProps<{
     map: TMapSummary;
+    is_public: boolean;
+    share_token: string | null;
 }>();
 
 const user_is_owner = useIsMapOwner();
@@ -23,12 +27,52 @@ const form = useForm({
 
 const delete_confirmation = ref('');
 const is_deleting = ref(false);
+const copied = ref(false);
+const shareUrl = computed(() => (share_token ? `${window.location.origin}/share/${share_token}` : ''));
 
 function deleteMap() {
     if (delete_confirmation.value !== map.name) {
         return;
     }
     router.delete(destroy(map.slug));
+}
+
+function togglePublic() {
+    router.post(
+        `/maps/${map.slug}/settings/toggle-public`,
+        {},
+        {
+            preserveState: true,
+            preserveScroll: true,
+        },
+    );
+}
+
+function generateShareToken() {
+    router.post(
+        `/maps/${map.slug}/settings/generate-share-token`,
+        {},
+        {
+            preserveState: true,
+            preserveScroll: true,
+        },
+    );
+}
+
+function revokeShareToken() {
+    router.delete(`/maps/${map.slug}/settings/revoke-share-token`, {
+        preserveState: true,
+        preserveScroll: true,
+    });
+}
+
+function copyShareLink() {
+    if (!shareUrl.value) return;
+    navigator.clipboard.writeText(shareUrl.value);
+    copied.value = true;
+    setTimeout(() => {
+        copied.value = false;
+    }, 2000);
 }
 </script>
 
@@ -51,6 +95,68 @@ function deleteMap() {
                         <small v-if="form.errors.name" class="text-red-500">{{ form.errors.name }}</small>
                         <div class="text-sm text-muted-foreground">The display name for this map</div>
                     </form>
+                </CardContent>
+            </Card>
+
+            <!-- Public Access Section -->
+            <Card>
+                <CardHeader>
+                    <CardTitle class="flex items-center gap-2 text-xl font-semibold">
+                        <Globe class="size-5" />
+                        Public Access
+                    </CardTitle>
+                    <CardDescription>Allow anyone to view this map without logging in</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h4 class="font-medium">Public Map</h4>
+                                <p class="text-sm text-muted-foreground">
+                                    When enabled, anyone can view this map as a Viewer without needing an account.
+                                </p>
+                            </div>
+                            <Switch :model-value="is_public" @update:modelValue="togglePublic" />
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <!-- Share Link Section -->
+            <Card>
+                <CardHeader>
+                    <CardTitle class="flex items-center gap-2 text-xl font-semibold">
+                        <Link2 class="size-5" />
+                        Share Link
+                    </CardTitle>
+                    <CardDescription>Generate a shareable link for viewer-only access</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div class="space-y-4">
+                        <p class="text-sm text-muted-foreground">
+                            Share links provide viewer-only access to this map. Anyone with the link can view the map topology, signatures, killmails,
+                            and EVE Scout connections.
+                        </p>
+
+                        <div v-if="share_token" class="space-y-3">
+                            <div class="flex items-center gap-2">
+                                <Input :model-value="shareUrl" readonly class="font-mono text-sm" />
+                                <Button variant="outline" size="icon" @click="copyShareLink">
+                                    <Check v-if="copied" class="size-4 text-green-500" />
+                                    <Copy v-else class="size-4" />
+                                </Button>
+                            </div>
+                            <Button variant="destructive" size="sm" @click="revokeShareToken">
+                                <Link2Off class="mr-2 size-4" />
+                                Revoke Share Link
+                            </Button>
+                        </div>
+
+                        <Button v-else variant="outline" @click="generateShareToken">
+                            <Link2 class="mr-2 size-4" />
+                            Generate Share Link
+                        </Button>
+                    </div>
                 </CardContent>
             </Card>
 

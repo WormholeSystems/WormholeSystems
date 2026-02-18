@@ -7,7 +7,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { updateMapUserSettings } from '@/composables/map';
 import { Data } from '@/composables/map/utils/data';
-import { useMapUserSettings } from '@/composables/useMapUserSettings';
+import { useShowMap } from '@/composables/useShowMap';
 import { TMapSolarsystem } from '@/pages/maps';
 import { TSignature } from '@/types/models';
 import { UTCDate } from '@date-fns/utc';
@@ -20,7 +20,7 @@ const props = defineProps<{
     signatures: TSignature[] | null | undefined;
 }>();
 
-const map_user_settings = useMapUserSettings();
+const page = useShowMap();
 const search = ref('');
 
 const filtered = computed(() => {
@@ -61,7 +61,7 @@ function handleOpenChange(isOpen: boolean) {
 }
 
 function handleDontAskAgain() {
-    updateMapUserSettings(map_user_settings.value, {
+    updateMapUserSettings(page.props.map.slug, {
         prompt_for_signature_enabled: false,
     });
     emit('selectSignature', null);

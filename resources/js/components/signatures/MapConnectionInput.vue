@@ -6,11 +6,12 @@ import { getSolarsystemClass, TProcessedConnection } from '@/composables/map';
 import { TSignatureType } from '@/types/models';
 import { computed, ref } from 'vue';
 
-const { type, unconnected_connections, connected_connections } = defineProps<{
+const { type, unconnected_connections, connected_connections, disabled } = defineProps<{
     type: TSignatureType | null | undefined;
     selected: TProcessedConnection | null;
     unconnected_connections: TProcessedConnection[];
     connected_connections: TProcessedConnection[];
+    disabled?: boolean;
 }>();
 
 const model = defineModel<number | null>({
@@ -41,7 +42,7 @@ function isNotFilterable(type: TSignatureType | null | undefined): type is null 
 </script>
 
 <template>
-    <Select v-model:model-value="model" v-model:open="open">
+    <Select v-model:model-value="model" v-model:open="open" :disabled="disabled">
         <SelectTrigger class="h-6 w-full text-xs">
             <SelectValue as-child>
                 <span>

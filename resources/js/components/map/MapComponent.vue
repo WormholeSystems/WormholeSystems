@@ -20,9 +20,9 @@ import {
 } from '@/composables/map';
 import { useConnectionInteraction } from '@/composables/map/composables/useConnectionInteraction';
 import { useMapEvents } from '@/composables/map/composables/useMapEvents';
-import useHasWritePermission from '@/composables/useHasWritePermission';
 import { useLayout } from '@/composables/useLayout';
 import { useMapBackground } from '@/composables/useMapBackground';
+import usePermission from '@/composables/usePermission';
 import { TMap } from '@/pages/maps';
 import { TMapConfig } from '@/types/map';
 import { Position, useMagicKeys, whenever } from '@vueuse/core';
@@ -51,7 +51,7 @@ const { Delete } = useMagicKeys();
 
 const { grid_size } = useMapGrid();
 
-const can_write = useHasWritePermission();
+const { canEdit: can_write } = usePermission();
 
 const {
     selected_connection,

@@ -14,7 +14,7 @@ import { createSignature, useSignatures } from '@/composables/map';
 import { usePasteSignatures } from '@/composables/map/composables/usePasteSignatures';
 import { useSortableSignatures } from '@/composables/map/composables/useSortedSignatures';
 import { useActiveMapCharacter } from '@/composables/useActiveMapCharacter';
-import useHasWritePermission from '@/composables/useHasWritePermission';
+import usePermission from '@/composables/usePermission';
 import type { TResolvedSelectedMapSolarsystem } from '@/pages/maps';
 import { ArrowDown, ArrowUp } from 'lucide-vue-next';
 import { computed } from 'vue';
@@ -25,7 +25,7 @@ const props = defineProps<{
 
 const { connections } = useSignatures();
 
-const can_write = useHasWritePermission();
+const { canEdit: can_write } = usePermission();
 
 const character = useActiveMapCharacter();
 

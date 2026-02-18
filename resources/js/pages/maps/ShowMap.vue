@@ -16,9 +16,9 @@ import SolarsystemDetails from '@/components/solarsystem/SolarsystemDetails.vue'
 import SystemInfo from '@/components/solarsystem/SystemInfo.vue';
 import SystemInfoEmptyState from '@/components/solarsystem/SystemInfoEmptyState.vue';
 import { useDisableTextSelection } from '@/composables/useDisableTextSelection';
-import useHasWritePermission from '@/composables/useHasWritePermission';
 import { useMapLayout } from '@/composables/useMapLayout';
 import { useOnClient } from '@/composables/useOnClient';
+import usePermission from '@/composables/usePermission';
 import { useStaticSolarsystems } from '@/composables/useStaticSolarsystems';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SeoHead from '@/layouts/SeoHead.vue';
@@ -37,18 +37,17 @@ const {
     map_user_settings,
     ignored_systems,
     map_characters,
-    has_guest_access,
     active_character_has_access,
     eve_scout_connections,
 } = defineProps<TShowMapProps>();
 
-const hasWriteAccess = useHasWritePermission();
+const { canManageAccess, isViewer } = usePermission();
 const page = usePage();
 
 const { resolveSolarsystem } = useStaticSolarsystems();
 
-// Show warning when the active character is not on the map's access list
-const showActiveCharacterWarning = computed(() => !active_character_has_access);
+// Show warning when the active character is not on the map's access list (only for authenticated users)
+const showActiveCharacterWarning = computed(() => page.props.auth.user && !active_character_has_access);
 
 const resolvedMap = computed<TMap>(() => {
     const solarsystems = map.map_solarsystems?.map((mapSolarsystem) => {
@@ -98,8 +97,24 @@ const resolvedMapNavigation = computed<TResolvedMapNavigation | null>(() => {
     };
 });
 
+// Cards unavailable due to permissions (not rendered, should not reserve layout space)
+const unavailableCards = computed(() => {
+    const cards: string[] = [];
+    if (isViewer.value) {
+        cards.push('solarsystem', 'audits', 'ship-history');
+    }
+    if (!map_characters) {
+        cards.push('characters');
+    }
+    return cards;
+});
+
 // Initialize layout management with reactive getter
-const layout = useMapLayout(() => map_user_settings);
+const layout = useMapLayout(
+    () => map_user_settings,
+    () => map.slug,
+    unavailableCards,
+);
 
 // Provide layout state for MapPanelHeader hide buttons
 provide('layoutEditMode', () => layout.isEditMode.value);
@@ -169,7 +184,7 @@ const handleResizeEnd = () => {
         <MapIntroduction
             :mapUserSettings="map_user_settings"
             :userScopes="userScopes"
-            :isVisible="!map_user_settings.introduction_confirmed_at && !has_guest_access"
+            :isVisible="!map_user_settings.introduction_confirmed_at && !isViewer"
             :mapSlug="map.slug"
         />
 
@@ -177,7 +192,7 @@ const handleResizeEnd = () => {
         <ActiveCharacterWarning
             v-if="showActiveCharacterWarning"
             :character-name="page.props.auth?.user?.active_character?.name ?? ''"
-            :has-write-access="hasWriteAccess"
+            :can-manage-access="canManageAccess"
             :map-slug="map.slug"
         />
 
@@ -213,7 +228,7 @@ const handleResizeEnd = () => {
             </GridItem>
 
             <!-- Notes Section -->
-            <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-if="!has_guest_access" v-bind="getLayoutItem('solarsystem').value">
+            <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-if="!isViewer" v-bind="getLayoutItem('solarsystem').value">
                 <SolarsystemDetails v-if="resolvedSelectedSolarsystem" :map_solarsystem="resolvedSelectedSolarsystem" />
                 <SignaturesEmptyState v-else />
             </GridItem>
@@ -225,7 +240,7 @@ const handleResizeEnd = () => {
 
             <!-- Audits Section -->
             <GridItem
-                v-if="!has_guest_access && !layout.isCardHidden('audits')"
+                v-if="!isViewer && !layout.isCardHidden('audits')"
                 @resize="handleResizeStart"
                 @resized="handleResizeEnd"
                 v-bind="getLayoutItem('audits').value"
@@ -235,7 +250,7 @@ const handleResizeEnd = () => {
 
             <!-- Ship History Section -->
             <GridItem
-                v-if="!has_guest_access && !layout.isCardHidden('ship-history')"
+                v-if="!isViewer && !layout.isCardHidden('ship-history')"
                 @resize="handleResizeStart"
                 @resized="handleResizeEnd"
                 v-bind="getLayoutItem('ship-history').value"
@@ -260,7 +275,7 @@ const handleResizeEnd = () => {
                 @resized="handleResizeEnd"
                 v-bind="getLayoutItem('killmails').value"
             >
-                <MapKillmails :map_killmails="map_killmails" :map_id="map.id" :map_user_settings="map_user_settings" />
+                <MapKillmails :map_killmails="map_killmails" :map_id="map.id" :map_slug="map.slug" :map_user_settings="map_user_settings" />
             </GridItem>
 
             <!-- Navigation Section -->

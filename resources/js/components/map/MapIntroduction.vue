@@ -70,7 +70,7 @@ const prevStep = () => {
 };
 
 function updateSetting(key: 'tracking_allowed' | 'is_tracking', value: boolean) {
-    updateMapUserSettings(props.mapUserSettings, {
+    updateMapUserSettings(props.mapSlug, {
         [key]: value,
     });
 }
@@ -78,19 +78,19 @@ function updateSetting(key: 'tracking_allowed' | 'is_tracking', value: boolean) 
 function handleTrackingAllowedChange(allowed: boolean) {
     if (!allowed) {
         // If disabling tracking allowed, also disable is_tracking
-        updateMapUserSettings(props.mapUserSettings, {
+        updateMapUserSettings(props.mapSlug, {
             tracking_allowed: false,
             is_tracking: false,
         });
     } else {
-        updateMapUserSettings(props.mapUserSettings, {
+        updateMapUserSettings(props.mapSlug, {
             tracking_allowed: true,
         });
     }
 }
 
 function completeOnboarding() {
-    updateMapUserSettings(props.mapUserSettings, {
+    updateMapUserSettings(props.mapSlug, {
         introduction_confirmed_at: new Date().toISOString(),
     });
 }

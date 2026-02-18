@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AboutController from '@/actions/App/Http/Controllers/AboutController';
+import LoginController from '@/actions/App/Http/Controllers/LoginController';
 import MapController from '@/actions/App/Http/Controllers/MapController';
 import ScopeController from '@/actions/App/Http/Controllers/ScopeController';
 import { CharacterImage } from '@/components/images';
@@ -14,7 +15,7 @@ import { home } from '@/routes';
 import type { AppPageProps, NavItem } from '@/types';
 import { TCharacter } from '@/types/models';
 import { Link, usePage } from '@inertiajs/vue3';
-import { AlertTriangle, Info, LayoutGrid, Menu, Shield } from 'lucide-vue-next';
+import { AlertTriangle, Info, LayoutGrid, LogIn, Menu, Shield } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 const page = usePage<
@@ -196,6 +197,15 @@ const mainNavItems: NavItem[] = [
                                 <UserMenuContent :user="user" />
                             </DropdownMenuContent>
                         </DropdownMenu>
+                    </template>
+                    <template v-else>
+                        <Link
+                            :href="LoginController.show().url"
+                            class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                        >
+                            <LogIn class="size-4" />
+                            <span class="hidden sm:inline">Login</span>
+                        </Link>
                     </template>
                 </div>
             </div>
