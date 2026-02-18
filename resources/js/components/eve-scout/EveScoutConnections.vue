@@ -360,7 +360,7 @@ const activeTab = useLocalStorage<'thera' | 'turnur'>('eve-scout-active-tab', 't
 
 <template>
     <MapPanel>
-        <MapPanelHeader>
+        <MapPanelHeader card-id="eve-scout">
             Eve Scout
             <span v-if="activeTab === 'thera' && theraLastUpdated" class="ml-2 text-muted-foreground/60">{{ theraLastUpdated }}</span>
             <span v-if="activeTab === 'turnur' && turnurLastUpdated" class="ml-2 text-muted-foreground/60">{{ turnurLastUpdated }}</span>

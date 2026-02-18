@@ -50,7 +50,7 @@ useOnClient(() =>
 
 <template>
     <MapPanel>
-        <MapPanelHeader>
+        <MapPanelHeader card-id="killmails">
             Killmails
             <span v-if="map_killmails?.length" class="ml-1 text-amber-400">{{ map_killmails.length }}</span>
             <template #actions>

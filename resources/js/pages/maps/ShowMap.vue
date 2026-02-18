@@ -26,7 +26,7 @@ import { TMap, TResolvedMapNavigation, TResolvedSelectedMapSolarsystem, TShowMap
 import { router, usePage } from '@inertiajs/vue3';
 import { echo } from '@laravel/echo-vue';
 import { GridItem, GridLayout } from 'grid-layout-plus';
-import { computed, ref } from 'vue';
+import { computed, provide, ref } from 'vue';
 
 const {
     map,
@@ -79,7 +79,11 @@ const resolvedSelectedSolarsystem = computed<TResolvedSelectedMapSolarsystem | n
     };
 });
 
-const resolvedMapNavigation = computed<TResolvedMapNavigation>(() => {
+const resolvedMapNavigation = computed<TResolvedMapNavigation | null>(() => {
+    if (!map_navigation) {
+        return null;
+    }
+
     const destinations = map_navigation.destinations.map((destination) => {
         const resolvedSolarsystem = resolveSolarsystem(destination.solarsystem_id);
 
@@ -96,6 +100,10 @@ const resolvedMapNavigation = computed<TResolvedMapNavigation>(() => {
 
 // Initialize layout management with reactive getter
 const layout = useMapLayout(() => map_user_settings);
+
+// Provide layout state for MapPanelHeader hide buttons
+provide('layoutEditMode', () => layout.isEditMode.value);
+provide('layoutHideCard', layout.hideCard);
 
 // Helper function to get layout item props
 const getLayoutItem = (id: string) => {
@@ -216,27 +224,52 @@ const handleResizeEnd = () => {
             </GridItem>
 
             <!-- Audits Section -->
-            <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-if="!has_guest_access" v-bind="getLayoutItem('audits').value">
+            <GridItem
+                v-if="!has_guest_access && !layout.isCardHidden('audits')"
+                @resize="handleResizeStart"
+                @resized="handleResizeEnd"
+                v-bind="getLayoutItem('audits').value"
+            >
                 <Audits :audits="resolvedSelectedSolarsystem?.audits ?? []" />
             </GridItem>
 
             <!-- Ship History Section -->
-            <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-if="!has_guest_access" v-bind="getLayoutItem('ship-history').value">
+            <GridItem
+                v-if="!has_guest_access && !layout.isCardHidden('ship-history')"
+                @resize="handleResizeStart"
+                @resized="handleResizeEnd"
+                v-bind="getLayoutItem('ship-history').value"
+            >
                 <ShipHistory />
             </GridItem>
 
             <!-- Map Characters Section -->
-            <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-if="map_characters" v-bind="getLayoutItem('characters').value">
+            <GridItem
+                v-if="map_characters && !layout.isCardHidden('characters')"
+                @resize="handleResizeStart"
+                @resized="handleResizeEnd"
+                v-bind="getLayoutItem('characters').value"
+            >
                 <MapCharacters :map_characters :map="resolvedMap" :selected_map_solarsystem="resolvedSelectedSolarsystem" :ignored_systems />
             </GridItem>
 
             <!-- Killmails Section -->
-            <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-bind="getLayoutItem('killmails').value">
+            <GridItem
+                v-if="!layout.isCardHidden('killmails')"
+                @resize="handleResizeStart"
+                @resized="handleResizeEnd"
+                v-bind="getLayoutItem('killmails').value"
+            >
                 <MapKillmails :map_killmails="map_killmails" :map_id="map.id" :map_user_settings="map_user_settings" />
             </GridItem>
 
             <!-- Navigation Section -->
-            <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-bind="getLayoutItem('autopilot').value">
+            <GridItem
+                v-if="resolvedMapNavigation && !layout.isCardHidden('autopilot')"
+                @resize="handleResizeStart"
+                @resized="handleResizeEnd"
+                v-bind="getLayoutItem('autopilot').value"
+            >
                 <NavigationPanel
                     :map_navigation="resolvedMapNavigation"
                     :map="resolvedMap"
@@ -247,7 +280,12 @@ const handleResizeEnd = () => {
             </GridItem>
 
             <!-- EVE Scout Connections Section -->
-            <GridItem @resize="handleResizeStart" @resized="handleResizeEnd" v-bind="getLayoutItem('eve-scout').value">
+            <GridItem
+                v-if="!layout.isCardHidden('eve-scout')"
+                @resize="handleResizeStart"
+                @resized="handleResizeEnd"
+                v-bind="getLayoutItem('eve-scout').value"
+            >
                 <EveScoutConnections :eve_scout_connections />
             </GridItem>
         </GridLayout>

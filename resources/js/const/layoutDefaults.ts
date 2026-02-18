@@ -88,6 +88,32 @@ export const DEFAULT_BREAKPOINTS: BreakpointsConfig = {
 };
 
 /**
+ * Card IDs that can be hidden by the user
+ */
+export const REMOVABLE_CARDS = ['audits', 'ship-history', 'characters', 'killmails', 'autopilot', 'eve-scout'] as const;
+export type RemovableCardId = (typeof REMOVABLE_CARDS)[number];
+export const REMOVABLE_CARD_LABELS: Record<RemovableCardId, string> = {
+    audits: 'Audits',
+    'ship-history': 'Ship History',
+    characters: 'Characters',
+    killmails: 'Killmails',
+    autopilot: 'Autopilot',
+    'eve-scout': 'EVE Scout',
+};
+
+/**
+ * Mapping from removable card IDs to their Inertia prop names.
+ * Used to request data reload when a card is unhidden.
+ * Only cards with conditionally-loaded backend data need entries here.
+ */
+export const CARD_INERTIA_PROPS: Partial<Record<RemovableCardId, string[]>> = {
+    audits: ['selected_map_solarsystem'],
+    killmails: ['map_killmails'],
+    'ship-history': ['ship_history'],
+    autopilot: ['map_navigation'],
+};
+
+/**
  * List of protected breakpoint keys that cannot be deleted
  */
 export const PROTECTED_BREAKPOINTS = ['xs', 'sm', 'md', 'lg'] as const;

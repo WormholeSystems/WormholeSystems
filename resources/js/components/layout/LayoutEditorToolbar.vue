@@ -3,8 +3,8 @@ import BreakpointManager from '@/components/layout/BreakpointManager.vue';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { UseMapLayoutReturn } from '@/composables/useMapLayout';
-import { isProtectedBreakpoint } from '@/const/layoutDefaults';
-import { Laptop, Monitor, MonitorUp, RotateCcw, Save, Smartphone, Tablet, X } from 'lucide-vue-next';
+import { isProtectedBreakpoint, REMOVABLE_CARD_LABELS, REMOVABLE_CARDS } from '@/const/layoutDefaults';
+import { Laptop, Monitor, MonitorUp, Plus, RotateCcw, Save, Smartphone, Tablet, X } from 'lucide-vue-next';
 import { computed, onMounted, ref, watch } from 'vue';
 
 const props = defineProps<{
@@ -13,10 +13,12 @@ const props = defineProps<{
 
 // Track initial state to detect changes
 const initialState = ref<string>('');
+const initialHiddenState = ref<string>('');
 
 onMounted(() => {
     // Store initial state as JSON for comparison
     initialState.value = JSON.stringify(props.layout.breakpoints.value);
+    initialHiddenState.value = JSON.stringify(props.layout.hiddenCards.value);
 });
 
 // Watch for entering edit mode to capture initial state
@@ -26,9 +28,15 @@ watch(
         if (isEditMode) {
             // Capture state when entering edit mode
             initialState.value = JSON.stringify(props.layout.breakpoints.value);
+            initialHiddenState.value = JSON.stringify(props.layout.hiddenCards.value);
         }
     },
 );
+
+// Hidden cards that can be re-added
+const hiddenCardIds = computed(() => {
+    return REMOVABLE_CARDS.filter((cardId) => props.layout.isCardHidden(cardId));
+});
 
 // Map breakpoint keys to icons (with fallbacks for custom breakpoints)
 function getBreakpointIcon(key: string) {
@@ -45,7 +53,8 @@ function getBreakpointIcon(key: string) {
 const hasUnsavedChanges = computed(() => {
     if (!initialState.value) return false;
     const currentState = JSON.stringify(props.layout.breakpoints.value);
-    return initialState.value !== currentState;
+    const currentHiddenState = JSON.stringify(props.layout.hiddenCards.value);
+    return initialState.value !== currentState || initialHiddenState.value !== currentHiddenState;
 });
 
 const selectedBreakpoint = computed(() => {
@@ -61,6 +70,7 @@ function handleExitEditMode() {
         props.layout.revertChanges();
         // Reset initial state to match reverted state
         initialState.value = JSON.stringify(props.layout.breakpoints.value);
+        initialHiddenState.value = JSON.stringify(props.layout.hiddenCards.value);
     }
     props.layout.toggleEditMode();
 }
@@ -69,6 +79,7 @@ function handleSave() {
     props.layout.saveLayout();
     // Update the initial state after saving
     initialState.value = JSON.stringify(props.layout.breakpoints.value);
+    initialHiddenState.value = JSON.stringify(props.layout.hiddenCards.value);
 }
 
 const canResetCurrentBreakpoint = computed(() => {
@@ -142,6 +153,24 @@ const canResetCurrentBreakpoint = computed(() => {
                     <component :is="getBreakpointIcon(selectedBreakpoint.key)" class="h-4 w-4" />
                     <span>{{ selectedBreakpoint.label }} ({{ selectedBreakpoint.minWidth }}px)</span>
                 </div>
+
+                <!-- Hidden Cards Re-add Buttons -->
+                <template v-if="hiddenCardIds.length > 0">
+                    <div class="h-8 w-px bg-border"></div>
+                    <div class="flex items-center gap-1">
+                        <Tooltip v-for="cardId in hiddenCardIds" :key="cardId">
+                            <TooltipTrigger as-child>
+                                <Button variant="outline" size="sm" class="h-8 gap-1 text-xs" @click="layout.showCard(cardId)">
+                                    <Plus class="h-3 w-3" />
+                                    {{ REMOVABLE_CARD_LABELS[cardId] }}
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" class="z-[60]">
+                                <p class="text-sm">Show {{ REMOVABLE_CARD_LABELS[cardId] }}</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </div>
+                </template>
 
                 <div class="h-8 w-px bg-border"></div>
 

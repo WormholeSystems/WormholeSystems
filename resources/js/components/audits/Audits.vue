@@ -12,7 +12,7 @@ const { audits = [] } = defineProps<{
 
 <template>
     <MapPanel>
-        <MapPanelHeader>
+        <MapPanelHeader card-id="audits">
             Activity
             <span v-if="audits.length" class="ml-1 text-amber-400">{{ audits.length }}</span>
         </MapPanelHeader>

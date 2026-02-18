@@ -1,5 +1,5 @@
 import { updateMapUserSettings } from '@/composables/map/actions/updateMapUserSettings';
-import { DEFAULT_BREAKPOINTS } from '@/const/layoutDefaults';
+import { CARD_INERTIA_PROPS, DEFAULT_BREAKPOINTS } from '@/const/layoutDefaults';
 import { BreakpointDefinition, BreakpointsConfig, LayoutItem } from '@/types/layout';
 import { TMapUserSetting } from '@/types/models';
 import { useWindowSize } from '@vueuse/core';
@@ -11,6 +11,7 @@ export interface UseMapLayoutReturn {
     selectedBreakpointKey: Ref<string>;
     breakpoints: Ref<BreakpointsConfig>;
     gridLayoutRef: Ref<any>;
+    hiddenCards: Ref<string[]>;
 
     // Computed properties
     currentBreakpointKey: ComputedRef<string>;
@@ -29,6 +30,9 @@ export interface UseMapLayoutReturn {
     addBreakpoint: (breakpoint: BreakpointDefinition) => void;
     removeBreakpoint: (key: string) => void;
     refreshLayout: () => void;
+    hideCard: (cardId: string) => void;
+    showCard: (cardId: string) => void;
+    isCardHidden: (cardId: string) => boolean;
 }
 
 export function useMapLayout(mapUserSettings: MaybeRefOrGetter<TMapUserSetting>): UseMapLayoutReturn {
@@ -38,6 +42,7 @@ export function useMapLayout(mapUserSettings: MaybeRefOrGetter<TMapUserSetting>)
     const isEditMode = ref(false);
     const breakpoints = ref<BreakpointsConfig>(loadBreakpoints(toValue(mapUserSettings)));
     const gridLayoutRef = ref<any>(null);
+    const hiddenCards = ref<string[]>(toValue(mapUserSettings).hidden_cards ?? []);
 
     // Sorted breakpoints
     const sortedBreakpoints = computed(() => {
@@ -63,10 +68,11 @@ export function useMapLayout(mapUserSettings: MaybeRefOrGetter<TMapUserSetting>)
         return isEditMode.value ? selectedBreakpointKey.value : currentBreakpointKey.value;
     });
 
-    // Current layout properties from active breakpoint
+    // Current layout properties from active breakpoint (filtered by hidden cards)
     const currentLayoutItems = computed(() => {
         const breakpoint = breakpoints.value[activeBreakpointKey.value];
-        return breakpoint?.items || [];
+        const items = breakpoint?.items || [];
+        return items.filter((item) => !hiddenCards.value.includes(item.i));
     });
 
     const currentLayoutCols = computed(() => {
@@ -98,19 +104,37 @@ export function useMapLayout(mapUserSettings: MaybeRefOrGetter<TMapUserSetting>)
 
     function updateLayout(items: LayoutItem[]) {
         const key = activeBreakpointKey.value;
+        const currentItems = breakpoints.value[key]?.items || [];
+        // Preserve positions of hidden items that aren't in the layout update
+        const hiddenItems = currentItems.filter((item) => hiddenCards.value.includes(item.i));
+        const newItems = [...items, ...hiddenItems];
+
+        // Only update if actually changed to prevent infinite re-render loops
+        // (.filter() in currentLayoutItems creates new array refs each time)
+        if (JSON.stringify(currentItems) === JSON.stringify(newItems)) {
+            return;
+        }
+
         breakpoints.value[key] = {
             ...breakpoints.value[key],
-            items,
+            items: newItems,
         };
     }
 
     function saveLayout() {
+        const previousHiddenCards = toValue(mapUserSettings).hidden_cards ?? [];
+        const newlyShownCards = previousHiddenCards.filter((card) => !hiddenCards.value.includes(card));
+
+        // Collect Inertia prop names for cards that went from hidden → shown
+        const reloadProps = newlyShownCards.flatMap((card) => CARD_INERTIA_PROPS[card as keyof typeof CARD_INERTIA_PROPS] ?? []);
+
         updateMapUserSettings(
             toValue(mapUserSettings),
             {
                 layout_breakpoints: breakpoints.value,
+                hidden_cards: hiddenCards.value,
             },
-            ['map_user_settings'],
+            ['map_user_settings', ...reloadProps],
         );
 
         isEditMode.value = false;
@@ -127,6 +151,7 @@ export function useMapLayout(mapUserSettings: MaybeRefOrGetter<TMapUserSetting>)
 
     function revertChanges() {
         breakpoints.value = loadBreakpoints(toValue(mapUserSettings));
+        hiddenCards.value = toValue(mapUserSettings).hidden_cards ?? [];
         refreshLayout();
     }
 
@@ -146,6 +171,31 @@ export function useMapLayout(mapUserSettings: MaybeRefOrGetter<TMapUserSetting>)
         breakpoints.value[breakpoint.key] = breakpoint;
     }
 
+    function hideCard(cardId: string) {
+        if (!hiddenCards.value.includes(cardId)) {
+            hiddenCards.value = [...hiddenCards.value, cardId];
+        }
+    }
+
+    function showCard(cardId: string) {
+        // Reposition the card to the bottom of each breakpoint to avoid ghost gaps
+        for (const bp of Object.values(breakpoints.value)) {
+            const item = bp.items.find((item) => item.i === cardId);
+            if (item) {
+                const visibleItems = bp.items.filter((i) => i.i !== cardId && !hiddenCards.value.includes(i.i));
+                const maxBottom = visibleItems.reduce((max, i) => Math.max(max, i.y + i.h), 0);
+                item.x = 0;
+                item.y = maxBottom;
+            }
+        }
+
+        hiddenCards.value = hiddenCards.value.filter((id) => id !== cardId);
+    }
+
+    function isCardHidden(cardId: string): boolean {
+        return hiddenCards.value.includes(cardId);
+    }
+
     function removeBreakpoint(key: string) {
         if (Object.keys(breakpoints.value).length <= 1) return;
 
@@ -161,6 +211,7 @@ export function useMapLayout(mapUserSettings: MaybeRefOrGetter<TMapUserSetting>)
         selectedBreakpointKey,
         breakpoints,
         gridLayoutRef,
+        hiddenCards,
         currentBreakpointKey,
         sortedBreakpoints,
         currentLayoutItems,
@@ -175,6 +226,9 @@ export function useMapLayout(mapUserSettings: MaybeRefOrGetter<TMapUserSetting>)
         addBreakpoint,
         removeBreakpoint,
         refreshLayout,
+        hideCard,
+        showCard,
+        isCardHidden,
     };
 }
 

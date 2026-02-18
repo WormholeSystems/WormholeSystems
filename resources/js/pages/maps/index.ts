@@ -52,8 +52,8 @@ export type TShowMapProps = {
     selected_map_solarsystem: TSelectedMapSolarsystem | null;
     map_killmails?: TKillmail[];
     map_characters: TCharacter[] | null;
-    map_navigation: TMapNavigation;
-    ship_history: TShipHistory[] | null;
+    map_navigation?: TMapNavigation;
+    ship_history?: TShipHistory[] | null;
     has_write_access: boolean;
     has_guest_access: boolean;
     active_character_has_access: boolean;
