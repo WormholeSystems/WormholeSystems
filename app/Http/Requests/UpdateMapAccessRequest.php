@@ -49,7 +49,7 @@ final class UpdateMapAccessRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()?->can('update', $this->map) && ! $this->map_access?->is_owner;
+        return $this->user()?->can('manageAccess', $this->map) && ! $this->map_access?->is_owner;
     }
 
     /**
@@ -63,6 +63,7 @@ final class UpdateMapAccessRequest extends FormRequest
             'entity_id' => 'required|integer',
             'entity_type' => 'required|string|in:character,corporation,alliance',
             'permission' => ['nullable', 'sometimes', Rule::enum(Permission::class)],
+            'expires_at' => ['nullable', 'date', 'after:now'],
         ];
     }
 }

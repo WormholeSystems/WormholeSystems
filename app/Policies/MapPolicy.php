@@ -10,30 +10,33 @@ use App\Models\User;
 
 final class MapPolicy
 {
-    /**
-     * Create a new policy instance.
-     */
-    public function __construct()
-    {
-        //
-    }
-
     public function viewAny(): bool
     {
         return true;
-        // Allow authenticated users to view maps list
     }
 
-    public function view(User $user, Map $map): bool
+    public function view(?User $user, Map $map): bool
     {
-        return $map->mapAccessors()->whereIn('accessible_id', $user->getAccessibleIds())->exists();
+        if ($map->isPubliclyAccessible()) {
+            return true;
+        }
+
+        if (! $user instanceof User) {
+            return false;
+        }
+
+        return $map->mapAccessors()->notExpired()->whereIn('accessible_id', $user->getAccessibleIds())->exists();
     }
 
-    public function viewCharacters(User $user, Map $map): bool
+    public function viewCharacters(?User $user, Map $map): bool
     {
+        if (! $user instanceof User) {
+            return false;
+        }
+
         $permission = $map->getUserPermission($user);
 
-        return $permission !== Permission::Guest;
+        return $permission instanceof Permission && $permission->isAtLeast(Permission::Member);
     }
 
     public function create(): bool
@@ -41,15 +44,38 @@ final class MapPolicy
         return true;
     }
 
-    public function update(User $user, Map $map): bool
+    public function update(?User $user, Map $map): bool
     {
+        if (! $user instanceof User) {
+            return false;
+        }
+
         $permission = $map->getUserPermission($user);
 
-        return $permission === Permission::Write;
+        return $permission instanceof Permission && $permission->isAtLeast(Permission::Member);
     }
 
-    public function delete(User $user, Map $map): bool
+    public function manageAccess(?User $user, Map $map): bool
     {
-        return $map->mapAccessors()->whereIn('accessible_id', $user->getAccessibleIds())->where('is_owner', true)->exists();
+        if (! $user instanceof User) {
+            return false;
+        }
+
+        $permission = $map->getUserPermission($user);
+
+        return $permission instanceof Permission && $permission->isAtLeast(Permission::Manager);
+    }
+
+    public function delete(?User $user, Map $map): bool
+    {
+        if (! $user instanceof User) {
+            return false;
+        }
+
+        return $map->mapAccessors()
+            ->notExpired()
+            ->whereIn('accessible_id', $user->getAccessibleIds())
+            ->where('is_owner', true)
+            ->exists();
     }
 }

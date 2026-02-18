@@ -24,4 +24,24 @@ final class MapAccessFactory extends Factory
             'map_id' => Map::factory(),
         ];
     }
+
+    /**
+     * Indicate that the access has expired.
+     */
+    public function expired(): static
+    {
+        return $this->state(fn (): array => [
+            'expires_at' => now()->subHour(),
+        ]);
+    }
+
+    /**
+     * Indicate that the access expires in the given number of hours.
+     */
+    public function expiresIn(int $hours): static
+    {
+        return $this->state(fn (): array => [
+            'expires_at' => now()->addHours($hours),
+        ]);
+    }
 }

@@ -10,6 +10,7 @@ use App\Models\Character;
 use App\Models\Corporation;
 use App\Models\Map;
 use App\Models\MapAccess;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -20,13 +21,14 @@ final readonly class CreateMapAccessAction
      *
      * @throws Throwable
      */
-    public function handle(Map $map, Character|Corporation|Alliance $accessor, bool $is_owner = false, Permission $permission = Permission::Write): MapAccess
+    public function handle(Map $map, Character|Corporation|Alliance $accessor, bool $is_owner = false, Permission $permission = Permission::Manager, ?CarbonImmutable $expires_at = null): MapAccess
     {
         return DB::transaction(fn (): MapAccess => $accessor->mapAccesses()->create([
             'map_id' => $map->id,
             'is_owner' => $is_owner,
             'permission' => $permission,
             'accessible_id' => $accessor->id,
+            'expires_at' => $is_owner ? null : $expires_at,
         ]), 5);
     }
 }
