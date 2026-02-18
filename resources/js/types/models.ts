@@ -218,6 +218,7 @@ export type TMapUserSetting = {
     introduction_confirmed_at: string | null;
     prompt_for_signature_enabled: boolean;
     layout_breakpoints?: Record<string, any> | null;
+    hidden_cards: string[] | null;
 };
 
 export type TShipHistory = {
