@@ -7,6 +7,7 @@ namespace App\Http\Requests;
 use App\Enums\KillmailFilter;
 use App\Enums\LifetimeStatus;
 use App\Enums\MassStatus;
+use App\Enums\RemovableCard;
 use App\Enums\RoutePreference;
 use App\Models\MapUserSetting;
 use App\Models\User;
@@ -45,6 +46,8 @@ final class UpdateMapUserSettingRequest extends FormRequest
             'introduction_confirmed_at' => ['nullable', 'string', 'date'],
             'prompt_for_signature_enabled' => ['nullable', 'boolean'],
             'layout_breakpoints' => ['nullable', 'array'],
+            'hidden_cards' => ['nullable', 'array'],
+            'hidden_cards.*' => ['string', Rule::enum(RemovableCard::class)],
         ];
     }
 }

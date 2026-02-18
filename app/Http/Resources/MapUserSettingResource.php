@@ -35,6 +35,7 @@ final class MapUserSettingResource extends JsonResource
             'introduction_confirmed_at' => $this->introduction_confirmed_at?->toISOString(),
             'prompt_for_signature_enabled' => $this->prompt_for_signature_enabled,
             'layout_breakpoints' => $this->layout_breakpoints,
+            'hidden_cards' => $this->hidden_cards ?? [],
         ];
     }
 }

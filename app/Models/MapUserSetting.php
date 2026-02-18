@@ -29,6 +29,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property CarbonImmutable|string|null $introduction_confirmed_at
  * @property bool $prompt_for_signature_enabled
  * @property array|null $layout_breakpoints
+ * @property array|null $hidden_cards
  * @property CarbonImmutable|string $created_at
  * @property CarbonImmutable|string $updated_at
  */
@@ -70,6 +71,7 @@ final class MapUserSetting extends Model
             'introduction_confirmed_at' => 'immutable_datetime',
             'prompt_for_signature_enabled' => 'boolean',
             'layout_breakpoints' => 'array',
+            'hidden_cards' => 'array',
         ];
     }
 }
