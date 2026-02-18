@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Features;
 
 use App\Enums\KillmailFilter;
+use App\Enums\RemovableCard;
 use App\Http\Resources\KillmailResource;
 use App\Models\Killmail;
 use App\Models\Map;
@@ -17,13 +18,21 @@ use Throwable;
 
 final readonly class MapKillmailsFeature implements ProvidesInertiaProperties
 {
+    /**
+     * @param  string[]  $hiddenCards
+     */
     public function __construct(
         private Map $map,
         private KillmailFilter $filter,
+        private array $hiddenCards = [],
     ) {}
 
     public function toInertiaProperties(RenderContext $context): array
     {
+        if (in_array(RemovableCard::Killmails->value, $this->hiddenCards)) {
+            return [];
+        }
+
         return [
             'map_killmails' => Inertia::defer($this->getMapKills(...)),
         ];

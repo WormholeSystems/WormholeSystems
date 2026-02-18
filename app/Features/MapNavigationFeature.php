@@ -4,16 +4,27 @@ declare(strict_types=1);
 
 namespace App\Features;
 
+use App\Enums\RemovableCard;
 use App\Models\Map;
 use Inertia\ProvidesInertiaProperties;
 use Inertia\RenderContext;
 
 final readonly class MapNavigationFeature implements ProvidesInertiaProperties
 {
-    public function __construct(private Map $map) {}
+    /**
+     * @param  string[]  $hiddenCards
+     */
+    public function __construct(
+        private Map $map,
+        private array $hiddenCards = [],
+    ) {}
 
     public function toInertiaProperties(RenderContext $context): array
     {
+        if (in_array(RemovableCard::Autopilot->value, $this->hiddenCards)) {
+            return [];
+        }
+
         return [
             'map_navigation' => fn (): array => [
                 'destinations' => $this->getDestinations(),
