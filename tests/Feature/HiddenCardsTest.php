@@ -26,7 +26,7 @@ beforeEach(function () {
 });
 
 it('accepts valid removable card IDs in hidden_cards', function () {
-    $this->putJson(route('map-user-settings.update', $this->settings), [
+    $this->putJson(route('maps.user-settings.update', $this->map), [
         'hidden_cards' => ['audits', 'ship-history', 'characters', 'killmails', 'autopilot', 'eve-scout'],
     ])->assertRedirect();
 
@@ -35,19 +35,19 @@ it('accepts valid removable card IDs in hidden_cards', function () {
 });
 
 it('rejects invalid card IDs in hidden_cards', function () {
-    $this->putJson(route('map-user-settings.update', $this->settings), [
+    $this->putJson(route('maps.user-settings.update', $this->map), [
         'hidden_cards' => ['map'],
     ])->assertUnprocessable();
 });
 
 it('rejects core card IDs in hidden_cards', function (string $coreCard) {
-    $this->putJson(route('map-user-settings.update', $this->settings), [
+    $this->putJson(route('maps.user-settings.update', $this->map), [
         'hidden_cards' => [$coreCard],
     ])->assertUnprocessable();
 })->with(['map', 'system-info', 'solarsystem', 'signatures']);
 
 it('persists hidden_cards correctly via PUT', function () {
-    $this->putJson(route('map-user-settings.update', $this->settings), [
+    $this->putJson(route('maps.user-settings.update', $this->map), [
         'hidden_cards' => ['killmails', 'audits'],
     ])->assertRedirect();
 
@@ -58,7 +58,7 @@ it('persists hidden_cards correctly via PUT', function () {
 it('allows nullable hidden_cards', function () {
     $this->settings->update(['hidden_cards' => ['killmails']]);
 
-    $this->putJson(route('map-user-settings.update', $this->settings), [
+    $this->putJson(route('maps.user-settings.update', $this->map), [
         'hidden_cards' => null,
     ])->assertRedirect();
 

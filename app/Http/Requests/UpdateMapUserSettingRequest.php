@@ -9,7 +9,7 @@ use App\Enums\LifetimeStatus;
 use App\Enums\MassStatus;
 use App\Enums\RemovableCard;
 use App\Enums\RoutePreference;
-use App\Models\MapUserSetting;
+use App\Models\Map;
 use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Container\Attributes\RouteParameter;
@@ -21,10 +21,15 @@ final class UpdateMapUserSettingRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
+     * Authenticated users must have view access to the map; guests may only update public maps.
      */
-    public function authorize(#[CurrentUser] User $user, #[RouteParameter('map_user_setting')] MapUserSetting $mapUserSetting): bool
+    public function authorize(#[RouteParameter('map')] Map $map, #[CurrentUser] ?User $user): bool
     {
-        return $user->can('update', $mapUserSetting);
+        if (! $user instanceof User) {
+            return $map->isPubliclyAccessible();
+        }
+
+        return $user->can('view', $map);
     }
 
     /**

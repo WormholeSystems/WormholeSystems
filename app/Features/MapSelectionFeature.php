@@ -23,7 +23,7 @@ final readonly class MapSelectionFeature implements ProvidesInertiaProperties
      */
     public function __construct(
         private Map $map,
-        private User $user,
+        private ?User $user,
         private ?MapSolarsystem $solarsystem = null,
         private array $hiddenCards = [],
     ) {}
@@ -44,14 +44,14 @@ final readonly class MapSelectionFeature implements ProvidesInertiaProperties
             return null;
         }
 
-        $isGuest = $this->map->getUserPermission($this->user) === Permission::Guest;
+        $isViewer = ! $this->user instanceof User || $this->map->getUserPermission($this->user) === Permission::Viewer;
         $loadAudits = ! in_array(RemovableCard::Audits->value, $this->hiddenCards);
 
         return $this->map->mapSolarsystems()
             ->with('signatures', 'wormholes')
-            ->when(! $isGuest && $loadAudits, fn ($query) => $query->with('audits', fn (Relation $query) => $query->latest()))
+            ->when(! $isViewer && $loadAudits, fn ($query) => $query->with('audits', fn (Relation $query) => $query->latest()))
             ->findOrFail($this->solarsystem->id)
-            ->hideNotes($isGuest)
+            ->hideNotes($isViewer)
             ->toResource(SelectedMapSolarsystemResource::class);
     }
 }

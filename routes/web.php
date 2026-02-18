@@ -41,14 +41,18 @@ Route::get('auth', [AuthController::class, 'show'])->name('auth');
 Route::get('eve', [EveController::class, 'show'])->name('eve.show');
 Route::get('eve/callback', [EveController::class, 'store'])->name('eve.store');
 
+// Public map access (no auth required)
+Route::get('maps/{map}', [MapController::class, 'show'])->name('maps.show');
+Route::put('maps/{map}/user-settings', [MapUserSettingController::class, 'update'])->name('maps.user-settings.update');
+Route::get('share/{token}', [MapController::class, 'showByToken'])->name('maps.share');
+
 Route::middleware('auth')->group(function () {
 
     Route::get('maps/{map}/ping', [PingController::class, 'show'])->name('maps.ping');
     Route::get('static/sovereignty.json.gz', [StaticDataController::class, 'sovereignty'])->name('static.sovereignty');
 
-    Route::resource('maps', MapController::class)->names([
+    Route::resource('maps', MapController::class)->except(['show'])->names([
         'index' => 'home',
-        'show' => 'maps.show',
         'create' => 'maps.create',
         'store' => 'maps.store',
         'edit' => 'maps.edit',
@@ -58,6 +62,9 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('maps/{map}/settings')->name('maps.settings.')->group(function () {
         Route::get('general', [MapSettingsController::class, 'show'])->name('general.show');
+        Route::post('toggle-public', [MapSettingsController::class, 'togglePublic'])->name('toggle-public');
+        Route::post('generate-share-token', [MapSettingsController::class, 'generateShareToken'])->name('generate-share-token');
+        Route::delete('revoke-share-token', [MapSettingsController::class, 'revokeShareToken'])->name('revoke-share-token');
         Route::get('preferences', [MapPreferencesController::class, 'show'])->name('preferences.show');
 
         Route::get('access', [MapAccessController::class, 'show'])->name('access.show');
@@ -96,8 +103,6 @@ Route::middleware('auth')->group(function () {
     Route::get('maps/{map}/scopes/add', [MapScopeController::class, 'show'])->name('map-scopes.show');
 
     Route::resource('map-route-solarsystems', MapRouteSolarsystemController::class)->only(['store', 'update', 'destroy']);
-    Route::resource('map-user-settings', MapUserSettingController::class)->only(['update']);
-
     Route::post('statistics', [StatisticsController::class, 'store'])->name('statistics.store');
 
     Route::post('ignore-systems', [IgnoreListController::class, 'store'])->name('ignore-systems.store');

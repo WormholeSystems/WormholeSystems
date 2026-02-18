@@ -35,8 +35,8 @@ final class MapSolarsystemController extends Controller
 
         $mapSolarsystem->load('signatures');
 
-        $isGuest = $mapSolarsystem->map->getUserPermission($this->user) === Permission::Guest;
-        $mapSolarsystem->hideNotes($isGuest);
+        $isViewer = $mapSolarsystem->map->getUserPermission($this->user) === Permission::Viewer;
+        $mapSolarsystem->hideNotes($isViewer);
 
         return response()->json([
             'data' => $mapSolarsystem->toResource(SelectedMapSolarsystemResource::class),

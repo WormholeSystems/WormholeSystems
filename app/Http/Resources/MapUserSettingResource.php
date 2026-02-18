@@ -21,8 +21,8 @@ final class MapUserSettingResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
-            'user_id' => $this->user_id,
+            'id' => $this->id ?? null,
+            'user_id' => $this->user_id ?? null,
             'map_id' => $this->map_id,
             'tracking_allowed' => $this->tracking_allowed,
             'is_tracking' => $this->is_tracking,
