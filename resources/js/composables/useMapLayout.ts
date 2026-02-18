@@ -35,7 +35,11 @@ export interface UseMapLayoutReturn {
     isCardHidden: (cardId: string) => boolean;
 }
 
-export function useMapLayout(mapUserSettings: MaybeRefOrGetter<TMapUserSetting>): UseMapLayoutReturn {
+export function useMapLayout(
+    mapUserSettings: MaybeRefOrGetter<TMapUserSetting>,
+    mapSlug: MaybeRefOrGetter<string>,
+    unavailableCards?: MaybeRefOrGetter<string[]>,
+): UseMapLayoutReturn {
     const { width: windowWidth } = useWindowSize();
 
     // Atomic refs
@@ -68,11 +72,12 @@ export function useMapLayout(mapUserSettings: MaybeRefOrGetter<TMapUserSetting>)
         return isEditMode.value ? selectedBreakpointKey.value : currentBreakpointKey.value;
     });
 
-    // Current layout properties from active breakpoint (filtered by hidden cards)
+    // Current layout properties from active breakpoint (filtered by hidden and unavailable cards)
     const currentLayoutItems = computed(() => {
         const breakpoint = breakpoints.value[activeBreakpointKey.value];
         const items = breakpoint?.items || [];
-        return items.filter((item) => !hiddenCards.value.includes(item.i));
+        const unavailable = toValue(unavailableCards) ?? [];
+        return items.filter((item) => !hiddenCards.value.includes(item.i) && !unavailable.includes(item.i));
     });
 
     const currentLayoutCols = computed(() => {
@@ -129,7 +134,7 @@ export function useMapLayout(mapUserSettings: MaybeRefOrGetter<TMapUserSetting>)
         const reloadProps = newlyShownCards.flatMap((card) => CARD_INERTIA_PROPS[card as keyof typeof CARD_INERTIA_PROPS] ?? []);
 
         updateMapUserSettings(
-            toValue(mapUserSettings),
+            toValue(mapSlug),
             {
                 layout_breakpoints: breakpoints.value,
                 hidden_cards: hiddenCards.value,

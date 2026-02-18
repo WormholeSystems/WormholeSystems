@@ -12,8 +12,8 @@ import MapPanel from '@/components/ui/map-panel/MapPanel.vue';
 import MapPanelContent from '@/components/ui/map-panel/MapPanelContent.vue';
 import MapPanelHeader from '@/components/ui/map-panel/MapPanelHeader.vue';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import useHasWritePermission from '@/composables/useHasWritePermission';
 import { useMapUserSettings } from '@/composables/useMapUserSettings';
+import usePermission from '@/composables/usePermission';
 import { useStaticData } from '@/composables/useStaticData';
 import useUser from '@/composables/useUser';
 import type { TMap, TResolvedMapNavigation, TResolvedSelectedMapSolarsystem } from '@/pages/maps';
@@ -35,7 +35,7 @@ const activeCharacter = computed(() => {
 });
 const characterStatus = computed(() => activeCharacter.value?.status);
 
-const can_write = useHasWritePermission();
+const { canEdit: can_write } = usePermission();
 
 const mapUserSettings = useMapUserSettings();
 const routePreferenceLabel = computed(() => {

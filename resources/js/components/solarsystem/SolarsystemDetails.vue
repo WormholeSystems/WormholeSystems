@@ -4,7 +4,7 @@ import MapPanel from '@/components/ui/map-panel/MapPanel.vue';
 import MapPanelContent from '@/components/ui/map-panel/MapPanelContent.vue';
 import MapPanelHeader from '@/components/ui/map-panel/MapPanelHeader.vue';
 import { Textarea } from '@/components/ui/textarea';
-import useHasWritePermission from '@/composables/useHasWritePermission';
+import usePermission from '@/composables/usePermission';
 import type { TResolvedSelectedMapSolarsystem } from '@/pages/maps';
 import MapSolarsystems from '@/routes/map-solarsystems';
 import { useForm } from '@inertiajs/vue3';
@@ -17,7 +17,7 @@ const { map_solarsystem } = defineProps<{
     map_solarsystem: TResolvedSelectedMapSolarsystem;
 }>();
 
-const can_write = useHasWritePermission();
+const { canEdit: can_write } = usePermission();
 
 const editing = ref(false);
 

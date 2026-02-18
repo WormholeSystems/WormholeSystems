@@ -14,8 +14,8 @@ import {
     ContextMenuTrigger,
 } from '@/components/ui/context-menu';
 import { deleteMapSolarsystem, updateMapSolarsystem } from '@/composables/map';
-import useHasWritePermission from '@/composables/useHasWritePermission';
 import { useNavigationSystems } from '@/composables/useNavigationSystems';
+import usePermission from '@/composables/usePermission';
 import useUser from '@/composables/useUser';
 import { useWaypoint } from '@/composables/useWaypoint';
 import { TMapSolarsystem } from '@/pages/maps';
@@ -28,7 +28,7 @@ const { map_solarsystem } = defineProps<{
 
 const user = useUser();
 
-const can_write = useHasWritePermission();
+const { canEdit: can_write } = usePermission();
 
 const setWaypoint = useWaypoint();
 

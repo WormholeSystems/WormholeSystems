@@ -6,8 +6,8 @@ import TrashIcon from '@/components/icons/TrashIcon.vue';
 import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue';
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import SolarsystemEffect from '@/components/solarsystem/SolarsystemEffect.vue';
-import useHasWritePermission from '@/composables/useHasWritePermission';
 import { usePath } from '@/composables/usePath';
+import usePermission from '@/composables/usePermission';
 import type { TResolvedMapRouteSolarsystem } from '@/pages/maps';
 import MapRouteSolarsystems from '@/routes/map-route-solarsystems';
 import { router } from '@inertiajs/vue3';
@@ -19,7 +19,7 @@ const { map_route } = defineProps<{
 
 const { setPath } = usePath();
 
-const can_write = useHasWritePermission();
+const { canEdit: can_write } = usePermission();
 
 function onHover(hovered: boolean) {
     if (hovered) {

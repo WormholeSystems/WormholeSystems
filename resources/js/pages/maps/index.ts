@@ -54,8 +54,7 @@ export type TShowMapProps = {
     map_characters: TCharacter[] | null;
     map_navigation?: TMapNavigation;
     ship_history?: TShipHistory[] | null;
-    has_write_access: boolean;
-    has_guest_access: boolean;
+    permission: 'viewer' | 'member' | 'manager' | null;
     active_character_has_access: boolean;
     layout: TLayout;
     map_user_settings: TMapUserSetting;

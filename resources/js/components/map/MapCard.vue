@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import MapController from '@/actions/App/Http/Controllers/MapController';
+import MapUserSettingController from '@/actions/App/Http/Controllers/MapUserSettingController';
 import Logo from '@/components/icons/Logo.vue';
 import SatelliteDish from '@/components/icons/SatelliteDish.vue';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +17,6 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { TMapSummary } from '@/pages/maps';
-import MapUserSettings from '@/routes/map-user-settings';
 import { Link } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
@@ -85,7 +85,7 @@ const open = ref(false);
                         </DialogClose>
                         <Button as-child>
                             <Link
-                                :href="MapUserSettings.update(map.map_user_setting!.id)"
+                                :href="MapUserSettingController.update(map.slug).url"
                                 :data="{ tracking_allowed: !map.map_user_setting?.tracking_allowed }"
                                 method="put"
                                 @click="open = false"

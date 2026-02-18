@@ -2,6 +2,7 @@ import { createMapSolarsystem, createTracking, map_solarsystems, updateMapUserSe
 import { getSecurityClass } from '@/composables/map/utils/security';
 import { useActiveMapCharacter } from '@/composables/useActiveMapCharacter';
 import { useMapUserSettings } from '@/composables/useMapUserSettings';
+import { useShowMap } from '@/composables/useShowMap';
 import { useTrackingSystems } from '@/composables/useTrackingSystems';
 import { TSolarsystem } from '@/pages/maps';
 import { TSignature, TSolarsystemClass } from '@/types/models';
@@ -10,6 +11,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 export function useTracking() {
     const character = useActiveMapCharacter();
     const map_user_settings = useMapUserSettings();
+    const page = useShowMap();
 
     const is_tracking = computed(() => map_user_settings.value?.is_tracking && character.value && map_user_settings.value?.tracking_allowed);
     const is_tracking_allowed = computed(() => map_user_settings.value.tracking_allowed);
@@ -88,7 +90,7 @@ export function useTracking() {
     function handleToggle() {
         if (!map_user_settings.value.tracking_allowed) return;
 
-        updateMapUserSettings(map_user_settings.value, {
+        updateMapUserSettings(page.props.map.slug, {
             is_tracking: !map_user_settings.value.is_tracking,
         });
     }

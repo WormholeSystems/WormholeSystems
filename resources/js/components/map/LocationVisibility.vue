@@ -2,6 +2,7 @@
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { updateMapUserSettings } from '@/composables/map';
+import { useShowMap } from '@/composables/useShowMap';
 import { TMapUserSetting } from '@/types/models';
 import { Eye, EyeOff } from 'lucide-vue-next';
 
@@ -9,8 +10,10 @@ const { map_user_settings } = defineProps<{
     map_user_settings: TMapUserSetting;
 }>();
 
+const page = useShowMap();
+
 function handleToggleVisibility() {
-    updateMapUserSettings(map_user_settings, {
+    updateMapUserSettings(page.props.map.slug, {
         tracking_allowed: !map_user_settings.tracking_allowed,
     });
 }

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import MapUserSettingController from '@/actions/App/Http/Controllers/MapUserSettingController';
 import SettingsIcon from '@/components/icons/SettingsIcon.vue';
 import Killmail from '@/components/map-killmails/Killmail.vue';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -9,15 +10,15 @@ import MapPanelHeaderActionButton from '@/components/ui/map-panel/MapPanelHeader
 import { useOnClient } from '@/composables/useOnClient';
 import { getMapChannelName } from '@/const/channels';
 import { KillmailReceivedEvent } from '@/const/events';
-import MapUserSettings from '@/routes/map-user-settings';
 import { TKillmail, TMapUserSetting } from '@/types/models';
 import { Deferred, router } from '@inertiajs/vue3';
 import { useEcho } from '@laravel/echo-vue';
 import type { AcceptableValue } from 'reka-ui';
 
-const { map_killmails, map_id, map_user_settings } = defineProps<{
+const { map_killmails, map_id, map_slug, map_user_settings } = defineProps<{
     map_killmails?: TKillmail[];
     map_id: number;
+    map_slug: string;
     map_user_settings: TMapUserSetting;
 }>();
 
@@ -27,7 +28,7 @@ type KillmailReceivedEvent = {
 
 function handleFilterChange(value: AcceptableValue) {
     router.put(
-        MapUserSettings.update(map_user_settings.id).url,
+        MapUserSettingController.update(map_slug).url,
         {
             killmail_filter: value as string,
         },

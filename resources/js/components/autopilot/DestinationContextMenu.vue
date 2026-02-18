@@ -11,8 +11,8 @@ import {
     ContextMenuTrigger,
 } from '@/components/ui/context-menu';
 import { createMapSolarsystem, useMapSolarsystems } from '@/composables/map';
-import useHasWritePermission from '@/composables/useHasWritePermission';
 import { useNavigationSystems } from '@/composables/useNavigationSystems';
+import usePermission from '@/composables/usePermission';
 import useUser from '@/composables/useUser';
 import { useWaypoint } from '@/composables/useWaypoint';
 import { computed } from 'vue';
@@ -33,7 +33,7 @@ const already_on_map = computed(() => {
     return map_solarsystems.value.some((map_solarsystem) => map_solarsystem.solarsystem_id === solarsystem_id);
 });
 
-const can_write = useHasWritePermission();
+const { canEdit: can_write } = usePermission();
 </script>
 
 <template>

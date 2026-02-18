@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import MapAccessController from '@/actions/App/Http/Controllers/MapAccessController';
 import MapPreferencesController from '@/actions/App/Http/Controllers/MapPreferencesController';
 import MapSettingsController from '@/actions/App/Http/Controllers/MapSettingsController';
 import TrackingIcon from '@/components/icons/TrackingIcon.vue';
@@ -8,9 +7,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { updateMapUserSettings } from '@/composables/map';
 import { useTracking } from '@/composables/map/composables/useTracking';
 import { useActiveMapCharacter } from '@/composables/useActiveMapCharacter';
-import useHasWritePermission from '@/composables/useHasWritePermission';
-import useIsMapOwner from '@/composables/useIsMapOwner';
 import { UseMapLayoutReturn } from '@/composables/useMapLayout';
+import usePermission from '@/composables/usePermission';
 import { usePing } from '@/composables/usePing';
 import { useStaticSolarsystem } from '@/composables/useStaticSolarsystems';
 import type { TMap } from '@/pages/maps';
@@ -33,8 +31,7 @@ const { map, map_user_settings, layout } = defineProps<{
 usePing(map);
 
 const character = useActiveMapCharacter();
-const hasWriteAccess = useHasWritePermission();
-const isOwner = useIsMapOwner();
+const { canEdit, canManageAccess } = usePermission();
 const echoStatus = typeof window !== 'undefined' ? useConnectionStatus() : ref<ConnectionStatus>('connected');
 const connectionStatus = computed(() => echoStatus.value);
 
@@ -58,7 +55,7 @@ const targetSolarsystemName = computed(() => target_solarsystem.value?.name || c
 
 // Location visibility toggle
 function handleToggleVisibility() {
-    updateMapUserSettings(map_user_settings, {
+    updateMapUserSettings(map.slug, {
         tracking_allowed: !map_user_settings.tracking_allowed,
     });
 }
@@ -84,12 +81,8 @@ const connectionStatusText = computed(() => {
 });
 
 const settingsUrl = computed(() => {
-    if (isOwner.value) {
+    if (canManageAccess.value) {
         return MapSettingsController.show(map.slug).url;
-    }
-
-    if (hasWriteAccess.value) {
-        return MapAccessController.show(map.slug).url;
     }
 
     return MapPreferencesController.show(map.slug).url;
@@ -107,7 +100,7 @@ const settingsUrl = computed(() => {
         <div class="hidden h-4 w-px bg-border/50 sm:block" />
 
         <!-- Search -->
-        <div v-if="hasWriteAccess" class="hidden flex-1 sm:block">
+        <div v-if="canEdit" class="hidden flex-1 sm:block">
             <MapSearch :map="map" />
         </div>
         <div v-else class="hidden flex-1 sm:block" />
@@ -154,7 +147,7 @@ const settingsUrl = computed(() => {
         <div class="hidden h-4 w-px bg-border/50 md:block" />
 
         <!-- Location Visibility Toggle -->
-        <Tooltip v-if="hasWriteAccess">
+        <Tooltip v-if="canEdit">
             <TooltipTrigger as-child>
                 <button
                     @click="handleToggleVisibility"
@@ -179,7 +172,7 @@ const settingsUrl = computed(() => {
         </Tooltip>
 
         <!-- Tracking Toggle -->
-        <Tooltip v-if="hasWriteAccess">
+        <Tooltip v-if="canEdit">
             <TooltipTrigger as-child>
                 <button
                     @click="toggleTracking"
@@ -230,8 +223,9 @@ const settingsUrl = computed(() => {
             </TooltipContent>
         </Tooltip>
 
-        <!-- Settings -->
+        <!-- Settings (authenticated users only) -->
         <Link
+            v-if="$page.props.auth.user"
             :href="settingsUrl"
             class="flex items-center gap-1.5 rounded bg-muted px-1.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground sm:px-2"
         >

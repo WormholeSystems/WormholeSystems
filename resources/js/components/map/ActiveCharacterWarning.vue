@@ -4,9 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Link } from '@inertiajs/vue3';
 import { AlertTriangle } from 'lucide-vue-next';
 
-const { mapSlug, characterName, hasWriteAccess } = defineProps<{
+const { mapSlug, characterName, canManageAccess } = defineProps<{
     characterName: string;
-    hasWriteAccess: boolean;
+    canManageAccess: boolean;
     mapSlug: string;
 }>();
 </script>
@@ -20,7 +20,7 @@ const { mapSlug, characterName, hasWriteAccess } = defineProps<{
                 character's access.
             </p>
         </div>
-        <Button v-if="hasWriteAccess" variant="outline" size="sm" as-child class="shrink-0">
+        <Button v-if="canManageAccess" variant="outline" size="sm" as-child class="shrink-0">
             <Link :href="MapAccessController.show(mapSlug)">Manage Access</Link>
         </Button>
     </div>
