@@ -41,11 +41,6 @@ Route::get('auth', [AuthController::class, 'show'])->name('auth');
 Route::get('eve', [EveController::class, 'show'])->name('eve.show');
 Route::get('eve/callback', [EveController::class, 'store'])->name('eve.store');
 
-// Public map access (no auth required)
-Route::get('maps/{map}', [MapController::class, 'show'])->name('maps.show');
-Route::put('maps/{map}/user-settings', [MapUserSettingController::class, 'update'])->name('maps.user-settings.update');
-Route::get('share/{token}', [MapController::class, 'showByToken'])->name('maps.share');
-
 Route::middleware('auth')->group(function () {
 
     Route::get('maps/{map}/ping', [PingController::class, 'show'])->name('maps.ping');
@@ -114,3 +109,8 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('tokens', TokenManagementController::class)->only(['index', 'store', 'destroy']);
 });
+
+// Public map access (no auth required)
+Route::get('maps/{map}', [MapController::class, 'show'])->name('maps.show');
+Route::put('maps/{map}/user-settings', [MapUserSettingController::class, 'update'])->name('maps.user-settings.update');
+Route::get('share/{token}', [MapController::class, 'showByToken'])->name('maps.share');
