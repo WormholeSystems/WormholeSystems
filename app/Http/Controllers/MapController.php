@@ -61,46 +61,24 @@ final class MapController extends Controller
             $map,
         );
 
-        // Initialize feature classes
         $settingsFeature = new MapSettingsFeature($this->user, $map->id);
         $settings = $settingsFeature->getSettings();
-
-        $selectionFeature = new MapSelectionFeature(
-            $map,
-            $this->user,
-            $selected_map_solarsystem,
-        );
-
-        $can_view_characters = Gate::allows('viewCharacters', $map);
-
-        $permissionsFeature = new MapPermissionsFeature($map, $this->user);
-        $killmailsFeature = new MapKillmailsFeature($map, $settings->killmail_filter ?? KillmailFilter::All);
-        $charactersFeature = new MapCharactersFeature(
-            $map,
-            $can_view_characters,
-        );
-        $shipHistoryFeature = new ShipHistoryFeature($this->user, $can_view_characters);
-        $navigationFeature = new MapNavigationFeature($map);
-        $trackingFeature = new MapTrackingFeature(
-            $map,
-            $request->integer('origin_map_solarsystem_id') ?: null,
-            $request->integer('target_solarsystem_id') ?: null
-        );
-        $eveScoutConnectionsFeature = new EveScoutConnectionsFeature($this->eve_scout_service);
+        $hiddenCards = $settings->hidden_cards ?? [];
+        $canViewCharacters = Gate::allows('viewCharacters', $map);
 
         return Inertia::render('maps/ShowMap', [
             'map' => $map->toResource(MapResource::class),
             'config' => config('map'),
-            $permissionsFeature,
-            $settingsFeature,
-            $selectionFeature,
-            $killmailsFeature,
-            $charactersFeature,
-            $shipHistoryFeature,
-            $navigationFeature,
-            $trackingFeature,
-            $eveScoutConnectionsFeature,
-        ]);
+        ])
+            ->with(new MapPermissionsFeature($map, $this->user))
+            ->with($settingsFeature)
+            ->with(new MapSelectionFeature($map, $this->user, $selected_map_solarsystem, $hiddenCards))
+            ->with(new MapTrackingFeature($map, $request->integer('origin_map_solarsystem_id') ?: null, $request->integer('target_solarsystem_id') ?: null))
+            ->with(new MapCharactersFeature($map, $canViewCharacters))
+            ->with(new EveScoutConnectionsFeature($this->eve_scout_service))
+            ->with(new MapKillmailsFeature($map, $settings->killmail_filter ?? KillmailFilter::All, $hiddenCards))
+            ->with(new ShipHistoryFeature($this->user, $canViewCharacters, $hiddenCards))
+            ->with(new MapNavigationFeature($map, $hiddenCards));
     }
 
     /**

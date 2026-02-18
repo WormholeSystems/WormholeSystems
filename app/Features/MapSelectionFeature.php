@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Features;
 
 use App\Enums\Permission;
+use App\Enums\RemovableCard;
 use App\Http\Resources\SelectedMapSolarsystemResource;
 use App\Models\Map;
 use App\Models\MapSolarsystem;
@@ -17,10 +18,14 @@ use Throwable;
 
 final readonly class MapSelectionFeature implements ProvidesInertiaProperties
 {
+    /**
+     * @param  string[]  $hiddenCards
+     */
     public function __construct(
         private Map $map,
         private User $user,
         private ?MapSolarsystem $solarsystem = null,
+        private array $hiddenCards = [],
     ) {}
 
     public function toInertiaProperties(RenderContext $context): array
@@ -40,10 +45,11 @@ final readonly class MapSelectionFeature implements ProvidesInertiaProperties
         }
 
         $isGuest = $this->map->getUserPermission($this->user) === Permission::Guest;
+        $loadAudits = ! in_array(RemovableCard::Audits->value, $this->hiddenCards);
 
         return $this->map->mapSolarsystems()
             ->with('signatures', 'wormholes')
-            ->when(! $isGuest, fn ($query) => $query->with('audits', fn (Relation $query) => $query->latest()))
+            ->when(! $isGuest && $loadAudits, fn ($query) => $query->with('audits', fn (Relation $query) => $query->latest()))
             ->findOrFail($this->solarsystem->id)
             ->hideNotes($isGuest)
             ->toResource(SelectedMapSolarsystemResource::class);

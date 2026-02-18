@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Features;
 
+use App\Enums\RemovableCard;
 use App\Http\Resources\ShipHistoryResource;
 use App\Models\CharacterStatus;
 use App\Models\ShipHistory;
@@ -15,13 +16,21 @@ use Throwable;
 
 final readonly class ShipHistoryFeature implements ProvidesInertiaProperties
 {
+    /**
+     * @param  string[]  $hiddenCards
+     */
     public function __construct(
         private User $user,
         private bool $canViewCharacters,
+        private array $hiddenCards = [],
     ) {}
 
     public function toInertiaProperties(RenderContext $context): array
     {
+        if (in_array(RemovableCard::ShipHistory->value, $this->hiddenCards)) {
+            return [];
+        }
+
         return [
             'ship_history' => fn (): ?ResourceCollection => $this->canViewCharacters ? $this->getShipHistory() : null,
         ];
