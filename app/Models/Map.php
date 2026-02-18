@@ -22,6 +22,8 @@ use function sprintf;
  *
  * @property int $id
  * @property string $name
+ * @property bool $is_public
+ * @property string|null $share_token
  * @property-read string|CarbonImmutable $created_at
  * @property-read string|CarbonImmutable $updated_at
  * @property-read Collection<int,MapSolarsystem> $mapSolarsystems
@@ -35,6 +37,11 @@ final class Map extends Model
 {
     /** @use HasFactory<MapFactory> */
     use HasFactory, HasSlug;
+
+    public function isPubliclyAccessible(): bool
+    {
+        return $this->is_public || $this->share_token !== null;
+    }
 
     /**
      * The map solar systems that are part of this map.
@@ -99,12 +106,21 @@ final class Map extends Model
      */
     public function getUserPermission(User $user): ?Permission
     {
-
         return Context::remember(sprintf('map_%d_user_%d_permission', $this->id, $user->id), fn () => $this->mapAccessors()
+            ->notExpired()
             ->whereIn('accessible_id', $user->getAccessibleIds())
-            ->orderByRaw("CASE WHEN permission = 'write' THEN 1 WHEN permission = 'read' THEN 2 WHEN permission = 'guest' THEN 3 ELSE 4 END")
-            ->first()->permission
+            ->orderByRaw("CASE WHEN permission = 'manager' THEN 1 WHEN permission = 'member' THEN 2 WHEN permission = 'viewer' THEN 3 ELSE 4 END")
+            ->first()?->permission
         );
+    }
 
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'is_public' => 'boolean',
+        ];
     }
 }

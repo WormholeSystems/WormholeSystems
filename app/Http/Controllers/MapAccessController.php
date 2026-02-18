@@ -9,11 +9,13 @@ use App\Actions\MapAccess\DeleteMapAccessAction;
 use App\Actions\MapAccess\UpdateMapAccessAction;
 use App\Enums\Permission;
 use App\Http\Requests\UpdateMapAccessRequest;
+use App\Http\Resources\MapAccessEntityResource;
 use App\Http\Resources\MapInfoResource;
 use App\Models\Alliance;
 use App\Models\Corporation;
 use App\Models\Map;
 use App\Models\MapAccess;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -29,7 +31,7 @@ final class MapAccessController extends Controller
      */
     public function show(Request $request, Map $map): Response
     {
-        Gate::authorize('update', $map); // Only users with write access can manage access
+        Gate::authorize('manageAccess', $map);
 
         $search = $request->string('search');
         $entities = DB::query()->fromSub(DB::table('characters')
@@ -39,44 +41,26 @@ final class MapAccessController extends Controller
                 WHERE accessible_type = "App\\\\Models\\\\Character"
                 AND accessible_id = characters.id
                 AND map_id = ?
-            ) as permission', [$map->id])->unionAll(
-                Corporation::query()->selectRaw('id, name, "corporation" as type, (
-                    SELECT permission
-                    FROM map_access
-                    WHERE accessible_type = "App\\\\Models\\\\Corporation"
-                    AND accessible_id = corporations.id
-                    AND map_id = ?
-                ) as permission', [$map->id])
-            )->unionAll(
-                Alliance::query()->selectRaw('id, name, "alliance" as type, (
-                    SELECT permission
-                    FROM map_access
-                    WHERE accessible_type = "App\\\\Models\\\\Alliance"
-                    AND accessible_id = alliances.id
-                    AND map_id = ?
-                ) as permission', [$map->id])
-            ), 'entities')
-            ->whereLike('name', sprintf('%s%%', $search))
-            ->orderBy('name')
-            ->take(30)
-            ->select(['id', 'name', 'type', 'permission'])
-            ->get();
-
-        $entitiesWithAccess = DB::query()->fromSub(DB::table('characters')
-            ->selectRaw('id, name, "character" as type, (
-                SELECT permission
+            ) as permission, (
+                SELECT is_owner
                 FROM map_access
                 WHERE accessible_type = "App\\\\Models\\\\Character"
                 AND accessible_id = characters.id
                 AND map_id = ?
-            ) as permission', [$map->id])->unionAll(
+            ) as is_owner', [$map->id, $map->id])->unionAll(
                 Corporation::query()->selectRaw('id, name, "corporation" as type, (
                     SELECT permission
                     FROM map_access
                     WHERE accessible_type = "App\\\\Models\\\\Corporation"
                     AND accessible_id = corporations.id
                     AND map_id = ?
-                ) as permission', [$map->id])
+                ) as permission, (
+                    SELECT is_owner
+                    FROM map_access
+                    WHERE accessible_type = "App\\\\Models\\\\Corporation"
+                    AND accessible_id = corporations.id
+                    AND map_id = ?
+                ) as is_owner', [$map->id, $map->id])
             )->unionAll(
                 Alliance::query()->selectRaw('id, name, "alliance" as type, (
                     SELECT permission
@@ -84,19 +68,32 @@ final class MapAccessController extends Controller
                     WHERE accessible_type = "App\\\\Models\\\\Alliance"
                     AND accessible_id = alliances.id
                     AND map_id = ?
-                ) as permission', [$map->id])
+                ) as permission, (
+                    SELECT is_owner
+                    FROM map_access
+                    WHERE accessible_type = "App\\\\Models\\\\Alliance"
+                    AND accessible_id = alliances.id
+                    AND map_id = ?
+                ) as is_owner', [$map->id, $map->id])
             ), 'entities')
-            ->whereNotNull('permission')
+            ->whereLike('name', sprintf('%s%%', $search))
             ->orderBy('name')
-            ->select(['id', 'name', 'type', 'permission'])
+            ->take(30)
+            ->select(['id', 'name', 'type', 'permission', 'is_owner'])
             ->get();
+
+        $entitiesWithAccess = $map->mapAccessors()
+            ->with('accessible')
+            ->orderBy('accessible_id')
+            ->get()
+            ->toResourceCollection(MapAccessEntityResource::class);
 
         return Inertia::render('maps/settings/ShowAccess', [
             'map' => $map->toResource(MapInfoResource::class),
             'entities' => $entities,
             'entitiesWithAccess' => $entitiesWithAccess,
             'search' => $search,
-            'has_write_access' => true, // If we reach here, user has write access (due to gate check)
+            'permission' => 'manager', // If we reach here, user has manager access (due to gate check)
         ]);
     }
 
@@ -110,13 +107,17 @@ final class MapAccessController extends Controller
         UpdateMapAccessAction $updateMapAccessAction,
         DeleteMapAccessAction $deleteMapAccessAction
     ): RedirectResponse {
+        $expires_at = $request->filled('expires_at')
+            ? CarbonImmutable::parse($request->validated('expires_at'))
+            : null;
+
         if ($this->isUpdatingExistingAccess($request)) {
             if (! $this->canUpdateExistingAccess($request, $map)) {
                 return back()->notify('Access denied.', 'You do not have permission to change this character access.');
             }
 
             if (($permission = $request->permission) instanceof Permission) {
-                $updateMapAccessAction->handle($request->map_access, permission: $permission);
+                $updateMapAccessAction->handle($request->map_access, permission: $permission, expires_at: $expires_at);
 
                 return back()->notify('Access updated successfully.', sprintf('The access for %s has been updated.', $request->map_access->accessible->name));
             }
@@ -128,7 +129,7 @@ final class MapAccessController extends Controller
             return back()->notify('Access removed successfully.', sprintf('The access for %s has been removed.', $name));
         }
 
-        $createMapAccessAction->handle($map, $request->accessor, permission: $request->permission);
+        $createMapAccessAction->handle($map, $request->accessor, permission: $request->permission, expires_at: $expires_at);
 
         return back()->notify('Access updated successfully.', 'You have successfully granted access to the entity.');
     }

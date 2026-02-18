@@ -22,7 +22,7 @@ final class DeleteMapSelectionRequest extends FormRequest
     {
         return Map::query()
             ->whereHas('mapSolarsystems', fn (Builder $query) => $query->whereIn('id', $this->array('map_solarsystem_ids')))
-            ->whereDoesntHave('mapAccessors', fn (Builder $query) => $query->whereIn('accessible_id', $user->getAccessibleIds())->where('permission', Permission::Write))
+            ->whereDoesntHave('mapAccessors', fn (Builder $query) => $query->notExpired()->whereIn('accessible_id', $user->getAccessibleIds())->whereIn('permission', [Permission::Member, Permission::Manager]))
             ->doesntExist();
     }
 

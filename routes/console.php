@@ -9,6 +9,7 @@ use App\Console\Commands\GenerateStaticDataCommand;
 use App\Console\Commands\GetServerStatusCommand;
 use App\Console\Commands\Killmails\GetKillmailsForLast90DaysCommand;
 use App\Console\Commands\Killmails\PurgeOldKillmailsCommand;
+use App\Console\Commands\MapAccess\PurgeExpiredMapAccessCommand;
 use App\Console\Commands\Signatures\DeleteOldSignaturesCommand;
 use App\Console\Commands\Sovereignty\GetSovereigntiesCommand;
 use Illuminate\Queue\Console\PruneBatchesCommand;
@@ -23,4 +24,5 @@ Schedule::command(CheckConnectionAgeCommand::class)->runInBackground()->everyTen
 Schedule::command(DeleteOldSignaturesCommand::class)->runInBackground()->everyTenMinutes()->withoutOverlapping();
 Schedule::command(GetKillmailsForLast90DaysCommand::class)->runInBackground()->weekly();
 Schedule::command(PurgeOldKillmailsCommand::class)->runInBackground()->daily();
+Schedule::command(PurgeExpiredMapAccessCommand::class)->runInBackground()->everyTenMinutes()->withoutOverlapping();
 Schedule::command(PruneBatchesCommand::class)->daily();

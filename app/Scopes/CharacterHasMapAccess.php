@@ -22,6 +22,7 @@ final readonly class CharacterHasMapAccess
     {
         return $query
             ->whereExists(MapAccess::query()
+                ->notExpired()
                 ->whereBelongsTo($this->map)
                 ->where(fn (Builder $query) => $query
                     ->whereColumn('accessible_id', 'characters.id')
@@ -30,7 +31,7 @@ final readonly class CharacterHasMapAccess
                     )
                 )
                 ->when($this->without_guests, fn (Builder $query) => $query
-                    ->where('permission', '!=', Permission::Guest)
+                    ->where('permission', '!=', Permission::Viewer)
                 )
             );
     }

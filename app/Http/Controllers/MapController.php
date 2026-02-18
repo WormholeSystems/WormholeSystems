@@ -38,7 +38,7 @@ use Throwable;
 final class MapController extends Controller
 {
     public function __construct(
-        #[CurrentUser] private readonly User $user,
+        #[CurrentUser] private readonly ?User $user,
         private readonly EveScoutService $eve_scout_service,
     ) {}
 
@@ -48,6 +48,10 @@ final class MapController extends Controller
     public function show(Request $request, Map $map): Response
     {
         Gate::authorize('view', $map);
+
+        /** @var User|null $user */
+        $user = $request->user();
+
         $map = Map::query()
             ->with([
                 'mapSolarsystems' => fn (Relation $query): Relation => $query->withCount('signatures', 'wormholeSignatures', 'mapConnections'),
@@ -61,7 +65,7 @@ final class MapController extends Controller
             $map,
         );
 
-        $settingsFeature = new MapSettingsFeature($this->user, $map->id);
+        $settingsFeature = new MapSettingsFeature($user, $map->id);
         $settings = $settingsFeature->getSettings();
         $hiddenCards = $settings->hidden_cards ?? [];
         $canViewCharacters = Gate::allows('viewCharacters', $map);
@@ -70,15 +74,22 @@ final class MapController extends Controller
             'map' => $map->toResource(MapResource::class),
             'config' => config('map'),
         ])
-            ->with(new MapPermissionsFeature($map, $this->user))
+            ->with(new MapPermissionsFeature($map, $user))
             ->with($settingsFeature)
-            ->with(new MapSelectionFeature($map, $this->user, $selected_map_solarsystem, $hiddenCards))
+            ->with(new MapSelectionFeature($map, $user, $selected_map_solarsystem, $hiddenCards))
             ->with(new MapTrackingFeature($map, $request->integer('origin_map_solarsystem_id') ?: null, $request->integer('target_solarsystem_id') ?: null))
             ->with(new MapCharactersFeature($map, $canViewCharacters))
             ->with(new EveScoutConnectionsFeature($this->eve_scout_service))
             ->with(new MapKillmailsFeature($map, $settings->killmail_filter ?? KillmailFilter::All, $hiddenCards))
-            ->with(new ShipHistoryFeature($this->user, $canViewCharacters, $hiddenCards))
+            ->with(new ShipHistoryFeature($user, $canViewCharacters, $hiddenCards))
             ->with(new MapNavigationFeature($map, $hiddenCards));
+    }
+
+    public function showByToken(string $token): RedirectResponse
+    {
+        $map = Map::query()->where('share_token', $token)->firstOrFail();
+
+        return redirect()->route('maps.show', $map);
     }
 
     /**
@@ -90,7 +101,7 @@ final class MapController extends Controller
 
         return Inertia::render('maps/ShowAllMaps', [
             'maps' => Map::query()
-                ->whereHas('mapAccessors', fn (Builder $builder) => $builder->whereIn('accessible_id', $this->user->getAccessibleIds()))
+                ->whereHas('mapAccessors', fn (Builder $builder) => $builder->notExpired()->whereIn('accessible_id', $this->user->getAccessibleIds()))
                 ->when($search->isNotEmpty(), fn (Builder $query) => $query->whereLike('name', sprintf('%%%s%%', $search)))
                 ->withCount([
                     'mapSolarsystems' => fn (Builder $builder) => $builder->whereNotNull('position_x'),

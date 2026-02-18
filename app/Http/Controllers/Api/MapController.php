@@ -35,7 +35,7 @@ final class MapController extends Controller
         $search = $request->string('search', '');
 
         $maps = Map::query()
-            ->whereHas('mapAccessors', fn (Builder $builder) => $builder->whereIn('accessible_id', $this->user->getAccessibleIds()))
+            ->whereHas('mapAccessors', fn (Builder $builder) => $builder->notExpired()->whereIn('accessible_id', $this->user->getAccessibleIds()))
             ->when($search->isNotEmpty(), fn (Builder $query) => $query->whereLike('name', sprintf('%%%s%%', $search)))
             ->withCount([
                 'mapSolarsystems' => fn (Builder $builder) => $builder->whereNotNull('position_x'),
@@ -60,10 +60,10 @@ final class MapController extends Controller
             ->tap(new WithVisibleSolarsystems)
             ->findOrFail($map->id);
 
-        $isGuest = $map->getUserPermission($this->user) === Permission::Guest;
+        $isViewer = $map->getUserPermission($this->user) === Permission::Viewer;
 
-        // Hide notes from all solarsystems for guest users
-        if ($isGuest) {
+        // Hide notes from all solarsystems for viewer users
+        if ($isViewer) {
             $map->mapSolarsystems->each->hideNotes();
         }
 
