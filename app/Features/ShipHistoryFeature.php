@@ -20,7 +20,7 @@ final readonly class ShipHistoryFeature implements ProvidesInertiaProperties
      * @param  string[]  $hiddenCards
      */
     public function __construct(
-        private User $user,
+        private ?User $user,
         private bool $canViewCharacters,
         private array $hiddenCards = [],
     ) {}
@@ -32,7 +32,7 @@ final readonly class ShipHistoryFeature implements ProvidesInertiaProperties
         }
 
         return [
-            'ship_history' => fn (): ?ResourceCollection => $this->canViewCharacters ? $this->getShipHistory() : null,
+            'ship_history' => fn (): ?ResourceCollection => $this->canViewCharacters && $this->user instanceof User ? $this->getShipHistory() : null,
         ];
     }
 

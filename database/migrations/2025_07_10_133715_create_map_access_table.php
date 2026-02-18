@@ -18,7 +18,7 @@ return new class extends Migration
             $table->id();
             $table->morphs('accessible');
             $table->foreignId('map_id')->constrained('maps')->onDelete('cascade');
-            $table->string('permission')->default(Permission::Write);
+            $table->string('permission')->default(Permission::Manager);
             $table->boolean('is_owner')->default(false);
             $table->timestamps();
         });

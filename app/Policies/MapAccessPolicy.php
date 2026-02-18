@@ -11,17 +11,11 @@ use App\Models\User;
 
 final class MapAccessPolicy
 {
-    /**
-     * Create a new policy instance.
-     */
-    public function __construct()
-    {
-        //
-    }
-
     public function create(User $user, Map $map): bool
     {
-        return $map->mapAccessors()->whereIn('accessible_id', $user->getAccessibleIds())->where('permission', Permission::Write)->exists();
+        $permission = $map->getUserPermission($user);
+
+        return $permission instanceof Permission && $permission->isAtLeast(Permission::Manager);
     }
 
     public function update(User $user, Map $map, MapAccess $access): bool
@@ -30,7 +24,9 @@ final class MapAccessPolicy
             return false;
         }
 
-        return $map->mapAccessors()->whereIn('accessible_id', $user->getAccessibleIds())->where('permission', Permission::Write)->exists();
+        $permission = $map->getUserPermission($user);
+
+        return $permission instanceof Permission && $permission->isAtLeast(Permission::Manager);
     }
 
     public function test(): bool
