@@ -67,11 +67,13 @@ final class UpdateCharacterLocation implements ShouldQueue
         assert($location instanceof Location);
         assert($ship instanceof Ship);
 
+        $shipName = $this->normalizeShipName($ship->ship_name);
+
         $characterStatus->update([
             'solarsystem_id' => $location->solar_system_id,
             'station_id' => $location->station_id,
             'structure_id' => $location->structure_id,
-            'ship_name' => $ship->ship_name,
+            'ship_name' => $shipName,
             'ship_type_id' => $ship->ship_type_id,
             'ship_item_id' => $ship->ship_item_id,
         ]);
@@ -80,13 +82,35 @@ final class UpdateCharacterLocation implements ShouldQueue
             $characterStatus->character_id,
             $ship->ship_item_id,
             $ship->ship_type_id,
-            $ship->ship_name
+            $shipName
         );
 
         if ($characterStatus->wasChanged()) {
             // Mark that event should be dispatched
             $characterStatus->update(['event_queued_at' => now()]);
         }
+    }
+
+    /**
+     * Normalize ship name by removing Python repr() formatting and decoding Unicode escapes.
+     */
+    private function normalizeShipName(string $shipName): string
+    {
+        // Only process if surrounded with u'...'
+        if (preg_match('/^u\'(.*)\'$/s', $shipName, $matches)) {
+            $inner = $matches[1];
+
+            // Escape any unescaped double quotes for JSON
+            $inner = preg_replace('/"/', '\\"', $inner);
+
+            $decoded = json_decode('"' . $inner . '"');
+            if (json_last_error() === JSON_ERROR_NONE && is_string($decoded)) {
+                return $decoded;
+            }
+        }
+
+        // Fallback to original string
+        return $shipName;
     }
 
     /**
