@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 use NicolasKion\Esi\Enums\EsiScope;
 use SocialiteProviders\Eveonline\Provider;
@@ -41,6 +42,10 @@ final class EveController extends Controller
         }
 
         $redirect = redirect()->intended(route('home'))->getTargetUrl();
+
+        if (Str::contains($redirect, '/static/')) {
+            $redirect = route('home');
+        }
 
         if (Session::has('redirect_to')) {
             $redirect = Session::pull('redirect_to');
