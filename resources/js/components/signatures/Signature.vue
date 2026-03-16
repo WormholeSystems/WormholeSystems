@@ -25,7 +25,7 @@ import type { TResolvedSelectedMapSolarsystem } from '@/pages/maps';
 import { TSignature, TSolarsystemClass } from '@/types/models';
 import { UTCDate } from '@date-fns/utc';
 import { syncRefs } from '@vueuse/core';
-import { Cloud, Database, Fan, Gem, Landmark, MoreVertical, Swords } from 'lucide-vue-next';
+import { Cloud, Database, Fan, Gem, Landmark, MoreVertical, Shield, Swords } from 'lucide-vue-next';
 import { AcceptableValue } from 'reka-ui';
 import { type Component, computed, nextTick, ref, toRef } from 'vue';
 
@@ -104,6 +104,7 @@ const categoryAbbrev: Record<string, string> = {
     'Ore Site': 'Ore',
     'Gas Site': 'Gas',
     'Combat Site': 'Combat',
+    'Homefront Operations': 'HF',
 };
 
 const categoryIcon: Record<string, Component> = {
@@ -113,6 +114,7 @@ const categoryIcon: Record<string, Component> = {
     'Ore Site': Gem,
     'Gas Site': Cloud,
     'Combat Site': Swords,
+    'Homefront Operations': Shield,
 };
 
 const categoryColor: Record<string, string> = {
@@ -122,6 +124,7 @@ const categoryColor: Record<string, string> = {
     'Combat Site': 'text-green-400',
     'Gas Site': 'text-orange-400',
     'Ore Site': 'text-yellow-400',
+    'Homefront Operations': 'text-rose-400',
 };
 
 function getCategoryAbbrev(name?: string | null): string {
