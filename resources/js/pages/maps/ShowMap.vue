@@ -124,7 +124,8 @@ provide('layoutHideCard', layout.hideCard);
 const getLayoutItem = (id: string) => {
     return computed(() => {
         const item = layout.currentLayoutItems.value.find((i) => i.i === id);
-        return item || { x: 0, y: 0, w: 1, h: 1, i: id };
+        const base = item || { x: 0, y: 0, w: 1, h: 1, i: id };
+        return { ...base, maxW: layout.currentLayoutCols.value - base.x };
     });
 };
 
@@ -143,17 +144,11 @@ useOnClient(() =>
     }),
 );
 
-// Prevent text selection during drag/resize operations
+// Prevent text selection while in edit mode (drag/resize events fire too late to prevent it reactively)
+useDisableTextSelection(() => layout.isEditMode.value);
+
 const isDragging = ref(false);
 const isResizing = ref(false);
-
-// Prevent text selection when in edit mode AND (dragging OR resizing)
-const shouldPreventSelection = computed(() => {
-    return layout.isEditMode.value && (isDragging.value || isResizing.value);
-});
-
-// Use text selection disabling for drag/resize operations
-useDisableTextSelection(shouldPreventSelection);
 
 const handleDragStart = () => {
     isDragging.value = true;
@@ -202,6 +197,7 @@ const handleResizeEnd = () => {
         <!-- Grid Layout Container -->
         <GridLayout
             :ref="layout.gridLayoutRef"
+            :style="layout.isEditMode.value ? { minHeight: '4000px' } : undefined"
             :layout="layout.currentLayoutItems.value"
             :col-num="layout.currentLayoutCols.value"
             :row-height="layout.currentLayoutRowHeight.value"

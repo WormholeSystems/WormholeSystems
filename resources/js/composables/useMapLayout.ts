@@ -33,6 +33,7 @@ export interface UseMapLayoutReturn {
     hideCard: (cardId: string) => void;
     showCard: (cardId: string) => void;
     isCardHidden: (cardId: string) => boolean;
+    addCard: (cardId: string) => void;
 }
 
 export function useMapLayout(
@@ -201,6 +202,45 @@ export function useMapLayout(
         return hiddenCards.value.includes(cardId);
     }
 
+    function addCard(cardId: string) {
+        const gridEl = gridLayoutRef.value?.$el as HTMLElement | undefined;
+        const sectionsBefore = gridEl ? new Set(gridEl.querySelectorAll(':scope > section')) : null;
+
+        showCard(cardId);
+
+        nextTick(() => {
+            if (!gridEl || !sectionsBefore) return;
+
+            const allSections = gridEl.querySelectorAll(':scope > section');
+            let newSection: HTMLElement | null = null;
+            for (const section of allSections) {
+                if (!sectionsBefore.has(section)) {
+                    newSection = section as HTMLElement;
+                    break;
+                }
+            }
+
+            if (!newSection) return;
+
+            // Wait for the grid's compaction transition to finish before scrolling
+            newSection.addEventListener(
+                'transitionend',
+                () => {
+                    newSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    newSection.classList.add('vgl-item--ping');
+                    newSection.addEventListener(
+                        'animationend',
+                        () => {
+                            newSection.classList.remove('vgl-item--ping');
+                        },
+                        { once: true },
+                    );
+                },
+                { once: true },
+            );
+        });
+    }
+
     function removeBreakpoint(key: string) {
         if (Object.keys(breakpoints.value).length <= 1) return;
 
@@ -234,6 +274,7 @@ export function useMapLayout(
         hideCard,
         showCard,
         isCardHidden,
+        addCard,
     };
 }
 
@@ -253,7 +294,7 @@ function loadBreakpoints(mapUserSettings: TMapUserSetting) {
                 description: data.description,
                 cols: data.cols || 1,
                 rowHeight: data.rowHeight || 100,
-                items: Array.isArray(data.items) ? data.items : [],
+                items: Array.isArray(data.items) ? JSON.parse(JSON.stringify(data.items)) : [],
             };
         }
 
