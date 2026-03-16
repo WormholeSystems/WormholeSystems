@@ -1,5 +1,5 @@
 {
-    "generated_at": "2026-02-06T15:53:39+00:00",
+    "generated_at": "2026-03-16T16:29:51+00:00",
     "categories": [
         {
             "id": 1,
@@ -30,6 +30,11 @@
             "id": 6,
             "name": "Ore Site",
             "code": "ore"
+        },
+        {
+            "id": 7,
+            "name": "Homefront Operations",
+            "code": "homefront"
         }
     ],
     "types": [
