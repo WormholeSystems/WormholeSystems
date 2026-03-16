@@ -106,9 +106,7 @@ function pasteLayout() {
                 toast.error('Invalid layout data.');
                 return;
             }
-            props.layout.breakpoints.value = data.breakpoints;
-            props.layout.hiddenCards.value = data.hiddenCards ?? [];
-            props.layout.refreshLayout();
+            props.layout.importLayout(data);
             toast.success('Layout pasted successfully.');
         } catch {
             toast.error('Invalid layout data. Make sure you copied a valid layout string.');

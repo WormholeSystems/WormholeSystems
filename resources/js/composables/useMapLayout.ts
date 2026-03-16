@@ -34,6 +34,7 @@ export interface UseMapLayoutReturn {
     showCard: (cardId: string) => void;
     isCardHidden: (cardId: string) => boolean;
     addCard: (cardId: string) => void;
+    importLayout: (data: { breakpoints: BreakpointsConfig; hiddenCards: string[] }) => void;
 }
 
 export function useMapLayout(
@@ -241,6 +242,12 @@ export function useMapLayout(
         });
     }
 
+    function importLayout(data: { breakpoints: BreakpointsConfig; hiddenCards: string[] }) {
+        breakpoints.value = data.breakpoints;
+        hiddenCards.value = data.hiddenCards ?? [];
+        refreshLayout();
+    }
+
     function removeBreakpoint(key: string) {
         if (Object.keys(breakpoints.value).length <= 1) return;
 
@@ -275,6 +282,7 @@ export function useMapLayout(
         showCard,
         isCardHidden,
         addCard,
+        importLayout,
     };
 }
 
