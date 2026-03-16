@@ -7,26 +7,24 @@ import { computed, MaybeRefOrGetter, toValue, watch } from 'vue';
  */
 export function useDisableTextSelection(shouldPreventValue: MaybeRefOrGetter<boolean>) {
     const shouldPrevent = computed(() => toValue(shouldPreventValue));
+
     const disableSelection = () => {
-        document.body.classList.add('select-none');
+        document.documentElement.style.userSelect = 'none';
+        document.documentElement.style.webkitUserSelect = 'none';
+        window.getSelection()?.removeAllRanges();
     };
 
     const enableSelection = () => {
-        document.body.classList.remove('select-none');
+        document.documentElement.style.userSelect = '';
+        document.documentElement.style.webkitUserSelect = '';
     };
 
-    // Event handlers
-    const forcePreventSelection = (e: Event) => {
+    const preventSelection = (e: Event) => {
         if (shouldPrevent.value) {
             e.preventDefault();
-            e.stopPropagation();
-            e.stopImmediatePropagation();
-            return false;
         }
-        return true;
     };
 
-    // Watch for changes and toggle selection
     watch(shouldPrevent, (prevent) => {
         if (prevent) {
             disableSelection();
@@ -35,8 +33,8 @@ export function useDisableTextSelection(shouldPreventValue: MaybeRefOrGetter<boo
         }
     });
 
-    useEventListener('selectstart', forcePreventSelection, { passive: false });
-    useEventListener('dragstart', forcePreventSelection, { passive: false });
+    useEventListener(document, 'selectstart', preventSelection, { capture: true, passive: false });
+
     return {
         disableSelection,
         enableSelection,
