@@ -237,4 +237,75 @@ html.dark {
     ::-webkit-scrollbar-button {
         display: none;
     }
+
+    .vgl-item--resizable {
+        outline: 2px dashed var(--color-neutral-500);
+        outline-offset: -1px;
+    }
+
+    .vgl-item--resizable::after {
+        content: '';
+        position: absolute;
+        top: 36px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 9999;
+    }
+
+    .vgl-item--dragging,
+    .vgl-item--resizing {
+        outline: 2px dashed var(--color-neutral-500);
+        outline-offset: -1px;
+        opacity: 0.8;
+    }
+
+    .vgl-item--ping {
+        animation: card-ping 1s ease-out;
+    }
+
+    @keyframes card-ping {
+        0% {
+            outline-color: var(--color-primary);
+            outline-width: 3px;
+            outline-style: solid;
+            box-shadow: 0 0 0 0 var(--color-primary);
+        }
+        50% {
+            box-shadow: 0 0 0 8px transparent;
+        }
+        100% {
+            outline-color: var(--color-neutral-500);
+            outline-width: 2px;
+            outline-style: dashed;
+            box-shadow: 0 0 0 0 transparent;
+        }
+    }
+
+    .vgl-item--placeholder {
+        background: var(--color-muted) !important;
+        border: 2px dashed var(--color-muted-foreground) !important;
+        border-radius: 6px;
+        opacity: 0.5;
+    }
+
+    .vgl-item {
+        --vgl-resizer-size: 32px;
+        --vgl-resizer-border-color: var(--color-neutral-500);
+        --vgl-resizer-border-width: 5px;
+        --vgl-placeholder-bg: var(--color-muted);
+        --vgl-placeholder-opacity: 50%;
+        --vgl-item-dragging-z-index: 100;
+        --vgl-item-resizing-z-index: 100;
+    }
+
+    .vgl-item--resizable {
+        overflow: visible !important;
+    }
+
+    .vgl-item__resizer {
+        right: 8px !important;
+        bottom: 8px !important;
+        z-index: 99999 !important;
+    }
 }

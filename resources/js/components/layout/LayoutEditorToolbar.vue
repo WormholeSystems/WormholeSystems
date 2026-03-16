@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import BreakpointManager from '@/components/layout/BreakpointManager.vue';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { UseMapLayoutReturn } from '@/composables/useMapLayout';
 import { isProtectedBreakpoint, REMOVABLE_CARD_LABELS, REMOVABLE_CARDS } from '@/const/layoutDefaults';
-import { Laptop, Monitor, MonitorUp, Plus, RotateCcw, Save, Smartphone, Tablet, X } from 'lucide-vue-next';
+import { ClipboardCopy, ClipboardPaste, Laptop, Monitor, MonitorUp, Plus, RotateCcw, Save, Smartphone, Tablet, X } from 'lucide-vue-next';
 import { computed, onMounted, ref, watch } from 'vue';
+import { toast } from 'vue-sonner';
 
 const props = defineProps<{
     layout: UseMapLayoutReturn;
@@ -61,17 +63,21 @@ const selectedBreakpoint = computed(() => {
     return props.layout.breakpoints.value[props.layout.selectedBreakpointKey.value];
 });
 
+const showDiscardDialog = ref(false);
+
 function handleExitEditMode() {
     if (hasUnsavedChanges.value) {
-        if (!confirm('You have unsaved changes. Are you sure you want to exit without saving?')) {
-            return;
-        }
-        // Revert changes to the last saved state
-        props.layout.revertChanges();
-        // Reset initial state to match reverted state
-        initialState.value = JSON.stringify(props.layout.breakpoints.value);
-        initialHiddenState.value = JSON.stringify(props.layout.hiddenCards.value);
+        showDiscardDialog.value = true;
+        return;
     }
+    props.layout.toggleEditMode();
+}
+
+function confirmDiscard() {
+    showDiscardDialog.value = false;
+    props.layout.revertChanges();
+    initialState.value = JSON.stringify(props.layout.breakpoints.value);
+    initialHiddenState.value = JSON.stringify(props.layout.hiddenCards.value);
     props.layout.toggleEditMode();
 }
 
@@ -80,6 +86,34 @@ function handleSave() {
     // Update the initial state after saving
     initialState.value = JSON.stringify(props.layout.breakpoints.value);
     initialHiddenState.value = JSON.stringify(props.layout.hiddenCards.value);
+}
+
+function copyLayout() {
+    const data = {
+        breakpoints: props.layout.breakpoints.value,
+        hiddenCards: props.layout.hiddenCards.value,
+    };
+    const encoded = btoa(JSON.stringify(data));
+    navigator.clipboard.writeText(encoded);
+    toast.success('Layout copied to clipboard.');
+}
+
+function pasteLayout() {
+    navigator.clipboard.readText().then((text) => {
+        try {
+            const data = JSON.parse(atob(text.trim()));
+            if (!data.breakpoints || typeof data.breakpoints !== 'object') {
+                toast.error('Invalid layout data.');
+                return;
+            }
+            props.layout.breakpoints.value = data.breakpoints;
+            props.layout.hiddenCards.value = data.hiddenCards ?? [];
+            props.layout.refreshLayout();
+            toast.success('Layout pasted successfully.');
+        } catch {
+            toast.error('Invalid layout data. Make sure you copied a valid layout string.');
+        }
+    });
 }
 
 const canResetCurrentBreakpoint = computed(() => {
@@ -154,19 +188,19 @@ const canResetCurrentBreakpoint = computed(() => {
                     <span>{{ selectedBreakpoint.label }} ({{ selectedBreakpoint.minWidth }}px)</span>
                 </div>
 
-                <!-- Hidden Cards Re-add Buttons -->
+                <!-- Hidden Cards - Drag to Add -->
                 <template v-if="hiddenCardIds.length > 0">
                     <div class="h-8 w-px bg-border"></div>
                     <div class="flex items-center gap-1">
                         <Tooltip v-for="cardId in hiddenCardIds" :key="cardId">
                             <TooltipTrigger as-child>
-                                <Button variant="outline" size="sm" class="h-8 gap-1 text-xs" @click="layout.showCard(cardId)">
+                                <Button variant="outline" size="sm" class="h-8 gap-1 text-xs" @click="layout.addCard(cardId)">
                                     <Plus class="h-3 w-3" />
                                     {{ REMOVABLE_CARD_LABELS[cardId] }}
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent side="top" class="z-[60]">
-                                <p class="text-sm">Show {{ REMOVABLE_CARD_LABELS[cardId] }}</p>
+                                <p class="text-sm">Add {{ REMOVABLE_CARD_LABELS[cardId] }}</p>
                             </TooltipContent>
                         </Tooltip>
                     </div>
@@ -199,8 +233,45 @@ const canResetCurrentBreakpoint = computed(() => {
                             <p class="text-sm">{{ hasUnsavedChanges ? 'Save Changes' : 'No Changes' }}</p>
                         </TooltipContent>
                     </Tooltip>
+
+                    <!-- Copy Layout -->
+                    <Tooltip>
+                        <TooltipTrigger as-child>
+                            <Button variant="ghost" size="icon" @click="copyLayout">
+                                <ClipboardCopy class="h-4 w-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" class="z-[60]">
+                            <p class="text-sm">Copy Layout</p>
+                        </TooltipContent>
+                    </Tooltip>
+
+                    <!-- Paste Layout -->
+                    <Tooltip>
+                        <TooltipTrigger as-child>
+                            <Button variant="ghost" size="icon" @click="pasteLayout">
+                                <ClipboardPaste class="h-4 w-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" class="z-[60]">
+                            <p class="text-sm">Paste Layout</p>
+                        </TooltipContent>
+                    </Tooltip>
                 </div>
             </div>
         </div>
     </Transition>
+
+    <Dialog v-model:open="showDiscardDialog">
+        <DialogContent class="sm:max-w-md">
+            <DialogHeader>
+                <DialogTitle>Discard changes?</DialogTitle>
+                <DialogDescription>You have unsaved layout changes. Are you sure you want to exit without saving?</DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+                <Button variant="outline" @click="showDiscardDialog = false">Keep editing</Button>
+                <Button variant="destructive" @click="confirmDiscard">Discard changes</Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
 </template>
