@@ -20,6 +20,7 @@ import useUser from '@/composables/useUser';
 import { useWaypoint } from '@/composables/useWaypoint';
 import { TMapSolarsystem } from '@/pages/maps';
 import { TMapSolarsystemStatus } from '@/types/models';
+import { Circle, Compass, ExternalLink, Globe, Map, MapPin, Navigation, Pin, Route, Trash2 } from 'lucide-vue-next';
 import type { AcceptableValue } from 'reka-ui';
 
 const { map_solarsystem } = defineProps<{
@@ -56,10 +57,14 @@ const options: TMapSolarsystemStatus[] = ['unknown', 'friendly', 'hostile', 'act
         </ContextMenuTrigger>
         <ContextMenuContent>
             <ContextMenuItem @select="handleTogglePin" v-if="can_write">
+                <Pin class="size-4" />
                 {{ map_solarsystem.pinned ? 'Unpin' : 'Pin' }}
             </ContextMenuItem>
             <ContextMenuSub v-if="can_write">
-                <ContextMenuSubTrigger> Status</ContextMenuSubTrigger>
+                <ContextMenuSubTrigger>
+                    <Map class="size-4" />
+                    Status
+                </ContextMenuSubTrigger>
                 <ContextMenuSubContent>
                     <ContextMenuRadioGroup :model-value="map_solarsystem.status ?? undefined" @update:model-value="handleStatusChange">
                         <ContextMenuRadioItem v-for="option in options" :key="option" :value="option">
@@ -76,26 +81,76 @@ const options: TMapSolarsystemStatus[] = ['unknown', 'friendly', 'hostile', 'act
             <ContextMenuSeparator />
 
             <ContextMenuSub>
-                <ContextMenuSubTrigger>External</ContextMenuSubTrigger>
+                <ContextMenuSubTrigger>
+                    <ExternalLink class="size-4" />
+                    External
+                </ContextMenuSubTrigger>
                 <ContextMenuSubContent>
-                    <ContextMenuItem as-child>
-                        <a
-                            :href="`https://evemaps.dotlan.net/map/${map_solarsystem.solarsystem?.region?.name.replaceAll(' ', '_')}/${map_solarsystem.solarsystem?.name.replaceAll(' ', '_')}`"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
+                    <ContextMenuSub>
+                        <ContextMenuSubTrigger>
+                            <ExternalLink class="size-4" />
                             Dotlan
-                        </a>
-                    </ContextMenuItem>
-                    <ContextMenuItem as-child>
-                        <a :href="`https://zkillboard.com/system/${map_solarsystem.solarsystem?.id}/`" target="_blank" rel="noopener noreferrer">
+                        </ContextMenuSubTrigger>
+                        <ContextMenuSubContent>
+                            <ContextMenuItem as-child>
+                                <a
+                                    :href="`https://evemaps.dotlan.net/system/${map_solarsystem.solarsystem?.name.replaceAll(' ', '_')}`"
+                                    target="_blank"
+                                    rel="noopener"
+                                >
+                                    <Globe class="size-4" />
+                                    System
+                                </a>
+                            </ContextMenuItem>
+                            <ContextMenuItem as-child>
+                                <a
+                                    :href="`https://evemaps.dotlan.net/map/${map_solarsystem.solarsystem?.region?.name.replaceAll(' ', '_')}/${map_solarsystem.solarsystem?.name.replaceAll(' ', '_')}`"
+                                    target="_blank"
+                                    rel="noopener"
+                                >
+                                    <Map class="size-4" />
+                                    Region Map
+                                </a>
+                            </ContextMenuItem>
+                            <ContextMenuItem as-child v-if="!map_solarsystem.solarsystem.class">
+                                <a
+                                    :href="`https://evemaps.dotlan.net/range/Revelation,5/${map_solarsystem.solarsystem?.name.replaceAll(' ', '_')}`"
+                                    target="_blank"
+                                    rel="noopener"
+                                >
+                                    <Circle class="size-4" />
+                                    Jump Range
+                                </a>
+                            </ContextMenuItem>
+                        </ContextMenuSubContent>
+                    </ContextMenuSub>
+                    <ContextMenuSub>
+                        <ContextMenuSubTrigger>
+                            <ExternalLink class="size-4" />
                             zKillboard
-                        </a>
-                    </ContextMenuItem>
+                        </ContextMenuSubTrigger>
+                        <ContextMenuSubContent>
+                            <ContextMenuItem as-child>
+                                <a :href="`https://zkillboard.com/system/${map_solarsystem.solarsystem?.id}/`" target="_blank" rel="noopener">
+                                    <Globe class="size-4" />
+                                    System
+                                </a>
+                            </ContextMenuItem>
+                            <ContextMenuItem as-child>
+                                <a :href="`https://zkillboard.com/region/${map_solarsystem.solarsystem?.region_id}/`" target="_blank" rel="noopener">
+                                    <Map class="size-4" />
+                                    Region
+                                </a>
+                            </ContextMenuItem>
+                        </ContextMenuSubContent>
+                    </ContextMenuSub>
                 </ContextMenuSubContent>
             </ContextMenuSub>
             <ContextMenuSub v-if="user && !map_solarsystem.solarsystem.class">
-                <ContextMenuSubTrigger>Set destination</ContextMenuSubTrigger>
+                <ContextMenuSubTrigger>
+                    <Navigation class="size-4" />
+                    Set destination
+                </ContextMenuSubTrigger>
                 <ContextMenuSubContent>
                     <ContextMenuItem
                         v-for="character in user.characters"
@@ -109,7 +164,10 @@ const options: TMapSolarsystemStatus[] = ['unknown', 'friendly', 'hostile', 'act
             </ContextMenuSub>
 
             <ContextMenuSub v-if="user && !map_solarsystem.solarsystem.class">
-                <ContextMenuSubTrigger>Add waypoint</ContextMenuSubTrigger>
+                <ContextMenuSubTrigger>
+                    <MapPin class="size-4" />
+                    Add waypoint
+                </ContextMenuSubTrigger>
                 <ContextMenuSubContent>
                     <ContextMenuItem
                         v-for="character in user.characters"
@@ -121,22 +179,35 @@ const options: TMapSolarsystemStatus[] = ['unknown', 'friendly', 'hostile', 'act
                     </ContextMenuItem>
                 </ContextMenuSubContent>
             </ContextMenuSub>
-            <ContextMenuSeparator />
-            <CopyNameMenu :map_solarsystem="map_solarsystem" />
-            <template v-if="!map_solarsystem.pinned && can_write">
-                <ContextMenuSeparator />
-                <ContextMenuItem @select="handleRemoveFromMap"> Remove </ContextMenuItem>
-            </template>
-
-            <ContextMenuSeparator />
 
             <ContextMenuSub>
-                <ContextMenuSubTrigger>Route planner</ContextMenuSubTrigger>
+                <ContextMenuSubTrigger>
+                    <Route class="size-4" />
+                    Route planner
+                </ContextMenuSubTrigger>
                 <ContextMenuSubContent>
-                    <ContextMenuItem @select="setFromSystem(map_solarsystem.solarsystem_id)">Set as origin</ContextMenuItem>
-                    <ContextMenuItem @select="setToSystem(map_solarsystem.solarsystem_id)">Set as destination</ContextMenuItem>
+                    <ContextMenuItem @select="setFromSystem(map_solarsystem.solarsystem_id)">
+                        <Compass class="size-4" />
+                        Set as origin
+                    </ContextMenuItem>
+                    <ContextMenuItem @select="setToSystem(map_solarsystem.solarsystem_id)">
+                        <Navigation class="size-4" />
+                        Set as destination
+                    </ContextMenuItem>
                 </ContextMenuSubContent>
             </ContextMenuSub>
+
+            <ContextMenuSeparator />
+
+            <CopyNameMenu :map_solarsystem="map_solarsystem" />
+
+            <template v-if="!map_solarsystem.pinned && can_write">
+                <ContextMenuSeparator />
+                <ContextMenuItem @select="handleRemoveFromMap" class="text-destructive focus:text-destructive">
+                    <Trash2 class="size-4" />
+                    Remove
+                </ContextMenuItem>
+            </template>
         </ContextMenuContent>
     </ContextMenu>
 </template>
