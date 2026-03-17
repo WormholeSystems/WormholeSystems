@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Events\Maps\MapUpdatedEvent;
 use App\Models\Map;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,6 +22,8 @@ final class HomeSystemController extends Controller
         ]);
 
         $map->update(['home_solarsystem_id' => $validated['map_solarsystem_id']]);
+
+        broadcast(new MapUpdatedEvent($map))->toOthers();
 
         return back();
     }
