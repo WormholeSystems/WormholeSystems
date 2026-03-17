@@ -19,7 +19,9 @@ export const mapState = reactive<TMapState>({
 });
 
 export const map_solarsystems = computed(() => mapState.map_solarsystems);
-export const map_solarsystems_selected = computed(() => map_solarsystems.value.filter((s) => s.is_selected && !s.pinned));
+export const map_solarsystems_selected = computed(() =>
+    map_solarsystems.value.filter((s) => s.is_selected && !s.pinned && s.id !== mapState.map?.home_solarsystem_id),
+);
 export const selection = computed(() => mapState.selection);
 export const grid_size = computed(() => mapState.config.grid_size);
 export const scale = computed(() => mapState.scale);

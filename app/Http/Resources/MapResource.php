@@ -27,6 +27,8 @@ final class MapResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'slug' => $this->slug,
+            'home_solarsystem_id' => $this->home_solarsystem_id,
+            'rally_solarsystem_id' => $this->rally_solarsystem_id,
             'map_solarsystems' => $this->mapSolarsystems->toResourceCollection(MapSolarsystemResource::class),
             'map_connections' => $this->mapConnections->toResourceCollection(MapConnectionResource::class),
             'owner' => [
