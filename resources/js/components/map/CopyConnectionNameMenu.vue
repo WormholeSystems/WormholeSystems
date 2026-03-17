@@ -2,6 +2,7 @@
 import { ContextMenuItem, ContextMenuSub, ContextMenuSubContent, ContextMenuSubTrigger } from '@/components/ui/context-menu';
 import { TProcessedConnection } from '@/composables/map';
 import { TTailoredSignature } from '@/pages/maps';
+import { Copy } from 'lucide-vue-next';
 import { computed } from 'vue';
 import { toast } from 'vue-sonner';
 
@@ -62,7 +63,10 @@ function copyNameToClipboard(value: string) {
 
 <template>
     <ContextMenuSub>
-        <ContextMenuSubTrigger>Copy name</ContextMenuSubTrigger>
+        <ContextMenuSubTrigger>
+            <Copy class="size-4" />
+            Copy name
+        </ContextMenuSubTrigger>
         <ContextMenuSubContent>
             <ContextMenuItem @select="copyNameToClipboard(source_name)">
                 {{ source_name }}

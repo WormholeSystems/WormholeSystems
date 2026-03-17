@@ -14,6 +14,7 @@ import { deleteMapConnection, TProcessedConnection, updateMapConnection } from '
 import { formatDateToISO } from '@/lib/utils';
 import { TLifetimeStatus, TMassStatus, TShipSize } from '@/types/models';
 import { UTCDate } from '@date-fns/utc';
+import { Clock, Ship, Trash2, Weight } from 'lucide-vue-next';
 import type { AcceptableValue } from 'reka-ui';
 
 const { map_connection } = defineProps<{
@@ -43,7 +44,10 @@ function handleLifetimeChange(lifetime: AcceptableValue) {
 <template>
     <ContextMenuContent>
         <ContextMenuSub>
-            <ContextMenuSubTrigger>Lifetime</ContextMenuSubTrigger>
+            <ContextMenuSubTrigger>
+                <Clock class="size-4" />
+                Lifetime
+            </ContextMenuSubTrigger>
             <ContextMenuSubContent>
                 <ContextMenuRadioGroup :model-value="map_connection.lifetime_status" @update:model-value="handleLifetimeChange">
                     <ContextMenuRadioItem value="healthy" class="flex items-center justify-between gap-2">
@@ -70,39 +74,55 @@ function handleLifetimeChange(lifetime: AcceptableValue) {
             </ContextMenuSubContent>
         </ContextMenuSub>
         <ContextMenuSub>
-            <ContextMenuSubTrigger>Ship Size</ContextMenuSubTrigger>
+            <ContextMenuSubTrigger>
+                <Weight class="size-4" />
+                Mass Status
+            </ContextMenuSubTrigger>
             <ContextMenuSubContent>
-                <ContextMenuRadioGroup :model-value="map_connection.ship_size" @update:model-value="handleShipSizeChange">
-                    <ContextMenuRadioItem value="frigate"> Frigate</ContextMenuRadioItem>
-                    <ContextMenuRadioItem value="medium"> Medium</ContextMenuRadioItem>
-                    <ContextMenuRadioItem value="large"> Large</ContextMenuRadioItem>
+                <ContextMenuRadioGroup :model-value="map_connection.mass_status" @update:model-value="handleStatusChange">
+                    <ContextMenuRadioItem value="fresh" class="flex items-center justify-between gap-2">
+                        <span class="flex items-center gap-2">
+                            <span class="inline-block size-2 rounded-full bg-neutral-500" />
+                            Fresh
+                        </span>
+                        <span class="text-muted-foreground">&ge; 50%</span>
+                    </ContextMenuRadioItem>
+                    <ContextMenuRadioItem value="reduced" class="flex items-center justify-between gap-2">
+                        <span class="flex items-center gap-2">
+                            <span class="inline-block size-2 rounded-full bg-amber-500" />
+                            Reduced
+                        </span>
+                        <span class="text-muted-foreground">&lt; 50%</span>
+                    </ContextMenuRadioItem>
+                    <ContextMenuRadioItem value="critical" class="flex items-center justify-between gap-2">
+                        <span class="flex items-center gap-2">
+                            <span class="inline-block size-2 rounded-full bg-red-500" />
+                            Critical
+                        </span>
+                        <span class="text-muted-foreground">&le; 15%</span>
+                    </ContextMenuRadioItem>
                 </ContextMenuRadioGroup>
             </ContextMenuSubContent>
         </ContextMenuSub>
         <ContextMenuSub>
-            <ContextMenuSubTrigger> Mass Status</ContextMenuSubTrigger>
+            <ContextMenuSubTrigger>
+                <Ship class="size-4" />
+                Ship Size
+            </ContextMenuSubTrigger>
             <ContextMenuSubContent>
-                <ContextMenuRadioGroup :model-value="map_connection.mass_status" @update:model-value="handleStatusChange">
-                    <ContextMenuRadioItem value="fresh" class="flex items-center justify-between gap-2">
-                        Fresh
-                        <span class="text-muted-foreground">&ge; 50%</span>
-                    </ContextMenuRadioItem>
-                    <ContextMenuRadioItem value="reduced" class="flex items-center justify-between gap-2">
-                        Reduced
-                        <span class="text-muted-foreground">&lt; 50%</span>
-                    </ContextMenuRadioItem>
-                    <ContextMenuRadioItem value="critical" class="flex items-center justify-between gap-2">
-                        Critical
-                        <span class="text-muted-foreground">&le; 15%</span>
-                    </ContextMenuRadioItem>
+                <ContextMenuRadioGroup :model-value="map_connection.ship_size" @update:model-value="handleShipSizeChange">
+                    <ContextMenuRadioItem value="frigate">Frigate</ContextMenuRadioItem>
+                    <ContextMenuRadioItem value="medium">Medium</ContextMenuRadioItem>
+                    <ContextMenuRadioItem value="large">Large</ContextMenuRadioItem>
                 </ContextMenuRadioGroup>
             </ContextMenuSubContent>
         </ContextMenuSub>
         <ContextMenuSeparator />
         <CopyConnectionNameMenu :map_connection="map_connection" />
         <ContextMenuSeparator />
-        <ContextMenuItem @click="handleRemoveFromMap"> Remove connection</ContextMenuItem>
+        <ContextMenuItem @click="handleRemoveFromMap" class="text-destructive focus:text-destructive">
+            <Trash2 class="size-4" />
+            Remove connection
+        </ContextMenuItem>
     </ContextMenuContent>
 </template>
-
-<style scoped></style>
