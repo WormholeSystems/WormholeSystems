@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ContextMenuItem, ContextMenuSub, ContextMenuSubContent, ContextMenuSubTrigger } from '@/components/ui/context-menu';
 import { TMapSolarsystem } from '@/pages/maps';
-import { Copy } from 'lucide-vue-next';
 import { computed } from 'vue';
 import { toast } from 'vue-sonner';
 
@@ -28,10 +27,7 @@ function copyNameToClipboard(value?: string) {
 
 <template>
     <ContextMenuSub>
-        <ContextMenuSubTrigger>
-            <Copy class="size-4" />
-            Copy name
-        </ContextMenuSubTrigger>
+        <ContextMenuSubTrigger>Copy name</ContextMenuSubTrigger>
         <ContextMenuSubContent>
             <ContextMenuItem @select="copyNameToClipboard()">
                 {{ default_name }}
