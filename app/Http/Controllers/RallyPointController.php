@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Events\Maps\MapUpdatedEvent;
 use App\Models\Map;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,6 +21,8 @@ final class RallyPointController extends Controller
         ]);
 
         $map->update(['rally_solarsystem_id' => $validated['solarsystem_id']]);
+
+        broadcast(new MapUpdatedEvent($map))->toOthers();
 
         return back();
     }
