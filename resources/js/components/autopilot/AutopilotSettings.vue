@@ -11,6 +11,7 @@ import { updateMapUserSettings } from '@/composables/map';
 import { useMapUserSettings } from '@/composables/useMapUserSettings';
 import { useShowMap } from '@/composables/useShowMap';
 import { TLifetimeStatus, TMassStatus } from '@/types/models';
+import type { AcceptableValue } from 'reka-ui';
 import { ref, watch } from 'vue';
 
 const map_user_settings = useMapUserSettings();
@@ -25,13 +26,13 @@ watch(
     },
 );
 
-function handleLifetimeStatusChange(value: string) {
+function handleLifetimeStatusChange(value: AcceptableValue) {
     updateMapUserSettings(page.props.map.slug, {
         route_allow_lifetime_status: value as TLifetimeStatus,
     });
 }
 
-function handleToggleMass(value: string) {
+function handleToggleMass(value: AcceptableValue) {
     updateMapUserSettings(page.props.map.slug, {
         route_allow_mass_status: value as TMassStatus,
     });
@@ -43,7 +44,7 @@ function handleToggleEveScout(value: boolean | 'indeterminate') {
     });
 }
 
-function handleRoutePreferenceChange(value: string) {
+function handleRoutePreferenceChange(value: AcceptableValue) {
     if (value === 'shorter' || value === 'safer' || value === 'less_secure') {
         updateMapUserSettings(page.props.map.slug, {
             route_preference: value,
