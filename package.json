@@ -58,9 +58,6 @@
         "vue": "^3.5.13",
         "vue-sonner": "^2.0.1"
     },
-    "overrides": {
-        "serialize-javascript": ">=7.0.3"
-    },
     "optionalDependencies": {
         "@rollup/rollup-linux-x64-gnu": "4.9.5",
         "@tailwindcss/oxide-linux-x64-gnu": "^4.0.1",
