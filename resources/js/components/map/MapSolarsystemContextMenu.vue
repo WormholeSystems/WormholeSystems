@@ -14,13 +14,15 @@ import {
     ContextMenuTrigger,
 } from '@/components/ui/context-menu';
 import { deleteMapSolarsystem, updateMapSolarsystem } from '@/composables/map';
+import { useHomeSystem } from '@/composables/useHomeSystem';
 import { useNavigationSystems } from '@/composables/useNavigationSystems';
 import usePermission from '@/composables/usePermission';
+import { useRallyPoint } from '@/composables/useRallyPoint';
 import useUser from '@/composables/useUser';
 import { useWaypoint } from '@/composables/useWaypoint';
 import { TMapSolarsystem } from '@/pages/maps';
 import { TMapSolarsystemStatus } from '@/types/models';
-import { Circle, Compass, ExternalLink, Globe, Map, MapPin, Navigation, Pin, Route, Trash2 } from 'lucide-vue-next';
+import { Circle, Compass, ExternalLink, Flag, Globe, Home, Map, MapPin, Navigation, Pin, Route, Trash2 } from 'lucide-vue-next';
 import type { AcceptableValue } from 'reka-ui';
 
 const { map_solarsystem } = defineProps<{
@@ -30,6 +32,9 @@ const { map_solarsystem } = defineProps<{
 const user = useUser();
 
 const { canEdit: can_write } = usePermission();
+
+const { isHome, toggleHomeSystem } = useHomeSystem(() => map_solarsystem.id);
+const { isRally, toggleRallyPoint } = useRallyPoint(() => map_solarsystem.solarsystem_id);
 
 const setWaypoint = useWaypoint();
 
@@ -88,7 +93,7 @@ const options: TMapSolarsystemStatus[] = ['unknown', 'friendly', 'hostile', 'act
                 <ContextMenuSubContent>
                     <ContextMenuSub>
                         <ContextMenuSubTrigger>
-                            <ExternalLink class="size-4" />
+                            <img src="https://evemaps.dotlan.net/favicon.ico" alt="" class="size-4 rounded-sm" />
                             Dotlan
                         </ContextMenuSubTrigger>
                         <ContextMenuSubContent>
@@ -126,7 +131,7 @@ const options: TMapSolarsystemStatus[] = ['unknown', 'friendly', 'hostile', 'act
                     </ContextMenuSub>
                     <ContextMenuSub>
                         <ContextMenuSubTrigger>
-                            <ExternalLink class="size-4" />
+                            <img src="https://zkillboard.com/favicon.ico" alt="" class="size-4 rounded-sm" />
                             zKillboard
                         </ContextMenuSubTrigger>
                         <ContextMenuSubContent>
@@ -201,7 +206,16 @@ const options: TMapSolarsystemStatus[] = ['unknown', 'friendly', 'hostile', 'act
 
             <CopyNameMenu :map_solarsystem="map_solarsystem" />
 
-            <template v-if="!map_solarsystem.pinned && can_write">
+            <ContextMenuItem @select="toggleHomeSystem" v-if="can_write">
+                <Home class="size-4" />
+                {{ isHome ? 'Unset Home System' : 'Set as Home System' }}
+            </ContextMenuItem>
+            <ContextMenuItem @select="toggleRallyPoint" v-if="can_write">
+                <Flag class="size-4" />
+                {{ isRally ? 'Clear Rally Point' : 'Set as Rally Point' }}
+            </ContextMenuItem>
+
+            <template v-if="!map_solarsystem.pinned && !isHome && can_write">
                 <ContextMenuSeparator />
                 <ContextMenuItem @select="handleRemoveFromMap" class="text-destructive focus:text-destructive">
                     <Trash2 class="size-4" />
