@@ -99,6 +99,8 @@ export type TMap = {
     id: number;
     name: string;
     slug: string;
+    home_solarsystem_id: number | null;
+    rally_solarsystem_id: number | null;
     map_solarsystems: TMapSolarsystem[];
     map_connections: TMapConnection[];
 };
