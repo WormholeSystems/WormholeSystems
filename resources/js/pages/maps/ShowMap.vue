@@ -19,6 +19,7 @@ import { useDisableTextSelection } from '@/composables/useDisableTextSelection';
 import { useMapLayout } from '@/composables/useMapLayout';
 import { useOnClient } from '@/composables/useOnClient';
 import usePermission from '@/composables/usePermission';
+import { useRallyRoute } from '@/composables/useRallyRoute';
 import { useStaticSolarsystems } from '@/composables/useStaticSolarsystems';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SeoHead from '@/layouts/SeoHead.vue';
@@ -64,6 +65,9 @@ const resolvedMap = computed<TMap>(() => {
         map_solarsystems: solarsystems ?? map.map_solarsystems,
     };
 });
+
+// Initialize rally route calculation
+useRallyRoute();
 
 const resolvedSelectedSolarsystem = computed<TResolvedSelectedMapSolarsystem | null>(() => {
     if (!selected_map_solarsystem) {
