@@ -48,6 +48,18 @@ function handleDragEnd(event: PointerEvent) {
 }
 
 useEventListener('pointerup', handleDragEnd);
+
+function getConnectionExtra(connection: TMapConnection): string {
+    if (!connection.ship_size) return '';
+    switch (connection.ship_size) {
+        case 'frigate':
+            return 'S';
+        case 'medium':
+            return 'M';
+        default:
+            return '';
+    }
+}
 </script>
 
 <template>
@@ -62,12 +74,10 @@ useEventListener('pointerup', handleDragEnd);
                 :key="map_connection.id"
                 :from="map_connection.source.position!"
                 :to="map_connection.target.position!"
-                :ship_size="map_connection.ship_size"
+                :extra="getConnectionExtra(map_connection)"
                 :mass_status="map_connection.mass_status"
                 :lifetime="map_connection.lifetime_status"
                 :is_highlighted="map_connection.is_on_route"
-                :is_on_rally_route="map_connection.is_on_rally_route"
-                :rally_route_reversed="map_connection.rally_route_reversed"
                 @connection-context-menu="(event) => emit('connectionContextMenu', event, map_connection)"
                 @connection-click="(event) => emit('connectionClick', event, map_connection)"
             />

@@ -7,7 +7,6 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BulkSignatureController;
 use App\Http\Controllers\EveController;
 use App\Http\Controllers\EveScoutConnectionController;
-use App\Http\Controllers\HomeSystemController;
 use App\Http\Controllers\IgnoreListController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\LoginController;
@@ -25,7 +24,6 @@ use App\Http\Controllers\MapUserSettingController;
 use App\Http\Controllers\PasteSignatureController;
 use App\Http\Controllers\PingController;
 use App\Http\Controllers\PreferredCharacterController;
-use App\Http\Controllers\RallyPointController;
 use App\Http\Controllers\ScopeController;
 use App\Http\Controllers\SignatureController;
 use App\Http\Controllers\StaticDataController;
@@ -62,8 +60,6 @@ Route::middleware('auth')->group(function () {
         Route::post('toggle-public', [MapSettingsController::class, 'togglePublic'])->name('toggle-public');
         Route::post('generate-share-token', [MapSettingsController::class, 'generateShareToken'])->name('generate-share-token');
         Route::delete('revoke-share-token', [MapSettingsController::class, 'revokeShareToken'])->name('revoke-share-token');
-        Route::post('home-system', [HomeSystemController::class, 'store'])->name('home-system');
-        Route::post('rally-point', [RallyPointController::class, 'store'])->name('rally-point');
         Route::get('preferences', [MapPreferencesController::class, 'show'])->name('preferences.show');
 
         Route::get('access', [MapAccessController::class, 'show'])->name('access.show');
