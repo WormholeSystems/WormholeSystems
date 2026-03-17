@@ -13,9 +13,10 @@ import {
 import { createMapSolarsystem, useMapSolarsystems } from '@/composables/map';
 import { useNavigationSystems } from '@/composables/useNavigationSystems';
 import usePermission from '@/composables/usePermission';
+import { useRallyPoint } from '@/composables/useRallyPoint';
 import useUser from '@/composables/useUser';
 import { useWaypoint } from '@/composables/useWaypoint';
-import { Compass, MapPin, Navigation, Plus, Route } from 'lucide-vue-next';
+import { Compass, Flag, MapPin, Navigation, Plus, Route } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 const { solarsystem_id } = defineProps<{
@@ -36,6 +37,7 @@ const already_on_map = computed(() => {
 
 const { canEdit: can_write } = usePermission();
 
+const { isRally, toggleRallyPoint } = useRallyPoint(() => solarsystem_id);
 </script>
 
 <template>
@@ -99,6 +101,12 @@ const { canEdit: can_write } = usePermission();
                 </ContextMenuItem>
             </template>
 
+            <ContextMenuSeparator />
+
+            <ContextMenuItem @select="toggleRallyPoint" v-if="can_write">
+                <Flag class="size-4" />
+                {{ isRally ? 'Clear Rally Point' : 'Set as Rally Point' }}
+            </ContextMenuItem>
         </ContextMenuContent>
     </ContextMenu>
 </template>
