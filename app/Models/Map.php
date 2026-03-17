@@ -24,8 +24,6 @@ use function sprintf;
  * @property string $name
  * @property bool $is_public
  * @property string|null $share_token
- * @property int|null $home_solarsystem_id
- * @property int|null $rally_solarsystem_id
  * @property-read string|CarbonImmutable $created_at
  * @property-read string|CarbonImmutable $updated_at
  * @property-read Collection<int,MapSolarsystem> $mapSolarsystems

@@ -16,15 +16,12 @@ import { TDataMapSolarSystem } from '@/composables/map';
 import MapSolarsystems from '@/routes/map-solarsystems';
 import { TCharacter } from '@/types/models';
 import { useForm } from '@inertiajs/vue3';
-import { Flag as FlagIcon, Home as HomeIcon } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 
 const { map_solarsystem } = defineProps<{
     map_solarsystem: TDataMapSolarSystem;
     pilots: TCharacter[];
     is_active?: boolean;
-    is_home?: boolean;
-    is_rally?: boolean;
 }>();
 
 const form = useForm<{
@@ -92,8 +89,6 @@ function handleSubmit() {
                 </PopoverContent>
             </Popover>
             <div class="col-start-3 row-start-1 flex items-center gap-1">
-                <HomeIcon v-if="is_home" class="size-[14px] text-amber-400" />
-                <FlagIcon v-if="is_rally" class="size-[14px] text-red-400" />
                 <LockIcon v-if="map_solarsystem.pinned" class="size-[14px] text-muted-foreground" />
                 <SatelliteDish v-if="map_solarsystem.signatures_count" class="size-[14px] text-amber-500" />
                 <HasExtraConnections v-if="extra_connections_count" :extra_connections_count="extra_connections_count" />

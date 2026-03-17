@@ -184,13 +184,12 @@ const mainNavItems: NavItem[] = [
                             <DropdownMenuTrigger :as-child="true">
                                 <button class="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors hover:bg-muted/50">
                                     <CharacterImage
-                                        v-if="user.active_character"
                                         :character_id="user.active_character.id"
                                         :character_name="user.active_character.name"
                                         class="size-6 rounded"
                                     />
                                     <span class="hidden max-w-28 truncate text-xs font-medium text-muted-foreground sm:block">
-                                        {{ user.active_character?.name }}
+                                        {{ user.active_character.name }}
                                     </span>
                                 </button>
                             </DropdownMenuTrigger>

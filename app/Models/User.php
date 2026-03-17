@@ -49,28 +49,19 @@ final class User extends Authenticatable
                 $active_character_id = $this->preferred_character_id;
             }
 
-            $character = $active_character_id
-                ? $this->characters->find($active_character_id)
-                : null;
-
-            // Preferred/session character no longer exists, clear it and fall back
-            if (! $character) {
-                if ($this->preferred_character_id && $this->preferred_character_id === $active_character_id) {
-                    $this->update(['preferred_character_id' => null]);
-                }
-
-                Session::forget(self::SESSION_ACTIVE_CHARACTER_ID);
-
+            $character = null;
+            if (! $active_character_id) {
+                // Fall back to first character
                 $character = $this->characters->first();
                 if (! $character) {
                     auth()->logout();
                     abort(403, 'No characters found. Please log in again.');
                 }
+
+                $this->active_character = $character;
             }
 
-            $this->active_character = $character;
-
-            return $character;
+            return $character ?? $this->characters->find($active_character_id);
         }
         set {
             if ($value instanceof Character) {

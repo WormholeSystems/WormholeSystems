@@ -13,10 +13,8 @@ import {
 import { createMapSolarsystem, useMapSolarsystems } from '@/composables/map';
 import { useNavigationSystems } from '@/composables/useNavigationSystems';
 import usePermission from '@/composables/usePermission';
-import { useRallyPoint } from '@/composables/useRallyPoint';
 import useUser from '@/composables/useUser';
 import { useWaypoint } from '@/composables/useWaypoint';
-import { Compass, Flag, MapPin, Navigation, Plus, Route } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 const { solarsystem_id } = defineProps<{
@@ -36,8 +34,6 @@ const already_on_map = computed(() => {
 });
 
 const { canEdit: can_write } = usePermission();
-
-const { isRally, toggleRallyPoint } = useRallyPoint(() => solarsystem_id);
 </script>
 
 <template>
@@ -47,10 +43,7 @@ const { isRally, toggleRallyPoint } = useRallyPoint(() => solarsystem_id);
         </ContextMenuTrigger>
         <ContextMenuContent>
             <ContextMenuSub>
-                <ContextMenuSubTrigger>
-                    <Navigation class="size-4" />
-                    Set destination
-                </ContextMenuSubTrigger>
+                <ContextMenuSubTrigger>Set destination</ContextMenuSubTrigger>
                 <ContextMenuSubContent>
                     <ContextMenuItem v-for="character in user.characters" :key="character.id" @select="setWaypoint(character.id, solarsystem_id)">
                         <CharacterImage :character_id="character.id" :character_name="character.name" class="size-5 rounded-lg" />
@@ -60,10 +53,7 @@ const { isRally, toggleRallyPoint } = useRallyPoint(() => solarsystem_id);
             </ContextMenuSub>
 
             <ContextMenuSub>
-                <ContextMenuSubTrigger>
-                    <MapPin class="size-4" />
-                    Add waypoint
-                </ContextMenuSubTrigger>
+                <ContextMenuSubTrigger>Add waypoint</ContextMenuSubTrigger>
                 <ContextMenuSubContent>
                     <ContextMenuItem
                         v-for="character in user.characters"
@@ -75,38 +65,20 @@ const { isRally, toggleRallyPoint } = useRallyPoint(() => solarsystem_id);
                     </ContextMenuItem>
                 </ContextMenuSubContent>
             </ContextMenuSub>
-
-            <ContextMenuSub>
-                <ContextMenuSubTrigger>
-                    <Route class="size-4" />
-                    Route planner
-                </ContextMenuSubTrigger>
-                <ContextMenuSubContent>
-                    <ContextMenuItem @select="setFromSystem(solarsystem_id)">
-                        <Compass class="size-4" />
-                        Set as origin
-                    </ContextMenuItem>
-                    <ContextMenuItem @select="setToSystem(solarsystem_id)">
-                        <Navigation class="size-4" />
-                        Set as destination
-                    </ContextMenuItem>
-                </ContextMenuSubContent>
-            </ContextMenuSub>
-
             <template v-if="!already_on_map && can_write">
                 <ContextMenuSeparator />
-                <ContextMenuItem @select="createMapSolarsystem(solarsystem_id)">
-                    <Plus class="size-4" />
-                    Add to map
-                </ContextMenuItem>
+                <ContextMenuItem @select="createMapSolarsystem(solarsystem_id)">Add to map</ContextMenuItem>
             </template>
 
             <ContextMenuSeparator />
 
-            <ContextMenuItem @select="toggleRallyPoint" v-if="can_write">
-                <Flag class="size-4" />
-                {{ isRally ? 'Clear Rally Point' : 'Set as Rally Point' }}
-            </ContextMenuItem>
+            <ContextMenuSub>
+                <ContextMenuSubTrigger>Route planner</ContextMenuSubTrigger>
+                <ContextMenuSubContent>
+                    <ContextMenuItem @select="setFromSystem(solarsystem_id)">Set as origin</ContextMenuItem>
+                    <ContextMenuItem @select="setToSystem(solarsystem_id)">Set as destination</ContextMenuItem>
+                </ContextMenuSubContent>
+            </ContextMenuSub>
         </ContextMenuContent>
     </ContextMenu>
 </template>

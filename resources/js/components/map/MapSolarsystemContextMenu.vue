@@ -14,15 +14,12 @@ import {
     ContextMenuTrigger,
 } from '@/components/ui/context-menu';
 import { deleteMapSolarsystem, updateMapSolarsystem } from '@/composables/map';
-import { useHomeSystem } from '@/composables/useHomeSystem';
 import { useNavigationSystems } from '@/composables/useNavigationSystems';
 import usePermission from '@/composables/usePermission';
-import { useRallyPoint } from '@/composables/useRallyPoint';
 import useUser from '@/composables/useUser';
 import { useWaypoint } from '@/composables/useWaypoint';
 import { TMapSolarsystem } from '@/pages/maps';
 import { TMapSolarsystemStatus } from '@/types/models';
-import { Circle, Compass, ExternalLink, Flag, Globe, Home, Map, MapPin, Navigation, Pin, Route, Trash2 } from 'lucide-vue-next';
 import type { AcceptableValue } from 'reka-ui';
 
 const { map_solarsystem } = defineProps<{
@@ -32,9 +29,6 @@ const { map_solarsystem } = defineProps<{
 const user = useUser();
 
 const { canEdit: can_write } = usePermission();
-
-const { isHome, toggleHomeSystem } = useHomeSystem(() => map_solarsystem.id);
-const { isRally, toggleRallyPoint } = useRallyPoint(() => map_solarsystem.solarsystem_id);
 
 const setWaypoint = useWaypoint();
 
@@ -62,14 +56,10 @@ const options: TMapSolarsystemStatus[] = ['unknown', 'friendly', 'hostile', 'act
         </ContextMenuTrigger>
         <ContextMenuContent>
             <ContextMenuItem @select="handleTogglePin" v-if="can_write">
-                <Pin class="size-4" />
                 {{ map_solarsystem.pinned ? 'Unpin' : 'Pin' }}
             </ContextMenuItem>
             <ContextMenuSub v-if="can_write">
-                <ContextMenuSubTrigger>
-                    <Map class="size-4" />
-                    Status
-                </ContextMenuSubTrigger>
+                <ContextMenuSubTrigger> Status</ContextMenuSubTrigger>
                 <ContextMenuSubContent>
                     <ContextMenuRadioGroup :model-value="map_solarsystem.status ?? undefined" @update:model-value="handleStatusChange">
                         <ContextMenuRadioItem v-for="option in options" :key="option" :value="option">
@@ -86,76 +76,26 @@ const options: TMapSolarsystemStatus[] = ['unknown', 'friendly', 'hostile', 'act
             <ContextMenuSeparator />
 
             <ContextMenuSub>
-                <ContextMenuSubTrigger>
-                    <ExternalLink class="size-4" />
-                    External
-                </ContextMenuSubTrigger>
+                <ContextMenuSubTrigger>External</ContextMenuSubTrigger>
                 <ContextMenuSubContent>
-                    <ContextMenuSub>
-                        <ContextMenuSubTrigger>
-                            <img src="https://evemaps.dotlan.net/favicon.ico" alt="" class="size-4 rounded-sm" />
+                    <ContextMenuItem as-child>
+                        <a
+                            :href="`https://evemaps.dotlan.net/map/${map_solarsystem.solarsystem?.region?.name.replaceAll(' ', '_')}/${map_solarsystem.solarsystem?.name.replaceAll(' ', '_')}`"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
                             Dotlan
-                        </ContextMenuSubTrigger>
-                        <ContextMenuSubContent>
-                            <ContextMenuItem as-child>
-                                <a
-                                    :href="`https://evemaps.dotlan.net/system/${map_solarsystem.solarsystem?.name.replaceAll(' ', '_')}`"
-                                    target="_blank"
-                                    rel="noopener"
-                                >
-                                    <Globe class="size-4" />
-                                    System
-                                </a>
-                            </ContextMenuItem>
-                            <ContextMenuItem as-child>
-                                <a
-                                    :href="`https://evemaps.dotlan.net/map/${map_solarsystem.solarsystem?.region?.name.replaceAll(' ', '_')}/${map_solarsystem.solarsystem?.name.replaceAll(' ', '_')}`"
-                                    target="_blank"
-                                    rel="noopener"
-                                >
-                                    <Map class="size-4" />
-                                    Region Map
-                                </a>
-                            </ContextMenuItem>
-                            <ContextMenuItem as-child v-if="!map_solarsystem.solarsystem.class">
-                                <a
-                                    :href="`https://evemaps.dotlan.net/range/Revelation,5/${map_solarsystem.solarsystem?.name.replaceAll(' ', '_')}`"
-                                    target="_blank"
-                                    rel="noopener"
-                                >
-                                    <Circle class="size-4" />
-                                    Jump Range
-                                </a>
-                            </ContextMenuItem>
-                        </ContextMenuSubContent>
-                    </ContextMenuSub>
-                    <ContextMenuSub>
-                        <ContextMenuSubTrigger>
-                            <img src="https://zkillboard.com/favicon.ico" alt="" class="size-4 rounded-sm" />
+                        </a>
+                    </ContextMenuItem>
+                    <ContextMenuItem as-child>
+                        <a :href="`https://zkillboard.com/system/${map_solarsystem.solarsystem?.id}/`" target="_blank" rel="noopener noreferrer">
                             zKillboard
-                        </ContextMenuSubTrigger>
-                        <ContextMenuSubContent>
-                            <ContextMenuItem as-child>
-                                <a :href="`https://zkillboard.com/system/${map_solarsystem.solarsystem?.id}/`" target="_blank" rel="noopener">
-                                    <Globe class="size-4" />
-                                    System
-                                </a>
-                            </ContextMenuItem>
-                            <ContextMenuItem as-child>
-                                <a :href="`https://zkillboard.com/region/${map_solarsystem.solarsystem?.region_id}/`" target="_blank" rel="noopener">
-                                    <Map class="size-4" />
-                                    Region
-                                </a>
-                            </ContextMenuItem>
-                        </ContextMenuSubContent>
-                    </ContextMenuSub>
+                        </a>
+                    </ContextMenuItem>
                 </ContextMenuSubContent>
             </ContextMenuSub>
             <ContextMenuSub v-if="user && !map_solarsystem.solarsystem.class">
-                <ContextMenuSubTrigger>
-                    <Navigation class="size-4" />
-                    Set destination
-                </ContextMenuSubTrigger>
+                <ContextMenuSubTrigger>Set destination</ContextMenuSubTrigger>
                 <ContextMenuSubContent>
                     <ContextMenuItem
                         v-for="character in user.characters"
@@ -169,10 +109,7 @@ const options: TMapSolarsystemStatus[] = ['unknown', 'friendly', 'hostile', 'act
             </ContextMenuSub>
 
             <ContextMenuSub v-if="user && !map_solarsystem.solarsystem.class">
-                <ContextMenuSubTrigger>
-                    <MapPin class="size-4" />
-                    Add waypoint
-                </ContextMenuSubTrigger>
+                <ContextMenuSubTrigger>Add waypoint</ContextMenuSubTrigger>
                 <ContextMenuSubContent>
                     <ContextMenuItem
                         v-for="character in user.characters"
@@ -184,44 +121,22 @@ const options: TMapSolarsystemStatus[] = ['unknown', 'friendly', 'hostile', 'act
                     </ContextMenuItem>
                 </ContextMenuSubContent>
             </ContextMenuSub>
-
-            <ContextMenuSub>
-                <ContextMenuSubTrigger>
-                    <Route class="size-4" />
-                    Route planner
-                </ContextMenuSubTrigger>
-                <ContextMenuSubContent>
-                    <ContextMenuItem @select="setFromSystem(map_solarsystem.solarsystem_id)">
-                        <Compass class="size-4" />
-                        Set as origin
-                    </ContextMenuItem>
-                    <ContextMenuItem @select="setToSystem(map_solarsystem.solarsystem_id)">
-                        <Navigation class="size-4" />
-                        Set as destination
-                    </ContextMenuItem>
-                </ContextMenuSubContent>
-            </ContextMenuSub>
+            <ContextMenuSeparator />
+            <CopyNameMenu :map_solarsystem="map_solarsystem" />
+            <template v-if="!map_solarsystem.pinned && can_write">
+                <ContextMenuSeparator />
+                <ContextMenuItem @select="handleRemoveFromMap"> Remove </ContextMenuItem>
+            </template>
 
             <ContextMenuSeparator />
 
-            <CopyNameMenu :map_solarsystem="map_solarsystem" />
-
-            <ContextMenuItem @select="toggleHomeSystem" v-if="can_write">
-                <Home class="size-4" />
-                {{ isHome ? 'Unset Home System' : 'Set as Home System' }}
-            </ContextMenuItem>
-            <ContextMenuItem @select="toggleRallyPoint" v-if="can_write">
-                <Flag class="size-4" />
-                {{ isRally ? 'Clear Rally Point' : 'Set as Rally Point' }}
-            </ContextMenuItem>
-
-            <template v-if="!map_solarsystem.pinned && !isHome && can_write">
-                <ContextMenuSeparator />
-                <ContextMenuItem @select="handleRemoveFromMap" class="text-destructive focus:text-destructive">
-                    <Trash2 class="size-4" />
-                    Remove
-                </ContextMenuItem>
-            </template>
+            <ContextMenuSub>
+                <ContextMenuSubTrigger>Route planner</ContextMenuSubTrigger>
+                <ContextMenuSubContent>
+                    <ContextMenuItem @select="setFromSystem(map_solarsystem.solarsystem_id)">Set as origin</ContextMenuItem>
+                    <ContextMenuItem @select="setToSystem(map_solarsystem.solarsystem_id)">Set as destination</ContextMenuItem>
+                </ContextMenuSubContent>
+            </ContextMenuSub>
         </ContextMenuContent>
     </ContextMenu>
 </template>

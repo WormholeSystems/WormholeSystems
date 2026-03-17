@@ -35,10 +35,6 @@ final class MapSolarsystemPolicy
 
     public function delete(User $user, MapSolarsystem $map_solarsystem): bool
     {
-        if ($map_solarsystem->map->home_solarsystem_id === $map_solarsystem->id) {
-            return false;
-        }
-
         return $user->can('update', $map_solarsystem->map);
     }
 }
