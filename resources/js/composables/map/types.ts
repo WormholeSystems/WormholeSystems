@@ -34,4 +34,6 @@ export type TProcessedConnection = TMapConnection & {
     source: TMapSolarsystem;
     target: TMapSolarsystem;
     is_on_route?: boolean;
+    is_on_rally_route?: boolean;
+    rally_route_reversed?: boolean;
 };
