@@ -4,6 +4,7 @@ import MapSolarsystemContextMenu from '@/components/map/MapSolarsystemContextMen
 import SolarsystemConnectionHandle from '@/components/map/solarsystem/SolarsystemConnectionHandle.vue';
 import SolarsystemDragHandle from '@/components/map/solarsystem/SolarsystemDragHandle.vue';
 import { TDataMapSolarSystem, useMapScale, useMapSolarsystem, useNewConnection, usePilotsInMapSolarsystem } from '@/composables/map';
+import { useMap } from '@/composables/useMap';
 import usePermission from '@/composables/usePermission';
 import { TShowMapProps } from '@/pages/maps';
 import { show } from '@/routes/maps';
@@ -40,8 +41,18 @@ useNewConnection(
 
 const pilots = usePilotsInMapSolarsystem(map_solarsystem);
 
+const map = useMap();
+
 const is_active = computed(() => {
     return page.props.selected_map_solarsystem?.id === map_solarsystem.id;
+});
+
+const is_home = computed(() => {
+    return map.value.home_solarsystem_id === map_solarsystem.id;
+});
+
+const is_rally = computed(() => {
+    return map.value.rally_solarsystem_id === map_solarsystem.solarsystem_id;
 });
 </script>
 
@@ -79,7 +90,7 @@ const is_active = computed(() => {
                             prefetch
                             cache-for="2s"
                         >
-                            <MapSolarsystemButton :map_solarsystem="map_solarsystem" :pilots="pilots" ref="button" :is_active />
+                            <MapSolarsystemButton :map_solarsystem="map_solarsystem" :pilots="pilots" ref="button" :is_active :is_home :is_rally />
                         </Link>
                         <template v-if="can_write">
                             <SolarsystemDragHandle ref="drag_ref" v-if="!map_solarsystem.pinned" />
