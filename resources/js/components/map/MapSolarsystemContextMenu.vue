@@ -22,7 +22,7 @@ import useUser from '@/composables/useUser';
 import { useWaypoint } from '@/composables/useWaypoint';
 import { TMapSolarsystem } from '@/pages/maps';
 import { TMapSolarsystemStatus } from '@/types/models';
-import { Circle, Compass, ExternalLink, Flag, Globe, Home, Map, Navigation, Pin, Route, Trash2, Users } from 'lucide-vue-next';
+import { Circle, Compass, ExternalLink, Flag, Globe, Home, Map, MapPin, Navigation, Pin, Route, Trash2, Users } from 'lucide-vue-next';
 import type { AcceptableValue } from 'reka-ui';
 
 const { map_solarsystem } = defineProps<{
@@ -174,6 +174,31 @@ const options: TMapSolarsystemStatus[] = ['unknown', 'friendly', 'hostile', 'act
                     </ContextMenuItem>
                     <ContextMenuSeparator v-if="user.characters.length > 1" />
                     <ContextMenuItem v-if="user.characters.length > 1" @select="handleSetDestinationAll">
+                        <Users class="size-4" />
+                        All Characters
+                    </ContextMenuItem>
+                </ContextMenuSubContent>
+            </ContextMenuSub>
+
+            <ContextMenuSub v-if="user && !map_solarsystem.solarsystem.class">
+                <ContextMenuSubTrigger>
+                    <MapPin class="size-4" />
+                    Add waypoint
+                </ContextMenuSubTrigger>
+                <ContextMenuSubContent>
+                    <ContextMenuItem
+                        v-for="character in user.characters"
+                        :key="character.id"
+                        @select="setWaypoint(character.id, map_solarsystem.solarsystem_id, false)"
+                    >
+                        <CharacterImage :character_id="character.id" :character_name="character.name" class="size-5 rounded-lg" />
+                        {{ character.name }}
+                    </ContextMenuItem>
+                    <ContextMenuSeparator v-if="user.characters.length > 1" />
+                    <ContextMenuItem
+                        v-if="user.characters.length > 1"
+                        @select="user.characters.forEach((c) => setWaypoint(c.id, map_solarsystem.solarsystem_id, false))"
+                    >
                         <Users class="size-4" />
                         All Characters
                     </ContextMenuItem>
