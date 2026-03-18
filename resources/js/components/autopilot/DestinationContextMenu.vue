@@ -17,7 +17,7 @@ import { useRallyPoint } from '@/composables/useRallyPoint';
 import { useStaticSolarsystem } from '@/composables/useStaticSolarsystems';
 import useUser from '@/composables/useUser';
 import { useWaypoint } from '@/composables/useWaypoint';
-import { Circle, Compass, ExternalLink, Flag, Globe, Map, MapPin, Navigation, Plus, Route } from 'lucide-vue-next';
+import { Circle, Compass, ExternalLink, Flag, Globe, Map, MapPin, Navigation, Plus, Route, Users } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 const { solarsystem_id } = defineProps<{
@@ -40,6 +40,13 @@ const { canEdit: can_write } = usePermission();
 
 const { isRally, toggleRallyPoint } = useRallyPoint(() => solarsystem_id);
 
+function handleSetDestinationAll() {
+    if (!user.value?.characters) return;
+    for (const character of user.value.characters) {
+        setWaypoint(character.id, solarsystem_id);
+    }
+}
+
 const staticSolarsystem = useStaticSolarsystem(() => solarsystem_id);
 </script>
 
@@ -59,6 +66,11 @@ const staticSolarsystem = useStaticSolarsystem(() => solarsystem_id);
                         <CharacterImage :character_id="character.id" :character_name="character.name" class="size-5 rounded-lg" />
                         {{ character.name }}
                     </ContextMenuItem>
+                    <ContextMenuSeparator v-if="user.characters.length > 1" />
+                    <ContextMenuItem v-if="user.characters.length > 1" @select="handleSetDestinationAll">
+                        <Users class="size-4" />
+                        All Characters
+                    </ContextMenuItem>
                 </ContextMenuSubContent>
             </ContextMenuSub>
 
@@ -75,6 +87,14 @@ const staticSolarsystem = useStaticSolarsystem(() => solarsystem_id);
                     >
                         <CharacterImage :character_id="character.id" :character_name="character.name" class="size-5 rounded-lg" />
                         {{ character.name }}
+                    </ContextMenuItem>
+                    <ContextMenuSeparator v-if="user.characters.length > 1" />
+                    <ContextMenuItem
+                        v-if="user.characters.length > 1"
+                        @select="user.characters.forEach((c) => setWaypoint(c.id, solarsystem_id, false))"
+                    >
+                        <Users class="size-4" />
+                        All Characters
                     </ContextMenuItem>
                 </ContextMenuSubContent>
             </ContextMenuSub>

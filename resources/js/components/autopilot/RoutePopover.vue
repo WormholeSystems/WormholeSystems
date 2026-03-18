@@ -1,19 +1,21 @@
 <script setup lang="ts">
 import DestinationContextMenu from '@/components/autopilot/DestinationContextMenu.vue';
 import ExtraWormholeIcon from '@/components/icons/ExtraWormholeIcon.vue';
+import { CharacterImage } from '@/components/images';
 import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue';
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import SolarsystemEffect from '@/components/solarsystem/SolarsystemEffect.vue';
 import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useActiveMapCharacter } from '@/composables/useActiveMapCharacter';
 import { useIgnoreList } from '@/composables/useIgnoreList';
 import { usePath } from '@/composables/usePath';
+import useUser from '@/composables/useUser';
 import { useWaypoint } from '@/composables/useWaypoint';
 import type { TResolvedSolarsystem } from '@/pages/maps';
 import { vElementHover } from '@vueuse/components';
-import { Navigation, X } from 'lucide-vue-next';
+import { Navigation, Users, X } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 interface Props {
@@ -25,11 +27,24 @@ const props = defineProps<Props>();
 const { ignoreSolarsystem, clearIgnoreList, ignored_systems } = useIgnoreList();
 const { setPath } = usePath();
 const setWaypoint = useWaypoint();
-const character = useActiveMapCharacter();
+const user = useUser();
 
 const hasRoute = computed(() => props.route && props.route.length > 0);
 const jumpCount = computed(() => (props.route ? props.route.length - 1 : 0));
 const destination = computed(() => (props.route && props.route.length > 0 ? props.route[props.route.length - 1] : null));
+
+function handleSetDestination(characterId: number) {
+    if (destination.value) {
+        setWaypoint(characterId, destination.value.id);
+    }
+}
+
+function handleSetDestinationAll() {
+    if (!destination.value || !user.value?.characters) return;
+    for (const character of user.value.characters) {
+        setWaypoint(character.id, destination.value.id);
+    }
+}
 
 function handleIgnoreSolarsystem(solarsystem_id: number) {
     ignoreSolarsystem(solarsystem_id, {
@@ -45,12 +60,6 @@ function handleClearIgnoreList() {
             setPath(props.route!);
         },
     });
-}
-
-function handleSetDestination() {
-    if (character.value && destination.value) {
-        setWaypoint(character.value.id, destination.value.id);
-    }
 }
 
 function onHover(hovered: boolean) {
@@ -83,10 +92,30 @@ function onHover(hovered: boolean) {
                         >
                             Clear {{ ignored_systems.length }} ignored
                         </button>
-                        <Button v-if="character && destination" variant="secondary" size="sm" class="h-6 gap-1 px-2 text-[10px]" @click="handleSetDestination">
-                            <Navigation class="size-3" />
-                            Set Destination
-                        </Button>
+                        <DropdownMenu v-if="user && destination">
+                            <DropdownMenuTrigger as-child>
+                                <Button variant="secondary" size="sm" class="h-6 gap-1 px-2 text-[10px]">
+                                    <Navigation class="size-3" />
+                                    Set Destination
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" class="w-48">
+                                <DropdownMenuItem
+                                    v-for="character in user.characters"
+                                    :key="character.id"
+                                    @select="handleSetDestination(character.id)"
+                                    class="gap-2 text-xs"
+                                >
+                                    <CharacterImage :character_id="character.id" :character_name="character.name" class="size-5 rounded" />
+                                    {{ character.name }}
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem @select="handleSetDestinationAll" class="gap-2 text-xs">
+                                    <Users class="size-4" />
+                                    All Characters
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                 </div>
 
