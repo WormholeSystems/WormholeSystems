@@ -26,7 +26,7 @@ const { solarsystem_id } = defineProps<{
 
 const user = useUser();
 
-const setWaypoint = useWaypoint();
+const { setWaypoint, setWaypointAll } = useWaypoint();
 
 const { map_solarsystems } = useMapSolarsystems();
 
@@ -41,10 +41,7 @@ const { canEdit: can_write } = usePermission();
 const { isRally, toggleRallyPoint } = useRallyPoint(() => solarsystem_id);
 
 function handleSetDestinationAll() {
-    if (!user.value?.characters) return;
-    for (const character of user.value.characters) {
-        setWaypoint(character.id, solarsystem_id);
-    }
+    setWaypointAll(solarsystem_id);
 }
 
 const staticSolarsystem = useStaticSolarsystem(() => solarsystem_id);
@@ -91,7 +88,7 @@ const staticSolarsystem = useStaticSolarsystem(() => solarsystem_id);
                     <ContextMenuSeparator v-if="user.characters.length > 1" />
                     <ContextMenuItem
                         v-if="user.characters.length > 1"
-                        @select="user.characters.forEach((c) => setWaypoint(c.id, solarsystem_id, false))"
+                        @select="setWaypointAll(solarsystem_id, false)"
                     >
                         <Users class="size-4" />
                         All Characters

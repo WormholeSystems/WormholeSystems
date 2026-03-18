@@ -26,7 +26,7 @@ const props = defineProps<Props>();
 
 const { ignoreSolarsystem, clearIgnoreList, ignored_systems } = useIgnoreList();
 const { setPath } = usePath();
-const setWaypoint = useWaypoint();
+const { setWaypoint, setWaypointAll } = useWaypoint();
 const user = useUser();
 
 const hasRoute = computed(() => props.route && props.route.length > 0);
@@ -40,10 +40,8 @@ function handleSetDestination(characterId: number) {
 }
 
 function handleSetDestinationAll() {
-    if (!destination.value || !user.value?.characters) return;
-    for (const character of user.value.characters) {
-        setWaypoint(character.id, destination.value.id);
-    }
+    if (!destination.value) return;
+    setWaypointAll(destination.value.id);
 }
 
 function handleIgnoreSolarsystem(solarsystem_id: number) {

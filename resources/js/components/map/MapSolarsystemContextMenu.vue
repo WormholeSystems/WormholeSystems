@@ -36,7 +36,7 @@ const { canEdit: can_write } = usePermission();
 const { isHome, toggleHomeSystem } = useHomeSystem(() => map_solarsystem.id);
 const { isRally, toggleRallyPoint } = useRallyPoint(() => map_solarsystem.solarsystem_id);
 
-const setWaypoint = useWaypoint();
+const { setWaypoint, setWaypointAll } = useWaypoint();
 
 const { setFromSystem, setToSystem } = useNavigationSystems();
 
@@ -45,10 +45,7 @@ function handleTogglePin() {
 }
 
 function handleSetDestinationAll() {
-    if (!user.value?.characters) return;
-    for (const character of user.value.characters) {
-        setWaypoint(character.id, map_solarsystem.solarsystem_id);
-    }
+    setWaypointAll(map_solarsystem.solarsystem_id);
 }
 
 function handleRemoveFromMap() {
@@ -197,7 +194,7 @@ const options: TMapSolarsystemStatus[] = ['unknown', 'friendly', 'hostile', 'act
                     <ContextMenuSeparator v-if="user.characters.length > 1" />
                     <ContextMenuItem
                         v-if="user.characters.length > 1"
-                        @select="user.characters.forEach((c) => setWaypoint(c.id, map_solarsystem.solarsystem_id, false))"
+                        @select="setWaypointAll(map_solarsystem.solarsystem_id, false)"
                     >
                         <Users class="size-4" />
                         All Characters
