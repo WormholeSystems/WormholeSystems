@@ -83,15 +83,10 @@ function onHover(hovered: boolean) {
                         >
                             Clear {{ ignored_systems.length }} ignored
                         </button>
-                        <Tooltip v-if="character && destination">
-                            <TooltipTrigger as-child>
-                                <Button variant="secondary" size="sm" class="h-6 gap-1 px-2 text-[10px]" @click="handleSetDestination">
-                                    <Navigation class="size-3" />
-                                    Set Destination
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom">Set in-game autopilot destination</TooltipContent>
-                        </Tooltip>
+                        <Button v-if="character && destination" variant="secondary" size="sm" class="h-6 gap-1 px-2 text-[10px]" @click="handleSetDestination">
+                            <Navigation class="size-3" />
+                            Set Destination
+                        </Button>
                     </div>
                 </div>
 
