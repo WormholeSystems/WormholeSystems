@@ -1,3 +1,4 @@
+import BulkWaypointController from '@/actions/App/Http/Controllers/BulkWaypointController';
 import Waypoints from '@/routes/waypoints';
 import { router } from '@inertiajs/vue3';
 
@@ -19,5 +20,21 @@ export function useWaypoint() {
         );
     }
 
-    return setWaypoint;
+    function setWaypointAll(solarsystem_id: number, clear_other_waypoints: boolean = true, add_to_beginning: boolean = false) {
+        router.post(
+            BulkWaypointController.store().url,
+            {
+                destination_id: solarsystem_id,
+                clear_other_waypoints,
+                add_to_beginning,
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+                only: ['notification'],
+            },
+        );
+    }
+
+    return { setWaypoint, setWaypointAll };
 }

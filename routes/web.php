@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\AboutController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BulkSignatureController;
+use App\Http\Controllers\BulkWaypointController;
 use App\Http\Controllers\EveController;
 use App\Http\Controllers\EveScoutConnectionController;
 use App\Http\Controllers\HomeSystemController;
@@ -92,6 +93,7 @@ Route::middleware('auth')->group(function () {
     Route::post('tracking', [TrackingController::class, 'store'])->name('tracking.store');
 
     Route::post('waypoints', [WaypointController::class, 'store'])->name('waypoints.store');
+    Route::post('waypoints/bulk', [BulkWaypointController::class, 'store'])->name('waypoints.bulk');
 
     Route::prefix('scopes')->name('scopes.')->group(function () {
         Route::get('/', [ScopeController::class, 'index'])->name('index');
