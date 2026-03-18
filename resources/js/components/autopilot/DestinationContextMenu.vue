@@ -14,9 +14,10 @@ import { createMapSolarsystem, useMapSolarsystems } from '@/composables/map';
 import { useNavigationSystems } from '@/composables/useNavigationSystems';
 import usePermission from '@/composables/usePermission';
 import { useRallyPoint } from '@/composables/useRallyPoint';
+import { useStaticSolarsystem } from '@/composables/useStaticSolarsystems';
 import useUser from '@/composables/useUser';
 import { useWaypoint } from '@/composables/useWaypoint';
-import { Compass, Flag, MapPin, Navigation, Plus, Route } from 'lucide-vue-next';
+import { Circle, Compass, ExternalLink, Flag, Globe, Map, MapPin, Navigation, Plus, Route } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 const { solarsystem_id } = defineProps<{
@@ -38,6 +39,8 @@ const already_on_map = computed(() => {
 const { canEdit: can_write } = usePermission();
 
 const { isRally, toggleRallyPoint } = useRallyPoint(() => solarsystem_id);
+
+const staticSolarsystem = useStaticSolarsystem(() => solarsystem_id);
 </script>
 
 <template>
@@ -102,6 +105,73 @@ const { isRally, toggleRallyPoint } = useRallyPoint(() => solarsystem_id);
             </template>
 
             <ContextMenuSeparator />
+
+            <ContextMenuSub v-if="staticSolarsystem">
+                <ContextMenuSubTrigger>
+                    <ExternalLink class="size-4" />
+                    External
+                </ContextMenuSubTrigger>
+                <ContextMenuSubContent>
+                    <ContextMenuSub>
+                        <ContextMenuSubTrigger>
+                            <img src="https://evemaps.dotlan.net/favicon.ico" alt="" class="size-4 rounded-sm" />
+                            Dotlan
+                        </ContextMenuSubTrigger>
+                        <ContextMenuSubContent>
+                            <ContextMenuItem as-child>
+                                <a
+                                    :href="`https://evemaps.dotlan.net/system/${staticSolarsystem.name.replaceAll(' ', '_')}`"
+                                    target="_blank"
+                                    rel="noopener"
+                                >
+                                    <Globe class="size-4" />
+                                    System
+                                </a>
+                            </ContextMenuItem>
+                            <ContextMenuItem as-child>
+                                <a
+                                    :href="`https://evemaps.dotlan.net/map/${staticSolarsystem.region?.name.replaceAll(' ', '_')}/${staticSolarsystem.name.replaceAll(' ', '_')}`"
+                                    target="_blank"
+                                    rel="noopener"
+                                >
+                                    <Map class="size-4" />
+                                    Region Map
+                                </a>
+                            </ContextMenuItem>
+                            <ContextMenuItem as-child v-if="!staticSolarsystem.class">
+                                <a
+                                    :href="`https://evemaps.dotlan.net/range/Revelation,5/${staticSolarsystem.name.replaceAll(' ', '_')}`"
+                                    target="_blank"
+                                    rel="noopener"
+                                >
+                                    <Circle class="size-4" />
+                                    Jump Range
+                                </a>
+                            </ContextMenuItem>
+                        </ContextMenuSubContent>
+                    </ContextMenuSub>
+                    <ContextMenuSub>
+                        <ContextMenuSubTrigger>
+                            <img src="https://zkillboard.com/favicon.ico" alt="" class="size-4 rounded-sm" />
+                            zKillboard
+                        </ContextMenuSubTrigger>
+                        <ContextMenuSubContent>
+                            <ContextMenuItem as-child>
+                                <a :href="`https://zkillboard.com/system/${staticSolarsystem.id}/`" target="_blank" rel="noopener">
+                                    <Globe class="size-4" />
+                                    System
+                                </a>
+                            </ContextMenuItem>
+                            <ContextMenuItem as-child>
+                                <a :href="`https://zkillboard.com/region/${staticSolarsystem.region_id}/`" target="_blank" rel="noopener">
+                                    <Map class="size-4" />
+                                    Region
+                                </a>
+                            </ContextMenuItem>
+                        </ContextMenuSubContent>
+                    </ContextMenuSub>
+                </ContextMenuSubContent>
+            </ContextMenuSub>
 
             <ContextMenuItem @select="toggleRallyPoint" v-if="can_write">
                 <Flag class="size-4" />

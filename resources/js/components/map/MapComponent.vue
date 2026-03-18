@@ -4,6 +4,7 @@ import MapConnectionDetails from '@/components/map/MapConnectionDetails.vue';
 import MapConnections from '@/components/map/MapConnections.vue';
 import MapContextMenu from '@/components/map/MapContextMenu.vue';
 import MapOptions from '@/components/map/MapOptions.vue';
+import MapRallyBadge from '@/components/map/MapRallyBadge.vue';
 import MapScrollbar from '@/components/map/MapScrollbar.vue';
 import MapSolarsystem from '@/components/map/MapSolarsystem.vue';
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu';
@@ -177,6 +178,7 @@ function onOpenChange(open: boolean) {
             @track-mousedown="onTrackMousedown('horizontal', $event)"
             @thumb-mousedown="onThumbMousedown('horizontal', $event)"
         />
+        <MapRallyBadge />
         <MapOptions :config />
     </div>
     <Popover v-model:open="connection_popover_open" :key="selected_connection?.id" v-if="selected_connection">
