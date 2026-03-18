@@ -23,13 +23,24 @@ const jumpCount = computed(() => {
     <div v-if="rallySolarsystem" class="absolute top-3 right-3 z-30">
         <DestinationContextMenu :solarsystem_id="rallySolarsystem.id">
             <button
-                class="flex cursor-pointer items-center gap-2 rounded-lg border border-pink-500/30 bg-white/80 px-3 py-1.5 text-xs shadow-sm backdrop-blur-sm transition-colors hover:bg-pink-50 dark:bg-neutral-900/80 dark:hover:bg-pink-950/30"
+                class="group flex cursor-pointer items-center gap-3 rounded-xl border border-pink-500/40 bg-gradient-to-r from-pink-500/10 to-pink-500/5 px-4 py-2.5 shadow-lg shadow-pink-500/10 backdrop-blur-md transition-all hover:border-pink-500/60 hover:shadow-pink-500/20 dark:from-pink-500/15 dark:to-pink-950/20"
             >
-                <Flag class="size-3.5 text-pink-500" />
-                <SolarsystemClass :wormhole_class="rallySolarsystem.class" :security="rallySolarsystem.security" class="font-bold" />
-                <span class="font-medium">{{ rallySolarsystem.name }}</span>
-                <span v-if="rallySolarsystem.region" class="text-muted-foreground">{{ rallySolarsystem.region.name }}</span>
-                <span v-if="jumpCount !== null" class="font-mono text-pink-500">{{ jumpCount }}j</span>
+                <div class="flex size-8 items-center justify-center rounded-lg bg-pink-500/15 transition-colors group-hover:bg-pink-500/25">
+                    <Flag class="size-4 text-pink-500" />
+                </div>
+                <div class="flex flex-col items-start gap-0.5">
+                    <div class="flex items-center gap-1.5 text-sm font-semibold">
+                        <SolarsystemClass :wormhole_class="rallySolarsystem.class" :security="rallySolarsystem.security" class="font-bold" />
+                        <span>{{ rallySolarsystem.name }}</span>
+                    </div>
+                    <span v-if="rallySolarsystem.region" class="text-[11px] text-muted-foreground">{{ rallySolarsystem.region.name }}</span>
+                </div>
+                <div
+                    v-if="jumpCount !== null"
+                    class="flex h-8 items-center rounded-lg bg-pink-500/15 px-2.5 font-mono text-sm font-bold text-pink-500 transition-colors group-hover:bg-pink-500/25"
+                >
+                    {{ jumpCount }}j
+                </div>
             </button>
         </DestinationContextMenu>
     </div>
