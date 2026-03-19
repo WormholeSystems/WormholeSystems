@@ -192,10 +192,7 @@ const options: TMapSolarsystemStatus[] = ['unknown', 'friendly', 'hostile', 'act
                         {{ character.name }}
                     </ContextMenuItem>
                     <ContextMenuSeparator v-if="user.characters.length > 1" />
-                    <ContextMenuItem
-                        v-if="user.characters.length > 1"
-                        @select="setWaypointAll(map_solarsystem.solarsystem_id, false)"
-                    >
+                    <ContextMenuItem v-if="user.characters.length > 1" @select="setWaypointAll(map_solarsystem.solarsystem_id, false)">
                         <Users class="size-4" />
                         All Characters
                     </ContextMenuItem>

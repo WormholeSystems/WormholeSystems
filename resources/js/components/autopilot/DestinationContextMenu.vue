@@ -86,10 +86,7 @@ const staticSolarsystem = useStaticSolarsystem(() => solarsystem_id);
                         {{ character.name }}
                     </ContextMenuItem>
                     <ContextMenuSeparator v-if="user.characters.length > 1" />
-                    <ContextMenuItem
-                        v-if="user.characters.length > 1"
-                        @select="setWaypointAll(solarsystem_id, false)"
-                    >
+                    <ContextMenuItem v-if="user.characters.length > 1" @select="setWaypointAll(solarsystem_id, false)">
                         <Users class="size-4" />
                         All Characters
                     </ContextMenuItem>
