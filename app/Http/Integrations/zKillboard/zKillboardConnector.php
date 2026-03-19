@@ -29,9 +29,14 @@ final class zKillboardConnector
             default => throw new InvalidArgumentException('Unsupported request method: '.$method->value),
         };
 
+        if ($result->notFound()) {
+            return $zKillboardRequest->toDto(null);
+        }
+
         if ($result->failed()) {
             throw new Exception('Request failed with status code: '.$result->status());
         }
+
         $data = $result->json();
 
         return $zKillboardRequest->toDto($data);

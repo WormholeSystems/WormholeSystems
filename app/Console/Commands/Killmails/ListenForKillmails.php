@@ -7,25 +7,30 @@ namespace App\Console\Commands\Killmails;
 use App\Actions\EnsureOrganisationExistsAction;
 use App\Console\Commands\AppCommand;
 use App\Events\Killmails\KillmailReceivedEvent;
-use App\Http\Integrations\zKillboard\DTO\RedisQKillmail;
+use App\Http\Integrations\zKillboard\DTO\R2Z2Killmail;
 use App\Http\Integrations\zKillboard\zKillboard;
 use App\Models\Killmail;
 use App\Models\Map;
 use App\Models\Solarsystem;
 use App\Models\Type;
 use Date;
-use Exception;
 use Illuminate\Container\Attributes\Config;
 use Illuminate\Support\Facades\Cache;
-use NicolasKion\Esi\Esi;
 use Throwable;
 
 use function sleep;
 use function sprintf;
+use function usleep;
 
 final class ListenForKillmails extends AppCommand
 {
-    private const int ZKILL_RATE_LIMIT_SECONDS = 1;
+    public const string RESTART_CACHE_KEY = 'zkillboard:r2z2:restart';
+
+    private const string CACHE_KEY = 'zkillboard:r2z2:last_sequence';
+
+    private const int POLL_DELAY_MS = 100;
+
+    private const int CATCHUP_SLEEP_SECONDS = 6;
 
     /**
      * The name and signature of the console command.
@@ -39,93 +44,117 @@ final class ListenForKillmails extends AppCommand
      *
      * @var string
      */
-    protected $description = 'Listen to zKillboard for killmails and process them.';
+    protected $description = 'Listen to zKillboard R2Z2 stream for killmails and process them.';
 
     private bool $should_keep_running = true;
 
     public function __construct(
         private readonly zKillboard $zKillboard,
-        private readonly Esi $esi,
         private readonly EnsureOrganisationExistsAction $ensureOrganisationExistsAction,
-        #[Config('services.zkillboard.identifier')] private readonly string $identifier,
         #[Config('services.zkillboard.max_age_days')] private readonly int $max_age_days,
     ) {
         parent::__construct();
     }
 
-    /**
-     * Execute the console command.
-     *
-     * @throws Exception
-     */
-    public function handle(): void
+    public function handle(): int
     {
-
         $this->trap([SIGTERM, SIGQUIT], $this->handleStop(...));
 
+        $restartSignal = Cache::get(self::RESTART_CACHE_KEY);
+
+        $sequence = $this->getStartingSequence();
+        $this->info(sprintf('Starting R2Z2 polling from sequence %d', $sequence));
+
         while ($this->should_keep_running) {
-            $redisQKillmail = $this->getNextKillmail();
+            if ($this->shouldRestart($restartSignal)) {
+                $this->info('Restart signal detected, exiting.');
 
-            if (! $redisQKillmail instanceof RedisQKillmail) {
-                $this->info('No killmail received, retrying in 60 seconds...');
-                sleep(60);
+                return self::SUCCESS;
+            }
+            try {
+                $killmail = $this->zKillboard->getKillmailBySequence($sequence);
+            } catch (Throwable $e) {
+                $this->error(sprintf('Error fetching sequence %d: %s', $sequence, $e->getMessage()));
+                sleep(self::CATCHUP_SLEEP_SECONDS);
 
                 continue;
             }
 
-            $result = $this->esi->getKillmail($redisQKillmail->killID, $redisQKillmail->zkb->hash);
-
-            if ($result->failed() || ! $result->data instanceof \NicolasKion\Esi\DTO\Killmail) {
-                $this->info(sprintf('Killmail ID %d could not be fetched from ESI, skipping.', $redisQKillmail->killID));
-
-                sleep(self::ZKILL_RATE_LIMIT_SECONDS);
+            if (! $killmail instanceof R2Z2Killmail) {
+                // 404 or empty — we've caught up, wait and retry same sequence
+                sleep(self::CATCHUP_SLEEP_SECONDS);
 
                 continue;
             }
 
-            $esi_killmail = $result->data;
+            $this->processKillmail($killmail);
 
-            $this->logKillmailDetails($redisQKillmail, $esi_killmail);
+            // Advance sequence and persist
+            $sequence = $killmail->sequence_id + 1;
+            Cache::put(self::CACHE_KEY, $sequence);
 
-            if (! $this->shouldStoreKillmail($esi_killmail)) {
-                $this->info(sprintf('Killmail ID %d is older than %d days, skipping.', $redisQKillmail->killID, $this->max_age_days));
-
-                sleep(self::ZKILL_RATE_LIMIT_SECONDS);
-
-                continue;
-            }
-
-            $redisQKillmail = $this->processKillmail($redisQKillmail, $esi_killmail);
-
-            $this->ensureOrganisationExistsAction->ensureCorporationExists($esi_killmail->victim->corporation_id);
-            $this->ensureOrganisationExistsAction->ensureAllianceExists($esi_killmail->victim->alliance_id);
-
-            $this->notifyMaps($redisQKillmail);
-
-            sleep(self::ZKILL_RATE_LIMIT_SECONDS);
+            // Brief delay between active polls to respect rate limits
+            usleep(self::POLL_DELAY_MS * 1000);
         }
 
         $this->info('Stopped listening for killmails.');
+
+        return self::SUCCESS;
     }
 
-    private function processKillmail(RedisQKillmail $redis_q_killmail, \NicolasKion\Esi\DTO\Killmail $esi_killmail): Killmail
+    private function shouldRestart(mixed $restartSignal): bool
     {
-        return Killmail::query()
-            ->updateOrCreate(
-                ['id' => $redis_q_killmail->killID],
-                [
-                    'hash' => $redis_q_killmail->zkb->hash,
-                    'solarsystem_id' => $esi_killmail->solar_system_id,
-                    'time' => $esi_killmail->killmail_time,
-                    'data' => (array) $esi_killmail,
-                    'zkb' => (array) $redis_q_killmail->zkb,
-                ]
-            );
+        return Cache::get(self::RESTART_CACHE_KEY) !== $restartSignal;
     }
 
-    /**
-     * Notify maps about the new killmail.
-     */
+    private function getStartingSequence(): int
+    {
+        $cached = Cache::get(self::CACHE_KEY);
+
+        if ($cached) {
+            return (int) $cached;
+        }
+
+        // No cached sequence — start from the current latest
+        try {
+            $latest = $this->zKillboard->getLatestSequence();
+            $this->info(sprintf('No cached sequence found, starting from latest: %d', $latest));
+
+            return $latest;
+        } catch (Throwable $e) {
+            $this->error(sprintf('Could not fetch latest sequence: %s', $e->getMessage()));
+
+            return 0;
+        }
+    }
+
+    private function processKillmail(R2Z2Killmail $killmail): void
+    {
+        $this->logKillmailDetails($killmail);
+
+        if (! $this->shouldStoreKillmail($killmail)) {
+            $this->info(sprintf('Killmail ID %d is older than %d days, skipping.', $killmail->killmail_id, $this->max_age_days));
+
+            return;
+        }
+
+        $stored = Killmail::query()->updateOrCreate(
+            ['id' => $killmail->killmail_id],
+            [
+                'hash' => $killmail->hash,
+                'solarsystem_id' => $killmail->getSolarSystemId(),
+                'time' => $killmail->getKillmailTime(),
+                'data' => $killmail->esi,
+                'zkb' => (array) $killmail->zkb,
+            ]
+        );
+
+        $this->ensureOrganisationExistsAction->ensureCorporationExists($killmail->getVictimCorporationId());
+        $this->ensureOrganisationExistsAction->ensureAllianceExists($killmail->getVictimAllianceId());
+
+        $this->notifyMaps($stored);
+    }
+
     private function notifyMaps(Killmail $killmail): void
     {
         $maps = Map::query()->whereRelation('mapSolarsystems', 'solarsystem_id', $killmail->solarsystem_id)->get();
@@ -133,57 +162,47 @@ final class ListenForKillmails extends AppCommand
         $maps->each(fn (Map $map) => KillmailReceivedEvent::dispatch($map));
     }
 
-    private function getNextKillmail(): ?RedisQKillmail
+    private function shouldStoreKillmail(R2Z2Killmail $killmail): bool
     {
-        try {
-            $killmail = $this->zKillboard->listenForKill($this->identifier);
-        } catch (Throwable $e) {
-            $this->error(sprintf('Error while listening for killmail: %s', $e->getMessage()));
+        $time = $killmail->getKillmailTime();
 
-            return null;
+        if (! $time) {
+            return false;
         }
 
-        return $killmail;
+        return Date::parse($time)->addDays($this->max_age_days)->isFuture();
+    }
+
+    private function logKillmailDetails(R2Z2Killmail $killmail): void
+    {
+        $solarsystem = Cache::memo()->remember(
+            key: sprintf('solarsystem_%d', $killmail->getSolarSystemId()),
+            ttl: 3600,
+            callback: fn () => Solarsystem::query()->find($killmail->getSolarSystemId())
+        );
+
+        $ship = Cache::memo()->remember(
+            key: sprintf('type_%d', $killmail->getVictimShipTypeId()),
+            ttl: 3600,
+            callback: fn () => Type::query()->find($killmail->getVictimShipTypeId())
+        );
+
+        $this->info(sprintf(
+            '[seq:%d] Killmail %d: %s destroyed in %s at %s. https://zkillboard.com/kill/%d/',
+            $killmail->sequence_id,
+            $killmail->killmail_id,
+            $ship->name ?? 'Unknown Ship',
+            $solarsystem->name ?? 'Unknown System',
+            $killmail->getKillmailTime() ?? 'unknown time',
+            $killmail->killmail_id
+        ));
     }
 
     private function handleStop(int $signal): void
     {
-        switch ($signal) {
-            case SIGTERM:
-            case SIGQUIT:
-                $this->should_keep_running = false;
-                break;
-        }
-    }
-
-    private function shouldStoreKillmail(\NicolasKion\Esi\DTO\Killmail $killmail): bool
-    {
-        $time = Date::parse($killmail->killmail_time);
-
-        return $time->addDays($this->max_age_days)->isFuture();
-    }
-
-    private function logKillmailDetails(RedisQKillmail $redisQKillmail, \NicolasKion\Esi\DTO\Killmail $esi_killmail): void
-    {
-        $solarsystem = Cache::memo()->remember(
-            key: sprintf('solarsystem_%d', $esi_killmail->solar_system_id),
-            ttl: 3600,
-            callback: fn () => Solarsystem::query()->find($esi_killmail->solar_system_id)
-        );
-
-        $ship = Cache::memo()->remember(
-            key: sprintf('type_%d', $esi_killmail->victim->ship_type_id),
-            ttl: 3600,
-            callback: fn () => Type::query()->find($esi_killmail->victim->ship_type_id)
-        );
-
-        $this->info(sprintf(
-            'Received killmail ID %d: A %s was destroyed in %s at %s. https://zkillboard.com/kill/%d/',
-            $redisQKillmail->killID,
-            $ship->name ?? 'Unknown Ship',
-            $solarsystem->name ?? 'Unknown System',
-            $esi_killmail->killmail_time,
-            $redisQKillmail->killID
-        ));
+        match ($signal) {
+            SIGTERM, SIGQUIT => $this->should_keep_running = false,
+            default => null,
+        };
     }
 }

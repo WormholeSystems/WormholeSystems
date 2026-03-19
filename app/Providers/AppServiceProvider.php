@@ -59,6 +59,8 @@ final class AppServiceProvider extends ServiceProvider
 
         Gate::policy(PersonalAccessToken::class, PersonalAccessTokenPolicy::class);
 
+        $this->reloads('app:restart-killmail-listener', 'killmails');
+
         $this->registerScheduleMacros();
     }
 
