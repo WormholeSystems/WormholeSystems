@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Scopes\WithVisibleSolarsystems;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -40,7 +41,10 @@ final class MapController extends Controller
             ->withCount([
                 'mapSolarsystems' => fn (Builder $builder) => $builder->whereNotNull('position_x'),
             ])
-            ->with('mapUserSetting')
+            ->with([
+                'mapSolarsystems' => fn (Relation $query) => $query->whereNotNull('position_x')->withCount('signatures', 'wormholeSignatures', 'mapConnections'),
+                'mapUserSetting',
+            ])
             ->get()
             ->toResourceCollection(MapResource::class);
 
