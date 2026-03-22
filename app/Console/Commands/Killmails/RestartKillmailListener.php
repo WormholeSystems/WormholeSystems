@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console\Commands\Killmails;
 
+use App\Enums\zKillboardCacheKey;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
 
@@ -15,7 +16,7 @@ final class RestartKillmailListener extends Command
 
     public function handle(): void
     {
-        Cache::put(ListenForKillmails::RESTART_CACHE_KEY, now()->timestamp);
+        Cache::put(zKillboardCacheKey::Restart, now()->timestamp);
 
         $this->components->info('Killmail listener restart signal sent.');
     }
