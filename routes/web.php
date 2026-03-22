@@ -35,6 +35,7 @@ use App\Http\Controllers\TokenManagementController;
 use App\Http\Controllers\TrackingController;
 use App\Http\Controllers\UserCharacterController;
 use App\Http\Controllers\WaypointController;
+use App\Http\Middleware\SetMapShareToken;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [LandingController::class, 'index'])->name('landing')->middleware('guest');
@@ -117,6 +118,6 @@ Route::middleware('auth')->group(function () {
 });
 
 // Public map access (no auth required)
-Route::get('maps/{map}', [MapController::class, 'show'])->name('maps.show');
+Route::get('maps/{map}', [MapController::class, 'show'])->middleware(SetMapShareToken::class)->name('maps.show');
 Route::put('maps/{map}/user-settings', [MapUserSettingController::class, 'update'])->name('maps.user-settings.update');
 Route::get('share/{token}', [MapController::class, 'showByToken'])->name('maps.share');
