@@ -6,6 +6,7 @@ namespace App\Console\Commands\Killmails;
 
 use App\Actions\EnsureOrganisationExistsAction;
 use App\Console\Commands\AppCommand;
+use App\Enums\zKillboardCacheKey;
 use App\Events\Killmails\KillmailReceivedEvent;
 use App\Http\Integrations\zKillboard\DTO\R2Z2Killmail;
 use App\Http\Integrations\zKillboard\zKillboard;
@@ -18,20 +19,11 @@ use Illuminate\Container\Attributes\Config;
 use Illuminate\Support\Facades\Cache;
 use Throwable;
 
-use function sleep;
 use function sprintf;
 use function usleep;
 
 final class ListenForKillmails extends AppCommand
 {
-    public const string RESTART_CACHE_KEY = 'zkillboard:r2z2:restart';
-
-    private const string CACHE_KEY = 'zkillboard:r2z2:last_sequence';
-
-    private const int POLL_DELAY_MS = 100;
-
-    private const int CATCHUP_SLEEP_SECONDS = 6;
-
     /**
      * The name and signature of the console command.
      *
@@ -52,6 +44,8 @@ final class ListenForKillmails extends AppCommand
         private readonly zKillboard $zKillboard,
         private readonly EnsureOrganisationExistsAction $ensureOrganisationExistsAction,
         #[Config('services.zkillboard.max_age_days')] private readonly int $max_age_days,
+        #[Config('services.zkillboard.poll_delay_ms')] private readonly int $poll_delay_ms,
+        #[Config('services.zkillboard.catchup_delay_ms')] private readonly int $catchup_delay_ms,
     ) {
         parent::__construct();
     }
@@ -60,7 +54,7 @@ final class ListenForKillmails extends AppCommand
     {
         $this->trap([SIGTERM, SIGQUIT], $this->handleStop(...));
 
-        $restartSignal = Cache::get(self::RESTART_CACHE_KEY);
+        $restartSignal = Cache::get(zKillboardCacheKey::Restart);
 
         $sequence = $this->getStartingSequence();
         $this->info(sprintf('Starting R2Z2 polling from sequence %d', $sequence));
@@ -75,14 +69,14 @@ final class ListenForKillmails extends AppCommand
                 $killmail = $this->zKillboard->getKillmailBySequence($sequence);
             } catch (Throwable $e) {
                 $this->error(sprintf('Error fetching sequence %d: %s', $sequence, $e->getMessage()));
-                sleep(self::CATCHUP_SLEEP_SECONDS);
+                usleep($this->catchup_delay_ms * 1_000);
 
                 continue;
             }
 
             if (! $killmail instanceof R2Z2Killmail) {
                 // 404 or empty — we've caught up, wait and retry same sequence
-                sleep(self::CATCHUP_SLEEP_SECONDS);
+                usleep($this->catchup_delay_ms * 1_000);
 
                 continue;
             }
@@ -91,10 +85,10 @@ final class ListenForKillmails extends AppCommand
 
             // Advance sequence and persist
             $sequence = $killmail->sequence_id + 1;
-            Cache::put(self::CACHE_KEY, $sequence);
+            Cache::put(zKillboardCacheKey::LastSequence, $sequence);
 
             // Brief delay between active polls to respect rate limits
-            usleep(self::POLL_DELAY_MS * 1000);
+            usleep($this->poll_delay_ms * 1_000);
         }
 
         $this->info('Stopped listening for killmails.');
@@ -104,12 +98,12 @@ final class ListenForKillmails extends AppCommand
 
     private function shouldRestart(mixed $restartSignal): bool
     {
-        return Cache::get(self::RESTART_CACHE_KEY) !== $restartSignal;
+        return Cache::get(zKillboardCacheKey::Restart) !== $restartSignal;
     }
 
     private function getStartingSequence(): int
     {
-        $cached = Cache::get(self::CACHE_KEY);
+        $cached = Cache::get(zKillboardCacheKey::LastSequence);
 
         if ($cached) {
             return (int) $cached;

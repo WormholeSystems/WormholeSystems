@@ -11,8 +11,12 @@ use App\Http\Integrations\zKillboard\Requests\GetR2Z2Sequence;
 use App\Http\Integrations\zKillboard\Requests\GetSolarsystemKills;
 use Exception;
 
-final class zKillboard
+final readonly class zKillboard
 {
+    public function __construct(
+        private zKillboardConnector $connector,
+    ) {}
+
     /**
      * @throws Exception
      */
@@ -20,7 +24,7 @@ final class zKillboard
     {
         $request = new GetSolarsystemKills($solarsystem_id);
 
-        return new zKillboardConnector()->handle($request);
+        return $this->connector->handle($request);
     }
 
     /**
@@ -30,7 +34,7 @@ final class zKillboard
     {
         $request = new GetKill($killmail_id);
 
-        return new zKillboardConnector()->handle($request);
+        return $this->connector->handle($request);
     }
 
     /**
@@ -40,7 +44,7 @@ final class zKillboard
     {
         $request = new GetR2Z2Sequence;
 
-        return new zKillboardConnector()->handle($request);
+        return $this->connector->handle($request);
     }
 
     /**
@@ -50,6 +54,6 @@ final class zKillboard
     {
         $request = new GetR2Z2Killmail($sequence_id);
 
-        return new zKillboardConnector()->handle($request);
+        return $this->connector->handle($request);
     }
 }

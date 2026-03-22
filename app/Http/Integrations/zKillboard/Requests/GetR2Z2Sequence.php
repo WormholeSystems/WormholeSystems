@@ -11,7 +11,12 @@ final class GetR2Z2Sequence extends zKillboardRequest
 {
     public RequestMethod $method = RequestMethod::GET;
 
-    public ?string $base_url = 'https://r2z2.zkillboard.com';
+    public ?string $base_url;
+
+    public function __construct()
+    {
+        $this->base_url = config()->string('services.zkillboard.r2z2_base_url');
+    }
 
     public function getEndpoint(): string
     {

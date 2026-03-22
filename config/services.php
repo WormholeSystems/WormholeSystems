@@ -38,7 +38,24 @@ return [
     ],
     'zkillboard' => [
         'identifier' => env('ZKILLBOARD_IDENTIFIER', 'nbrvecs7654vb68mnbv'),
+
+        // Killmails older than this are skipped during ingestion.
         'max_age_days' => env('ZKILLBOARD_MAX_AGE_DAYS', 2 * 365),
+
+        // Base URL for the R2Z2 ephemeral killmail stream.
+        'r2z2_base_url' => env('ZKILLBOARD_R2Z2_BASE_URL', 'https://r2z2.zkillboard.com'),
+
+        // Number of HTTP retry attempts before giving up on a request.
+        'retry_attempts' => env('ZKILLBOARD_RETRY_ATTEMPTS', 5),
+
+        // Delay between HTTP retries. 6s matches R2Z2's recommended minimum backoff.
+        'retry_delay_ms' => env('ZKILLBOARD_RETRY_DELAY_MS', 6_000),
+
+        // Delay between polls when actively consuming new killmails.
+        'poll_delay_ms' => env('ZKILLBOARD_POLL_DELAY_MS', 100),
+
+        // Delay when caught up or after an error. 6s matches R2Z2's recommended minimum backoff.
+        'catchup_delay_ms' => env('ZKILLBOARD_CATCHUP_DELAY_MS', 6_000),
     ],
     'eveonline' => [
         'client_id' => env('EVE_CLIENT_ID'),
