@@ -17,8 +17,17 @@ final class MapPolicy
 
     public function view(?User $user, Map $map): bool
     {
-        if ($map->isPubliclyAccessible()) {
+        if ($map->is_public) {
             return true;
+        }
+
+        if ($map->share_token !== null) {
+            $providedToken = request()->query('share_token')
+                ?? session("map_share_token_{$map->id}");
+
+            if ($providedToken === $map->share_token) {
+                return true;
+            }
         }
 
         if (! $user instanceof User) {

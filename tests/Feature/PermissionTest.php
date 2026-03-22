@@ -241,6 +241,54 @@ it('reports map as not publicly accessible when private and no share token', fun
     expect($map->isPubliclyAccessible())->toBeFalse();
 });
 
+it('redirects a share link to the map with the share token', function () {
+    $token = Str::uuid()->toString();
+    $map = Map::factory()->create(['is_public' => false, 'share_token' => $token]);
+
+    $this->get(route('maps.share', $token))
+        ->assertRedirect(route('maps.show', ['map' => $map, 'share_token' => $token]));
+});
+
+it('allows an anonymous user to view a share token map with valid token', function () {
+    $token = Str::uuid()->toString();
+    $map = Map::factory()->create(['is_public' => false, 'share_token' => $token]);
+
+    request()->merge(['share_token' => $token]);
+
+    expect(app(App\Policies\MapPolicy::class)->view(null, $map))->toBeTrue();
+});
+
+it('allows an anonymous user to view a share token map with the token stored in session', function () {
+    $token = Str::uuid()->toString();
+    $map = Map::factory()->create(['is_public' => false, 'share_token' => $token]);
+
+    session()->put("map_share_token_{$map->id}", $token);
+
+    expect(app(App\Policies\MapPolicy::class)->view(null, $map))->toBeTrue();
+});
+
+it('prevents an anonymous user from viewing a share token map without the token', function () {
+    $map = Map::factory()->create(['is_public' => false, 'share_token' => Str::uuid()->toString()]);
+
+    expect(app(App\Policies\MapPolicy::class)->view(null, $map))->toBeFalse();
+});
+
+it('prevents an anonymous user from viewing a share token map with a wrong token', function () {
+    $map = Map::factory()->create(['is_public' => false, 'share_token' => Str::uuid()->toString()]);
+
+    request()->merge(['share_token' => 'wrong-token']);
+
+    expect(app(App\Policies\MapPolicy::class)->view(null, $map))->toBeFalse();
+});
+
+it('prevents an anonymous user from viewing a share token map with a wrong session token', function () {
+    $map = Map::factory()->create(['is_public' => false, 'share_token' => Str::uuid()->toString()]);
+
+    session()->put("map_share_token_{$map->id}", 'wrong-token');
+
+    expect(app(App\Policies\MapPolicy::class)->view(null, $map))->toBeFalse();
+});
+
 // --- No access user ---
 
 it('prevents a user without access from viewing a private map', function () {
