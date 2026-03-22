@@ -6,17 +6,26 @@ namespace App\Exception;
 
 use App\Http\Middleware\HandleInertiaRequests;
 use Exception;
+use Illuminate\Container\Attributes\Config;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
+use Sentry\Laravel\Integration;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
-final class ExceptionHandler
+final readonly class ExceptionHandler
 {
+    public function __construct(
+        #[Config('sentry.dsn')] private ?string $dsn = null,
+    ) {}
+
     public function __invoke(Exceptions $exceptions): void
     {
+
+        $this->notifySentry($exceptions);
+
         $exceptions->respond(function (Response $response, Throwable $exception, Request $request): Response {
             $status_code = $response->getStatusCode();
 
@@ -29,6 +38,15 @@ final class ExceptionHandler
                 default => $response,
             };
         });
+    }
+
+    private function notifySentry(Exceptions $exceptions): void
+    {
+        if (! $this->dsn) {
+            return;
+        }
+
+        Integration::handles($exceptions);
     }
 
     private function handleApiException(Response $response): Response
