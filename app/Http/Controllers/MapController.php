@@ -16,6 +16,7 @@ use App\Features\MapSelectionFeature;
 use App\Features\MapSettingsFeature;
 use App\Features\MapTrackingFeature;
 use App\Features\ShipHistoryFeature;
+use App\Features\ThreatAnalysisFeature;
 use App\Http\Requests\StoreMapRequest;
 use App\Http\Requests\UpdateMapRequest;
 use App\Http\Resources\MapCardResource;
@@ -82,7 +83,8 @@ final class MapController extends Controller
             ->with(new EveScoutConnectionsFeature($this->eve_scout_service))
             ->with(new MapKillmailsFeature($map, $settings->killmail_filter ?? KillmailFilter::All, $hiddenCards))
             ->with(new ShipHistoryFeature($user, $canViewCharacters, $hiddenCards))
-            ->with(new MapNavigationFeature($map, $hiddenCards));
+            ->with(new MapNavigationFeature($map, $hiddenCards))
+            ->with(new ThreatAnalysisFeature($selected_map_solarsystem, $hiddenCards));
     }
 
     public function showByToken(string $token): RedirectResponse

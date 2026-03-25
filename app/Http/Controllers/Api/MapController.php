@@ -42,7 +42,7 @@ final class MapController extends Controller
                 'mapSolarsystems' => fn (Builder $builder) => $builder->whereNotNull('position_x'),
             ])
             ->with([
-                'mapSolarsystems' => fn (Relation $query) => $query->whereNotNull('position_x')->withCount('signatures', 'wormholeSignatures', 'mapConnections'),
+                'mapSolarsystems' => fn (Relation $query) => $query->whereNotNull('position_x')->withCount('signatures', 'wormholeSignatures', 'mapConnections')->with('wormholeSystem:id,threat_level'),
                 'mapUserSetting',
             ])
             ->get()
