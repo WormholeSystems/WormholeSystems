@@ -12,4 +12,5 @@ enum RemovableCard: string
     case Killmails = 'killmails';
     case Autopilot = 'autopilot';
     case EveScout = 'eve-scout';
+    case ThreatAnalysis = 'threat-analysis';
 }

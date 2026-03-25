@@ -53,6 +53,7 @@ final class UpdateMapUserSettingRequest extends FormRequest
             'layout_breakpoints' => ['nullable', 'array'],
             'hidden_cards' => ['nullable', 'array'],
             'hidden_cards.*' => ['string', Rule::enum(RemovableCard::class)],
+            'show_threat_level' => ['boolean'],
         ];
     }
 }

@@ -25,6 +25,7 @@ final readonly class MapSettingsFeature implements ProvidesInertiaProperties
         'prompt_for_signature_enabled' => false,
         'layout_breakpoints' => null,
         'hidden_cards' => null,
+        'show_threat_level' => true,
     ];
 
     private MapUserSetting $settings;
