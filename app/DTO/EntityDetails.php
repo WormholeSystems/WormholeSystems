@@ -46,6 +46,19 @@ final readonly class EntityDetails
         );
     }
 
+    /**
+     * @return array{id: int, name: string, type: string, kills: int}
+     */
+    public function toArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'type' => $this->type,
+            'kills' => $this->kills,
+        ];
+    }
+
     public function toMarkdown(): string
     {
         if ($this->type === 'unknown') {
