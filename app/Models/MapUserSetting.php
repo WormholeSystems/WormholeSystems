@@ -30,6 +30,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property bool $prompt_for_signature_enabled
  * @property array|null $layout_breakpoints
  * @property array|null $hidden_cards
+ * @property bool $show_threat_level
  * @property CarbonImmutable|string $created_at
  * @property CarbonImmutable|string $updated_at
  */
@@ -72,6 +73,7 @@ final class MapUserSetting extends Model
             'prompt_for_signature_enabled' => 'boolean',
             'layout_breakpoints' => 'array',
             'hidden_cards' => 'array',
+            'show_threat_level' => 'boolean',
         ];
     }
 }

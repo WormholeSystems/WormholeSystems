@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\ThreatLevel;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -16,6 +17,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $id
  * @property int $effect_id
  * @property-read int $class
+ * @property ThreatLevel $threat_level
+ * @property array|null $threat_data
+ * @property CarbonImmutable|null $threat_analyzed_at
  * @property-read string|CarbonImmutable $created_at
  * @property-read string|CarbonImmutable $updated_at
  * @property-read WormholeEffect $effect
@@ -52,5 +56,19 @@ final class WormholeSystem extends Model
     public function wormholeStatics(): HasMany
     {
         return $this->hasMany(WormholeStatic::class, 'wormhole_system_id');
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'threat_level' => ThreatLevel::class,
+            'threat_data' => 'array',
+            'threat_analyzed_at' => 'immutable_datetime',
+            'created_at' => 'immutable_datetime',
+            'updated_at' => 'immutable_datetime',
+        ];
     }
 }
