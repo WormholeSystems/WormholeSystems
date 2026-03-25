@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\DTO;
 
 use App\Collections\OrganisationStatsCollection;
-use App\Enums\MapSolarsystemStatus;
+use App\Enums\ThreatLevel;
 
 final readonly class SystemAnalysisResult
 {
     public function __construct(
-        public MapSolarsystemStatus $status,
-        public string $notesContent,
+        public ThreatLevel $threatLevel,
+        public array $threatData,
         public OrganisationStatsCollection $topOrganisations,
         public int $totalKills,
     ) {}
@@ -22,43 +22,35 @@ final readonly class SystemAnalysisResult
     ): self {
         $totalKills = $topOrganisations->getTotalKills();
 
-        $status = match (true) {
-            $totalKills >= $options->hostileThreshold => MapSolarsystemStatus::Hostile,
-            $totalKills >= $options->activeThreshold => MapSolarsystemStatus::Active,
-            default => MapSolarsystemStatus::Unknown
+        $threatLevel = match (true) {
+            $totalKills >= $options->hostileThreshold => ThreatLevel::Critical,
+            $totalKills >= $options->activeThreshold => ThreatLevel::High,
+            default => ThreatLevel::Unknown,
         };
 
-        $notesContent = self::generateNotesContent($topOrganisations, $options);
+        $threatData = self::generateThreatData($topOrganisations);
 
         return new self(
-            status: $status,
-            notesContent: $notesContent,
+            threatLevel: $threatLevel,
+            threatData: $threatData,
             topOrganisations: $topOrganisations,
             totalKills: $totalKills,
         );
     }
 
-    private static function generateNotesContent(OrganisationStatsCollection $topOrganisations, AnalysisOptions $options): string
+    /**
+     * @return array<int, array{id: int, name: string, type: string, kills: int}>
+     */
+    private static function generateThreatData(OrganisationStatsCollection $topOrganisations): array
     {
-        $start = '<!-- killmails:start -->';
-        $end = '<!-- killmails:end -->';
-
         if ($topOrganisations->isEmpty()) {
-            $markdown = 'We could not find any groups that meet the criteria.';
-        } else {
-            $markdown = $topOrganisations
-                ->map(fn (OrganisationStats $stats, int $id): string => EntityDetails::fromId($id, $stats->killCount)->toMarkdown())
-                ->implode("\n");
+            return [];
         }
 
-        return sprintf(
-            "%s\nTop %d groups that were active for at least %d days within the last %d days:\n\n%s\n\n%s\n",
-            $start,
-            $options->top,
-            $options->daysActive,
-            $options->daysAgo,
-            $markdown,
-            $end
-        );
+        return $topOrganisations
+            ->toBase()
+            ->map(fn (OrganisationStats $stats, int $id): array => EntityDetails::fromId($id, $stats->killCount)->toArray())
+            ->values()
+            ->all();
     }
 }

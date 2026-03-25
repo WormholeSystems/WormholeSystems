@@ -8,15 +8,12 @@ use App\Collections\OrganisationStatsCollection;
 use App\Console\Commands\AppCommand;
 use App\DTO\AnalysisOptions;
 use App\DTO\SystemAnalysisResult;
-use App\Events\MapSolarsystems\MapSolarsystemsUpdatedEvent;
 use App\Models\Alliance;
 use App\Models\Corporation;
-use App\Models\MapSolarsystem;
 use App\Models\WormholeSystem;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
-use NicolasKion\Esi\DTO\Name;
 use NicolasKion\Esi\Enums\NameCategory;
 use NicolasKion\Esi\Esi;
 use Psr\SimpleCache\InvalidArgumentException;
@@ -31,19 +28,18 @@ final class AnalyzeWormholeSystems extends AppCommand
      * @var string
      */
     protected $signature = 'app:analyze-wormhole-systems
-        {map : The map ID to analyze}
         {--days-ago=90 : Number of days to look back for killmails}
         {--days-active=5 : Minimum number of days with kills to consider a group active}
         {--top=10 : Number of top groups to display}
-        {--active-threshold=15 : Minimum number of kills to consider a system active}
-        {--hostile-threshold=50 : Minimum number of kills to consider a system hostile}';
+        {--active-threshold=15 : Minimum number of kills for high threat}
+        {--hostile-threshold=50 : Minimum number of kills for critical threat}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Analyze wormhole systems based on killmails';
+    protected $description = 'Analyze wormhole systems and set threat levels based on killmails';
 
     private AnalysisOptions $options;
 
@@ -57,14 +53,9 @@ final class AnalyzeWormholeSystems extends AppCommand
      */
     public function handle(): int
     {
-        $this->options = AnalysisOptions::fromCommand(
-            $this->arguments(),
-            $this->options()
-        );
+        $this->options = AnalysisOptions::fromCommand($this->options());
 
         progress('Analyzing wormhole systems', WormholeSystem::all(), $this->analyzeWormholeSystem(...));
-
-        MapSolarsystemsUpdatedEvent::dispatch($this->options->mapId);
 
         $this->info('Finished analyzing wormhole systems');
 
@@ -82,7 +73,7 @@ final class AnalyzeWormholeSystems extends AppCommand
 
         $analysisResult = SystemAnalysisResult::create($topOrganisations, $this->options);
 
-        $this->updateMapSolarsystem($wormholeSystem, $analysisResult);
+        $this->updateWormholeSystem($wormholeSystem, $analysisResult);
     }
 
     private function getKillmails(WormholeSystem $wormholeSystem): Collection
@@ -139,38 +130,13 @@ final class AnalyzeWormholeSystems extends AppCommand
         return $organisationStats->topByKillCount($this->options->top);
     }
 
-    private function updateMapSolarsystem(WormholeSystem $wormholeSystem, SystemAnalysisResult $analysisResult): void
+    private function updateWormholeSystem(WormholeSystem $wormholeSystem, SystemAnalysisResult $analysisResult): void
     {
-        $mapSolarsystem = MapSolarsystem::query()
-            ->where('solarsystem_id', $wormholeSystem->solarsystem->id)
-            ->where('map_id', $this->options->mapId)
-            ->firstOrNew();
-
-        $updatedNotes = $this->mergeNotesContent($mapSolarsystem->notes ?? '', $analysisResult->notesContent);
-
-        $mapSolarsystem->fill([
-            'solarsystem_id' => $wormholeSystem->solarsystem->id,
-            'map_id' => $this->options->mapId,
-            'notes' => $updatedNotes,
-            'status' => $analysisResult->status,
+        $wormholeSystem->update([
+            'threat_level' => $analysisResult->threatLevel,
+            'threat_data' => $analysisResult->threatData,
+            'threat_analyzed_at' => now(),
         ]);
-
-        $mapSolarsystem->save();
-    }
-
-    private function mergeNotesContent(string $existingNotes, string $newNotesContent): string
-    {
-        $hasExistingBlock = preg_match('/<!-- killmails:start -->.*<!-- killmails:end -->/s', $existingNotes);
-
-        if ($hasExistingBlock) {
-            return preg_replace(
-                '/<!-- killmails:start -->.*<!-- killmails:end -->/s',
-                $newNotesContent,
-                $existingNotes
-            );
-        }
-
-        return $existingNotes.$newNotesContent;
     }
 
     /**

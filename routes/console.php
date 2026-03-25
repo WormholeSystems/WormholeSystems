@@ -7,6 +7,7 @@ use App\Console\Commands\Characters\GetOnlineCharactersCommand;
 use App\Console\Commands\CheckConnectionAgeCommand;
 use App\Console\Commands\GenerateStaticDataCommand;
 use App\Console\Commands\GetServerStatusCommand;
+use App\Console\Commands\Killmails\AnalyzeWormholeSystems;
 use App\Console\Commands\Killmails\GetKillmailsForLast90DaysCommand;
 use App\Console\Commands\Killmails\PurgeOldKillmailsCommand;
 use App\Console\Commands\MapAccess\PurgeExpiredMapAccessCommand;
@@ -26,3 +27,4 @@ Schedule::command(GetKillmailsForLast90DaysCommand::class)->runInBackground()->w
 Schedule::command(PurgeOldKillmailsCommand::class)->runInBackground()->daily();
 Schedule::command(PurgeExpiredMapAccessCommand::class)->runInBackground()->everyTenMinutes()->withoutOverlapping();
 Schedule::command(PruneBatchesCommand::class)->daily();
+Schedule::command(AnalyzeWormholeSystems::class)->runInBackground()->daily()->withoutOverlapping();
