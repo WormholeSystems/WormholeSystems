@@ -15,7 +15,7 @@ import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover'
 import { TDataMapSolarSystem } from '@/composables/map';
 import MapSolarsystems from '@/routes/map-solarsystems';
 import { TCharacter } from '@/types/models';
-import { useForm } from '@inertiajs/vue3';
+import { useForm, usePage } from '@inertiajs/vue3';
 import { Flag as FlagIcon, Home as HomeIcon } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 
@@ -46,6 +46,12 @@ const resolvedSolarsystem = computed(() => ({
     effect: map_solarsystem.solarsystem?.effect ?? null,
 }));
 
+const page = usePage();
+const effectiveThreatLevel = computed(() => {
+    const settings = page.props.map_user_settings as { show_threat_level?: boolean } | undefined;
+    return settings?.show_threat_level ? (map_solarsystem.threat_level ?? null) : null;
+});
+
 const open = ref(false);
 
 const extra_connections_count = computed(() => {
@@ -72,8 +78,9 @@ function handleSubmit() {
         :data-hovered="map_solarsystem.is_hovered"
         :data-status="map_solarsystem.status"
         :data-has-pilots="pilots.length > 0"
-        :data-is-active="is_active"
-        class="grid h-[40px] rounded border border-neutral-300 bg-white text-left text-xs ring-offset-2 ring-offset-neutral-50 transition-colors duration-200 ease-in-out select-none hover:bg-white focus:bg-white data-[has-pilots=true]:h-[60px] data-[hovered=true]:outline-2 data-[hovered=true]:outline-yellow-500 data-[is-active=true]:ring-2 data-[is-active=true]:ring-amber-500 data-[selected=true]:bg-amber-100 data-[status=active]:border-active data-[status=empty]:border-empty data-[status=friendly]:border-friendly data-[status=hostile]:border-hostile data-[status=unknown]:border-unknown dark:border-neutral-700 dark:bg-neutral-900 dark:ring-offset-neutral-900 dark:hover:bg-neutral-800 dark:focus:bg-neutral-800 dark:data-[is-active=true]:ring-2 dark:data-[is-active=true]:ring-amber-500 dark:data-[selected=true]:bg-amber-900 dark:data-[status=active]:border-active dark:data-[status=empty]:border-empty dark:data-[status=friendly]:border-friendly dark:data-[status=hostile]:border-hostile dark:data-[status=unscanned]:border-unscanned"
+        :data-is-active="!!is_active"
+        :data-threat-level="effectiveThreatLevel"
+        class="grid h-[40px] rounded border border-neutral-300 bg-white text-left text-xs ring-offset-2 ring-offset-neutral-50 transition-colors duration-200 ease-in-out select-none hover:bg-white focus:bg-white data-[has-pilots=true]:h-[60px] data-[hovered=true]:outline-2 data-[hovered=true]:outline-yellow-500 data-[is-active=true]:ring-2 data-[is-active=true]:ring-amber-500 data-[selected=true]:bg-amber-100 data-[status=active]:border-active data-[status=empty]:border-empty data-[status=friendly]:border-friendly data-[status=hostile]:border-hostile data-[status=unknown]:border-unknown data-[is-active=false]:data-[threat-level=critical]:ring-2 data-[is-active=false]:data-[threat-level=critical]:ring-threat-critical data-[is-active=false]:data-[threat-level=high]:ring-2 data-[is-active=false]:data-[threat-level=high]:ring-threat-high dark:border-neutral-700 dark:bg-neutral-900 dark:ring-offset-neutral-900 dark:hover:bg-neutral-800 dark:focus:bg-neutral-800 dark:data-[is-active=true]:ring-2 dark:data-[is-active=true]:ring-amber-500 dark:data-[selected=true]:bg-amber-900 dark:data-[status=active]:border-active dark:data-[status=empty]:border-empty dark:data-[status=friendly]:border-friendly dark:data-[status=hostile]:border-hostile dark:data-[status=unscanned]:border-unscanned"
         @dblclick="open = true"
         @drag.prevent
     >

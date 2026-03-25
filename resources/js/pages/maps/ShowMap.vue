@@ -15,6 +15,7 @@ import SignaturesEmptyState from '@/components/signatures/SignaturesEmptyState.v
 import SolarsystemDetails from '@/components/solarsystem/SolarsystemDetails.vue';
 import SystemInfo from '@/components/solarsystem/SystemInfo.vue';
 import SystemInfoEmptyState from '@/components/solarsystem/SystemInfoEmptyState.vue';
+import ThreatAnalysis from '@/components/threat-analysis/ThreatAnalysis.vue';
 import { useDisableTextSelection } from '@/composables/useDisableTextSelection';
 import { useMapLayout } from '@/composables/useMapLayout';
 import { useOnClient } from '@/composables/useOnClient';
@@ -40,6 +41,7 @@ const {
     map_characters,
     active_character_has_access,
     eve_scout_connections,
+    threat_analysis,
 } = defineProps<TShowMapProps>();
 
 const { canManageAccess, isViewer } = usePermission();
@@ -302,6 +304,16 @@ const handleResizeEnd = () => {
                 v-bind="getLayoutItem('eve-scout').value"
             >
                 <EveScoutConnections :eve_scout_connections />
+            </GridItem>
+
+            <!-- Threat Analysis Section -->
+            <GridItem
+                v-if="!layout.isCardHidden('threat-analysis')"
+                @resize="handleResizeStart"
+                @resized="handleResizeEnd"
+                v-bind="getLayoutItem('threat-analysis').value"
+            >
+                <ThreatAnalysis :threat_analysis="threat_analysis" />
             </GridItem>
         </GridLayout>
         <!-- Layout Edit Controls -->

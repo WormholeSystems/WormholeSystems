@@ -86,7 +86,14 @@ const is_rally = computed(() => {
                             "
                             preserve-state
                             preserve-scroll
-                            :only="['map', 'selected_map_solarsystem', 'map_navigation', 'map_characters', 'eve_scout_connections']"
+                            :only="[
+                                'map',
+                                'selected_map_solarsystem',
+                                'map_navigation',
+                                'map_characters',
+                                'eve_scout_connections',
+                                'threat_analysis',
+                            ]"
                             prefetch
                             cache-for="2s"
                         >

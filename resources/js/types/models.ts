@@ -170,6 +170,22 @@ export type TSignature = {
 
 export type TMapSolarsystemStatus = 'active' | 'unscanned' | 'unknown' | 'friendly' | 'hostile' | 'empty';
 
+export type TThreatLevel = 'critical' | 'high' | 'unknown';
+
+export type TThreatEntity = {
+    id: number;
+    name: string;
+    type: 'alliance' | 'corporation' | 'unknown';
+    kills: number;
+};
+
+export type TThreatAnalysis = {
+    solarsystem_id: number;
+    threat_level: TThreatLevel;
+    threat_data: TThreatEntity[];
+    threat_analyzed_at: string | null;
+};
+
 export type TCharacter = {
     id: number;
     name: string;
@@ -218,6 +234,7 @@ export type TMapUserSetting = {
     prompt_for_signature_enabled: boolean;
     layout_breakpoints?: Record<string, any> | null;
     hidden_cards: string[] | null;
+    show_threat_level: boolean;
 };
 
 export type TShipHistory = {

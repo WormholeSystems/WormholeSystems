@@ -16,7 +16,7 @@ import type { TMapUserSetting } from '@/types/models';
 import { Link } from '@inertiajs/vue3';
 import { useConnectionStatus } from '@laravel/echo-vue';
 import { ConnectionStatus } from 'laravel-echo';
-import { Eye, EyeOff, LayoutGrid, Map as MapIcon, Settings, Wifi, WifiOff } from 'lucide-vue-next';
+import { Eye, EyeOff, LayoutGrid, Map as MapIcon, Settings, ShieldAlert, Wifi, WifiOff } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import MapSearch from './MapSearch.vue';
 import TrackingSignatureDialog from './TrackingSignatureDialog.vue';
@@ -57,6 +57,12 @@ const targetSolarsystemName = computed(() => target_solarsystem.value?.name || c
 function handleToggleVisibility() {
     updateMapUserSettings(map.slug, {
         tracking_allowed: !map_user_settings.tracking_allowed,
+    });
+}
+
+function handleToggleThreatLevel() {
+    updateMapUserSettings(map.slug, {
+        show_threat_level: !map_user_settings.show_threat_level,
     });
 }
 
@@ -197,6 +203,30 @@ const settingsUrl = computed(() => {
                     <p class="text-xs font-medium">Auto-Tracking</p>
                     <p class="text-xs text-muted-foreground">{{ is_tracking ? 'Enabled' : 'Disabled' }} - Track system changes</p>
                 </template>
+            </TooltipContent>
+        </Tooltip>
+
+        <!-- Threat Analysis Toggle -->
+        <Tooltip>
+            <TooltipTrigger as-child>
+                <button
+                    @click="handleToggleThreatLevel"
+                    class="flex items-center gap-1.5 rounded px-1.5 py-1 text-xs transition-colors sm:px-2"
+                    :class="
+                        map_user_settings.show_threat_level
+                            ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
+                            : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                    "
+                >
+                    <ShieldAlert class="size-3.5" />
+                    <span class="hidden md:inline">Threats</span>
+                </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+                <p class="text-xs font-medium">Wormhole Threat Analysis</p>
+                <p class="text-xs text-muted-foreground">
+                    {{ map_user_settings.show_threat_level ? 'Showing' : 'Hidden' }} - Threat level rings on systems
+                </p>
             </TooltipContent>
         </Tooltip>
 

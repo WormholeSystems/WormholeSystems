@@ -81,6 +81,9 @@
     --color-active: var(--color-orange-500);
     --color-empty: var(--color-emerald-400);
 
+    --color-threat-critical: var(--color-red-600);
+    --color-threat-high: var(--color-orange-500);
+
     --text-2xs: 0.7rem;
     --text-3xs: 0.625rem;
 }
