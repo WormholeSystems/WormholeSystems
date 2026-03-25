@@ -44,6 +44,12 @@ function handlePromtForSignatureChange(value: boolean | 'indeterminate') {
         updateMapUserSettings({ prompt_for_signature_enabled: value });
     }
 }
+
+function handleToggleThreatLevel(value: boolean | 'indeterminate') {
+    if (typeof value === 'boolean') {
+        updateMapUserSettings({ show_threat_level: value });
+    }
+}
 </script>
 
 <template>
@@ -94,6 +100,14 @@ function handlePromtForSignatureChange(value: boolean | 'indeterminate') {
                             </SelectContent>
                         </Select>
                         <div class="text-sm text-muted-foreground">Filter which killmails are displayed based on system type</div>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div class="space-y-0.5">
+                            <Label class="text-sm font-medium">Show Threat Level</Label>
+                            <div class="text-sm text-muted-foreground">Display a colored ring around wormhole systems based on killmail activity</div>
+                        </div>
+                        <Checkbox :model-value="map_user_settings.show_threat_level" @update:model-value="handleToggleThreatLevel" />
                     </div>
                 </CardContent>
             </Card>

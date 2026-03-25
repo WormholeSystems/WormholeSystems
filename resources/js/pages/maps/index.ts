@@ -15,6 +15,8 @@ import {
     TSignature,
     TSolarsystemClass,
     TSolarsystemType,
+    TThreatAnalysis,
+    TThreatLevel,
     TWormholeClass,
     TWormholeEffectName,
 } from '@/types/models';
@@ -62,6 +64,7 @@ export type TShowMapProps = {
     tracking_origin?: TSelectedMapSolarsystem | null;
     tracking_target?: TTrackingTarget | null;
     eve_scout_connections?: TEveScoutConnection[];
+    threat_analysis?: TThreatAnalysis | null;
 };
 
 export type TTrackingTarget = {
@@ -84,6 +87,7 @@ export type TMapSolarsystemBase = {
     signatures_count: number;
     wormhole_signatures_count: number;
     map_connections_count: number;
+    threat_level?: TThreatLevel | null;
     signatures?: TSignature[] | null;
 };
 
