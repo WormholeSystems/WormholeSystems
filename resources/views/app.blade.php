@@ -30,7 +30,7 @@
         }
     </style>
 
-    <title inertia>{{ config('app.name', 'Laravel') }}</title>
+    <title data-inertia>{{ config('app.name', 'Laravel') }}</title>
 
     <!-- PWA Meta Tags -->
     <meta name="application-name" content="wormhole.systems">
@@ -65,9 +65,10 @@
     <link rel="manifest" href="/build/manifest.webmanifest">
 
     @vite(['resources/js/app.ts', "resources/js/pages/{$page['component']}.vue", 'resources/css/app.css'])
-    @inertiaHead
+    <x-inertia::head />
 </head>
 <body class="font-sans antialiased">
-@inertia
+    <x-inertia::app />
+
 </body>
 </html>
