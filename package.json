@@ -2,8 +2,7 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "vue-tsc && vite build",
-        "build:ssr": "vite build && vite build --ssr",
+        "build": "vue-tsc && vite build && vite build --ssr",
         "dev": "vite",
         "format": "prettier --write resources/",
         "format:check": "prettier --check resources/",
@@ -30,7 +29,8 @@
     },
     "dependencies": {
         "@date-fns/utc": "^2.1.1",
-        "@inertiajs/vue3": "^2.0.0",
+        "@inertiajs/vite": "^3.0",
+        "@inertiajs/vue3": "^3.0",
         "@tailwindcss/vite": "^4.1.1",
         "@tanstack/vue-table": "^8.21.3",
         "@types/markdown-it": "^14.1.2",
