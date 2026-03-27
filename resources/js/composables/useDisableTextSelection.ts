@@ -1,5 +1,6 @@
 import { useEventListener } from '@vueuse/core';
 import { computed, MaybeRefOrGetter, toValue, watch } from 'vue';
+import { isSSR } from './useOnClient';
 
 /**
  * Composable to disable text selection
@@ -9,12 +10,14 @@ export function useDisableTextSelection(shouldPreventValue: MaybeRefOrGetter<boo
     const shouldPrevent = computed(() => toValue(shouldPreventValue));
 
     const disableSelection = () => {
+        if (isSSR()) return;
         document.documentElement.style.userSelect = 'none';
         document.documentElement.style.webkitUserSelect = 'none';
         window.getSelection()?.removeAllRanges();
     };
 
     const enableSelection = () => {
+        if (isSSR()) return;
         document.documentElement.style.userSelect = '';
         document.documentElement.style.webkitUserSelect = '';
     };
@@ -33,7 +36,9 @@ export function useDisableTextSelection(shouldPreventValue: MaybeRefOrGetter<boo
         }
     });
 
-    useEventListener(document, 'selectstart', preventSelection, { capture: true, passive: false });
+    if (!isSSR()) {
+        useEventListener(document, 'selectstart', preventSelection, { capture: true, passive: false });
+    }
 
     return {
         disableSelection,
