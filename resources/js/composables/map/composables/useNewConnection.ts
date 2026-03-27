@@ -1,8 +1,8 @@
 import { TMapSolarsystem } from '@/pages/maps';
 import MapConnections from '@/routes/map-connections';
 import { router } from '@inertiajs/vue3';
-import { MaybeRefOrGetter, useEventListener } from '@vueuse/core';
-import { computed, reactive, toValue } from 'vue';
+import { useEventListener } from '@vueuse/core';
+import { computed, MaybeRefOrGetter, reactive, toValue } from 'vue';
 
 const store = reactive<{
     origin: TMapSolarsystem | null;
