@@ -1,7 +1,6 @@
 import { useMapCharacters } from '@/composables/useMapCharacters';
 import { TMapSolarsystem } from '@/pages/maps';
-import { MaybeRefOrGetter } from '@vueuse/core';
-import { computed, toValue } from 'vue';
+import { computed, MaybeRefOrGetter, toValue } from 'vue';
 
 export function usePilotsInMapSolarsystem(map_solarsystem: MaybeRefOrGetter<TMapSolarsystem>) {
     const characters = useMapCharacters();
