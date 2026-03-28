@@ -21,48 +21,10 @@ final class SovereigntyResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
-            'corporation' => $this->getCorporation(),
-            'alliance' => $this->getAlliance(),
-            'faction' => $this->getFaction(),
-        ];
-    }
-
-    private function getCorporation(): ?array
-    {
-        if ($this->corporation === null) {
-            return null;
-        }
-
-        return [
-            'id' => $this->corporation->id,
-            'name' => $this->corporation->name,
-            'ticker' => $this->corporation->ticker,
-        ];
-    }
-
-    private function getAlliance(): ?array
-    {
-        if ($this->alliance === null) {
-            return null;
-        }
-
-        return [
-            'id' => $this->alliance->id,
-            'name' => $this->alliance->name,
-            'ticker' => $this->alliance->ticker,
-        ];
-    }
-
-    private function getFaction(): ?array
-    {
-        if ($this->faction === null) {
-            return null;
-        }
-
-        return [
-            'id' => $this->faction->id,
-            'name' => $this->faction->name,
+            'id' => $this->solarsystem_id,
+            'alliance' => $this->whenLoaded('alliance', fn () => AllianceResource::make($this->alliance)),
+            'corporation' => $this->whenLoaded('corporation', fn () => CorporationResource::make($this->corporation)),
+            'faction' => $this->whenLoaded('faction', fn () => FactionResource::make($this->faction)),
         ];
     }
 }

@@ -1,9 +1,7 @@
-import { fetchCompressedJson } from '@/lib/compressedJson';
+import { index } from '@/routes/api/sovereignties';
 import type { TSovereignty } from '@/types/models';
 import type { MaybeRefOrGetter } from 'vue';
 import { computed, readonly, shallowRef, toValue } from 'vue';
-
-const sovereigntyUrl = '/static/sovereignty.json.gz';
 
 const sovereigntyMap = shallowRef<Record<number, TSovereignty> | null>(null);
 let loadPromise: Promise<Record<number, TSovereignty>> | null = null;
@@ -18,10 +16,17 @@ async function loadSovereigntyData(): Promise<Record<number, TSovereignty>> {
     }
 
     if (!loadPromise) {
-        loadPromise = fetchCompressedJson<Record<number, TSovereignty>>(sovereigntyUrl).then((data) => {
-            sovereigntyMap.value = data;
-            return data;
-        });
+        loadPromise = fetch(index.url(), { cache: 'force-cache' })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch sovereignty data: ${response.status}`);
+                }
+                return response.json() as Promise<Record<number, TSovereignty>>;
+            })
+            .then((data) => {
+                sovereigntyMap.value = data;
+                return data;
+            });
     }
 
     return loadPromise;
