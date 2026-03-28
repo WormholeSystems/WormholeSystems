@@ -3,7 +3,7 @@
     "type": "module",
     "scripts": {
         "build": "vue-tsc && vite build",
-        "build:ssr": "vite build && vite build --ssr",
+        "build:ssr": "vite build --ssr",
         "dev": "vite",
         "format": "prettier --write resources/",
         "format:check": "prettier --check resources/",
