@@ -19,10 +19,11 @@ final class SovereigntyController extends Controller
                 ->with(['alliance', 'corporation', 'faction'])
                 ->get();
 
-            return SovereigntyResource::collection($sovereignties)
-                ->collection
-                ->keyBy('id')
-                ->toArray();
+            return $sovereignties
+                ->mapWithKeys(fn (Sovereignty $sovereignty) => [
+                    $sovereignty->solarsystem_id => SovereigntyResource::make($sovereignty)->resolve(),
+                ])
+                ->all();
         });
 
         return response()
