@@ -12,6 +12,7 @@ use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use NicolasKion\Esi\DTO\Name;
 use NicolasKion\Esi\Enums\NameCategory;
@@ -67,6 +68,8 @@ final class GetSovereignties implements ShouldQueue
                 Log::info(sprintf('Failed to update sovereignty for system %d: %s', $sovereignty->system_id, $e->getMessage()));
             }
         }
+
+        Cache::forget('sovereignty');
     }
 
     private function getNamesForMissingEntities(Esi $esi, Collection $missing_ids): void

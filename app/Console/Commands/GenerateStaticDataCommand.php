@@ -7,13 +7,9 @@ namespace App\Console\Commands;
 use App\Utilities\CCPRounding;
 use Closure;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Concurrency;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use JsonException;
-use NicolasKion\Esi\Enums\NameCategory;
-use NicolasKion\Esi\Esi;
-use NicolasKion\Esi\Facades\Esi as EsiFacade;
 use NicolasKion\SDE\Data\Dto\ConstellationDto;
 use NicolasKion\SDE\Data\Dto\Position2dDto;
 use NicolasKion\SDE\Data\Dto\RegionDto;
@@ -28,22 +24,18 @@ use RuntimeException;
 use Symfony\Component\Console\Helper\ProgressIndicator;
 use Throwable;
 
-use function array_chunk;
 use function array_filter;
 use function array_flip;
 use function array_map;
 use function array_merge;
-use function array_unique;
 use function array_values;
 use function collect;
 use function explode;
 use function file_get_contents;
 use function hrtime;
 use function in_array;
-use function is_array;
 use function is_string;
 use function iterator_to_array;
-use function ksort;
 use function max;
 use function mb_trim;
 use function memory_get_peak_usage;
@@ -61,9 +53,7 @@ final class GenerateStaticDataCommand extends Command
 
     private const int CORPORATION_DED = 1000137;
 
-    private const int ESI_TICKER_CONCURRENCY_CHUNK_SIZE = 10;
-
-    protected $signature = 'generate:static-data {--skip-sovereignty}';
+    protected $signature = 'generate:static-data';
 
     protected $description = 'Generate static data files for client-side routing';
 
@@ -77,9 +67,6 @@ final class GenerateStaticDataCommand extends Command
 
         $resourcesPath = resource_path('static');
         File::ensureDirectoryExists($resourcesPath);
-
-        $storagePath = storage_path('app/static');
-        File::ensureDirectoryExists($storagePath);
 
         $data = $this->profileStep('Load source datasets', function (): array {
             $regionsById = $this->loadRegions();
@@ -167,20 +154,6 @@ final class GenerateStaticDataCommand extends Command
 
             return true;
         });
-
-        if (! $this->option('skip-sovereignty')) {
-            $this->profileStep('Write sovereignty', function () use ($storagePath): bool {
-                $this->writeCompressedJson(
-                    "$storagePath/sovereignty.json.gz",
-                    $this->fetchSovereigntyFromEsi(app(Esi::class)),
-                );
-
-                return true;
-            });
-            $this->info("✓ Sovereignty data written to $storagePath");
-        } else {
-            $this->warn('Skipping sovereignty generation (--skip-sovereignty).');
-        }
 
         $this->info("✓ Static data written to $resourcesPath");
 
@@ -642,280 +615,6 @@ final class GenerateStaticDataCommand extends Command
         return $connections;
     }
 
-    /**
-     * @return array<int, array{id: int, alliance: ?array{id: int, name: string, ticker: string}, corporation: ?array{id: int, name: string, ticker: string}, faction: ?array{id: int, name: string}}>
-     */
-    private function fetchSovereigntyFromEsi(Esi $esi): array
-    {
-        $result = $esi->getSovereignty();
-
-        if ($result->failed()) {
-            $this->warn('Failed to fetch sovereignty from ESI, writing empty data set.');
-
-            return [];
-        }
-
-        if (! is_array($result->data)) {
-            return [];
-        }
-
-        $sovereignties = collect($result->data);
-
-        $allianceIds = $sovereignties->pluck('alliance_id')->filter()->unique()->values()->all();
-        $corporationIds = $sovereignties->pluck('corporation_id')->filter()->unique()->values()->all();
-        $factionIds = $sovereignties->pluck('faction_id')->filter()->unique()->values()->all();
-
-        $namesById = $this->fetchNamesById($esi, array_values(array_unique([...$allianceIds, ...$corporationIds, ...$factionIds])));
-        $allianceTickersById = $this->fetchAllianceTickersById($esi, $allianceIds);
-        $corporationTickersById = $this->fetchCorporationTickersById($esi, $corporationIds);
-
-        $payload = [];
-
-        foreach ($sovereignties as $sovereignty) {
-            $payload[$sovereignty->system_id] = [
-                'id' => $sovereignty->system_id,
-                'alliance' => $this->formatSovereigntyAlliance($sovereignty->alliance_id, $namesById, $allianceTickersById),
-                'corporation' => $this->formatSovereigntyCorporation($sovereignty->corporation_id, $namesById, $corporationTickersById),
-                'faction' => $this->formatSovereigntyFaction($sovereignty->faction_id, $namesById),
-            ];
-        }
-
-        ksort($payload);
-
-        return $payload;
-    }
-
-    /**
-     * @param  int[]  $ids
-     * @return array<int, string>
-     */
-    private function fetchNamesById(Esi $esi, array $ids): array
-    {
-        if ($ids === []) {
-            return [];
-        }
-
-        $namesById = [];
-
-        foreach (array_chunk($ids, 1000) as $chunk) {
-            $result = $esi->getNames($chunk);
-
-            if ($result->failed()) {
-                continue;
-            }
-
-            foreach ($result->data as $name) {
-                if (! in_array($name->category, [NameCategory::Alliance, NameCategory::Corporation, NameCategory::Faction], true)) {
-                    continue;
-                }
-
-                $namesById[$name->id] = $name->name;
-            }
-        }
-
-        return $namesById;
-    }
-
-    /**
-     * @param  int[]  $allianceIds
-     * @return array<int, string>
-     */
-    private function fetchAllianceTickersById(Esi $esi, array $allianceIds): array
-    {
-        $tickersById = $this->fetchAllianceTickersConcurrently($allianceIds);
-
-        foreach ($allianceIds as $allianceId) {
-            if (($tickersById[$allianceId] ?? '') !== '') {
-                continue;
-            }
-
-            $result = $esi->getAlliance($allianceId);
-            if ($result->failed()) {
-                continue;
-            }
-            if ($result->data === null) {
-                continue;
-            }
-
-            $ticker = $result->data->ticker ?? '';
-            if ($ticker !== '') {
-                $tickersById[$allianceId] = $ticker;
-            }
-        }
-
-        return $tickersById;
-    }
-
-    /**
-     * @param  int[]  $corporationIds
-     * @return array<int, string>
-     */
-    private function fetchCorporationTickersById(Esi $esi, array $corporationIds): array
-    {
-        $tickersById = $this->fetchCorporationTickersConcurrently($corporationIds);
-
-        foreach ($corporationIds as $corporationId) {
-            if (($tickersById[$corporationId] ?? '') !== '') {
-                continue;
-            }
-
-            $result = $esi->getCorporation($corporationId);
-            if ($result->failed()) {
-                continue;
-            }
-            if ($result->data === null) {
-                continue;
-            }
-
-            $ticker = $result->data->ticker ?? '';
-            if ($ticker !== '') {
-                $tickersById[$corporationId] = $ticker;
-            }
-        }
-
-        return $tickersById;
-    }
-
-    /**
-     * @param  int[]  $allianceIds
-     * @return array<int, string>
-     */
-    private function fetchAllianceTickersConcurrently(array $allianceIds): array
-    {
-        if ($allianceIds === []) {
-            return [];
-        }
-
-        if (app()->runningUnitTests()) {
-            return [];
-        }
-
-        $tickersById = [];
-
-        foreach (array_chunk($allianceIds, self::ESI_TICKER_CONCURRENCY_CHUNK_SIZE) as $chunk) {
-            $tasks = [];
-
-            foreach ($chunk as $id) {
-                $tasks[] = static function () use ($id): ?array {
-                    $result = EsiFacade::getAlliance($id);
-
-                    if ($result->failed()) {
-                        return null;
-                    }
-
-                    return [
-                        'id' => $id,
-                        'ticker' => $result->data->ticker ?? null,
-                    ];
-                };
-            }
-
-            $results = Concurrency::run($tasks);
-
-            foreach ($results as $tickerResult) {
-                $tickersById[(int) $tickerResult['id']] = $tickerResult['ticker'];
-            }
-        }
-
-        return $tickersById;
-    }
-
-    /**
-     * @param  int[]  $corporationIds
-     * @return array<int, string>
-     */
-    private function fetchCorporationTickersConcurrently(array $corporationIds): array
-    {
-        if ($corporationIds === []) {
-            return [];
-        }
-
-        if (app()->runningUnitTests()) {
-            return [];
-        }
-
-        $tickersById = [];
-
-        foreach (array_chunk($corporationIds, self::ESI_TICKER_CONCURRENCY_CHUNK_SIZE) as $chunk) {
-            $tasks = [];
-
-            foreach ($chunk as $id) {
-                $tasks[] = static function () use ($id): ?array {
-                    $result = EsiFacade::getCorporation($id);
-
-                    if ($result->failed()) {
-                        return null;
-                    }
-
-                    return [
-                        'id' => $id,
-                        'ticker' => $result->data->ticker ?? null,
-                    ];
-                };
-            }
-
-            $results = Concurrency::run($tasks);
-
-            foreach ($results as $tickerResult) {
-                $tickersById[(int) $tickerResult['id']] = $tickerResult['ticker'];
-            }
-        }
-
-        return $tickersById;
-    }
-
-    /**
-     * @param  array<int, string>  $namesById
-     * @param  array<int, string>  $tickersById
-     * @return array{id: int, name: string, ticker: string}|null
-     */
-    private function formatSovereigntyAlliance(?int $allianceId, array $namesById, array $tickersById): ?array
-    {
-        if ($allianceId === null) {
-            return null;
-        }
-
-        return [
-            'id' => $allianceId,
-            'name' => $namesById[$allianceId] ?? '',
-            'ticker' => $tickersById[$allianceId] ?? '',
-        ];
-    }
-
-    /**
-     * @param  array<int, string>  $namesById
-     * @param  array<int, string>  $tickersById
-     * @return array{id: int, name: string, ticker: string}|null
-     */
-    private function formatSovereigntyCorporation(?int $corporationId, array $namesById, array $tickersById): ?array
-    {
-        if ($corporationId === null) {
-            return null;
-        }
-
-        return [
-            'id' => $corporationId,
-            'name' => $namesById[$corporationId] ?? '',
-            'ticker' => $tickersById[$corporationId] ?? '',
-        ];
-    }
-
-    /**
-     * @param  array<int, string>  $namesById
-     * @return array{id: int, name: string}|null
-     */
-    private function formatSovereigntyFaction(?int $factionId, array $namesById): ?array
-    {
-        if ($factionId === null) {
-            return null;
-        }
-
-        return [
-            'id' => $factionId,
-            'name' => $namesById[$factionId] ?? '',
-        ];
-    }
-
     private function sdePath(string $file): string
     {
         $path = Storage::path("sde/$file");
@@ -941,21 +640,6 @@ final class GenerateStaticDataCommand extends Command
         }
 
         return $contents;
-    }
-
-    /**
-     * @throws JsonException
-     */
-    private function writeCompressedJson(string $path, array $data): void
-    {
-        $encoded = json_encode($data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
-        $compressed = gzencode($encoded, 9);
-
-        if ($compressed === false) {
-            throw new RuntimeException("Failed to compress JSON for $path.");
-        }
-
-        File::put($path, $compressed);
     }
 
     /**

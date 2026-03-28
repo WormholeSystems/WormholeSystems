@@ -29,7 +29,6 @@ use App\Http\Controllers\PreferredCharacterController;
 use App\Http\Controllers\RallyPointController;
 use App\Http\Controllers\ScopeController;
 use App\Http\Controllers\SignatureController;
-use App\Http\Controllers\StaticDataController;
 use App\Http\Controllers\StatisticsController;
 use App\Http\Controllers\TokenManagementController;
 use App\Http\Controllers\TrackingController;
@@ -48,8 +47,6 @@ Route::get('eve/callback', [EveController::class, 'store'])->name('eve.store');
 Route::middleware('auth')->group(function () {
 
     Route::get('maps/{map}/ping', [PingController::class, 'show'])->name('maps.ping');
-    Route::get('static/sovereignty.json.gz', [StaticDataController::class, 'sovereignty'])->name('static.sovereignty');
-
     Route::resource('maps', MapController::class)->except(['show'])->names([
         'index' => 'home',
         'create' => 'maps.create',
