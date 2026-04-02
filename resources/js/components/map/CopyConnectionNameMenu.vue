@@ -43,8 +43,10 @@ function formatSystemName(system: typeof map_connection.source, signature: TTail
         return parts.join(' ');
     }
 
-    // For k-space systems: "class_string sig_id solarsystem_name region_name"
-    const parts = [class_string];
+    // For k-space systems: "alias class_string sig_id solarsystem_name region_name"
+    const parts = [];
+    if (system.alias) parts.push(system.alias);
+    parts.push(class_string);
     if (sig_string) parts.push(sig_string);
     parts.push(system.solarsystem.name);
     parts.push(system.solarsystem.region?.name);
