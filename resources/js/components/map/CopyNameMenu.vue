@@ -17,7 +17,12 @@ const class_string = computed(() => {
 });
 
 const default_name = computed(() => {
-    return `${class_string.value} ${map_solarsystem.solarsystem.name} ${map_solarsystem.solarsystem?.region?.name}`;
+    const parts = [];
+    if (map_solarsystem.alias) parts.push(map_solarsystem.alias);
+    parts.push(class_string.value);
+    parts.push(map_solarsystem.solarsystem.name);
+    parts.push(map_solarsystem.solarsystem?.region?.name);
+    return parts.join(' ');
 });
 
 function copyNameToClipboard(value?: string) {
