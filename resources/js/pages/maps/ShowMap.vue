@@ -5,6 +5,7 @@ import MapCharacters from '@/components/characters/MapCharacters.vue';
 import EveScoutConnections from '@/components/eve-scout/EveScoutConnections.vue';
 import LayoutEditorToolbar from '@/components/layout/LayoutEditorToolbar.vue';
 import MapKillmails from '@/components/map-killmails/MapKillmails.vue';
+import MapSkyhooks from '@/components/map-skyhooks/MapSkyhooks.vue';
 import ActiveCharacterWarning from '@/components/map/ActiveCharacterWarning.vue';
 import MapComponent from '@/components/map/MapComponent.vue';
 import MapIntroduction from '@/components/map/MapIntroduction.vue';
@@ -42,6 +43,7 @@ const {
     active_character_has_access,
     eve_scout_connections,
     threat_analysis,
+    map_skyhooks,
 } = defineProps<TShowMapProps>();
 
 const { canManageAccess, isViewer } = usePermission();
@@ -314,6 +316,16 @@ const handleResizeEnd = () => {
                 v-bind="getLayoutItem('threat-analysis').value"
             >
                 <ThreatAnalysis :threat_analysis="threat_analysis" />
+            </GridItem>
+
+            <!-- Raidable Skyhooks Section -->
+            <GridItem
+                v-if="!layout.isCardHidden('skyhooks')"
+                @resize="handleResizeStart"
+                @resized="handleResizeEnd"
+                v-bind="getLayoutItem('skyhooks').value"
+            >
+                <MapSkyhooks :map_skyhooks="map_skyhooks" />
             </GridItem>
         </GridLayout>
         <!-- Layout Edit Controls -->

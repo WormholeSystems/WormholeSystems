@@ -65,6 +65,16 @@ export type TShowMapProps = {
     tracking_target?: TTrackingTarget | null;
     eve_scout_connections?: TEveScoutConnection[];
     threat_analysis?: TThreatAnalysis | null;
+    map_skyhooks?: TRaidableSkyhook[];
+};
+
+export type TRaidableSkyhook = {
+    planet_id: number;
+    solarsystem_id: number;
+    planet_name: string | null;
+    planet_type: 'lava' | 'ice' | 'other' | null;
+    theft_vulnerability_start: string;
+    theft_vulnerability_end: string;
 };
 
 export type TTrackingTarget = {
