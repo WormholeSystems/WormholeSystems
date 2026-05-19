@@ -12,6 +12,7 @@ use App\Console\Commands\Killmails\GetKillmailsForLast90DaysCommand;
 use App\Console\Commands\Killmails\PurgeOldKillmailsCommand;
 use App\Console\Commands\MapAccess\PurgeExpiredMapAccessCommand;
 use App\Console\Commands\Signatures\DeleteOldSignaturesCommand;
+use App\Console\Commands\Skyhooks\GetRaidableSkyhooksCommand;
 use App\Console\Commands\Sovereignty\GetSovereigntiesCommand;
 use Illuminate\Queue\Console\PruneBatchesCommand;
 use Illuminate\Support\Facades\Schedule;
@@ -20,6 +21,7 @@ Schedule::command(GetServerStatusCommand::class)->runInBackground()->everyMinute
 Schedule::command(GetOnlineCharactersCommand::class)->runInBackground()->everyThirtySeconds()->withoutOverlapping(expiresAt: 60)->notDuringDowntime();
 Schedule::command(GetOnlineCharacterLocationsCommand::class)->runInBackground()->everyFiveSeconds()->withoutOverlapping(expiresAt: 60)->notDuringDowntime();
 Schedule::command(GetSovereigntiesCommand::class)->runInBackground()->daily()->at('15:00')->withoutOverlapping()->notDuringDowntime();
+Schedule::command(GetRaidableSkyhooksCommand::class)->runInBackground()->everyFiveMinutes()->withoutOverlapping()->notDuringDowntime();
 Schedule::command(GenerateStaticDataCommand::class)->runInBackground()->daily()->withoutOverlapping()->notDuringDowntime();
 Schedule::command(CheckConnectionAgeCommand::class)->runInBackground()->everyTenMinutes()->withoutOverlapping();
 Schedule::command(DeleteOldSignaturesCommand::class)->runInBackground()->everyTenMinutes()->withoutOverlapping();
