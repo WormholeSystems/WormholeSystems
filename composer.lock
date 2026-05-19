@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2afbbda7962e6b1ac262340501501eb2",
+    "content-hash": "61e752e25692b0ed80dccf3c8fb60a4a",
     "packages": [
         {
             "name": "brick/math",
@@ -3850,16 +3850,16 @@
         },
         {
             "name": "nicolaskion/eve",
-            "version": "v0.3.2",
+            "version": "v0.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/NicolasKion/Esi.git",
-                "reference": "9c1a334db35ada6c4a24375e2f8b08d3f39df2b9"
+                "reference": "f7852bb3d7e3aac5a2188ae52ac9d680b81590f9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/NicolasKion/Esi/zipball/9c1a334db35ada6c4a24375e2f8b08d3f39df2b9",
-                "reference": "9c1a334db35ada6c4a24375e2f8b08d3f39df2b9",
+                "url": "https://api.github.com/repos/NicolasKion/Esi/zipball/f7852bb3d7e3aac5a2188ae52ac9d680b81590f9",
+                "reference": "f7852bb3d7e3aac5a2188ae52ac9d680b81590f9",
                 "shasum": ""
             },
             "require": {
@@ -3917,7 +3917,7 @@
             ],
             "support": {
                 "issues": "https://github.com/NicolasKion/Esi/issues",
-                "source": "https://github.com/NicolasKion/Esi/tree/v0.3.2"
+                "source": "https://github.com/NicolasKion/Esi/tree/v0.4"
             },
             "funding": [
                 {
@@ -3925,7 +3925,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-05-19T19:29:47+00:00"
+            "time": "2026-05-19T20:03:44+00:00"
         },
         {
             "name": "nicolaskion/sde",
