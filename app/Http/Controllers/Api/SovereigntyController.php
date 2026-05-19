@@ -20,7 +20,7 @@ final class SovereigntyController extends Controller
                 ->get();
 
             return $sovereignties
-                ->mapWithKeys(fn (Sovereignty $sovereignty) => [
+                ->mapWithKeys(fn (Sovereignty $sovereignty): array => [
                     $sovereignty->solarsystem_id => SovereigntyResource::make($sovereignty)->resolve(),
                 ])
                 ->all();
