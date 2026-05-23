@@ -265,7 +265,7 @@ function handleSort(column: SkyhookSortColumn) {
                                         <ArrowDown v-if="sortColumn === 'jumps' && sortDirection === 'desc'" class="size-3" />
                                     </button>
                                     <button @click="handleSort('status')" class="flex items-center justify-end gap-1 hover:text-foreground">
-                                        <span>Status</span>
+                                        <span>Timer</span>
                                         <ArrowUp v-if="sortColumn === 'status' && sortDirection === 'asc'" class="size-3" />
                                         <ArrowDown v-if="sortColumn === 'status' && sortDirection === 'desc'" class="size-3" />
                                     </button>
