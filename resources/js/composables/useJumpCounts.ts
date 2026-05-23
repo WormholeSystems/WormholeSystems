@@ -58,7 +58,7 @@ export function useJumpCounts(params: UseJumpCountsParams) {
                 const jumpsMap = new Map<number, number>();
                 const routesMap = new Map<number, RouteResult>();
                 for (const targetId of targets) {
-                    const result = findRoute(settings, fromId, targetId, dynamicConnections, eveScoutConnections, ignored);
+                    const result = await findRoute(settings, fromId, targetId, dynamicConnections, eveScoutConnections, ignored);
                     if (result.route.length === 0) {
                         continue;
                     }
