@@ -46,7 +46,7 @@ export function useRallyRoute() {
 
                 const { dynamicConnections, eveScoutConnections } = getConnections();
 
-                const result = findRoute(routingSettings.value, homeId, rallyId, dynamicConnections, eveScoutConnections, []);
+                const result = await findRoute(routingSettings.value, homeId, rallyId, dynamicConnections, eveScoutConnections, []);
 
                 rallyRoute.value = result.route;
             },

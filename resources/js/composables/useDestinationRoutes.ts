@@ -53,7 +53,7 @@ export function useDestinationRoutes(params: UseDestinationRoutesParams) {
 
                 const routeMap = new Map<number, RouteResult>();
                 for (const destination of destinations) {
-                    const result = findRoute(settings, fromId, destination.solarsystem_id, dynamicConnections, eveScoutConnections, ignored);
+                    const result = await findRoute(settings, fromId, destination.solarsystem_id, dynamicConnections, eveScoutConnections, ignored);
                     if (result.route.length === 0) {
                         continue;
                     }

@@ -54,7 +54,7 @@ export function useRouteCalculator(params: UseRouteCalculatorParams) {
                 await initializeRouting();
 
                 const { dynamicConnections, eveScoutConnections } = getConnections();
-                const result = findRoute({ ...routingSettings.value }, from, to, dynamicConnections, eveScoutConnections, [
+                const result = await findRoute({ ...routingSettings.value }, from, to, dynamicConnections, eveScoutConnections, [
                     ...(toValue(params.ignoredSystems) ?? []),
                 ]);
 

@@ -53,7 +53,7 @@ export function useClosestSystemsCalculator(params: UseClosestSystemsParams) {
                 await initializeRouting();
 
                 const { dynamicConnections, eveScoutConnections } = getConnections();
-                const closestResults = findClosestSystems(
+                const closestResults = await findClosestSystems(
                     { ...routingSettings.value },
                     from,
                     condition,
