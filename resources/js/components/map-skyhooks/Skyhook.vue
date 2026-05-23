@@ -2,13 +2,14 @@
 import DestinationContextMenu from '@/components/autopilot/DestinationContextMenu.vue';
 import RoutePopover from '@/components/autopilot/RoutePopover.vue';
 import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMapSolarsystems } from '@/composables/map';
 import { useStaticSolarsystems } from '@/composables/useStaticSolarsystems';
 import type { TRaidableSkyhook, TResolvedSolarsystem } from '@/pages/maps';
 import { UTCDate } from '@date-fns/utc';
 import { vElementHover } from '@vueuse/components';
 import { useNow } from '@vueuse/core';
-import { differenceInMinutes } from 'date-fns';
+import { differenceInMinutes, format } from 'date-fns';
 import { computed } from 'vue';
 
 const { skyhook, jumps, route } = defineProps<{
@@ -48,15 +49,11 @@ function formatRelative(target: Date): string {
     return `${days}d ${hours % 24}h`;
 }
 
-const statusLabel = computed(() => {
-    if (hasEnded.value) return `ended ${formatRelative(end.value)} ago`;
-    if (isVulnerable.value) return `ends in ${formatRelative(end.value)}`;
-    return `opens in ${formatRelative(start.value)}`;
-});
-
 const fifteen_minutes_in_ms = 15 * 60 * 1000;
 
 const isAboutToEnd = computed(() => isVulnerable.value && end.value.getTime() - now.value.getTime() < fifteen_minutes_in_ms);
+
+const statusTime = computed(() => formatRelative(hasEnded.value || isVulnerable.value ? end.value : start.value));
 
 const statusColor = computed(() => {
     if (hasEnded.value) return 'bg-muted-foreground/40';
@@ -65,7 +62,20 @@ const statusColor = computed(() => {
     return 'bg-emerald-400 animate-pulse';
 });
 
-const statusTextClass = computed(() => (isAboutToEnd.value ? 'text-red-400 animate-pulse' : 'text-muted-foreground/80'));
+const statusTimeClass = computed(() => {
+    if (hasEnded.value) return 'text-muted-foreground/60';
+    if (!isVulnerable.value) return 'text-amber-400';
+    if (isAboutToEnd.value) return 'text-red-400 animate-pulse';
+    return 'text-emerald-400';
+});
+
+const tooltipHeadline = computed(() => {
+    if (hasEnded.value) return `Closed ${statusTime.value} ago`;
+    if (isVulnerable.value) return `Raidable for ${statusTime.value}`;
+    return `Raidable in ${statusTime.value}`;
+});
+
+const tooltipWindow = computed(() => `${format(start.value, 'HH:mm')} – ${format(end.value, 'HH:mm')} UTC`);
 
 const planetLabel = computed(() => skyhook.planet_name ?? `Planet ${skyhook.planet_id}`);
 
@@ -98,7 +108,19 @@ const hasRoute = computed(() => route !== null && route.length > 1);
                 }}</span>
             </RoutePopover>
             <span v-else class="text-right font-mono text-[10px] tracking-wider uppercase" :class="jumpsClass">{{ jumpsLabel }}</span>
-            <span class="text-right font-mono text-[10px] tracking-wider uppercase" :class="statusTextClass">{{ statusLabel }}</span>
+            <Tooltip>
+                <TooltipTrigger as-child>
+                    <span
+                        class="cursor-help justify-self-end font-mono text-[10px] font-semibold tracking-wider uppercase"
+                        :class="statusTimeClass"
+                        >{{ statusTime }}</span
+                    >
+                </TooltipTrigger>
+                <TooltipContent class="flex flex-col gap-0.5">
+                    <span>{{ tooltipHeadline }}</span>
+                    <span class="font-mono text-[10px] text-muted-foreground">{{ tooltipWindow }}</span>
+                </TooltipContent>
+            </Tooltip>
         </div>
     </DestinationContextMenu>
 </template>
