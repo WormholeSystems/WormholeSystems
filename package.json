@@ -2,9 +2,10 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "vue-tsc && vite build",
+        "build": "vue-tsc && npm run build:worker && vite build",
         "build:ssr": "vite build --ssr",
-        "dev": "vite",
+        "build:worker": "vite build -c vite.config.worker.ts",
+        "dev": "concurrently -k -n vite,worker -c green,magenta \"vite\" \"vite build -c vite.config.worker.ts --watch\"",
         "format": "prettier --write resources/",
         "format:check": "prettier --check resources/",
         "lint": "eslint . --fix"
@@ -42,6 +43,7 @@
         "@vueuse/math": "^14.2.1",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
+        "comlink": "^4.4.2",
         "concurrently": "^9.2.1",
         "date-fns": "^4.1.0",
         "grid-layout-plus": "^1.1.1",
