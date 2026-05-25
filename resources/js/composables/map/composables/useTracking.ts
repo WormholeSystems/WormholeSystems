@@ -3,6 +3,7 @@ import { getSecurityClass } from '@/composables/map/utils/security';
 import { useActiveMapCharacter } from '@/composables/useActiveMapCharacter';
 import { useMapUserSettings } from '@/composables/useMapUserSettings';
 import { useShowMap } from '@/composables/useShowMap';
+import { useStaticData } from '@/composables/useStaticData';
 import { useTrackingSystems } from '@/composables/useTrackingSystems';
 import { TSolarsystem } from '@/pages/maps';
 import { TSignature, TSolarsystemClass } from '@/types/models';
@@ -12,6 +13,7 @@ export function useTracking() {
     const character = useActiveMapCharacter();
     const map_user_settings = useMapUserSettings();
     const page = useShowMap();
+    const { staticData } = useStaticData();
 
     const is_tracking = computed(() => map_user_settings.value?.is_tracking && character.value && map_user_settings.value?.tracking_allowed);
     const is_tracking_allowed = computed(() => map_user_settings.value.tracking_allowed);
@@ -57,6 +59,11 @@ export function useTracking() {
         update(old_map_solarsystem.id, new_solarsystem_id, performJump);
     }
 
+    function isGateConnected(origin_solarsystem_id: number | null | undefined, target_solarsystem_id: number | null | undefined): boolean {
+        if (!origin_solarsystem_id || !target_solarsystem_id) return false;
+        return staticData.value?.connections[origin_solarsystem_id]?.includes(target_solarsystem_id) ?? false;
+    }
+
     function sortSignatures(a: TSignature, b: TSignature) {
         if (!a.signature_id || !b.signature_id) return 0;
         if (a.map_connection_id && !b.map_connection_id) return 1;
@@ -80,7 +87,8 @@ export function useTracking() {
 
     function performJump() {
         if (existing_connection.value?.map_connection_id) return;
-        if (!signatures.value?.length || !map_user_settings.value.prompt_for_signature_enabled) {
+        const gate_connected = isGateConnected(origin_map_solarsystem.value?.solarsystem_id, target_solarsystem.value?.id);
+        if (gate_connected || !signatures.value?.length || !map_user_settings.value.prompt_for_signature_enabled) {
             return createTracking(origin_map_solarsystem.value!.id, target_solarsystem.value!.id);
         }
 
