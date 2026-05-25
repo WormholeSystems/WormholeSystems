@@ -13,10 +13,12 @@ use App\Data\TrackingData;
 use App\Enums\LifetimeStatus;
 use App\Enums\MassStatus;
 use App\Enums\ShipSize;
+use App\Enums\SignatureCategory as SignatureCategoryEnum;
 use App\Models\Map;
 use App\Models\MapConnection;
 use App\Models\MapSolarsystem;
 use App\Models\Signature;
+use App\Models\SignatureCategory;
 use App\Models\Solarsystem;
 use App\Traits\PositionsMapSolarsystems;
 use App\Utilities\WormholeConnectionClassifier;
@@ -116,10 +118,14 @@ final readonly class StoreTrackingAction
 
             // Link the signature to the connection if provided
             if ($data->signature_id) {
+                $signature_update = ['map_connection_id' => $connection->id];
+
+                if ($signature instanceof Signature && $signature->signature_category_id === null) {
+                    $signature_update['signature_category_id'] = $this->getWormholeCategoryId();
+                }
+
                 Signature::query()->where('id', $data->signature_id)
-                    ->update([
-                        'map_connection_id' => $connection->id,
-                    ]);
+                    ->update($signature_update);
             }
 
         }, 10);
@@ -255,9 +261,20 @@ final readonly class StoreTrackingAction
             return;
         }
 
-        $this->updateSignatureAction->handle($signature, SignatureData::from([
-            'map_connection_id' => $connection->id,
-        ]));
+        $update_payload = ['map_connection_id' => $connection->id];
+
+        if ($signature->signature_category_id === null) {
+            $update_payload['signature_category_id'] = $this->getWormholeCategoryId();
+        }
+
+        $this->updateSignatureAction->handle($signature, SignatureData::from($update_payload));
+    }
+
+    private function getWormholeCategoryId(): ?int
+    {
+        return SignatureCategory::query()
+            ->where('code', SignatureCategoryEnum::Wormhole)
+            ->value('id');
     }
 
     private function getMassStatusForSignature(?Signature $signature): MassStatus
