@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Features;
 
+use App\Enums\SignatureCategory;
 use App\Http\Resources\MapSolarsystemResource;
 use App\Models\Map;
 use Illuminate\Database\Eloquent\Builder;
@@ -44,7 +45,9 @@ final readonly class MapTrackingFeature implements ProvidesInertiaProperties
             ->where('map_solarsystems.id', $this->origin_map_solarsystem_id)
             ->with([
                 'signatures' => fn ($query) => $query
-                    ->whereHas('signatureCategory', fn (Builder $q) => $q->where('name', 'Wormhole'))
+                    ->where(fn (Builder $q) => $q
+                        ->whereRelation('signatureCategory', 'code', SignatureCategory::Wormhole)
+                        ->orWhereNull('signature_category_id'))
                     ->with(['signatureType', 'signatureCategory', 'wormhole', 'mapConnection']),
             ])
             ->withCount('signatures', 'wormholeSignatures', 'mapConnections')
