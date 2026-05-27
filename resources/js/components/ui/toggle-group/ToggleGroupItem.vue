@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import type { VariantProps } from 'class-variance-authority'
-import { reactiveOmit } from '@vueuse/core'
-import { ToggleGroupItem, type ToggleGroupItemProps, useForwardProps } from 'reka-ui'
-import { type HTMLAttributes, inject } from 'vue'
-import { cn } from '@/lib/utils'
-import { toggleVariants } from '@/components/ui/toggle'
+import type { VariantProps } from 'class-variance-authority';
+import { reactiveOmit } from '@vueuse/core';
+import { ToggleGroupItem, type ToggleGroupItemProps, useForwardProps } from 'reka-ui';
+import { type HTMLAttributes, inject } from 'vue';
+import { cn } from '@/lib/utils';
+import { toggleVariants } from '@/components/ui/toggle';
 
 type ToggleGroupVariants = VariantProps<typeof toggleVariants>
 
@@ -32,7 +32,7 @@ const forwardedProps = useForwardProps(delegatedProps)
         variant: context?.variant || variant,
         size: context?.size || size,
       }),
-      'min-w-0 flex-1 shrink-0 rounded-none shadow-none first:rounded-l-md last:rounded-r-md focus:z-10 focus-visible:z-10 data-[variant=outline]:border-l-0 data-[variant=outline]:first:border-l',
+      'min-w-0 flex-1 size-6 shrink-0 rounded-none shadow-none first:rounded-l-md last:rounded-r-md focus:z-10 focus-visible:z-10 data-[variant=outline]:border-l-0 data-[variant=outline]:first:border-l bg-neutral-100 data-active:bg-white dark:data-active:bg-neutral-900 dark:bg-neutral-950',
       props.class)"
   >
     <slot v-bind="slotProps" />
