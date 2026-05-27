@@ -198,7 +198,7 @@ function handleSort(column: SkyhookSortColumn) {
                     <Tooltip>
                         <TooltipTrigger as-child>
                             <ToggleGroupItem value="upcoming" aria-label="Show upcoming">
-                                <span class="size-2 rounded-full bg-amber-400" />
+                                <span class="inline-block size-2 rounded-full bg-amber-400" />
                             </ToggleGroupItem>
                         </TooltipTrigger>
                         <TooltipContent>Upcoming</TooltipContent>
@@ -206,7 +206,7 @@ function handleSort(column: SkyhookSortColumn) {
                     <Tooltip>
                         <TooltipTrigger as-child>
                             <ToggleGroupItem value="active" aria-label="Show active">
-                                <span class="size-2 rounded-full bg-emerald-400" />
+                                <span class="inline-block size-2 rounded-full bg-emerald-400" />
                             </ToggleGroupItem>
                         </TooltipTrigger>
                         <TooltipContent>Currently raidable</TooltipContent>
@@ -214,7 +214,7 @@ function handleSort(column: SkyhookSortColumn) {
                     <Tooltip>
                         <TooltipTrigger as-child>
                             <ToggleGroupItem value="ending" aria-label="Show about to end">
-                                <span class="size-2 rounded-full bg-red-400" />
+                                <span class="inline-block size-2 rounded-full bg-red-400" />
                             </ToggleGroupItem>
                         </TooltipTrigger>
                         <TooltipContent>Ending soon (&lt; 15m)</TooltipContent>
