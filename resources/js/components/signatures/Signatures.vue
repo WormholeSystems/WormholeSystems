@@ -9,6 +9,7 @@ import MapPanel from '@/components/ui/map-panel/MapPanel.vue';
 import MapPanelContent from '@/components/ui/map-panel/MapPanelContent.vue';
 import MapPanelHeader from '@/components/ui/map-panel/MapPanelHeader.vue';
 import MapPanelHeaderActionButton from '@/components/ui/map-panel/MapPanelHeaderActionButton.vue';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { createSignature, useSignatures } from '@/composables/map';
 import { usePasteSignatures } from '@/composables/map/composables/usePasteSignatures';
@@ -16,8 +17,9 @@ import { useSortableSignatures } from '@/composables/map/composables/useSortedSi
 import { useActiveMapCharacter } from '@/composables/useActiveMapCharacter';
 import usePermission from '@/composables/usePermission';
 import type { TResolvedSelectedMapSolarsystem } from '@/pages/maps';
-import { ArrowDown, ArrowUp } from 'lucide-vue-next';
-import { computed } from 'vue';
+import { useLocalStorage } from '@vueuse/core';
+import { ArrowDown, ArrowUp, CircleHelp, Cloud, Database, Fan, Gem, Landmark, Shield, Swords } from 'lucide-vue-next';
+import { type Component, computed } from 'vue';
 
 const props = defineProps<{
     map_solarsystem: TResolvedSelectedMapSolarsystem | null;
@@ -40,7 +42,32 @@ const {
     cancelPaste,
 } = usePasteSignatures(() => props.map_solarsystem);
 
-const { sortPreferences, sorted, updateSortPreferences } = useSortableSignatures(signatures);
+const UNCATEGORIZED_FILTER = '__uncategorized__';
+
+const categoryFilterOptions: Array<{ value: string; icon: Component; color: string; label: string }> = [
+    { value: 'Wormhole', icon: Fan, color: 'text-sky-400', label: 'Wormhole' },
+    { value: 'Data Site', icon: Database, color: 'text-cyan-400', label: 'Data Site' },
+    { value: 'Relic Site', icon: Landmark, color: 'text-amber-400', label: 'Relic Site' },
+    { value: 'Ore Site', icon: Gem, color: 'text-yellow-400', label: 'Ore Site' },
+    { value: 'Gas Site', icon: Cloud, color: 'text-orange-400', label: 'Gas Site' },
+    { value: 'Combat Site', icon: Swords, color: 'text-green-400', label: 'Combat Site' },
+    { value: 'Homefront Operations', icon: Shield, color: 'text-rose-400', label: 'Homefront Operations' },
+    { value: UNCATEGORIZED_FILTER, icon: CircleHelp, color: 'text-muted-foreground', label: 'Uncategorized' },
+];
+
+const activeCategoryFilters = useLocalStorage<string[]>(
+    'signatures-category-filters',
+    categoryFilterOptions.map((option) => option.value),
+);
+
+const filteredSignatures = computed(() =>
+    signatures.value.filter((signature) => {
+        const key = signature.signature_category?.name ?? UNCATEGORIZED_FILTER;
+        return activeCategoryFilters.value.includes(key);
+    }),
+);
+
+const { sortPreferences, sorted, updateSortPreferences } = useSortableSignatures(filteredSignatures);
 
 const connected_connections = computed(() => {
     return connections.value.filter((connection) => {
@@ -84,38 +111,52 @@ function createNewSignature() {
     <MapPanel v-if="map_solarsystem" class="overflow-x-hidden">
         <MapPanelHeader>
             Signatures
-            <span v-if="signatures.length" class="ml-1 text-amber-400">{{ signatures.length }}</span>
-            <template #actions v-if="can_write">
-                <Tooltip v-if="pasted_signatures">
-                    <TooltipTrigger as-child>
-                        <MapPanelHeaderActionButton v-if="pasted_signatures" @click="pasted_signatures = null"> Unselect </MapPanelHeaderActionButton>
-                    </TooltipTrigger>
-                    <TooltipContent> Unselect signatures</TooltipContent>
-                </Tooltip>
-                <Tooltip v-if="deleted_signatures.length > 0">
-                    <TooltipTrigger as-child>
-                        <MapPanelHeaderActionButton @click="deleteMissingSignatures(true)" variant="destructive" size="icon">
-                            <TrashIcon />
-                        </MapPanelHeaderActionButton>
-                    </TooltipTrigger>
-                    <TooltipContent> Delete missing signatures and their connections </TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                    <TooltipTrigger as-child>
-                        <MapPanelHeaderActionButton @click="pasteSignatures" size="icon">
-                            <PasteIcon />
-                        </MapPanelHeaderActionButton>
-                    </TooltipTrigger>
-                    <TooltipContent> Paste signatures from clipboard (Ctrl/Cmd + V)</TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                    <TooltipTrigger as-child>
-                        <MapPanelHeaderActionButton @click="createNewSignature" size="icon">
-                            <PlusIcon />
-                        </MapPanelHeaderActionButton>
-                    </TooltipTrigger>
-                    <TooltipContent> Create new signature</TooltipContent>
-                </Tooltip>
+            <span v-if="filteredSignatures.length" class="ml-1 text-amber-400">{{ filteredSignatures.length }}</span>
+            <template #actions>
+                <ToggleGroup v-model="activeCategoryFilters" type="multiple" size="sm" variant="outline">
+                    <Tooltip v-for="option in categoryFilterOptions" :key="option.value">
+                        <TooltipTrigger as-child>
+                            <ToggleGroupItem :value="option.value" :aria-label="option.label">
+                                <component :is="option.icon" class="mx-1 size-3" :class="option.color" />
+                            </ToggleGroupItem>
+                        </TooltipTrigger>
+                        <TooltipContent>{{ option.label }}</TooltipContent>
+                    </Tooltip>
+                </ToggleGroup>
+                <template v-if="can_write">
+                    <Tooltip v-if="pasted_signatures">
+                        <TooltipTrigger as-child>
+                            <MapPanelHeaderActionButton v-if="pasted_signatures" @click="pasted_signatures = null">
+                                Unselect
+                            </MapPanelHeaderActionButton>
+                        </TooltipTrigger>
+                        <TooltipContent> Unselect signatures</TooltipContent>
+                    </Tooltip>
+                    <Tooltip v-if="deleted_signatures.length > 0">
+                        <TooltipTrigger as-child>
+                            <MapPanelHeaderActionButton @click="deleteMissingSignatures(true)" variant="destructive" size="icon">
+                                <TrashIcon />
+                            </MapPanelHeaderActionButton>
+                        </TooltipTrigger>
+                        <TooltipContent> Delete missing signatures and their connections </TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                        <TooltipTrigger as-child>
+                            <MapPanelHeaderActionButton @click="pasteSignatures" size="icon">
+                                <PasteIcon />
+                            </MapPanelHeaderActionButton>
+                        </TooltipTrigger>
+                        <TooltipContent> Paste signatures from clipboard (Ctrl/Cmd + V)</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                        <TooltipTrigger as-child>
+                            <MapPanelHeaderActionButton @click="createNewSignature" size="icon">
+                                <PlusIcon />
+                            </MapPanelHeaderActionButton>
+                        </TooltipTrigger>
+                        <TooltipContent> Create new signature</TooltipContent>
+                    </Tooltip>
+                </template>
             </template>
         </MapPanelHeader>
         <MapPanelContent>
