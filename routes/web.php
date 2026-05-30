@@ -15,6 +15,7 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MapAccessController;
 use App\Http\Controllers\MapConnectionController;
 use App\Http\Controllers\MapController;
+use App\Http\Controllers\MapIgnoredSolarsystemController;
 use App\Http\Controllers\MapPreferencesController;
 use App\Http\Controllers\MapRouteSolarsystemController;
 use App\Http\Controllers\MapRoutingSettingsController;
@@ -69,6 +70,8 @@ Route::middleware('auth')->group(function () {
         Route::post('access', [MapAccessController::class, 'store'])->name('access.store');
 
         Route::get('routing', [MapRoutingSettingsController::class, 'show'])->name('routing.show');
+
+        Route::get('mapping', [MapIgnoredSolarsystemController::class, 'show'])->name('mapping.show');
     });
 
     Route::delete('logout', [AuthController::class, 'destroy'])->name('logout');
@@ -107,6 +110,10 @@ Route::middleware('auth')->group(function () {
     Route::post('ignore-systems', [IgnoreListController::class, 'store'])->name('ignore-systems.store');
     Route::delete('ignore-system/{solarsystem_id}', [IgnoreListController::class, 'destroy'])->name('ignore-systems.destroy');
     Route::delete('ignore-systems', [IgnoreListController::class, 'destroyAll'])->name('ignore-systems.destroy-all');
+
+    Route::post('map-ignored-solarsystems', [MapIgnoredSolarsystemController::class, 'store'])->name('map-ignored-solarsystems.store');
+    Route::delete('maps/{map}/ignored-solarsystems/{solarsystem_id}', [MapIgnoredSolarsystemController::class, 'destroy'])->name('map-ignored-solarsystems.destroy');
+    Route::delete('maps/{map}/ignored-solarsystems', [MapIgnoredSolarsystemController::class, 'destroyAll'])->name('map-ignored-solarsystems.destroy-all');
 
     Route::delete('map-solarsystems/{mapSolarsystem}/signatures', [BulkSignatureController::class, 'destroy'])
         ->name('map-solarsystems.signatures.destroy');

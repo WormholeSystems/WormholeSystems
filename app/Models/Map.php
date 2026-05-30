@@ -32,6 +32,7 @@ use function sprintf;
  * @property-read Collection<int,MapConnection> $mapConnections
  * @property-read Collection<int,MapAccess> $mapAccessors
  * @property-read Collection<int,MapRouteSolarsystem> $mapRouteSolarsystems
+ * @property-read Collection<int,MapIgnoredSolarsystem> $mapIgnoredSolarsystems
  * @property-read null|MapUserSetting $mapUserSetting
  * @property-read MapAccess $mapOwner
  */
@@ -89,6 +90,16 @@ final class Map extends Model
     public function mapRouteSolarsystems(): HasMany
     {
         return $this->hasMany(MapRouteSolarsystem::class, 'map_id');
+    }
+
+    /**
+     * The solar systems that should never be auto-mapped on this map.
+     *
+     * @return HasMany<MapIgnoredSolarsystem, $this>
+     */
+    public function mapIgnoredSolarsystems(): HasMany
+    {
+        return $this->hasMany(MapIgnoredSolarsystem::class, 'map_id');
     }
 
     public function mapUserSettings(): HasMany
