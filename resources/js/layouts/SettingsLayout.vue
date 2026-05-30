@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import MapAccessController from '@/actions/App/Http/Controllers/MapAccessController';
+import MapIgnoredSolarsystemController from '@/actions/App/Http/Controllers/MapIgnoredSolarsystemController';
 import MapPreferencesController from '@/actions/App/Http/Controllers/MapPreferencesController';
 import MapRoutingSettingsController from '@/actions/App/Http/Controllers/MapRoutingSettingsController';
 import MapSettingsController from '@/actions/App/Http/Controllers/MapSettingsController';
@@ -9,7 +10,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import SeoHead from '@/layouts/SeoHead.vue';
 import { TMapSummary } from '@/pages/maps';
 import { Link, usePage } from '@inertiajs/vue3';
-import { ArrowLeft, Route, Settings, User, Users } from 'lucide-vue-next';
+import { ArrowLeft, Crosshair, Route, Settings, User, Users } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 interface Props {
@@ -41,7 +42,15 @@ const navigationItems = computed(() => {
         name: 'Preferences',
         href: MapPreferencesController.show(props.map.slug),
         icon: User,
-        description: 'Personal tracking and filters',
+        description: 'Killmails and display options',
+    });
+
+    // Mapping - Everyone
+    items.push({
+        name: 'Mapping',
+        href: MapIgnoredSolarsystemController.show(props.map.slug),
+        icon: Crosshair,
+        description: 'Tracking and ignored systems',
     });
 
     // Access - Manager+ only

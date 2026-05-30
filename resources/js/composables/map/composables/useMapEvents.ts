@@ -5,6 +5,7 @@ import {
     MapConnectionCreatedEvent,
     MapConnectionDeletedEvent,
     MapConnectionUpdatedEvent,
+    MapIgnoredSolarsystemsUpdatedEvent,
     MapRouteSolarsystemsUpdatedEvent,
     MapSolarsystemCreatedEvent,
     MapSolarsystemDeletedEvent,
@@ -57,6 +58,14 @@ export function useMapEvents(map: MaybeRefOrGetter<TMap>) {
         useEcho(getMapChannelName(map_ref.value.id), [MapRouteSolarsystemsUpdatedEvent], () => {
             router.reload({
                 only: ['map_navigation'],
+            });
+        }),
+    );
+
+    useOnClient(() =>
+        useEcho(map_channel_name.value, [MapIgnoredSolarsystemsUpdatedEvent], () => {
+            router.reload({
+                only: ['map_ignored_systems'],
             });
         }),
     );

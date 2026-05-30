@@ -28,4 +28,6 @@ export const SignatureDeletedEvent = getEventName('Signatures', 'SignatureDelete
 
 export const MapRouteSolarsystemsUpdatedEvent = getEventName('MapRouteSolarsystems', 'MapRouteSolarsystemsUpdatedEvent');
 
+export const MapIgnoredSolarsystemsUpdatedEvent = getEventName('MapIgnoredSolarsystems', 'MapIgnoredSolarsystemsUpdatedEvent');
+
 export const ServerStatusUpdatedEvent = getEventName('ServerStatusUpdatedEvent');
