@@ -1,6 +1,7 @@
 import { createMapSolarsystem, createTracking, map_solarsystems, updateMapUserSettings } from '@/composables/map';
 import { getSecurityClass } from '@/composables/map/utils/security';
 import { useActiveMapCharacter } from '@/composables/useActiveMapCharacter';
+import { useMapIgnoredSystems } from '@/composables/useMapIgnoredSystems';
 import { useMapUserSettings } from '@/composables/useMapUserSettings';
 import { useShowMap } from '@/composables/useShowMap';
 import { useStaticData } from '@/composables/useStaticData';
@@ -12,6 +13,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 export function useTracking() {
     const character = useActiveMapCharacter();
     const map_user_settings = useMapUserSettings();
+    const { isIgnored } = useMapIgnoredSystems();
     const page = useShowMap();
     const { staticData } = useStaticData();
 
@@ -53,6 +55,7 @@ export function useTracking() {
     });
 
     function handleSolarsystemJump(old_solarsystem_id: number | null, new_solarsystem_id: number) {
+        if (isIgnored(new_solarsystem_id)) return;
         const old_map_solarsystem = map_solarsystems.value.find((s) => s.solarsystem_id === old_solarsystem_id);
         if (!old_map_solarsystem) return;
         if (old_map_solarsystem.solarsystem_id === new_solarsystem_id) return;
@@ -106,6 +109,8 @@ export function useTracking() {
     function addCurrentSolarsystemIfNotOnMap() {
         const active_solarsystem_id = character.value?.status?.solarsystem_id;
         if (!active_solarsystem_id) return;
+
+        if (isIgnored(active_solarsystem_id)) return;
 
         if (isSolarsystemInMap(active_solarsystem_id)) return;
 
