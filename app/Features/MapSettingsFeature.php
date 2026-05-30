@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Features;
 
+use App\Models\MapIgnoredSolarsystem;
 use App\Models\MapUserSetting;
 use App\Models\User;
 use Illuminate\Support\Facades\Session;
@@ -47,6 +48,10 @@ final readonly class MapSettingsFeature implements ProvidesInertiaProperties
         return [
             'map_user_settings' => $this->settings->toResource(...),
             'ignored_systems' => fn () => Session::get('ignored_systems', []),
+            'map_ignored_systems' => fn (): array => MapIgnoredSolarsystem::query()
+                ->where('map_id', $this->map_id)
+                ->pluck('solarsystem_id')
+                ->all(),
         ];
     }
 
