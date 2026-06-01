@@ -24,6 +24,7 @@ use App\Http\Controllers\MapSelectionController;
 use App\Http\Controllers\MapSettingsController;
 use App\Http\Controllers\MapSolarsystemController;
 use App\Http\Controllers\MapUserSettingController;
+use App\Http\Controllers\MapWebhookController;
 use App\Http\Controllers\PasteSignatureController;
 use App\Http\Controllers\PingController;
 use App\Http\Controllers\PreferredCharacterController;
@@ -72,6 +73,8 @@ Route::middleware('auth')->group(function () {
         Route::get('routing', [MapRoutingSettingsController::class, 'show'])->name('routing.show');
 
         Route::get('mapping', [MapIgnoredSolarsystemController::class, 'show'])->name('mapping.show');
+
+        Route::get('webhooks', [MapWebhookController::class, 'show'])->name('webhooks.show');
     });
 
     Route::delete('logout', [AuthController::class, 'destroy'])->name('logout');
@@ -110,6 +113,8 @@ Route::middleware('auth')->group(function () {
     Route::post('ignore-systems', [IgnoreListController::class, 'store'])->name('ignore-systems.store');
     Route::delete('ignore-system/{solarsystem_id}', [IgnoreListController::class, 'destroy'])->name('ignore-systems.destroy');
     Route::delete('ignore-systems', [IgnoreListController::class, 'destroyAll'])->name('ignore-systems.destroy-all');
+
+    Route::resource('map-webhooks', MapWebhookController::class)->only(['store', 'update', 'destroy']);
 
     Route::post('map-ignored-solarsystems', [MapIgnoredSolarsystemController::class, 'store'])->name('map-ignored-solarsystems.store');
     Route::delete('maps/{map}/ignored-solarsystems/{solarsystem_id}', [MapIgnoredSolarsystemController::class, 'destroy'])->name('map-ignored-solarsystems.destroy');
