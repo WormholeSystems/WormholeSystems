@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\MapSolarsystem;
 
 use App\Events\MapSolarsystems\MapSolarsystemCreatedEvent;
+use App\Jobs\Webhooks\EvaluateMapWebhooksJob;
 use App\Models\Map;
 use App\Models\MapSolarsystem;
 
@@ -21,6 +22,8 @@ final class StoreMapSolarsystemAction
 
         broadcast(new MapSolarsystemCreatedEvent($map->id))
             ->toOthers();
+
+        EvaluateMapWebhooksJob::dispatch($map->id, $map_solarsystem->solarsystem_id)->afterCommit();
 
         return $map_solarsystem;
     }
