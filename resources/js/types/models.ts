@@ -237,6 +237,16 @@ export type TMapUserSetting = {
     show_threat_level: boolean;
 };
 
+export type TMapWebhook = {
+    id: number;
+    name: string;
+    type: 'proximity';
+    target_solarsystem_id: number;
+    max_jumps: number;
+    is_active: boolean;
+    last_fired_at: string | null;
+};
+
 export type TShipHistory = {
     id: number;
     character_id: number;
