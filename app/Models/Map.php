@@ -33,6 +33,7 @@ use function sprintf;
  * @property-read Collection<int,MapAccess> $mapAccessors
  * @property-read Collection<int,MapRouteSolarsystem> $mapRouteSolarsystems
  * @property-read Collection<int,MapIgnoredSolarsystem> $mapIgnoredSolarsystems
+ * @property-read Collection<int,MapWebhook> $mapWebhooks
  * @property-read null|MapUserSetting $mapUserSetting
  * @property-read MapAccess $mapOwner
  */
@@ -100,6 +101,16 @@ final class Map extends Model
     public function mapIgnoredSolarsystems(): HasMany
     {
         return $this->hasMany(MapIgnoredSolarsystem::class, 'map_id');
+    }
+
+    /**
+     * The Discord webhooks configured for this map.
+     *
+     * @return HasMany<MapWebhook, $this>
+     */
+    public function mapWebhooks(): HasMany
+    {
+        return $this->hasMany(MapWebhook::class, 'map_id');
     }
 
     public function mapUserSettings(): HasMany
