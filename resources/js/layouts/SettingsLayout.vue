@@ -4,13 +4,14 @@ import MapIgnoredSolarsystemController from '@/actions/App/Http/Controllers/MapI
 import MapPreferencesController from '@/actions/App/Http/Controllers/MapPreferencesController';
 import MapRoutingSettingsController from '@/actions/App/Http/Controllers/MapRoutingSettingsController';
 import MapSettingsController from '@/actions/App/Http/Controllers/MapSettingsController';
+import MapWebhookController from '@/actions/App/Http/Controllers/MapWebhookController';
 import { Button } from '@/components/ui/button';
 import usePermission from '@/composables/usePermission';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SeoHead from '@/layouts/SeoHead.vue';
 import { TMapSummary } from '@/pages/maps';
 import { Link, usePage } from '@inertiajs/vue3';
-import { ArrowLeft, Crosshair, Route, Settings, User, Users } from 'lucide-vue-next';
+import { ArrowLeft, Crosshair, Route, Settings, User, Users, Webhook } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 interface Props {
@@ -70,6 +71,16 @@ const navigationItems = computed(() => {
         icon: Route,
         description: 'Route calculation preferences',
     });
+
+    // Webhooks - Manager+ only
+    if (canManageAccess.value) {
+        items.push({
+            name: 'Webhooks',
+            href: MapWebhookController.show(props.map.slug),
+            icon: Webhook,
+            description: 'Known-space connection alerts',
+        });
+    }
 
     return items;
 });
