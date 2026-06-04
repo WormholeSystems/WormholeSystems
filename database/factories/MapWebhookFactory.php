@@ -37,4 +37,16 @@ final class MapWebhookFactory extends Factory
     {
         return $this->state(fn (): array => ['is_active' => false]);
     }
+
+    /**
+     * @param  array<int, array{subject: string, side: string, mode: string, ids: int[]}>  $filters
+     */
+    public function killmail(array $filters = []): self
+    {
+        return $this->state(fn (): array => [
+            'type' => MapWebhookType::Killmail,
+            'target_solarsystem_id' => null,
+            'filters' => $filters,
+        ]);
+    }
 }

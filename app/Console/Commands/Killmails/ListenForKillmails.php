@@ -10,6 +10,7 @@ use App\Enums\zKillboardCacheKey;
 use App\Events\Killmails\KillmailReceivedEvent;
 use App\Http\Integrations\zKillboard\DTO\R2Z2Killmail;
 use App\Http\Integrations\zKillboard\zKillboard;
+use App\Jobs\Webhooks\EvaluateKillmailWebhooksJob;
 use App\Models\Killmail;
 use App\Models\Map;
 use App\Models\Solarsystem;
@@ -83,9 +84,8 @@ final class ListenForKillmails extends AppCommand
 
             $this->processKillmail($killmail);
 
-            // Advance sequence and persist
+            // Advance sequence
             $sequence = $killmail->sequence_id + 1;
-            Cache::put(zKillboardCacheKey::LastSequence, $sequence);
 
             // Brief delay between active polls to respect rate limits
             usleep($this->poll_delay_ms * 1_000);
@@ -103,12 +103,6 @@ final class ListenForKillmails extends AppCommand
 
     private function getStartingSequence(): int
     {
-        $cached = Cache::get(zKillboardCacheKey::LastSequence);
-
-        if ($cached) {
-            return (int) $cached;
-        }
-
         // No cached sequence — start from the current latest
         try {
             $latest = $this->zKillboard->getLatestSequence();
@@ -147,6 +141,8 @@ final class ListenForKillmails extends AppCommand
         $this->ensureOrganisationExistsAction->ensureAllianceExists($killmail->getVictimAllianceId());
 
         $this->notifyMaps($stored);
+
+        EvaluateKillmailWebhooksJob::dispatch($stored->id);
     }
 
     private function notifyMaps(Killmail $killmail): void

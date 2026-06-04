@@ -4,20 +4,30 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Models\Killmail;
+use App\Models\MapSolarsystem;
 use App\Models\MapWebhook;
 use App\Models\Solarsystem;
+use App\Models\Type;
+use App\Services\Killmails\KillmailFilterDescriber;
+use App\Services\Killmails\KillmailFilterRule;
 use App\Services\Routing\ProximityResult;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-final class DiscordWebhookService
+final readonly class DiscordWebhookService
 {
     private const int COLOR_HIGHSEC = 0x2ECC71;
 
     private const int COLOR_LOWSEC = 0xE67E22;
 
     private const int COLOR_NULLSEC = 0xE74C3C;
+
+    public function __construct(
+        private KillmailFilterDescriber $filterDescriber,
+    ) {}
 
     /**
      * POST a proximity alert embed to the webhook's Discord URL, coloured by the
@@ -31,24 +41,106 @@ final class DiscordWebhookService
         $originName = $systems[$result->matchedOriginSolarsystemId]['name'] ?? (string) $result->matchedOriginSolarsystemId;
         $routeNames = array_map(fn (int $id): string => $systems[$id]['name'] ?? (string) $id, $result->route);
 
+        $this->deliver($webhook, [
+            'title' => sprintf('Found new %d %s %s connection', $result->jumps, $result->jumps === 1 ? 'jump' : 'jumps', $target['name']),
+            'description' => sprintf('**%s** was just added to your map, putting **%s** within range.', $originName, $target['name']),
+            'color' => $this->colorForSecurity((float) $target['security']),
+            'fields' => [
+                ['name' => 'Target', 'value' => sprintf('%s (%.1f)', $target['name'], $target['security']), 'inline' => true],
+                ['name' => 'Gate jumps', 'value' => (string) $result->jumps, 'inline' => true],
+                ['name' => 'From system', 'value' => $originName, 'inline' => true],
+                ['name' => 'Route', 'value' => implode(' → ', $routeNames)],
+            ],
+        ]);
+    }
+
+    /**
+     * POST a killmail alert embed to the webhook's Discord URL when a kill matching the
+     * webhook's filters occurs within range of the map.
+     */
+    /**
+     * @param  Collection<int, KillmailFilterRule>  $matchedFilters
+     */
+    public function sendKillmailAlert(MapWebhook $webhook, Killmail $killmail, ProximityResult $result, Collection $matchedFilters): void
+    {
+        $data = json_decode(json_encode($killmail->data), true) ?: [];
+        $victim = is_array($data['victim'] ?? null) ? $data['victim'] : [];
+        $shipTypeId = (int) ($victim['ship_type_id'] ?? 0);
+
+        $systems = Solarsystem::query()
+            ->whereIn('id', $result->route)
+            ->get(['id', 'name', 'security'])
+            ->keyBy('id');
+
+        $systemName = $systems[$killmail->solarsystem_id]->name ?? (string) $killmail->solarsystem_id;
+        $security = (float) ($systems[$killmail->solarsystem_id]->security ?? 0.0);
+
+        $shipName = $this->typeName($shipTypeId);
+        $totalValue = (float) (data_get($killmail->zkb, 'totalValue') ?? 0.0);
+
+        $fields = [
+            ['name' => 'System', 'value' => sprintf('%s (%.1f)', $systemName, $security), 'inline' => true],
+            ['name' => 'Ship', 'value' => $shipName, 'inline' => true],
+            ['name' => 'Value', 'value' => sprintf('%s ISK', number_format($totalValue)), 'inline' => true],
+        ];
+
+        if ($killmail->time !== null) {
+            $fields[] = ['name' => 'When', 'value' => sprintf('<t:%d:R>', $killmail->time->timestamp), 'inline' => true];
+        }
+
+        if ($result->jumps === 0) {
+            $description = 'A matching killmail occurred **inside your chain**.';
+        } else {
+            $description = sprintf('A matching killmail occurred **%d %s** from your chain.', $result->jumps, $result->jumps === 1 ? 'jump' : 'jumps');
+            $fields[] = ['name' => 'Exit from', 'value' => $this->resolveExit($webhook, $result, $systems), 'inline' => true];
+            $fields[] = ['name' => 'Jumps from chain', 'value' => (string) $result->jumps, 'inline' => true];
+            $fields[] = ['name' => 'Route', 'value' => implode(' → ', array_map(fn (int $id): string => $systems[$id]->name ?? (string) $id, $result->route))];
+        }
+
+        $filterLines = $this->filterDescriber->describe($matchedFilters);
+
+        if ($filterLines !== []) {
+            $fields[] = ['name' => 'Matched filters', 'value' => implode("\n", $filterLines)];
+        }
+
+        $embed = [
+            'title' => sprintf('%s killed in %s', $shipName, $systemName),
+            'url' => sprintf('https://zkillboard.com/kill/%d/', $killmail->id),
+            'description' => $description,
+            'color' => $this->colorForSecurity($security),
+            'fields' => $fields,
+        ];
+
+        if ($killmail->time !== null) {
+            $embed['timestamp'] = $killmail->time->toIso8601String();
+        }
+
+        if ($shipTypeId > 0) {
+            $embed['thumbnail'] = ['url' => sprintf('https://images.evetech.net/types/%d/render?size=128', $shipTypeId)];
+        }
+
+        $this->deliver($webhook, $embed);
+    }
+
+    /**
+     * POST a single embed to the webhook's Discord URL, pinging the configured role when
+     * one is set. Delivery failures are logged but never bubble up.
+     *
+     * @param  array<string, mixed>  $embed
+     */
+    private function deliver(MapWebhook $webhook, array $embed): void
+    {
+        $payload = ['embeds' => [$embed]];
+
+        if ($webhook->discord_role_id !== null) {
+            $payload['content'] = sprintf('<@&%s>', $webhook->discord_role_id);
+            $payload['allowed_mentions'] = ['roles' => [$webhook->discord_role_id]];
+        }
+
         try {
             Http::timeout(10)
                 ->retry(3, 200)
-                ->post($webhook->discord_webhook_url, [
-                    'embeds' => [
-                        [
-                            'title' => sprintf('Found new %d %s %s connection', $result->jumps, $result->jumps === 1 ? 'jump' : 'jumps', $target['name']),
-                            'description' => sprintf('**%s** was just added to your map, putting **%s** within range.', $originName, $target['name']),
-                            'color' => $this->colorForSecurity((float) $target['security']),
-                            'fields' => [
-                                ['name' => 'Target', 'value' => sprintf('%s (%.1f)', $target['name'], $target['security']), 'inline' => true],
-                                ['name' => 'Gate jumps', 'value' => (string) $result->jumps, 'inline' => true],
-                                ['name' => 'From system', 'value' => $originName, 'inline' => true],
-                                ['name' => 'Route', 'value' => implode(' → ', $routeNames)],
-                            ],
-                        ],
-                    ],
-                ])
+                ->post($webhook->discord_webhook_url, $payload)
                 ->throw();
         } catch (Throwable $e) {
             Log::warning('Discord webhook delivery failed', [
@@ -56,6 +148,34 @@ final class DiscordWebhookService
                 'message' => $e->getMessage(),
             ]);
         }
+    }
+
+    /**
+     * The chain system nearest the kill — where a pilot would exit the map — shown with
+     * its map alias when one is set.
+     *
+     * @param  Collection<int, Solarsystem>  $systems
+     */
+    private function resolveExit(MapWebhook $webhook, ProximityResult $result, Collection $systems): string
+    {
+        $originId = $result->matchedOriginSolarsystemId;
+        $name = $systems[$originId]->name ?? (string) $originId;
+
+        $alias = MapSolarsystem::query()
+            ->where('map_id', $webhook->map_id)
+            ->isSolarsystem($originId)
+            ->value('alias');
+
+        return $alias ? sprintf('%s (%s)', $alias, $name) : $name;
+    }
+
+    private function typeName(int $typeId): string
+    {
+        if ($typeId === 0) {
+            return 'Unknown ship';
+        }
+
+        return Type::query()->find($typeId)?->name ?? (string) $typeId;
     }
 
     private function colorForSecurity(float $security): int
