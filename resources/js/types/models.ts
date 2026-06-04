@@ -237,12 +237,39 @@ export type TMapUserSetting = {
     show_threat_level: boolean;
 };
 
+export type TMapWebhookType = 'proximity' | 'killmail';
+
+export type TKillmailFilterSubject = 'ship_type' | 'ship_group' | 'character' | 'corporation' | 'alliance';
+
+export type TKillmailFilterSide = 'victim' | 'attacker' | 'either';
+
+export type TKillmailFilterMode = 'include' | 'exclude';
+
+export type TKillmailFilterMatch = 'any' | 'all';
+
+export type TKillmailFilterRule = {
+    subject: TKillmailFilterSubject;
+    side: TKillmailFilterSide;
+    mode: TKillmailFilterMode;
+    ids: number[];
+};
+
+export type TEveSearchResult = {
+    id: number;
+    name: string;
+    group_name?: string | null;
+    category_name?: string | null;
+};
+
 export type TMapWebhook = {
     id: number;
     name: string;
-    type: 'proximity';
-    target_solarsystem_id: number;
+    discord_role_id: string | null;
+    type: TMapWebhookType;
+    target_solarsystem_id: number | null;
     max_jumps: number;
+    filter_match: TKillmailFilterMatch;
+    filters: TKillmailFilterRule[];
     is_active: boolean;
     last_fired_at: string | null;
 };

@@ -1,6 +1,6 @@
 import MapWebhookController from '@/actions/App/Http/Controllers/MapWebhookController';
 import { AppPageProps } from '@/types';
-import { TMapWebhook } from '@/types/models';
+import { TKillmailFilterMatch, TKillmailFilterRule, TMapWebhook, TMapWebhookType } from '@/types/models';
 import { VisitHelperOptions } from '@inertiajs/core';
 import { router, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
@@ -8,8 +8,12 @@ import { computed } from 'vue';
 export type TMapWebhookPayload = {
     name: string;
     discord_webhook_url?: string | null;
-    target_solarsystem_id: number;
+    discord_role_id?: string | null;
+    type: TMapWebhookType;
+    target_solarsystem_id?: number | null;
     max_jumps: number;
+    filter_match?: TKillmailFilterMatch;
+    filters?: TKillmailFilterRule[];
     is_active: boolean;
 };
 
