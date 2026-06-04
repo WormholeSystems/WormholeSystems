@@ -25,9 +25,12 @@ final class MapWebhookResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'discord_role_id' => $this->discord_role_id,
             'type' => $this->type->value,
             'target_solarsystem_id' => $this->target_solarsystem_id,
             'max_jumps' => $this->max_jumps,
+            'filter_match' => $this->filter_match->value,
+            'filters' => $this->filters->map->toArray()->all(),
             'is_active' => $this->is_active,
             'last_fired_at' => $this->last_fired_at?->toIso8601String(),
         ];

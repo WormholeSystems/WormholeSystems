@@ -24,6 +24,7 @@ function validWebhookPayload(Map $map, array $overrides = []): array
         'map_id' => $map->id,
         'name' => 'Jita alert',
         'discord_webhook_url' => 'https://discord.com/api/webhooks/123456789/abcdefg',
+        'type' => 'proximity',
         'target_solarsystem_id' => makeSolarsystem(30009100),
         'max_jumps' => 5,
         'is_active' => true,
@@ -50,6 +51,7 @@ it('lets a manager update a webhook', function () {
 
     $this->put(route('map-webhooks.update', $webhook), [
         'name' => 'New',
+        'type' => 'proximity',
         'target_solarsystem_id' => $webhook->target_solarsystem_id,
         'max_jumps' => 10,
         'is_active' => true,

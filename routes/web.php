@@ -8,6 +8,7 @@ use App\Http\Controllers\BulkSignatureController;
 use App\Http\Controllers\BulkWaypointController;
 use App\Http\Controllers\EveController;
 use App\Http\Controllers\EveScoutConnectionController;
+use App\Http\Controllers\EveSearchController;
 use App\Http\Controllers\HomeSystemController;
 use App\Http\Controllers\IgnoreListController;
 use App\Http\Controllers\LandingController;
@@ -115,6 +116,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('ignore-systems', [IgnoreListController::class, 'destroyAll'])->name('ignore-systems.destroy-all');
 
     Route::resource('map-webhooks', MapWebhookController::class)->only(['store', 'update', 'destroy']);
+    Route::get('eve/ship-search', [EveSearchController::class, 'index'])->name('eve.ship-search');
 
     Route::post('map-ignored-solarsystems', [MapIgnoredSolarsystemController::class, 'store'])->name('map-ignored-solarsystems.store');
     Route::delete('maps/{map}/ignored-solarsystems/{solarsystem_id}', [MapIgnoredSolarsystemController::class, 'destroy'])->name('map-ignored-solarsystems.destroy');

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Concerns\HasMapWebhookRules;
 use App\Models\MapWebhook;
 use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
@@ -12,6 +13,8 @@ use Illuminate\Foundation\Http\FormRequest;
 
 final class UpdateMapWebhookRequest extends FormRequest
 {
+    use HasMapWebhookRules;
+
     public MapWebhook $mapWebhook {
         get => $this->route('map_webhook');
     }
@@ -35,11 +38,8 @@ final class UpdateMapWebhookRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
             'discord_webhook_url' => ['nullable', 'url', 'regex:#^https://discord(app)?\.com/api/webhooks/#'],
-            'target_solarsystem_id' => ['required', 'integer', 'exists:solarsystems,id'],
-            'max_jumps' => ['required', 'integer', 'between:1,20'],
-            'is_active' => ['boolean'],
+            ...$this->webhookRules(),
         ];
     }
 }

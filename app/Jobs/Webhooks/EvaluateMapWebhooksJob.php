@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Jobs\Webhooks;
 
+use App\Enums\MapWebhookType;
 use App\Models\MapIgnoredSolarsystem;
 use App\Models\MapWebhook;
 use App\Services\DiscordWebhookService;
 use App\Services\Routing\MapProximityPathfinder;
+use App\Services\Routing\ProximityResult;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -40,6 +42,7 @@ final class EvaluateMapWebhooksJob implements ShouldBeUnique, ShouldQueue
     {
         $webhooks = MapWebhook::query()
             ->where('map_id', $this->map_id)
+            ->where('type', MapWebhookType::Proximity)
             ->where('is_active', true)
             ->get();
 
@@ -61,7 +64,7 @@ final class EvaluateMapWebhooksJob implements ShouldBeUnique, ShouldQueue
                 $webhook->max_jumps,
             );
 
-            if (! $result instanceof \App\Services\Routing\ProximityResult) {
+            if (! $result instanceof ProximityResult) {
                 continue;
             }
 
