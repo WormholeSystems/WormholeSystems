@@ -1,9 +1,14 @@
 import { deleteSignatures, pasteSignatures } from '@/composables/map';
 import { useIsUsingInput } from '@/composables/map/composables/useIsUsingInput';
 import { useActiveMapCharacter } from '@/composables/useActiveMapCharacter';
+import { useOnClient } from '@/composables/useOnClient';
+import { useShowMap } from '@/composables/useShowMap';
+import { getMapChannelName } from '@/const/channels';
+import { SignatureCreatedEvent, SignatureDeletedEvent, SignatureUpdatedEvent } from '@/const/events';
 import { signatureParser, TRawSignature } from '@/lib/SignatureParser';
 import { TSelectedMapSolarsystem } from '@/pages/maps';
 import { TSignature } from '@/types/models';
+import { useEcho } from '@laravel/echo-vue';
 import { useEventListener } from '@vueuse/core';
 import { computed, type MaybeRefOrGetter, ref, toValue, watch } from 'vue';
 import { toast } from 'vue-sonner';
@@ -52,6 +57,16 @@ export function usePasteSignatures(map_solarsystem: MaybeRefOrGetter<TSelectedMa
         () => {
             pasted_signatures.value = null;
         },
+    );
+
+    // When another user changes the signatures on this map, drop the local paste
+    // selection. Otherwise the freshly appeared signatures would be highlighted as
+    // "missing" against our stale paste, making people think they disappeared.
+    const page = useShowMap();
+    useOnClient(() =>
+        useEcho(getMapChannelName(page.props.map.id), [SignatureCreatedEvent, SignatureUpdatedEvent, SignatureDeletedEvent], () => {
+            pasted_signatures.value = null;
+        }),
     );
 
     useEventListener('paste', (event) => {
@@ -134,6 +149,7 @@ export function usePasteSignatures(map_solarsystem: MaybeRefOrGetter<TSelectedMa
             deleted_signatures.value.map((signature) => signature.id),
             with_solarsystems,
         );
+        pasted_signatures.value = null;
     }
 
     function processSignatures(signatures: TRawSignature[], skipWarning = false) {
