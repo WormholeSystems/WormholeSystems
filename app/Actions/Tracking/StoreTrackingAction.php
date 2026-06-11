@@ -89,10 +89,14 @@ final readonly class StoreTrackingAction
             $target_map_solarsystem = $this->getMapSolarsystemOnMap($origin->map, $to_solarsystem)
                 ?? $this->addSolarsystemToMap($origin, $to_solarsystem);
 
+            if (filled($data->alias)) {
+                $target_map_solarsystem->update(['alias' => $data->alias]);
+            }
+
             $signature = Signature::query()->find($data->signature_id);
 
-            $mass_status = $this->getMassStatusForSignature($signature);
-            $lifetime_status = $this->getLifetimeStatusForSignature($signature);
+            $mass_status = $data->mass_status ?? $this->getMassStatusForSignature($signature);
+            $lifetime_status = $data->lifetime ?? $this->getLifetimeStatusForSignature($signature);
 
             $connection = $this->storeMapConnectionRequest->handle(
                 [

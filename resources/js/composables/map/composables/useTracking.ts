@@ -7,7 +7,7 @@ import { useShowMap } from '@/composables/useShowMap';
 import { useStaticData } from '@/composables/useStaticData';
 import { useTrackingSystems } from '@/composables/useTrackingSystems';
 import { TSolarsystem } from '@/pages/maps';
-import { TSignature, TSolarsystemClass } from '@/types/models';
+import { TLifetimeStatus, TMassStatus, TSignature, TSolarsystemClass } from '@/types/models';
 import { computed, onMounted, ref, watch } from 'vue';
 
 export function useTracking() {
@@ -121,10 +121,20 @@ export function useTracking() {
         return map_solarsystems.value.some((s) => s.solarsystem_id === solarsystem_id);
     }
 
-    function handleSelectSignature(signature_id: number | null) {
+    function handleSelectSignature(selection: {
+        signatureId: number | null;
+        alias: string | null;
+        lifetime: TLifetimeStatus;
+        massStatus: TMassStatus;
+    }) {
         show_signature_modal.value = false;
         if (!origin_map_solarsystem.value || !target_solarsystem.value) return;
-        createTracking(origin_map_solarsystem.value.id, target_solarsystem.value.id, signature_id);
+        createTracking(origin_map_solarsystem.value.id, target_solarsystem.value.id, {
+            signature_id: selection.signatureId,
+            alias: selection.alias,
+            lifetime: selection.lifetime,
+            mass_status: selection.massStatus,
+        });
     }
 
     return {
@@ -137,5 +147,6 @@ export function useTracking() {
         handleSelectSignature,
         origin_map_solarsystem,
         target_solarsystem,
+        existing_map_solarsystem,
     };
 }

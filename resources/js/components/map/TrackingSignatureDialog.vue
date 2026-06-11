@@ -3,21 +3,25 @@ import WormholeOption from '@/components/signatures/WormholeOption.vue';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogDescription, DialogFooter, DialogHeader, DialogScrollContent, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { updateMapUserSettings } from '@/composables/map';
 import { Data } from '@/composables/map/utils/data';
 import { useShowMap } from '@/composables/useShowMap';
 import { TMapSolarsystem } from '@/pages/maps';
-import { TSignature } from '@/types/models';
+import { TLifetimeStatus, TMassStatus, TSignature } from '@/types/models';
 import { UTCDate } from '@date-fns/utc';
 import { formatDistanceToNowStrict } from 'date-fns';
+import { AcceptableValue } from 'reka-ui';
 import { computed, ref, watch } from 'vue';
 
 const props = defineProps<{
     originMapSolarsystem: TMapSolarsystem | null;
     targetSolarsystemName: string | null;
     signatures: TSignature[] | null | undefined;
+    existingAlias?: string | null;
 }>();
 
 const page = useShowMap();
@@ -38,25 +42,54 @@ const filtered = computed(() => {
 const open = defineModel<boolean>('open', { required: true });
 
 const emit = defineEmits<{
-    selectSignature: [signatureId: number | null];
+    selectSignature: [selection: { signatureId: number | null; alias: string | null; lifetime: TLifetimeStatus; massStatus: TMassStatus }];
 }>();
 
 const selectedSignatureId = ref<number | null>(null);
+const alias = ref('');
+const lifetime = ref<TLifetimeStatus>('healthy');
+const massStatus = ref<TMassStatus>('fresh');
 
-// Reset selection when dialog opens
+// Reset inputs when the dialog opens. The alias is prefilled with the target's
+// current alias when it is already on the map, and empty for a new system.
 watch(open, (isOpen) => {
     if (isOpen) {
         selectedSignatureId.value = null;
+        alias.value = props.existingAlias ?? '';
+        lifetime.value = 'healthy';
+        massStatus.value = 'fresh';
     }
 });
 
+// Adopt the signature's lifetime / mass when it carries a meaningful value,
+// otherwise keep whatever the user manually selected.
+watch(selectedSignatureId, (id) => {
+    const signature = props.signatures?.find((s) => s.id === id);
+    if (!signature) return;
+    if (signature.lifetime && signature.lifetime !== 'healthy') {
+        lifetime.value = signature.lifetime;
+    }
+    if (signature.mass_status) {
+        massStatus.value = signature.mass_status;
+    }
+});
+
+function buildSelection(signatureId: number | null) {
+    return {
+        signatureId,
+        alias: alias.value.trim() || null,
+        lifetime: lifetime.value,
+        massStatus: massStatus.value,
+    };
+}
+
 function handleConfirm() {
-    emit('selectSignature', selectedSignatureId.value);
+    emit('selectSignature', buildSelection(selectedSignatureId.value));
 }
 
 function handleOpenChange(isOpen: boolean) {
     if (!isOpen) {
-        emit('selectSignature', null);
+        emit('selectSignature', buildSelection(null));
     }
 }
 
@@ -64,7 +97,19 @@ function handleDontAskAgain() {
     updateMapUserSettings(page.props.map.slug, {
         prompt_for_signature_enabled: false,
     });
-    emit('selectSignature', null);
+    emit('selectSignature', buildSelection(null));
+}
+
+function handleLifetimeChange(value: AcceptableValue) {
+    if (value === 'healthy' || value === 'eol' || value === 'critical') {
+        lifetime.value = value;
+    }
+}
+
+function handleMassStatusChange(value: AcceptableValue) {
+    if (value === 'fresh' || value === 'reduced' || value === 'critical') {
+        massStatus.value = value;
+    }
 }
 
 function formatDate(date: string) {
@@ -113,6 +158,40 @@ function formatDate(date: string) {
                         </div>
                     </label>
                 </RadioGroup>
+                <div class="grid gap-3">
+                    <div class="grid gap-1.5">
+                        <Label for="tracking-alias" class="text-xs">Alias</Label>
+                        <Input id="tracking-alias" v-model:model-value="alias" placeholder="Optional system alias" />
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="grid gap-1.5">
+                            <Label class="text-xs">Lifetime</Label>
+                            <Select :model-value="lifetime" @update:model-value="handleLifetimeChange">
+                                <SelectTrigger class="w-full">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="healthy">Healthy</SelectItem>
+                                    <SelectItem value="eol">End of Life</SelectItem>
+                                    <SelectItem value="critical">Critical</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div class="grid gap-1.5">
+                            <Label class="text-xs">Mass</Label>
+                            <Select :model-value="massStatus" @update:model-value="handleMassStatusChange">
+                                <SelectTrigger class="w-full">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="fresh">Fresh</SelectItem>
+                                    <SelectItem value="reduced">Reduced</SelectItem>
+                                    <SelectItem value="critical">Critical</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                </div>
                 <DialogFooter class="sm:justify-between">
                     <Tooltip>
                         <TooltipTrigger as-child>
