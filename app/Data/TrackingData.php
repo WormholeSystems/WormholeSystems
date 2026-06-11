@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Data;
 
+use App\Enums\LifetimeStatus;
+use App\Enums\MassStatus;
 use App\Enums\Permission;
 use App\Models\Map;
 use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\Request;
 use Spatie\LaravelData\Attributes\Validation\Exists;
+use Spatie\LaravelData\Attributes\Validation\Max;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Optional;
 
@@ -22,6 +25,10 @@ final class TrackingData extends Data
         public int $to_solarsystem_id,
         #[Exists(table: 'signatures', column: 'id')]
         public int|null|Optional $signature_id = null,
+        #[Max(255)]
+        public ?string $alias = null,
+        public ?LifetimeStatus $lifetime = null,
+        public ?MassStatus $mass_status = null,
     ) {}
 
     /**

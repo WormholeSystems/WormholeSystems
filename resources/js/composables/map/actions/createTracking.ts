@@ -1,13 +1,21 @@
 import Tracking from '@/routes/tracking';
+import { TLifetimeStatus, TMassStatus } from '@/types/models';
 import { router } from '@inertiajs/vue3';
 
-export function createTracking(from_map_solarsystem_id: number, to_solarsystem_id: number, signature_id?: number | null) {
+type TrackingOptions = {
+    signature_id?: number | null;
+    alias?: string | null;
+    lifetime?: TLifetimeStatus | null;
+    mass_status?: TMassStatus | null;
+};
+
+export function createTracking(from_map_solarsystem_id: number, to_solarsystem_id: number, options: TrackingOptions = {}) {
     return router.post(
         Tracking.store().url,
         {
             from_map_solarsystem_id,
             to_solarsystem_id,
-            signature_id,
+            ...options,
         },
         {
             preserveScroll: true,
