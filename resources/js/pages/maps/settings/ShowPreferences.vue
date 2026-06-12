@@ -32,6 +32,12 @@ function handleToggleThreatLevel(value: boolean | 'indeterminate') {
         updateMapUserSettings({ show_threat_level: value });
     }
 }
+
+function handleToggleStaticsFirst(value: boolean | 'indeterminate') {
+    if (typeof value === 'boolean') {
+        updateMapUserSettings({ show_statics_first: value });
+    }
+}
 </script>
 
 <template>
@@ -64,6 +70,16 @@ function handleToggleThreatLevel(value: boolean | 'indeterminate') {
                             <div class="text-sm text-muted-foreground">Display a colored ring around wormhole systems based on killmail activity</div>
                         </div>
                         <Checkbox :model-value="map_user_settings.show_threat_level" @update:model-value="handleToggleThreatLevel" />
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div class="space-y-0.5">
+                            <Label class="text-sm font-medium">Show Statics First</Label>
+                            <div class="text-sm text-muted-foreground">
+                                Group this system's static wormholes at the top of the signature type selector
+                            </div>
+                        </div>
+                        <Checkbox :model-value="map_user_settings.show_statics_first" @update:model-value="handleToggleStaticsFirst" />
                     </div>
                 </CardContent>
             </Card>

@@ -31,6 +31,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property array|null $layout_breakpoints
  * @property array|null $hidden_cards
  * @property bool $show_threat_level
+ * @property bool $show_statics_first
  * @property CarbonImmutable|string $created_at
  * @property CarbonImmutable|string $updated_at
  */
@@ -74,6 +75,7 @@ final class MapUserSetting extends Model
             'layout_breakpoints' => 'array',
             'hidden_cards' => 'array',
             'show_threat_level' => 'boolean',
+            'show_statics_first' => 'boolean',
         ];
     }
 }

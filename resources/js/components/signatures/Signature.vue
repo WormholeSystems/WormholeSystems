@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { deleteSignature, getSolarsystemClass, toStringedSolarsystemClass, TProcessedConnection, updateSignature } from '@/composables/map';
 import { useSolarsystemClass } from '@/composables/map/composables/useSolarsystemClass';
 import { Data } from '@/composables/map/utils/data';
+import { useMapUserSettings } from '@/composables/useMapUserSettings';
 import usePermission from '@/composables/usePermission';
 import { getTypesByCategory, signatureCategories } from '@/const/signatures';
 import { formatDateToISO } from '@/lib/utils';
@@ -97,7 +98,12 @@ const current_class = computed(() => {
     return getSolarsystemClass(selected_connection.value.target);
 });
 
+const map_user_settings = useMapUserSettings();
+
 const static_signatures = computed<string[]>(() => {
+    if (!map_user_settings.value.show_statics_first) {
+        return [];
+    }
     return (selected_map_solarsystem.solarsystem.statics ?? []).map((wormhole_static) => wormhole_static.name);
 });
 
