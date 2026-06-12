@@ -12,6 +12,7 @@ import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { TDataMapSolarSystem } from '@/composables/map';
 import MapSolarsystems from '@/routes/map-solarsystems';
 import { TCharacter } from '@/types/models';
@@ -99,10 +100,32 @@ function handleSubmit() {
                 </PopoverContent>
             </Popover>
             <div class="col-start-3 row-start-1 flex items-center gap-1">
-                <HomeIcon v-if="is_home" class="size-[14px] text-amber-400" />
-                <FlagIcon v-if="is_rally" class="size-[14px] text-red-400" />
-                <LockIcon v-if="map_solarsystem.pinned" class="size-[14px] text-muted-foreground" />
-                <SatelliteDish v-if="map_solarsystem.signatures_count" class="size-[14px] text-amber-500" />
+                <Tooltip v-if="is_home" :delay-duration="500">
+                    <TooltipTrigger>
+                        <HomeIcon class="size-[14px] text-amber-400" />
+                    </TooltipTrigger>
+                    <TooltipContent> Home system </TooltipContent>
+                </Tooltip>
+                <Tooltip v-if="is_rally" :delay-duration="500">
+                    <TooltipTrigger>
+                        <FlagIcon class="size-[14px] text-red-400" />
+                    </TooltipTrigger>
+                    <TooltipContent> Rally point </TooltipContent>
+                </Tooltip>
+                <Tooltip v-if="map_solarsystem.pinned" :delay-duration="500">
+                    <TooltipTrigger>
+                        <LockIcon class="size-[14px] text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent> Pinned in place </TooltipContent>
+                </Tooltip>
+                <Tooltip v-if="map_solarsystem.signatures_count" :delay-duration="500">
+                    <TooltipTrigger>
+                        <SatelliteDish class="size-[14px] text-amber-500" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        {{ map_solarsystem.signatures_count }} {{ map_solarsystem.signatures_count === 1 ? 'signature' : 'signatures' }}
+                    </TooltipContent>
+                </Tooltip>
                 <HasExtraConnections v-if="extra_connections_count" :extra_connections_count="extra_connections_count" />
                 <SolarsystemSovereignty :sovereignty="resolvedSolarsystem.sovereignty" :solarsystem-id="resolvedSolarsystem.id">
                     <template #fallback>
