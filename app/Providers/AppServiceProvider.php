@@ -49,7 +49,9 @@ final class AppServiceProvider extends ServiceProvider
 
         Vite::useAggressivePrefetching();
 
-        URL::forceHttps();
+        if (!app()->environment(['local', 'testing'])) {
+            URL::forceHttps();
+        }
 
         Date::use(CarbonImmutable::class);
 
