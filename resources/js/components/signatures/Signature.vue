@@ -97,6 +97,10 @@ const current_class = computed(() => {
     return getSolarsystemClass(selected_connection.value.target);
 });
 
+const static_signatures = computed<string[]>(() => {
+    return (selected_map_solarsystem.solarsystem.statics ?? []).map((wormhole_static) => wormhole_static.name);
+});
+
 const categoryAbbrev: Record<string, string> = {
     Wormhole: 'WH',
     'Data Site': 'Data',
@@ -266,6 +270,7 @@ function handleMassStatusChange(mass_status: AcceptableValue) {
                 :can_write="can_write"
                 :wormhole_options="sortedAvailableTypes"
                 :current_class="current_class"
+                :static_signatures="static_signatures"
             />
             <SignatureTypeInput
                 v-else

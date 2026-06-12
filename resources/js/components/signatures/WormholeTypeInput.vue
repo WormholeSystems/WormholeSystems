@@ -4,14 +4,26 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSepa
 import type { TSignatureType } from '@/types/models';
 import { computed, shallowRef } from 'vue';
 
-const { wormhole_options, current_class } = defineProps<{
+const {
+    wormhole_options,
+    current_class,
+    static_signatures = [],
+} = defineProps<{
     can_write: boolean;
     wormhole_options: TSignatureType[];
     current_class: string | number | null;
+    static_signatures?: string[];
 }>();
 
 const model = defineModel<number | null>({
     required: true,
+});
+
+const statics = computed<TSignatureType[]>(() => {
+    if (static_signatures.length === 0) {
+        return [];
+    }
+    return wormhole_options.filter((option: TSignatureType) => static_signatures.includes(option.signature)).filter(filterByCurrentClass);
 });
 
 const k162_options = computed<TSignatureType[]>(() => {
@@ -19,7 +31,9 @@ const k162_options = computed<TSignatureType[]>(() => {
 });
 
 const wormholes = computed<TSignatureType[]>(() => {
-    return wormhole_options.filter((option: TSignatureType) => option.signature !== 'K162').filter(filterByCurrentClass);
+    return wormhole_options
+        .filter((option: TSignatureType) => option.signature !== 'K162' && !static_signatures.includes(option.signature))
+        .filter(filterByCurrentClass);
 });
 
 const selected_signature = computed(() => {
@@ -46,6 +60,15 @@ function filterByCurrentClass(option: TSignatureType) {
         </SelectTrigger>
         <SelectContent class="max-h-72">
             <template v-if="open">
+                <template v-if="statics.length">
+                    <SelectGroup>
+                        <SelectLabel class="text-xs text-muted-foreground">Statics</SelectLabel>
+                        <SelectItem v-for="option in statics" :key="option.id" :value="option.id" class="text-xs">
+                            <WormholeOption :wormhole="option" />
+                        </SelectItem>
+                    </SelectGroup>
+                    <SelectSeparator />
+                </template>
                 <SelectGroup>
                     <SelectLabel class="text-xs text-muted-foreground">K162</SelectLabel>
                     <SelectItem v-for="option in k162_options" :key="option.id" :value="option.id" class="text-xs">
