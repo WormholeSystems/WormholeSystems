@@ -37,6 +37,7 @@ final class MapUserSettingResource extends JsonResource
             'layout_breakpoints' => $this->layout_breakpoints,
             'hidden_cards' => $this->hidden_cards ?? [],
             'show_threat_level' => $this->show_threat_level,
+            'show_statics_first' => $this->show_statics_first,
         ];
     }
 }

@@ -235,6 +235,7 @@ export type TMapUserSetting = {
     layout_breakpoints?: Record<string, any> | null;
     hidden_cards: string[] | null;
     show_threat_level: boolean;
+    show_statics_first: boolean;
 };
 
 export type TMapWebhookType = 'proximity' | 'killmail';
