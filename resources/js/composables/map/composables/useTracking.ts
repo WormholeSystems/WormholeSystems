@@ -1,4 +1,12 @@
-import { createMapSolarsystem, createTracking, map_solarsystems, updateMapUserSettings } from '@/composables/map';
+import {
+    createMapSolarsystem,
+    createTracking,
+    formatBookmarkName,
+    getSignatureIdShort,
+    map_solarsystems,
+    suggestAlias,
+    updateMapUserSettings,
+} from '@/composables/map';
 import { getSecurityClass } from '@/composables/map/utils/security';
 import { useActiveMapCharacter } from '@/composables/useActiveMapCharacter';
 import { useMapIgnoredSystems } from '@/composables/useMapIgnoredSystems';
@@ -9,6 +17,7 @@ import { useTrackingSystems } from '@/composables/useTrackingSystems';
 import { TSolarsystem } from '@/pages/maps';
 import { TLifetimeStatus, TMassStatus, TSignature, TSolarsystemClass } from '@/types/models';
 import { computed, onMounted, ref, watch } from 'vue';
+import { toast } from 'vue-sonner';
 
 export function useTracking() {
     const character = useActiveMapCharacter();
@@ -35,6 +44,29 @@ export function useTracking() {
                     s.map_connection?.from_map_solarsystem_id === existing_map_solarsystem.value?.id,
             ) || null
         );
+    });
+
+    // Pre-fill the signature dialog's alias field. An alias the target already
+    // carries on the map wins; otherwise we guess the next chain alias.
+    const suggested_alias = computed(() => {
+        if (existing_map_solarsystem.value?.alias) {
+            return existing_map_solarsystem.value.alias;
+        }
+
+        if (!map_user_settings.value.suggest_alias_enabled) return null;
+
+        const origin = origin_map_solarsystem.value;
+        const target = target_solarsystem.value;
+        if (!origin || !target) return null;
+
+        const home = map_solarsystems.value.find((s) => s.id === page.props.map.home_solarsystem_id);
+
+        return suggestAlias({
+            parentAlias: origin.alias,
+            targetIsWormhole: target.type === 'wormhole',
+            homeIsWormhole: home?.solarsystem?.type === 'wormhole',
+            aliases: map_solarsystems.value.map((s) => s.alias).filter((alias): alias is string => Boolean(alias)),
+        });
     });
 
     watch(
@@ -129,12 +161,28 @@ export function useTracking() {
     }) {
         show_signature_modal.value = false;
         if (!origin_map_solarsystem.value || !target_solarsystem.value) return;
+        copyConnectionBookmark(selection.signatureId, selection.alias);
         createTracking(origin_map_solarsystem.value.id, target_solarsystem.value.id, {
             signature_id: selection.signatureId,
             alias: selection.alias,
             lifetime: selection.lifetime,
             mass_status: selection.massStatus,
         });
+    }
+
+    // Copy the connection bookmark for the system we just jumped into, using the
+    // same scheme as the connection context menu: the current system labelled
+    // with the signature we used in the origin.
+    function copyConnectionBookmark(signatureId: number | null, alias: string | null) {
+        if (!map_user_settings.value.copy_bookmark_enabled) return;
+        const target = target_solarsystem.value;
+        if (!target) return;
+
+        const signature = signatures.value?.find((s) => s.id === signatureId) ?? null;
+        const name = formatBookmarkName({ alias, solarsystem: target }, getSignatureIdShort(signature?.signature_id));
+
+        navigator.clipboard.writeText(name);
+        toast.success('Copied bookmark to clipboard', { description: name });
     }
 
     return {
@@ -148,5 +196,6 @@ export function useTracking() {
         origin_map_solarsystem,
         target_solarsystem,
         existing_map_solarsystem,
+        suggested_alias,
     };
 }
