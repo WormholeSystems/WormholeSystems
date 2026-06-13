@@ -3,6 +3,7 @@ import {
     createTracking,
     formatBookmarkName,
     getSignatureIdShort,
+    isWormholeSystem,
     map_solarsystems,
     suggestAlias,
     updateMapUserSettings,
@@ -63,8 +64,8 @@ export function useTracking() {
 
         return suggestAlias({
             parentAlias: origin.alias,
-            targetIsWormhole: target.type === 'wormhole',
-            homeIsWormhole: home?.solarsystem?.type === 'wormhole',
+            targetIsWormhole: isWormholeSystem(target),
+            homeIsWormhole: isWormholeSystem(home?.solarsystem),
             aliases: map_solarsystems.value.map((s) => s.alias).filter((alias): alias is string => Boolean(alias)),
         });
     });

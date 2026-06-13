@@ -33,7 +33,7 @@ export function useStaticSolarsystems() {
         constellation_id: 0,
         class: null,
         security: 0,
-        type: 'wormhole',
+        type: 'wh',
         region: { id: 0, name: 'Unknown' },
         sovereignty: null,
         statics: null,

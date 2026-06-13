@@ -2,7 +2,7 @@
 
 import type { TMapConnection, TResolvedSolarsystem, TWormhole } from '@/pages/maps';
 
-export type TSolarsystemType = 'eve' | 'wormhole' | 'abyssal';
+export type TSolarsystemType = 'eve' | 'wh' | 'hidden' | 'abyssal' | 'void';
 
 export type TRegion = {
     id: number;

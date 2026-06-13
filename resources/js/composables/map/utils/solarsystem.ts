@@ -1,5 +1,5 @@
 import { TMapSolarsystem } from '@/pages/maps';
-import { TSolarsystemClass, TStringedSolarsystemClass } from '@/types/models';
+import { TSolarsystemClass, TSolarsystemType, TStringedSolarsystemClass } from '@/types/models';
 import { mapState } from '../state';
 import { TDataMapSolarSystem, WithIsSelected } from '../types';
 
@@ -49,4 +49,12 @@ export function toStringedSolarsystemClass(target_class: TSolarsystemClass | nul
     if (target_class === null) return null;
 
     return String(target_class) as TStringedSolarsystemClass;
+}
+
+/**
+ * Whether a solar system is a wormhole (j-space) system. The static data stores
+ * wormhole systems with the type "wh"; k-space systems use "eve".
+ */
+export function isWormholeSystem(solarsystem?: { type: TSolarsystemType } | null): boolean {
+    return solarsystem?.type === 'wh';
 }
