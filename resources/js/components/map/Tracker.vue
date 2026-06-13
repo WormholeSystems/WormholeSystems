@@ -27,7 +27,7 @@ const {
     handleSelectSignature,
     origin_map_solarsystem,
     target_solarsystem,
-    existing_map_solarsystem,
+    suggested_alias,
 } = useTracking();
 
 const currentSolarsystem = useStaticSolarsystem(() => character?.status?.solarsystem_id ?? null);
@@ -65,7 +65,7 @@ const targetSolarsystemName = computed(() => target_solarsystem.value?.name || c
         :origin-map-solarsystem="origin_map_solarsystem"
         :target-solarsystem-name="targetSolarsystemName"
         :signatures="signatures"
-        :existing-alias="existing_map_solarsystem?.alias"
+        :suggested-alias="suggested_alias"
         @select-signature="handleSelectSignature"
     />
 </template>
