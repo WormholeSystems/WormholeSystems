@@ -21,7 +21,7 @@ const props = defineProps<{
     originMapSolarsystem: TMapSolarsystem | null;
     targetSolarsystemName: string | null;
     signatures: TSignature[] | null | undefined;
-    existingAlias?: string | null;
+    suggestedAlias?: string | null;
 }>();
 
 const page = useShowMap();
@@ -50,12 +50,12 @@ const alias = ref('');
 const lifetime = ref<TLifetimeStatus>('healthy');
 const massStatus = ref<TMassStatus>('fresh');
 
-// Reset inputs when the dialog opens. The alias is prefilled with the target's
-// current alias when it is already on the map, and empty for a new system.
+// Reset inputs when the dialog opens. The alias is prefilled with the suggested
+// chain alias (or the target's existing alias when it is already on the map).
 watch(open, (isOpen) => {
     if (isOpen) {
         selectedSignatureId.value = null;
-        alias.value = props.existingAlias ?? '';
+        alias.value = props.suggestedAlias ?? '';
         lifetime.value = 'healthy';
         massStatus.value = 'fresh';
     }
