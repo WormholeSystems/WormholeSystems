@@ -60,12 +60,10 @@ export function useTracking() {
         const target = target_solarsystem.value;
         if (!origin || !target) return null;
 
-        const home = map_solarsystems.value.find((s) => s.id === page.props.map.home_solarsystem_id);
-
         return suggestAlias({
             parentAlias: origin.alias,
             targetIsWormhole: isWormholeSystem(target),
-            homeIsWormhole: isWormholeSystem(home?.solarsystem),
+            originIsWormhole: isWormholeSystem(origin.solarsystem),
             aliases: map_solarsystems.value.map((s) => s.alias).filter((alias): alias is string => Boolean(alias)),
         });
     });

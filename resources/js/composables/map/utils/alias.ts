@@ -31,16 +31,22 @@ export function guessNextAlias(parentAlias: string | null | undefined, aliases: 
 
 /**
  * Suggest an alias for a system reached by a tracked jump, or null when it
- * should not be aliased. K-space targets are only aliased when the map's home
- * system is a wormhole; wormhole targets are always aliased.
+ * should not be aliased. The target is aliased when it is itself a wormhole, or
+ * when the origin we jumped from is part of the chain — either a wormhole or an
+ * already-aliased system. This lets a k-space exit of an aliased wormhole
+ * continue the chain (e.g. jumping from "2" into k-space suggests "21").
  */
 export function suggestAlias(params: {
     parentAlias: string | null | undefined;
     targetIsWormhole: boolean;
-    homeIsWormhole: boolean;
+    originIsWormhole: boolean;
     aliases: string[];
 }): string | null {
-    if (!params.targetIsWormhole && !params.homeIsWormhole) return null;
+    const originIsAliased = Boolean(params.parentAlias && params.parentAlias.trim());
+
+    if (!params.targetIsWormhole && !params.originIsWormhole && !originIsAliased) {
+        return null;
+    }
 
     return guessNextAlias(params.parentAlias, params.aliases);
 }
