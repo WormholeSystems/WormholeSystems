@@ -58,6 +58,18 @@ function handlePromptForSignatureChange(value: boolean | 'indeterminate') {
     }
 }
 
+function handleSuggestAliasChange(value: boolean | 'indeterminate') {
+    if (typeof value === 'boolean') {
+        updateMapUserSettings({ suggest_alias_enabled: value });
+    }
+}
+
+function handleCopyBookmarkChange(value: boolean | 'indeterminate') {
+    if (typeof value === 'boolean') {
+        updateMapUserSettings({ copy_bookmark_enabled: value });
+    }
+}
+
 const solarsystems = computed(() => staticData.value?.solarsystems ?? []);
 
 const ignoredSolarsystems = computed(() =>
@@ -128,6 +140,26 @@ function handleSolarsystemSelect(solarsystem: TStaticSolarsystem) {
                             :model-value="map_user_settings.prompt_for_signature_enabled"
                             @update:model-value="handlePromptForSignatureChange"
                         />
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div class="space-y-0.5">
+                            <Label class="text-sm font-medium">Suggest Alias</Label>
+                            <div class="text-sm text-muted-foreground">
+                                Pre-fill a guessed chain alias (1, 11, 12…) for new systems you jump into while tracking
+                            </div>
+                        </div>
+                        <Checkbox :model-value="map_user_settings.suggest_alias_enabled" @update:model-value="handleSuggestAliasChange" />
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div class="space-y-0.5">
+                            <Label class="text-sm font-medium">Copy Bookmark</Label>
+                            <div class="text-sm text-muted-foreground">
+                                Copy the connection bookmark name to your clipboard after selecting the signature you jumped through
+                            </div>
+                        </div>
+                        <Checkbox :model-value="map_user_settings.copy_bookmark_enabled" @update:model-value="handleCopyBookmarkChange" />
                     </div>
                 </CardContent>
             </Card>

@@ -49,6 +49,7 @@ const {
     handleSelectSignature,
     origin_map_solarsystem,
     target_solarsystem,
+    suggested_alias,
 } = useTracking();
 
 const targetSolarsystemName = computed(() => target_solarsystem.value?.name || currentSolarsystem.value?.name || null);
@@ -270,6 +271,7 @@ const settingsUrl = computed(() => {
         :origin-map-solarsystem="origin_map_solarsystem"
         :target-solarsystem-name="targetSolarsystemName"
         :signatures="signatures"
+        :suggested-alias="suggested_alias"
         @select-signature="handleSelectSignature"
     />
 </template>
