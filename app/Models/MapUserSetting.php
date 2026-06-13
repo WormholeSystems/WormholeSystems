@@ -28,6 +28,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|KillmailFilter $killmail_filter
  * @property CarbonImmutable|string|null $introduction_confirmed_at
  * @property bool $prompt_for_signature_enabled
+ * @property bool $suggest_alias_enabled
+ * @property bool $copy_bookmark_enabled
  * @property array|null $layout_breakpoints
  * @property array|null $hidden_cards
  * @property bool $show_threat_level
@@ -72,6 +74,8 @@ final class MapUserSetting extends Model
             'route_use_evescout' => 'boolean',
             'introduction_confirmed_at' => 'immutable_datetime',
             'prompt_for_signature_enabled' => 'boolean',
+            'suggest_alias_enabled' => 'boolean',
+            'copy_bookmark_enabled' => 'boolean',
             'layout_breakpoints' => 'array',
             'hidden_cards' => 'array',
             'show_threat_level' => 'boolean',
