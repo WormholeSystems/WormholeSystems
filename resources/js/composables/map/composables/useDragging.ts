@@ -3,8 +3,9 @@ import { TMapSolarsystem } from '@/pages/maps';
 import MapSelection from '@/routes/map-selection';
 import MapSolarsystems from '@/routes/map-solarsystems';
 import { router } from '@inertiajs/vue3';
-import { useDraggable, useEventListener } from '@vueuse/core';
-import { computed, MaybeRefOrGetter, shallowRef, toValue, watchEffect } from 'vue';
+import { useDraggable } from '@vueuse/core';
+import { computed, MaybeRefOrGetter, toValue, watchEffect } from 'vue';
+import { beginMapDrag, endMapDrag } from '../dragState';
 import { map_solarsystems, map_solarsystems_selected, mapState } from '../state';
 import { useSelection } from './useSelection';
 import { useMapSolarsystems } from './useSolarsystems';
@@ -16,8 +17,6 @@ export function useMapSolarsystem(
 ) {
     const { setSystemPosition } = useMapSolarsystems();
     const { clearSelection } = useSelection();
-
-    const is_dragging = shallowRef(false);
 
     const current_map_solarsystem = computed(() => map_solarsystems.value.find((s) => s.id === toValue(system)?.id)!);
 
@@ -39,7 +38,7 @@ export function useMapSolarsystem(
             return current_map_solarsystem.value?.pinned;
         },
         onStart() {
-            is_dragging.value = true;
+            beginMapDrag();
         },
     });
 
@@ -51,7 +50,7 @@ export function useMapSolarsystem(
     });
 
     function handleDragEnd() {
-        is_dragging.value = false;
+        endMapDrag();
         updateMapSolarsystem(true);
     }
 
@@ -113,14 +112,6 @@ export function useMapSolarsystem(
             },
         );
     }
-
-    useEventListener('pointerdown', (event) => {
-        if (!is_dragging.value) {
-            return;
-        }
-
-        event.preventDefault();
-    });
 
     return draggable;
 }

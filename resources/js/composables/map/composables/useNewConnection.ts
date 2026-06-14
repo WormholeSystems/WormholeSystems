@@ -3,6 +3,7 @@ import MapConnections from '@/routes/map-connections';
 import { router } from '@inertiajs/vue3';
 import { useEventListener } from '@vueuse/core';
 import { computed, MaybeRefOrGetter, reactive, toValue } from 'vue';
+import { beginMapDrag, endMapDrag } from '../dragState';
 
 const store = reactive<{
     origin: TMapSolarsystem | null;
@@ -22,13 +23,18 @@ export function useNewConnection(
      */
     function handleDragStart() {
         store.origin = toValue(map_solarsystem)!;
+        beginMapDrag();
     }
 
     /**
-     * Handles the drag end event for creating a new connection.
+     * Handles the drag end event for creating a new connection. Bound to every
+     * node's window pointerup; only the first run while a drag is active does
+     * any work, so begin/end stay balanced.
      */
     function handleDragEnd() {
+        if (!store.origin) return;
         store.origin = null;
+        endMapDrag();
     }
 
     function handleConnectionCreation() {
