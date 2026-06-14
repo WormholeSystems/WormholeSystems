@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('map_user_settings', function (Blueprint $table) {
+        Schema::table('map_user_settings', function (Blueprint $table): void {
             $table->boolean('copy_bookmark_enabled')->default(false)->after('suggest_alias_enabled');
         });
     }
@@ -23,7 +23,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('map_user_settings', function (Blueprint $table) {
+        Schema::table('map_user_settings', function (Blueprint $table): void {
             $table->dropColumn('copy_bookmark_enabled');
         });
     }
