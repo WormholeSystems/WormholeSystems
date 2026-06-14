@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('map_user_settings', function (Blueprint $table) {
+        Schema::table('map_user_settings', function (Blueprint $table): void {
             $table->boolean('suggest_alias_enabled')->default(false)->after('prompt_for_signature_enabled');
         });
     }
@@ -23,7 +23,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('map_user_settings', function (Blueprint $table) {
+        Schema::table('map_user_settings', function (Blueprint $table): void {
             $table->dropColumn('suggest_alias_enabled');
         });
     }

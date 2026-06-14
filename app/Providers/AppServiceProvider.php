@@ -49,7 +49,7 @@ final class AppServiceProvider extends ServiceProvider
 
         Vite::useAggressivePrefetching();
 
-        if (!app()->environment(['local', 'testing'])) {
+        if (! app()->environment(['local', 'testing'])) {
             URL::forceHttps();
         }
 
