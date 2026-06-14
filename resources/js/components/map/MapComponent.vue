@@ -69,7 +69,7 @@ const { scale } = useMapScale();
 
 const mouse = useMapMouse();
 
-const { backgroundImageUrl } = useMapBackground();
+const { backgroundImageUrl, backgroundMode } = useMapBackground();
 
 const { handleMouseDown, handleMouseMove, handleMouseUp, handleMouseLeave, handleContextMenu } = useMapPanning(scrollable_container);
 
@@ -91,24 +91,42 @@ const {
 } = useMapScrollbars(scrollable_container);
 
 const mapContainerStyle = computed(() => {
+    const cell = `${grid_size.value * scale.value}px`;
     const baseStyle = {
-        backgroundSize: `${grid_size.value * scale.value}px ${grid_size.value * scale.value}px`,
+        backgroundSize: `${cell} ${cell}`,
         minHeight: `${config.max_size.y * scale.value}px`,
         minWidth: `${config.max_size.x * scale.value}px`,
     };
 
-    if (backgroundImageUrl.value) {
+    // In "grid" mode the image is painted onto the scaled map content, so it
+    // spans the whole grid and pans / zooms together with the systems.
+    if (backgroundImageUrl.value && backgroundMode.value === 'grid') {
         return {
             ...baseStyle,
             backgroundImage: `linear-gradient(to right, rgba(0, 0, 0, 0.3) 1px, transparent 1px), linear-gradient(to bottom, rgba(0, 0, 0, 0.3) 1px, transparent 1px), url(${backgroundImageUrl.value})`,
-            backgroundSize: `${grid_size.value * scale.value}px ${grid_size.value * scale.value}px, ${grid_size.value * scale.value}px ${grid_size.value * scale.value}px, cover`,
+            backgroundSize: `${cell} ${cell}, ${cell} ${cell}, cover`,
             backgroundRepeat: 'repeat, repeat, no-repeat',
             backgroundPosition: '0 0, 0 0, center center',
-            backgroundAttachment: 'scroll, scroll, fixed',
+            backgroundAttachment: 'scroll, scroll, scroll',
         };
     }
 
     return baseStyle;
+});
+
+// In "viewport" mode the image lives on the (non-scrolling) scrollable container,
+// so it stays fixed to the visible panel regardless of panning or zoom.
+const scrollableContainerStyle = computed(() => {
+    if (!backgroundImageUrl.value || backgroundMode.value !== 'viewport') {
+        return undefined;
+    }
+
+    return {
+        backgroundImage: `url(${backgroundImageUrl.value})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center center',
+        backgroundRepeat: 'no-repeat',
+    };
 });
 
 useMapEvents(map);
@@ -136,6 +154,7 @@ function onOpenChange(open: boolean) {
         <div
             ref="scrollable-container"
             class="relative h-full w-full overflow-hidden bg-neutral-100 dark:bg-neutral-950"
+            :style="scrollableContainerStyle"
             @mousedown="handleMouseDown"
             @mousemove="handleMouseMove"
             @mouseup="handleMouseUp"
