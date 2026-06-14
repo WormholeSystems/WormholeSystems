@@ -17,6 +17,7 @@ import SolarsystemDetails from '@/components/solarsystem/SolarsystemDetails.vue'
 import SystemInfo from '@/components/solarsystem/SystemInfo.vue';
 import SystemInfoEmptyState from '@/components/solarsystem/SystemInfoEmptyState.vue';
 import ThreatAnalysis from '@/components/threat-analysis/ThreatAnalysis.vue';
+import { is_map_dragging } from '@/composables/map';
 import { useDisableTextSelection } from '@/composables/useDisableTextSelection';
 import { useMapLayout } from '@/composables/useMapLayout';
 import { useOnClient } from '@/composables/useOnClient';
@@ -152,8 +153,9 @@ useOnClient(() =>
     }),
 );
 
-// Prevent text selection while in edit mode (drag/resize events fire too late to prevent it reactively)
-useDisableTextSelection(() => layout.isEditMode.value);
+// Prevent text selection while in edit mode or while dragging a node / new connection
+// (drag events fire too late to prevent it reactively)
+useDisableTextSelection(() => layout.isEditMode.value || is_map_dragging.value);
 
 const isDragging = ref(false);
 const isResizing = ref(false);
