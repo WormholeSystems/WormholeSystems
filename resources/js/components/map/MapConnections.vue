@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import MapConnection from '@/components/map/MapConnection.vue';
-import { useMapConnections, useMapMouse, useNewConnection, useSelection } from '@/composables/map';
+import { beginMapDrag, endMapDrag, useMapConnections, useMapMouse, useNewConnection, useSelection } from '@/composables/map';
 import { TMapConnection } from '@/pages/maps';
 import { useEventListener } from '@vueuse/core';
 import { ref, useTemplateRef } from 'vue';
@@ -23,9 +23,9 @@ const emit = defineEmits<{
 }>();
 
 function handleDragStart(event: PointerEvent) {
-    document.body.classList.add('select-none');
     if (event.button !== 0) return;
     dragging.value = true;
+    beginMapDrag();
     setSelectionStart(event.offsetX, event.offsetY);
 }
 
@@ -35,9 +35,9 @@ function handleDragMove() {
 }
 
 function handleDragEnd(event: PointerEvent) {
-    document.body.classList.remove('select-none');
     if (!dragging.value) return;
     dragging.value = false;
+    endMapDrag();
     const bounds = container.value?.getBoundingClientRect();
     if (!bounds) return;
 
