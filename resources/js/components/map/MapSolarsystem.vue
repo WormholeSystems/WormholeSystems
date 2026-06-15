@@ -80,7 +80,7 @@ const is_rally = computed(() => {
                     <div class="">
                         <Link
                             :href="
-                                show(map_solarsystem.map_id, {
+                                show(map.slug, {
                                     mergeQuery: { map_solarsystem_id: map_solarsystem.id },
                                 })
                             "
