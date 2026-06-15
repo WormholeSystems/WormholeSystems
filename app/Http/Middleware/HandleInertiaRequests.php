@@ -32,6 +32,13 @@ final class HandleInertiaRequests extends Middleware
      */
     protected $rootView = 'app';
 
+    /**
+     * @var array<int, string>
+     */
+    protected $withoutSsr = [
+        'maps/*',
+    ];
+
     public function __construct(#[CurrentUser]
         private readonly ?User $user = null) {}
 
