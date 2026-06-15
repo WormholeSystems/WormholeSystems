@@ -103,7 +103,7 @@ function isCurrentRoute(href: string) {
             <div class="mb-8">
                 <div class="mb-4 flex items-center gap-4">
                     <Button variant="ghost" size="sm" as-child>
-                        <Link :href="`/maps/${map.slug}`">
+                        <Link :href="`/maps/${map.slug}`" prefetch>
                             <ArrowLeft class="mr-2 h-4 w-4" />
                             Back to Map
                         </Link>
@@ -125,6 +125,7 @@ function isCurrentRoute(href: string) {
                                     'bg-accent text-accent-foreground': isCurrentRoute(item.href.url),
                                     'text-muted-foreground': !isCurrentRoute(item.href.url),
                                 }"
+                                prefetch
                             >
                                 <component :is="item.icon" class="mt-0.5 h-4 w-4 flex-shrink-0" />
                                 <div>

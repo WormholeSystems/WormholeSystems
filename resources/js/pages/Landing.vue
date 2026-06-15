@@ -43,7 +43,7 @@ const seoData = {
                             <a :href="Eve.show().url" class="text-sm font-medium">Sign in</a>
                         </Button>
                         <Button v-else asChild size="sm" variant="outline">
-                            <Link :href="home()" class="text-sm font-medium">Go to maps</Link>
+                            <Link :href="home()" class="text-sm font-medium" prefetch>Go to maps</Link>
                         </Button>
                     </div>
                 </div>
@@ -78,7 +78,7 @@ const seoData = {
                                 </Button>
                             </template>
                             <Button asChild size="lg" v-else>
-                                <Link :href="home()" class="inline-flex items-center gap-2">
+                                <Link :href="home()" class="inline-flex items-center gap-2" prefetch>
                                     Explore Maps
                                     <ArrowRight class="h-4 w-4" />
                                 </Link>

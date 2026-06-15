@@ -38,7 +38,7 @@ function handleSubmit() {
                     <InputError :message="form.errors.name" class="mt-2" />
                     <CardFooter class="flex justify-between">
                         <Button as-child variant="secondary">
-                            <Link :href="home()"> Cancel</Link>
+                            <Link :href="home()" prefetch> Cancel</Link>
                         </Button>
                         <Button type="submit" class="btn btn-primary"> Create Map</Button>
                     </CardFooter>

@@ -37,7 +37,7 @@ const filteredMapsCount = computed(() => maps.length);
                         <h1 class="text-3xl font-bold tracking-tight text-foreground">Maps</h1>
                         <p class="mt-2 text-muted-foreground">Manage and explore your wormhole mapping networks</p>
                     </div>
-                    <Link :href="MapController.create()">
+                    <Link :href="MapController.create()" prefetch>
                         <Button class="flex items-center gap-2">
                             <PlusIcon class="h-4 w-4" />
                             Create New Map
@@ -82,7 +82,7 @@ const filteredMapsCount = computed(() => maps.length);
                 </p>
                 <div class="flex gap-2">
                     <Button v-if="search" variant="outline" @click="search = ''"> Clear Search</Button>
-                    <Link :href="MapController.create()">
+                    <Link :href="MapController.create()" prefetch>
                         <Button class="flex items-center gap-2">
                             <PlusIcon class="h-4 w-4" />
                             {{ search ? 'Create New Map' : 'Create Your First Map' }}
