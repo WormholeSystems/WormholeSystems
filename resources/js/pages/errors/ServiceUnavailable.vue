@@ -44,7 +44,7 @@ usePoll(5000);
 
             <div class="flex flex-col gap-3">
                 <Button as-child>
-                    <Link :href="home()" class="flex items-center justify-center gap-2">
+                    <Link :href="home()" class="flex items-center justify-center gap-2" prefetch>
                         <HomeIcon class="h-4 w-4" />
                         Home
                     </Link>

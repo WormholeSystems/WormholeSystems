@@ -30,7 +30,7 @@ const open = ref(false);
 <template>
     <Card>
         <CardHeader>
-            <Link class="group flex items-center gap-3" :href="MapController.show(map.slug)">
+            <Link class="group flex items-center gap-3" :href="MapController.show(map.slug)" prefetch>
                 <div class="rounded-lg bg-primary/10 p-2">
                     <Logo class="h-5 w-5 text-primary" />
                 </div>
@@ -97,7 +97,7 @@ const open = ref(false);
                 </DialogContent>
             </Dialog>
             <Button variant="ghost" as-child>
-                <Link :href="MapController.show(map.slug)">View Map →</Link>
+                <Link :href="MapController.show(map.slug)" prefetch>View Map →</Link>
             </Button>
         </CardFooter>
     </Card>

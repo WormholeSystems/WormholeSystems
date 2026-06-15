@@ -21,7 +21,7 @@ const { mapSlug, characterName, canManageAccess } = defineProps<{
             </p>
         </div>
         <Button v-if="canManageAccess" variant="outline" size="sm" as-child class="shrink-0">
-            <Link :href="MapAccessController.show(mapSlug)">Manage Access</Link>
+            <Link :href="MapAccessController.show(mapSlug)" prefetch>Manage Access</Link>
         </Button>
     </div>
 </template>

@@ -68,6 +68,7 @@ const mainNavItems: NavItem[] = [
                                                 :href="item.href"
                                                 class="flex items-center gap-3 rounded-md px-2 py-2 text-sm font-medium text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                                                 :class="{ 'bg-muted/50 text-foreground': isCurrentRoute(item.href) }"
+                                                prefetch
                                             >
                                                 <component v-if="item.icon" :is="item.icon" class="size-4" />
                                                 {{ item.title }}
@@ -90,6 +91,7 @@ const mainNavItems: NavItem[] = [
                                                 :href="ScopeController.index()"
                                                 class="flex items-center gap-3 text-sm font-medium text-muted-foreground hover:text-foreground"
                                                 :class="{ 'text-red-400': page.props.missing_scopes.length }"
+                                                prefetch
                                             >
                                                 <AlertTriangle v-if="page.props.missing_scopes.length" class="size-4" />
                                                 <Shield v-else class="size-4" />
@@ -113,7 +115,7 @@ const mainNavItems: NavItem[] = [
                         </Sheet>
                     </div>
 
-                    <Link :href="home()" class="flex items-center gap-x-2">
+                    <Link :href="home()" class="flex items-center gap-x-2" prefetch>
                         <AppLogo />
                     </Link>
 
@@ -128,6 +130,7 @@ const mainNavItems: NavItem[] = [
                                 :href="item.href"
                                 class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
                                 :class="{ 'bg-muted/50 text-foreground': isCurrentRoute(item.href) }"
+                                prefetch
                             >
                                 <component v-if="item.icon" :is="item.icon" class="size-4" />
                                 {{ item.title }}
@@ -161,6 +164,7 @@ const mainNavItems: NavItem[] = [
                             :class="
                                 page.props.missing_scopes.length ? 'text-red-400 hover:text-red-300' : 'text-muted-foreground hover:text-foreground'
                             "
+                            prefetch
                         >
                             <AlertTriangle v-if="page.props.missing_scopes.length" class="size-4" />
                             <Shield v-else class="size-4" />
@@ -203,6 +207,7 @@ const mainNavItems: NavItem[] = [
                         <Link
                             :href="LoginController.show().url"
                             class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                            prefetch
                         >
                             <LogIn class="size-4" />
                             <span class="hidden sm:inline">Login</span>
