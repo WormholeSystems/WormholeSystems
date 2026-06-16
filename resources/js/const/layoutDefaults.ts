@@ -124,6 +124,17 @@ export const REMOVABLE_CARD_LABELS: Record<RemovableCardId, string> = {
     skyhooks: 'Raidable Skyhooks',
 };
 
+export const REMOVABLE_CARD_DESCRIPTIONS: Record<RemovableCardId, string> = {
+    audits: 'Activity log of recent changes to the selected system.',
+    'ship-history': 'Ships recently flown by tracked pilots.',
+    characters: 'Pilots currently tracked on the map.',
+    killmails: 'Recent killmails reported in mapped systems.',
+    autopilot: 'Route planner and in-game waypoint controls.',
+    'eve-scout': 'Live Thera & Turnur connections from EVE-Scout.',
+    'threat-analysis': 'Threat ratings for nearby wormhole systems.',
+    skyhooks: 'Raidable skyhooks and their vulnerability timers.',
+};
+
 /**
  * Mapping from removable card IDs to their Inertia prop names.
  * Used to request data reload when a card is unhidden.
