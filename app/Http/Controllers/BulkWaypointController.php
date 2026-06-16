@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\SetWaypointAction;
 use App\Models\User;
+use App\Scopes\CharacterIsOnline;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\RedirectResponse;
@@ -24,7 +25,10 @@ final class BulkWaypointController extends Controller
             'add_to_beginning' => ['sometimes', 'boolean'],
         ]);
 
-        $characters = $user->characters()->whereHas('esiTokens', fn ($q) => $q->hasWaypointScopes())->get();
+        $characters = $user->characters()
+            ->whereHas('esiTokens', fn ($q) => $q->hasWaypointScopes())
+            ->tap(new CharacterIsOnline)
+            ->get();
 
         foreach ($characters as $character) {
             $setWaypointAction->handle($character, $validated);
