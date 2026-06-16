@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Jobs\Characters;
 
 use App\Events\Characters\CharacterStatusUpdatedEvent;
+use App\Events\Characters\UserCharacterStatusUpdatedEvent;
+use App\Models\Character;
 use App\Models\CharacterStatus;
 use App\Models\Map;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -42,5 +44,14 @@ final class DispatchCharacterStatusEvents implements ShouldQueue
             ->select('maps.id')
             ->lazy()
             ->each(fn (Map $map) => CharacterStatusUpdatedEvent::dispatch($map->id));
+
+        // Notify each owning user directly so their character list refreshes even
+        // for characters that are not on any map they are currently viewing.
+        Character::query()
+            ->whereIn('id', $updated_character_ids)
+            ->whereNotNull('user_id')
+            ->pluck('user_id')
+            ->unique()
+            ->each(fn (int $userId) => UserCharacterStatusUpdatedEvent::dispatch($userId));
     }
 }

@@ -24,6 +24,7 @@ import { useMapEvents } from '@/composables/map/composables/useMapEvents';
 import { useLayout } from '@/composables/useLayout';
 import { useMapBackground } from '@/composables/useMapBackground';
 import usePermission from '@/composables/usePermission';
+import { useUserEvents } from '@/composables/useUserEvents';
 import { TMap } from '@/pages/maps';
 import { TMapConfig } from '@/types/map';
 import { Position, useMagicKeys, whenever } from '@vueuse/core';
@@ -130,6 +131,7 @@ const scrollableContainerStyle = computed(() => {
 });
 
 useMapEvents(map);
+useUserEvents();
 
 const opened_at = ref<Position | null>(null);
 
