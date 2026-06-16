@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&family=Chakra+Petch:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
@@ -7,10 +7,16 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
+/* Landing page renders system-class colours dynamically; keep these utilities generated. */
+@source inline('{text,bg,border}-{c1,c2,c3,c4,c5,c6,hs,ls,ns,friendly,hostile,active,unscanned,empty}');
+@source inline('{bg,text}-{c1,c2,c3,c4,c5,c6,friendly,hostile,active,unscanned,empty}/{10,15,70}');
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
     --font-sans: Instrument Sans, ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-display: 'Chakra Petch', 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-hud: 'Space Mono', ui-monospace, 'SFMono-Regular', 'Menlo', monospace;
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
