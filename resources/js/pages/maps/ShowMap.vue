@@ -6,7 +6,6 @@ import EveScoutConnections from '@/components/eve-scout/EveScoutConnections.vue'
 import LayoutEditorToolbar from '@/components/layout/LayoutEditorToolbar.vue';
 import MapKillmails from '@/components/map-killmails/MapKillmails.vue';
 import MapSkyhooks from '@/components/map-skyhooks/MapSkyhooks.vue';
-import ActiveCharacterWarning from '@/components/map/ActiveCharacterWarning.vue';
 import MapComponent from '@/components/map/MapComponent.vue';
 import MapIntroduction from '@/components/map/MapIntroduction.vue';
 import MapStatusBar from '@/components/map/MapStatusBar.vue';
@@ -41,19 +40,15 @@ const {
     map_user_settings,
     ignored_systems,
     map_characters,
-    active_character_has_access,
     eve_scout_connections,
     threat_analysis,
     map_skyhooks,
 } = defineProps<TShowMapProps>();
 
-const { canManageAccess, isViewer } = usePermission();
+const { isViewer } = usePermission();
 const page = usePage();
 
 const { resolveSolarsystem } = useStaticSolarsystems();
-
-// Show warning when the active character is not on the map's access list (only for authenticated users)
-const showActiveCharacterWarning = computed(() => page.props.auth.user && !active_character_has_access);
 
 const resolvedMap = computed<TMap>(() => {
     const solarsystems = map.map_solarsystems?.map((mapSolarsystem) => {
@@ -191,14 +186,6 @@ const handleResizeEnd = () => {
             :userScopes="userScopes"
             :isVisible="!map_user_settings.introduction_confirmed_at && !isViewer"
             :mapSlug="map.slug"
-        />
-
-        <!-- Active Character Access Warning -->
-        <ActiveCharacterWarning
-            v-if="showActiveCharacterWarning"
-            :character-name="page.props.auth?.user?.active_character?.name ?? ''"
-            :can-manage-access="canManageAccess"
-            :map-slug="map.slug"
         />
 
         <!-- Status Bar -->
