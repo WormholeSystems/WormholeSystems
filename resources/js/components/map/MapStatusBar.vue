@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import MapAccessController from '@/actions/App/Http/Controllers/MapAccessController';
 import MapPreferencesController from '@/actions/App/Http/Controllers/MapPreferencesController';
 import MapSettingsController from '@/actions/App/Http/Controllers/MapSettingsController';
 import TrackingIcon from '@/components/icons/TrackingIcon.vue';
@@ -16,7 +17,7 @@ import type { TMapUserSetting } from '@/types/models';
 import { Link } from '@inertiajs/vue3';
 import { useConnectionStatus } from '@laravel/echo-vue';
 import { ConnectionStatus } from 'laravel-echo';
-import { Eye, EyeOff, LayoutGrid, Map as MapIcon, Settings, ShieldAlert, Wifi, WifiOff } from 'lucide-vue-next';
+import { AlertTriangle, Eye, EyeOff, LayoutGrid, Map as MapIcon, Settings, ShieldAlert, Wifi, WifiOff } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import MapSearch from './MapSearch.vue';
 import TrackingSignatureDialog from './TrackingSignatureDialog.vue';
@@ -97,7 +98,32 @@ const settingsUrl = computed(() => {
 </script>
 
 <template>
-    <div class="flex h-10 shrink-0 items-center gap-2 border-b border-border/50 bg-muted/30 px-2 sm:gap-3 sm:px-3">
+    <div class="relative flex h-10 shrink-0 items-center gap-2 border-b border-border/50 bg-muted/30 px-2 sm:gap-3 sm:px-3">
+        <!-- Active Character Access Warning (centered, prominent) -->
+        <Tooltip v-if="$page.props.auth.user && !$page.props.active_character_has_access">
+            <TooltipTrigger as-child>
+                <component
+                    :is="canManageAccess ? Link : 'div'"
+                    :href="canManageAccess ? MapAccessController.show(map.slug) : undefined"
+                    class="absolute top-1/2 left-1/2 z-10 flex -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-full border border-yellow-500/40 bg-yellow-500/15 px-3 py-1 text-xs font-medium text-yellow-500 shadow-sm transition-colors hover:bg-yellow-500/25"
+                >
+                    <AlertTriangle class="size-3.5 shrink-0 animate-pulse" />
+                    <span class="whitespace-nowrap">Limited map access</span>
+                </component>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+                <p class="text-xs font-medium text-yellow-500">Limited Access</p>
+                <p class="max-w-xs text-xs text-muted-foreground">
+                    Your active character{{
+                        $page.props.auth.user.active_character?.name ? ` ${$page.props.auth.user.active_character.name}` : ''
+                    }}
+                    is not on this map's access list. You are viewing through another character's access.{{
+                        canManageAccess ? ' Click to manage access.' : ''
+                    }}
+                </p>
+            </TooltipContent>
+        </Tooltip>
+
         <!-- Map Name -->
         <div class="flex items-center gap-2">
             <MapIcon class="size-4 text-muted-foreground" />
