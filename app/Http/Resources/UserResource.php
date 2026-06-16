@@ -23,7 +23,7 @@ final class UserResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'active_character' => $this->active_character?->load('esiScopes')->toResource(CharacterResource::class),
-            'characters' => $this->characters->toResourceCollection(CharacterResource::class),
+            'characters' => $this->characters->loadMissing('characterStatus')->toResourceCollection(CharacterResource::class),
         ];
     }
 }

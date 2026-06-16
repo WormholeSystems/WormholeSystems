@@ -26,6 +26,10 @@ const { solarsystem_id } = defineProps<{
 
 const user = useUser();
 
+// Waypoints can only be set for characters that are online in-game, so the
+// destination/waypoint menus only offer online characters.
+const onlineCharacters = computed(() => user.value?.characters.filter((character) => character.status?.is_online) ?? []);
+
 const { setWaypoint, setWaypointAll } = useWaypoint();
 
 const { map_solarsystems } = useMapSolarsystems();
@@ -59,15 +63,22 @@ const staticSolarsystem = useStaticSolarsystem(() => solarsystem_id);
                     Set destination
                 </ContextMenuSubTrigger>
                 <ContextMenuSubContent>
-                    <ContextMenuItem v-for="character in user.characters" :key="character.id" @select="setWaypoint(character.id, solarsystem_id)">
-                        <CharacterImage :character_id="character.id" :character_name="character.name" class="size-5 rounded-lg" />
-                        {{ character.name }}
-                    </ContextMenuItem>
-                    <ContextMenuSeparator v-if="user.characters.length > 1" />
-                    <ContextMenuItem v-if="user.characters.length > 1" @select="handleSetDestinationAll">
-                        <Users class="size-4" />
-                        All Characters
-                    </ContextMenuItem>
+                    <template v-if="onlineCharacters.length">
+                        <ContextMenuItem
+                            v-for="character in onlineCharacters"
+                            :key="character.id"
+                            @select="setWaypoint(character.id, solarsystem_id)"
+                        >
+                            <CharacterImage :character_id="character.id" :character_name="character.name" class="size-5 rounded-lg" />
+                            {{ character.name }}
+                        </ContextMenuItem>
+                        <ContextMenuSeparator v-if="onlineCharacters.length > 1" />
+                        <ContextMenuItem v-if="onlineCharacters.length > 1" @select="handleSetDestinationAll">
+                            <Users class="size-4" />
+                            All Characters
+                        </ContextMenuItem>
+                    </template>
+                    <ContextMenuItem v-else disabled>No characters online</ContextMenuItem>
                 </ContextMenuSubContent>
             </ContextMenuSub>
 
@@ -77,19 +88,22 @@ const staticSolarsystem = useStaticSolarsystem(() => solarsystem_id);
                     Add waypoint
                 </ContextMenuSubTrigger>
                 <ContextMenuSubContent>
-                    <ContextMenuItem
-                        v-for="character in user.characters"
-                        :key="character.id"
-                        @select="setWaypoint(character.id, solarsystem_id, false)"
-                    >
-                        <CharacterImage :character_id="character.id" :character_name="character.name" class="size-5 rounded-lg" />
-                        {{ character.name }}
-                    </ContextMenuItem>
-                    <ContextMenuSeparator v-if="user.characters.length > 1" />
-                    <ContextMenuItem v-if="user.characters.length > 1" @select="setWaypointAll(solarsystem_id, false)">
-                        <Users class="size-4" />
-                        All Characters
-                    </ContextMenuItem>
+                    <template v-if="onlineCharacters.length">
+                        <ContextMenuItem
+                            v-for="character in onlineCharacters"
+                            :key="character.id"
+                            @select="setWaypoint(character.id, solarsystem_id, false)"
+                        >
+                            <CharacterImage :character_id="character.id" :character_name="character.name" class="size-5 rounded-lg" />
+                            {{ character.name }}
+                        </ContextMenuItem>
+                        <ContextMenuSeparator v-if="onlineCharacters.length > 1" />
+                        <ContextMenuItem v-if="onlineCharacters.length > 1" @select="setWaypointAll(solarsystem_id, false)">
+                            <Users class="size-4" />
+                            All Characters
+                        </ContextMenuItem>
+                    </template>
+                    <ContextMenuItem v-else disabled>No characters online</ContextMenuItem>
                 </ContextMenuSubContent>
             </ContextMenuSub>
 
