@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import PlusIcon from '@/components/icons/PlusIcon.vue';
-import SolarsystemEffect from '@/components/map/SolarsystemEffect.vue';
-import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
+import SolarsystemSearchResult from '@/components/solarsystem/SolarsystemSearchResult.vue';
 import { Combobox, ComboboxAnchor, ComboboxEmpty, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxList } from '@/components/ui/combobox';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import MapPanelHeaderActionButton from '@/components/ui/map-panel/MapPanelHeaderActionButton.vue';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useSolarsystemAliases } from '@/composables/useSolarsystemAliases';
 import { useStaticData } from '@/composables/useStaticData';
 import type { TMap, TResolvedMapRouteSolarsystem } from '@/pages/maps';
 import MapRouteSolarsystems from '@/routes/map-route-solarsystems';
@@ -20,6 +20,7 @@ const { map, map_route_solarsystems } = defineProps<{
 
 const search = ref('');
 const { staticData, loadStaticData } = useStaticData();
+const { getAlias } = useSolarsystemAliases(() => map.map_solarsystems);
 
 void loadStaticData();
 
@@ -87,7 +88,11 @@ function handleSolarsystemSelect(solarsystem: TStaticSolarsystem) {
                 </ComboboxAnchor>
                 <ComboboxList class="w-115" align="start">
                     <ComboboxEmpty> No results found</ComboboxEmpty>
-                    <ComboboxGroup heading="Search Results" v-if="new_solarsystems.length > 0" class="grid grid-cols-[auto_1fr_auto]">
+                    <ComboboxGroup
+                        heading="Search Results"
+                        v-if="new_solarsystems.length > 0"
+                        class="grid grid-cols-[auto_1fr_1fr_auto] items-center gap-x-2"
+                    >
                         <ComboboxItem
                             v-for="solarsystem in new_solarsystems"
                             :key="solarsystem.id"
@@ -95,32 +100,22 @@ function handleSolarsystemSelect(solarsystem: TStaticSolarsystem) {
                             @select.prevent="() => handleSolarsystemSelect(solarsystem)"
                             class="col-span-full grid grid-cols-subgrid"
                         >
-                            <div class="justify-self-center">
-                                <SolarsystemClass :wormhole_class="solarsystem.class" :security="solarsystem.security" :name="solarsystem.name" />
-                            </div>
-                            <span class="whitespace-nowrap">{{ solarsystem.name }}</span>
-                            <span class="truncate text-muted-foreground" v-if="!solarsystem.class">{{ solarsystem.region?.name }}</span>
-                            <div class="justify-self-end" v-else-if="solarsystem.effect">
-                                <SolarsystemEffect :effect="solarsystem.effect" />
-                            </div>
+                            <SolarsystemSearchResult :solarsystem="solarsystem" :alias="getAlias(solarsystem.id)" />
                         </ComboboxItem>
                     </ComboboxGroup>
-                    <ComboboxGroup heading="Already in Watchlist" v-if="existing_solarsystems.length > 0" class="grid grid-cols-[auto_1fr_auto]">
+                    <ComboboxGroup
+                        heading="Already in Watchlist"
+                        v-if="existing_solarsystems.length > 0"
+                        class="grid grid-cols-[auto_1fr_1fr_auto] items-center gap-x-2"
+                    >
                         <ComboboxItem
                             v-for="solarsystem in existing_solarsystems"
                             :key="solarsystem.id"
                             :value="solarsystem.name"
-                            class="col-span-full grid grid-cols-subgrid"
                             disabled
+                            class="col-span-full grid grid-cols-subgrid"
                         >
-                            <div class="justify-self-center">
-                                <SolarsystemClass :wormhole_class="solarsystem.class" :security="solarsystem.security" :name="solarsystem.name" />
-                            </div>
-                            <span class="whitespace-nowrap">{{ solarsystem.name }}</span>
-                            <span class="truncate text-muted-foreground" v-if="!solarsystem.class">{{ solarsystem.region?.name }}</span>
-                            <div class="justify-self-end" v-else-if="solarsystem.effect">
-                                <SolarsystemEffect :effect="solarsystem.effect" />
-                            </div>
+                            <SolarsystemSearchResult :solarsystem="solarsystem" :alias="getAlias(solarsystem.id)" />
                         </ComboboxItem>
                     </ComboboxGroup>
                 </ComboboxList>

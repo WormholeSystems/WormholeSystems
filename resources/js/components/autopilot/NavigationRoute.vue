@@ -10,6 +10,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useIgnoreList } from '@/composables/useIgnoreList';
 import { usePath } from '@/composables/usePath';
 import { useRouteCalculator } from '@/composables/useRouteCalculator';
+import { useSolarsystemAliases } from '@/composables/useSolarsystemAliases';
 import { useStaticSolarsystem, useStaticSolarsystems } from '@/composables/useStaticSolarsystems';
 import type { TMap, TResolvedMapRouteSolarsystem, TResolvedSelectedMapSolarsystem, TResolvedSolarsystem } from '@/pages/maps';
 import type { ConnectionType } from '@/routing/types';
@@ -32,6 +33,7 @@ const { map, solarsystems, selected_map_solarsystem, ignored_systems, active_cha
 
 const mapConnections = computed(() => map.map_connections ?? []);
 const mapSolarsystems = computed(() => map.map_solarsystems ?? []);
+const { aliases } = useSolarsystemAliases(mapSolarsystems);
 const { ignoreSolarsystem, clearIgnoreList } = useIgnoreList();
 const { setPath } = usePath();
 
@@ -176,7 +178,7 @@ function clearTo() {
                     </div>
                 </template>
             </ComboboxAnchor>
-            <SystemComboboxList :solarsystems="filteredSolarsystems" @select="handleFromSystemSelect" />
+            <SystemComboboxList :solarsystems="filteredSolarsystems" :aliases="aliases" @select="handleFromSystemSelect" />
         </Combobox>
         <div v-if="hasQuickPicks" class="mt-1.5 flex flex-wrap gap-1.5">
             <button
@@ -259,7 +261,7 @@ function clearTo() {
                     </div>
                 </template>
             </ComboboxAnchor>
-            <SystemComboboxList :solarsystems="filteredSolarsystems" @select="handleToSystemSelect" />
+            <SystemComboboxList :solarsystems="filteredSolarsystems" :aliases="aliases" @select="handleToSystemSelect" />
         </Combobox>
         <div v-if="hasQuickPicks" class="mt-1.5 flex flex-wrap gap-1.5">
             <button

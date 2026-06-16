@@ -8,6 +8,7 @@ import SolarsystemEffect from '@/components/solarsystem/SolarsystemEffect.vue';
 import { Combobox, ComboboxAnchor } from '@/components/ui/combobox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useClosestSystemsCalculator } from '@/composables/useClosestSystemsCalculator';
+import { useSolarsystemAliases } from '@/composables/useSolarsystemAliases';
 import { useStaticData } from '@/composables/useStaticData';
 import { useStaticSolarsystem, useStaticSolarsystems } from '@/composables/useStaticSolarsystems';
 import type { TMap, TResolvedMapRouteSolarsystem, TResolvedSelectedMapSolarsystem, TResolvedSolarsystem } from '@/pages/maps';
@@ -29,6 +30,7 @@ const { map, solarsystems, selected_map_solarsystem, active_character, character
 
 const mapConnections = computed(() => map.map_connections ?? []);
 const mapSolarsystems = computed(() => map.map_solarsystems ?? []);
+const { aliases } = useSolarsystemAliases(mapSolarsystems);
 
 const { staticData, loadStaticData } = useStaticData();
 void loadStaticData();
@@ -184,7 +186,7 @@ function clearSystem() {
                     </div>
                 </template>
             </ComboboxAnchor>
-            <SystemComboboxList :solarsystems="filteredSolarsystems" @select="handleSystemSelect" />
+            <SystemComboboxList :solarsystems="filteredSolarsystems" :aliases="aliases" @select="handleSystemSelect" />
         </Combobox>
         <div v-if="hasQuickPicks" class="mt-1.5 flex flex-wrap gap-1.5">
             <button
