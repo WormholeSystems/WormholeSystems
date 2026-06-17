@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Resources;
 
 use App\Models\Map;
+use App\Models\MapAccess;
 use App\Models\MapUserSetting;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -30,10 +31,35 @@ final class MapCardResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'slug' => $this->slug,
-            'map_user_setting' => $this->handleUserSetting(),
-            'owner' => $this->mapOwner->accessible->toResource(CharacterResource::class),
+            'is_public' => $this->is_public,
+            'role' => $this->resolveRole(),
             'map_solarsystems_count' => $this->map_solarsystems_count,
+            'map_connections_count' => $this->map_connections_count,
+            'map_user_setting' => $this->handleUserSetting(),
         ];
+    }
+
+    /**
+     * The current user's highest role on the map, derived from the eager-loaded
+     * (user-scoped) access entries. Owners are reported as "owner".
+     */
+    private function resolveRole(): ?string
+    {
+        $accessors = $this->mapAccessors;
+
+        if ($accessors->isEmpty()) {
+            return null;
+        }
+
+        if ($accessors->contains(fn (MapAccess $access): bool => (bool) $access->is_owner)) {
+            return 'owner';
+        }
+
+        return $accessors
+            ->sortByDesc(fn (MapAccess $access): int => $access->permission->level())
+            ->first()
+            ?->permission
+            ?->value;
     }
 
     /**

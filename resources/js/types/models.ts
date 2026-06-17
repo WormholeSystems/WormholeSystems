@@ -238,6 +238,7 @@ export type TMapUserSetting = {
     hidden_cards: string[] | null;
     show_threat_level: boolean;
     show_statics_first: boolean;
+    is_archived: boolean;
 };
 
 export type TMapWebhookType = 'proximity' | 'killmail';
