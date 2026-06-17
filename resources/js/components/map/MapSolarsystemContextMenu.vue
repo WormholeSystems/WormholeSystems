@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { CharacterImage } from '@/components/images';
-import CopyNameMenu from '@/components/map/CopyNameMenu.vue';
 import {
     ContextMenu,
     ContextMenuContent,
@@ -227,8 +226,6 @@ const options: TMapSolarsystemStatus[] = ['unknown', 'friendly', 'hostile', 'act
             </ContextMenuSub>
 
             <ContextMenuSeparator />
-
-            <CopyNameMenu :map_solarsystem="map_solarsystem" />
 
             <ContextMenuItem @select="toggleHomeSystem" v-if="can_write">
                 <Home class="size-4" />
