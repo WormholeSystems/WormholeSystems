@@ -9,4 +9,5 @@ enum ShipSize: string
     case Frigate = 'frigate';
     case Medium = 'medium';
     case Large = 'large';
+    case ExtraLarge = 'xlarge';
 }

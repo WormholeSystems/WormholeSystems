@@ -24,7 +24,7 @@ export type TRoutePreference = 'shorter' | 'safer' | 'less_secure';
 
 export type TLifetimeStatus = 'healthy' | 'eol' | 'critical';
 
-export type TShipSize = 'frigate' | 'medium' | 'large';
+export type TShipSize = 'frigate' | 'medium' | 'large' | 'xlarge';
 
 export type TSovereignty = {
     id: number;

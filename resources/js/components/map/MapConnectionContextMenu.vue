@@ -114,6 +114,7 @@ function handleLifetimeChange(lifetime: AcceptableValue) {
                     <ContextMenuRadioItem value="frigate">Frigate</ContextMenuRadioItem>
                     <ContextMenuRadioItem value="medium">Medium</ContextMenuRadioItem>
                     <ContextMenuRadioItem value="large">Large</ContextMenuRadioItem>
+                    <ContextMenuRadioItem value="xlarge">Extra Large</ContextMenuRadioItem>
                 </ContextMenuRadioGroup>
             </ContextMenuSubContent>
         </ContextMenuSub>
