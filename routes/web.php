@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-use App\Http\Controllers\AboutController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BulkSignatureController;
 use App\Http\Controllers\BulkWaypointController;
+use App\Http\Controllers\DocumentationController;
 use App\Http\Controllers\EveController;
 use App\Http\Controllers\EveScoutConnectionController;
 use App\Http\Controllers\EveSearchController;
@@ -41,7 +41,7 @@ use App\Http\Middleware\SetMapShareToken;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [LandingController::class, 'index'])->name('landing')->middleware('guest');
-Route::get('about', [AboutController::class, 'index'])->name('about');
+Route::get('documentation/{path?}', [DocumentationController::class, 'index'])->where('path', '.*')->name('documentation');
 Route::get('login', [LoginController::class, 'show'])->name('login');
 Route::get('auth', [AuthController::class, 'show'])->name('auth');
 Route::get('eve', [EveController::class, 'show'])->name('eve.show');

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import AboutController from '@/actions/App/Http/Controllers/AboutController';
+import DocumentationController from '@/actions/App/Http/Controllers/DocumentationController';
 import LoginController from '@/actions/App/Http/Controllers/LoginController';
 import MapController from '@/actions/App/Http/Controllers/MapController';
 import ScopeController from '@/actions/App/Http/Controllers/ScopeController';
@@ -15,7 +15,7 @@ import { home } from '@/routes';
 import type { AppPageProps, NavItem } from '@/types';
 import { TCharacter } from '@/types/models';
 import { Link, usePage } from '@inertiajs/vue3';
-import { AlertTriangle, Info, LayoutGrid, LogIn, Menu, Shield } from 'lucide-vue-next';
+import { AlertTriangle, CircleHelp, LayoutGrid, LogIn, Menu, Shield } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 const page = usePage<
@@ -34,9 +34,9 @@ const mainNavItems: NavItem[] = [
         icon: LayoutGrid,
     },
     {
-        title: 'About',
-        href: AboutController.index().url,
-        icon: Info,
+        title: 'Documentation',
+        href: DocumentationController.index().url,
+        icon: CircleHelp,
     },
 ];
 </script>
