@@ -36,13 +36,22 @@ const emit = defineEmits<{
 const curve = computed(() => bezierCurve(from, to));
 const center = computed(() => midPoint(from, to));
 
+function getShipSizeLabel(size?: TShipSize | null): string | null {
+    if (size === 'frigate') return 'S';
+    if (size === 'medium') return 'M';
+    if (size === 'xlarge') return 'XL';
+
+    return null;
+}
+
 const indicators = computed<Indicator[]>(() => {
     const items: Indicator[] = [];
 
-    if (ship_size && ship_size !== 'large') {
+    const shipSizeLabel = getShipSizeLabel(ship_size);
+    if (shipSizeLabel) {
         items.push({
             type: 'text',
-            label: ship_size === 'frigate' ? 'S' : 'M',
+            label: shipSizeLabel,
             fill: 'var(--color-neutral-500)',
             stroke: 'var(--color-neutral-600)',
         });
