@@ -283,7 +283,10 @@ export type TMapSummary = {
     id: number;
     name: string;
     slug: string;
+    is_public: boolean;
+    role: 'viewer' | 'member' | 'manager' | 'owner' | null;
     map_solarsystems_count: number;
+    map_connections_count: number;
     map_user_setting: TMapUserSetting;
 };
 

@@ -102,15 +102,20 @@ final class MapController extends Controller
     public function index(Request $request): Response
     {
         $search = $request->string('search');
+        $accessibleIds = $this->user->getAccessibleIds();
 
         return Inertia::render('maps/ShowAllMaps', [
             'maps' => Map::query()
-                ->whereHas('mapAccessors', fn (Builder $builder) => $builder->notExpired()->whereIn('accessible_id', $this->user->getAccessibleIds()))
+                ->whereHas('mapAccessors', fn (Builder $builder) => $builder->notExpired()->whereIn('accessible_id', $accessibleIds))
                 ->when($search->isNotEmpty(), fn (Builder $query) => $query->whereLike('name', sprintf('%%%s%%', $search)))
                 ->withCount([
                     'mapSolarsystems' => fn (Builder $builder) => $builder->whereNotNull('position_x'),
+                    'mapConnections',
                 ])
-                ->with('mapUserSetting')
+                ->with([
+                    'mapUserSetting',
+                    'mapAccessors' => fn ($builder) => $builder->notExpired()->whereIn('accessible_id', $accessibleIds),
+                ])
                 ->get()
                 ->toResourceCollection(MapCardResource::class),
             'search' => $search->toString(),

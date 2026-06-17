@@ -40,6 +40,7 @@ final class MapUserSettingResource extends JsonResource
             'hidden_cards' => $this->hidden_cards ?? [],
             'show_threat_level' => $this->show_threat_level,
             'show_statics_first' => $this->show_statics_first,
+            'is_archived' => $this->is_archived ?? false,
         ];
     }
 }
