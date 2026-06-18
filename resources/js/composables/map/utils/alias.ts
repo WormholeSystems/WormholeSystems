@@ -31,7 +31,8 @@ export function guessNextAlias(parentAlias: string | null | undefined, aliases: 
         return Number.isNaN(index) ? max : Math.max(max, index);
     }, 0);
 
-    return `${prefix}${highest + 1}`;
+    const result = `${prefix}${highest + 1}`;
+    return result.replace(/(\d{3})(?=\d)/g, '$1-');
 }
 
 /**
