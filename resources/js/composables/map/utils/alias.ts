@@ -8,8 +8,13 @@
  * extend the parent's prefix with digits and are not themselves nested under a
  * longer prefix, so "121" is never mistaken for a direct child of "1".
  */
+import { useMapUserSettings } from '@/composables/useMapUserSettings';
+
 export function guessNextAlias(parentAlias: string | null | undefined, aliases: string[]): string {
-    const prefix = (parentAlias ?? '').trim();
+    const map_user_settings = useMapUserSettings();
+    const concatDisabled = Boolean(map_user_settings.value?.concat_alias_disabled);
+
+    const prefix = concatDisabled ? '' : (parentAlias ?? '').trim();
 
     const numericChildren = aliases.filter((alias) => {
         if (alias.length <= prefix.length) return false;

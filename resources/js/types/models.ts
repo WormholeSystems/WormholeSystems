@@ -233,6 +233,7 @@ export type TMapUserSetting = {
     introduction_confirmed_at: string | null;
     prompt_for_signature_enabled: boolean;
     suggest_alias_enabled: boolean;
+    concat_alias_disabled: boolean;
     copy_bookmark_enabled: boolean;
     layout_breakpoints?: Record<string, any> | null;
     hidden_cards: string[] | null;

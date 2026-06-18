@@ -51,6 +51,7 @@ final class UpdateMapUserSettingRequest extends FormRequest
             'introduction_confirmed_at' => ['nullable', 'string', 'date'],
             'prompt_for_signature_enabled' => ['nullable', 'boolean'],
             'suggest_alias_enabled' => ['boolean'],
+            'concat_alias_disabled' => ['boolean'],
             'copy_bookmark_enabled' => ['boolean'],
             'layout_breakpoints' => ['nullable', 'array'],
             'hidden_cards' => ['nullable', 'array'],

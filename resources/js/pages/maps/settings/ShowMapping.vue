@@ -64,6 +64,12 @@ function handleSuggestAliasChange(value: boolean | 'indeterminate') {
     }
 }
 
+function handleConcatAliasChange(value: boolean | 'indeterminate') {
+    if (typeof value === 'boolean') {
+        updateMapUserSettings({ concat_alias_disabled: value });
+    }
+}
+
 function handleCopyBookmarkChange(value: boolean | 'indeterminate') {
     if (typeof value === 'boolean') {
         updateMapUserSettings({ copy_bookmark_enabled: value });
@@ -150,6 +156,16 @@ function handleSolarsystemSelect(solarsystem: TStaticSolarsystem) {
                             </div>
                         </div>
                         <Checkbox :model-value="map_user_settings.suggest_alias_enabled" @update:model-value="handleSuggestAliasChange" />
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div class="space-y-0.5">
+                            <Label class="text-sm font-medium">Disable Alias Concatination</Label>
+                            <div class="text-sm text-muted-foreground">
+                                The suggested alias will always start with a 1 and ignore what was filled in the origin
+                            </div>
+                        </div>
+                        <Checkbox :model-value="map_user_settings.concat_alias_disabled" @update:model-value="handleConcatAliasChange" />
                     </div>
 
                     <div class="flex items-center justify-between">
