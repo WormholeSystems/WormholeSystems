@@ -2,6 +2,7 @@ import {
     createMapSolarsystem,
     createTracking,
     formatBookmarkName,
+    formatHomeBookmarkName,
     getSignatureIdShort,
     isWormholeSystem,
     map_solarsystems,
@@ -178,7 +179,7 @@ export function useTracking() {
         if (!target) return;
 
         const signature = signatures.value?.find((s) => s.id === signatureId) ?? null;
-        const name = formatBookmarkName({ alias, solarsystem: target }, getSignatureIdShort(signature?.signature_id));
+        const name = formatHomeBookmarkName({ alias, solarsystem: target });
 
         navigator.clipboard.writeText(name);
         toast.success('Copied bookmark to clipboard', { description: name });

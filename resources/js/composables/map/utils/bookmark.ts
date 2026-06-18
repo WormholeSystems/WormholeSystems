@@ -54,3 +54,20 @@ export function formatBookmarkName(system: BookmarkSystem, signatureIdShort: str
     if (system.solarsystem.region?.name) parts.push(system.solarsystem.region.name);
     return parts.join(' ');
 }
+
+/**
+ * Build the connection bookmark name for the home connection.
+ *
+ * Wormhole systems read "alias sig class"; k-space systems read
+ * "alias class sig name region".
+ */
+export function formatHomeBookmarkName(system: BookmarkSystem): string {
+    const class_string = getBookmarkClassString(system.solarsystem);
+
+    const parts: string[] = [];
+    parts.push("  **");
+
+    parts.push(system.alias?system.alias:system.solarsystem.name);
+    parts.push(class_string);
+    return parts.join(' ');
+}
