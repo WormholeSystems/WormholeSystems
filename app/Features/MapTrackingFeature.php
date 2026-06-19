@@ -57,7 +57,7 @@ final readonly class MapTrackingFeature implements ProvidesInertiaProperties
                     ->orWhereNull('signature_category_id'))
                 ->with(['signatureType', 'signatureCategory', 'wormhole', 'mapConnection']),
         ])
-            ->loadCount('signatures', 'wormholeSignatures', 'mapConnections');
+            ->loadCount('signatures', 'wormholeSignatures', 'mapConnections', 'uncategorizedSignatures');
 
         return $solarsystem->toResource(MapSolarsystemResource::class);
     }

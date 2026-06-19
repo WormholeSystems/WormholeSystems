@@ -55,6 +55,22 @@ const effectiveThreatLevel = computed(() => {
 
 const open = ref(false);
 
+const hasUncategorizedSignatures = computed(() => {
+    return (map_solarsystem.uncategorized_signatures_count ?? 0) > 0;
+});
+
+const signatureTooltipText = computed(() => {
+    const total = map_solarsystem.signatures_count;
+    const uncategorized = map_solarsystem.uncategorized_signatures_count ?? 0;
+    const signatureLabel = total === 1 ? 'signature' : 'signatures';
+
+    return `${total} ${signatureLabel}${uncategorized ? ` ${uncategorized} uncategorized` : ''}`;
+});
+
+const signatureIconClass = computed(() => {
+    return hasUncategorizedSignatures.value ? 'size-[14px] text-rose-500' : 'size-[14px] text-amber-500';
+});
+
 const extra_connections_count = computed(() => {
     const connections_count = map_solarsystem.wormhole_signatures_count ?? 0;
     const mapped_connections_count = map_solarsystem.map_connections_count ?? 0;
@@ -120,11 +136,9 @@ function handleSubmit() {
                 </Tooltip>
                 <Tooltip v-if="map_solarsystem.signatures_count" :delay-duration="500">
                     <TooltipTrigger>
-                        <SatelliteDish class="size-[14px] text-amber-500" />
+                        <SatelliteDish :class="signatureIconClass" />
                     </TooltipTrigger>
-                    <TooltipContent>
-                        {{ map_solarsystem.signatures_count }} {{ map_solarsystem.signatures_count === 1 ? 'signature' : 'signatures' }}
-                    </TooltipContent>
+                    <TooltipContent>{{ signatureTooltipText }}</TooltipContent>
                 </Tooltip>
                 <HasExtraConnections v-if="extra_connections_count" :extra_connections_count="extra_connections_count" />
                 <SolarsystemSovereignty :sovereignty="resolvedSolarsystem.sovereignty" :solarsystem-id="resolvedSolarsystem.id">
