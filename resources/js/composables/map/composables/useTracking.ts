@@ -69,11 +69,15 @@ export function useTracking() {
     });
 
     watch(
-        () => character.value?.status?.solarsystem_id,
-        (new_solarsystem_id, old_solarsystem_id) => {
+        () => [character.value?.id, character.value?.status?.solarsystem_id] as const,
+        ([new_character_id, new_solarsystem_id], [old_character_id, old_solarsystem_id]) => {
             if (!map_user_settings.value.is_tracking) return;
             if (!new_solarsystem_id || !old_solarsystem_id) return;
             if (new_solarsystem_id === old_solarsystem_id) return;
+            // Only a single character moving between systems is a real jump. When
+            // the active character is switched the watched system id also changes,
+            // but that must not create a connection between the two characters' systems.
+            if (new_character_id !== old_character_id) return;
 
             handleSolarsystemJump(old_solarsystem_id, new_solarsystem_id);
         },
