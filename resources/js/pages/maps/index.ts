@@ -97,6 +97,7 @@ export type TMapSolarsystemBase = {
     signatures_count: number;
     wormhole_signatures_count: number;
     map_connections_count: number;
+    uncategorized_signatures_count: number;
     threat_level?: TThreatLevel | null;
     signatures?: TSignature[] | null;
 };

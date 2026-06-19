@@ -13,7 +13,7 @@ export function createSignature(map_solarsystem_id: number) {
         {
             preserveScroll: true,
             preserveState: true,
-            only: ['selected_map_solarsystem'],
+            only: ['map', 'selected_map_solarsystem'],
         },
     );
 }

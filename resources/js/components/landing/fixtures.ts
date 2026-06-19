@@ -168,6 +168,7 @@ function node(
         signatures_count: 0,
         wormhole_signatures_count: 0,
         map_connections_count: 0,
+        uncategorized_signatures_count: 0,
         threat_level: null,
         signatures: null,
         solarsystem: system,
