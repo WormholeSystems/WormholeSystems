@@ -7,7 +7,9 @@ namespace App\Features;
 use App\Enums\SignatureCategory;
 use App\Http\Resources\MapSolarsystemResource;
 use App\Models\Map;
+use App\Models\MapSolarsystem;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Inertia\Inertia;
 use Inertia\ProvidesInertiaProperties;
@@ -41,17 +43,23 @@ final readonly class MapTrackingFeature implements ProvidesInertiaProperties
             return null;
         }
 
-        return $this->map->mapSolarsystems()
-            ->where('map_solarsystems.id', $this->origin_map_solarsystem_id)
-            ->with([
-                'signatures' => fn ($query) => $query
-                    ->where(fn (Builder $q) => $q
-                        ->whereRelation('signatureCategory', 'code', SignatureCategory::Wormhole)
-                        ->orWhereNull('signature_category_id'))
-                    ->with(['signatureType', 'signatureCategory', 'wormhole', 'mapConnection']),
-            ])
-            ->withCount('signatures', 'wormholeSignatures', 'mapConnections')
-            ->first()?->toResource(MapSolarsystemResource::class);
+        $solarsystem = $this->map->mapSolarsystems()->find($this->origin_map_solarsystem_id);
+
+        if (! $solarsystem instanceof MapSolarsystem) {
+            return null;
+        }
+
+        $solarsystem->load([
+            'signatures' => fn (Relation $query) => $query
+                ->where('map_solarsystem_id', $this->origin_map_solarsystem_id)
+                ->where(fn (Builder $q) => $q
+                    ->whereRelation('signatureCategory', 'code', SignatureCategory::Wormhole)
+                    ->orWhereNull('signature_category_id'))
+                ->with(['signatureType', 'signatureCategory', 'wormhole', 'mapConnection']),
+        ])
+            ->loadCount('signatures', 'wormholeSignatures', 'mapConnections');
+
+        return $solarsystem->toResource(MapSolarsystemResource::class);
     }
 
     /**
