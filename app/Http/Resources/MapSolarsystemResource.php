@@ -33,6 +33,7 @@ final class MapSolarsystemResource extends JsonResource
             'pinned' => $this->pinned,
             'solarsystem_id' => $this->solarsystem_id,
             'signatures_count' => $this->signatures_count,
+            'uncategorized_signatures_count' => $this->uncategorized_signatures_count,
             'wormhole_signatures_count' => $this->wormhole_signatures_count,
             'map_connections_count' => $this->map_connections_count,
             'threat_level' => $this->whenLoaded('wormholeSystem', fn () => $this->wormholeSystem?->threat_level),
