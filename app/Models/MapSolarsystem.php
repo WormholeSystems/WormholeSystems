@@ -36,6 +36,7 @@ use Staudenmeir\EloquentHasManyDeep\HasRelationships;
  * @property MapSolarsystemStatus $status
  * @property bool $pinned
  * @property-read int|null $signatures_count
+ * @property-read int|null $uncategorized_signatures_count
  * @property-read int|null $wormhole_signatures_count
  * @property-read int|null $map_connections_count
  * @property-read Solarsystem $solarsystem
@@ -104,6 +105,15 @@ final class MapSolarsystem extends Model implements \OwenIt\Auditing\Contracts\A
     public function signatures(): HasMany
     {
         return $this->hasMany(Signature::class, 'map_solarsystem_id');
+    }
+
+    /**
+     * @return HasMany<Signature,$this>
+     */
+    public function uncategorizedSignatures(): HasMany
+    {
+        return $this->hasMany(Signature::class, 'map_solarsystem_id')
+            ->whereNull('signature_category_id');
     }
 
     /**

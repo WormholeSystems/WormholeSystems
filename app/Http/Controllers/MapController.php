@@ -56,7 +56,7 @@ final class MapController extends Controller
 
         $map = Map::query()
             ->with([
-                'mapSolarsystems' => fn (Relation $query): Relation => $query->withCount('signatures', 'wormholeSignatures', 'mapConnections'),
+                'mapSolarsystems' => fn (Relation $query): Relation => $query->withCount('signatures', 'wormholeSignatures', 'mapConnections', 'uncategorizedSignatures'),
                 'mapRouteSolarsystems',
             ])
             ->tap(new WithVisibleSolarsystems)
