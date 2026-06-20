@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\KillmailFilter;
 use App\Enums\LifetimeStatus;
+use App\Enums\MapBackgroundMode;
 use App\Enums\MassStatus;
 use App\Enums\RoutePreference;
 use Carbon\CarbonImmutable;
@@ -35,6 +36,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property bool $show_threat_level
  * @property bool $show_statics_first
  * @property bool $is_archived
+ * @property string|null $background_image_path
+ * @property string|MapBackgroundMode $background_image_mode
  * @property CarbonImmutable|string $created_at
  * @property CarbonImmutable|string $updated_at
  */
@@ -82,6 +85,7 @@ final class MapUserSetting extends Model
             'show_threat_level' => 'boolean',
             'show_statics_first' => 'boolean',
             'is_archived' => 'boolean',
+            'background_image_mode' => MapBackgroundMode::class,
         ];
     }
 }

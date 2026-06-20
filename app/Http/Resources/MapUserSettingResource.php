@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Resources;
 
+use App\Enums\MapBackgroundMode;
 use App\Models\MapUserSetting;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * @mixin MapUserSetting
@@ -41,6 +43,10 @@ final class MapUserSettingResource extends JsonResource
             'show_threat_level' => $this->show_threat_level,
             'show_statics_first' => $this->show_statics_first,
             'is_archived' => $this->is_archived ?? false,
+            'background_image_url' => $this->background_image_path
+                ? Storage::disk('public')->url($this->background_image_path)
+                : null,
+            'background_image_mode' => $this->background_image_mode ?? MapBackgroundMode::Grid,
         ];
     }
 }
