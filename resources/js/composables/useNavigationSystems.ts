@@ -1,82 +1,38 @@
-import { AppPageProps } from '@/types';
-import { router, usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { readonly, ref } from 'vue';
+
+const fromSystemId = ref<number | null>(null);
+const toSystemId = ref<number | null>(null);
 
 export function useNavigationSystems() {
-    const page = usePage<
-        AppPageProps<{
-            from_solarsystem_id?: number;
-            to_solarsystem_id?: number;
-        }>
-    >();
-
-    const fromSystemId = computed(() => page.props.from_solarsystem_id);
-    const toSystemId = computed(() => page.props.to_solarsystem_id);
-
-    function setFromSystem(solarsystemId: number) {
-        router.reload({
-            data: {
-                from_solarsystem_id: solarsystemId,
-            },
-            only: ['map_navigation'],
-        });
+    function setFromSystem(solarsystemId: number): void {
+        fromSystemId.value = solarsystemId;
     }
 
-    function setToSystem(solarsystemId: number) {
-        router.reload({
-            data: {
-                to_solarsystem_id: solarsystemId,
-            },
-            only: ['map_navigation'],
-        });
+    function setToSystem(solarsystemId: number): void {
+        toSystemId.value = solarsystemId;
     }
 
-    function clearFromSystem() {
-        router.reload({
-            data: {
-                from_solarsystem_id: null,
-            },
-            only: ['map_navigation'],
-        });
+    function clearFromSystem(): void {
+        fromSystemId.value = null;
     }
 
-    function clearToSystem() {
-        router.reload({
-            data: {
-                to_solarsystem_id: null,
-            },
-            only: ['map_navigation'],
-        });
+    function clearToSystem(): void {
+        toSystemId.value = null;
     }
 
-    function setBothSystems(fromId: number, toId: number) {
-        router.reload({
-            data: {
-                from_solarsystem_id: fromId,
-                to_solarsystem_id: toId,
-            },
-            only: ['map_navigation'],
-        });
-    }
-
-    function clearBothSystems() {
-        router.reload({
-            data: {
-                from_solarsystem_id: null,
-                to_solarsystem_id: null,
-            },
-            only: ['map_navigation'],
-        });
+    function swapSystems(): void {
+        const temp = fromSystemId.value;
+        fromSystemId.value = toSystemId.value;
+        toSystemId.value = temp;
     }
 
     return {
-        fromSystemId,
-        toSystemId,
+        fromSystemId: readonly(fromSystemId),
+        toSystemId: readonly(toSystemId),
         setFromSystem,
         setToSystem,
         clearFromSystem,
         clearToSystem,
-        setBothSystems,
-        clearBothSystems,
+        swapSystems,
     };
 }
