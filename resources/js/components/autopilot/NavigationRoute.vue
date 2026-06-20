@@ -8,6 +8,7 @@ import SolarsystemEffect from '@/components/solarsystem/SolarsystemEffect.vue';
 import { Combobox, ComboboxAnchor } from '@/components/ui/combobox';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useIgnoreList } from '@/composables/useIgnoreList';
+import { useNavigationSystems } from '@/composables/useNavigationSystems';
 import { usePath } from '@/composables/usePath';
 import { useRouteCalculator } from '@/composables/useRouteCalculator';
 import { useSolarsystemAliases } from '@/composables/useSolarsystemAliases';
@@ -38,18 +39,20 @@ const { ignoreSolarsystem, clearIgnoreList } = useIgnoreList();
 const { setPath } = usePath();
 
 const search = ref('');
-const fromSystem = ref<TResolvedSolarsystem | null>(null);
-const toSystem = ref<TResolvedSolarsystem | null>(null);
+
+const { fromSystemId, toSystemId, setFromSystem, setToSystem, clearFromSystem, clearToSystem, swapSystems } = useNavigationSystems();
+const { resolveSolarsystem } = useStaticSolarsystems();
+
+const fromSystem = computed(() => (fromSystemId.value ? resolveSolarsystem(fromSystemId.value) : null));
+const toSystem = computed(() => (toSystemId.value ? resolveSolarsystem(toSystemId.value) : null));
 
 const { route: routeSteps, jumps: routeJumps } = useRouteCalculator({
-    fromId: computed(() => fromSystem.value?.id ?? null),
-    toId: computed(() => toSystem.value?.id ?? null),
+    fromId: fromSystemId,
+    toId: toSystemId,
     ignoredSystems: computed(() => ignored_systems),
     mapConnections,
     mapSolarsystems,
 });
-
-const { resolveSolarsystem } = useStaticSolarsystems();
 
 type RouteEntry = {
     solarsystem: TStaticSolarsystem;
@@ -103,12 +106,12 @@ watch(
 );
 
 function handleFromSystemSelect(system: TResolvedSolarsystem) {
-    fromSystem.value = system;
+    setFromSystem(system.id);
     search.value = '';
 }
 
 function handleToSystemSelect(system: TResolvedSolarsystem) {
-    toSystem.value = system;
+    setToSystem(system.id);
     search.value = '';
 }
 
@@ -128,18 +131,12 @@ function handleClearIgnoreList() {
     });
 }
 
-function swapSystems() {
-    const temp = fromSystem.value;
-    fromSystem.value = toSystem.value;
-    toSystem.value = temp;
-}
-
 function clearFrom() {
-    fromSystem.value = null;
+    clearFromSystem();
 }
 
 function clearTo() {
-    toSystem.value = null;
+    clearToSystem();
 }
 </script>
 
