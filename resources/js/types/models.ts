@@ -239,6 +239,8 @@ export type TMapUserSetting = {
     show_threat_level: boolean;
     show_statics_first: boolean;
     is_archived: boolean;
+    background_image_url: string | null;
+    background_image_mode: 'grid' | 'viewport';
 };
 
 export type TMapWebhookType = 'proximity' | 'killmail';
