@@ -50,6 +50,7 @@ final class UpdateMapUserSettingRequest extends FormRequest
             'killmail_filter' => ['nullable', 'string', Rule::enum(KillmailFilter::class)],
             'introduction_confirmed_at' => ['nullable', 'string', 'date'],
             'prompt_for_signature_enabled' => ['nullable', 'boolean'],
+            'auto_confirm_signatures' => ['nullable', 'boolean'],
             'suggest_alias_enabled' => ['boolean'],
             'concat_alias_disabled' => ['boolean'],
             'copy_bookmark_enabled' => ['boolean'],

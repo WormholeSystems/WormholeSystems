@@ -64,6 +64,12 @@ function handleSuggestAliasChange(value: boolean | 'indeterminate') {
     }
 }
 
+function handleAutoConfirmChange(value: boolean | 'indeterminate') {
+    if (typeof value === 'boolean') {
+        updateMapUserSettings({ auto_confirm_signatures: value });
+    }
+}
+
 function handleConcatAliasChange(value: boolean | 'indeterminate') {
     if (typeof value === 'boolean') {
         updateMapUserSettings({ concat_alias_disabled: value });
@@ -146,6 +152,16 @@ function handleSolarsystemSelect(solarsystem: TStaticSolarsystem) {
                             :model-value="map_user_settings.prompt_for_signature_enabled"
                             @update:model-value="handlePromptForSignatureChange"
                         />
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div class="space-y-0.5">
+                            <Label class="text-sm font-medium">Auto confirm signatures</Label>
+                            <div class="text-sm text-muted-foreground">
+                                Automatically confirm the signature dialog to generate aliases and bookmarks without user input
+                            </div>
+                        </div>
+                        <Checkbox :model-value="map_user_settings.auto_confirm_signatures" @update:model-value="handleAutoConfirmChange" />
                     </div>
 
                     <div class="flex items-center justify-between">

@@ -232,6 +232,7 @@ export type TMapUserSetting = {
     killmail_filter: 'all' | 'jspace' | 'kspace';
     introduction_confirmed_at: string | null;
     prompt_for_signature_enabled: boolean;
+    auto_confirm_signatures?: boolean;
     suggest_alias_enabled: boolean;
     concat_alias_disabled: boolean;
     copy_bookmark_enabled: boolean;

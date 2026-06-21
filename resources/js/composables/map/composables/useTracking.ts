@@ -127,11 +127,31 @@ export function useTracking() {
     function performJump() {
         if (existing_connection.value?.map_connection_id) return;
         const gate_connected = isGateConnected(origin_map_solarsystem.value?.solarsystem_id, target_solarsystem.value?.id);
-        if (gate_connected || !signatures.value?.length || !map_user_settings.value.prompt_for_signature_enabled) {
+
+        // If gate connected or prompting is disabled → just create tracking
+        if (gate_connected || !map_user_settings.value.prompt_for_signature_enabled) {
             return createTracking(origin_map_solarsystem.value!.id, target_solarsystem.value!.id);
         }
 
+        // Show the signature dialog even when there are no known signatures
         show_signature_modal.value = true;
+
+        // If auto-confirm is enabled, immediately confirm the dialog to
+        // generate aliases/bookmarks while still allowing the dialog to briefly appear.
+        if (map_user_settings.value.auto_confirm_signatures || !signatures.value?.length) {
+            const alias = suggested_alias.value ?? null;
+            // Copy bookmark and create tracking on next tick so the dialog can render.
+            setTimeout(() => {
+                copyConnectionBookmark(null, alias);
+                createTracking(origin_map_solarsystem.value!.id, target_solarsystem.value!.id, {
+                    signature_id: null,
+                    alias,
+                    lifetime: 'healthy',
+                    mass_status: 'fresh',
+                });
+                show_signature_modal.value = false;
+            }, 0);
+        }
     }
 
     function handleToggle() {
