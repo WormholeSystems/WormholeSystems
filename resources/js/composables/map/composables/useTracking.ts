@@ -5,6 +5,7 @@ import {
     formatHomeBookmarkName,
     getSignatureIdShort,
     isWormholeSystem,
+    useMapConnections,
     map_solarsystems,
     suggestAlias,
     updateMapUserSettings,
@@ -24,6 +25,7 @@ import { toast } from 'vue-sonner';
 export function useTracking() {
     const character = useActiveMapCharacter();
     const map_user_settings = useMapUserSettings();
+    const map_connections = useMapConnections();
     const { isIgnored } = useMapIgnoredSystems();
     const page = useShowMap();
     const { staticData } = useStaticData();
@@ -61,11 +63,19 @@ export function useTracking() {
         const target = target_solarsystem.value;
         if (!origin || !target) return null;
 
+        const connectedAliases = map_connections.value
+            .filter((connection) => connection.from_map_solarsystem_id === origin.id || connection.to_map_solarsystem_id === origin.id)
+            .map((connection) => {
+                const otherId = connection.from_map_solarsystem_id === origin.id ? connection.to_map_solarsystem_id : connection.from_map_solarsystem_id;
+                return map_solarsystems.value.find((system) => system.id === otherId)?.alias ?? null;
+            });
+
         return suggestAlias({
             parentAlias: origin.alias,
             targetIsWormhole: isWormholeSystem(target),
             originIsWormhole: isWormholeSystem(origin.solarsystem),
             aliases: map_solarsystems.value.map((s) => s.alias).filter((alias): alias is string => Boolean(alias)),
+            connectedAliases,
         });
     });
 
