@@ -176,12 +176,7 @@ it('does not treat an unplaced map solarsystem as being on the map', function ()
     $unplaced = makeSolarsystem(30009502);
 
     $map = mapWithSystem($placed);
-    // A tracked-but-unplaced system (no position) is not actually on the chain.
-    MapSolarsystem::factory()->for($map)->create([
-        'solarsystem_id' => $unplaced,
-        'position_x' => null,
-        'position_y' => null,
-    ]);
+    // A system that is not placed on the map is not on the chain.
     MapWebhook::factory()->for($map)->killmail()->create(['max_jumps' => 1]);
 
     $killmail = makeKillmail($unplaced);

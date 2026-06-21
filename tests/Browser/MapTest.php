@@ -3,18 +3,12 @@
 declare(strict_types=1);
 
 use App\Models\Map;
-use App\Models\User;
-
-use function Pest\Laravel\actingAs;
 
 it('shows all the maps the user has access to', function () {
-
     $map = Map::factory()->create();
-    $user = User::factory()->ownsMap($map)->create();
+    $this->actAsMapOwner($map);
 
     $other_map = Map::factory()->create();
-
-    actingAs($user);
 
     visit(route('home'))
         ->assertSee($map->name)
@@ -24,11 +18,8 @@ it('shows all the maps the user has access to', function () {
 });
 
 it('shows a map', function () {
-
     $map = Map::factory()->create();
-    $user = User::factory()->ownsMap($map)->create();
-
-    actingAs($user);
+    $this->actAsMapOwner($map, dismissOnboarding: false);
 
     visit(route('maps.show', $map))
         ->assertSee('Welcome to the Map')
@@ -44,11 +35,8 @@ it('shows a map', function () {
 });
 
 it('shows the general settings page for a map', function () {
-
     $map = Map::factory()->create();
-    $user = User::factory()->ownsMap($map)->create();
-
-    actingAs($user);
+    $this->actAsMapOwner($map);
 
     visit(route('maps.settings.general.show', $map))
         ->assertSee('General Settings')
@@ -58,11 +46,8 @@ it('shows the general settings page for a map', function () {
 });
 
 it('shows the access settings page for a map', function () {
-
     $map = Map::factory()->create();
-    $user = User::factory()->ownsMap($map)->create();
-
-    actingAs($user);
+    $this->actAsMapOwner($map);
 
     visit(route('maps.settings.access.show', $map))
         ->assertSee('Access Control')
@@ -72,11 +57,8 @@ it('shows the access settings page for a map', function () {
 });
 
 it('shows the preferences settings page for a map', function () {
-
     $map = Map::factory()->create();
-    $user = User::factory()->ownsMap($map)->create();
-
-    actingAs($user);
+    $this->actAsMapOwner($map);
 
     visit(route('maps.settings.preferences.show', $map))
         ->assertSee('Preferences')
@@ -86,11 +68,8 @@ it('shows the preferences settings page for a map', function () {
 });
 
 it('shows the routing settings page for a map', function () {
-
     $map = Map::factory()->create();
-    $user = User::factory()->ownsMap($map)->create();
-
-    actingAs($user);
+    $this->actAsMapOwner($map);
 
     visit(route('maps.settings.routing.show', $map))
         ->assertSee('Routing Settings')
