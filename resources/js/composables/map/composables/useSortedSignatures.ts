@@ -24,6 +24,11 @@ export function useSortableSignatures<T extends TSignature>(signatures: Ref<T[]>
         return signature.updated_at;
     }
 
+    function getUpdatedDate(signature: TSignature): string {
+        // Always use updated_at for explicit "updated" column
+        return signature.updated_at;
+    }
+
     function getSortComparison(a: TSignature, b: TSignature): number {
         let primaryComparison: number;
 
@@ -42,6 +47,12 @@ export function useSortableSignatures<T extends TSignature>(signatures: Ref<T[]>
                 const aDate = new Date(getModifiedDate(a)).getTime();
                 const bDate = new Date(getModifiedDate(b)).getTime();
                 primaryComparison = bDate - aDate; // Reverse comparison so newer = smaller (comes first in asc)
+                break;
+            case 'updated':
+                // Sort by explicit updated_at timestamp
+                const aUpdated = new Date(getUpdatedDate(a)).getTime();
+                const bUpdated = new Date(getUpdatedDate(b)).getTime();
+                primaryComparison = bUpdated - aUpdated;
                 break;
             default:
                 primaryComparison = 0;

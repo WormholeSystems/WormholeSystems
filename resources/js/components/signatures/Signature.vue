@@ -2,6 +2,7 @@
 import TrashIcon from '@/components/icons/TrashIcon.vue';
 import MapConnectionInput from '@/components/signatures/MapConnectionInput.vue';
 import SignatureTimeDetails from '@/components/signatures/SignatureTimeDetails.vue';
+import SignatureUpdatedDetails from '@/components/signatures/SignatureUpdatedDetails.vue';
 import SignatureTypeInput from '@/components/signatures/SignatureTypeInput.vue';
 import WormholeTypeInput from '@/components/signatures/WormholeTypeInput.vue';
 import { Button } from '@/components/ui/button';
@@ -305,6 +306,11 @@ function handleMassStatusChange(mass_status: AcceptableValue) {
         <!-- Age -->
         <div class="w-10 shrink-0 text-right">
             <SignatureTimeDetails :category="signature.signature_category?.name" :selected_connection="selected_connection" :signature="signature" />
+        </div>
+
+        <!-- Last updated (U/D) -->
+        <div class="w-12 shrink-0 text-right">
+            <SignatureUpdatedDetails :signature="signature" />
         </div>
 
         <!-- Actions -->

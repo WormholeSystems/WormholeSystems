@@ -85,7 +85,7 @@ const unconnected_connections = computed(() => {
     });
 });
 
-function handleSort(column: 'id' | 'category' | 'type' | 'age') {
+function handleSort(column: 'id' | 'category' | 'type' | 'age' | 'updated') {
     let newDirection: 'asc' | 'desc';
 
     if (sortPreferences.value.column === column) {
@@ -184,6 +184,11 @@ function createNewSignature() {
                     <span>Age</span>
                     <ArrowUp v-if="sortPreferences.column === 'age' && sortPreferences.direction === 'asc'" class="size-3" />
                     <ArrowDown v-if="sortPreferences.column === 'age' && sortPreferences.direction === 'desc'" class="size-3" />
+                </button>
+                <button class="flex w-12 shrink-0 items-center justify-end gap-1 hover:text-foreground" @click="handleSort('updated')">
+                    <span>U/D</span>
+                    <ArrowUp v-if="sortPreferences.column === 'updated' && sortPreferences.direction === 'asc'" class="size-3" />
+                    <ArrowDown v-if="sortPreferences.column === 'updated' && sortPreferences.direction === 'desc'" class="size-3" />
                 </button>
                 <span class="w-6 shrink-0"></span>
             </div>
