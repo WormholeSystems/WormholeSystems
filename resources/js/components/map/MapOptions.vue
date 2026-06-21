@@ -1,20 +1,28 @@
 <script setup lang="ts">
+import MapBackgroundImageController from '@/actions/App/Http/Controllers/MapBackgroundImageController';
 import BackgroundImageIcon from '@/components/icons/BackgroundImageIcon.vue';
 import MinusIcon from '@/components/icons/MinusIcon.vue';
 import PlusIcon from '@/components/icons/PlusIcon.vue';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useMapScale } from '@/composables/map';
+import { updateMapUserSettings } from '@/composables/map/actions/updateMapUserSettings';
+import { useMap } from '@/composables/useMap';
 import { TMapBackgroundMode, useMapBackground } from '@/composables/useMapBackground';
-import { ImageUp, Trash2 } from 'lucide-vue-next';
+import { router } from '@inertiajs/vue3';
+import { ImageUp, Loader2, Trash2 } from 'lucide-vue-next';
 import { ref, useTemplateRef } from 'vue';
+import { toast } from 'vue-sonner';
 
 const { scale, setScale } = useMapScale();
 
-const { backgroundImageUrl, backgroundMode, setBackgroundImageUrl, clearBackgroundImage, setBackgroundMode } = useMapBackground();
+const map = useMap();
+
+const { backgroundImageUrl, backgroundMode, canUpload } = useMapBackground();
 
 const fileInput = useTemplateRef<HTMLInputElement>('file-input');
 const is_dragging = ref(false);
+const is_uploading = ref(false);
 
 const modeOptions: { value: TMapBackgroundMode; label: string; hint: string }[] = [
     { value: 'grid', label: 'Move with map', hint: 'Spans the grid, pans and zooms with the systems' },
@@ -22,17 +30,35 @@ const modeOptions: { value: TMapBackgroundMode; label: string; hint: string }[] 
 ];
 
 function triggerUpload() {
-    fileInput.value?.click();
+    if (!is_uploading.value) fileInput.value?.click();
 }
 
-function loadFile(file: File) {
-    const reader = new FileReader();
-    reader.onload = () => {
-        if (typeof reader.result === 'string') {
-            setBackgroundImageUrl(reader.result);
-        }
-    };
-    reader.readAsDataURL(file);
+function uploadFile(file: File) {
+    router.post(
+        MapBackgroundImageController.store(map.value.slug).url,
+        { background_image: file },
+        {
+            forceFormData: true,
+            preserveScroll: true,
+            preserveState: true,
+            only: ['map_user_settings'],
+            onStart: () => (is_uploading.value = true),
+            onFinish: () => (is_uploading.value = false),
+            onError: (errors) => toast.error(errors.background_image ?? 'Failed to upload background image'),
+        },
+    );
+}
+
+function removeBackground() {
+    router.delete(MapBackgroundImageController.destroy(map.value.slug).url, {
+        preserveScroll: true,
+        preserveState: true,
+        only: ['map_user_settings'],
+    });
+}
+
+function setMode(mode: TMapBackgroundMode) {
+    updateMapUserSettings(map.value.slug, { background_image_mode: mode }, ['map_user_settings']);
 }
 
 function onFileSelected(event: Event) {
@@ -40,13 +66,14 @@ function onFileSelected(event: Event) {
     const file = input.files?.[0];
     // Reset so re-selecting the same file fires change again.
     input.value = '';
-    if (file) loadFile(file);
+    if (file) uploadFile(file);
 }
 
 function onDrop(event: DragEvent) {
     is_dragging.value = false;
+    if (is_uploading.value) return;
     const file = event.dataTransfer?.files?.[0];
-    if (file?.type.startsWith('image/')) loadFile(file);
+    if (file?.type.startsWith('image/')) uploadFile(file);
 }
 </script>
 
@@ -67,7 +94,8 @@ function onDrop(event: DragEvent) {
                             variant="ghost"
                             size="sm"
                             class="h-6 gap-1 px-2 text-xs text-muted-foreground hover:text-destructive"
-                            @click="clearBackgroundImage"
+                            :disabled="is_uploading"
+                            @click="removeBackground"
                         >
                             <Trash2 class="size-3.5" />
                             Remove
@@ -76,6 +104,7 @@ function onDrop(event: DragEvent) {
 
                     <input ref="file-input" type="file" accept="image/*" class="hidden" @change="onFileSelected" />
                     <div
+                        v-if="canUpload"
                         class="group relative flex aspect-video cursor-pointer items-center justify-center overflow-hidden rounded-xl border-2 border-dashed transition-colors"
                         :class="is_dragging ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50 hover:bg-muted/40'"
                         @click="triggerUpload"
@@ -97,9 +126,16 @@ function onDrop(event: DragEvent) {
                                 <ImageUp class="size-4" />
                             </div>
                             <span class="text-xs font-medium text-foreground">Drag &amp; drop or click</span>
-                            <span class="text-[10px]">PNG, JPG, GIF or WebP</span>
+                            <span class="text-[10px]">PNG, JPG, GIF or WebP · max 8 MB</span>
+                        </div>
+
+                        <div v-if="is_uploading" class="absolute inset-0 flex items-center justify-center bg-background/70">
+                            <Loader2 class="size-5 animate-spin text-primary" />
                         </div>
                     </div>
+                    <p v-else class="rounded-xl border border-dashed border-border px-3 py-4 text-center text-xs text-muted-foreground">
+                        Sign in to set a background image for this map.
+                    </p>
 
                     <div v-if="backgroundImageUrl" class="flex flex-col gap-1.5">
                         <span class="text-xs font-medium text-muted-foreground">Position</span>
@@ -115,7 +151,7 @@ function onDrop(event: DragEvent) {
                                         : 'text-muted-foreground hover:text-foreground'
                                 "
                                 :title="option.hint"
-                                @click="setBackgroundMode(option.value)"
+                                @click="setMode(option.value)"
                             >
                                 {{ option.label }}
                             </button>

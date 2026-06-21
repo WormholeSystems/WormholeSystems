@@ -13,11 +13,7 @@ export function useRallyRoute() {
 
         const map = useMap();
 
-        const homeSolarsystemId = computed(() => {
-            if (!map.value.home_solarsystem_id) return null;
-            const homeMapSystem = map.value.map_solarsystems?.find((s) => s.id === map.value.home_solarsystem_id);
-            return homeMapSystem?.solarsystem_id ?? null;
-        });
+        const homeSolarsystemId = computed(() => map.value.home_solarsystem_id ?? null);
 
         const { routingSettings, convertedEveScoutConnections, getConnections } = useRoutingSetup({
             mapConnections: computed(() => map.value.map_connections ?? []),

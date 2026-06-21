@@ -28,23 +28,22 @@ final class SelectedMapSolarsystemResource extends JsonResource
             'map_id' => $this->map_id,
             'solarsystem_id' => $this->solarsystem_id,
             'alias' => $this->alias,
-            'status' => $this->status,
-            'occupier_alias' => $this->occupier_alias,
-            'notes' => $this->notes,
+            'status' => $this->details->status,
+            'occupier_alias' => $this->details->occupier_alias,
+            'notes' => in_array('notes', $this->details->getHidden(), true) ? null : $this->details->notes,
             'position' => $this->getPositionArray(),
             'is_pinned' => $this->pinned,
             'map_connections' => $this->mapConnections->toResourceCollection(MapConnectionResource::class),
             'signatures' => $this->signatures->toResourceCollection(SignatureResource::class),
-            'audits' => $this->audits->toResourceCollection(AuditResource::class),
+            'audits' => $this->details->audits->toResourceCollection(AuditResource::class),
         ];
     }
 
-    private function getPositionArray(): ?array
+    /**
+     * @return array{x: int, y: int}
+     */
+    private function getPositionArray(): array
     {
-        if ($this->position_x === null || $this->position_y === null) {
-            return null;
-        }
-
         return [
             'x' => $this->position_x,
             'y' => $this->position_y,

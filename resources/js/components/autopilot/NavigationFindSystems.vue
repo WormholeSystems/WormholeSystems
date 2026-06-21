@@ -8,6 +8,7 @@ import SolarsystemEffect from '@/components/solarsystem/SolarsystemEffect.vue';
 import { Combobox, ComboboxAnchor } from '@/components/ui/combobox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useClosestSystemsCalculator } from '@/composables/useClosestSystemsCalculator';
+import { useNavigationSystems } from '@/composables/useNavigationSystems';
 import { useSolarsystemAliases } from '@/composables/useSolarsystemAliases';
 import { useStaticData } from '@/composables/useStaticData';
 import { useStaticSolarsystem, useStaticSolarsystems } from '@/composables/useStaticSolarsystems';
@@ -36,22 +37,25 @@ const { staticData, loadStaticData } = useStaticData();
 void loadStaticData();
 
 const search = ref('');
-const fromSystem = ref<TResolvedSolarsystem | null>(null);
+
+const { fromSystemId, setFromSystem, clearFromSystem } = useNavigationSystems();
+const { resolveSolarsystem } = useStaticSolarsystems();
+
+const fromSystem = computed(() => (fromSystemId.value ? resolveSolarsystem(fromSystemId.value) : null));
+
 const condition = ref<string>('observatories');
 const limit = ref(15);
 const sortBy = ref<'name' | 'security' | 'region' | 'jumps'>('jumps');
 const sortDirection = ref<'asc' | 'desc'>('asc');
 
 const { results } = useClosestSystemsCalculator({
-    fromId: computed(() => fromSystem.value?.id ?? null),
+    fromId: fromSystemId,
     condition,
     limit,
     ignoredSystems: computed(() => ignored_systems),
     mapConnections,
     mapSolarsystems,
 });
-
-const { resolveSolarsystem } = useStaticSolarsystems();
 
 const resolvedResults = computed(() =>
     results.value.map((result) => ({
@@ -135,7 +139,7 @@ const filteredSolarsystems = computed(() => {
 });
 
 function handleSystemSelect(system: TResolvedSolarsystem) {
-    fromSystem.value = system;
+    setFromSystem(system.id);
     search.value = '';
 }
 
@@ -154,7 +158,7 @@ function handleSort(column: typeof sortBy.value) {
 }
 
 function clearSystem() {
-    fromSystem.value = null;
+    clearFromSystem();
 }
 </script>
 
@@ -180,7 +184,7 @@ function clearSystem() {
                         <Search class="size-3.5 shrink-0 text-muted-foreground/40" />
                         <RekaComboboxInput
                             v-model="search"
-                            placeholder="Search system..."
+                            placeholder="Search for a start system..."
                             class="h-8 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/40"
                         />
                     </div>
@@ -228,7 +232,7 @@ function clearSystem() {
     </div>
 
     <!-- Condition & limit bar -->
-    <div v-if="fromSystem" class="flex items-center gap-2 border-b border-border/30 px-3 py-2">
+    <div class="flex items-center gap-2 border-b border-border/30 px-3 py-2">
         <Select v-model="condition" class="min-w-0 flex-1">
             <SelectTrigger class="h-7 w-full border-0 bg-muted/30 px-2 text-xs shadow-none">
                 <SelectValue placeholder="Condition..." />

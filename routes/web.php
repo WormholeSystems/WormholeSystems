@@ -14,6 +14,7 @@ use App\Http\Controllers\IgnoreListController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MapAccessController;
+use App\Http\Controllers\MapBackgroundImageController;
 use App\Http\Controllers\MapConnectionController;
 use App\Http\Controllers\MapController;
 use App\Http\Controllers\MapIgnoredSolarsystemController;
@@ -126,6 +127,9 @@ Route::middleware('auth')->group(function () {
         ->name('map-solarsystems.signatures.destroy');
 
     Route::resource('tokens', TokenManagementController::class)->only(['index', 'store', 'destroy']);
+
+    Route::post('maps/{map}/background-image', [MapBackgroundImageController::class, 'store'])->name('maps.background-image.store');
+    Route::delete('maps/{map}/background-image', [MapBackgroundImageController::class, 'destroy'])->name('maps.background-image.destroy');
 });
 
 // Public map access (no auth required)

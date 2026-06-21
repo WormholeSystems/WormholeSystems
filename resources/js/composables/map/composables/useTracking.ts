@@ -95,7 +95,7 @@ export function useTracking() {
         const old_map_solarsystem = map_solarsystems.value.find((s) => s.solarsystem_id === old_solarsystem_id);
         if (!old_map_solarsystem) return;
         if (old_map_solarsystem.solarsystem_id === new_solarsystem_id) return;
-        update(old_map_solarsystem.id, new_solarsystem_id, performJump);
+        update(old_map_solarsystem.solarsystem_id, new_solarsystem_id, performJump);
     }
 
     function isGateConnected(origin_solarsystem_id: number | null | undefined, target_solarsystem_id: number | null | undefined): boolean {

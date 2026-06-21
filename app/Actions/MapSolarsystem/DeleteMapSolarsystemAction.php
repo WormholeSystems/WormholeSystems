@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\MapSolarsystem;
 
-use App\Actions\MapConnections\DeleteMapConnectionsFromMapSolarsystemAction;
+use App\Events\MapConnections\MapConnectionsDeletedEvent;
 use App\Events\MapSolarsystems\MapSolarsystemDeletedEvent;
 use App\Models\MapSolarsystem;
 use Illuminate\Support\Facades\DB;
@@ -12,20 +12,23 @@ use Throwable;
 
 final readonly class DeleteMapSolarsystemAction
 {
-    public function __construct(private DeleteMapConnectionsFromMapSolarsystemAction $action) {}
-
     /**
+     * Remove a system from the map. The placement row is hard-deleted so its connections and
+     * signatures cascade away; the persistent details (occupier, status, notes) survive.
+     *
      * @throws Throwable
      */
     public function handle(MapSolarsystem $mapSolarsystem): bool
     {
         return DB::transaction(function () use ($mapSolarsystem): bool {
-            $mapSolarsystem->update(['position_x' => null, 'position_y' => null, 'alias' => null]);
+            $map_id = $mapSolarsystem->map_id;
 
-            broadcast(new MapSolarsystemDeletedEvent($mapSolarsystem->map_id))
-                ->toOthers();
+            $deleted = (bool) $mapSolarsystem->delete();
 
-            return $this->action->handle($mapSolarsystem);
+            broadcast(new MapSolarsystemDeletedEvent($map_id))->toOthers();
+            broadcast(new MapConnectionsDeletedEvent($map_id))->toOthers();
+
+            return $deleted;
         });
     }
 }

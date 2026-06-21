@@ -34,7 +34,6 @@ trait PositionsMapSolarsystems
         int $maxTries = 100
     ): array {
         $occupiedPositions = $map->mapSolarsystems()
-            ->isOnMap()
             ->get(['position_x', 'position_y', 'id']);
 
         $new_y = $referenceSystem->position_y;

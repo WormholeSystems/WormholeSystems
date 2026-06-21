@@ -63,7 +63,7 @@ final class MapController extends Controller
             ->findOrFail($map->id);
 
         $selected_map_solarsystem = $this->getSelectedMapSolarsystem(
-            $request->input('map_solarsystem_id'),
+            $request->input('solarsystem_id'),
             $map,
         );
 
@@ -79,7 +79,7 @@ final class MapController extends Controller
             ->with(new MapPermissionsFeature($map, $user))
             ->with($settingsFeature)
             ->with(new MapSelectionFeature($map, $user, $selected_map_solarsystem, $hiddenCards))
-            ->with(new MapTrackingFeature($map, $request->integer('origin_map_solarsystem_id') ?: null, $request->integer('target_solarsystem_id') ?: null))
+            ->with(new MapTrackingFeature($map, $request->integer('origin_solarsystem_id') ?: null, $request->integer('target_solarsystem_id') ?: null))
             ->with(new MapCharactersFeature($map, $canViewCharacters))
             ->with(new EveScoutConnectionsFeature($this->eve_scout_service))
             ->with(new MapKillmailsFeature($map, $settings->killmail_filter ?? KillmailFilter::All, $hiddenCards))
@@ -156,14 +156,16 @@ final class MapController extends Controller
     }
 
     /**
-     * Get the selected map solarsystem based on the provided ID.
+     * Resolve the selected system from its solarsystem id. Keying on the solarsystem (rather
+     * than the placement) keeps the selection stable across a system being removed and
+     * re-added, and simply clears when the system is not currently on the map.
      */
-    private function getSelectedMapSolarsystem(null|string|int $selected_map_solarsystem_id, Map $map): ?MapSolarsystem
+    private function getSelectedMapSolarsystem(null|string|int $selected_solarsystem_id, Map $map): ?MapSolarsystem
     {
-        if ($selected_map_solarsystem_id === null) {
+        if ($selected_solarsystem_id === null) {
             return null;
         }
 
-        return $map->mapSolarsystems()->findOrFail((int) $selected_map_solarsystem_id);
+        return $map->mapSolarsystems()->where('solarsystem_id', (int) $selected_solarsystem_id)->first();
     }
 }

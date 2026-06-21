@@ -27,8 +27,8 @@ final class MapSolarsystemResource extends JsonResource
             'id' => $this->id,
             'map_id' => $this->map_id,
             'alias' => $this->alias,
-            'status' => $this->status,
-            'occupier_alias' => $this->occupier_alias,
+            'status' => $this->details->status,
+            'occupier_alias' => $this->details->occupier_alias,
             'position' => $this->getPositionArray(),
             'pinned' => $this->pinned,
             'solarsystem_id' => $this->solarsystem_id,
@@ -41,12 +41,11 @@ final class MapSolarsystemResource extends JsonResource
         ];
     }
 
-    private function getPositionArray(): ?array
+    /**
+     * @return array{x: int, y: int}
+     */
+    private function getPositionArray(): array
     {
-        if ($this->position_x === null || $this->position_y === null) {
-            return null;
-        }
-
         return [
             'x' => $this->position_x,
             'y' => $this->position_y,

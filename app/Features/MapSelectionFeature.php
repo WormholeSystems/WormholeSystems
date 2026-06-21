@@ -47,11 +47,13 @@ final readonly class MapSelectionFeature implements ProvidesInertiaProperties
         $isViewer = ! $this->user instanceof User || $this->map->getUserPermission($this->user) === Permission::Viewer;
         $loadAudits = ! in_array(RemovableCard::Audits->value, $this->hiddenCards);
 
-        return $this->map->mapSolarsystems()
-            ->with('signatures', 'wormholes')
-            ->when(! $isViewer && $loadAudits, fn ($query) => $query->with('audits', fn (Relation $query) => $query->latest()))
-            ->findOrFail($this->solarsystem->id)
-            ->hideNotes($isViewer)
-            ->toResource(SelectedMapSolarsystemResource::class);
+        $mapSolarsystem = $this->map->mapSolarsystems()
+            ->with('signatures', 'wormholes', 'details')
+            ->when(! $isViewer && $loadAudits, fn ($query) => $query->with('details.audits', fn (Relation $query) => $query->latest()))
+            ->findOrFail($this->solarsystem->id);
+
+        $mapSolarsystem->details->hideNotes($isViewer);
+
+        return $mapSolarsystem->toResource(SelectedMapSolarsystemResource::class);
     }
 }

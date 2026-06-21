@@ -44,11 +44,11 @@ const pilots = usePilotsInMapSolarsystem(map_solarsystem);
 const map = useMap();
 
 const is_active = computed(() => {
-    return page.props.selected_map_solarsystem?.id === map_solarsystem.id;
+    return page.props.selected_map_solarsystem?.solarsystem_id === map_solarsystem.solarsystem_id;
 });
 
 const is_home = computed(() => {
-    return map.value.home_solarsystem_id === map_solarsystem.id;
+    return map.value.home_solarsystem_id === map_solarsystem.solarsystem_id;
 });
 
 const is_rally = computed(() => {
@@ -61,7 +61,7 @@ const is_rally = computed(() => {
         ref="element"
         :style="drag.style.value"
         class="pointer-events-none absolute hover:z-20 data-[active=true]:z-10"
-        :data-active="page.props.selected_map_solarsystem?.id === map_solarsystem.id"
+        :data-active="page.props.selected_map_solarsystem?.solarsystem_id === map_solarsystem.solarsystem_id"
     >
         <div
             :style="{
@@ -81,7 +81,7 @@ const is_rally = computed(() => {
                         <Link
                             :href="
                                 show(map.slug, {
-                                    mergeQuery: { map_solarsystem_id: map_solarsystem.id },
+                                    mergeQuery: { solarsystem_id: map_solarsystem.solarsystem_id },
                                 })
                             "
                             preserve-state
@@ -101,7 +101,7 @@ const is_rally = computed(() => {
                         </Link>
                         <template v-if="can_write">
                             <SolarsystemDragHandle ref="drag_ref" v-if="!map_solarsystem.pinned" />
-                            <SolarsystemConnectionHandle ref="link_ref" />
+                            <SolarsystemConnectionHandle ref="link_ref" :data-connection-source="map_solarsystem.solarsystem_id" />
                         </template>
                     </div>
                 </div>

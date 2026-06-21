@@ -194,7 +194,6 @@ final readonly class AddEveScoutConnectionToMapAction
         // Check if system already exists on map (with position)
         $existingSystem = $map->mapSolarsystems()
             ->where('solarsystem_id', $solarsystemId)
-            ->isOnMap()
             ->first();
 
         if ($existingSystem) {
@@ -203,7 +202,6 @@ final readonly class AddEveScoutConnectionToMapAction
 
         // Get all occupied positions for collision detection
         $occupiedPositions = $map->mapSolarsystems()
-            ->isOnMap()
             ->get(['position_x', 'position_y', 'id']);
 
         // Try default starting position for special system (Thera/Turnur)
@@ -275,7 +273,6 @@ final readonly class AddEveScoutConnectionToMapAction
         // Check if system already exists on map (with position)
         $existingSystem = $map->mapSolarsystems()
             ->where('solarsystem_id', $solarsystemId)
-            ->isOnMap()
             ->first();
 
         if ($existingSystem) {
@@ -284,7 +281,6 @@ final readonly class AddEveScoutConnectionToMapAction
 
         // Get all occupied positions for collision detection
         $occupiedPositions = $map->mapSolarsystems()
-            ->isOnMap()
             ->get(['position_x', 'position_y', 'id']);
 
         // Try to find a free position to the right of the parent

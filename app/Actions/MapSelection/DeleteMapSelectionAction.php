@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace App\Actions\MapSelection;
 
+use App\Events\MapConnections\MapConnectionsDeletedEvent;
 use App\Events\MapSolarsystems\MapSolarsystemsDeletedEvent;
-use App\Models\Map;
-use App\Models\MapConnection;
 use App\Models\MapSolarsystem;
 use Illuminate\Support\Facades\DB;
 use Throwable;
@@ -14,7 +13,8 @@ use Throwable;
 final class DeleteMapSelectionAction
 {
     /**
-     * Delete selected map solarsystems from the database.
+     * Remove the selected systems from the map. Placement rows are hard-deleted so their
+     * connections and signatures cascade away; the persistent details survive.
      *
      * @param  int[]  $map_solarsystem_ids
      *
@@ -23,22 +23,17 @@ final class DeleteMapSelectionAction
     public function handle(array $map_solarsystem_ids): void
     {
         DB::transaction(function () use ($map_solarsystem_ids): void {
+            // A selection always belongs to a single map.
+            $map_id = MapSolarsystem::query()->whereIn('id', $map_solarsystem_ids)->value('map_id');
 
-            MapSolarsystem::query()->whereIn('id', $map_solarsystem_ids)
-                ->get()
-                ->each
-                ->update(['position_x' => null, 'position_y' => null, 'alias' => null]);
+            if ($map_id === null) {
+                return;
+            }
 
-            MapConnection::query()
-                ->whereIn('from_map_solarsystem_id', $map_solarsystem_ids)
-                ->orWhereIn('to_map_solarsystem_id', $map_solarsystem_ids)
-                ->delete();
+            MapSolarsystem::query()->whereIn('id', $map_solarsystem_ids)->delete();
 
-            Map::query()
-                ->whereHas('mapSolarsystems', function ($query) use ($map_solarsystem_ids): void {
-                    $query->whereIn('id', $map_solarsystem_ids);
-                })
-                ->each(fn (Map $map) => broadcast(new MapSolarsystemsDeletedEvent($map->id))->toOthers());
+            broadcast(new MapSolarsystemsDeletedEvent($map_id))->toOthers();
+            broadcast(new MapConnectionsDeletedEvent($map_id))->toOthers();
         });
     }
 }
