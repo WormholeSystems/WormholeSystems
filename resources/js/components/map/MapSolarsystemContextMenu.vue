@@ -36,7 +36,7 @@ const onlineCharacters = computed(() => user.value?.characters.filter((character
 
 const { canEdit: can_write } = usePermission();
 
-const { isHome, toggleHomeSystem } = useHomeSystem(() => map_solarsystem.id);
+const { isHome, toggleHomeSystem } = useHomeSystem(() => map_solarsystem.solarsystem_id);
 const { isRally, toggleRallyPoint } = useRallyPoint(() => map_solarsystem.solarsystem_id);
 
 const { setWaypoint, setWaypointAll } = useWaypoint();

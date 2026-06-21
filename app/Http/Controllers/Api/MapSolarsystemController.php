@@ -33,10 +33,10 @@ final class MapSolarsystemController extends Controller
     {
         Gate::authorize('view', $mapSolarsystem);
 
-        $mapSolarsystem->load('signatures');
+        $mapSolarsystem->load('signatures', 'details');
 
         $isViewer = $mapSolarsystem->map->getUserPermission($this->user) === Permission::Viewer;
-        $mapSolarsystem->hideNotes($isViewer);
+        $mapSolarsystem->details->hideNotes($isViewer);
 
         return response()->json([
             'data' => $mapSolarsystem->toResource(SelectedMapSolarsystemResource::class),

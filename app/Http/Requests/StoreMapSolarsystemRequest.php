@@ -42,8 +42,8 @@ final class StoreMapSolarsystemRequest extends FormRequest
             'solarsystem_id' => ['required', 'exists:solarsystems,id'],
             'alias' => ['nullable', 'string', 'max:255'],
             'occupier_alias' => ['nullable', 'string', 'max:255'],
-            'position_x' => ['nullable',  Rule::numeric()->min($grid_size)->max($max_size_x - $grid_size)],
-            'position_y' => ['nullable', Rule::numeric()->min($grid_size)->max($max_size_y - $grid_size)],
+            'position_x' => ['required', Rule::numeric()->min($grid_size)->max($max_size_x - $grid_size)],
+            'position_y' => ['required', Rule::numeric()->min($grid_size)->max($max_size_y - $grid_size)],
             'status' => ['nullable', 'sometimes', Rule::enum(MapSolarsystemStatus::class)],
             'pinned' => ['boolean'],
         ];

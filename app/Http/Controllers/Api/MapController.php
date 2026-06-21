@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Actions\Map\UpdateMapAction;
-use App\Enums\Permission;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateMapRequest;
 use App\Http\Resources\MapResource;
@@ -63,13 +62,6 @@ final class MapController extends Controller
         $map = Map::query()
             ->tap(new WithVisibleSolarsystems)
             ->findOrFail($map->id);
-
-        $isViewer = $map->getUserPermission($this->user) === Permission::Viewer;
-
-        // Hide notes from all solarsystems for viewer users
-        if ($isViewer) {
-            $map->mapSolarsystems->each->hideNotes();
-        }
 
         return response()->json([
             'data' => $map->toResource(MapResource::class),

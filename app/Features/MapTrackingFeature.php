@@ -20,7 +20,7 @@ final readonly class MapTrackingFeature implements ProvidesInertiaProperties
 {
     public function __construct(
         private Map $map,
-        private ?int $origin_map_solarsystem_id,
+        private ?int $origin_solarsystem_id,
         private ?int $target_solarsystem_id,
     ) {}
 
@@ -39,11 +39,11 @@ final readonly class MapTrackingFeature implements ProvidesInertiaProperties
      */
     private function getTrackingOrigin(): ?JsonResource
     {
-        if (! $this->origin_map_solarsystem_id) {
+        if (! $this->origin_solarsystem_id) {
             return null;
         }
 
-        $solarsystem = $this->map->mapSolarsystems()->find($this->origin_map_solarsystem_id);
+        $solarsystem = $this->map->mapSolarsystems()->where('solarsystem_id', $this->origin_solarsystem_id)->first();
 
         if (! $solarsystem instanceof MapSolarsystem) {
             return null;
@@ -51,7 +51,7 @@ final readonly class MapTrackingFeature implements ProvidesInertiaProperties
 
         $solarsystem->load([
             'signatures' => fn (Relation $query) => $query
-                ->where('map_solarsystem_id', $this->origin_map_solarsystem_id)
+                ->where('map_solarsystem_id', $solarsystem->id)
                 ->where(fn (Builder $q) => $q
                     ->whereRelation('signatureCategory', 'code', SignatureCategory::Wormhole)
                     ->orWhereNull('signature_category_id'))

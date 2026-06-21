@@ -18,10 +18,10 @@ final class HomeSystemController extends Controller
         Gate::authorize('update', $map);
 
         $validated = $request->validate([
-            'map_solarsystem_id' => ['nullable', 'integer', Rule::exists('map_solarsystems', 'id')->where('map_id', $map->id)],
+            'solarsystem_id' => ['nullable', 'integer', Rule::exists('map_solarsystems', 'solarsystem_id')->where('map_id', $map->id)],
         ]);
 
-        $map->update(['home_solarsystem_id' => $validated['map_solarsystem_id']]);
+        $map->update(['home_solarsystem_id' => $validated['solarsystem_id']]);
 
         broadcast(new MapUpdatedEvent($map))->toOthers();
 

@@ -128,7 +128,6 @@ final readonly class StoreTrackingAction
     {
         return $map->mapSolarsystems()
             ->isSolarsystem($solarsystem)
-            ->isOnMap()
             ->first();
     }
 

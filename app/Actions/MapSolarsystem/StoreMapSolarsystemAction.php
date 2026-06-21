@@ -13,11 +13,18 @@ final class StoreMapSolarsystemAction
 {
     public function handle(Map $map, array $data): MapSolarsystem
     {
+        // Persistent intel is kept (or created with defaults) so it survives a system being
+        // removed and re-added; only the placement is (re)created.
+        $details = $map->mapSolarsystemDetails()->firstOrCreate([
+            'solarsystem_id' => $data['solarsystem_id'],
+        ]);
+
         $map_solarsystem = $map->mapSolarsystems()->updateOrCreate([
             'solarsystem_id' => $data['solarsystem_id'],
         ], [
-            'position_x' => $data['position_x'] ?? null,
-            'position_y' => $data['position_y'] ?? null,
+            'map_solarsystem_details_id' => $details->id,
+            'position_x' => $data['position_x'],
+            'position_y' => $data['position_y'],
         ]);
 
         broadcast(new MapSolarsystemCreatedEvent($map->id))
