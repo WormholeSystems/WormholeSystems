@@ -91,6 +91,7 @@ function handleSubmit() {
 
 <template>
     <div
+        :data-solarsystem-id="map_solarsystem.solarsystem_id"
         :data-selected="map_solarsystem.is_selected"
         :data-hovered="map_solarsystem.is_hovered"
         :data-status="map_solarsystem.status"

@@ -158,7 +158,6 @@ final class EvaluateKillmailWebhooksJob implements ShouldBeUnique, ShouldQueue
 
         $systemsByMap = MapSolarsystem::query()
             ->whereIn('map_id', $mapIds)
-            ->isOnMap()
             ->get(['map_id', 'solarsystem_id'])
             ->groupBy('map_id');
 

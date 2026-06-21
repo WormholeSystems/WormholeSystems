@@ -29,6 +29,7 @@ use function sprintf;
  * @property-read string|CarbonImmutable $created_at
  * @property-read string|CarbonImmutable $updated_at
  * @property-read Collection<int,MapSolarsystem> $mapSolarsystems
+ * @property-read Collection<int,MapSolarsystemDetails> $mapSolarsystemDetails
  * @property-read Collection<int,MapConnection> $mapConnections
  * @property-read Collection<int,MapAccess> $mapAccessors
  * @property-read Collection<int,MapRouteSolarsystem> $mapRouteSolarsystems
@@ -65,6 +66,16 @@ final class Map extends Model
     public function mapSolarsystems(): HasMany
     {
         return $this->hasMany(MapSolarsystem::class, 'map_id');
+    }
+
+    /**
+     * Persistent per-system intel for this map, including systems not currently placed.
+     *
+     * @return HasMany<MapSolarsystemDetails, $this>
+     */
+    public function mapSolarsystemDetails(): HasMany
+    {
+        return $this->hasMany(MapSolarsystemDetails::class, 'map_id');
     }
 
     /**

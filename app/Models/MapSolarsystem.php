@@ -6,7 +6,6 @@ namespace App\Models;
 
 use App\Builders\MapSolarsystemBuilder;
 use App\Collections\MapSolarsystemCollection;
-use App\Enums\MapSolarsystemStatus;
 use App\Relations\HasManyMapConnections;
 use Database\Factories\MapSolarsystemFactory;
 use Illuminate\Database\Eloquent\Attributes\CollectedBy;
@@ -18,22 +17,20 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use OwenIt\Auditing\Auditable;
-use OwenIt\Auditing\Models\Audit;
 use Staudenmeir\EloquentHasManyDeep\HasManyDeep;
 use Staudenmeir\EloquentHasManyDeep\HasRelationships;
 
 /**
- * Represents a solarsystem on a map
+ * Represents the placement of a solarsystem on a map (canvas position, alias, pinned state).
+ * Persistent per-map intel (occupier, status, notes) lives on {@see MapSolarsystemDetails}.
  *
  * @property int $id
  * @property int $map_id
  * @property int $solarsystem_id
+ * @property int $map_solarsystem_details_id
  * @property string|null $alias
- * @property string|null $occupier_alias
- * @property float|null $position_x
- * @property float|null $position_y
- * @property MapSolarsystemStatus $status
+ * @property int $position_x
+ * @property int $position_y
  * @property bool $pinned
  * @property-read int|null $signatures_count
  * @property-read int|null $uncategorized_signatures_count
@@ -41,22 +38,20 @@ use Staudenmeir\EloquentHasManyDeep\HasRelationships;
  * @property-read int|null $map_connections_count
  * @property-read Solarsystem $solarsystem
  * @property-read Map $map
+ * @property-read MapSolarsystemDetails $details
  * @property-read Collection<int,MapConnection> $mapConnections
  * @property-read Collection<int,MapConnection> $connectionsTo
  * @property-read Collection<int,MapConnection> $connectionsFrom
  * @property-read WormholeSystem|null $wormholeSystem
  * @property-read Collection<int,Signature> $signatures
  * @property-read Collection<int,Signature> $wormholeSignatures
- * @property-read Collection<int,Audit> $audits
  * @property-read Collection<int,Wormhole> $wormholes
  */
 #[UseFactory(MapSolarsystemFactory::class)]
 #[UseEloquentBuilder(MapSolarsystemBuilder::class)]
 #[CollectedBy(MapSolarsystemCollection::class)]
-final class MapSolarsystem extends Model implements \OwenIt\Auditing\Contracts\Auditable
+final class MapSolarsystem extends Model
 {
-    use Auditable;
-
     /** @use HasFactory<MapSolarsystemFactory> */
     use HasFactory;
 
@@ -89,6 +84,16 @@ final class MapSolarsystem extends Model implements \OwenIt\Auditing\Contracts\A
     public function map(): BelongsTo
     {
         return $this->belongsTo(Map::class);
+    }
+
+    /**
+     * The persistent intel for this system on this map.
+     *
+     * @return BelongsTo<MapSolarsystemDetails,$this>
+     */
+    public function details(): BelongsTo
+    {
+        return $this->belongsTo(MapSolarsystemDetails::class, 'map_solarsystem_details_id');
     }
 
     /**
@@ -134,17 +139,9 @@ final class MapSolarsystem extends Model implements \OwenIt\Auditing\Contracts\A
         );
     }
 
-    public function hideNotes(bool $hide = true): self
-    {
-        $this->makeHiddenIf($hide, 'notes');
-
-        return $this;
-    }
-
     protected function casts(): array
     {
         return [
-            'status' => MapSolarsystemStatus::class,
             'created_at' => 'immutable_datetime',
             'updated_at' => 'immutable_datetime',
         ];

@@ -17,9 +17,8 @@ final class WithVisibleSolarsystems
     public function __invoke(Builder $query): Builder
     {
         return $query->with([
-            'mapSolarsystems' => fn (Relation $query) => $query->whereNotNull('position_x')->withCount('signatures', 'wormholeSignatures', 'mapConnections', 'uncategorizedSignatures')->with('wormholeSystem:id,threat_level'),
-            'mapConnections' => fn (Relation $query) => $query->whereDoesntHave('fromMapSolarsystem', fn (Builder $query) => $query->whereNull('position_x'))
-                ->whereDoesntHave('toMapSolarsystem', fn (Builder $query) => $query->whereNull('position_x')),
+            'mapSolarsystems' => fn (Relation $query) => $query->withCount('signatures', 'wormholeSignatures', 'mapConnections', 'uncategorizedSignatures')->with('wormholeSystem:id,threat_level', 'details'),
+            'mapConnections',
         ]);
     }
 }

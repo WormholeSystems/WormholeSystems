@@ -34,10 +34,10 @@ export function useTrackingSystems() {
         };
     }
 
-    function update(map_solarsystem_id: number | null, target_solarsystem_id: number | null = null, callback?: () => void) {
+    function update(origin_solarsystem_id: number | null, target_solarsystem_id: number | null = null, callback?: () => void) {
         router.reload({
             data: {
-                origin_map_solarsystem_id: map_solarsystem_id,
+                origin_solarsystem_id: origin_solarsystem_id,
                 target_solarsystem_id: target_solarsystem_id,
             },
             only: ['tracking_origin', 'tracking_target'],

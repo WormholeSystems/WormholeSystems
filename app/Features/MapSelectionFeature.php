@@ -10,7 +10,6 @@ use App\Http\Resources\SelectedMapSolarsystemResource;
 use App\Models\Map;
 use App\Models\MapSolarsystem;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Inertia\ProvidesInertiaProperties;
@@ -48,13 +47,13 @@ final readonly class MapSelectionFeature implements ProvidesInertiaProperties
         $isViewer = ! $this->user instanceof User || $this->map->getUserPermission($this->user) === Permission::Viewer;
         $loadAudits = ! in_array(RemovableCard::Audits->value, $this->hiddenCards);
 
-        return $this->map->mapSolarsystems()
-            ->with('signatures', 'wormholes')
-            ->with('mapConnections', fn (Relation $query) => $query->whereDoesntHave('fromMapSolarsystem', fn (Builder $query) => $query->whereNull('position_x'))
-                ->whereDoesntHave('toMapSolarsystem', fn (Builder $query) => $query->whereNull('position_x')))
-            ->when(! $isViewer && $loadAudits, fn ($query) => $query->with('audits', fn (Relation $query) => $query->latest()))
-            ->findOrFail($this->solarsystem->id)
-            ->hideNotes($isViewer)
-            ->toResource(SelectedMapSolarsystemResource::class);
+        $mapSolarsystem = $this->map->mapSolarsystems()
+            ->with('signatures', 'wormholes', 'details')
+            ->when(! $isViewer && $loadAudits, fn ($query) => $query->with('details.audits', fn (Relation $query) => $query->latest()))
+            ->findOrFail($this->solarsystem->id);
+
+        $mapSolarsystem->details->hideNotes($isViewer);
+
+        return $mapSolarsystem->toResource(SelectedMapSolarsystemResource::class);
     }
 }
