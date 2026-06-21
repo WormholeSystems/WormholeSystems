@@ -78,6 +78,7 @@ final class MapUserSetting extends Model
             'introduction_confirmed_at' => 'immutable_datetime',
             'prompt_for_signature_enabled' => 'boolean',
             'auto_confirm_signatures' => 'boolean',
+            'first_layer_nato_alias' => 'boolean',
             'suggest_alias_enabled' => 'boolean',
             'concat_alias_disabled' => 'boolean',
             'copy_bookmark_enabled' => 'boolean',

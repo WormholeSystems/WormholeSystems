@@ -10,11 +10,86 @@
  */
 import { useMapUserSettings } from '@/composables/useMapUserSettings';
 
+const FIRST_LAYER_NATO_ALIASES = [
+    'ALPHA',
+    'BRAVO',
+    'DELTA',
+    'ECHO',
+    'FOXTROT',
+    'GOLF',
+    'HOTEL',
+    'INDIA',
+    'JULIETT',
+    'KILO',
+    'LIMA',
+    'MIKE',
+    'NOVEMBER',
+    'OSCAR',
+    'PAPA',
+    'QUEBEC',
+    'ROMEO',
+    'SIERRA',
+    'TANGO',
+    'UNIFORM',
+    'VICTOR',
+    'WHISKEY',
+    'X-RAY',
+    'YANKEE',
+    'ZULU',
+];
+
+function nextNatoAlias(aliases: string[]): string {
+    const existingWords = new Set(
+        aliases
+            .map((alias) => alias.trim())
+            .filter((alias) => FIRST_LAYER_NATO_ALIASES.includes(alias)),
+    );
+
+    return FIRST_LAYER_NATO_ALIASES.find((word) => !existingWords.has(word)) ?? 'ZULU';
+}
+
+function isTopLevelAlias(parentAlias: string | null | undefined): boolean {
+    return !parentAlias || !parentAlias.trim();
+}
+
+function isNatoAlias(alias: string | null | undefined): boolean {
+    if (!alias) return false;
+    return FIRST_LAYER_NATO_ALIASES.includes(alias.trim());
+}
+
+function nextNatoChildAlias(parentAlias: string, aliases: string[]): string {
+    const letter = parentAlias.trim().charAt(0).toUpperCase();
+    const childPattern = new RegExp(`^${letter}(\\d+)$`);
+
+    const numericChildren = aliases.filter((alias) => {
+        const match = alias.trim().toUpperCase().match(childPattern);
+        return Boolean(match);
+    });
+
+    const highest = numericChildren.reduce((max, alias) => {
+        const match = alias.trim().toUpperCase().match(childPattern);
+        if (!match) return max;
+        const index = Number.parseInt(match[1], 10);
+        return Number.isNaN(index) ? max : Math.max(max, index);
+    }, 0);
+
+    return `${letter}${highest + 1}`;
+}
+
 export function guessNextAlias(parentAlias: string | null | undefined, aliases: string[]): string {
     const map_user_settings = useMapUserSettings();
     const concatDisabled = Boolean(map_user_settings.value?.concat_alias_disabled);
+    const firstLayerNatoAlias = Boolean(map_user_settings.value?.first_layer_nato_alias);
 
     const prefix = concatDisabled ? '' : (parentAlias ?? '').trim();
+
+    if (firstLayerNatoAlias && isTopLevelAlias(parentAlias)) {
+        return nextNatoAlias(aliases);
+    }
+
+    if (firstLayerNatoAlias && isNatoAlias(parentAlias ?? null)) {
+        return nextNatoChildAlias(parentAlias!.trim(), aliases);
+    }
 
     const numericChildren = aliases.filter((alias) => {
         if (alias.length <= prefix.length) return false;

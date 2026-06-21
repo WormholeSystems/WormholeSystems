@@ -35,6 +35,7 @@ final class MapUserSettingResource extends JsonResource
             'introduction_confirmed_at' => $this->introduction_confirmed_at?->toISOString(),
             'prompt_for_signature_enabled' => $this->prompt_for_signature_enabled,
             'auto_confirm_signatures' => $this->auto_confirm_signatures ?? false,
+            'first_layer_nato_alias' => $this->first_layer_nato_alias ?? false,
             'suggest_alias_enabled' => $this->suggest_alias_enabled,
             'concat_alias_disabled' => $this->concat_alias_disabled,
             'copy_bookmark_enabled' => $this->copy_bookmark_enabled,

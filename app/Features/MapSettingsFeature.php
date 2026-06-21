@@ -26,6 +26,7 @@ final readonly class MapSettingsFeature implements ProvidesInertiaProperties
         'prompt_for_signature_enabled' => true,
         'auto_confirm_signatures' => false,
         'suggest_alias_enabled' => true,
+        'first_layer_nato_alias' => false,
         'concat_alias_disabled' => false,
         'copy_bookmark_enabled' => true,
         'layout_breakpoints' => null,

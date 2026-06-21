@@ -69,7 +69,11 @@ function handleAutoConfirmChange(value: boolean | 'indeterminate') {
         updateMapUserSettings({ auto_confirm_signatures: value });
     }
 }
-
+function handleFirstLayerNatoAliasChange(value: boolean | 'indeterminate') {
+    if (typeof value === 'boolean') {
+        updateMapUserSettings({ first_layer_nato_alias: value });
+    }
+}
 function handleConcatAliasChange(value: boolean | 'indeterminate') {
     if (typeof value === 'boolean') {
         updateMapUserSettings({ concat_alias_disabled: value });
@@ -162,6 +166,16 @@ function handleSolarsystemSelect(solarsystem: TStaticSolarsystem) {
                             </div>
                         </div>
                         <Checkbox :model-value="map_user_settings.auto_confirm_signatures" @update:model-value="handleAutoConfirmChange" />
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div class="space-y-0.5">
+                            <Label class="text-sm font-medium">First layer NATO alias</Label>
+                            <div class="text-sm text-muted-foreground">
+                                Use NATO alphabet words for first-layer wormhole aliases, then shorten second-layer aliases to A1, B2, etc.
+                            </div>
+                        </div>
+                        <Checkbox :model-value="map_user_settings.first_layer_nato_alias" @update:model-value="handleFirstLayerNatoAliasChange" />
                     </div>
 
                     <div class="flex items-center justify-between">
