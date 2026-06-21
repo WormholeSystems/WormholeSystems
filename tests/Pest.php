@@ -14,7 +14,10 @@ declare(strict_types=1);
 */
 
 pest()->extend(Tests\TestCase::class)
-    ->in('Feature');
+    ->in('Feature', 'Browser');
+
+pest()->use(Tests\Browser\Concerns\InteractsWithMap::class)
+    ->in('Browser');
 /*
 |--------------------------------------------------------------------------
 | Expectations
@@ -65,4 +68,20 @@ function makeSolarsystem(int $id, float $security = 0.5): int
     ]);
 
     return $id;
+}
+
+/**
+ * Place a solarsystem on a map (seeding the underlying solarsystem so the FK resolves),
+ * returning the placement.
+ */
+function placeMapSolarsystem(App\Models\Map $map, int $solarsystemId, int $x = 100, int $y = 100): App\Models\MapSolarsystem
+{
+    makeSolarsystem($solarsystemId);
+
+    return App\Models\MapSolarsystem::factory()->for($map)->create([
+        'solarsystem_id' => $solarsystemId,
+        'position_x' => $x,
+        'position_y' => $y,
+        'pinned' => false,
+    ]);
 }
