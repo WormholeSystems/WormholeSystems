@@ -17,7 +17,7 @@ import Notifications from '@/components/user/Notifications.vue';
 import useUser from '@/composables/useUser';
 import Appearance from '@/layouts/Appearance.vue';
 import SeoHead from '@/layouts/SeoHead.vue';
-import { home } from '@/routes';
+import { documentation, home } from '@/routes';
 import Eve from '@/routes/eve';
 import { UTCDate } from '@date-fns/utc';
 import { Link, usePage } from '@inertiajs/vue3';
@@ -27,9 +27,12 @@ import {
     Activity,
     ArrowRight,
     Bell,
+    BookOpen,
+    Container,
     Crosshair,
     Crown,
     Eye,
+    Github,
     Laptop,
     LayoutGrid,
     Monitor,
@@ -178,6 +181,13 @@ const vReveal = {
                         <span class="font-display text-lg font-bold tracking-tight text-foreground">WormholeSystems</span>
                     </div>
                     <div class="flex items-center gap-3">
+                        <Link
+                            :href="documentation().url"
+                            class="hidden items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground sm:flex"
+                        >
+                            <BookOpen class="h-4 w-4" />
+                            Docs
+                        </Link>
                         <a
                             :href="page.props.discord.invite"
                             class="hidden items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground sm:flex"
@@ -287,6 +297,65 @@ const vReveal = {
                                 <CountUp :to="stat.to" :suffix="stat.suffix" :decimals="stat.decimals" />
                             </div>
                             <div class="mt-2 font-hud text-[11px] tracking-[0.15em] text-muted-foreground uppercase">{{ stat.k }}</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Open source & self-hosting (surfaced early — it's a core differentiator) -->
+                <section class="mx-auto max-w-7xl px-6 pb-10 sm:px-8">
+                    <div v-reveal class="overflow-hidden rounded-2xl border border-emerald-400/30 bg-emerald-500/[0.04] p-8 sm:p-10">
+                        <div class="grid gap-8 lg:grid-cols-[1fr_1.1fr] lg:items-center">
+                            <div>
+                                <div
+                                    class="inline-flex items-center gap-2 rounded-full border border-emerald-400/35 bg-emerald-500/10 px-3.5 py-1.5 font-hud text-[11px] tracking-[0.2em] text-emerald-300 uppercase"
+                                >
+                                    <Github class="h-3.5 w-3.5" />
+                                    100% open source
+                                </div>
+                                <h2 class="mt-5 font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                                    Free, open source, and yours to self-host
+                                </h2>
+                                <p class="mt-4 max-w-xl text-[15px] leading-7 text-muted-foreground">
+                                    Use the hosted version, dig into the code, or spin up your own private instance with the ready-made container
+                                    setup. No lock-in — it's all out in the open.
+                                </p>
+                            </div>
+                            <div class="grid gap-4 sm:grid-cols-2">
+                                <a
+                                    href="https://github.com/WormholeSystems/WormholeSystems"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="group rounded-xl border border-border/60 bg-card/50 p-5 transition-colors hover:border-emerald-400/60 hover:bg-card"
+                                >
+                                    <div class="feat-icon">
+                                        <Github class="h-5 w-5 text-emerald-400" />
+                                    </div>
+                                    <h3 class="mt-4 flex items-center gap-2 font-display text-lg font-bold text-foreground">
+                                        Source code
+                                        <ArrowRight class="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                                    </h3>
+                                    <p class="mt-2 text-sm leading-6 text-muted-foreground">
+                                        Browse the full source, open issues, and contribute on GitHub.
+                                    </p>
+                                </a>
+                                <a
+                                    href="https://github.com/WormholeSystems/wormholesystems-containers"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="group rounded-xl border border-border/60 bg-card/50 p-5 transition-colors hover:border-emerald-400/60 hover:bg-card"
+                                >
+                                    <div class="feat-icon">
+                                        <Container class="h-5 w-5 text-emerald-400" />
+                                    </div>
+                                    <h3 class="mt-4 flex items-center gap-2 font-display text-lg font-bold text-foreground">
+                                        Self-host
+                                        <ArrowRight class="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                                    </h3>
+                                    <p class="mt-2 text-sm leading-6 text-muted-foreground">
+                                        A ready-to-run Docker setup for your own private instance.
+                                    </p>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -619,6 +688,26 @@ const vReveal = {
                         <Logo class="h-6 w-6 text-muted-foreground/60" />
                         <span class="font-display text-sm font-bold text-muted-foreground">WormholeSystems</span>
                     </div>
+                    <nav class="flex items-center gap-2">
+                        <a
+                            href="https://github.com/WormholeSystems/WormholeSystems"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="inline-flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                        >
+                            <Github class="h-4 w-4" />
+                            Source
+                        </a>
+                        <a
+                            href="https://github.com/WormholeSystems/wormholesystems-containers"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="inline-flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                        >
+                            <Container class="h-4 w-4" />
+                            Self-host
+                        </a>
+                    </nav>
                     <p class="text-center text-sm text-muted-foreground/60 sm:text-right">
                         © {{ currentYear }} WormholeSystems. EVE Online and the EVE logo are trademarks of CCP hf.
                     </p>
