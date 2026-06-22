@@ -17,6 +17,7 @@ import { useRallyPoint } from '@/composables/useRallyPoint';
 import { useStaticSolarsystem } from '@/composables/useStaticSolarsystems';
 import useUser from '@/composables/useUser';
 import { useWaypoint } from '@/composables/useWaypoint';
+import { isWormholeClass } from '@/const/solarsystemClasses';
 import { Circle, Compass, ExternalLink, Flag, Globe, Map, MapPin, Navigation, Plus, Route, Users } from 'lucide-vue-next';
 import { computed } from 'vue';
 
@@ -166,7 +167,7 @@ const staticSolarsystem = useStaticSolarsystem(() => solarsystem_id);
                                     Region Map
                                 </a>
                             </ContextMenuItem>
-                            <ContextMenuItem as-child v-if="!staticSolarsystem.class">
+                            <ContextMenuItem as-child v-if="!isWormholeClass(staticSolarsystem.class)">
                                 <a
                                     :href="`https://evemaps.dotlan.net/range/Revelation,5/${staticSolarsystem.name.replaceAll(' ', '_')}`"
                                     target="_blank"

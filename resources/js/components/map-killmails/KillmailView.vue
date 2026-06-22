@@ -110,7 +110,7 @@ const finalBlow = computed(() => killmail.data.attackers.find((a) => a.final_blo
         <span v-else />
 
         <!-- Location -->
-        <SolarsystemClass :wormhole_class="solarsystem.class" :security="solarsystem.security" class="justify-self-center" />
+        <SolarsystemClass :solarsystem_class="solarsystem.class" class="justify-self-center" />
 
         <span v-if="alias" class="truncate font-mono text-xs font-medium">{{ alias }}</span>
         <span v-else class="truncate font-mono text-xs">{{ solarsystem.name }}</span>

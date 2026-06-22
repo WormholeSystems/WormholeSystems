@@ -34,16 +34,12 @@ function handleSystemClick(system: TResolvedSolarsystem) {
             class="h-6 gap-1"
         >
             <MapPin class="size-3 shrink-0 stroke-muted-foreground" />
-            <SolarsystemClass
-                :wormhole_class="selected_map_solarsystem.solarsystem.class"
-                :security="selected_map_solarsystem.solarsystem.security"
-                class="shrink-0"
-            />
+            <SolarsystemClass :solarsystem_class="selected_map_solarsystem.solarsystem.class" class="shrink-0" />
             <span class="text-xs">{{ selected_map_solarsystem.solarsystem.name }}</span>
         </Button>
         <Button v-if="active_character_system" variant="outline" size="xs" @click="handleSystemClick(active_character_system)" class="h-6 gap-1">
             <Navigation class="size-3 shrink-0 stroke-muted-foreground" />
-            <SolarsystemClass :wormhole_class="active_character_system.class" :security="active_character_system.security" class="shrink-0" />
+            <SolarsystemClass :solarsystem_class="active_character_system.class" class="shrink-0" />
             <span class="text-xs">{{ active_character_system.name }}</span>
         </Button>
         <Button
@@ -54,7 +50,7 @@ function handleSystemClick(system: TResolvedSolarsystem) {
             @click="handleSystemClick(destination.solarsystem)"
             class="h-6 gap-1"
         >
-            <SolarsystemClass :wormhole_class="destination.solarsystem.class" :security="destination.solarsystem.security" class="shrink-0" />
+            <SolarsystemClass :solarsystem_class="destination.solarsystem.class" class="shrink-0" />
             <span class="text-xs">{{ destination.solarsystem.name }}</span>
         </Button>
     </div>

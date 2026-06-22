@@ -1,3 +1,4 @@
+import { isWormholeClass } from '@/const/solarsystemClasses';
 import { TMapSolarsystem } from '@/pages/maps';
 import MapConnections from '@/routes/map-connections';
 import { router } from '@inertiajs/vue3';
@@ -60,8 +61,8 @@ export function useNewConnection(
     }
 
     function getMaximumShipSizeForConnection(from: TMapSolarsystem, to: TMapSolarsystem): string | undefined {
-        const classes = [from.solarsystem.class, to.solarsystem.class].filter((c) => c !== null && c !== undefined);
-        if (classes.includes(1)) return 'medium';
+        const classes = [from.solarsystem.class, to.solarsystem.class].filter(isWormholeClass);
+        if (classes.includes('1')) return 'medium';
 
         // Check if Turnur connects to JSpace
         const names = [from.solarsystem.name, to.solarsystem.name];
@@ -72,7 +73,7 @@ export function useNewConnection(
         if (names.includes('Thera') && highsec.length) return 'medium';
 
         // Check if it involves a frigate-only system
-        if (classes.includes(13)) return 'frigate';
+        if (classes.includes('13')) return 'frigate';
 
         return undefined;
     }

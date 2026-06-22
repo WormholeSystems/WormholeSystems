@@ -199,11 +199,7 @@ function handleSolarsystemSelect(solarsystem: TStaticSolarsystem) {
                                             class="col-span-full grid grid-cols-subgrid"
                                         >
                                             <div class="justify-self-center">
-                                                <SolarsystemClass
-                                                    :wormhole_class="solarsystem.class"
-                                                    :security="solarsystem.security"
-                                                    :name="solarsystem.name"
-                                                />
+                                                <SolarsystemClass :solarsystem_class="solarsystem.class" :name="solarsystem.name" />
                                             </div>
                                             <span class="whitespace-nowrap">{{ solarsystem.name }}</span>
                                             <span class="truncate text-muted-foreground" v-if="!solarsystem.class">{{
@@ -227,11 +223,7 @@ function handleSolarsystemSelect(solarsystem: TStaticSolarsystem) {
                                             disabled
                                         >
                                             <div class="justify-self-center">
-                                                <SolarsystemClass
-                                                    :wormhole_class="solarsystem.class"
-                                                    :security="solarsystem.security"
-                                                    :name="solarsystem.name"
-                                                />
+                                                <SolarsystemClass :solarsystem_class="solarsystem.class" :name="solarsystem.name" />
                                             </div>
                                             <span class="whitespace-nowrap">{{ solarsystem.name }}</span>
                                             <span class="truncate text-muted-foreground" v-if="!solarsystem.class">{{
@@ -252,7 +244,7 @@ function handleSolarsystemSelect(solarsystem: TStaticSolarsystem) {
 
                     <ul v-else class="divide-y divide-border rounded-lg border">
                         <li v-for="solarsystem in ignoredSolarsystems" :key="solarsystem.id" class="flex items-center gap-3 px-3 py-2">
-                            <SolarsystemClass :wormhole_class="solarsystem.class" :security="solarsystem.security" :name="solarsystem.name" />
+                            <SolarsystemClass :solarsystem_class="solarsystem.class" :name="solarsystem.name" />
                             <span class="font-medium">{{ solarsystem.name }}</span>
                             <span class="truncate text-sm text-muted-foreground">{{ solarsystem.region?.name }}</span>
                             <Button

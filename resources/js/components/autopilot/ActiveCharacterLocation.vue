@@ -54,11 +54,7 @@ function handleHover(hovered: boolean, route: TSolarsystem[] | null) {
                     <span class="truncate text-xs font-medium">{{ activeCharacter?.name || 'Unknown' }}</span>
                 </div>
                 <div v-if="statusSolarsystem" class="flex items-baseline gap-1 text-[11px] text-muted-foreground">
-                    <SolarsystemClass
-                        :wormhole_class="statusSolarsystem.class"
-                        :security="statusSolarsystem.security"
-                        class="shrink-0 leading-none font-bold"
-                    />
+                    <SolarsystemClass :solarsystem_class="statusSolarsystem.class" class="shrink-0 leading-none font-bold" />
                     <span class="truncate">{{ statusSolarsystem.name }}</span>
                     <span class="text-muted-foreground/50">·</span>
                     <span class="truncate">{{ statusSolarsystem.region?.name }}</span>

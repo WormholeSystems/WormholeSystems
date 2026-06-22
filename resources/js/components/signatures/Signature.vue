@@ -15,15 +15,15 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { deleteSignature, getSolarsystemClass, toStringedSolarsystemClass, TProcessedConnection, updateSignature } from '@/composables/map';
-import { useSolarsystemClass } from '@/composables/map/composables/useSolarsystemClass';
+import { deleteSignature, TProcessedConnection, updateSignature } from '@/composables/map';
 import { Data } from '@/composables/map/utils/data';
 import { useMapUserSettings } from '@/composables/useMapUserSettings';
 import usePermission from '@/composables/usePermission';
 import { getTypesByCategory, signatureCategories } from '@/const/signatures';
+import { classSortWeight } from '@/const/solarsystemClasses';
 import { formatDateToISO } from '@/lib/utils';
 import type { TResolvedSelectedMapSolarsystem } from '@/pages/maps';
-import { TSignature, TSolarsystemClass } from '@/types/models';
+import { TSignature } from '@/types/models';
 import { UTCDate } from '@date-fns/utc';
 import { syncRefs } from '@vueuse/core';
 import { Cloud, Database, Fan, Gem, Landmark, MoreVertical, Shield, Swords } from 'lucide-vue-next';
@@ -58,31 +58,15 @@ const selected_connection = computed(() => {
     );
 });
 
-const solarsystem_class = useSolarsystemClass(selected_map_solarsystem);
+const solarsystem_class = computed(() => selected_map_solarsystem.solarsystem.class);
 
 const availableTypes = computed(() => {
     if (!signature.signature_category_id) return [];
-    return getTypesByCategory(signature.signature_category_id).filter((type) =>
-        type.spawn_areas?.includes(toStringedSolarsystemClass(solarsystem_class.value)!),
-    );
+    return getTypesByCategory(signature.signature_category_id).filter((type) => type.spawn_areas?.includes(solarsystem_class.value));
 });
 
-const getClassSortOrder = (target_class: TSolarsystemClass | null): number => {
-    if (!target_class) return 999;
-    const stringed_target_class = toStringedSolarsystemClass(target_class)!;
-    if (stringed_target_class === 'h') return 1;
-    if (stringed_target_class === 'l') return 2;
-    if (stringed_target_class === 'n') return 3;
-    if (/^\d+$/.test(stringed_target_class)) {
-        return 10 + parseInt(stringed_target_class);
-    }
-    if (stringed_target_class === 'p') return 200;
-    if (stringed_target_class === 'unknown') return 300;
-    return 999;
-};
-
 const sortedAvailableTypes = computed(() => {
-    return availableTypes.value.toSorted((a, b) => getClassSortOrder(a.target_class) - getClassSortOrder(b.target_class));
+    return availableTypes.value.toSorted((a, b) => classSortWeight(a.target_class) - classSortWeight(b.target_class));
 });
 
 const wormholeCategoryId = computed(() => {
@@ -95,7 +79,7 @@ const isWormhole = computed(() => {
 
 const current_class = computed(() => {
     if (!selected_connection.value?.target) return null;
-    return getSolarsystemClass(selected_connection.value.target);
+    return selected_connection.value.target.solarsystem.class;
 });
 
 const map_user_settings = useMapUserSettings();

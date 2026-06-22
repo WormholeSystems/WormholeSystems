@@ -5,6 +5,7 @@ import { useMap } from '@/composables/useMap';
 import usePermission from '@/composables/usePermission';
 import { useSelectedMapSolarsystem } from '@/composables/useSelectedMapSolarsystem';
 import { useStaticSolarsystems } from '@/composables/useStaticSolarsystems';
+import { classSortWeight, isWormholeClass } from '@/const/solarsystemClasses';
 import type { TResolvedMapRouteSolarsystem } from '@/pages/maps';
 import { useLocalStorage } from '@vueuse/core';
 import { ArrowDown, ArrowUp } from 'lucide-vue-next';
@@ -65,11 +66,11 @@ const sorted = computed(() => {
 
         switch (sortColumn.value) {
             case 'system': {
-                const aIsWH = a.solarsystem.class !== null;
-                const bIsWH = b.solarsystem.class !== null;
+                const aIsWH = isWormholeClass(a.solarsystem.class);
+                const bIsWH = isWormholeClass(b.solarsystem.class);
 
                 if (aIsWH && bIsWH) {
-                    comparison = (a.solarsystem.class || 0) - (b.solarsystem.class || 0);
+                    comparison = classSortWeight(a.solarsystem.class) - classSortWeight(b.solarsystem.class);
                 } else if (!aIsWH && !bIsWH) {
                     comparison = (b.solarsystem.security || 0) - (a.solarsystem.security || 0);
                 } else {

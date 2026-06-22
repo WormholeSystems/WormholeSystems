@@ -59,7 +59,7 @@ function removeRoute() {
             class="col-span-full grid grid-cols-subgrid items-center border-b border-border/30 px-3 py-1.5 hover:bg-muted/30"
             v-element-hover="onHover"
         >
-            <SolarsystemClass :wormhole_class="map_route.solarsystem.class" :security="map_route.solarsystem.security" class="justify-self-center" />
+            <SolarsystemClass :solarsystem_class="map_route.solarsystem.class" class="justify-self-center" />
 
             <span class="truncate text-xs">{{ map_route.solarsystem.name }}</span>
 

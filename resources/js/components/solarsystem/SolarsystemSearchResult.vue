@@ -14,7 +14,7 @@ const { solarsystem, alias = null } = defineProps<{
 <template>
     <div class="contents text-xs">
         <span class="justify-self-center">
-            <SolarsystemClass :wormhole_class="solarsystem.class" :security="solarsystem.security" />
+            <SolarsystemClass :solarsystem_class="solarsystem.class" />
         </span>
         <span class="min-w-0 truncate">
             <span class="font-medium text-foreground">{{ solarsystem.name }}</span>
