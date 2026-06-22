@@ -264,6 +264,7 @@ export type TMapUserSetting = {
     hidden_cards: string[] | null;
     show_threat_level: boolean;
     show_statics_first: boolean;
+    select_jumped_system: boolean;
     is_archived: boolean;
     background_image_url: string | null;
     background_image_mode: 'grid' | 'viewport';

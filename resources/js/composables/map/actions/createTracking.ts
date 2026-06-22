@@ -9,7 +9,14 @@ type TrackingOptions = {
     mass_status?: TMassStatus | null;
 };
 
-export function createTracking(from_map_solarsystem_id: number, to_solarsystem_id: number, options: TrackingOptions = {}) {
+type TrackingVisitOptions = Parameters<typeof router.post>[2];
+
+export function createTracking(
+    from_map_solarsystem_id: number,
+    to_solarsystem_id: number,
+    options: TrackingOptions = {},
+    visitOptions: TrackingVisitOptions = {},
+) {
     return router.post(
         Tracking.store().url,
         {
@@ -21,6 +28,7 @@ export function createTracking(from_map_solarsystem_id: number, to_solarsystem_i
             preserveScroll: true,
             preserveState: true,
             only: ['map', 'map_navigation', 'selected_map_solarsystem'],
+            ...visitOptions,
         },
     );
 }

@@ -38,6 +38,12 @@ function handleToggleStaticsFirst(value: boolean | 'indeterminate') {
         updateMapUserSettings({ show_statics_first: value });
     }
 }
+
+function handleToggleSelectJumpedSystem(value: boolean | 'indeterminate') {
+    if (typeof value === 'boolean') {
+        updateMapUserSettings({ select_jumped_system: value });
+    }
+}
 </script>
 
 <template>
@@ -80,6 +86,16 @@ function handleToggleStaticsFirst(value: boolean | 'indeterminate') {
                             </div>
                         </div>
                         <Checkbox :model-value="map_user_settings.show_statics_first" @update:model-value="handleToggleStaticsFirst" />
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div class="space-y-0.5">
+                            <Label class="text-sm font-medium">Select Jumped System</Label>
+                            <div class="text-sm text-muted-foreground">
+                                Automatically select the destination system on the map whenever your tracking character jumps
+                            </div>
+                        </div>
+                        <Checkbox :model-value="map_user_settings.select_jumped_system" @update:model-value="handleToggleSelectJumpedSystem" />
                     </div>
                 </CardContent>
             </Card>

@@ -45,6 +45,7 @@ final class MapUserSettingResource extends JsonResource
             'hidden_cards' => $this->hidden_cards ?? [],
             'show_threat_level' => $this->show_threat_level,
             'show_statics_first' => $this->show_statics_first,
+            'select_jumped_system' => $this->select_jumped_system,
             'is_archived' => $this->is_archived ?? false,
             'background_image_url' => $this->background_image_path
                 ? Storage::disk('public')->url($this->background_image_path)
