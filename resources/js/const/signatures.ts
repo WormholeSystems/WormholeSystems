@@ -1,8 +1,9 @@
 /**
  * Static TypeScript module for signature categories and types.
  *
- * Data is loaded from the generated JSON file.
- * To regenerate the data, run: php artisan generate:signature-types
+ * resources/js/data/signatures.json is the single source of truth for this data.
+ * The frontend imports it directly here, and the database is seeded from the same
+ * file via SignatureCategorySeeder / SignatureTypeSeeder (run `php artisan db:seed`).
  */
 
 import signatureData from '@/data/signatures.json';
