@@ -148,7 +148,7 @@ function clearTo() {
                 <template v-if="fromSystem">
                     <div class="flex h-8 items-center gap-1.5 rounded-md bg-muted/30 px-2">
                         <span class="font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">From</span>
-                        <SolarsystemClass :wormhole_class="fromSystem.class" :security="fromSystem.security" class="shrink-0 text-xs" />
+                        <SolarsystemClass :solarsystem_class="fromSystem.class" class="shrink-0 text-xs" />
                         <span class="min-w-0 flex-1 truncate text-sm">
                             {{ fromSystem.name }}
                             <span class="text-xs text-muted-foreground">· {{ fromSystem.region?.name }}</span>
@@ -183,11 +183,7 @@ function clearTo() {
                 class="inline-flex items-center gap-1.5 rounded-md border border-border/40 bg-muted/30 px-2 py-1 text-xs transition-colors hover:bg-muted/60"
                 @click="handleFromSystemSelect(selected_map_solarsystem.solarsystem)"
             >
-                <SolarsystemClass
-                    :wormhole_class="selected_map_solarsystem.solarsystem.class"
-                    :security="selected_map_solarsystem.solarsystem.security"
-                    class="shrink-0 text-[10px]"
-                />
+                <SolarsystemClass :solarsystem_class="selected_map_solarsystem.solarsystem.class" class="shrink-0 text-[10px]" />
                 <span>{{ selected_map_solarsystem.solarsystem.name }}</span>
                 <MapPin class="size-3 shrink-0 text-muted-foreground" />
             </button>
@@ -196,11 +192,7 @@ function clearTo() {
                 class="inline-flex items-center gap-1.5 rounded-md border border-border/40 bg-muted/30 px-2 py-1 text-xs transition-colors hover:bg-muted/60"
                 @click="handleFromSystemSelect(activeCharacterSystem)"
             >
-                <SolarsystemClass
-                    :wormhole_class="activeCharacterSystem.class"
-                    :security="activeCharacterSystem.security"
-                    class="shrink-0 text-[10px]"
-                />
+                <SolarsystemClass :solarsystem_class="activeCharacterSystem.class" class="shrink-0 text-[10px]" />
                 <span>{{ activeCharacterSystem.name }}</span>
                 <Navigation class="size-3 shrink-0 text-muted-foreground" />
             </button>
@@ -210,7 +202,7 @@ function clearTo() {
                 class="inline-flex items-center gap-1.5 rounded-md border border-border/40 bg-muted/30 px-2 py-1 text-xs transition-colors hover:bg-muted/60"
                 @click="handleFromSystemSelect(dest.solarsystem)"
             >
-                <SolarsystemClass :wormhole_class="dest.solarsystem.class" :security="dest.solarsystem.security" class="shrink-0 text-[10px]" />
+                <SolarsystemClass :solarsystem_class="dest.solarsystem.class" class="shrink-0 text-[10px]" />
                 <span>{{ dest.solarsystem.name }}</span>
             </button>
         </div>
@@ -231,7 +223,7 @@ function clearTo() {
                 <template v-if="toSystem">
                     <div class="flex h-8 items-center gap-1.5 rounded-md bg-muted/30 px-2">
                         <span class="font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">To</span>
-                        <SolarsystemClass :wormhole_class="toSystem.class" :security="toSystem.security" class="shrink-0 text-xs" />
+                        <SolarsystemClass :solarsystem_class="toSystem.class" class="shrink-0 text-xs" />
                         <span class="min-w-0 flex-1 truncate text-sm">
                             {{ toSystem.name }}
                             <span class="text-xs text-muted-foreground">· {{ toSystem.region?.name }}</span>
@@ -266,11 +258,7 @@ function clearTo() {
                 class="inline-flex items-center gap-1.5 rounded-md border border-border/40 bg-muted/30 px-2 py-1 text-xs transition-colors hover:bg-muted/60"
                 @click="handleToSystemSelect(selected_map_solarsystem.solarsystem)"
             >
-                <SolarsystemClass
-                    :wormhole_class="selected_map_solarsystem.solarsystem.class"
-                    :security="selected_map_solarsystem.solarsystem.security"
-                    class="shrink-0 text-[10px]"
-                />
+                <SolarsystemClass :solarsystem_class="selected_map_solarsystem.solarsystem.class" class="shrink-0 text-[10px]" />
                 <span>{{ selected_map_solarsystem.solarsystem.name }}</span>
                 <MapPin class="size-3 shrink-0 text-muted-foreground" />
             </button>
@@ -279,11 +267,7 @@ function clearTo() {
                 class="inline-flex items-center gap-1.5 rounded-md border border-border/40 bg-muted/30 px-2 py-1 text-xs transition-colors hover:bg-muted/60"
                 @click="handleToSystemSelect(activeCharacterSystem)"
             >
-                <SolarsystemClass
-                    :wormhole_class="activeCharacterSystem.class"
-                    :security="activeCharacterSystem.security"
-                    class="shrink-0 text-[10px]"
-                />
+                <SolarsystemClass :solarsystem_class="activeCharacterSystem.class" class="shrink-0 text-[10px]" />
                 <span>{{ activeCharacterSystem.name }}</span>
                 <Navigation class="size-3 shrink-0 text-muted-foreground" />
             </button>
@@ -293,7 +277,7 @@ function clearTo() {
                 class="inline-flex items-center gap-1.5 rounded-md border border-border/40 bg-muted/30 px-2 py-1 text-xs transition-colors hover:bg-muted/60"
                 @click="handleToSystemSelect(dest.solarsystem)"
             >
-                <SolarsystemClass :wormhole_class="dest.solarsystem.class" :security="dest.solarsystem.security" class="shrink-0 text-[10px]" />
+                <SolarsystemClass :solarsystem_class="dest.solarsystem.class" class="shrink-0 text-[10px]" />
                 <span>{{ dest.solarsystem.name }}</span>
             </button>
         </div>
@@ -317,7 +301,7 @@ function clearTo() {
             <div class="col-span-full grid grid-cols-subgrid items-center border-b border-border/30 px-3 py-1 hover:bg-muted/30">
                 <span class="text-center font-mono text-[10px] text-muted-foreground/60">{{ index + 1 }}</span>
 
-                <SolarsystemClass :wormhole_class="entry.solarsystem.class" :security="entry.solarsystem.security" class="justify-self-center" />
+                <SolarsystemClass :solarsystem_class="entry.solarsystem.class" class="justify-self-center" />
 
                 <span class="min-w-0 truncate text-xs">
                     {{ entry.solarsystem.name }}

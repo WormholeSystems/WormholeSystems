@@ -13,11 +13,10 @@ import {
     TShipHistory,
     TShipSize,
     TSignature,
-    TSolarsystemClass,
     TSolarsystemType,
+    TStringedSolarsystemClass,
     TThreatAnalysis,
     TThreatLevel,
-    TWormholeClass,
     TWormholeEffectName,
 } from '@/types/models';
 import type { TStaticSolarsystem } from '@/types/static-data';
@@ -129,7 +128,7 @@ export type TSolarsystem = {
     name: string;
     region_id: number;
     constellation_id: number;
-    class: TWormholeClass | null;
+    class: TStringedSolarsystemClass;
     security: number;
     type: TSolarsystemType;
     region: TRegion;
@@ -219,7 +218,7 @@ export type TTailoredSignature = {
     id: number;
     signature_id: string;
     map_solarsystem_id: number;
-    target_class: TSolarsystemClass | null;
+    target_class: TStringedSolarsystemClass | null;
     extra: string | null;
     wormhole: TWormhole | null;
     signature_category: TSignatureCategory | null;

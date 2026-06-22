@@ -2,7 +2,7 @@
 import ConnectionOption from '@/components/signatures/ConnectionOption.vue';
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getSolarsystemClass, TProcessedConnection } from '@/composables/map';
+import { TProcessedConnection } from '@/composables/map';
 import { TSignatureType } from '@/types/models';
 import { computed, ref } from 'vue';
 
@@ -24,14 +24,14 @@ const filtered_unconnected_connections = computed(() => {
     if (isNotFilterable(type)) {
         return unconnected_connections;
     }
-    return unconnected_connections.filter((connection) => type.target_class === getSolarsystemClass(connection.target).toString());
+    return unconnected_connections.filter((connection) => type.target_class === connection.target.solarsystem.class);
 });
 
 const filtered_connected_connections = computed(() => {
     if (isNotFilterable(type)) {
         return connected_connections;
     }
-    return connected_connections.filter((connection) => type.target_class === getSolarsystemClass(connection.target).toString());
+    return connected_connections.filter((connection) => type.target_class === connection.target.solarsystem.class);
 });
 
 function isNotFilterable(type: TSignatureType | null | undefined): type is null | undefined {
@@ -47,11 +47,7 @@ function isNotFilterable(type: TSignatureType | null | undefined): type is null 
             <SelectValue as-child>
                 <span>
                     <span v-if="selected" class="inline-flex items-center gap-1">
-                        <SolarsystemClass
-                            :wormhole_class="selected.target.solarsystem.class"
-                            :security="selected.target.solarsystem?.security"
-                            class="w-5 shrink-0 text-center"
-                        />
+                        <SolarsystemClass :solarsystem_class="selected.target.solarsystem.class" class="w-5 shrink-0 text-center" />
                         <span v-if="selected.target.alias" class="shrink-0 font-medium">{{ selected.target.alias }}</span>
                         <span class="truncate text-muted-foreground" :class="{ '!text-foreground': !selected.target.alias }">
                             {{ selected.target.solarsystem.name }}

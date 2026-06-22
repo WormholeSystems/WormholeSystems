@@ -13,7 +13,7 @@ const { solarsystem } = defineProps<{ solarsystem: TSolarsystem | null }>();
         <div v-if="solarsystem" class="grid grid-cols-[1fr_auto]">
             <div class="font-medium">{{ solarsystem.name }}</div>
             <div class="place-self-center">
-                <SolarsystemClass :wormhole_class="solarsystem.class" :security="solarsystem.security" />
+                <SolarsystemClass :solarsystem_class="solarsystem.class" />
             </div>
             <div class="text-sm text-muted-foreground">{{ solarsystem.region?.name }}</div>
             <div class="place-self-center">

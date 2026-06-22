@@ -31,7 +31,7 @@ export function useStaticSolarsystems() {
         name: name ?? 'Unknown',
         region_id: 0,
         constellation_id: 0,
-        class: null,
+        class: 'unknown',
         security: 0,
         type: 'wh',
         region: { id: 0, name: 'Unknown' },

@@ -103,7 +103,7 @@ function onRouteHover(hovered: boolean): void {
         </Tooltip>
 
         <div class="justify-self-center">
-            <SolarsystemClass v-if="static_solarsystem" :wormhole_class="static_solarsystem.class" :security="static_solarsystem.security" />
+            <SolarsystemClass v-if="static_solarsystem" :solarsystem_class="static_solarsystem.class" />
         </div>
 
         <div class="min-w-0 truncate text-xs">

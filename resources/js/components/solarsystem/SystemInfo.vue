@@ -5,6 +5,7 @@ import MapPanelContent from '@/components/ui/map-panel/MapPanelContent.vue';
 import MapPanelHeader from '@/components/ui/map-panel/MapPanelHeader.vue';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useSovereignty } from '@/composables/useSovereigntyData';
+import { isWormholeClass } from '@/const/solarsystemClasses';
 import type { TResolvedSelectedMapSolarsystem } from '@/pages/maps';
 import { computed } from 'vue';
 
@@ -38,7 +39,7 @@ const effectColor = computed(() => {
 const dotlanLink = computed(() => {
     const region = system.value?.region?.name?.replace(/ /g, '_');
     const name = system.value?.name?.replace(/ /g, '_');
-    if (system.value?.class) {
+    if (isWormholeClass(system.value?.class)) {
         return `https://evemaps.dotlan.net/system/${name}`;
     }
     return `https://evemaps.dotlan.net/map/${region}/${name}`;
@@ -88,7 +89,7 @@ function formatLifetime(hours: number | null): string {
             <!-- Hero: System Name -->
             <div class="border-b border-border/50 px-3 py-3">
                 <div class="flex items-center gap-2">
-                    <SolarsystemClass :wormhole_class="system?.class" :security="system?.security" />
+                    <SolarsystemClass :solarsystem_class="system?.class" />
                     <span class="truncate text-sm font-medium">
                         {{ map_solarsystem.alias || system?.name }}
                         <span v-if="map_solarsystem.alias" class="text-muted-foreground">({{ system?.name }})</span>
@@ -110,7 +111,7 @@ function formatLifetime(hours: number | null): string {
                     >
                     <a :href="dotlanLink" target="_blank" rel="noopener" class="transition-colors hover:text-foreground">Dotlan</a>
                     <a
-                        v-if="system?.class"
+                        v-if="isWormholeClass(system?.class)"
                         :href="`https://anoik.is/systems/${system?.name}`"
                         target="_blank"
                         rel="noopener"

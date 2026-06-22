@@ -1,8 +1,11 @@
+import { isWormholeClass } from '@/const/solarsystemClasses';
 import { TResolvedSolarsystem } from '@/pages/maps';
 
-type BookmarkSolarsystem = Pick<TResolvedSolarsystem, 'class' | 'security' | 'name'> & {
+type BookmarkSolarsystem = Pick<TResolvedSolarsystem, 'class' | 'name'> & {
     region?: { name?: string | null } | null;
 };
+
+const KSPACE_BOOKMARK_LABELS: Record<string, string> = { h: 'HS', l: 'LS', n: 'NS' };
 
 type BookmarkSystem = {
     alias?: string | null;
@@ -14,10 +17,8 @@ type BookmarkSystem = {
  * otherwise "HS" / "LS" / "NS" derived from security.
  */
 export function getBookmarkClassString(solarsystem: BookmarkSolarsystem): string {
-    if (solarsystem.class) return `C${solarsystem.class}`;
-    if (solarsystem.security >= 0.5) return 'HS';
-    if (solarsystem.security > 0.0) return 'LS';
-    return 'NS';
+    if (isWormholeClass(solarsystem.class)) return `C${solarsystem.class}`;
+    return KSPACE_BOOKMARK_LABELS[solarsystem.class] ?? solarsystem.class.toUpperCase();
 }
 
 /**
@@ -39,7 +40,7 @@ export function getSignatureIdShort(signatureId: string | null | undefined): str
 export function formatBookmarkName(system: BookmarkSystem, signatureIdShort: string): string {
     const class_string = getBookmarkClassString(system.solarsystem);
 
-    if (system.solarsystem.class) {
+    if (isWormholeClass(system.solarsystem.class)) {
         const parts = [system.alias || system.solarsystem.name];
         if (signatureIdShort) parts.push(signatureIdShort);
         parts.push(class_string);

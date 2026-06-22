@@ -130,10 +130,33 @@ export type TSignatureCategory = {
     updated_at: string;
 };
 
-export type TWormholeClass = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18;
+export type TWormholeClass = 1 | 2 | 3 | 4 | 5 | 6 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23;
 export type TKSpaceClass = 'n' | 'l' | 'h' | 'p';
 export type TSolarsystemClass = TWormholeClass | TKSpaceClass | 'unknown';
+
+/**
+ * The canonical wire/storage form of a solarsystem class: the string value of
+ * the PHP `SolarsystemClass` enum (e.g. "1".."18", "h"/"l"/"n", "unknown").
+ * Every system resolves to exactly one of these server-side.
+ */
 export type TStringedSolarsystemClass = `${TSolarsystemClass}`;
+
+/**
+ * Metadata for a single solarsystem class. Generated from the PHP enum via
+ * `php artisan generate:solarsystem-classes`; see const/solarsystemClasses.ts.
+ */
+export type TSolarsystemClassMeta = {
+    value: TStringedSolarsystemClass;
+    label: string;
+    short_label: string;
+    color_token: string;
+    sort_weight: number;
+    is_standard: boolean;
+    is_special: boolean;
+    is_drifter: boolean;
+    is_known_space: boolean;
+    is_wormhole_space: boolean;
+};
 
 export type TSignatureType = {
     id: number;
@@ -141,7 +164,7 @@ export type TSignatureType = {
     signature: string;
     signature_category_id: number;
     category_name: string;
-    target_class: TSolarsystemClass | null;
+    target_class: TStringedSolarsystemClass | null;
     extra: string | null;
     spawn_areas: TStringedSolarsystemClass[] | null;
     created_at?: string;
