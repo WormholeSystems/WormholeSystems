@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\DTO\EveSocialiteUser;
+use App\Exception\CharacterNotAuthorizedException;
 use App\Jobs\UpdateAffiliations;
 use App\Models\Alliance;
 use App\Models\Character;
@@ -20,13 +21,15 @@ use NicolasKion\Esi\Esi;
 final readonly class EsiAuthService
 {
     public function __construct(
-        private Esi $esi
+        private Esi $esi,
+        private AffiliationWhitelist $whitelist,
     ) {}
 
     /**
      * @return array{0: ?User, 1: ?Character}
      *
      * @throws ConnectionException
+     * @throws CharacterNotAuthorizedException
      */
     public function getUser(?int $add_to_user_id = null): array
     {
@@ -51,6 +54,10 @@ final readonly class EsiAuthService
         UpdateAffiliations::dispatchSync($affiliations->data[0]);
 
         $character = $this->resolveCharacter($socialite_user, $affiliations->data[0]);
+
+        if (! $this->whitelist->allows([$character->id, $character->corporation_id, $character->alliance_id])) {
+            throw new CharacterNotAuthorizedException();
+        }
 
         $this->createEsiToken($socialite_user, $character);
 

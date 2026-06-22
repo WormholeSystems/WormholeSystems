@@ -3,11 +3,17 @@ import LockIcon from '@/components/icons/LockIcon.vue';
 import Logo from '@/components/icons/Logo.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import Notifications from '@/components/user/Notifications.vue';
 import SeoHead from '@/layouts/SeoHead.vue';
 import Eve from '@/routes/eve';
 import { UTCDate } from '@date-fns/utc';
+import { usePage } from '@inertiajs/vue3';
 import { format } from 'date-fns';
+import { computed } from 'vue';
+
+const page = usePage();
+const error = computed(() => page.props.errors?.eve);
 
 const currentYear = format(new UTCDate(), 'yyyy');
 </script>
@@ -39,6 +45,14 @@ const currentYear = format(new UTCDate(), 'yyyy');
                     <CardDescription> Sign in or create your account with EVE Online to start mapping wormhole systems </CardDescription>
                 </CardHeader>
                 <CardContent class="space-y-6">
+                    <!-- Access Denied Error -->
+                    <div
+                        v-if="error"
+                        class="rounded-md border border-red-500/50 bg-red-500/10 p-3 text-center text-sm text-red-600 dark:text-red-500"
+                    >
+                        {{ error }}
+                    </div>
+
                     <!-- EVE Online SSO Button -->
                     <Button asChild class="w-full" size="lg">
                         <a :href="Eve.show().url" class="flex items-center justify-center gap-3">
