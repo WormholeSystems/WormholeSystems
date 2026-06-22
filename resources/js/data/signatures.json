@@ -1,5 +1,5 @@
 {
-    "generated_at": "2026-03-16T16:29:51+00:00",
+    "generated_at": "2026-06-22T10:37:28+00:00",
     "categories": [
         {
             "id": 1,
@@ -39,1774 +39,2594 @@
     ],
     "types": [
         {
-            "id": 167,
+            "id": 175,
             "name": "A009 - C13",
             "signature": "A009",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "13",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
-            "id": 198,
+            "id": 206,
             "name": "A239 - L",
             "signature": "A239",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "l",
             "extra": null,
-            "spawn_areas": ["2", "13"]
+            "spawn_areas": [
+                "2",
+                "13"
+            ]
         },
         {
-            "id": 243,
+            "id": 251,
             "name": "A641 - H",
             "signature": "A641",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "h",
             "extra": null,
-            "spawn_areas": ["h"]
+            "spawn_areas": [
+                "h"
+            ]
         },
         {
-            "id": 206,
+            "id": 214,
             "name": "A982 - C6",
             "signature": "A982",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "6",
             "extra": null,
-            "spawn_areas": ["3"]
+            "spawn_areas": [
+                "3"
+            ]
         },
         {
-            "id": 242,
+            "id": 250,
             "name": "B041 - C6",
             "signature": "B041",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "6",
             "extra": null,
-            "spawn_areas": ["h"]
+            "spawn_areas": [
+                "h"
+            ]
         },
         {
-            "id": 197,
+            "id": 205,
             "name": "B274 - H",
             "signature": "B274",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "h",
             "extra": null,
-            "spawn_areas": ["2", "13"]
+            "spawn_areas": [
+                "2",
+                "13"
+            ]
         },
         {
-            "id": 249,
+            "id": 257,
             "name": "B449 - H",
             "signature": "B449",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "h",
             "extra": null,
-            "spawn_areas": ["l", "n"]
+            "spawn_areas": [
+                "l",
+                "n"
+            ]
         },
         {
-            "id": 234,
+            "id": 242,
             "name": "B520 - H",
             "signature": "B520",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "h",
             "extra": null,
-            "spawn_areas": ["6"]
+            "spawn_areas": [
+                "6"
+            ]
         },
         {
-            "id": 168,
+            "id": 176,
             "name": "B735 - Barbican (C15)",
             "signature": "B735",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "15",
             "extra": "Barbican",
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
-            "id": 169,
+            "id": 177,
             "name": "C008 - C5",
             "signature": "C008",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "5",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
-            "id": 182,
+            "id": 190,
             "name": "C125 - C2",
             "signature": "C125",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "2",
             "extra": null,
-            "spawn_areas": ["1"]
+            "spawn_areas": [
+                "1"
+            ]
         },
         {
-            "id": 226,
+            "id": 234,
             "name": "C140 - L",
             "signature": "C140",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "l",
             "extra": null,
-            "spawn_areas": ["5", "6"]
+            "spawn_areas": [
+                "5",
+                "6"
+            ]
         },
         {
-            "id": 212,
+            "id": 220,
             "name": "C247 - C3",
             "signature": "C247",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "3",
             "extra": null,
-            "spawn_areas": ["4", "13"]
+            "spawn_areas": [
+                "4",
+                "13"
+            ]
         },
         {
-            "id": 236,
+            "id": 244,
             "name": "C248 - 0.0",
             "signature": "C248",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "n",
             "extra": null,
-            "spawn_areas": ["6", "13"]
+            "spawn_areas": [
+                "6",
+                "13"
+            ]
         },
         {
-            "id": 235,
+            "id": 243,
             "name": "C391 - L",
             "signature": "C391",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "l",
             "extra": null,
-            "spawn_areas": ["6", "13"]
+            "spawn_areas": [
+                "6",
+                "13"
+            ]
         },
         {
-            "id": 170,
+            "id": 178,
             "name": "C414 - Conflux (C17)",
             "signature": "C414",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "17",
             "extra": "Conflux",
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
-            "id": 256,
+            "id": 264,
             "name": "C729 - T Pochven",
             "signature": "C729",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "n",
             "extra": "Pochven",
-            "spawn_areas": ["h", "l", "n"]
+            "spawn_areas": [
+                "h",
+                "l",
+                "n"
+            ]
         },
         {
-            "id": 220,
+            "id": 228,
             "name": "D364 - C2",
             "signature": "D364",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "2",
             "extra": null,
-            "spawn_areas": ["5"]
+            "spawn_areas": [
+                "5"
+            ]
         },
         {
-            "id": 192,
+            "id": 200,
             "name": "D382 - C2",
             "signature": "D382",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "2",
             "extra": null,
-            "spawn_areas": ["2", "13", "14", "15", "16", "17", "18"]
+            "spawn_areas": [
+                "2",
+                "13",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18"
+            ]
         },
         {
-            "id": 225,
+            "id": 233,
             "name": "D792 - H",
             "signature": "D792",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "h",
             "extra": null,
-            "spawn_areas": ["5", "6", "13"]
+            "spawn_areas": [
+                "5",
+                "6",
+                "13"
+            ]
         },
         {
-            "id": 207,
+            "id": 215,
             "name": "D845 - H",
             "signature": "D845",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "h",
             "extra": null,
-            "spawn_areas": ["3", "13"]
+            "spawn_areas": [
+                "3",
+                "13"
+            ]
         },
         {
-            "id": 171,
+            "id": 179,
             "name": "E004 - C1",
             "signature": "E004",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "1",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
-            "id": 222,
+            "id": 230,
             "name": "E175 - C4",
             "signature": "E175",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "4",
             "extra": null,
-            "spawn_areas": ["5"]
+            "spawn_areas": [
+                "5"
+            ]
         },
         {
-            "id": 199,
+            "id": 207,
             "name": "E545 - 0.0",
             "signature": "E545",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "n",
             "extra": null,
-            "spawn_areas": ["2", "13"]
+            "spawn_areas": [
+                "2",
+                "13"
+            ]
         },
         {
-            "id": 261,
+            "id": 269,
             "name": "E587 - 0.0 Thera",
             "signature": "E587",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "n",
             "extra": "Thera",
-            "spawn_areas": ["12"]
+            "spawn_areas": [
+                "12"
+            ]
         },
         {
-            "id": 200,
+            "id": 208,
             "name": "F135 - C12 Thera",
             "signature": "F135",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "12",
             "extra": "Thera",
-            "spawn_areas": ["2", "3"]
+            "spawn_areas": [
+                "2",
+                "3"
+            ]
         },
         {
-            "id": 258,
+            "id": 266,
             "name": "F216 - T Pochven",
             "signature": "F216",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "n",
             "extra": "Pochven",
-            "spawn_areas": ["2", "3", "4", "5", "6"]
+            "spawn_areas": [
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
         },
         {
-            "id": 190,
+            "id": 198,
             "name": "F353 - C12 Thera",
             "signature": "F353",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "12",
             "extra": "Thera",
-            "spawn_areas": ["1"]
+            "spawn_areas": [
+                "1"
+            ]
         },
         {
-            "id": 172,
+            "id": 180,
             "name": "G008 - C6",
             "signature": "G008",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "6",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
-            "id": 229,
+            "id": 237,
             "name": "G024 - C2",
             "signature": "G024",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "2",
             "extra": null,
-            "spawn_areas": ["6", "13"]
+            "spawn_areas": [
+                "6",
+                "13"
+            ]
         },
         {
-            "id": 181,
+            "id": 189,
             "name": "H121 - C1",
             "signature": "H121",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "1",
             "extra": null,
-            "spawn_areas": ["1"]
+            "spawn_areas": [
+                "1"
+            ]
         },
         {
-            "id": 223,
+            "id": 231,
             "name": "H296 - C5",
             "signature": "H296",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "5",
             "extra": null,
-            "spawn_areas": ["5", "13"]
+            "spawn_areas": [
+                "5",
+                "13"
+            ]
         },
         {
-            "id": 214,
+            "id": 222,
             "name": "H900 - C5",
             "signature": "H900",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "5",
             "extra": null,
-            "spawn_areas": ["4", "13"]
+            "spawn_areas": [
+                "4",
+                "13"
+            ]
         },
         {
-            "id": 202,
+            "id": 210,
             "name": "I182 - C2",
             "signature": "I182",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "2",
             "extra": null,
-            "spawn_areas": ["3"]
+            "spawn_areas": [
+                "3"
+            ]
         },
         {
-            "id": 188,
+            "id": 196,
             "name": "J244 - L",
             "signature": "J244",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "l",
             "extra": null,
-            "spawn_areas": ["1", "13"]
+            "spawn_areas": [
+                "1",
+                "13"
+            ]
         },
         {
-            "id": 262,
+            "id": 270,
             "name": "J377 - L Turnur",
             "signature": "J377",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "l",
             "extra": "Turnur",
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13", "h", "l", "n"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13",
+                "h",
+                "l",
+                "n"
+            ]
         },
         {
-            "id": 173,
+            "id": 181,
             "name": "J492 - L",
             "signature": "J492",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "l",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
         },
         {
-            "id": 158,
+            "id": 166,
             "name": "K162 - C1",
             "signature": "K162",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "1",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13", "14", "15", "16", "17", "18", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
-            "id": 159,
+            "id": 167,
             "name": "K162 - C2",
             "signature": "K162",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "2",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13", "14", "15", "16", "17", "18", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
-            "id": 160,
+            "id": 168,
             "name": "K162 - C3",
             "signature": "K162",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "3",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13", "14", "15", "16", "17", "18", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
-            "id": 161,
+            "id": 169,
             "name": "K162 - C4",
             "signature": "K162",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "4",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13", "14", "15", "16", "17", "18", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
-            "id": 162,
+            "id": 170,
             "name": "K162 - C5",
             "signature": "K162",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "5",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13", "14", "15", "16", "17", "18", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
-            "id": 163,
+            "id": 171,
             "name": "K162 - C6",
             "signature": "K162",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "6",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13", "14", "15", "16", "17", "18", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
-            "id": 164,
+            "id": 172,
             "name": "K162 - H",
             "signature": "K162",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "h",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13", "14", "15", "16", "17", "18", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
-            "id": 165,
+            "id": 173,
             "name": "K162 - L",
             "signature": "K162",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "l",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13", "14", "15", "16", "17", "18", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
-            "id": 166,
+            "id": 174,
             "name": "K162 - N",
             "signature": "K162",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "n",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13", "14", "15", "16", "17", "18", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
-            "id": 157,
+            "id": 165,
             "name": "K162 - Unknown",
             "signature": "K162",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "unknown",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13", "14", "15", "16", "17", "18", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
-            "id": 218,
+            "id": 226,
             "name": "K329 - 0.0",
             "signature": "K329",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "n",
             "extra": null,
-            "spawn_areas": ["4"]
+            "spawn_areas": [
+                "4"
+            ]
         },
         {
-            "id": 209,
+            "id": 217,
             "name": "K346 - 0.0",
             "signature": "K346",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "n",
             "extra": null,
-            "spawn_areas": ["3", "13"]
+            "spawn_areas": [
+                "3",
+                "13"
+            ]
         },
         {
-            "id": 174,
+            "id": 182,
             "name": "L005 - C2",
             "signature": "L005",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "2",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
-            "id": 253,
+            "id": 261,
             "name": "L031 - C12 Thera",
             "signature": "L031",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "12",
             "extra": "Thera",
-            "spawn_areas": ["n"]
+            "spawn_areas": [
+                "n"
+            ]
         },
         {
-            "id": 230,
+            "id": 238,
             "name": "L477 - C3",
             "signature": "L477",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "3",
             "extra": null,
-            "spawn_areas": ["6"]
+            "spawn_areas": [
+                "6"
+            ]
         },
         {
-            "id": 185,
+            "id": 193,
             "name": "L614 - C5",
             "signature": "L614",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "5",
             "extra": null,
-            "spawn_areas": ["1"]
+            "spawn_areas": [
+                "1"
+            ]
         },
         {
-            "id": 175,
+            "id": 183,
             "name": "M001 - C4",
             "signature": "M001",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "4",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
-            "id": 252,
+            "id": 260,
             "name": "M164 - C12 Thera",
             "signature": "M164",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "12",
             "extra": "Thera",
-            "spawn_areas": ["l"]
+            "spawn_areas": [
+                "l"
+            ]
         },
         {
-            "id": 221,
+            "id": 229,
             "name": "M267 - C3",
             "signature": "M267",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "3",
             "extra": null,
-            "spawn_areas": ["5", "13"]
+            "spawn_areas": [
+                "5",
+                "13"
+            ]
         },
         {
-            "id": 241,
+            "id": 249,
             "name": "M555 - C5",
             "signature": "M555",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "5",
             "extra": null,
-            "spawn_areas": ["h"]
+            "spawn_areas": [
+                "h"
+            ]
         },
         {
-            "id": 184,
+            "id": 192,
             "name": "M609 - C4",
             "signature": "M609",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "4",
             "extra": null,
-            "spawn_areas": ["1"]
+            "spawn_areas": [
+                "1"
+            ]
         },
         {
-            "id": 195,
+            "id": 203,
             "name": "N062 - C5",
             "signature": "N062",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "5",
             "extra": null,
-            "spawn_areas": ["2", "13", "14", "15", "16", "17", "18"]
+            "spawn_areas": [
+                "2",
+                "13",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18"
+            ]
         },
         {
-            "id": 187,
+            "id": 195,
             "name": "N110 - H",
             "signature": "N110",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "h",
             "extra": null,
-            "spawn_areas": ["1", "13"]
+            "spawn_areas": [
+                "1",
+                "13"
+            ]
         },
         {
-            "id": 217,
+            "id": 225,
             "name": "N290 - L",
             "signature": "N290",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "l",
             "extra": null,
-            "spawn_areas": ["4"]
+            "spawn_areas": [
+                "4"
+            ]
         },
         {
-            "id": 247,
+            "id": 255,
             "name": "N432 - C5",
             "signature": "N432",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "5",
             "extra": null,
-            "spawn_areas": ["l", "n"]
+            "spawn_areas": [
+                "l",
+                "n"
+            ]
         },
         {
-            "id": 211,
+            "id": 219,
             "name": "N766 - C2",
             "signature": "N766",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "2",
             "extra": null,
-            "spawn_areas": ["4", "13"]
+            "spawn_areas": [
+                "4",
+                "13"
+            ]
         },
         {
-            "id": 205,
+            "id": 213,
             "name": "N770 - C5",
             "signature": "N770",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "5",
             "extra": null,
-            "spawn_areas": ["3"]
+            "spawn_areas": [
+                "3"
+            ]
         },
         {
-            "id": 250,
+            "id": 258,
             "name": "N944 - L",
             "signature": "N944",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "l",
             "extra": null,
-            "spawn_areas": ["l", "n"]
+            "spawn_areas": [
+                "l",
+                "n"
+            ]
         },
         {
-            "id": 203,
+            "id": 211,
             "name": "N968 - C3",
             "signature": "N968",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "3",
             "extra": null,
-            "spawn_areas": ["3"]
+            "spawn_areas": [
+                "3"
+            ]
         },
         {
-            "id": 240,
+            "id": 248,
             "name": "O128 - C4",
             "signature": "O128",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "4",
             "extra": null,
-            "spawn_areas": ["h", "l", "n"]
+            "spawn_areas": [
+                "h",
+                "l",
+                "n"
+            ]
         },
         {
-            "id": 193,
+            "id": 201,
             "name": "O477 - C3",
             "signature": "O477",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "3",
             "extra": null,
-            "spawn_areas": ["2", "13", "14", "15", "16", "17", "18"]
+            "spawn_areas": [
+                "2",
+                "13",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18"
+            ]
         },
         {
-            "id": 183,
+            "id": 191,
             "name": "O883 - C3",
             "signature": "O883",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "3",
             "extra": null,
-            "spawn_areas": ["1"]
+            "spawn_areas": [
+                "1"
+            ]
         },
         {
-            "id": 210,
+            "id": 218,
             "name": "P060 - C1",
             "signature": "P060",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "1",
             "extra": null,
-            "spawn_areas": ["4", "13"]
+            "spawn_areas": [
+                "4",
+                "13"
+            ]
         },
         {
-            "id": 176,
+            "id": 184,
             "name": "Q003 - 0.0",
             "signature": "Q003",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "n",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
-            "id": 259,
+            "id": 267,
             "name": "Q063 - H Thera",
             "signature": "Q063",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "h",
             "extra": "Thera",
-            "spawn_areas": ["12"]
+            "spawn_areas": [
+                "12"
+            ]
         },
         {
-            "id": 228,
+            "id": 236,
             "name": "Q317 - C1",
             "signature": "Q317",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "1",
             "extra": null,
-            "spawn_areas": ["6", "13"]
+            "spawn_areas": [
+                "6",
+                "13"
+            ]
         },
         {
-            "id": 244,
+            "id": 252,
             "name": "R051 - L",
             "signature": "R051",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "l",
             "extra": null,
-            "spawn_areas": ["h"]
+            "spawn_areas": [
+                "h"
+            ]
         },
         {
-            "id": 254,
+            "id": 262,
             "name": "R081 - C4",
             "signature": "R081",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "4",
             "extra": null,
-            "spawn_areas": ["p"]
+            "spawn_areas": [
+                "p"
+            ]
         },
         {
-            "id": 177,
+            "id": 185,
             "name": "R259 - Redoubt (C18)",
             "signature": "R259",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "18",
             "extra": "Redoubt",
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
-            "id": 196,
+            "id": 204,
             "name": "R474 - C6",
             "signature": "R474",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "6",
             "extra": null,
-            "spawn_areas": ["2", "14", "15", "16", "17", "18"]
+            "spawn_areas": [
+                "2",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18"
+            ]
         },
         {
-            "id": 238,
+            "id": 246,
             "name": "R943 - C2",
             "signature": "R943",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "2",
             "extra": null,
-            "spawn_areas": ["h", "l", "n"]
+            "spawn_areas": [
+                "h",
+                "l",
+                "n"
+            ]
         },
         {
-            "id": 216,
+            "id": 224,
             "name": "S047 - H",
             "signature": "S047",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "h",
             "extra": null,
-            "spawn_areas": ["4"]
+            "spawn_areas": [
+                "4"
+            ]
         },
         {
-            "id": 251,
+            "id": 259,
             "name": "S199 - 0.0",
             "signature": "S199",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "n",
             "extra": null,
-            "spawn_areas": ["l", "n"]
+            "spawn_areas": [
+                "l",
+                "n"
+            ]
         },
         {
-            "id": 186,
+            "id": 194,
             "name": "S804 - C6",
             "signature": "S804",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "6",
             "extra": null,
-            "spawn_areas": ["1"]
+            "spawn_areas": [
+                "1"
+            ]
         },
         {
-            "id": 178,
+            "id": 186,
             "name": "S877 - Sentinel (C14)",
             "signature": "S877",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "14",
             "extra": "Sentinel",
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
-            "id": 204,
+            "id": 212,
             "name": "T405 - C4",
             "signature": "T405",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "4",
             "extra": null,
-            "spawn_areas": ["3"]
+            "spawn_areas": [
+                "3"
+            ]
         },
         {
-            "id": 246,
+            "id": 254,
             "name": "T458 - C12 Thera",
             "signature": "T458",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "12",
             "extra": "Thera",
-            "spawn_areas": ["h"]
+            "spawn_areas": [
+                "h"
+            ]
         },
         {
-            "id": 263,
+            "id": 271,
             "name": "U201 - L",
             "signature": "U201",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "l",
             "extra": null,
-            "spawn_areas": ["13"]
+            "spawn_areas": [
+                "13"
+            ]
         },
         {
-            "id": 208,
+            "id": 216,
             "name": "U210 - L",
             "signature": "U210",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "l",
             "extra": null,
-            "spawn_areas": ["3", "13"]
+            "spawn_areas": [
+                "3",
+                "13"
+            ]
         },
         {
-            "id": 248,
+            "id": 256,
             "name": "U319 - C6",
             "signature": "U319",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "6",
             "extra": null,
-            "spawn_areas": ["l", "n"]
+            "spawn_areas": [
+                "l",
+                "n"
+            ]
         },
         {
-            "id": 257,
+            "id": 265,
             "name": "U372 - T Pochven",
             "signature": "U372",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "n",
             "extra": "Pochven",
-            "spawn_areas": ["n"]
+            "spawn_areas": [
+                "n"
+            ]
         },
         {
-            "id": 215,
+            "id": 223,
             "name": "U574 - C6",
             "signature": "U574",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "6",
             "extra": null,
-            "spawn_areas": ["4", "13"]
+            "spawn_areas": [
+                "4",
+                "13"
+            ]
         },
         {
-            "id": 245,
+            "id": 253,
             "name": "V283 - 0.0",
             "signature": "V283",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "n",
             "extra": null,
-            "spawn_areas": ["h"]
+            "spawn_areas": [
+                "h"
+            ]
         },
         {
-            "id": 201,
+            "id": 209,
             "name": "V301 - C1",
             "signature": "V301",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "1",
             "extra": null,
-            "spawn_areas": ["3"]
+            "spawn_areas": [
+                "3"
+            ]
         },
         {
-            "id": 224,
+            "id": 232,
             "name": "V753 - C6",
             "signature": "V753",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "6",
             "extra": null,
-            "spawn_areas": ["5", "13"]
+            "spawn_areas": [
+                "5",
+                "13"
+            ]
         },
         {
-            "id": 260,
+            "id": 268,
             "name": "V898 - L Thera",
             "signature": "V898",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "l",
             "extra": "Thera",
-            "spawn_areas": ["12"]
+            "spawn_areas": [
+                "12"
+            ]
         },
         {
-            "id": 232,
+            "id": 240,
             "name": "V911 - C5",
             "signature": "V911",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "5",
             "extra": null,
-            "spawn_areas": ["6", "13"]
+            "spawn_areas": [
+                "6",
+                "13"
+            ]
         },
         {
-            "id": 179,
+            "id": 187,
             "name": "V928 - Vidette (C16)",
             "signature": "V928",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "16",
             "extra": "Vidette",
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
-            "id": 233,
+            "id": 241,
             "name": "W237 - C6",
             "signature": "W237",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "6",
             "extra": null,
-            "spawn_areas": ["6", "13"]
+            "spawn_areas": [
+                "6",
+                "13"
+            ]
         },
         {
-            "id": 255,
+            "id": 263,
             "name": "X450 - 0.0",
             "signature": "X450",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "n",
             "extra": null,
-            "spawn_areas": ["p"]
+            "spawn_areas": [
+                "p"
+            ]
         },
         {
-            "id": 239,
+            "id": 247,
             "name": "X702 - C3",
             "signature": "X702",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "3",
             "extra": null,
-            "spawn_areas": ["h", "l", "n"]
+            "spawn_areas": [
+                "h",
+                "l",
+                "n"
+            ]
         },
         {
-            "id": 213,
+            "id": 221,
             "name": "X877 - C4",
             "signature": "X877",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "4",
             "extra": null,
-            "spawn_areas": ["4", "13"]
+            "spawn_areas": [
+                "4",
+                "13"
+            ]
         },
         {
-            "id": 194,
+            "id": 202,
             "name": "Y683 - C4",
             "signature": "Y683",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "4",
             "extra": null,
-            "spawn_areas": ["2", "13", "14", "15", "16", "17", "18"]
+            "spawn_areas": [
+                "2",
+                "13",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18"
+            ]
         },
         {
-            "id": 219,
+            "id": 227,
             "name": "Y790 - C1",
             "signature": "Y790",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "1",
             "extra": null,
-            "spawn_areas": ["5"]
+            "spawn_areas": [
+                "5"
+            ]
         },
         {
-            "id": 180,
+            "id": 188,
             "name": "Z006 - C3",
             "signature": "Z006",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "3",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13", "h", "l", "n", "p"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13",
+                "h",
+                "l",
+                "n",
+                "p"
+            ]
         },
         {
-            "id": 189,
+            "id": 197,
             "name": "Z060 - 0.0",
             "signature": "Z060",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "n",
             "extra": null,
-            "spawn_areas": ["1", "13"]
+            "spawn_areas": [
+                "1",
+                "13"
+            ]
         },
         {
-            "id": 227,
+            "id": 235,
             "name": "Z142 - 0.0",
             "signature": "Z142",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "n",
             "extra": null,
-            "spawn_areas": ["5", "6"]
+            "spawn_areas": [
+                "5",
+                "6"
+            ]
         },
         {
-            "id": 231,
+            "id": 239,
             "name": "Z457 - C4",
             "signature": "Z457",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "4",
             "extra": null,
-            "spawn_areas": ["6"]
+            "spawn_areas": [
+                "6"
+            ]
         },
         {
-            "id": 191,
+            "id": 199,
             "name": "Z647 - C1",
             "signature": "Z647",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "1",
             "extra": null,
-            "spawn_areas": ["2", "13", "14", "15", "16", "17", "18"]
+            "spawn_areas": [
+                "2",
+                "13",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18"
+            ]
         },
         {
-            "id": 237,
+            "id": 245,
             "name": "Z971 - C1",
             "signature": "Z971",
             "signature_category_id": 1,
             "category_name": "Wormhole",
             "target_class": "1",
             "extra": null,
-            "spawn_areas": ["h", "l", "n"]
+            "spawn_areas": [
+                "h",
+                "l",
+                "n"
+            ]
         },
         {
-            "id": 82,
+            "id": 86,
             "name": "Abandoned Research Complex DA005",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n"]
+            "spawn_areas": [
+                "n"
+            ]
         },
         {
-            "id": 83,
+            "id": 87,
             "name": "Abandoned Research Complex DA015",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n"]
+            "spawn_areas": [
+                "n"
+            ]
         },
         {
-            "id": 84,
+            "id": 88,
             "name": "Abandoned Research Complex DC007",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n"]
+            "spawn_areas": [
+                "n"
+            ]
         },
         {
-            "id": 85,
+            "id": 89,
             "name": "Abandoned Research Complex DC021",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n"]
+            "spawn_areas": [
+                "n"
+            ]
         },
         {
-            "id": 86,
+            "id": 90,
             "name": "Abandoned Research Complex DC035",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n"]
+            "spawn_areas": [
+                "n"
+            ]
         },
         {
-            "id": 87,
+            "id": 91,
             "name": "Abandoned Research Complex DG003",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n"]
+            "spawn_areas": [
+                "n"
+            ]
         },
         {
-            "id": 88,
+            "id": 92,
             "name": "Central Angel Command Center",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
-            "id": 89,
+            "id": 93,
             "name": "Central Angel Data Mining Site",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
-            "id": 90,
+            "id": 94,
             "name": "Central Angel Sparking Transmitter",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
-            "id": 91,
+            "id": 95,
             "name": "Central Angel Survey Site",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
-            "id": 92,
+            "id": 96,
             "name": "Central Blood Raider Command Center",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
-            "id": 93,
+            "id": 97,
             "name": "Central Blood Raider Data Mining Site",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
-            "id": 94,
+            "id": 98,
             "name": "Central Blood Raider Sparking Transmitter",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
-            "id": 95,
+            "id": 99,
             "name": "Central Blood Raider Survey Site",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
-            "id": 96,
+            "id": 100,
             "name": "Central Guristas Command Center",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
-            "id": 97,
+            "id": 101,
             "name": "Central Guristas Data Mining Site",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
-            "id": 98,
+            "id": 102,
             "name": "Central Guristas Sparking Transmitter",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
-            "id": 99,
+            "id": 103,
             "name": "Central Guristas Survey Site",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
-            "id": 268,
+            "id": 112,
             "name": "Central Rogue Drone Command Center",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
-            "id": 269,
+            "id": 113,
             "name": "Central Rogue Drone Data Mining Site",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
-            "id": 270,
+            "id": 114,
             "name": "Central Rogue Drone Sparking Transmitter",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
-            "id": 271,
+            "id": 115,
             "name": "Central Rogue Drone Survey Site",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
-            "id": 100,
+            "id": 104,
             "name": "Central Sansha Command Center",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
-            "id": 101,
+            "id": 105,
             "name": "Central Sansha Data Mining Site",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
-            "id": 102,
+            "id": 106,
             "name": "Central Sansha Sparking Transmitter",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
-            "id": 103,
+            "id": 107,
             "name": "Central Sansha Survey Site",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
-            "id": 104,
+            "id": 108,
             "name": "Central Serpentis Command Center",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
-            "id": 105,
+            "id": 109,
             "name": "Central Serpentis Data Mining Site",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
-            "id": 106,
+            "id": 110,
             "name": "Central Serpentis Sparking Transmitter",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
-            "id": 107,
+            "id": 111,
             "name": "Central Serpentis Survey Site",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
-            "id": 119,
+            "id": 127,
             "name": "Improved Blood Raiders Covert Research Facility",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n"]
+            "spawn_areas": [
+                "n"
+            ]
         },
         {
-            "id": 118,
+            "id": 126,
             "name": "Improved Guristas Covert Research Facility",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n"]
+            "spawn_areas": [
+                "n"
+            ]
         },
         {
-            "id": 117,
+            "id": 125,
             "name": "Improved Sansha Covert Research Facility",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n"]
+            "spawn_areas": [
+                "n"
+            ]
         },
         {
-            "id": 116,
+            "id": 124,
             "name": "Improved Serpentis Covert Research Facility",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n"]
+            "spawn_areas": [
+                "n"
+            ]
         },
         {
-            "id": 111,
+            "id": 119,
             "name": "Lesser Blood Raiders Covert Research Facility",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["h"]
+            "spawn_areas": [
+                "h"
+            ]
         },
         {
-            "id": 110,
+            "id": 118,
             "name": "Lesser Guristas Covert Research Facility",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["h"]
+            "spawn_areas": [
+                "h"
+            ]
         },
         {
-            "id": 109,
+            "id": 117,
             "name": "Lesser Sansha Covert Research Facility",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["h"]
+            "spawn_areas": [
+                "h"
+            ]
         },
         {
-            "id": 108,
+            "id": 116,
             "name": "Lesser Serpentis Covert Research Facility",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["h"]
+            "spawn_areas": [
+                "h"
+            ]
         },
         {
-            "id": 115,
+            "id": 123,
             "name": "Standard Blood Raiders Covert Research Facility",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["l"]
+            "spawn_areas": [
+                "l"
+            ]
         },
         {
-            "id": 114,
+            "id": 122,
             "name": "Standard Guristas Covert Research Facility",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["l"]
+            "spawn_areas": [
+                "l"
+            ]
         },
         {
-            "id": 113,
+            "id": 121,
             "name": "Standard Sansha Covert Research Facility",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["l"]
+            "spawn_areas": [
+                "l"
+            ]
         },
         {
-            "id": 112,
+            "id": 120,
             "name": "Standard Serpentis Covert Research Facility",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["l"]
+            "spawn_areas": [
+                "l"
+            ]
         },
         {
-            "id": 123,
+            "id": 131,
             "name": "Superior Blood Raiders Covert Research Facility",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13"
+            ]
         },
         {
-            "id": 122,
+            "id": 130,
             "name": "Superior Guristas Covert Research Facility",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13"
+            ]
         },
         {
-            "id": 121,
+            "id": 129,
             "name": "Superior Sansha Covert Research Facility",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13"
+            ]
         },
         {
-            "id": 120,
+            "id": 128,
             "name": "Superior Serpentis Covert Research Facility",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "13"
+            ]
         },
         {
-            "id": 134,
+            "id": 142,
             "name": "Unsecured Core Backup Array",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["6"]
+            "spawn_areas": [
+                "6"
+            ]
         },
         {
-            "id": 135,
+            "id": 143,
             "name": "Unsecured Core Emergence",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["6"]
+            "spawn_areas": [
+                "6"
+            ]
         },
         {
-            "id": 128,
+            "id": 136,
             "name": "Unsecured Frontier Database",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["3"]
+            "spawn_areas": [
+                "3"
+            ]
         },
         {
-            "id": 130,
+            "id": 138,
             "name": "Unsecured Frontier Digital Nexus",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["4"]
+            "spawn_areas": [
+                "4"
+            ]
         },
         {
-            "id": 132,
+            "id": 140,
             "name": "Unsecured Frontier Enclave Relay",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["5"]
+            "spawn_areas": [
+                "5"
+            ]
         },
         {
-            "id": 129,
+            "id": 137,
             "name": "Unsecured Frontier Receiver",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["3"]
+            "spawn_areas": [
+                "3"
+            ]
         },
         {
-            "id": 133,
+            "id": 141,
             "name": "Unsecured Frontier Server Bank",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["5"]
+            "spawn_areas": [
+                "5"
+            ]
         },
         {
-            "id": 131,
+            "id": 139,
             "name": "Unsecured Frontier Trinary Hub",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["4"]
+            "spawn_areas": [
+                "4"
+            ]
         },
         {
-            "id": 124,
+            "id": 132,
             "name": "Unsecured Perimeter Amplifier",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1"]
+            "spawn_areas": [
+                "1"
+            ]
         },
         {
-            "id": 126,
+            "id": 134,
             "name": "Unsecured Perimeter Comms Relay",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["2"]
+            "spawn_areas": [
+                "2"
+            ]
         },
         {
-            "id": 125,
+            "id": 133,
             "name": "Unsecured Perimeter Information Center",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1"]
+            "spawn_areas": [
+                "1"
+            ]
         },
         {
-            "id": 127,
+            "id": 135,
             "name": "Unsecured Perimeter Transponder Farm",
             "signature": null,
             "signature_category_id": 2,
             "category_name": "Data Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["2"]
+            "spawn_areas": [
+                "2"
+            ]
         },
         {
-            "id": 80,
+            "id": 84,
             "name": "Forgotten Core Assembly Hall",
             "signature": null,
             "signature_category_id": 3,
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["6"]
+            "spawn_areas": [
+                "6"
+            ]
         },
         {
-            "id": 81,
+            "id": 85,
             "name": "Forgotten Core Circuitry Disassembler",
             "signature": null,
             "signature_category_id": 3,
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["6"]
+            "spawn_areas": [
+                "6"
+            ]
         },
         {
-            "id": 78,
+            "id": 82,
             "name": "Forgotten Core Data Field",
             "signature": null,
             "signature_category_id": 3,
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["5"]
+            "spawn_areas": [
+                "5"
+            ]
         },
         {
-            "id": 79,
+            "id": 83,
             "name": "Forgotten Core Information Pen",
             "signature": null,
             "signature_category_id": 3,
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["5"]
+            "spawn_areas": [
+                "5"
+            ]
         },
         {
-            "id": 76,
+            "id": 80,
             "name": "Forgotten Frontier Conversion Module",
             "signature": null,
             "signature_category_id": 3,
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["4"]
+            "spawn_areas": [
+                "4"
+            ]
         },
         {
-            "id": 77,
+            "id": 81,
             "name": "Forgotten Frontier Evacuation Center",
             "signature": null,
             "signature_category_id": 3,
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["4"]
+            "spawn_areas": [
+                "4"
+            ]
         },
         {
-            "id": 74,
+            "id": 78,
             "name": "Forgotten Frontier Quarantine Outpost",
             "signature": null,
             "signature_category_id": 3,
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["3"]
+            "spawn_areas": [
+                "3"
+            ]
         },
         {
-            "id": 75,
+            "id": 79,
             "name": "Forgotten Frontier Recursive Depot",
             "signature": null,
             "signature_category_id": 3,
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["3"]
+            "spawn_areas": [
+                "3"
+            ]
         },
         {
-            "id": 70,
+            "id": 74,
             "name": "Forgotten Perimeter Coronation Platform",
             "signature": null,
             "signature_category_id": 3,
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1"]
+            "spawn_areas": [
+                "1"
+            ]
         },
         {
-            "id": 72,
+            "id": 76,
             "name": "Forgotten Perimeter Gateway",
             "signature": null,
             "signature_category_id": 3,
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["2"]
+            "spawn_areas": [
+                "2"
+            ]
         },
         {
-            "id": 73,
+            "id": 77,
             "name": "Forgotten Perimeter Habitation Coils",
             "signature": null,
             "signature_category_id": 3,
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["2"]
+            "spawn_areas": [
+                "2"
+            ]
         },
         {
-            "id": 71,
+            "id": 75,
             "name": "Forgotten Perimeter Power Array",
             "signature": null,
             "signature_category_id": 3,
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1"]
+            "spawn_areas": [
+                "1"
+            ]
         },
         {
             "id": 50,
@@ -1816,7 +2636,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 51,
@@ -1826,7 +2651,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 52,
@@ -1836,7 +2666,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 53,
@@ -1846,7 +2681,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 54,
@@ -1856,7 +2696,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 55,
@@ -1866,7 +2711,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 56,
@@ -1876,7 +2726,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 57,
@@ -1886,7 +2741,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 58,
@@ -1896,7 +2756,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 59,
@@ -1906,7 +2771,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 60,
@@ -1916,7 +2786,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 61,
@@ -1926,47 +2801,72 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
-            "id": 264,
+            "id": 70,
             "name": "Ruined Rogue Drone Crystal Quarry",
             "signature": null,
             "signature_category_id": 3,
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
-            "id": 265,
+            "id": 71,
             "name": "Ruined Rogue Drone Monument Site",
             "signature": null,
             "signature_category_id": 3,
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
-            "id": 266,
+            "id": 72,
             "name": "Ruined Rogue Drone Science Outpost",
             "signature": null,
             "signature_category_id": 3,
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
-            "id": 267,
+            "id": 73,
             "name": "Ruined Rogue Drone Temple Site",
             "signature": null,
             "signature_category_id": 3,
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 62,
@@ -1976,7 +2876,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 63,
@@ -1986,7 +2891,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 64,
@@ -1996,7 +2906,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 65,
@@ -2006,7 +2921,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 66,
@@ -2016,7 +2936,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 67,
@@ -2026,7 +2951,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 68,
@@ -2036,7 +2966,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 69,
@@ -2046,7 +2981,12 @@
             "category_name": "Relic Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["n", "1", "2", "3"]
+            "spawn_areas": [
+                "n",
+                "1",
+                "2",
+                "3"
+            ]
         },
         {
             "id": 43,
@@ -2056,7 +2996,10 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["17", "18"]
+            "spawn_areas": [
+                "17",
+                "18"
+            ]
         },
         {
             "id": 22,
@@ -2066,7 +3009,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["6"]
+            "spawn_areas": [
+                "6"
+            ]
         },
         {
             "id": 21,
@@ -2076,7 +3021,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["6"]
+            "spawn_areas": [
+                "6"
+            ]
         },
         {
             "id": 17,
@@ -2086,7 +3033,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["5"]
+            "spawn_areas": [
+                "5"
+            ]
         },
         {
             "id": 18,
@@ -2096,7 +3045,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["5"]
+            "spawn_areas": [
+                "5"
+            ]
         },
         {
             "id": 33,
@@ -2106,7 +3057,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["14"]
+            "spawn_areas": [
+                "14"
+            ]
         },
         {
             "id": 38,
@@ -2116,7 +3069,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["15"]
+            "spawn_areas": [
+                "15"
+            ]
         },
         {
             "id": 42,
@@ -2126,7 +3081,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["16"]
+            "spawn_areas": [
+                "16"
+            ]
         },
         {
             "id": 25,
@@ -2136,7 +3093,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["12"]
+            "spawn_areas": [
+                "12"
+            ]
         },
         {
             "id": 26,
@@ -2146,7 +3105,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["12"]
+            "spawn_areas": [
+                "12"
+            ]
         },
         {
             "id": 9,
@@ -2156,7 +3117,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["3"]
+            "spawn_areas": [
+                "3"
+            ]
         },
         {
             "id": 13,
@@ -2166,7 +3129,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["4"]
+            "spawn_areas": [
+                "4"
+            ]
         },
         {
             "id": 14,
@@ -2176,7 +3141,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["4"]
+            "spawn_areas": [
+                "4"
+            ]
         },
         {
             "id": 46,
@@ -2186,7 +3153,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["17"]
+            "spawn_areas": [
+                "17"
+            ]
         },
         {
             "id": 37,
@@ -2196,7 +3165,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["15"]
+            "spawn_areas": [
+                "15"
+            ]
         },
         {
             "id": 49,
@@ -2206,7 +3177,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["18"]
+            "spawn_areas": [
+                "18"
+            ]
         },
         {
             "id": 15,
@@ -2216,7 +3189,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["4"]
+            "spawn_areas": [
+                "4"
+            ]
         },
         {
             "id": 29,
@@ -2226,7 +3201,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["14"]
+            "spawn_areas": [
+                "14"
+            ]
         },
         {
             "id": 31,
@@ -2236,7 +3213,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["14"]
+            "spawn_areas": [
+                "14"
+            ]
         },
         {
             "id": 19,
@@ -2246,7 +3225,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["5"]
+            "spawn_areas": [
+                "5"
+            ]
         },
         {
             "id": 10,
@@ -2256,7 +3237,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["3"]
+            "spawn_areas": [
+                "3"
+            ]
         },
         {
             "id": 45,
@@ -2266,7 +3249,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["17"]
+            "spawn_areas": [
+                "17"
+            ]
         },
         {
             "id": 1,
@@ -2276,7 +3261,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1"]
+            "spawn_areas": [
+                "1"
+            ]
         },
         {
             "id": 2,
@@ -2286,7 +3273,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1"]
+            "spawn_areas": [
+                "1"
+            ]
         },
         {
             "id": 5,
@@ -2296,7 +3285,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["2"]
+            "spawn_areas": [
+                "2"
+            ]
         },
         {
             "id": 6,
@@ -2306,7 +3297,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["2"]
+            "spawn_areas": [
+                "2"
+            ]
         },
         {
             "id": 3,
@@ -2316,7 +3309,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1"]
+            "spawn_areas": [
+                "1"
+            ]
         },
         {
             "id": 27,
@@ -2326,7 +3321,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["12"]
+            "spawn_areas": [
+                "12"
+            ]
         },
         {
             "id": 20,
@@ -2336,7 +3333,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["5"]
+            "spawn_areas": [
+                "5"
+            ]
         },
         {
             "id": 44,
@@ -2346,7 +3345,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["17"]
+            "spawn_areas": [
+                "17"
+            ]
         },
         {
             "id": 39,
@@ -2356,7 +3357,10 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["16", "18"]
+            "spawn_areas": [
+                "16",
+                "18"
+            ]
         },
         {
             "id": 8,
@@ -2366,7 +3370,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["2"]
+            "spawn_areas": [
+                "2"
+            ]
         },
         {
             "id": 48,
@@ -2376,7 +3382,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["18"]
+            "spawn_areas": [
+                "18"
+            ]
         },
         {
             "id": 32,
@@ -2386,7 +3394,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["14"]
+            "spawn_areas": [
+                "14"
+            ]
         },
         {
             "id": 41,
@@ -2396,7 +3406,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["16"]
+            "spawn_areas": [
+                "16"
+            ]
         },
         {
             "id": 40,
@@ -2406,7 +3418,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["16"]
+            "spawn_areas": [
+                "16"
+            ]
         },
         {
             "id": 16,
@@ -2416,7 +3430,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["4"]
+            "spawn_areas": [
+                "4"
+            ]
         },
         {
             "id": 11,
@@ -2426,7 +3442,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["3"]
+            "spawn_areas": [
+                "3"
+            ]
         },
         {
             "id": 36,
@@ -2436,7 +3454,10 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["15", "16"]
+            "spawn_areas": [
+                "15",
+                "16"
+            ]
         },
         {
             "id": 47,
@@ -2446,7 +3467,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["18"]
+            "spawn_areas": [
+                "18"
+            ]
         },
         {
             "id": 23,
@@ -2456,7 +3479,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["6"]
+            "spawn_areas": [
+                "6"
+            ]
         },
         {
             "id": 28,
@@ -2466,7 +3491,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["12"]
+            "spawn_areas": [
+                "12"
+            ]
         },
         {
             "id": 4,
@@ -2476,7 +3503,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1"]
+            "spawn_areas": [
+                "1"
+            ]
         },
         {
             "id": 24,
@@ -2486,7 +3515,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["6"]
+            "spawn_areas": [
+                "6"
+            ]
         },
         {
             "id": 12,
@@ -2496,7 +3527,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["3"]
+            "spawn_areas": [
+                "3"
+            ]
         },
         {
             "id": 7,
@@ -2506,7 +3539,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["2"]
+            "spawn_areas": [
+                "2"
+            ]
         },
         {
             "id": 35,
@@ -2516,7 +3551,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["15"]
+            "spawn_areas": [
+                "15"
+            ]
         },
         {
             "id": 30,
@@ -2526,7 +3563,9 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["14"]
+            "spawn_areas": [
+                "14"
+            ]
         },
         {
             "id": 34,
@@ -2536,217 +3575,322 @@
             "category_name": "Combat Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["15"]
+            "spawn_areas": [
+                "15"
+            ]
         },
         {
-            "id": 136,
+            "id": 144,
             "name": "Barren Perimeter Reservoir",
             "signature": null,
             "signature_category_id": 5,
             "category_name": "Gas Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
         },
         {
-            "id": 141,
+            "id": 149,
             "name": "Bountiful Frontier Reservoir",
             "signature": null,
             "signature_category_id": 5,
             "category_name": "Gas Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["3", "4", "5", "6"]
+            "spawn_areas": [
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
         },
         {
-            "id": 143,
+            "id": 151,
             "name": "Instrumental Core Reservoir",
             "signature": null,
             "signature_category_id": 5,
             "category_name": "Gas Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["5", "6"]
+            "spawn_areas": [
+                "5",
+                "6"
+            ]
         },
         {
-            "id": 138,
+            "id": 146,
             "name": "Minor Perimeter Reservoir",
             "signature": null,
             "signature_category_id": 5,
             "category_name": "Gas Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
         },
         {
-            "id": 140,
+            "id": 148,
             "name": "Ordinary Perimeter Reservoir",
             "signature": null,
             "signature_category_id": 5,
             "category_name": "Gas Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
         },
         {
-            "id": 139,
+            "id": 147,
             "name": "Sizeable Perimeter Reservoir",
             "signature": null,
             "signature_category_id": 5,
             "category_name": "Gas Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
         },
         {
-            "id": 137,
+            "id": 145,
             "name": "Token Perimeter Reservoir",
             "signature": null,
             "signature_category_id": 5,
             "category_name": "Gas Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
         },
         {
-            "id": 142,
+            "id": 150,
             "name": "Vast Frontier Reservoir",
             "signature": null,
             "signature_category_id": 5,
             "category_name": "Gas Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["3", "4", "5", "6"]
+            "spawn_areas": [
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
         },
         {
-            "id": 144,
+            "id": 152,
             "name": "Vital Core Reservoir",
             "signature": null,
             "signature_category_id": 5,
             "category_name": "Gas Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["5", "6"]
+            "spawn_areas": [
+                "5",
+                "6"
+            ]
         },
         {
-            "id": 148,
+            "id": 156,
             "name": "Average Frontier Deposit",
             "signature": null,
             "signature_category_id": 6,
             "category_name": "Ore Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5"
+            ]
         },
         {
-            "id": 146,
+            "id": 154,
             "name": "Common Perimeter Deposit",
             "signature": null,
             "signature_category_id": 6,
             "category_name": "Ore Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
         },
         {
-            "id": 153,
+            "id": 161,
             "name": "Exceptional Core Deposit",
             "signature": null,
             "signature_category_id": 6,
             "category_name": "Ore Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["5"]
+            "spawn_areas": [
+                "5"
+            ]
         },
         {
-            "id": 151,
+            "id": 159,
             "name": "Infrequent Core Deposit",
             "signature": null,
             "signature_category_id": 6,
             "category_name": "Ore Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["3", "4", "5"]
+            "spawn_areas": [
+                "3",
+                "4",
+                "5"
+            ]
         },
         {
-            "id": 149,
+            "id": 157,
             "name": "Isolated Core Deposit",
             "signature": null,
             "signature_category_id": 6,
             "category_name": "Ore Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1", "2", "5"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "5"
+            ]
         },
         {
-            "id": 145,
+            "id": 153,
             "name": "Ordinary Perimeter Deposit",
             "signature": null,
             "signature_category_id": 6,
             "category_name": "Ore Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
         },
         {
-            "id": 154,
+            "id": 162,
             "name": "Rarified Core Deposit",
             "signature": null,
             "signature_category_id": 6,
             "category_name": "Ore Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["5", "6"]
+            "spawn_areas": [
+                "5",
+                "6"
+            ]
         },
         {
-            "id": 155,
+            "id": 163,
             "name": "Shattered Debris Field",
             "signature": null,
             "signature_category_id": 6,
             "category_name": "Ore Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["13"]
+            "spawn_areas": [
+                "13"
+            ]
         },
         {
-            "id": 156,
+            "id": 164,
             "name": "Shattered Ice Field",
             "signature": null,
             "signature_category_id": 6,
             "category_name": "Ore Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["13"]
+            "spawn_areas": [
+                "13"
+            ]
         },
         {
-            "id": 150,
+            "id": 158,
             "name": "Uncommon Core Deposit",
             "signature": null,
             "signature_category_id": 6,
             "category_name": "Ore Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1", "2", "5"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "5"
+            ]
         },
         {
-            "id": 147,
+            "id": 155,
             "name": "Unexceptional Frontier Deposit",
             "signature": null,
             "signature_category_id": 6,
             "category_name": "Ore Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6"]
+            "spawn_areas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+            ]
         },
         {
-            "id": 152,
+            "id": 160,
             "name": "Unusual Core Deposit",
             "signature": null,
             "signature_category_id": 6,
             "category_name": "Ore Site",
             "target_class": null,
             "extra": null,
-            "spawn_areas": ["3", "4", "5"]
+            "spawn_areas": [
+                "3",
+                "4",
+                "5"
+            ]
         }
     ]
 }
