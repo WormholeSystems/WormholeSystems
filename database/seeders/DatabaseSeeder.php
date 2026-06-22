@@ -17,6 +17,8 @@ final class DatabaseSeeder extends Seeder
     {
         $this->command->call(SeedCommand::class);
         $this->call(EsiScopeSeeder::class);
+        $this->call(SignatureCategorySeeder::class);
+        $this->call(SignatureTypeSeeder::class);
         $this->call(WormholeEffectSeeder::class);
         $this->call(WormholeSeeder::class);
         $this->call(WormholeSystemSeeder::class);
