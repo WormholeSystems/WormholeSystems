@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Enums\SolarsystemClass;
 use App\Utilities\CCPRounding;
 use Closure;
 use Illuminate\Console\Command;
@@ -456,13 +457,17 @@ final class GenerateStaticDataCommand extends Command
                 continue;
             }
 
+            $security = CCPRounding::roundSecurity($solarsystemRow->securityStatus);
+
             $solarsystems[] = [
                 'id' => $solarsystemRow->id,
                 'name' => $solarsystemRow->name,
                 'region_id' => $solarsystemRow->regionId,
                 'constellation_id' => $solarsystemRow->constellationId,
-                'class' => $wormholeSystem['class'] ?? null,
-                'security' => CCPRounding::roundSecurity($solarsystemRow->securityStatus),
+                'class' => ($wormholeSystem['class'] ?? null) !== null
+                    ? SolarsystemClass::from((string) $wormholeSystem['class'])->value
+                    : SolarsystemClass::fromSecurity($security)->value,
+                'security' => $security,
                 'type' => UniverseHelpers::determineAreaType($solarsystemRow->id),
                 'region' => [
                     'id' => $region['id'],

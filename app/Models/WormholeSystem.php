@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Casts\SolarsystemClassCast;
+use App\Enums\SolarsystemClass;
 use App\Enums\ThreatLevel;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
@@ -16,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  *
  * @property int $id
  * @property int $effect_id
- * @property-read int $class
+ * @property-read SolarsystemClass $class
  * @property ThreatLevel $threat_level
  * @property array|null $threat_data
  * @property CarbonImmutable|null $threat_analyzed_at
@@ -64,6 +66,7 @@ final class WormholeSystem extends Model
     protected function casts(): array
     {
         return [
+            'class' => SolarsystemClassCast::class,
             'threat_level' => ThreatLevel::class,
             'threat_data' => 'array',
             'threat_analyzed_at' => 'immutable_datetime',
