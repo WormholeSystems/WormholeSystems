@@ -12,6 +12,7 @@ import usePermission from '@/composables/usePermission';
 import { useSelectedMapSolarsystem } from '@/composables/useSelectedMapSolarsystem';
 import { useShowMap } from '@/composables/useShowMap';
 import { useStaticSolarsystems } from '@/composables/useStaticSolarsystems';
+import { classSortWeight, isWormholeClass } from '@/const/solarsystemClasses';
 import type { TResolvedSolarsystem } from '@/pages/maps';
 import EveScoutConnections from '@/routes/eve-scout-connections';
 import type { TEveScoutConnection } from '@/types/eve-scout';
@@ -81,7 +82,7 @@ const allTargetIds = computed(() => {
 });
 
 // WH targets: both Thera and Turnur allowed as midpoints (full EVE Scout routing)
-const whTargetIds = computed(() => allTargetIds.value.filter((id) => resolveSolarsystem(id).class !== null));
+const whTargetIds = computed(() => allTargetIds.value.filter((id) => isWormholeClass(resolveSolarsystem(id).class)));
 
 // K-space targets per tab: only the OTHER special system is allowed as midpoint
 // (Thera tab blocks Thera, Turnur tab blocks Turnur)
@@ -94,7 +95,7 @@ function getKspaceTargetsForTab(specialSystem: string) {
             const isSpecial = inSystem.name === specialSystem || outSystem.name === specialSystem;
             if (!isSpecial) continue;
             const other = inSystem.name === specialSystem ? outSystem : inSystem;
-            if (other.class === null) ids.add(other.id);
+            if (!isWormholeClass(other.class)) ids.add(other.id);
         }
         return [...ids];
     });
@@ -213,11 +214,11 @@ function sortConnections(connections: TEnrichedEveScoutConnection[], specialSyst
 
         switch (sortColumn) {
             case 'system': {
-                const aIsWH = aSystem.class !== null;
-                const bIsWH = bSystem.class !== null;
+                const aIsWH = isWormholeClass(aSystem.class);
+                const bIsWH = isWormholeClass(bSystem.class);
 
                 if (aIsWH && bIsWH) {
-                    comparison = (aSystem.class || 0) - (bSystem.class || 0);
+                    comparison = classSortWeight(aSystem.class) - classSortWeight(bSystem.class);
                 } else if (!aIsWH && !bIsWH) {
                     comparison = (bSystem.security || 0) - (aSystem.security || 0);
                 } else {

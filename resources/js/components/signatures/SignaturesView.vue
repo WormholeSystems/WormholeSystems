@@ -105,8 +105,7 @@ const sorted = computed(() => [...signatures].sort((a, b) => (a.signature_id ?? 
                 <span class="min-w-0 flex-1 text-xs">
                     <span v-if="isWormhole(signature) && selectedConnection(signature)" class="inline-flex items-center gap-1">
                         <SolarsystemClass
-                            :wormhole_class="selectedConnection(signature)!.target.solarsystem.class"
-                            :security="selectedConnection(signature)!.target.solarsystem.security"
+                            :solarsystem_class="selectedConnection(signature)!.target.solarsystem.class"
                             class="w-5 shrink-0 text-center"
                         />
                         <span v-if="selectedConnection(signature)!.target.alias" class="shrink-0 font-medium">

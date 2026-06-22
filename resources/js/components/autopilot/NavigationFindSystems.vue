@@ -169,7 +169,7 @@ function clearSystem() {
             <ComboboxAnchor class="w-full">
                 <template v-if="fromSystem">
                     <div class="flex h-8 items-center gap-1.5 rounded-md bg-muted/30 px-2">
-                        <SolarsystemClass :wormhole_class="fromSystem.class" :security="fromSystem.security" class="shrink-0 text-xs" />
+                        <SolarsystemClass :solarsystem_class="fromSystem.class" class="shrink-0 text-xs" />
                         <span class="min-w-0 flex-1 truncate text-sm">
                             {{ fromSystem.name }}
                             <span class="text-[10px] text-muted-foreground">· {{ fromSystem.region?.name }}</span>
@@ -198,11 +198,7 @@ function clearSystem() {
                 class="inline-flex items-center gap-1.5 rounded-md border border-border/40 bg-muted/30 px-2 py-1 text-xs transition-colors hover:bg-muted/60"
                 @click="handleSystemSelect(selected_map_solarsystem.solarsystem)"
             >
-                <SolarsystemClass
-                    :wormhole_class="selected_map_solarsystem.solarsystem.class"
-                    :security="selected_map_solarsystem.solarsystem.security"
-                    class="shrink-0 text-[10px]"
-                />
+                <SolarsystemClass :solarsystem_class="selected_map_solarsystem.solarsystem.class" class="shrink-0 text-[10px]" />
                 <span>{{ selected_map_solarsystem.solarsystem.name }}</span>
                 <MapPin class="size-3 shrink-0 text-muted-foreground" />
             </button>
@@ -211,11 +207,7 @@ function clearSystem() {
                 class="inline-flex items-center gap-1.5 rounded-md border border-border/40 bg-muted/30 px-2 py-1 text-xs transition-colors hover:bg-muted/60"
                 @click="handleSystemSelect(activeCharacterSystem)"
             >
-                <SolarsystemClass
-                    :wormhole_class="activeCharacterSystem.class"
-                    :security="activeCharacterSystem.security"
-                    class="shrink-0 text-[10px]"
-                />
+                <SolarsystemClass :solarsystem_class="activeCharacterSystem.class" class="shrink-0 text-[10px]" />
                 <span>{{ activeCharacterSystem.name }}</span>
                 <Navigation class="size-3 shrink-0 text-muted-foreground" />
             </button>
@@ -225,7 +217,7 @@ function clearSystem() {
                 class="inline-flex items-center gap-1.5 rounded-md border border-border/40 bg-muted/30 px-2 py-1 text-xs transition-colors hover:bg-muted/60"
                 @click="handleSystemSelect(dest.solarsystem)"
             >
-                <SolarsystemClass :wormhole_class="dest.solarsystem.class" :security="dest.solarsystem.security" class="shrink-0 text-[10px]" />
+                <SolarsystemClass :solarsystem_class="dest.solarsystem.class" class="shrink-0 text-[10px]" />
                 <span>{{ dest.solarsystem.name }}</span>
             </button>
         </div>
@@ -294,7 +286,7 @@ function clearSystem() {
 
         <DestinationContextMenu v-for="result in sortedResults" :key="result.solarsystem.id" :solarsystem_id="result.solarsystem.id">
             <div class="col-span-full grid grid-cols-subgrid items-center border-b border-border/30 px-3 py-1.5 hover:bg-muted/30">
-                <SolarsystemClass :wormhole_class="result.solarsystem.class" :security="result.solarsystem.security" class="justify-self-center" />
+                <SolarsystemClass :solarsystem_class="result.solarsystem.class" class="justify-self-center" />
 
                 <span class="truncate text-xs">{{ result.solarsystem.name }}</span>
 

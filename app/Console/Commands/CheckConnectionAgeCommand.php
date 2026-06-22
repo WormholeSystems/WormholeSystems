@@ -7,6 +7,7 @@ namespace App\Console\Commands;
 use App\Actions\MapConnections\UpdateMapConnectionAction;
 use App\Data\MapConnectionData;
 use App\Enums\LifetimeStatus;
+use App\Enums\SolarsystemClass;
 use App\Models\MapConnection;
 use Illuminate\Console\Command;
 use Throwable;
@@ -136,19 +137,20 @@ final class CheckConnectionAgeCommand extends AppCommand
 
     private function isC6toKSpaceConnection(MapConnection $connection): bool
     {
-        return $connection->fromMapSolarsystem->wormholeSystem?->class === 6
+        return $connection->fromMapSolarsystem->wormholeSystem?->class === SolarsystemClass::C6
             && $connection->toMapSolarsystem->wormholeSystem === null
-            || $connection->toMapSolarsystem->wormholeSystem?->class === 6
+            || $connection->toMapSolarsystem->wormholeSystem?->class === SolarsystemClass::C6
             && $connection->fromMapSolarsystem->wormholeSystem === null;
     }
 
     private function isDrifterToKSpaceConnection(MapConnection $connection): bool
     {
-        $drifterClasses = [14, 15, 16, 17, 18];
+        if ($connection->fromMapSolarsystem->wormholeSystem?->class?->isDrifter() === true
+            && $connection->toMapSolarsystem->wormholeSystem === null) {
+            return true;
+        }
 
-        return in_array($connection->fromMapSolarsystem->wormholeSystem?->class, $drifterClasses, true)
-            && $connection->toMapSolarsystem->wormholeSystem === null
-            || in_array($connection->toMapSolarsystem->wormholeSystem?->class, $drifterClasses, true)
-            && $connection->fromMapSolarsystem->wormholeSystem === null;
+        return $connection->toMapSolarsystem->wormholeSystem?->class?->isDrifter() === true
+        && $connection->fromMapSolarsystem->wormholeSystem === null;
     }
 }

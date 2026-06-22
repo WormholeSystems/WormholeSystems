@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { TDataMapSolarSystem } from '@/composables/map';
+import { isWormholeClass } from '@/const/solarsystemClasses';
 import MapSolarsystems from '@/routes/map-solarsystems';
 import { TCharacter } from '@/types/models';
 import { useForm, usePage } from '@inertiajs/vue3';
@@ -40,7 +41,7 @@ const resolvedSolarsystem = computed(() => ({
     id: map_solarsystem.solarsystem?.id ?? map_solarsystem.solarsystem_id,
     name: map_solarsystem.solarsystem?.name ?? map_solarsystem.alias ?? '',
     security: map_solarsystem.solarsystem?.security ?? 0,
-    class: map_solarsystem.solarsystem?.class ?? null,
+    class: map_solarsystem.solarsystem?.class ?? 'unknown',
     sovereignty: map_solarsystem.solarsystem?.sovereignty ?? null,
     region: map_solarsystem.solarsystem?.region ?? null,
     statics: map_solarsystem.solarsystem?.statics ?? null,
@@ -103,7 +104,7 @@ function handleSubmit() {
         @drag.prevent
     >
         <div class="row-start-1 grid grid-cols-[auto_1fr_auto] items-center justify-center gap-x-1 px-2">
-            <SolarsystemClass :security="resolvedSolarsystem.security" :wormhole_class="resolvedSolarsystem.class" />
+            <SolarsystemClass :solarsystem_class="resolvedSolarsystem.class" />
             <Popover :open="open" @update:open="(value) => open && (open = value)">
                 <PopoverAnchor>
                     <SolarsystemName :map_solarsystem="map_solarsystem" />
@@ -148,7 +149,10 @@ function handleSubmit() {
                     </template>
                 </SolarsystemSovereignty>
             </div>
-            <SolarsystemRegion :region="resolvedSolarsystem.region" v-if="resolvedSolarsystem.region && !resolvedSolarsystem.class" />
+            <SolarsystemRegion
+                :region="resolvedSolarsystem.region"
+                v-if="resolvedSolarsystem.region && !isWormholeClass(resolvedSolarsystem.class)"
+            />
             <SolarsystemStatics v-else-if="resolvedSolarsystem.statics" :statics="resolvedSolarsystem.statics" />
         </div>
         <SolarsystemPilots v-if="pilots.length" :pilots />

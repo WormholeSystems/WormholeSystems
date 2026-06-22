@@ -170,8 +170,7 @@ function submit() {
             <template #icon="{ webhook }">
                 <SolarsystemClass
                     v-if="findSolarsystem(webhook.target_solarsystem_id)"
-                    :wormhole_class="findSolarsystem(webhook.target_solarsystem_id)!.class"
-                    :security="findSolarsystem(webhook.target_solarsystem_id)!.security"
+                    :solarsystem_class="findSolarsystem(webhook.target_solarsystem_id)!.class"
                     :name="findSolarsystem(webhook.target_solarsystem_id)!.name"
                 />
             </template>
@@ -259,11 +258,7 @@ function submit() {
                         <div v-if="!isKillmail" class="space-y-1.5">
                             <Label>Target system</Label>
                             <div v-if="selectedTarget" class="flex items-center gap-2 text-sm">
-                                <SolarsystemClass
-                                    :wormhole_class="selectedTarget.class"
-                                    :security="selectedTarget.security"
-                                    :name="selectedTarget.name"
-                                />
+                                <SolarsystemClass :solarsystem_class="selectedTarget.class" :name="selectedTarget.name" />
                                 <span class="font-medium">{{ selectedTarget.name }}</span>
                             </div>
                             <Combobox class="rounded-lg border bg-neutral-900">
@@ -285,11 +280,7 @@ function submit() {
                                             class="col-span-full grid grid-cols-subgrid"
                                         >
                                             <div class="justify-self-center">
-                                                <SolarsystemClass
-                                                    :wormhole_class="solarsystem.class"
-                                                    :security="solarsystem.security"
-                                                    :name="solarsystem.name"
-                                                />
+                                                <SolarsystemClass :solarsystem_class="solarsystem.class" :name="solarsystem.name" />
                                             </div>
                                             <span class="whitespace-nowrap">{{ solarsystem.name }}</span>
                                             <span class="truncate text-muted-foreground" v-if="!solarsystem.class">{{

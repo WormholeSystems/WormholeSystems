@@ -174,8 +174,8 @@ final readonly class AddEveScoutConnectionToMapAction
         $aSystem = $solarsystems->get($aDestinationId);
         $bSystem = $solarsystems->get($bDestinationId);
 
-        $a_value = $aSystem->wormholeSystem?->class ? -$aSystem->wormholeSystem->class : $aSystem->security;
-        $b_value = $bSystem->wormholeSystem?->class ? -$bSystem->wormholeSystem->class : $bSystem->security;
+        $a_value = $aSystem->wormholeSystem?->class !== null ? -(int) $aSystem->wormholeSystem->class->value : $aSystem->security;
+        $b_value = $bSystem->wormholeSystem?->class !== null ? -(int) $bSystem->wormholeSystem->class->value : $bSystem->security;
 
         return $b_value <=> $a_value;
     }

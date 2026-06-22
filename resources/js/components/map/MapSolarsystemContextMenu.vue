@@ -19,6 +19,7 @@ import usePermission from '@/composables/usePermission';
 import { useRallyPoint } from '@/composables/useRallyPoint';
 import useUser from '@/composables/useUser';
 import { useWaypoint } from '@/composables/useWaypoint';
+import { isWormholeClass } from '@/const/solarsystemClasses';
 import { TMapSolarsystem } from '@/pages/maps';
 import { TMapSolarsystemStatus } from '@/types/models';
 import { Circle, Compass, ExternalLink, Flag, Globe, Home, Map, MapPin, Navigation, Pin, Route, Trash2, Users } from 'lucide-vue-next';
@@ -124,7 +125,7 @@ const options: TMapSolarsystemStatus[] = ['unknown', 'friendly', 'hostile', 'act
                                     Region Map
                                 </a>
                             </ContextMenuItem>
-                            <ContextMenuItem as-child v-if="!map_solarsystem.solarsystem.class">
+                            <ContextMenuItem as-child v-if="!isWormholeClass(map_solarsystem.solarsystem.class)">
                                 <a
                                     :href="`https://evemaps.dotlan.net/range/Revelation,5/${map_solarsystem.solarsystem?.name.replaceAll(' ', '_')}`"
                                     target="_blank"
@@ -158,7 +159,7 @@ const options: TMapSolarsystemStatus[] = ['unknown', 'friendly', 'hostile', 'act
                     </ContextMenuSub>
                 </ContextMenuSubContent>
             </ContextMenuSub>
-            <ContextMenuSub v-if="user && !map_solarsystem.solarsystem.class">
+            <ContextMenuSub v-if="user && !isWormholeClass(map_solarsystem.solarsystem.class)">
                 <ContextMenuSubTrigger>
                     <Navigation class="size-4" />
                     Set destination
@@ -183,7 +184,7 @@ const options: TMapSolarsystemStatus[] = ['unknown', 'friendly', 'hostile', 'act
                 </ContextMenuSubContent>
             </ContextMenuSub>
 
-            <ContextMenuSub v-if="user && !map_solarsystem.solarsystem.class">
+            <ContextMenuSub v-if="user && !isWormholeClass(map_solarsystem.solarsystem.class)">
                 <ContextMenuSubTrigger>
                     <MapPin class="size-4" />
                     Add waypoint

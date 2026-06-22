@@ -8,8 +8,10 @@
 @source '../../storage/framework/views/*.php';
 
 /* Landing page renders system-class colours dynamically; keep these utilities generated. */
-@source inline('{text,bg,border}-{c1,c2,c3,c4,c5,c6,hs,ls,ns,friendly,hostile,active,unscanned,empty}');
-@source inline('{bg,text}-{c1,c2,c3,c4,c5,c6,friendly,hostile,active,unscanned,empty}/{10,15,70}');
+@source inline('{text,bg,border}-{c1,c2,c3,c4,c5,c6,c12,c13,c14,c15,c16,c17,c18,hs,ls,ns,pochven,unknown,friendly,hostile,active,unscanned,empty}');
+@source inline(
+    '{bg,text}-{c1,c2,c3,c4,c5,c6,c12,c13,c14,c15,c16,c17,c18,hs,ls,ns,pochven,unknown,friendly,hostile,active,unscanned,empty}/{10,15,70}'
+);
 
 @custom-variant dark (&:is(.dark *));
 
@@ -74,6 +76,14 @@
     --color-c4: var(--color-violet-500);
     --color-c5: var(--color-orange-400);
     --color-c6: var(--color-red-500);
+    --color-c12: var(--color-teal-300);
+    --color-c13: var(--color-fuchsia-400);
+    --color-c14: var(--color-rose-400);
+    --color-c15: var(--color-rose-400);
+    --color-c16: var(--color-rose-400);
+    --color-c17: var(--color-rose-400);
+    --color-c18: var(--color-rose-400);
+    --color-pochven: var(--color-red-700);
     --color-pulsar: var(--color-blue-500);
     --color-magnetar: var(--color-pink-500);
     --color-wolf-rayet-star: var(--color-amber-950);

@@ -30,7 +30,7 @@ function onHover(hovered: boolean) {
             class="flex items-center gap-1.5 rounded border bg-white px-2 py-1 hover:bg-neutral-50 dark:bg-neutral-900/40 dark:hover:bg-neutral-800/30"
             v-element-hover="onHover"
         >
-            <SolarsystemClass :wormhole_class="destination.solarsystem.class" :security="destination.solarsystem.security" />
+            <SolarsystemClass :solarsystem_class="destination.solarsystem.class" />
 
             <span class="truncate text-xs font-medium">{{ destination.solarsystem.name }}</span>
 

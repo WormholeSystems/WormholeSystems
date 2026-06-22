@@ -35,7 +35,7 @@ const resolvedRoute = computed(() => {
                     <div class="flex flex-col items-start gap-0.5">
                         <span class="text-[10px] font-medium tracking-wider text-pink-500/70 uppercase">Rally Point</span>
                         <div class="flex items-center gap-1.5 text-sm font-semibold">
-                            <SolarsystemClass :wormhole_class="rallySolarsystem.class" :security="rallySolarsystem.security" class="font-bold" />
+                            <SolarsystemClass :solarsystem_class="rallySolarsystem.class" class="font-bold" />
                             <span>{{ rallySolarsystem.name }}</span>
                             <span v-if="rallySolarsystem.region" class="text-xs text-muted-foreground">{{ rallySolarsystem.region.name }}</span>
                         </div>

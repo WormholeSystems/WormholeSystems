@@ -10,15 +10,13 @@ import {
     suggestAlias,
     updateMapUserSettings,
 } from '@/composables/map';
-import { getSecurityClass } from '@/composables/map/utils/security';
 import { useActiveMapCharacter } from '@/composables/useActiveMapCharacter';
 import { useMapIgnoredSystems } from '@/composables/useMapIgnoredSystems';
 import { useMapUserSettings } from '@/composables/useMapUserSettings';
 import { useShowMap } from '@/composables/useShowMap';
 import { useStaticData } from '@/composables/useStaticData';
 import { useTrackingSystems } from '@/composables/useTrackingSystems';
-import { TSolarsystem } from '@/pages/maps';
-import { TLifetimeStatus, TMassStatus, TSignature, TSolarsystemClass } from '@/types/models';
+import { TLifetimeStatus, TMassStatus, TSignature } from '@/types/models';
 import { computed, onMounted, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
 
@@ -120,17 +118,11 @@ export function useTracking() {
         return a.signature_id?.localeCompare(b.signature_id);
     }
 
-    function getTargetSolarsystemClass(system: TSolarsystem): TSolarsystemClass {
-        if (system.class) return system.class;
-        return getSecurityClass(system.security);
-    }
-
     function isPossibleSignature(signature: TSignature): boolean {
         if (!signature.signature_type_id) return true;
         if (!target_solarsystem.value) return true;
-        const solarsystem_class = getTargetSolarsystemClass(target_solarsystem.value);
-        if (!solarsystem_class) return true;
-        if (signature.signature_type?.target_class === String(solarsystem_class)) return true;
+        const solarsystem_class = target_solarsystem.value.class;
+        if (signature.signature_type?.target_class === solarsystem_class) return true;
         return signature.signature_type?.target_class === null;
     }
 
