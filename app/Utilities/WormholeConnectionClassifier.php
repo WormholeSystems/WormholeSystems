@@ -15,13 +15,13 @@ final class WormholeConnectionClassifier
         // @see /resources/js/hooks/useNewConnection.ts
 
         $classes = collect([$from->wormholeSystem?->class, $to->wormholeSystem?->class])
-            ->filter(fn ($c): bool => $c !== null);
+            ->filter(fn ($c): bool => $c instanceof SolarsystemClass);
 
-        if ($classes->contains(SolarsystemClass::C13->value)) {
+        if ($classes->contains(SolarsystemClass::C13)) {
             return ShipSize::Frigate;
         }
 
-        if ($classes->contains(SolarsystemClass::C1->value)) {
+        if ($classes->contains(SolarsystemClass::C1)) {
             return ShipSize::Medium;
         }
 

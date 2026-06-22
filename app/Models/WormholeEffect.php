@@ -29,49 +29,6 @@ final class WormholeEffect extends Model
         return $this->hasMany(WormholeSystem::class, 'effect_id');
     }
 
-    public function getEffectArray(int|string $class): ?array
-    {
-        $effects = $this->effects;
-
-        if ($effects->isEmpty()) {
-            return null;
-        }
-
-        ['Buffs' => $buffs, 'Debuffs' => $debuffs] = $effects;
-
-        $class_index = match ((int) $class) {
-            1 => 0,
-            2 => 1,
-            3 => 2,
-            4 => 3,
-            5 => 4,
-            6 => 5,
-            13 => 6,
-            default => match (true) {
-                $class >= 14 && $class <= 18 => 1,
-                default => $class,
-            }
-
-        };
-
-        return collect($buffs)
-            ->map(fn (array $strengths, string $name): array => [
-                'name' => $name,
-                'strength' => $strengths[$class_index] ?? null,
-                'type' => 'Buff',
-            ])
-            ->merge(
-                collect($debuffs)
-                    ->map(fn (array $strengths, string $name): array => [
-                        'name' => $name,
-                        'strength' => $strengths[$class_index] ?? null,
-                        'type' => 'Debuff',
-                    ])
-            )
-            ->values()
-            ->all();
-    }
-
     protected function casts(): array
     {
         return [
