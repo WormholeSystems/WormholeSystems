@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Exception\CharacterNotAuthorizedException;
 use App\Services\EsiAuthService;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\RedirectResponse;
@@ -24,7 +25,17 @@ final class EveController extends Controller
     {
         $account_id = Session::get('add_to_account');
 
-        [$user, $character] = $esiAuthService->getUser($account_id);
+        $access_denied_message = 'Your character is not authorized to access this instance.';
+
+        try {
+            [$user, $character] = $esiAuthService->getUser($account_id);
+        } catch (CharacterNotAuthorizedException) {
+            if ($account_id) {
+                return to_route('home')->notify('Access denied', message: $access_denied_message, type: 'error');
+            }
+
+            return to_route('login')->withErrors(['eve' => $access_denied_message]);
+        }
 
         if (! $user) {
             return to_route('home')->notify('Error', message: 'Unable to retrieve user information from EVE Online. Please try again later.');
