@@ -1,4 +1,6 @@
 import { MaybeRefOrGetter, ref, toValue } from 'vue';
+import { is_map_dragging } from '../dragState';
+import { is_layout_locked } from './useMapViewMode';
 
 export function useMapPanning(container: MaybeRefOrGetter<HTMLElement | null>) {
     const is_panning = ref(false);
@@ -11,8 +13,14 @@ export function useMapPanning(container: MaybeRefOrGetter<HTMLElement | null>) {
         const containerElement = toValue(container);
         if (!containerElement) return;
 
-        // Check if middle mouse button (button 1) is pressed
-        if (event.button !== 1) return;
+        // Never hijack an in-progress drag (moving a node, drawing a new connection).
+        if (is_map_dragging.value) return;
+
+        // Middle mouse always pans; in the locked tree layout a left drag pans too,
+        // unless a selection modifier (Shift/Ctrl/Cmd) is held, which box-selects.
+        const wants_marquee = event.shiftKey || event.ctrlKey || event.metaKey;
+        const can_pan = event.button === 1 || (event.button === 0 && is_layout_locked.value && !wants_marquee);
+        if (!can_pan) return;
 
         event.preventDefault();
         is_panning.value = true;
@@ -42,14 +50,11 @@ export function useMapPanning(container: MaybeRefOrGetter<HTMLElement | null>) {
         containerElement.scrollTop = scroll_top.value - dy;
     }
 
-    function handleMouseUp(event: MouseEvent) {
+    function handleMouseUp() {
         if (!is_panning.value) return;
 
         const containerElement = toValue(container);
         if (!containerElement) return;
-
-        // Only handle middle mouse button release
-        if (event.button !== 1) return;
 
         is_panning.value = false;
         containerElement.style.cursor = '';

@@ -172,8 +172,6 @@ function node(
         threat_level: null,
         signatures: null,
         solarsystem: system,
-        is_selected: false,
-        is_hovered: false,
         ...extra,
     };
 }

@@ -2,7 +2,7 @@ import { useSelectedMapSolarsystem } from '@/composables/useSelectedMapSolarsyst
 import { TMapSolarsystem } from '@/pages/maps';
 import MapSolarsystems from '@/routes/map-solarsystems';
 import { router } from '@inertiajs/vue3';
-import { mapState } from '../state';
+import { toBaseUnits } from '../utils/position';
 
 export function updateMapSolarsystem(
     map_solarsystem: TMapSolarsystem,
@@ -26,8 +26,12 @@ export function updateMapSolarsystem(
         MapSolarsystems.update(map_solarsystem.id).url,
         {
             ...data,
-            position_x: data.position_x ? data.position_x * (1 / mapState.scale) : map_solarsystem.position?.x,
-            position_y: data.position_y ? data.position_y * (1 / mapState.scale) : map_solarsystem.position?.y,
+            // Positions are stored in base units while the in-memory value is scaled
+            // (and, in the tree layout, auto-computed). Only send a position when one
+            // is actually supplied, so pinning or renaming doesn't overwrite the
+            // stored coordinates with the on-screen ones.
+            ...(data.position_x !== undefined ? { position_x: toBaseUnits(data.position_x) } : {}),
+            ...(data.position_y !== undefined ? { position_y: toBaseUnits(data.position_y) } : {}),
         },
         {
             preserveState: true,

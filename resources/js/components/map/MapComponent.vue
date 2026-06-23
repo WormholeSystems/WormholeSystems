@@ -9,6 +9,7 @@ import MapScrollbar from '@/components/map/MapScrollbar.vue';
 import MapSolarsystem from '@/components/map/MapSolarsystem.vue';
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { Popover, PopoverAnchor } from '@/components/ui/popover';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
     deleteSelectedMapSolarsystems,
     useCreateMap,
@@ -18,6 +19,7 @@ import {
     useMapScale,
     useMapScrollbars,
     useMapSolarsystems,
+    useMapViewMode,
 } from '@/composables/map';
 import { useConnectionInteraction } from '@/composables/map/composables/useConnectionInteraction';
 import { useMapEvents } from '@/composables/map/composables/useMapEvents';
@@ -35,6 +37,8 @@ const { map, config } = defineProps<{
     config: TMapConfig;
 }>();
 
+const { viewMode, is_tree_layout } = useMapViewMode();
+
 const container = useTemplateRef('map-container');
 const scrollable_container = useTemplateRef('scrollable-container');
 
@@ -45,6 +49,7 @@ useCreateMap(
     () => container.value!,
     () => config,
     layout,
+    () => viewMode.value,
 );
 
 const { map_solarsystems } = useMapSolarsystems();
@@ -89,14 +94,35 @@ const {
     onTrackMousedown,
     onScrollAreaEnter,
     onScrollAreaMousemove,
-} = useMapScrollbars(scrollable_container);
+} = useMapScrollbars(scrollable_container, () => contentSize.value);
+
+// The manual map uses the full configured canvas. The tree layout instead sizes the
+// canvas to its own content (plus padding) so the SVG viewBox covers every connection
+// without leaving a large empty scroll area below a small tree. The container's
+// `h-full w-full` keeps it at least viewport-sized.
+const contentSize = computed(() => {
+    // Padding leaves room for a node's body/handles past its anchor, so edge nodes
+    // aren't clipped by the canvas's overflow-hidden.
+    const padding = 240 * scale.value;
+    if (!is_tree_layout.value) {
+        return { x: config.max_size.x * scale.value + padding, y: config.max_size.y * scale.value + padding };
+    }
+    let maxX = 0;
+    let maxY = 0;
+    for (const solarsystem of map_solarsystems.value) {
+        if (!solarsystem.position) continue;
+        maxX = Math.max(maxX, solarsystem.position.x);
+        maxY = Math.max(maxY, solarsystem.position.y);
+    }
+    return { x: maxX + padding, y: maxY + padding };
+});
 
 const mapContainerStyle = computed(() => {
     const cell = `${grid_size.value * scale.value}px`;
     const baseStyle = {
         backgroundSize: `${cell} ${cell}`,
-        minHeight: `${config.max_size.y * scale.value}px`,
-        minWidth: `${config.max_size.x * scale.value}px`,
+        minHeight: `${contentSize.value.y}px`,
+        minWidth: `${contentSize.value.x}px`,
     };
 
     // In "grid" mode the image is painted onto the scaled map content, so it
@@ -156,6 +182,7 @@ function onOpenChange(open: boolean) {
         <div
             ref="scrollable-container"
             class="relative h-full w-full overflow-hidden bg-neutral-100 dark:bg-neutral-950"
+            :class="{ 'cursor-grab': is_tree_layout }"
             :style="scrollableContainerStyle"
             @mousedown="handleMouseDown"
             @mousemove="handleMouseMove"
@@ -165,7 +192,13 @@ function onOpenChange(open: boolean) {
         >
             <ContextMenu @update:open="onOpenChange">
                 <ContextMenuTrigger>
-                    <div class="bg-grid relative grid h-full w-full" @dragover.prevent ref="map-container" :style="mapContainerStyle">
+                    <div
+                        class="relative grid h-full w-full overflow-hidden"
+                        :class="{ 'bg-grid': !is_tree_layout }"
+                        @dragover.prevent
+                        ref="map-container"
+                        :style="mapContainerStyle"
+                    >
                         <MapConnections @connection-context-menu="handleConnectionContextMenu" @connection-click="handleConnectionClick" />
                         <MapSolarsystem v-for="solarsystem in map_solarsystems" :key="solarsystem.id" :map_solarsystem="solarsystem" />
                     </div>
@@ -200,6 +233,16 @@ function onOpenChange(open: boolean) {
             @thumb-mousedown="onThumbMousedown('horizontal', $event)"
         />
         <MapRallyBadge />
+        <Tooltip v-if="is_tree_layout" :delay-duration="300">
+            <TooltipTrigger as-child>
+                <span
+                    class="pointer-events-auto absolute bottom-3 left-3 z-20 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold tracking-wider text-white uppercase shadow-sm select-none dark:bg-amber-600"
+                >
+                    Beta
+                </span>
+            </TooltipTrigger>
+            <TooltipContent>The tree layout is experimental and still a work in progress.</TooltipContent>
+        </Tooltip>
         <MapOptions :config />
     </div>
     <Popover v-model:open="connection_popover_open" :key="selected_connection?.id" v-if="selected_connection">
