@@ -1,5 +1,5 @@
 import { TMapSolarsystem } from '@/pages/maps';
-import { map_solarsystems, map_solarsystems_selected, mapState } from '../state';
+import { isSystemSelected, map_solarsystems, map_solarsystems_selected, mapState } from '../state';
 
 export function useMapSolarsystems() {
     function setSystemPosition(system: TMapSolarsystem, raw_x: number, raw_y: number) {
@@ -17,7 +17,7 @@ export function useMapSolarsystems() {
         }
 
         mapState.map_solarsystems.forEach((s) => {
-            if (s.is_selected && !s.pinned) {
+            if (isSystemSelected(s) && !s.pinned) {
                 s.position = {
                     x: s.position!.x + dx,
                     y: s.position!.y + dy,

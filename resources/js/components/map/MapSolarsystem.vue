@@ -3,7 +3,15 @@ import MapSolarsystemButton from '@/components/map/MapSolarsystemButton.vue';
 import MapSolarsystemContextMenu from '@/components/map/MapSolarsystemContextMenu.vue';
 import SolarsystemConnectionHandle from '@/components/map/solarsystem/SolarsystemConnectionHandle.vue';
 import SolarsystemDragHandle from '@/components/map/solarsystem/SolarsystemDragHandle.vue';
-import { TDataMapSolarSystem, useMapScale, useMapSolarsystem, useNewConnection, usePilotsInMapSolarsystem } from '@/composables/map';
+import {
+    is_layout_locked,
+    item_anchor_offset,
+    TDataMapSolarSystem,
+    useMapScale,
+    useMapSolarsystem,
+    useNewConnection,
+    usePilotsInMapSolarsystem,
+} from '@/composables/map';
 import { useMap } from '@/composables/useMap';
 import usePermission from '@/composables/usePermission';
 import { TShowMapProps } from '@/pages/maps';
@@ -65,8 +73,8 @@ const is_rally = computed(() => {
     >
         <div
             :style="{
-                '--tw-translate-x': -scale * 40 + 'px',
-                '--tw-translate-y': -scale * 20 + 'px',
+                '--tw-translate-x': -scale * item_anchor_offset.x + 'px',
+                '--tw-translate-y': -scale * item_anchor_offset.y + 'px',
             }"
             class="pointer-events-auto origin-top-left translate-[var(--translate-x),var(--translate-y)]"
         >
@@ -100,7 +108,7 @@ const is_rally = computed(() => {
                             <MapSolarsystemButton :map_solarsystem="map_solarsystem" :pilots="pilots" ref="button" :is_active :is_home :is_rally />
                         </Link>
                         <template v-if="can_write">
-                            <SolarsystemDragHandle ref="drag_ref" v-if="!map_solarsystem.pinned" />
+                            <SolarsystemDragHandle ref="drag_ref" v-if="!map_solarsystem.pinned && !is_layout_locked" />
                             <SolarsystemConnectionHandle ref="link_ref" :data-connection-source="map_solarsystem.solarsystem_id" />
                         </template>
                     </div>

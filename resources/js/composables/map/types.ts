@@ -20,15 +20,10 @@ export type TMapState = {
     scale: number;
 };
 
-export type WithIsSelected<T> = T & {
-    is_selected: boolean;
-};
-
-export type WithHovered<T> = T & {
-    is_hovered: boolean;
-};
-
-export type TDataMapSolarSystem = WithIsSelected<WithHovered<TMapSolarsystem>>;
+// Selection and hover are derived from interaction state (see isSystemSelected /
+// isSystemHovered in state.ts) rather than baked onto each system, so this is just
+// the resolved system with its scaled position.
+export type TDataMapSolarSystem = TMapSolarsystem;
 
 export type TProcessedConnection = TMapConnection & {
     source: TMapSolarsystem;

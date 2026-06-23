@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import MapConnection from '@/components/map/MapConnection.vue';
 import MapSolarsystemButton from '@/components/map/MapSolarsystemButton.vue';
-import type { TDataMapSolarSystem, TProcessedConnection } from '@/composables/map';
+import { item_anchor_offset, type TDataMapSolarSystem, type TProcessedConnection } from '@/composables/map';
 import { TCharacter } from '@/types/models';
 
 const {
@@ -49,7 +49,12 @@ function scaled(position: { x: number; y: number } | null | undefined): { x: num
             class="absolute"
             :style="{ transform: `translate(${scaled(solarsystem.position).x}px, ${scaled(solarsystem.position).y}px)` }"
         >
-            <div :style="{ transform: `translate(${-40 * scale}px, ${-20 * scale}px)`, transformOrigin: 'top left' }">
+            <div
+                :style="{
+                    transform: `translate(${-item_anchor_offset.x * scale}px, ${-item_anchor_offset.y * scale}px)`,
+                    transformOrigin: 'top left',
+                }"
+            >
                 <div :style="{ scale, transformOrigin: 'top left' }">
                     <MapSolarsystemButton
                         :map_solarsystem="solarsystem"
@@ -57,6 +62,7 @@ function scaled(position: { x: number; y: number } | null | undefined): { x: num
                         :is_active="false"
                         :is_home="home_solarsystem_id === solarsystem.id"
                         :is_rally="rally_solarsystem_id === solarsystem.solarsystem_id"
+                        :interactive="false"
                     />
                 </div>
             </div>

@@ -7,15 +7,22 @@ const MIN_THUMB_SIZE = 30;
 const AUTO_HIDE_DELAY = 1500;
 const MOUSEMOVE_THROTTLE = 300;
 
-export function useMapScrollbars(container: MaybeRefOrGetter<HTMLElement | null>) {
+export function useMapScrollbars(container: MaybeRefOrGetter<HTMLElement | null>, content?: MaybeRefOrGetter<{ x: number; y: number } | null>) {
     const scroll_left = ref(0);
     const scroll_top = ref(0);
     const viewport_width = ref(0);
     const viewport_height = ref(0);
-    const content_width = ref(0);
-    const content_height = ref(0);
+    const measured_width = ref(0);
+    const measured_height = ref(0);
     const scrollbars_visible = ref(false);
     const is_dragging = ref(false);
+
+    // The content size is the caller's intended canvas size when provided, so the
+    // scrollbar reflects a layout switch immediately instead of racing the DOM:
+    // tree-positioned nodes linger in the DOM for a tick after switching back and
+    // would otherwise inflate the measured scrollHeight.
+    const content_width = computed(() => toValue(content)?.x ?? measured_width.value);
+    const content_height = computed(() => toValue(content)?.y ?? measured_height.value);
 
     let hide_timeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -25,8 +32,8 @@ export function useMapScrollbars(container: MaybeRefOrGetter<HTMLElement | null>
 
         viewport_width.value = el.clientWidth;
         viewport_height.value = el.clientHeight;
-        content_width.value = el.scrollWidth;
-        content_height.value = el.scrollHeight;
+        measured_width.value = el.scrollWidth;
+        measured_height.value = el.scrollHeight;
     }
 
     function syncScroll() {

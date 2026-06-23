@@ -13,20 +13,24 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { TDataMapSolarSystem } from '@/composables/map';
+import { forgetNodeSize, isSystemHovered, isSystemSelected, reportNodeSize, TDataMapSolarSystem, useMapViewMode } from '@/composables/map';
 import { isWormholeClass } from '@/const/solarsystemClasses';
 import MapSolarsystems from '@/routes/map-solarsystems';
 import { TCharacter } from '@/types/models';
 import { useForm, usePage } from '@inertiajs/vue3';
+import { useElementSize } from '@vueuse/core';
 import { Flag as FlagIcon, Home as HomeIcon } from 'lucide-vue-next';
-import { computed, ref } from 'vue';
+import { computed, onBeforeUnmount, ref, useTemplateRef, watch } from 'vue';
 
-const { map_solarsystem } = defineProps<{
+const { map_solarsystem, interactive = true } = defineProps<{
     map_solarsystem: TDataMapSolarSystem;
     pilots: TCharacter[];
     is_active?: boolean;
     is_home?: boolean;
     is_rally?: boolean;
+    /** False for static renders (the landing/printable MapView), which must not
+     * write into the live map's node-size store or follow its layout mode. */
+    interactive?: boolean;
 }>();
 
 const form = useForm<{
@@ -55,6 +59,28 @@ const effectiveThreatLevel = computed(() => {
 });
 
 const open = ref(false);
+
+const { is_tree_layout } = useMapViewMode();
+
+// The tree layout's fixed width / truncation only applies to the live map; a static
+// render must ignore the persisted view mode so the landing map isn't forced into it.
+const usesTreeStyle = computed(() => interactive && is_tree_layout.value);
+
+// Selection and hover are derived from interaction state (only on the live map), so
+// flipping them re-renders just this node instead of rebuilding the whole array.
+const is_selected = computed(() => interactive && isSystemSelected(map_solarsystem));
+const is_hovered = computed(() => interactive && isSystemHovered(map_solarsystem.id));
+
+const root = useTemplateRef<HTMLElement>('root');
+if (interactive) {
+    // Report the node's rendered (base-unit) size so connections can attach to its
+    // real edge. The scale lives on an ancestor, so this measures the unscaled box.
+    const { width, height } = useElementSize(root, undefined, { box: 'border-box' });
+    watch([width, height], ([w, h]) => {
+        if (w > 0 && h > 0) reportNodeSize(map_solarsystem.id, { width: w, height: h });
+    });
+    onBeforeUnmount(() => forgetNodeSize(map_solarsystem.id));
+}
 
 const hasUncategorizedSignatures = computed(() => {
     return (map_solarsystem.uncategorized_signatures_count ?? 0) > 0;
@@ -92,14 +118,16 @@ function handleSubmit() {
 
 <template>
     <div
+        ref="root"
         :data-solarsystem-id="map_solarsystem.solarsystem_id"
-        :data-selected="map_solarsystem.is_selected"
-        :data-hovered="map_solarsystem.is_hovered"
+        :data-selected="is_selected"
+        :data-hovered="is_hovered"
         :data-status="map_solarsystem.status"
         :data-has-pilots="pilots.length > 0"
         :data-is-active="!!is_active"
         :data-threat-level="effectiveThreatLevel"
         class="grid h-[40px] rounded border border-neutral-300 bg-white text-left text-xs ring-offset-2 ring-offset-neutral-50 transition-colors duration-200 ease-in-out select-none hover:bg-white focus:bg-white data-[has-pilots=true]:h-[60px] data-[hovered=true]:outline-2 data-[hovered=true]:outline-yellow-500 data-[is-active=true]:ring-2 data-[is-active=true]:ring-amber-500 data-[selected=true]:bg-amber-100 data-[status=active]:border-active data-[status=empty]:border-empty data-[status=friendly]:border-friendly data-[status=hostile]:border-hostile data-[status=unknown]:border-unknown data-[is-active=false]:data-[threat-level=critical]:ring-2 data-[is-active=false]:data-[threat-level=critical]:ring-threat-critical data-[is-active=false]:data-[threat-level=high]:ring-2 data-[is-active=false]:data-[threat-level=high]:ring-threat-high dark:border-neutral-700 dark:bg-neutral-900 dark:ring-offset-neutral-900 dark:hover:bg-neutral-800 dark:focus:bg-neutral-800 dark:data-[is-active=true]:ring-2 dark:data-[is-active=true]:ring-amber-500 dark:data-[selected=true]:bg-amber-900 dark:data-[status=active]:border-active dark:data-[status=empty]:border-empty dark:data-[status=friendly]:border-friendly dark:data-[status=hostile]:border-hostile dark:data-[status=unscanned]:border-unscanned"
+        :class="{ 'w-[180px]': usesTreeStyle }"
         @dblclick="open = true"
         @drag.prevent
     >
@@ -107,7 +135,7 @@ function handleSubmit() {
             <SolarsystemClass :solarsystem_class="resolvedSolarsystem.class" />
             <Popover :open="open" @update:open="(value) => open && (open = value)">
                 <PopoverAnchor>
-                    <SolarsystemName :map_solarsystem="map_solarsystem" />
+                    <SolarsystemName :map_solarsystem="map_solarsystem" :truncate="usesTreeStyle" />
                 </PopoverAnchor>
                 <PopoverContent>
                     <form @submit.prevent="handleSubmit" class="grid gap-2">
