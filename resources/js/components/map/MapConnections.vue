@@ -14,10 +14,15 @@ import {
 } from '@/composables/map';
 import type { Coordinates, TProcessedConnection } from '@/composables/map/types';
 import { TMapConnection } from '@/pages/maps';
-import { useEventListener } from '@vueuse/core';
+import { useElementSize, useEventListener } from '@vueuse/core';
 import { computed, ref, useTemplateRef } from 'vue';
 
 const container = useTemplateRef('container');
+
+// Drive the SVG viewBox from a reactive size: reading container.clientWidth/Height in the
+// template doesn't re-evaluate on resize, so the drawing would otherwise keep a stale box
+// when the window (and the canvas) resizes.
+const { width: viewBoxWidth, height: viewBoxHeight } = useElementSize(container);
 
 const connections = useMapConnections();
 
@@ -40,17 +45,24 @@ function nodeBox(anchor: Coordinates, id: number): NodeBox | null {
 
 type Endpoints = { from: Coordinates; to: Coordinates; fromNormal: Coordinates; toNormal: Coordinates };
 
-// Only attach to the top/bottom edges once a node is this many times further away
-// vertically than horizontally — i.e. almost directly above or below. Otherwise the
-// wide left/right edges are used.
-const VERTICAL_EDGE_RATIO = 2.5;
-
-/** Connects the centre of each box's facing edge, leaving perpendicular to it. */
+/**
+ * Connects the centre of each box's facing edge, leaving perpendicular to it.
+ *
+ * Prefer the left/right edges whenever the boxes are separated horizontally — then the
+ * smoothstep drops its long vertical run through the clear lane between the columns
+ * (down, then right into the node) instead of routing down-over-down with the second
+ * vertical run cutting straight through the column of stacked siblings. Top/bottom
+ * edges are only used when the boxes share a column, so there is no horizontal lane.
+ */
 function edgeCenterConnection(source: NodeBox, target: NodeBox): Endpoints {
     const dx = target.centerX - source.centerX;
     const dy = target.centerY - source.centerY;
 
-    if (Math.abs(dy) <= Math.abs(dx) * VERTICAL_EDGE_RATIO) {
+    const separatedX = target.minX > source.maxX || source.minX > target.maxX;
+    const separatedY = target.minY > source.maxY || source.minY > target.maxY;
+    const useHorizontal = separatedX || (!separatedY && Math.abs(dx) >= Math.abs(dy));
+
+    if (useHorizontal) {
         const rightward = dx >= 0;
         return {
             from: { x: rightward ? source.maxX : source.minX, y: source.centerY },
@@ -195,11 +207,16 @@ const drawnConnections = computed<RenderedConnection[]>(() => {
     for (const group of fans.values()) {
         if (group.length < 2) continue;
         const horizontal = group[0].fromNormal.x !== 0;
+        // Keep the whole fan inside the lane between the two columns: when there are more
+        // connections than BEND_SPACING would fit in the gap, shrink the spacing so the
+        // outermost runs still clear the neighbouring nodes instead of cutting through them.
+        const gap = Math.min(...group.map((item) => Math.abs(horizontal ? item.to.x - item.from.x : item.to.y - item.from.y)));
+        const spacing = Math.min(BEND_SPACING * scale.value, (gap * 0.8) / (group.length - 1));
         // Farthest target bends closest to the node; ties (above vs below) split by side.
         group.sort((a, b) => b.distance - a.distance || a.signed - b.signed);
         group.forEach((item, i) => {
             const base = horizontal ? (item.from.x + item.to.x) / 2 : (item.from.y + item.to.y) / 2;
-            item.bend = base + (i - (group.length - 1) / 2) * BEND_SPACING * scale.value;
+            item.bend = base + (i - (group.length - 1) / 2) * spacing;
         });
     }
 
@@ -271,11 +288,7 @@ useEventListener('pointerup', handleDragEnd);
 
 <template>
     <div class="" ref="container" @pointerdown="handleDragStart" @pointermove="handleDragMove">
-        <svg
-            class="h-full w-full text-neutral-700"
-            xmlns="http://www.w3.org/2000/svg"
-            :viewBox="`0 0 ${container?.clientWidth ?? 0} ${container?.clientHeight ?? 0}`"
-        >
+        <svg class="h-full w-full text-neutral-700" xmlns="http://www.w3.org/2000/svg" :viewBox="`0 0 ${viewBoxWidth} ${viewBoxHeight}`">
             <MapConnection
                 v-for="{ connection, from, to, fromNormal, toNormal, bend, variant } in drawnConnections"
                 :key="connection.id"
