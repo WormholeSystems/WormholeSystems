@@ -1,4 +1,4 @@
-import { applyScale, getConnectionWithSourceAndTarget, sortByAlias, sortByClass } from '@/composables/map';
+import { applyScale, compareSystems, getConnectionWithSourceAndTarget } from '@/composables/map';
 import { TLayout } from '@/composables/useLayout';
 import { TMap } from '@/pages/maps';
 import { TMapConfig } from '@/types/map';
@@ -82,7 +82,11 @@ function toTreeInput(map: TMap) {
             const systemA = systemsById.get(a);
             const systemB = systemsById.get(b);
             if (!systemA || !systemB) return 0;
-            return sortByAlias(systemA, systemB) || sortByClass(systemA, systemB);
+            // The home system always sorts to the top of its level (normally the roots).
+            const aHome = systemA.solarsystem_id === map.home_solarsystem_id;
+            const bHome = systemB.solarsystem_id === map.home_solarsystem_id;
+            if (aHome !== bHome) return aHome ? -1 : 1;
+            return compareSystems(systemA, systemB);
         },
     };
 }
