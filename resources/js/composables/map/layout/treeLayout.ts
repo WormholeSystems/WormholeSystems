@@ -46,7 +46,9 @@ export function computeTreeLayout(input: TreeLayoutInput, options: TreeLayoutOpt
     // levelGap is wide enough that a connection's midpoint (where the mass /
     // ship-size badges sit) clears the fixed-width nodes, which paint over the SVG.
     const levelGap = snap(options.levelGap ?? 320);
-    const siblingGap = snap(options.siblingGap ?? 80);
+    // Sized so plain 40px nodes keep a small gap and 60px pilot rows still don't
+    // overlap; tighter than this starts overlapping systems that have online pilots.
+    const siblingGap = snap(options.siblingGap ?? 60);
     const margin = snap(options.margin ?? 80);
     const treeGap = options.treeGap ?? 2;
 
