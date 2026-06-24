@@ -1,3 +1,4 @@
+export * from './useAddConnection';
 export * from './useConnections';
 export * from './useCreateMap';
 export * from './useDragging';
@@ -14,3 +15,4 @@ export * from './usePilotsInMapSolarsystem';
 export * from './useSelection';
 export * from './useSignatures';
 export * from './useSolarsystems';
+export * from './useSolarsystemSearch';
