@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import MapAddConnectionDialog from '@/components/map/MapAddConnectionDialog.vue';
 import MapConnectionContextMenu from '@/components/map/MapConnectionContextMenu.vue';
 import MapConnectionDetails from '@/components/map/MapConnectionDetails.vue';
 import MapConnections from '@/components/map/MapConnections.vue';
@@ -255,6 +256,7 @@ function onOpenChange(open: boolean) {
         />
         <MapConnectionDetails :connection="selected_connection" />
     </Popover>
+    <MapAddConnectionDialog />
 </template>
 
 <style scoped>

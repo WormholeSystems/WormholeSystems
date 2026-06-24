@@ -12,7 +12,7 @@ import {
     ContextMenuSubTrigger,
     ContextMenuTrigger,
 } from '@/components/ui/context-menu';
-import { deleteMapSolarsystem, updateMapSolarsystem } from '@/composables/map';
+import { deleteMapSolarsystem, updateMapSolarsystem, useAddConnection } from '@/composables/map';
 import { useHomeSystem } from '@/composables/useHomeSystem';
 import { useNavigationSystems } from '@/composables/useNavigationSystems';
 import usePermission from '@/composables/usePermission';
@@ -22,7 +22,7 @@ import { useWaypoint } from '@/composables/useWaypoint';
 import { isWormholeClass } from '@/const/solarsystemClasses';
 import { TMapSolarsystem } from '@/pages/maps';
 import { TMapSolarsystemStatus } from '@/types/models';
-import { Circle, Compass, ExternalLink, Flag, Globe, Home, Map, MapPin, Navigation, Pin, Route, Trash2, Users } from 'lucide-vue-next';
+import { Circle, Compass, ExternalLink, Flag, Globe, Home, Map, MapPin, Navigation, Pin, Route, Trash2, Users, Waypoints } from 'lucide-vue-next';
 import type { AcceptableValue } from 'reka-ui';
 import { computed } from 'vue';
 
@@ -43,6 +43,12 @@ const { isRally, toggleRallyPoint } = useRallyPoint(() => map_solarsystem.solars
 const { setWaypoint, setWaypointAll } = useWaypoint();
 
 const { setFromSystem, setToSystem } = useNavigationSystems();
+
+const { openAddConnection } = useAddConnection();
+
+function handleAddConnection() {
+    openAddConnection(map_solarsystem);
+}
 
 function handleTogglePin() {
     updateMapSolarsystem(map_solarsystem, { pinned: !map_solarsystem.pinned });
@@ -72,6 +78,10 @@ const options: TMapSolarsystemStatus[] = ['unknown', 'friendly', 'hostile', 'act
             <ContextMenuItem @select="handleTogglePin" v-if="can_write">
                 <Pin class="size-4" />
                 {{ map_solarsystem.pinned ? 'Unpin' : 'Pin' }}
+            </ContextMenuItem>
+            <ContextMenuItem @select="handleAddConnection" v-if="can_write">
+                <Waypoints class="size-4" />
+                Add connection
             </ContextMenuItem>
             <ContextMenuSub v-if="can_write">
                 <ContextMenuSubTrigger>

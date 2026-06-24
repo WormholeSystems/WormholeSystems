@@ -2,58 +2,54 @@
 import SolarsystemSearchResult from '@/components/solarsystem/SolarsystemSearchResult.vue';
 import { Combobox, ComboboxAnchor, ComboboxEmpty, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxList } from '@/components/ui/combobox';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { createMapSolarsystem } from '@/composables/map';
+import { createMapSolarsystem, useAddConnection, useSolarsystemSearch } from '@/composables/map';
 import { useShowMap } from '@/composables/useShowMap';
-import { useSolarsystemAliases } from '@/composables/useSolarsystemAliases';
-import { useStaticData } from '@/composables/useStaticData';
 import { TStaticSolarsystem } from '@/types/static-data';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
+
+const { origin, closeAddConnection } = useAddConnection();
 
 const search = ref('');
 
 const page = useShowMap();
-const { staticData, loadStaticData } = useStaticData();
-const { getAlias } = useSolarsystemAliases(() => page.props.map.map_solarsystems);
+const { new_solarsystems, existing_solarsystems, getAlias } = useSolarsystemSearch(search, () => page.props.map.map_solarsystems);
 
-void loadStaticData();
+const isOpen = computed({
+    get: () => origin.value !== null,
+    set: (value: boolean) => {
+        if (!value) {
+            closeAddConnection();
+        }
+    },
+});
 
-const adding = ref(false);
+// Start each open with a clean query.
+watch(origin, (value) => {
+    if (value) {
+        search.value = '';
+    }
+});
 
-const filteredSolarsystems = computed(() => {
-    const query = search.value.trim().toLowerCase();
-    if (!query) {
-        return [] as TStaticSolarsystem[];
+const originName = computed(() => origin.value?.alias || origin.value?.solarsystem?.name || 'this system');
+
+// Works for both groups: a new system is created and linked, an existing one is just
+// linked (the backend finds it in place without moving it and skips a duplicate link).
+function handleSolarsystemSelect(solarsystem: TStaticSolarsystem) {
+    if (!origin.value) {
+        return;
     }
 
-    const solarsystems = staticData.value?.solarsystems ?? [];
-
-    return solarsystems.filter((solarsystem) => solarsystem.name.toLowerCase().includes(query)).slice(0, 25);
-});
-
-const new_solarsystems = computed(() => {
-    return filteredSolarsystems.value.filter(
-        (solarsystem) => !page.props.map.map_solarsystems?.some((map_solarsystem) => map_solarsystem.solarsystem_id === solarsystem.id),
-    );
-});
-
-const existing_solarsystems = computed(() => {
-    return filteredSolarsystems.value.filter((solarsystem) =>
-        page.props.map.map_solarsystems?.some((map_solarsystem) => map_solarsystem.solarsystem_id === solarsystem.id),
-    );
-});
-
-function handleSolarsystemSelect(solarsystem: TStaticSolarsystem) {
-    createMapSolarsystem(solarsystem.id);
+    createMapSolarsystem(solarsystem.id, null, origin.value.id);
+    closeAddConnection();
 }
 </script>
 
 <template>
-    <Dialog v-model:open="adding">
-        <slot />
+    <Dialog v-model:open="isOpen">
         <DialogContent>
             <DialogHeader>
-                <DialogTitle> Add Solarsystem</DialogTitle>
-                <DialogDescription> Add a solarsystem to the map;</DialogDescription>
+                <DialogTitle> Add connection</DialogTitle>
+                <DialogDescription> Search for a system to connect to {{ originName }}.</DialogDescription>
             </DialogHeader>
             <Combobox class="rounded-lg border bg-neutral-900">
                 <ComboboxAnchor>
@@ -62,7 +58,7 @@ function handleSolarsystemSelect(solarsystem: TStaticSolarsystem) {
                 <ComboboxList>
                     <ComboboxEmpty> No results found</ComboboxEmpty>
                     <ComboboxGroup
-                        heading="Search Results"
+                        heading="New systems"
                         v-if="new_solarsystems.length > 0"
                         class="grid grid-cols-[auto_1fr_1fr_auto] items-center gap-x-2"
                     >
@@ -77,7 +73,7 @@ function handleSolarsystemSelect(solarsystem: TStaticSolarsystem) {
                         </ComboboxItem>
                     </ComboboxGroup>
                     <ComboboxGroup
-                        heading="Already in Map"
+                        heading="Already on the map"
                         v-if="existing_solarsystems.length > 0"
                         class="grid grid-cols-[auto_1fr_1fr_auto] items-center gap-x-2"
                     >
@@ -85,6 +81,7 @@ function handleSolarsystemSelect(solarsystem: TStaticSolarsystem) {
                             v-for="solarsystem in existing_solarsystems"
                             :key="solarsystem.id"
                             :value="solarsystem.name"
+                            @select.prevent="() => handleSolarsystemSelect(solarsystem)"
                             class="col-span-full grid grid-cols-subgrid"
                         >
                             <SolarsystemSearchResult :solarsystem="solarsystem" :alias="getAlias(solarsystem.id)" />

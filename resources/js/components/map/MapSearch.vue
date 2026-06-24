@@ -1,49 +1,21 @@
 <script setup lang="ts">
 import SolarsystemSearchResult from '@/components/solarsystem/SolarsystemSearchResult.vue';
 import { Combobox, ComboboxAnchor, ComboboxEmpty, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxList } from '@/components/ui/combobox';
-import { createMapSolarsystem } from '@/composables/map';
-import { useSolarsystemAliases } from '@/composables/useSolarsystemAliases';
-import { useStaticData } from '@/composables/useStaticData';
+import { createMapSolarsystem, useSolarsystemSearch } from '@/composables/map';
 import type { TMap } from '@/pages/maps';
 import type { TStaticSolarsystem } from '@/types/static-data';
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 
 const { map } = defineProps<{
     map: TMap;
 }>();
 
 const search = ref('');
-const { staticData, loadStaticData } = useStaticData();
-const { getAlias } = useSolarsystemAliases(() => map.map_solarsystems);
-
-void loadStaticData();
+const { new_solarsystems, existing_solarsystems, getAlias } = useSolarsystemSearch(search, () => map.map_solarsystems);
 
 function handleSolarsystemSelect(solarsystem: TStaticSolarsystem) {
     createMapSolarsystem(solarsystem.id);
 }
-
-const filteredSolarsystems = computed(() => {
-    const query = search.value.trim().toLowerCase();
-    if (!query) {
-        return [] as TStaticSolarsystem[];
-    }
-
-    const solarsystems = staticData.value?.solarsystems ?? [];
-
-    return solarsystems.filter((solarsystem) => solarsystem.name.toLowerCase().includes(query)).slice(0, 25);
-});
-
-const new_solarsystems = computed(() => {
-    return filteredSolarsystems.value.filter((solarsystem) => {
-        return !map.map_solarsystems?.some((map_solarsystem) => map_solarsystem.solarsystem_id === solarsystem.id);
-    });
-});
-
-const existing_solarsystems = computed(() => {
-    return filteredSolarsystems.value.filter((solarsystem) => {
-        return map.map_solarsystems?.some((map_solarsystem) => map_solarsystem.solarsystem_id === solarsystem.id);
-    });
-});
 </script>
 
 <template>
