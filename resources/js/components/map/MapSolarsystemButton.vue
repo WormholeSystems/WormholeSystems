@@ -134,7 +134,7 @@ function handleSubmit() {
         <div class="row-start-1 grid grid-cols-[auto_1fr_auto] items-center justify-center gap-x-1 px-2">
             <SolarsystemClass :solarsystem_class="resolvedSolarsystem.class" />
             <Popover :open="open" @update:open="(value) => open && (open = value)">
-                <PopoverAnchor>
+                <PopoverAnchor class="col-start-2 row-start-1 min-w-0">
                     <SolarsystemName :map_solarsystem="map_solarsystem" :truncate="usesTreeStyle" />
                 </PopoverAnchor>
                 <PopoverContent>
