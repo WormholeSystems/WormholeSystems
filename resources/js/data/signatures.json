@@ -136,7 +136,7 @@
             "category_name": "Wormhole",
             "target_class": "5",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "h", "l", "n", "p"]
+            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13", "h", "l", "n", "p"]
         },
         {
             "id": 182,
@@ -246,7 +246,7 @@
             "category_name": "Wormhole",
             "target_class": "h",
             "extra": null,
-            "spawn_areas": ["3", "13"]
+            "spawn_areas": ["3", "4", "13"]
         },
         {
             "id": 171,
@@ -326,7 +326,7 @@
             "category_name": "Wormhole",
             "target_class": "6",
             "extra": null,
-            "spawn_areas": ["1", "2", "3", "4", "5", "6", "h", "l", "n", "p"]
+            "spawn_areas": ["1", "2", "3", "4", "5", "6", "13", "h", "l", "n", "p"]
         },
         {
             "id": 229,
@@ -526,7 +526,7 @@
             "category_name": "Wormhole",
             "target_class": "n",
             "extra": null,
-            "spawn_areas": ["3", "13"]
+            "spawn_areas": ["3", "4", "5", "6", "13"]
         },
         {
             "id": 174,
@@ -896,7 +896,7 @@
             "category_name": "Wormhole",
             "target_class": "l",
             "extra": null,
-            "spawn_areas": ["3", "13"]
+            "spawn_areas": ["3", "4", "5", "13"]
         },
         {
             "id": 248,
