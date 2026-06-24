@@ -67,7 +67,7 @@ const {
     handleConnectionContextMenu,
     handleConnectionClick,
     connection_popover_open,
-    connection_popover_position,
+    connection_popover_reference,
 } = useConnectionInteraction();
 
 const context_menu_type = computed(() => (selected_connection.value ? 'connection' : 'map'));
@@ -247,13 +247,7 @@ function onOpenChange(open: boolean) {
         <MapOptions :config />
     </div>
     <Popover v-model:open="connection_popover_open" :key="selected_connection?.id" v-if="selected_connection">
-        <PopoverAnchor
-            :style="{
-                position: 'absolute',
-                left: connection_popover_position?.x + 'px',
-                top: connection_popover_position?.y + 'px',
-            }"
-        />
+        <PopoverAnchor :reference="connection_popover_reference" />
         <MapConnectionDetails :connection="selected_connection" />
     </Popover>
     <MapAddConnectionDialog />
