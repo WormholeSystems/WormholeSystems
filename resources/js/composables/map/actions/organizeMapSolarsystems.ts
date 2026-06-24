@@ -65,6 +65,7 @@ export function organizeMapSolarsystems(spacing: number = 1) {
             preserveScroll: true,
             onSuccess: () => {
                 mapState.selection = null;
+                mapState.selected_ids = [];
             },
             only: ['map'],
         },

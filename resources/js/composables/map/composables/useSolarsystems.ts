@@ -13,6 +13,7 @@ export function useMapSolarsystems() {
             if (system_state?.pinned) return;
             system_state.position = { x, y };
             mapState.selection = null;
+            mapState.selected_ids = [];
             return;
         }
 
