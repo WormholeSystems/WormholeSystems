@@ -8,6 +8,7 @@ export const mapState = reactive<TMapState>({
     map_solarsystems: [],
     map_connections: [],
     selection: null,
+    selected_ids: [],
     config: {
         max_size: {
             x: 4000,
@@ -22,18 +23,32 @@ export const mapState = reactive<TMapState>({
 export const map_solarsystems = computed(() => mapState.map_solarsystems);
 
 /**
- * Whether a system falls inside the current marquee box. Derived from interaction
- * state rather than stored on the system, so the selection can change without
- * rebuilding the system array. Positions and the marquee are both in scaled pixels.
+ * Whether a system is part of the current selection. The selected set is a sticky
+ * list of ids (committed from the marquee) rather than a live box test, so dragging
+ * the systems out of the box doesn't deselect them mid-drag.
  */
-export function isSystemSelected(system: Pick<TMapSolarsystem, 'position'>): boolean {
+export function isSystemSelected(system: Pick<TMapSolarsystem, 'id'>): boolean {
+    return mapState.selected_ids.includes(system.id);
+}
+
+/**
+ * Commit the systems currently inside the marquee box to the selected set. Called as
+ * the box is drawn, so the highlight tracks the marquee live. Positions and the
+ * marquee are both in scaled pixels.
+ */
+export function selectSystemsInBox(): void {
     const box = mapState.selection;
-    if (!box?.end || !system.position) return false;
+    if (!box?.end) {
+        mapState.selected_ids = [];
+        return;
+    }
     const minX = Math.min(box.start.x, box.end.x);
     const maxX = Math.max(box.start.x, box.end.x);
     const minY = Math.min(box.start.y, box.end.y);
     const maxY = Math.max(box.start.y, box.end.y);
-    return system.position.x >= minX && system.position.x <= maxX && system.position.y >= minY && system.position.y <= maxY;
+    mapState.selected_ids = map_solarsystems.value
+        .filter((s) => s.position && s.position.x >= minX && s.position.x <= maxX && s.position.y >= minY && s.position.y <= maxY)
+        .map((s) => s.id);
 }
 
 /** Whether a system is the currently hovered one. */

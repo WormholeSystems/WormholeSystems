@@ -15,6 +15,7 @@ export type TMapState = {
         start: Coordinates;
         end: Coordinates | null;
     } | null;
+    selected_ids: number[];
     config: TMapConfig;
     hovered_solarsystem_id: number | null;
     scale: number;
