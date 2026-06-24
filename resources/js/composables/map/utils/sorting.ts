@@ -19,3 +19,12 @@ export function sortByRegion(a: TMapSolarsystem, b: TMapSolarsystem): number {
 export function sortByName(a: TMapSolarsystem, b: TMapSolarsystem): number {
     return a.solarsystem?.name.localeCompare(b.solarsystem?.name ?? '') || 0;
 }
+
+/**
+ * The canonical system ordering: alias first, then class, then region, then name.
+ * Shared by the organize-selection action and the tree layout's sibling order so the
+ * two stay consistent.
+ */
+export function compareSystems(a: TMapSolarsystem, b: TMapSolarsystem): number {
+    return sortByAlias(a, b) || sortByClass(a, b) || sortByRegion(a, b) || sortByName(a, b);
+}

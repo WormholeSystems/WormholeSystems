@@ -1,7 +1,7 @@
 import MapSelection from '@/routes/map-selection';
 import { router } from '@inertiajs/vue3';
 import { mapState, map_solarsystems_selected } from '../state';
-import { item_height, sortByAlias, sortByClass, sortByName, sortByRegion } from '../utils';
+import { compareSystems, item_height } from '../utils';
 
 function calculateSortedPositions(sorted_ids: number[]) {
     const sorted_positions = map_solarsystems_selected.value
@@ -37,12 +37,7 @@ export function organizeMapSolarsystems(spacing: number = 1) {
         { x: Infinity, y: Infinity },
     );
 
-    const sorted_ids = map_solarsystems_selected.value
-        .toSorted(sortByName)
-        .toSorted(sortByRegion)
-        .toSorted(sortByClass)
-        .toSorted(sortByAlias)
-        .map((s) => s.id);
+    const sorted_ids = map_solarsystems_selected.value.toSorted(compareSystems).map((s) => s.id);
 
     const sorted_positions = calculateSortedPositions(sorted_ids).map((s, index) => {
         const position_x = first_position.x;
