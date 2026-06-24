@@ -3,6 +3,22 @@ import { Coordinates } from '../types';
 
 export const item_height = 40;
 
+/**
+ * Convert an on-screen (scaled-pixel) length back to stored/base units. Positions
+ * live in scaled space for rendering; this is the single boundary where they cross
+ * back to the base units the server persists.
+ */
+export function toBaseUnits(scaledValue: number): number {
+    return scaledValue / mapState.scale;
+}
+
+/**
+ * Where a node's connection anchor (its stored position) sits relative to the node's
+ * top-left, in base units. Nodes are rendered translated by this much so the anchor
+ * lands at the right spot; connection routing uses it to reconstruct the node box.
+ */
+export const item_anchor_offset = { x: 40, y: 20 } as const;
+
 export function getFreePosition(): Coordinates {
     const map_width = mapState.config.max_size.x;
     const map_height = mapState.config.max_size.y;

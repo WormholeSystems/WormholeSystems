@@ -46,6 +46,13 @@ final class StoreMapSolarsystemRequest extends FormRequest
             'position_y' => ['required', Rule::numeric()->min($grid_size)->max($max_size_y - $grid_size)],
             'status' => ['nullable', 'sometimes', Rule::enum(MapSolarsystemStatus::class)],
             'pinned' => ['boolean'],
+            // Optional origin to link the new system back to; must live on the same map.
+            'connect_to_map_solarsystem_id' => [
+                'nullable',
+                'sometimes',
+                'integer',
+                Rule::exists('map_solarsystems', 'id')->where('map_id', $this->input('map_id')),
+            ],
         ];
     }
 }

@@ -1,3 +1,4 @@
+export * from './useAddConnection';
 export * from './useConnections';
 export * from './useCreateMap';
 export * from './useDragging';
@@ -7,8 +8,11 @@ export * from './useMapMouse';
 export * from './useMapPanning';
 export * from './useMapScale';
 export * from './useMapScrollbars';
+export * from './useMapViewMode';
 export * from './useNewConnection';
+export * from './useNodeSizes';
 export * from './usePilotsInMapSolarsystem';
 export * from './useSelection';
 export * from './useSignatures';
 export * from './useSolarsystems';
+export * from './useSolarsystemSearch';

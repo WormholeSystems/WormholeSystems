@@ -4,7 +4,12 @@ import { Position } from '@vueuse/core';
 import { mapState } from '../state';
 import { getFreePosition } from '../utils';
 
-export function createMapSolarsystem(solarsystem_id: number, position: Position | null = null) {
+/**
+ * Adds a system to the map. When `connectToMapSolarsystemId` is given, the backend also
+ * links the new system to it in the same request (the "Add connection" flow), so the
+ * frontend never needs the new node's id.
+ */
+export function createMapSolarsystem(solarsystem_id: number, position: Position | null = null, connectToMapSolarsystemId: number | null = null) {
     position = position ?? getFreePosition();
     return router.post(
         MapSolarsystems.store().url,
@@ -13,6 +18,7 @@ export function createMapSolarsystem(solarsystem_id: number, position: Position 
             solarsystem_id,
             position_x: position.x,
             position_y: position.y,
+            ...(connectToMapSolarsystemId != null ? { connect_to_map_solarsystem_id: connectToMapSolarsystemId } : {}),
         },
         {
             preserveState: true,
