@@ -1,5 +1,4 @@
 import {
-    createMapSolarsystem,
     createTracking,
     formatBookmarkName,
     getSignatureIdShort,
@@ -15,7 +14,7 @@ import { useShowMap } from '@/composables/useShowMap';
 import { useStaticData } from '@/composables/useStaticData';
 import { useTrackingSystems } from '@/composables/useTrackingSystems';
 import { TLifetimeStatus, TMassStatus, TSignature } from '@/types/models';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
 
 export function useTracking() {
@@ -81,12 +80,6 @@ export function useTracking() {
         },
     );
 
-    onMounted(() => {
-        if (!map_user_settings.value.is_tracking) return;
-
-        addCurrentSolarsystemIfNotOnMap();
-    });
-
     function handleSolarsystemJump(old_solarsystem_id: number | null, new_solarsystem_id: number) {
         if (isIgnored(new_solarsystem_id)) return;
         const old_map_solarsystem = map_solarsystems.value.find((s) => s.solarsystem_id === old_solarsystem_id);
@@ -131,21 +124,6 @@ export function useTracking() {
         updateMapUserSettings(page.props.map.slug, {
             is_tracking: !map_user_settings.value.is_tracking,
         });
-    }
-
-    function addCurrentSolarsystemIfNotOnMap() {
-        const active_solarsystem_id = character.value?.status?.solarsystem_id;
-        if (!active_solarsystem_id) return;
-
-        if (isIgnored(active_solarsystem_id)) return;
-
-        if (isSolarsystemInMap(active_solarsystem_id)) return;
-
-        createMapSolarsystem(active_solarsystem_id);
-    }
-
-    function isSolarsystemInMap(solarsystem_id: number): boolean {
-        return map_solarsystems.value.some((s) => s.solarsystem_id === solarsystem_id);
     }
 
     function handleSelectSignature(selection: {
