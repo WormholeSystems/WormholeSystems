@@ -27,6 +27,8 @@ export type TreeLayoutOptions = {
     marginX?: number;
     /** Top padding above the first row, in base units. */
     marginY?: number;
+    /** Extra y-gap where two separate clusters / pinned chains meet, in base units. */
+    clusterGap?: number;
 };
 
 /**
@@ -53,6 +55,10 @@ export function computeTreeLayout(input: TreeLayoutInput, options: TreeLayoutOpt
     // the first row sits close to the top edge.
     const marginX = snap(options.marginX ?? 60);
     const marginY = snap(options.marginY ?? 40);
+    // Half a row of extra space between distinct clusters / pinned chains so they read apart
+    // without drifting far. Only applied at the (rare) cluster boundary, so it needn't snap
+    // to the grid itself — the final positions still do.
+    const clusterGap = options.clusterGap ?? siblingGap / 2;
 
     const adjacency = new Map<number, number[]>();
     for (const id of input.nodeIds) {
@@ -75,6 +81,8 @@ export function computeTreeLayout(input: TreeLayoutInput, options: TreeLayoutOpt
     const depthOf = new Map<number, number>();
     const childrenOf = new Map<number, number[]>();
     const parentOf = new Map<number, number>();
+    // The cluster (seed root) each node belongs to, used to widen the gap between clusters.
+    const rootOf = new Map<number, number>();
     for (const id of input.nodeIds) {
         childrenOf.set(id, []);
     }
@@ -93,6 +101,7 @@ export function computeTreeLayout(input: TreeLayoutInput, options: TreeLayoutOpt
                 depthOf.set(neighbour, (depthOf.get(current) ?? 0) + 1);
                 childrenOf.get(current)!.push(neighbour);
                 parentOf.set(neighbour, current);
+                rootOf.set(neighbour, rootOf.get(current)!);
                 queue.push(neighbour);
             }
         }
@@ -101,6 +110,7 @@ export function computeTreeLayout(input: TreeLayoutInput, options: TreeLayoutOpt
     const addRoot = (id: number): void => {
         roots.push(id);
         depthOf.set(id, 0);
+        rootOf.set(id, id);
         visited.add(id);
         queue.push(id);
     };
@@ -163,9 +173,22 @@ export function computeTreeLayout(input: TreeLayoutInput, options: TreeLayoutOpt
     // This is what lets the height follow the widest level: a sparse deeper level packs
     // tightly around its parent, and only spreads the level above once it outgrows it.
     const separateLevel = (level: number[]): void => {
+        // Cumulative minimum offset of each node from the first: siblingGap per step, plus a
+        // clusterGap wherever this node starts a different cluster than its predecessor.
+        const offsets: number[] = [];
+        let cumulative = 0;
+        for (let index = 0; index < level.length; index++) {
+            if (index > 0) {
+                cumulative += siblingGap;
+                if (rootOf.get(level[index]) !== rootOf.get(level[index - 1])) {
+                    cumulative += clusterGap;
+                }
+            }
+            offsets.push(cumulative);
+        }
         const blocks: { value: number; weight: number }[] = [];
         level.forEach((node, index) => {
-            let value = y.get(node)! - index * siblingGap;
+            let value = y.get(node)! - offsets[index];
             let weight = 1;
             while (blocks.length > 0 && blocks[blocks.length - 1].value > value) {
                 const previous = blocks.pop()!;
@@ -177,7 +200,7 @@ export function computeTreeLayout(input: TreeLayoutInput, options: TreeLayoutOpt
         let index = 0;
         for (const block of blocks) {
             for (let offset = 0; offset < block.weight; offset++) {
-                y.set(level[index], block.value + index * siblingGap);
+                y.set(level[index], block.value + offsets[index]);
                 index += 1;
             }
         }
