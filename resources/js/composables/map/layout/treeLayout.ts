@@ -23,8 +23,10 @@ export type TreeLayoutOptions = {
     siblingGap?: number;
     /** Snaps positions onto the same grid the manual map uses. */
     gridSize?: number;
-    /** Padding kept around the laid-out content, in base units. */
-    margin?: number;
+    /** Left padding before the first column, in base units. */
+    marginX?: number;
+    /** Top padding above the first row, in base units. */
+    marginY?: number;
 };
 
 /**
@@ -47,7 +49,10 @@ export function computeTreeLayout(input: TreeLayoutInput, options: TreeLayoutOpt
     // Sized so plain 40px nodes keep a small gap and 60px pilot rows still don't
     // overlap; tighter than this starts overlapping systems that have online pilots.
     const siblingGap = snap(options.siblingGap ?? 60);
-    const margin = snap(options.margin ?? 80);
+    // A little left padding, and a top padding one system height shorter than the left so
+    // the first row sits close to the top edge.
+    const marginX = snap(options.marginX ?? 60);
+    const marginY = snap(options.marginY ?? 40);
 
     const adjacency = new Map<number, number[]>();
     for (const id of input.nodeIds) {
@@ -217,7 +222,7 @@ export function computeTreeLayout(input: TreeLayoutInput, options: TreeLayoutOpt
         if (depth === undefined || yValue === undefined) {
             continue;
         }
-        positions.set(id, { x: snap(margin + depth * levelGap), y: snap(margin + yValue - minY) });
+        positions.set(id, { x: snap(marginX + depth * levelGap), y: snap(marginY + yValue - minY) });
     }
 
     return positions;
