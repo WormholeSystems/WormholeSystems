@@ -18,6 +18,7 @@ use App\Http\Controllers\MapBackgroundImageController;
 use App\Http\Controllers\MapConnectionController;
 use App\Http\Controllers\MapController;
 use App\Http\Controllers\MapIgnoredSolarsystemController;
+use App\Http\Controllers\MapLayoutController;
 use App\Http\Controllers\MapPreferencesController;
 use App\Http\Controllers\MapRouteSolarsystemController;
 use App\Http\Controllers\MapRoutingSettingsController;
@@ -130,6 +131,8 @@ Route::middleware('auth')->group(function () {
 
     Route::post('maps/{map}/background-image', [MapBackgroundImageController::class, 'store'])->name('maps.background-image.store');
     Route::delete('maps/{map}/background-image', [MapBackgroundImageController::class, 'destroy'])->name('maps.background-image.destroy');
+
+    Route::put('maps/{map}/layout', [MapLayoutController::class, 'update'])->name('maps.layout.update');
 });
 
 // Public map access (no auth required)
