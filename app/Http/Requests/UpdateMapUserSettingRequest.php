@@ -7,6 +7,7 @@ namespace App\Http\Requests;
 use App\Enums\KillmailFilter;
 use App\Enums\LifetimeStatus;
 use App\Enums\MapBackgroundMode;
+use App\Enums\MapLayout;
 use App\Enums\MassStatus;
 use App\Enums\RemovableCard;
 use App\Enums\RoutePreference;
@@ -60,6 +61,7 @@ final class UpdateMapUserSettingRequest extends FormRequest
             'show_statics_first' => ['boolean'],
             'is_archived' => ['boolean'],
             'background_image_mode' => ['nullable', 'string', Rule::enum(MapBackgroundMode::class)],
+            'layout_override' => ['nullable', 'sometimes', Rule::enum(MapLayout::class)],
         ];
     }
 }

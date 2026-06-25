@@ -29,7 +29,8 @@ final class UpdateMapLayoutRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'layout' => ['required', Rule::enum(MapLayout::class)],
+            'layout' => ['sometimes', Rule::enum(MapLayout::class)],
+            'allow_layout_override' => ['sometimes', 'boolean'],
         ];
     }
 }

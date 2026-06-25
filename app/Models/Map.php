@@ -158,6 +158,7 @@ final class Map extends Model
         return [
             'is_public' => 'boolean',
             'layout' => MapLayout::class,
+            'allow_layout_override' => 'boolean',
         ];
     }
 }
