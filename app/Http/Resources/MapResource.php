@@ -30,6 +30,7 @@ final class MapResource extends JsonResource
             'home_solarsystem_id' => $this->home_solarsystem_id,
             'rally_solarsystem_id' => $this->rally_solarsystem_id,
             'layout' => $this->layout,
+            'allow_layout_override' => $this->allow_layout_override,
             'map_solarsystems' => $this->mapSolarsystems->toResourceCollection(MapSolarsystemResource::class),
             'map_connections' => $this->mapConnections->toResourceCollection(MapConnectionResource::class),
             'owner' => [

@@ -47,6 +47,7 @@ final class MapUserSettingResource extends JsonResource
                 ? Storage::disk('public')->url($this->background_image_path)
                 : null,
             'background_image_mode' => $this->background_image_mode ?? MapBackgroundMode::Grid,
+            'layout_override' => $this->layout_override,
         ];
     }
 }

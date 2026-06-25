@@ -31,6 +31,7 @@ final readonly class MapSettingsFeature implements ProvidesInertiaProperties
         'show_threat_level' => true,
         'show_statics_first' => true,
         'background_image_mode' => 'grid',
+        'layout_override' => null,
     ];
 
     private MapUserSetting $settings;
