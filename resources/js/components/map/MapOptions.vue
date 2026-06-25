@@ -5,24 +5,16 @@ import MinusIcon from '@/components/icons/MinusIcon.vue';
 import PlusIcon from '@/components/icons/PlusIcon.vue';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { TMapLayoutMode, useMapScale, useMapViewMode } from '@/composables/map';
+import { useMapScale } from '@/composables/map';
 import { updateMapUserSettings } from '@/composables/map/actions/updateMapUserSettings';
 import { useMap } from '@/composables/useMap';
 import { TMapBackgroundMode, useMapBackground } from '@/composables/useMapBackground';
 import { router } from '@inertiajs/vue3';
-import { ImageUp, Loader2, Trash2, Waypoints, Workflow } from 'lucide-vue-next';
-import { ref, useTemplateRef, type Component } from 'vue';
+import { ImageUp, Loader2, Trash2 } from 'lucide-vue-next';
+import { ref, useTemplateRef } from 'vue';
 import { toast } from 'vue-sonner';
 
 const { scale, setScale } = useMapScale();
-
-const { viewMode } = useMapViewMode();
-
-const layoutModes: { value: TMapLayoutMode; icon: Component; label: string }[] = [
-    { value: 'manual', icon: Waypoints, label: 'Free layout' },
-    { value: 'tree', icon: Workflow, label: 'Tree layout' },
-];
 
 const map = useMap();
 
@@ -87,23 +79,6 @@ function onDrop(event: DragEvent) {
 
 <template>
     <div class="absolute right-3 bottom-3 z-30 flex items-center gap-0.5 rounded-full bg-white/60 px-1 dark:bg-neutral-800/60">
-        <Tooltip v-for="mode in layoutModes" :key="mode.value" :delay-duration="300">
-            <TooltipTrigger as-child>
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    class="h-8 w-8 rounded-full"
-                    :class="
-                        viewMode === mode.value ? 'bg-white text-foreground shadow-sm dark:bg-neutral-700' : 'text-neutral-600 dark:text-neutral-400'
-                    "
-                    @click="viewMode = mode.value"
-                >
-                    <component :is="mode.icon" class="size-4" />
-                </Button>
-            </TooltipTrigger>
-            <TooltipContent>{{ mode.label }}</TooltipContent>
-        </Tooltip>
-        <span class="mx-0.5 h-5 w-px bg-neutral-300/70 dark:bg-neutral-600/70" />
         <Popover>
             <PopoverTrigger as-child>
                 <Button variant="ghost" size="icon" class="h-8 w-8 rounded-full text-neutral-600 dark:text-neutral-400" title="Background Image">

@@ -1,12 +1,11 @@
-import { useStorage } from '@vueuse/core';
 import { computed } from 'vue';
+import { mapState } from '../state';
 
 export type TMapLayoutMode = 'manual' | 'tree';
 
-// Module-level singletons so every component (the map, the options pill, …) reads
-// and writes the same persisted value rather than separate, out-of-sync refs.
-const viewMode = useStorage<TMapLayoutMode>('map-view-mode', 'manual');
-const is_tree_layout = computed(() => viewMode.value === 'tree');
+// The layout mode is a per-map setting (managers toggle it; everyone shares it), so it is
+// derived from the live map rather than a per-browser value.
+const is_tree_layout = computed(() => mapState.map?.layout === 'tree');
 
 /**
  * Auto layouts (the tree view) position nodes for you, so manual dragging and the
@@ -17,5 +16,5 @@ const is_tree_layout = computed(() => viewMode.value === 'tree');
 export const is_layout_locked = is_tree_layout;
 
 export function useMapViewMode() {
-    return { viewMode, is_tree_layout };
+    return { is_tree_layout };
 }

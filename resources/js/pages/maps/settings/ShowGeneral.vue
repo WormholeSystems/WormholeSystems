@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import MapLayoutController from '@/actions/App/Http/Controllers/MapLayoutController';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -10,7 +11,7 @@ import SettingsLayout from '@/layouts/SettingsLayout.vue';
 import { TMapSummary } from '@/pages/maps';
 import { destroy, update } from '@/routes/maps';
 import { router, useForm } from '@inertiajs/vue3';
-import { Check, Copy, Globe, Link2, Link2Off } from 'lucide-vue-next';
+import { Check, Copy, Globe, Link2, Link2Off, Waypoints, Workflow, type LucideIcon } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 
 const { map, is_public, share_token } = defineProps<{
@@ -35,6 +36,27 @@ function deleteMap() {
         return;
     }
     router.delete(destroy(map.slug));
+}
+
+const placementOptions: { value: 'manual' | 'tree'; label: string; hint: string; icon: LucideIcon; beta?: boolean }[] = [
+    { value: 'manual', label: 'Custom', hint: 'Place systems anywhere yourself', icon: Waypoints },
+    { value: 'tree', label: 'Automatic', hint: 'Systems arrange into branches from the pinned ones', icon: Workflow, beta: true },
+];
+
+function setPlacement(layout: 'manual' | 'tree') {
+    if (layout === map.layout) {
+        return;
+    }
+
+    router.put(
+        MapLayoutController.update(map.slug).url,
+        { layout },
+        {
+            preserveState: true,
+            preserveScroll: true,
+            only: ['map'],
+        },
+    );
 }
 
 function togglePublic() {
@@ -95,6 +117,47 @@ function copyShareLink() {
                         <small v-if="form.errors.name" class="text-red-500">{{ form.errors.name }}</small>
                         <div class="text-sm text-muted-foreground">The display name for this map</div>
                     </form>
+                </CardContent>
+            </Card>
+
+            <!-- System Placement Section -->
+            <Card>
+                <CardHeader>
+                    <CardTitle class="flex items-center gap-2 text-xl font-semibold">
+                        <Workflow class="size-5" />
+                        System Placement
+                    </CardTitle>
+                    <CardDescription>How systems are positioned for everyone viewing this map</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div class="grid gap-2 sm:grid-cols-2">
+                        <button
+                            v-for="option in placementOptions"
+                            :key="option.value"
+                            type="button"
+                            class="flex items-start gap-3 rounded-lg border p-3 text-left transition-colors"
+                            :class="map.layout === option.value ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/40'"
+                            @click="setPlacement(option.value)"
+                        >
+                            <component
+                                :is="option.icon"
+                                class="size-5 shrink-0"
+                                :class="map.layout === option.value ? 'text-primary' : 'text-muted-foreground'"
+                            />
+                            <span>
+                                <span class="flex items-center gap-1.5 text-sm font-medium">
+                                    {{ option.label }}
+                                    <span
+                                        v-if="option.beta"
+                                        class="rounded-full bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-white uppercase dark:bg-amber-600"
+                                    >
+                                        Beta
+                                    </span>
+                                </span>
+                                <span class="block text-xs text-muted-foreground">{{ option.hint }}</span>
+                            </span>
+                        </button>
+                    </div>
                 </CardContent>
             </Card>
 

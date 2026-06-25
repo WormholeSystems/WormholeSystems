@@ -38,7 +38,7 @@ const { map, config } = defineProps<{
     config: TMapConfig;
 }>();
 
-const { viewMode, is_tree_layout } = useMapViewMode();
+const { is_tree_layout } = useMapViewMode();
 
 const container = useTemplateRef('map-container');
 const scrollable_container = useTemplateRef('scrollable-container');
@@ -50,7 +50,6 @@ useCreateMap(
     () => container.value!,
     () => config,
     layout,
-    () => viewMode.value,
 );
 
 const { map_solarsystems } = useMapSolarsystems();
@@ -242,7 +241,7 @@ function onOpenChange(open: boolean) {
                     Beta
                 </span>
             </TooltipTrigger>
-            <TooltipContent>The tree layout is experimental and still a work in progress.</TooltipContent>
+            <TooltipContent>Automatic placement is experimental and still a work in progress.</TooltipContent>
         </Tooltip>
         <MapOptions :config />
     </div>
