@@ -4,9 +4,12 @@ import RoutePopover from '@/components/autopilot/RoutePopover.vue';
 import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue';
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import SolarsystemEffect from '@/components/solarsystem/SolarsystemEffect.vue';
+import { useMapSolarsystems } from '@/composables/map';
+import { usePath } from '@/composables/usePath';
 import type { TResolvedSolarsystem } from '@/pages/maps';
 import type { TEveScoutConnection } from '@/types/eve-scout';
 import type { TStaticSolarsystem } from '@/types/static-data';
+import { vElementHover } from '@vueuse/components';
 import { computed } from 'vue';
 
 type TEveScoutConnectionWithSystems = TEveScoutConnection & {
@@ -24,6 +27,20 @@ const { connection, specialSystem } = defineProps<{
 const otherSystem = computed(() => {
     return connection.in_system.name === specialSystem ? connection.out_system : connection.in_system;
 });
+
+const { map_solarsystems, setHoveredMapSolarsystem } = useMapSolarsystems();
+const { setPath } = usePath();
+
+const map_solarsystem = computed(() => map_solarsystems.value.find((s) => s.solarsystem_id === otherSystem.value.id));
+
+// Hovering the row highlights the route to the connected system (and the system itself
+// when it is on the map).
+function onHover(hovered: boolean) {
+    if (map_solarsystem.value) {
+        setHoveredMapSolarsystem(map_solarsystem.value.id, hovered);
+    }
+    setPath(hovered ? (connection.route ?? null) : null);
+}
 
 // Get the signature for the special system side
 const specialSignature = computed(() => {
@@ -47,7 +64,10 @@ const remainingHoursFormatted = computed(() => {
 
 <template>
     <DestinationContextMenu :solarsystem_id="otherSystem.id">
-        <div class="col-span-full grid grid-cols-subgrid items-center border-b border-border/30 px-3 py-1.5 hover:bg-muted/30">
+        <div
+            v-element-hover="onHover"
+            class="col-span-full grid grid-cols-subgrid items-center border-b border-border/30 px-3 py-1.5 hover:bg-muted/30"
+        >
             <SolarsystemClass :solarsystem_class="otherSystem.class" class="justify-self-center" />
 
             <span class="truncate text-xs">{{ otherSystem.name }}</span>

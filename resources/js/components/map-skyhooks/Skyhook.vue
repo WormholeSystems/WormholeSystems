@@ -4,6 +4,7 @@ import RoutePopover from '@/components/autopilot/RoutePopover.vue';
 import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMapSolarsystems } from '@/composables/map';
+import { usePath } from '@/composables/usePath';
 import { useStaticSolarsystems } from '@/composables/useStaticSolarsystems';
 import type { TRaidableSkyhook, TResolvedSolarsystem } from '@/pages/maps';
 import { UTCDate } from '@date-fns/utc';
@@ -20,14 +21,17 @@ const { skyhook, jumps, route } = defineProps<{
 
 const { map_solarsystems, setHoveredMapSolarsystem } = useMapSolarsystems();
 const { resolveSolarsystem } = useStaticSolarsystems();
+const { setPath } = usePath();
 
 const map_solarsystem = computed(() => map_solarsystems.value.find((s) => s.solarsystem_id === skyhook.solarsystem_id));
 const staticSolarsystem = computed(() => resolveSolarsystem(skyhook.solarsystem_id));
 
+// Hovering the row highlights both the system and the route to it on the map.
 function onHover(hovered: boolean) {
     if (map_solarsystem.value) {
         setHoveredMapSolarsystem(map_solarsystem.value.id, hovered);
     }
+    setPath(hovered ? route : null);
 }
 
 const now = useNow({ interval: 30_000 });
