@@ -30,6 +30,7 @@ final class MapInfoResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'slug' => $this->slug,
+            'layout' => $this->layout,
             'map_user_setting' => $this->handleUserSetting(),
             'owner' => $this->mapOwner->accessible->toResource(CharacterResource::class),
         ];

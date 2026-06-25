@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\MapLayout;
 use App\Enums\Permission;
 use App\Traits\HasSlug;
 use Carbon\CarbonImmutable;
@@ -156,6 +157,7 @@ final class Map extends Model
     {
         return [
             'is_public' => 'boolean',
+            'layout' => MapLayout::class,
         ];
     }
 }

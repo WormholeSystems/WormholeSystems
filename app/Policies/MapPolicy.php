@@ -75,6 +75,20 @@ final class MapPolicy
         return $permission instanceof Permission && $permission->isAtLeast(Permission::Manager);
     }
 
+    /**
+     * Manager-level map configuration that affects every viewer (e.g. the layout mode).
+     */
+    public function updateSettings(?User $user, Map $map): bool
+    {
+        if (! $user instanceof User) {
+            return false;
+        }
+
+        $permission = $map->getUserPermission($user);
+
+        return $permission instanceof Permission && $permission->isAtLeast(Permission::Manager);
+    }
+
     public function delete(?User $user, Map $map): bool
     {
         if (! $user instanceof User) {
