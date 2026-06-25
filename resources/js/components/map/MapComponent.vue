@@ -13,6 +13,7 @@ import { Popover, PopoverAnchor } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
     deleteSelectedMapSolarsystems,
+    mapState,
     useCreateMap,
     useMapGrid,
     useMapMouse,
@@ -26,12 +27,13 @@ import { useConnectionInteraction } from '@/composables/map/composables/useConne
 import { useMapEvents } from '@/composables/map/composables/useMapEvents';
 import { useLayout } from '@/composables/useLayout';
 import { useMapBackground } from '@/composables/useMapBackground';
+import { useMapUserSettings } from '@/composables/useMapUserSettings';
 import usePermission from '@/composables/usePermission';
 import { useUserEvents } from '@/composables/useUserEvents';
 import { TMap } from '@/pages/maps';
 import { TMapConfig } from '@/types/map';
 import { Position, useMagicKeys, whenever } from '@vueuse/core';
-import { computed, ref, useTemplateRef } from 'vue';
+import { computed, ref, useTemplateRef, watchEffect } from 'vue';
 
 const { map, config } = defineProps<{
     map: TMap;
@@ -39,6 +41,13 @@ const { map, config } = defineProps<{
 }>();
 
 const { is_tree_layout } = useMapViewMode();
+
+// Mirror the viewer's personal layout override into map state so the module-level
+// view-mode singleton (and everything that derives the lock from it) can read it.
+const mapUserSettings = useMapUserSettings();
+watchEffect(() => {
+    mapState.user_layout_override = mapUserSettings.value?.layout_override ?? null;
+});
 
 const container = useTemplateRef('map-container');
 const scrollable_container = useTemplateRef('scrollable-container');
