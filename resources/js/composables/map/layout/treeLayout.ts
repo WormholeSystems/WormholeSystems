@@ -19,10 +19,8 @@ export type TreeLayoutInput = {
 export type TreeLayoutOptions = {
     /** Distance between depth levels (x), in base units. */
     levelGap?: number;
-    /** Distance between siblings (y), in base units. */
+    /** Minimum distance between siblings (y), in base units. */
     siblingGap?: number;
-    /** Empty sibling slots inserted between separate trees of the forest. */
-    treeGap?: number;
     /** Snaps positions onto the same grid the manual map uses. */
     gridSize?: number;
     /** Padding kept around the laid-out content, in base units. */
@@ -50,7 +48,6 @@ export function computeTreeLayout(input: TreeLayoutInput, options: TreeLayoutOpt
     // overlap; tighter than this starts overlapping systems that have online pilots.
     const siblingGap = snap(options.siblingGap ?? 60);
     const margin = snap(options.margin ?? 80);
-    const treeGap = options.treeGap ?? 2;
 
     const adjacency = new Map<number, number[]>();
     for (const id of input.nodeIds) {
@@ -72,6 +69,7 @@ export function computeTreeLayout(input: TreeLayoutInput, options: TreeLayoutOpt
 
     const depthOf = new Map<number, number>();
     const childrenOf = new Map<number, number[]>();
+    const parentOf = new Map<number, number>();
     for (const id of input.nodeIds) {
         childrenOf.set(id, []);
     }
@@ -89,6 +87,7 @@ export function computeTreeLayout(input: TreeLayoutInput, options: TreeLayoutOpt
                 visited.add(neighbour);
                 depthOf.set(neighbour, (depthOf.get(current) ?? 0) + 1);
                 childrenOf.get(current)!.push(neighbour);
+                parentOf.set(neighbour, current);
                 queue.push(neighbour);
             }
         }
@@ -134,37 +133,91 @@ export function computeTreeLayout(input: TreeLayoutInput, options: TreeLayoutOpt
         roots.sort(compare);
     }
 
-    // First walk: give every leaf its own cross-axis slot, every parent the midpoint
-    // of its children. A shared slot counter across roots spreads the trees apart.
-    const slot = new Map<number, number>();
-    let nextLeafSlot = 0;
-    const assignSlots = (node: number): void => {
-        const children = childrenOf.get(node)!;
-        if (children.length === 0) {
-            slot.set(node, nextLeafSlot);
-            nextLeafSlot += 1;
-            return;
+    // Group nodes by depth, ordered by a pre-order walk so each subtree stays contiguous
+    // (which keeps branches from crossing once they are pulled together below).
+    const levels: number[][] = [];
+    const collectLevels = (node: number): void => {
+        const depth = depthOf.get(node)!;
+        (levels[depth] ??= []).push(node);
+        for (const child of childrenOf.get(node)!) {
+            collectLevels(child);
         }
-        for (const child of children) {
-            assignSlots(child);
-        }
-        const first = slot.get(children[0])!;
-        const last = slot.get(children[children.length - 1])!;
-        slot.set(node, (first + last) / 2);
     };
     for (const root of roots) {
-        assignSlots(root);
-        nextLeafSlot += treeGap;
+        collectLevels(root);
+    }
+
+    // Cross-axis (y) coordinate per node, seeded uniformly within each level.
+    const y = new Map<number, number>();
+    for (const level of levels) {
+        level.forEach((node, index) => y.set(node, index * siblingGap));
+    }
+
+    // Place a level's nodes as close to their desired y as possible while keeping at least
+    // siblingGap between neighbours and their order intact (isotonic regression via PAV).
+    // This is what lets the height follow the widest level: a sparse deeper level packs
+    // tightly around its parent, and only spreads the level above once it outgrows it.
+    const separateLevel = (level: number[]): void => {
+        const blocks: { value: number; weight: number }[] = [];
+        level.forEach((node, index) => {
+            let value = y.get(node)! - index * siblingGap;
+            let weight = 1;
+            while (blocks.length > 0 && blocks[blocks.length - 1].value > value) {
+                const previous = blocks.pop()!;
+                value = (previous.value * previous.weight + value * weight) / (previous.weight + weight);
+                weight += previous.weight;
+            }
+            blocks.push({ value, weight });
+        });
+        let index = 0;
+        for (const block of blocks) {
+            for (let offset = 0; offset < block.weight; offset++) {
+                y.set(level[index], block.value + index * siblingGap);
+                index += 1;
+            }
+        }
+    };
+
+    // Alternate pulling children under their parent and parents to their children's centre;
+    // a handful of passes converges for a tree.
+    const PASSES = 6;
+    for (let pass = 0; pass < PASSES; pass++) {
+        for (let depth = 1; depth < levels.length; depth++) {
+            for (const node of levels[depth]) {
+                const parent = parentOf.get(node);
+                if (parent !== undefined) {
+                    y.set(node, y.get(parent)!);
+                }
+            }
+            separateLevel(levels[depth]);
+        }
+        for (let depth = levels.length - 2; depth >= 0; depth--) {
+            for (const node of levels[depth]) {
+                const children = childrenOf.get(node)!;
+                if (children.length > 0) {
+                    y.set(node, children.reduce((total, child) => total + y.get(child)!, 0) / children.length);
+                }
+            }
+            separateLevel(levels[depth]);
+        }
+    }
+
+    let minY = Infinity;
+    for (const value of y.values()) {
+        minY = Math.min(minY, value);
+    }
+    if (!Number.isFinite(minY)) {
+        minY = 0;
     }
 
     const positions = new Map<number, Coordinates>();
     for (const id of input.nodeIds) {
         const depth = depthOf.get(id);
-        const slotValue = slot.get(id);
-        if (depth === undefined || slotValue === undefined) {
+        const yValue = y.get(id);
+        if (depth === undefined || yValue === undefined) {
             continue;
         }
-        positions.set(id, { x: snap(margin + depth * levelGap), y: snap(margin + slotValue * siblingGap) });
+        positions.set(id, { x: snap(margin + depth * levelGap), y: snap(margin + yValue - minY) });
     }
 
     return positions;
