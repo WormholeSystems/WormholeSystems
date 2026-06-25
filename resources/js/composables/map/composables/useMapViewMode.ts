@@ -3,9 +3,19 @@ import { mapState } from '../state';
 
 export type TMapLayoutMode = 'manual' | 'tree';
 
-// The layout mode is a per-map setting (managers toggle it; everyone shares it), so it is
-// derived from the live map rather than a per-browser value.
-const is_tree_layout = computed(() => mapState.map?.layout === 'tree');
+// The map's layout is the shared default a manager sets. When the map allows it, a viewer
+// can override it for themselves (mapState.user_layout_override). The effective mode the
+// rest of the map reacts to is the override when present, otherwise the map default.
+const effective_layout = computed<TMapLayoutMode>(() => {
+    const map = mapState.map;
+    if (!map) return 'manual';
+    if (map.allow_layout_override && mapState.user_layout_override) {
+        return mapState.user_layout_override;
+    }
+    return map.layout;
+});
+
+const is_tree_layout = computed(() => effective_layout.value === 'tree');
 
 /**
  * Auto layouts (the tree view) position nodes for you, so manual dragging and the
@@ -16,5 +26,5 @@ const is_tree_layout = computed(() => mapState.map?.layout === 'tree');
 export const is_layout_locked = is_tree_layout;
 
 export function useMapViewMode() {
-    return { is_tree_layout };
+    return { is_tree_layout, effective_layout };
 }

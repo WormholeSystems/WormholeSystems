@@ -16,6 +16,8 @@ export type TMapState = {
         end: Coordinates | null;
     } | null;
     selected_ids: number[];
+    // The viewer's personal layout override (when the map allows it); null follows the map.
+    user_layout_override: 'manual' | 'tree' | null;
     config: TMapConfig;
     hovered_solarsystem_id: number | null;
     scale: number;

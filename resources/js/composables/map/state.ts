@@ -9,6 +9,7 @@ export const mapState = reactive<TMapState>({
     map_connections: [],
     selection: null,
     selected_ids: [],
+    user_layout_override: null,
     config: {
         max_size: {
             x: 4000,

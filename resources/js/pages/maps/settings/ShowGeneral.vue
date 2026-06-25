@@ -59,6 +59,18 @@ function setPlacement(layout: 'manual' | 'tree') {
     );
 }
 
+function setAllowOverride(allow_layout_override: boolean) {
+    router.put(
+        MapLayoutController.update(map.slug).url,
+        { allow_layout_override },
+        {
+            preserveState: true,
+            preserveScroll: true,
+            only: ['map'],
+        },
+    );
+}
+
 function togglePublic() {
     router.post(
         `/maps/${map.slug}/settings/toggle-public`,
@@ -157,6 +169,17 @@ function copyShareLink() {
                                 <span class="block text-xs text-muted-foreground">{{ option.hint }}</span>
                             </span>
                         </button>
+                    </div>
+
+                    <div class="mt-4 flex items-center justify-between border-t border-border/50 pt-4">
+                        <div>
+                            <h4 class="text-sm font-medium">Let viewers choose their own</h4>
+                            <p class="text-xs text-muted-foreground">
+                                When enabled, anyone can switch their own view between Custom and Automatic. Otherwise the placement above is enforced
+                                for everyone.
+                            </p>
+                        </div>
+                        <Switch :model-value="map.allow_layout_override" @update:modelValue="setAllowOverride" />
                     </div>
                 </CardContent>
             </Card>

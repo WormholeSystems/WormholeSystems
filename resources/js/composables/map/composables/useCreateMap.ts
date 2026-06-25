@@ -1,4 +1,4 @@
-import { applyScale, compareSystems, getConnectionWithSourceAndTarget } from '@/composables/map';
+import { applyScale, compareSystems, getConnectionWithSourceAndTarget, useMapViewMode } from '@/composables/map';
 import { TLayout } from '@/composables/useLayout';
 import { TMap } from '@/pages/maps';
 import { TMapConfig } from '@/types/map';
@@ -13,12 +13,14 @@ export function useCreateMap(
     config: MaybeRefOrGetter<TMapConfig>,
     layout?: MaybeRefOrGetter<TLayout>,
 ) {
+    const { is_tree_layout } = useMapViewMode();
+
     // Base-unit tree positions, recomputed only when the structure changes (systems,
-    // connections, pins, home, the map's layout mode) — not on every hover / selection /
+    // connections, pins, home, the effective layout mode) — not on every hover / selection /
     // zoom, which keep the spanning-forest search out of those hot paths.
     const treeLayout = computed<Map<number, Coordinates> | null>(() => {
         const mapValue = toValue(map);
-        if (!mapValue || mapValue.layout !== 'tree') return null;
+        if (!mapValue || !is_tree_layout.value) return null;
         return computeTreeLayout(toTreeInput(mapValue), { gridSize: toValue(config).grid_size });
     });
 
