@@ -8,7 +8,6 @@ import { useMapSolarsystems } from '@/composables/map';
 import { usePath } from '@/composables/usePath';
 import { TCharacter } from '@/types/models';
 import type { TStaticSolarsystem } from '@/types/static-data';
-import { vElementHover } from '@vueuse/components';
 import { computed } from 'vue';
 
 const { character, static_solarsystem } = defineProps<{
@@ -23,31 +22,19 @@ const map_solarsystem = computed(() => {
     return map_solarsystems.value.find((solarsystem) => solarsystem.solarsystem_id === character.status?.solarsystem_id);
 });
 
+// Hovering the row highlights both the system and the route to it on the map.
 function onHover(hovered: boolean) {
     if (map_solarsystem.value) {
         setHoveredMapSolarsystem(map_solarsystem.value.id, hovered);
     }
-}
-
-function onRouteHover(hovered: boolean) {
-    if (hovered) {
-        setPath(character.route ?? []);
-    } else {
-        setPath(null);
-    }
+    setPath(hovered ? (character.route ?? null) : null);
 }
 </script>
 
 <template>
     <div class="contents">
         <DestinationContextMenu :solarsystem_id="character.status?.solarsystem_id ?? 0">
-            <CharacterView
-                :character="character"
-                :static_solarsystem="static_solarsystem"
-                :alias="map_solarsystem?.alias ?? null"
-                @hover="onHover"
-                @route-hover="onRouteHover"
-            >
+            <CharacterView :character="character" :static_solarsystem="static_solarsystem" :alias="map_solarsystem?.alias ?? null" @hover="onHover">
                 <template #sovereignty>
                     <SolarsystemSovereignty
                         v-if="static_solarsystem"
@@ -62,10 +49,7 @@ function onRouteHover(hovered: boolean) {
                 </template>
                 <template #jumps="{ nextHop, jumpCount, jumpClass }">
                     <RoutePopover :route="character.route">
-                        <button
-                            v-element-hover="onRouteHover"
-                            class="flex min-w-0 cursor-pointer items-center gap-1.5 justify-self-end hover:text-foreground"
-                        >
+                        <button class="flex min-w-0 cursor-pointer items-center gap-1.5 justify-self-end hover:text-foreground">
                             <span v-if="nextHop" class="truncate text-[10px] text-muted-foreground">{{ nextHop.name }}</span>
                             <span v-if="jumpCount !== null" class="shrink-0 font-mono text-xs font-medium" :class="jumpClass">{{ jumpCount }}j</span>
                             <span v-else class="font-mono text-[10px] text-muted-foreground/60">--</span>
