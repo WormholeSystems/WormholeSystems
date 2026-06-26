@@ -32,6 +32,13 @@ final class MapConnectionBuilder extends Builder
         return $this->where('lifetime', '!=', LifetimeStatus::Critical);
     }
 
+    public function isStale(): self
+    {
+        return $this->where('lifetime', LifetimeStatus::Critical)
+            ->whereNotNull('lifetime_updated_at')
+            ->where('lifetime_updated_at', '<=', now()->subHour());
+    }
+
     public function connectsSolarsystemsInMap(int $map_id, int $first_solarsystem_id, int $second_solarsystem_id): self
     {
         return $this->whereRelation('map', 'id', $map_id)

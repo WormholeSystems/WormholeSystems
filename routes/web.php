@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BulkMapConnectionController;
 use App\Http\Controllers\BulkSignatureController;
 use App\Http\Controllers\BulkWaypointController;
 use App\Http\Controllers\DocumentationController;
@@ -84,6 +85,8 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('map-solarsystems', MapSolarsystemController::class)->only(['store', 'update', 'destroy']);
     Route::resource('map-connections', MapConnectionController::class)->only(['store', 'update', 'destroy']);
+    Route::delete('maps/{map}/stale-connections', [BulkMapConnectionController::class, 'destroy'])
+        ->name('maps.stale-connections.destroy');
     Route::put('map-selection', [MapSelectionController::class, 'update'])->name('map-selection.update');
     Route::delete('map-selection', [MapSelectionController::class, 'destroy'])->name('map-selection.destroy');
 
