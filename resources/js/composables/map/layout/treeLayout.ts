@@ -27,8 +27,28 @@ export type TreeLayoutOptions = {
     marginX?: number;
     /** Top padding above the first row, in base units. */
     marginY?: number;
-    /** Extra y-gap where two separate clusters / pinned chains meet, in base units. */
-    clusterGap?: number;
+};
+
+/**
+ * A forest node, linked to its parent and children, plus the scratch fields the
+ * Reingold–Tilford layout mutates. Built once the spanning forest is known.
+ */
+type LayoutNode = {
+    id: number;
+    depth: number;
+    parent: LayoutNode | null;
+    children: LayoutNode[];
+    /** 1-based position among siblings; lets moveSubtree spread a shift across the subtrees between two contours. */
+    siblingIndex: number;
+    prelim: number;
+    mod: number;
+    change: number;
+    shift: number;
+    /** Stitches a shorter subtree's contour into its taller neighbour's. */
+    thread: LayoutNode | null;
+    ancestor: LayoutNode;
+    /** Final cross-axis (y) coordinate, filled by secondWalk. */
+    cross: number;
 };
 
 /**
@@ -55,20 +75,14 @@ export function computeTreeLayout(input: TreeLayoutInput, options: TreeLayoutOpt
     // the first row sits close to the top edge.
     const marginX = snap(options.marginX ?? 60);
     const marginY = snap(options.marginY ?? 40);
-    // Half a row of extra space between distinct clusters / pinned chains so they read apart
-    // without drifting far. Only applied at the (rare) cluster boundary, so it needn't snap
-    // to the grid itself — the final positions still do.
-    const clusterGap = options.clusterGap ?? siblingGap / 2;
 
+    // --- Build the undirected graph of systems. ---
     const adjacency = new Map<number, number[]>();
     for (const id of input.nodeIds) {
         adjacency.set(id, []);
     }
     for (const edge of input.edges) {
-        if (edge.from === edge.to) {
-            continue;
-        }
-        if (!adjacency.has(edge.from) || !adjacency.has(edge.to)) {
+        if (edge.from === edge.to || !adjacency.has(edge.from) || !adjacency.has(edge.to)) {
             continue;
         }
         adjacency.get(edge.from)!.push(edge.to);
@@ -78,18 +92,16 @@ export function computeTreeLayout(input: TreeLayoutInput, options: TreeLayoutOpt
         adjacency.set(id, [...new Set(neighbours)]);
     }
 
+    // --- Carve a spanning forest out of the graph via breadth-first search. ---
     const depthOf = new Map<number, number>();
     const childrenOf = new Map<number, number[]>();
-    const parentOf = new Map<number, number>();
-    // The cluster (seed root) each node belongs to, used to widen the gap between clusters.
-    const rootOf = new Map<number, number>();
     for (const id of input.nodeIds) {
         childrenOf.set(id, []);
     }
     const visited = new Set<number>();
     const roots: number[] = [];
-
     const queue: number[] = [];
+
     const processQueue = (): void => {
         while (queue.length > 0) {
             const current = queue.shift()!;
@@ -98,19 +110,15 @@ export function computeTreeLayout(input: TreeLayoutInput, options: TreeLayoutOpt
                     continue;
                 }
                 visited.add(neighbour);
-                depthOf.set(neighbour, (depthOf.get(current) ?? 0) + 1);
+                depthOf.set(neighbour, depthOf.get(current)! + 1);
                 childrenOf.get(current)!.push(neighbour);
-                parentOf.set(neighbour, current);
-                rootOf.set(neighbour, rootOf.get(current)!);
                 queue.push(neighbour);
             }
         }
     };
-
     const addRoot = (id: number): void => {
         roots.push(id);
         depthOf.set(id, 0);
-        rootOf.set(id, id);
         visited.add(id);
         queue.push(id);
     };
@@ -148,104 +156,190 @@ export function computeTreeLayout(input: TreeLayoutInput, options: TreeLayoutOpt
         roots.sort(compare);
     }
 
-    // Group nodes by depth, ordered by a pre-order walk so each subtree stays contiguous
-    // (which keeps branches from crossing once they are pulled together below).
-    const levels: number[][] = [];
-    const collectLevels = (node: number): void => {
-        const depth = depthOf.get(node)!;
-        (levels[depth] ??= []).push(node);
-        for (const child of childrenOf.get(node)!) {
-            collectLevels(child);
-        }
-    };
-    for (const root of roots) {
-        collectLevels(root);
+    // --- Materialise the forest as linked node records for the layout passes. ---
+    const nodes = new Map<number, LayoutNode>();
+    for (const id of input.nodeIds) {
+        const node: LayoutNode = {
+            id,
+            depth: depthOf.get(id) ?? 0,
+            parent: null,
+            children: [],
+            siblingIndex: 1,
+            prelim: 0,
+            mod: 0,
+            change: 0,
+            shift: 0,
+            thread: null,
+            ancestor: null as unknown as LayoutNode,
+            cross: 0,
+        };
+        node.ancestor = node;
+        nodes.set(id, node);
     }
-
-    // Cross-axis (y) coordinate per node, seeded uniformly within each level.
-    const y = new Map<number, number>();
-    for (const level of levels) {
-        level.forEach((node, index) => y.set(node, index * siblingGap));
-    }
-
-    // Place a level's nodes as close to their desired y as possible while keeping at least
-    // siblingGap between neighbours and their order intact (isotonic regression via PAV).
-    // This is what lets the height follow the widest level: a sparse deeper level packs
-    // tightly around its parent, and only spreads the level above once it outgrows it.
-    const separateLevel = (level: number[]): void => {
-        // Cumulative minimum offset of each node from the first: siblingGap per step, plus a
-        // clusterGap wherever this node starts a different cluster than its predecessor.
-        const offsets: number[] = [];
-        let cumulative = 0;
-        for (let index = 0; index < level.length; index++) {
-            if (index > 0) {
-                cumulative += siblingGap;
-                if (rootOf.get(level[index]) !== rootOf.get(level[index - 1])) {
-                    cumulative += clusterGap;
-                }
-            }
-            offsets.push(cumulative);
-        }
-        const blocks: { value: number; weight: number }[] = [];
-        level.forEach((node, index) => {
-            let value = y.get(node)! - offsets[index];
-            let weight = 1;
-            while (blocks.length > 0 && blocks[blocks.length - 1].value > value) {
-                const previous = blocks.pop()!;
-                value = (previous.value * previous.weight + value * weight) / (previous.weight + weight);
-                weight += previous.weight;
-            }
-            blocks.push({ value, weight });
+    for (const [id, childIds] of childrenOf) {
+        const node = nodes.get(id)!;
+        node.children = childIds.map((childId) => nodes.get(childId)!);
+        node.children.forEach((child, index) => {
+            child.parent = node;
+            child.siblingIndex = index + 1;
         });
-        let index = 0;
-        for (const block of blocks) {
-            for (let offset = 0; offset < block.weight; offset++) {
-                y.set(level[index], block.value + offsets[index]);
-                index += 1;
-            }
+    }
+
+    // --- Cross-axis (y) placement: Reingold–Tilford, Buchheim et al.'s linear formulation. ---
+    // Each subtree is laid out against its siblings' contours, so a tall subtree pushes the next
+    // sibling clear of its whole extent — not just one row. This keeps a node's siblings (e.g.
+    // other pinned roots) out of the band its own children occupy, while sparse subtrees still
+    // nest tightly. siblingGap is the minimum gap kept between adjacent nodes on any level.
+
+    // The node continuing the left / right contour: the first / last child, or — for a leaf — the
+    // threaded node into a neighbour's contour.
+    const nextLeft = (node: LayoutNode): LayoutNode | null => node.children[0] ?? node.thread;
+    const nextRight = (node: LayoutNode): LayoutNode | null => node.children[node.children.length - 1] ?? node.thread;
+    const leftSiblingOf = (node: LayoutNode): LayoutNode | null =>
+        node.parent && node.siblingIndex > 1 ? node.parent.children[node.siblingIndex - 2] : null;
+
+    const moveSubtree = (left: LayoutNode, right: LayoutNode, distance: number): void => {
+        const subtrees = right.siblingIndex - left.siblingIndex;
+        right.change -= distance / subtrees;
+        right.shift += distance;
+        left.change += distance / subtrees;
+        right.prelim += distance;
+        right.mod += distance;
+    };
+
+    // Where a shift is absorbed: vInnerMinus's recorded ancestor if it is a sibling of node (a
+    // parent-pointer compare), else the running default ancestor.
+    const ancestorFor = (vInnerMinus: LayoutNode, node: LayoutNode, defaultAncestor: LayoutNode): LayoutNode =>
+        vInnerMinus.ancestor.parent === node.parent ? vInnerMinus.ancestor : defaultAncestor;
+
+    const executeShifts = (node: LayoutNode): void => {
+        let shift = 0;
+        let change = 0;
+        for (let index = node.children.length - 1; index >= 0; index--) {
+            const child = node.children[index];
+            child.prelim += shift;
+            child.mod += shift;
+            change += child.change;
+            shift += child.shift + change;
         }
     };
 
-    // Alternate pulling children under their parent and parents to their children's centre;
-    // a handful of passes converges for a tree.
-    const PASSES = 6;
-    for (let pass = 0; pass < PASSES; pass++) {
-        for (let depth = 1; depth < levels.length; depth++) {
-            for (const node of levels[depth]) {
-                const parent = parentOf.get(node);
-                if (parent !== undefined) {
-                    y.set(node, y.get(parent)!);
-                }
-            }
-            separateLevel(levels[depth]);
+    // Slide node's subtree right until its left contour clears its left siblings' right contour by
+    // siblingGap, threading the shorter side so deeper levels stay separated too.
+    const apportion = (node: LayoutNode, defaultAncestor: LayoutNode): LayoutNode => {
+        const leftSibling = leftSiblingOf(node);
+        if (!leftSibling) {
+            return defaultAncestor;
         }
-        for (let depth = levels.length - 2; depth >= 0; depth--) {
-            for (const node of levels[depth]) {
-                const children = childrenOf.get(node)!;
-                if (children.length > 0) {
-                    y.set(node, children.reduce((total, child) => total + y.get(child)!, 0) / children.length);
-                }
+        let vInnerPlus = node;
+        let vOuterPlus = node;
+        let vInnerMinus = leftSibling;
+        let vOuterMinus = node.parent!.children[0];
+        let sInnerPlus = vInnerPlus.mod;
+        let sOuterPlus = vOuterPlus.mod;
+        let sInnerMinus = vInnerMinus.mod;
+        let sOuterMinus = vOuterMinus.mod;
+        while (nextRight(vInnerMinus) && nextLeft(vInnerPlus)) {
+            vInnerMinus = nextRight(vInnerMinus)!;
+            vInnerPlus = nextLeft(vInnerPlus)!;
+            vOuterMinus = nextLeft(vOuterMinus)!;
+            vOuterPlus = nextRight(vOuterPlus)!;
+            vOuterPlus.ancestor = node;
+            const shift = vInnerMinus.prelim + sInnerMinus - (vInnerPlus.prelim + sInnerPlus) + siblingGap;
+            if (shift > 0) {
+                moveSubtree(ancestorFor(vInnerMinus, node, defaultAncestor), node, shift);
+                sInnerPlus += shift;
+                sOuterPlus += shift;
             }
-            separateLevel(levels[depth]);
+            sInnerMinus += vInnerMinus.mod;
+            sInnerPlus += vInnerPlus.mod;
+            sOuterMinus += vOuterMinus.mod;
+            sOuterPlus += vOuterPlus.mod;
         }
-    }
+        if (nextRight(vInnerMinus) && !nextRight(vOuterPlus)) {
+            vOuterPlus.thread = nextRight(vInnerMinus);
+            vOuterPlus.mod += sInnerMinus - sOuterPlus;
+        } else if (nextLeft(vInnerPlus) && !nextLeft(vOuterMinus)) {
+            vOuterMinus.thread = nextLeft(vInnerPlus);
+            vOuterMinus.mod += sInnerPlus - sOuterMinus;
+            defaultAncestor = node;
+        }
+        return defaultAncestor;
+    };
 
-    let minY = Infinity;
-    for (const value of y.values()) {
-        minY = Math.min(minY, value);
+    // First pass: give each subtree a preliminary x relative to its parent, resolving overlaps
+    // between sibling subtrees as it goes.
+    const firstWalk = (node: LayoutNode): void => {
+        if (node.children.length === 0) {
+            const leftSibling = leftSiblingOf(node);
+            node.prelim = leftSibling ? leftSibling.prelim + siblingGap : 0;
+            return;
+        }
+        let defaultAncestor = node.children[0];
+        for (const child of node.children) {
+            firstWalk(child);
+            defaultAncestor = apportion(child, defaultAncestor);
+        }
+        executeShifts(node);
+        const midpoint = (node.children[0].prelim + node.children[node.children.length - 1].prelim) / 2;
+        const leftSibling = leftSiblingOf(node);
+        if (leftSibling) {
+            node.prelim = leftSibling.prelim + siblingGap;
+            node.mod = node.prelim - midpoint;
+        } else {
+            node.prelim = midpoint;
+        }
+    };
+
+    // Second pass: sum the modifiers down each path to turn preliminary positions into absolute ones.
+    const secondWalk = (node: LayoutNode, modSum: number): void => {
+        node.cross = node.prelim + modSum;
+        for (const child of node.children) {
+            secondWalk(child, modSum + node.mod);
+        }
+    };
+
+    // Hang every root off one virtual super-root and lay out the whole forest in a single pass, so
+    // the roots are contour-packed exactly like any other siblings: a shallow tree rises into a
+    // deeper neighbour's empty columns instead of being parked below its lowest node. The
+    // super-root is never rendered — it just gives the roots a common parent for the two walks.
+    const superRoot: LayoutNode = {
+        id: -1,
+        depth: -1,
+        parent: null,
+        children: roots.map((id) => nodes.get(id)!),
+        siblingIndex: 1,
+        prelim: 0,
+        mod: 0,
+        change: 0,
+        shift: 0,
+        thread: null,
+        ancestor: null as unknown as LayoutNode,
+        cross: 0,
+    };
+    superRoot.ancestor = superRoot;
+    superRoot.children.forEach((child, index) => {
+        child.parent = superRoot;
+        child.siblingIndex = index + 1;
+    });
+    firstWalk(superRoot);
+    secondWalk(superRoot, 0);
+
+    // firstWalk centres the forest around zero, so cross can be negative; drop it onto the top margin.
+    let minCross = Infinity;
+    for (const node of nodes.values()) {
+        minCross = Math.min(minCross, node.cross);
     }
-    if (!Number.isFinite(minY)) {
-        minY = 0;
+    if (!Number.isFinite(minCross)) {
+        minCross = 0;
     }
 
     const positions = new Map<number, Coordinates>();
-    for (const id of input.nodeIds) {
-        const depth = depthOf.get(id);
-        const yValue = y.get(id);
-        if (depth === undefined || yValue === undefined) {
-            continue;
-        }
-        positions.set(id, { x: snap(marginX + depth * levelGap), y: snap(marginY + yValue - minY) });
+    for (const node of nodes.values()) {
+        positions.set(node.id, {
+            x: snap(marginX + node.depth * levelGap),
+            y: snap(marginY + node.cross - minCross),
+        });
     }
 
     return positions;
