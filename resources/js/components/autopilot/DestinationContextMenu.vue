@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { CharacterImage } from '@/components/images';
+import SolarsystemExternalLinks from '@/components/solarsystem/SolarsystemExternalLinks.vue';
 import {
     ContextMenu,
     ContextMenuContent,
@@ -17,8 +18,7 @@ import { useRallyPoint } from '@/composables/useRallyPoint';
 import { useStaticSolarsystem } from '@/composables/useStaticSolarsystems';
 import useUser from '@/composables/useUser';
 import { useWaypoint } from '@/composables/useWaypoint';
-import { isWormholeClass } from '@/const/solarsystemClasses';
-import { Circle, Compass, ExternalLink, Flag, Globe, Map, MapPin, Navigation, Plus, Route, Users } from 'lucide-vue-next';
+import { Compass, Flag, MapPin, Navigation, Plus, Route, Users } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 const { solarsystem_id } = defineProps<{
@@ -58,6 +58,16 @@ const staticSolarsystem = useStaticSolarsystem(() => solarsystem_id);
             <slot />
         </ContextMenuTrigger>
         <ContextMenuContent>
+            <template v-if="!already_on_map && can_write">
+                <ContextMenuItem @select="createMapSolarsystem(solarsystem_id)">
+                    <Plus class="size-4" />
+                    Add to map
+                </ContextMenuItem>
+                <ContextMenuSeparator />
+            </template>
+
+            <SolarsystemExternalLinks v-if="staticSolarsystem" :solarsystem="staticSolarsystem" />
+
             <ContextMenuSub>
                 <ContextMenuSubTrigger>
                     <Navigation class="size-4" />
@@ -125,82 +135,7 @@ const staticSolarsystem = useStaticSolarsystem(() => solarsystem_id);
                 </ContextMenuSubContent>
             </ContextMenuSub>
 
-            <template v-if="!already_on_map && can_write">
-                <ContextMenuSeparator />
-                <ContextMenuItem @select="createMapSolarsystem(solarsystem_id)">
-                    <Plus class="size-4" />
-                    Add to map
-                </ContextMenuItem>
-            </template>
-
             <ContextMenuSeparator />
-
-            <ContextMenuSub v-if="staticSolarsystem">
-                <ContextMenuSubTrigger>
-                    <ExternalLink class="size-4" />
-                    External
-                </ContextMenuSubTrigger>
-                <ContextMenuSubContent>
-                    <ContextMenuSub>
-                        <ContextMenuSubTrigger>
-                            <img src="https://evemaps.dotlan.net/favicon.ico" alt="" class="size-4 rounded-sm" />
-                            Dotlan
-                        </ContextMenuSubTrigger>
-                        <ContextMenuSubContent>
-                            <ContextMenuItem as-child>
-                                <a
-                                    :href="`https://evemaps.dotlan.net/system/${staticSolarsystem.name.replaceAll(' ', '_')}`"
-                                    target="_blank"
-                                    rel="noopener"
-                                >
-                                    <Globe class="size-4" />
-                                    System
-                                </a>
-                            </ContextMenuItem>
-                            <ContextMenuItem as-child>
-                                <a
-                                    :href="`https://evemaps.dotlan.net/map/${staticSolarsystem.region?.name.replaceAll(' ', '_')}/${staticSolarsystem.name.replaceAll(' ', '_')}`"
-                                    target="_blank"
-                                    rel="noopener"
-                                >
-                                    <Map class="size-4" />
-                                    Region Map
-                                </a>
-                            </ContextMenuItem>
-                            <ContextMenuItem as-child v-if="!isWormholeClass(staticSolarsystem.class)">
-                                <a
-                                    :href="`https://evemaps.dotlan.net/range/Revelation,5/${staticSolarsystem.name.replaceAll(' ', '_')}`"
-                                    target="_blank"
-                                    rel="noopener"
-                                >
-                                    <Circle class="size-4" />
-                                    Jump Range
-                                </a>
-                            </ContextMenuItem>
-                        </ContextMenuSubContent>
-                    </ContextMenuSub>
-                    <ContextMenuSub>
-                        <ContextMenuSubTrigger>
-                            <img src="https://zkillboard.com/favicon.ico" alt="" class="size-4 rounded-sm" />
-                            zKillboard
-                        </ContextMenuSubTrigger>
-                        <ContextMenuSubContent>
-                            <ContextMenuItem as-child>
-                                <a :href="`https://zkillboard.com/system/${staticSolarsystem.id}/`" target="_blank" rel="noopener">
-                                    <Globe class="size-4" />
-                                    System
-                                </a>
-                            </ContextMenuItem>
-                            <ContextMenuItem as-child>
-                                <a :href="`https://zkillboard.com/region/${staticSolarsystem.region_id}/`" target="_blank" rel="noopener">
-                                    <Map class="size-4" />
-                                    Region
-                                </a>
-                            </ContextMenuItem>
-                        </ContextMenuSubContent>
-                    </ContextMenuSub>
-                </ContextMenuSubContent>
-            </ContextMenuSub>
 
             <ContextMenuItem @select="toggleRallyPoint" v-if="can_write">
                 <Flag class="size-4" />
