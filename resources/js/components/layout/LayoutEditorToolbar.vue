@@ -24,31 +24,12 @@ import {
     Tablet,
     X,
 } from 'lucide-vue-next';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 import { toast } from 'vue-sonner';
 
 const props = defineProps<{
     layout: UseMapLayoutReturn;
 }>();
-
-// Track initial state to detect changes
-const initialState = ref<string>('');
-const initialHiddenState = ref<string>('');
-
-onMounted(() => {
-    initialState.value = JSON.stringify(props.layout.breakpoints.value);
-    initialHiddenState.value = JSON.stringify(props.layout.hiddenCards.value);
-});
-
-watch(
-    () => props.layout.isEditMode.value,
-    (isEditMode) => {
-        if (isEditMode) {
-            initialState.value = JSON.stringify(props.layout.breakpoints.value);
-            initialHiddenState.value = JSON.stringify(props.layout.hiddenCards.value);
-        }
-    },
-);
 
 const hiddenCardIds = computed(() => {
     return REMOVABLE_CARDS.filter((cardId) => props.layout.isCardHidden(cardId));
@@ -63,12 +44,7 @@ function getBreakpointIcon(minWidth: number) {
     return MonitorUp;
 }
 
-const hasUnsavedChanges = computed(() => {
-    if (!initialState.value) return false;
-    const currentState = JSON.stringify(props.layout.breakpoints.value);
-    const currentHiddenState = JSON.stringify(props.layout.hiddenCards.value);
-    return initialState.value !== currentState || initialHiddenState.value !== currentHiddenState;
-});
+const hasUnsavedChanges = computed(() => props.layout.hasUnsavedChanges.value);
 
 const showDiscardDialog = ref(false);
 
@@ -83,15 +59,11 @@ function handleExitEditMode() {
 function confirmDiscard() {
     showDiscardDialog.value = false;
     props.layout.revertChanges();
-    initialState.value = JSON.stringify(props.layout.breakpoints.value);
-    initialHiddenState.value = JSON.stringify(props.layout.hiddenCards.value);
     props.layout.toggleEditMode();
 }
 
 function handleSave() {
     props.layout.saveLayout();
-    initialState.value = JSON.stringify(props.layout.breakpoints.value);
-    initialHiddenState.value = JSON.stringify(props.layout.hiddenCards.value);
 }
 
 function copyLayout() {

@@ -14,6 +14,7 @@ export interface UseMapLayoutReturn {
     hiddenCards: Ref<string[]>;
 
     // Computed properties
+    hasUnsavedChanges: ComputedRef<boolean>;
     currentBreakpointKey: ComputedRef<string>;
     sortedBreakpoints: ComputedRef<BreakpointDefinition[]>;
     currentLayoutItems: ComputedRef<LayoutItem[]>;
@@ -49,6 +50,21 @@ export function useMapLayout(
     const breakpoints = ref<BreakpointsConfig>(loadBreakpoints(toValue(mapUserSettings)));
     const gridLayoutRef = ref<any>(null);
     const hiddenCards = ref<string[]>(toValue(mapUserSettings).hidden_cards ?? []);
+
+    // Snapshot of the last saved/reverted state so we can detect unsaved edits.
+    const savedSnapshot = ref('');
+    const savedHiddenSnapshot = ref('');
+
+    function captureSnapshot() {
+        savedSnapshot.value = JSON.stringify(breakpoints.value);
+        savedHiddenSnapshot.value = JSON.stringify(hiddenCards.value);
+    }
+
+    captureSnapshot();
+
+    const hasUnsavedChanges = computed(() => {
+        return savedSnapshot.value !== JSON.stringify(breakpoints.value) || savedHiddenSnapshot.value !== JSON.stringify(hiddenCards.value);
+    });
 
     // Sorted breakpoints
     const sortedBreakpoints = computed(() => {
@@ -144,6 +160,7 @@ export function useMapLayout(
             ['map_user_settings', ...reloadProps],
         );
 
+        captureSnapshot();
         isEditMode.value = false;
     }
 
@@ -159,6 +176,7 @@ export function useMapLayout(
     function revertChanges() {
         breakpoints.value = loadBreakpoints(toValue(mapUserSettings));
         hiddenCards.value = toValue(mapUserSettings).hidden_cards ?? [];
+        captureSnapshot();
         refreshLayout();
     }
 
@@ -166,6 +184,7 @@ export function useMapLayout(
         isEditMode.value = !isEditMode.value;
         if (isEditMode.value) {
             selectedBreakpointKey.value = currentBreakpointKey.value;
+            captureSnapshot();
         }
     }
 
@@ -264,6 +283,7 @@ export function useMapLayout(
         breakpoints,
         gridLayoutRef,
         hiddenCards,
+        hasUnsavedChanges,
         currentBreakpointKey,
         sortedBreakpoints,
         currentLayoutItems,

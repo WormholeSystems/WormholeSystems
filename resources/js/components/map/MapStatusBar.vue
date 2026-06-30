@@ -5,6 +5,8 @@ import MapSettingsController from '@/actions/App/Http/Controllers/MapSettingsCon
 import TrackingIcon from '@/components/icons/TrackingIcon.vue';
 import StaleConnectionsBadge from '@/components/map/StaleConnectionsBadge.vue';
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { updateMapUserSettings } from '@/composables/map';
 import { useTracking } from '@/composables/map/composables/useTracking';
@@ -56,6 +58,29 @@ const {
 } = useTracking();
 
 const targetSolarsystemName = computed(() => target_solarsystem.value?.name || currentSolarsystem.value?.name || null);
+
+// Confirm before leaving layout edit mode so users don't lose unsaved changes by
+// clicking the toggle again instead of Save.
+const showCancelLayoutDialog = ref(false);
+
+function handleLayoutToggle() {
+    if (layout.isEditMode.value && layout.hasUnsavedChanges.value) {
+        showCancelLayoutDialog.value = true;
+        return;
+    }
+    layout.toggleEditMode();
+}
+
+function saveLayoutAndExit() {
+    showCancelLayoutDialog.value = false;
+    layout.saveLayout();
+}
+
+function discardLayoutAndExit() {
+    showCancelLayoutDialog.value = false;
+    layout.revertChanges();
+    layout.toggleEditMode();
+}
 
 // Location visibility toggle
 function handleToggleVisibility() {
@@ -267,7 +292,7 @@ const settingsUrl = computed(() => {
         <Tooltip>
             <TooltipTrigger as-child>
                 <button
-                    @click="layout.toggleEditMode()"
+                    @click="handleLayoutToggle"
                     class="flex items-center gap-1.5 rounded px-1.5 py-1 text-xs transition-colors sm:px-2"
                     :class="
                         layout.isEditMode.value
@@ -305,4 +330,23 @@ const settingsUrl = computed(() => {
         :suggested-alias="suggested_alias"
         @select-signature="handleSelectSignature"
     />
+
+    <!-- Leave Layout Editing Confirmation -->
+    <Dialog v-model:open="showCancelLayoutDialog">
+        <DialogContent class="sm:max-w-md">
+            <DialogHeader>
+                <DialogTitle>Save your layout changes?</DialogTitle>
+                <DialogDescription>
+                    You have unsaved layout changes. Save them, discard them and revert to your last saved layout, or keep editing.
+                </DialogDescription>
+            </DialogHeader>
+            <DialogFooter class="gap-2 sm:justify-between">
+                <Button variant="outline" @click="showCancelLayoutDialog = false">Keep editing</Button>
+                <div class="flex gap-2">
+                    <Button variant="destructive" @click="discardLayoutAndExit">Discard</Button>
+                    <Button @click="saveLayoutAndExit">Save</Button>
+                </div>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
 </template>
