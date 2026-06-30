@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { CharacterImage } from '@/components/images';
+import SolarsystemExternalLinks from '@/components/solarsystem/SolarsystemExternalLinks.vue';
 import {
     ContextMenu,
     ContextMenuContent,
@@ -22,7 +23,7 @@ import { useWaypoint } from '@/composables/useWaypoint';
 import { isWormholeClass } from '@/const/solarsystemClasses';
 import { TMapSolarsystem } from '@/pages/maps';
 import { TMapSolarsystemStatus } from '@/types/models';
-import { Circle, Compass, ExternalLink, Flag, Globe, Home, Map, MapPin, Navigation, Pin, Route, Trash2, Users, Waypoints } from 'lucide-vue-next';
+import { Compass, Flag, Home, Map, MapPin, Navigation, Pin, Route, Trash2, Users, Waypoints } from 'lucide-vue-next';
 import type { AcceptableValue } from 'reka-ui';
 import { computed } from 'vue';
 
@@ -103,72 +104,7 @@ const options: TMapSolarsystemStatus[] = ['unknown', 'friendly', 'hostile', 'act
 
             <ContextMenuSeparator />
 
-            <ContextMenuSub>
-                <ContextMenuSubTrigger>
-                    <ExternalLink class="size-4" />
-                    External
-                </ContextMenuSubTrigger>
-                <ContextMenuSubContent>
-                    <ContextMenuSub>
-                        <ContextMenuSubTrigger>
-                            <img src="https://evemaps.dotlan.net/favicon.ico" alt="" class="size-4 rounded-sm" />
-                            Dotlan
-                        </ContextMenuSubTrigger>
-                        <ContextMenuSubContent>
-                            <ContextMenuItem as-child>
-                                <a
-                                    :href="`https://evemaps.dotlan.net/system/${map_solarsystem.solarsystem?.name.replaceAll(' ', '_')}`"
-                                    target="_blank"
-                                    rel="noopener"
-                                >
-                                    <Globe class="size-4" />
-                                    System
-                                </a>
-                            </ContextMenuItem>
-                            <ContextMenuItem as-child>
-                                <a
-                                    :href="`https://evemaps.dotlan.net/map/${map_solarsystem.solarsystem?.region?.name.replaceAll(' ', '_')}/${map_solarsystem.solarsystem?.name.replaceAll(' ', '_')}`"
-                                    target="_blank"
-                                    rel="noopener"
-                                >
-                                    <Map class="size-4" />
-                                    Region Map
-                                </a>
-                            </ContextMenuItem>
-                            <ContextMenuItem as-child v-if="!isWormholeClass(map_solarsystem.solarsystem.class)">
-                                <a
-                                    :href="`https://evemaps.dotlan.net/range/Revelation,5/${map_solarsystem.solarsystem?.name.replaceAll(' ', '_')}`"
-                                    target="_blank"
-                                    rel="noopener"
-                                >
-                                    <Circle class="size-4" />
-                                    Jump Range
-                                </a>
-                            </ContextMenuItem>
-                        </ContextMenuSubContent>
-                    </ContextMenuSub>
-                    <ContextMenuSub>
-                        <ContextMenuSubTrigger>
-                            <img src="https://zkillboard.com/favicon.ico" alt="" class="size-4 rounded-sm" />
-                            zKillboard
-                        </ContextMenuSubTrigger>
-                        <ContextMenuSubContent>
-                            <ContextMenuItem as-child>
-                                <a :href="`https://zkillboard.com/system/${map_solarsystem.solarsystem?.id}/`" target="_blank" rel="noopener">
-                                    <Globe class="size-4" />
-                                    System
-                                </a>
-                            </ContextMenuItem>
-                            <ContextMenuItem as-child>
-                                <a :href="`https://zkillboard.com/region/${map_solarsystem.solarsystem?.region_id}/`" target="_blank" rel="noopener">
-                                    <Map class="size-4" />
-                                    Region
-                                </a>
-                            </ContextMenuItem>
-                        </ContextMenuSubContent>
-                    </ContextMenuSub>
-                </ContextMenuSubContent>
-            </ContextMenuSub>
+            <SolarsystemExternalLinks :solarsystem="map_solarsystem.solarsystem" />
             <ContextMenuSub v-if="user && !isWormholeClass(map_solarsystem.solarsystem.class)">
                 <ContextMenuSubTrigger>
                     <Navigation class="size-4" />
