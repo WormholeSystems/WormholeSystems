@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ContextMenuItem, ContextMenuSub, ContextMenuSubContent, ContextMenuSubTrigger } from '@/components/ui/context-menu';
-import { formatBookmarkName, getSignatureIdShort, TProcessedConnection } from '@/composables/map';
+import { formatBookmarkName, TProcessedConnection } from '@/composables/map';
+import { useMap } from '@/composables/useMap';
 import { Copy } from 'lucide-vue-next';
 import { computed } from 'vue';
 import { toast } from 'vue-sonner';
@@ -8,6 +9,8 @@ import { toast } from 'vue-sonner';
 const { map_connection } = defineProps<{
     map_connection: TProcessedConnection;
 }>();
+
+const map = useMap();
 
 const source_signature = computed(() => {
     if (!map_connection.signatures?.length) return null;
@@ -19,9 +22,33 @@ const target_signature = computed(() => {
     return map_connection.signatures.find((sig) => sig.map_solarsystem_id === map_connection.target.id) || null;
 });
 
-const source_name = computed(() => formatBookmarkName(map_connection.source, getSignatureIdShort(target_signature.value?.signature_id)));
+const source_name = computed(() =>
+    formatBookmarkName(
+        map_connection.source,
+        {
+            signatureId: target_signature.value?.signature_id,
+            shipSize: map_connection.ship_size,
+            massStatus: map_connection.mass_status,
+            lifetime: map_connection.lifetime_status,
+            wormholeCode: target_signature.value?.wormhole?.name,
+        },
+        map.value,
+    ),
+);
 
-const target_name = computed(() => formatBookmarkName(map_connection.target, getSignatureIdShort(source_signature.value?.signature_id)));
+const target_name = computed(() =>
+    formatBookmarkName(
+        map_connection.target,
+        {
+            signatureId: source_signature.value?.signature_id,
+            shipSize: map_connection.ship_size,
+            massStatus: map_connection.mass_status,
+            lifetime: map_connection.lifetime_status,
+            wormholeCode: source_signature.value?.wormhole?.name,
+        },
+        map.value,
+    ),
+);
 
 function copyNameToClipboard(value: string) {
     navigator.clipboard.writeText(value);
