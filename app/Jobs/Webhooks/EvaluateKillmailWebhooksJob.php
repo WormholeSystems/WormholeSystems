@@ -12,7 +12,8 @@ use App\Models\MapAlert;
 use App\Models\MapIgnoredSolarsystem;
 use App\Models\MapSolarsystem;
 use App\Models\Type;
-use App\Services\DiscordWebhookService;
+use App\Services\Discord\DiscordDelivery;
+use App\Services\Discord\KillmailAlertEmbed;
 use App\Services\Killmails\KillmailWebhookMatcher;
 use App\Services\Routing\MapProximityPathfinder;
 use App\Services\Routing\ProximityResult;
@@ -44,7 +45,7 @@ final class EvaluateKillmailWebhooksJob implements ShouldBeUnique, ShouldQueue
         return 'killmail:'.$this->killmail_id;
     }
 
-    public function handle(MapProximityPathfinder $pathfinder, DiscordWebhookService $discord, KillmailWebhookMatcher $matcher): void
+    public function handle(MapProximityPathfinder $pathfinder, KillmailAlertEmbed $embed, DiscordDelivery $delivery, KillmailWebhookMatcher $matcher): void
     {
         $alerts = MapAlert::query()
             ->where('type', MapWebhookType::Killmail)
@@ -98,7 +99,7 @@ final class EvaluateKillmailWebhooksJob implements ShouldBeUnique, ShouldQueue
 
             $matchedFilters = $matcher->matchingRules($pools, $alert->filters);
 
-            $discord->sendKillmailAlert($alert, $killmail, $result, $matchedFilters);
+            $delivery->deliver($alert, $embed->build($alert, $killmail, $result, $matchedFilters));
 
             $alert->update(['last_fired_at' => now()]);
         }
