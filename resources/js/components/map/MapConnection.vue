@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { TLifetimeStatus, TMassStatus, TShipSize } from '@/types/models';
-import { Clock, Weight } from 'lucide-vue-next';
+import { TConnectionType, TLifetimeStatus, TMassStatus, TShipSize } from '@/types/models';
+import { Clock, Heart, Orbit, Weight } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 type Position = {
@@ -9,7 +9,7 @@ type Position = {
 };
 
 type Indicator = {
-    type: 'text' | 'clock' | 'weight';
+    type: 'text' | 'clock' | 'weight' | 'gate' | 'preserve';
     label?: string;
     fill: string;
     stroke: string;
@@ -25,6 +25,8 @@ type Props = {
     bend?: number | null;
     /** 'orthogonal' draws the tree-style rounded elbow + slim stroke; 'default' the original curve. */
     variant?: 'default' | 'orthogonal';
+    type?: TConnectionType;
+    preserve_mass?: boolean;
     ship_size?: TShipSize | null;
     mass_status?: TMassStatus;
     lifetime?: TLifetimeStatus;
@@ -33,7 +35,21 @@ type Props = {
     rally_route_reversed?: boolean;
 };
 
-const { from, to, from_normal, to_normal, bend, variant = 'default', mass_status, lifetime, ship_size } = defineProps<Props>();
+const {
+    from,
+    to,
+    from_normal,
+    to_normal,
+    bend,
+    variant = 'default',
+    type = 'wormhole',
+    preserve_mass = false,
+    mass_status,
+    lifetime,
+    ship_size,
+} = defineProps<Props>();
+
+const isStargate = computed(() => type === 'stargate');
 
 const emit = defineEmits<{
     (e: 'connectionContextMenu', event: MouseEvent): void;
@@ -112,6 +128,22 @@ function getShipSizeLabel(size?: TShipSize | null): string | null {
 const indicators = computed<Indicator[]>(() => {
     const items: Indicator[] = [];
 
+    if (isStargate.value) {
+        items.push({
+            type: 'gate',
+            fill: 'var(--color-sky-500)',
+            stroke: 'var(--color-sky-600)',
+        });
+    }
+
+    if (preserve_mass) {
+        items.push({
+            type: 'preserve',
+            fill: 'var(--color-emerald-500)',
+            stroke: 'var(--color-emerald-600)',
+        });
+    }
+
     const shipSizeLabel = getShipSizeLabel(ship_size);
     if (shipSizeLabel) {
         items.push({
@@ -162,8 +194,20 @@ function getDashArray() {
 
 <template>
     <g pointer-events="visiblePainted" class="group text-neutral-300 dark:text-neutral-700">
+        <!-- Stargates are permanent, so they draw a single solid line instead of the wormhole's mass/lifetime styling. -->
         <path
-            v-if="mass_status === 'fresh' || lifetime === 'eol' || lifetime === 'critical'"
+            v-if="isStargate"
+            :d="curve"
+            stroke="currentColor"
+            fill="none"
+            :stroke-width="isOrthogonal ? 1.5 : 4"
+            stroke-linejoin="round"
+            stroke-linecap="round"
+            :data-highlighted="is_highlighted"
+            class="cursor-pointer text-sky-500 transition-colors duration-200 ease-in-out group-hover:text-sky-400"
+        />
+        <path
+            v-if="!isStargate && (mass_status === 'fresh' || lifetime === 'eol' || lifetime === 'critical')"
             :d="curve"
             stroke="currentColor"
             fill="none"
@@ -176,7 +220,7 @@ function getDashArray() {
             class="cursor-pointer text-neutral-300 transition-colors duration-200 ease-in-out group-hover:text-neutral-200 dark:text-neutral-700 dark:group-hover:text-neutral-600"
         />
         <path
-            v-if="mass_status !== 'fresh'"
+            v-if="!isStargate && mass_status !== 'fresh'"
             :d="curve"
             stroke="currentColor"
             fill="none"
@@ -228,6 +272,8 @@ function getDashArray() {
                     </span>
                     <Weight v-else-if="indicator.type === 'weight'" class="size-3.5" :style="{ color: indicator.fill }" />
                     <Clock v-else-if="indicator.type === 'clock'" class="size-3.5" :style="{ color: indicator.fill }" />
+                    <Orbit v-else-if="indicator.type === 'gate'" class="size-3.5" :style="{ color: indicator.fill }" />
+                    <Heart v-else-if="indicator.type === 'preserve'" class="size-3.5" :style="{ color: indicator.fill }" />
                 </template>
             </div>
         </foreignObject>

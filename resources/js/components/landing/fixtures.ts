@@ -207,6 +207,8 @@ function connection(
         id,
         from_map_solarsystem_id: source.id,
         to_map_solarsystem_id: target.id,
+        type: 'wormhole',
+        preserve_mass: false,
         mass_status,
         lifetime_status,
         lifetime_status_updated_at: null,

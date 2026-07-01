@@ -1,11 +1,13 @@
 import { TMapConnection } from '@/pages/maps';
 import MapConnections from '@/routes/map-connections';
-import { TLifetimeStatus, TMassStatus, TShipSize } from '@/types/models';
+import { TConnectionType, TLifetimeStatus, TMassStatus, TShipSize } from '@/types/models';
 import { router } from '@inertiajs/vue3';
 
 export function updateMapConnection(
     map_connection: TMapConnection,
     data: {
+        type?: TConnectionType | string;
+        preserve_mass?: boolean;
         mass_status?: TMassStatus | string;
         ship_size?: TShipSize | string;
         lifetime?: TLifetimeStatus | string;

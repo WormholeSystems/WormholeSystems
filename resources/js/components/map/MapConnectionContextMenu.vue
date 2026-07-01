@@ -11,18 +11,39 @@ import {
     ContextMenuSubTrigger,
 } from '@/components/ui/context-menu';
 import { deleteMapConnection, TProcessedConnection, updateMapConnection } from '@/composables/map';
+import { useStaticData } from '@/composables/useStaticData';
 import { formatDateToISO } from '@/lib/utils';
-import { TLifetimeStatus, TMassStatus, TShipSize } from '@/types/models';
+import { TConnectionType, TLifetimeStatus, TMassStatus, TShipSize } from '@/types/models';
 import { UTCDate } from '@date-fns/utc';
-import { Clock, Ship, Trash2, Weight } from 'lucide-vue-next';
+import { Check, Clock, Heart, Ship, Trash2, TriangleAlert, Waypoints, Weight } from 'lucide-vue-next';
 import type { AcceptableValue } from 'reka-ui';
+import { computed } from 'vue';
 
 const { map_connection } = defineProps<{
     map_connection: TProcessedConnection;
 }>();
 
+const { staticData, loadStaticData } = useStaticData();
+void loadStaticData();
+
+// Whether the two systems are actually joined by a stargate in the static data.
+// Used to warn (but not block) when marking a connection as a stargate.
+const is_gate_connected = computed(() => {
+    const from = map_connection.source.solarsystem_id;
+    const to = map_connection.target.solarsystem_id;
+    return staticData.value?.connections[from]?.includes(to) ?? false;
+});
+
 function handleRemoveFromMap() {
     deleteMapConnection(map_connection);
+}
+
+function handleTypeChange(type: AcceptableValue) {
+    updateMapConnection(map_connection, { type: type as TConnectionType });
+}
+
+function handleTogglePreserveMass() {
+    updateMapConnection(map_connection, { preserve_mass: !map_connection.preserve_mass });
 }
 
 function handleStatusChange(mass_status: AcceptableValue) {
@@ -118,6 +139,30 @@ function handleLifetimeChange(lifetime: AcceptableValue) {
                 </ContextMenuRadioGroup>
             </ContextMenuSubContent>
         </ContextMenuSub>
+        <ContextMenuSub>
+            <ContextMenuSubTrigger>
+                <Waypoints class="size-4" />
+                Connection type
+            </ContextMenuSubTrigger>
+            <ContextMenuSubContent>
+                <ContextMenuRadioGroup :model-value="map_connection.type" @update:model-value="handleTypeChange">
+                    <ContextMenuRadioItem value="wormhole">Wormhole</ContextMenuRadioItem>
+                    <ContextMenuRadioItem value="stargate" class="flex items-center justify-between gap-2">
+                        Stargate
+                        <TriangleAlert v-if="!is_gate_connected" class="size-3.5 text-amber-500" />
+                    </ContextMenuRadioItem>
+                </ContextMenuRadioGroup>
+                <p v-if="!is_gate_connected" class="max-w-52 px-2 py-1 text-xs text-muted-foreground">
+                    These systems aren't connected by a stargate. You can still mark it as one.
+                </p>
+            </ContextMenuSubContent>
+        </ContextMenuSub>
+        <ContextMenuSeparator />
+        <ContextMenuItem @select.prevent="handleTogglePreserveMass">
+            <Heart class="size-4" />
+            Preserve mass
+            <Check v-if="map_connection.preserve_mass" class="ml-auto size-4" />
+        </ContextMenuItem>
         <ContextMenuSeparator />
         <CopyConnectionNameMenu :map_connection="map_connection" />
         <ContextMenuSeparator />
