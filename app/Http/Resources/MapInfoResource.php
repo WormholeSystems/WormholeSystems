@@ -32,6 +32,7 @@ final class MapInfoResource extends JsonResource
             'slug' => $this->slug,
             'layout' => $this->layout,
             'allow_layout_override' => $this->allow_layout_override,
+            'constant_width_enabled' => $this->constant_width_enabled,
             'bookmark_format_wormhole' => $this->bookmark_format_wormhole,
             'bookmark_format_kspace' => $this->bookmark_format_kspace,
             'map_user_setting' => $this->handleUserSetting(),

@@ -60,11 +60,12 @@ const effectiveThreatLevel = computed(() => {
 
 const open = ref(false);
 
-const { is_tree_layout } = useMapViewMode();
+const { is_tree_layout, is_constant_width_enabled } = useMapViewMode();
 
-// The tree layout's fixed width / truncation only applies to the live map; a static
-// render must ignore the persisted view mode so the landing map isn't forced into it.
-const usesTreeStyle = computed(() => interactive && is_tree_layout.value);
+// The fixed node width / truncation applies in the tree layout, or whenever the map pins a
+// constant width — but only on the live map, so a static render (the landing map) isn't
+// forced into it.
+const usesFixedWidth = computed(() => interactive && (is_tree_layout.value || is_constant_width_enabled.value));
 
 // Selection and hover are derived from interaction state (only on the live map), so
 // flipping them re-renders just this node instead of rebuilding the whole array.
@@ -127,7 +128,7 @@ function handleSubmit() {
         :data-is-active="!!is_active"
         :data-threat-level="effectiveThreatLevel"
         class="grid h-[40px] rounded border border-neutral-300 bg-white text-left text-xs ring-offset-2 ring-offset-neutral-50 transition-colors duration-200 ease-in-out select-none hover:bg-white focus:bg-white data-[has-pilots=true]:h-[60px] data-[hovered=true]:outline-2 data-[hovered=true]:outline-yellow-500 data-[is-active=true]:ring-2 data-[is-active=true]:ring-amber-500 data-[selected=true]:bg-amber-100 data-[status=active]:border-active data-[status=empty]:border-empty data-[status=friendly]:border-friendly data-[status=hostile]:border-hostile data-[status=unknown]:border-unknown data-[is-active=false]:data-[threat-level=critical]:ring-2 data-[is-active=false]:data-[threat-level=critical]:ring-threat-critical data-[is-active=false]:data-[threat-level=high]:ring-2 data-[is-active=false]:data-[threat-level=high]:ring-threat-high dark:border-neutral-700 dark:bg-neutral-900 dark:ring-offset-neutral-900 dark:hover:bg-neutral-800 dark:focus:bg-neutral-800 dark:data-[is-active=true]:ring-2 dark:data-[is-active=true]:ring-amber-500 dark:data-[selected=true]:bg-amber-900 dark:data-[status=active]:border-active dark:data-[status=empty]:border-empty dark:data-[status=friendly]:border-friendly dark:data-[status=hostile]:border-hostile dark:data-[status=unscanned]:border-unscanned"
-        :class="{ 'w-[180px]': usesTreeStyle }"
+        :class="{ 'w-[180px]': usesFixedWidth }"
         @dblclick="open = true"
         @drag.prevent
     >
@@ -135,7 +136,7 @@ function handleSubmit() {
             <SolarsystemClass :solarsystem_class="resolvedSolarsystem.class" />
             <Popover :open="open" @update:open="(value) => open && (open = value)">
                 <PopoverAnchor class="col-start-2 row-start-1 min-w-0">
-                    <SolarsystemName :map_solarsystem="map_solarsystem" :truncate="usesTreeStyle" />
+                    <SolarsystemName :map_solarsystem="map_solarsystem" :truncate="usesFixedWidth" />
                 </PopoverAnchor>
                 <PopoverContent>
                     <form @submit.prevent="handleSubmit" class="grid gap-2">

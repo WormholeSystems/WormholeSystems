@@ -71,6 +71,18 @@ function setAllowOverride(allow_layout_override: boolean) {
     );
 }
 
+function setConstantWidth(constant_width_enabled: boolean) {
+    router.put(
+        MapLayoutController.update(map.slug).url,
+        { constant_width_enabled },
+        {
+            preserveState: true,
+            preserveScroll: true,
+            only: ['map'],
+        },
+    );
+}
+
 function togglePublic() {
     router.post(
         `/maps/${map.slug}/settings/toggle-public`,
@@ -180,6 +192,16 @@ function copyShareLink() {
                             </p>
                         </div>
                         <Switch :model-value="map.allow_layout_override" @update:modelValue="setAllowOverride" />
+                    </div>
+
+                    <div class="mt-4 flex items-center justify-between border-t border-border/50 pt-4">
+                        <div>
+                            <h4 class="text-sm font-medium">Uniform system width</h4>
+                            <p class="text-xs text-muted-foreground">
+                                Give every system node the same fixed width so they all line up neatly, instead of each one sizing to its contents.
+                            </p>
+                        </div>
+                        <Switch :model-value="map.constant_width_enabled" @update:modelValue="setConstantWidth" />
                     </div>
                 </CardContent>
             </Card>

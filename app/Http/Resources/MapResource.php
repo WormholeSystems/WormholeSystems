@@ -31,6 +31,7 @@ final class MapResource extends JsonResource
             'rally_solarsystem_id' => $this->rally_solarsystem_id,
             'layout' => $this->layout,
             'allow_layout_override' => $this->allow_layout_override,
+            'constant_width_enabled' => $this->constant_width_enabled,
             'bookmark_format_wormhole' => $this->bookmark_format_wormhole,
             'bookmark_format_kspace' => $this->bookmark_format_kspace,
             'map_solarsystems' => $this->mapSolarsystems->toResourceCollection(MapSolarsystemResource::class),
