@@ -50,18 +50,19 @@ function nodeCenter(anchor: Coordinates | null, id: number): Coordinates | null 
     return box ? { x: box.centerX, y: box.centerY } : anchor;
 }
 
+// Padding of the endpoint "rail" inside each vertical edge of the node.
+const RAIL_PADDING = 40;
+
 /**
- * The point on a node's edge facing `target`: where the straight line from the node's
- * centre to `target` crosses the node's bounding box. Keeps the whole connection visible
- * instead of running it under the node.
+ * A connection endpoint that slides along a horizontal rail through the node's centre.
+ * The rail runs at the vertical centre, inset RAIL_PADDING from each edge, and the
+ * endpoint sits at the point on it nearest the other node (`towardX`) — so it's pulled
+ * toward the far node but never closer than RAIL_PADDING to the edge.
  */
-function edgePointToward(box: NodeBox, target: Coordinates): Coordinates {
-    const dx = target.x - box.centerX;
-    const dy = target.y - box.centerY;
-    const halfWidth = (box.maxX - box.minX) / 2;
-    const halfHeight = (box.maxY - box.minY) / 2;
-    const t = Math.min(dx !== 0 ? halfWidth / Math.abs(dx) : Infinity, dy !== 0 ? halfHeight / Math.abs(dy) : Infinity);
-    return { x: box.centerX + dx * t, y: box.centerY + dy * t };
+function centrelineOrigin(box: NodeBox, towardX: number): Coordinates {
+    const padding = Math.min(RAIL_PADDING * scale.value, (box.maxX - box.minX) / 2);
+    const x = Math.max(box.minX + padding, Math.min(towardX, box.maxX - padding));
+    return { x, y: box.centerY };
 }
 
 type Endpoints = { from: Coordinates; to: Coordinates; fromNormal: Coordinates; toNormal: Coordinates };
@@ -175,12 +176,10 @@ const drawnConnections = computed<RenderedConnection[]>(() => {
                 };
             }
 
-            const sourceCenter = { x: sourceBox.centerX, y: sourceBox.centerY };
-            const targetCenter = { x: targetBox.centerX, y: targetBox.centerY };
             return {
                 connection,
-                from: edgePointToward(sourceBox, targetCenter),
-                to: edgePointToward(targetBox, sourceCenter),
+                from: centrelineOrigin(sourceBox, targetBox.centerX),
+                to: centrelineOrigin(targetBox, sourceBox.centerX),
                 variant: 'default',
             };
         });
