@@ -24,6 +24,7 @@ use function sprintf;
  * @property int $id
  * @property string $name
  * @property bool $is_public
+ * @property bool $constant_width_enabled
  * @property string|null $share_token
  * @property int|null $home_solarsystem_id
  * @property int|null $rally_solarsystem_id
@@ -183,6 +184,7 @@ final class Map extends Model
             'is_public' => 'boolean',
             'layout' => MapLayout::class,
             'allow_layout_override' => 'boolean',
+            'constant_width_enabled' => 'boolean',
         ];
     }
 }

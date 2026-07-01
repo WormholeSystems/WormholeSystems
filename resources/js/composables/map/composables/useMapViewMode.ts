@@ -17,6 +17,9 @@ const effective_layout = computed<TMapLayoutMode>(() => {
 
 const is_tree_layout = computed(() => effective_layout.value === 'tree');
 
+// A manager can pin every node to the auto-layout width regardless of placement mode.
+const is_constant_width_enabled = computed(() => mapState.map?.constant_width_enabled ?? false);
+
 /**
  * Auto layouts (the tree view) position nodes for you, so manual dragging and the
  * selection marquee are disabled while one is active. Exported for the low-level
@@ -26,5 +29,5 @@ const is_tree_layout = computed(() => effective_layout.value === 'tree');
 export const is_layout_locked = is_tree_layout;
 
 export function useMapViewMode() {
-    return { is_tree_layout, effective_layout };
+    return { is_tree_layout, effective_layout, is_constant_width_enabled };
 }

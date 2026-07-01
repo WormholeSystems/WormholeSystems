@@ -94,3 +94,23 @@ it('lets any member save a personal layout override', function () {
 
     expect($user->mapUserSettings()->where('map_id', $map->id)->value('layout_override'))->toBe(MapLayout::Tree);
 });
+
+it('lets a manager enable constant width', function () {
+    $map = Map::factory()->create();
+
+    actingAs(layoutTestUser($map, Permission::Manager))
+        ->put("/maps/{$map->slug}/layout", ['constant_width_enabled' => true])
+        ->assertRedirect();
+
+    expect($map->fresh()->constant_width_enabled)->toBeTrue();
+});
+
+it('forbids a member from enabling constant width', function () {
+    $map = Map::factory()->create();
+
+    actingAs(layoutTestUser($map, Permission::Member))
+        ->put("/maps/{$map->slug}/layout", ['constant_width_enabled' => true])
+        ->assertForbidden();
+
+    expect($map->fresh()->constant_width_enabled)->toBeFalse();
+});
