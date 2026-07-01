@@ -16,4 +16,6 @@ A connection also remembers when it was first connected and when its lifetime la
 
 You maintain mass and ship size yourself as the hole is used; lifetime is something you can set and that the app also ages automatically over time. Keeping these honest matters — they feed straight into routing, and the [wormhole filters](/documentation/autopilot-and-routing/wormhole-filters) use them to decide which holes are safe to route through.
 
+A connection can also be marked as a [stargate instead of a wormhole](/documentation/connections/connection-type), and flagged to [preserve its mass](/documentation/connections/preserve-mass) so the fleet keeps heavy ships off it.
+
 The next pages explain each status and its levels.
