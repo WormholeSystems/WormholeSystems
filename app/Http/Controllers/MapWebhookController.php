@@ -9,8 +9,10 @@ use App\Actions\MapWebhooks\DeleteMapWebhookAction;
 use App\Actions\MapWebhooks\UpdateMapWebhookAction;
 use App\Http\Requests\StoreMapWebhookRequest;
 use App\Http\Requests\UpdateMapWebhookRequest;
+use App\Http\Resources\MapAlertResource;
 use App\Http\Resources\MapInfoResource;
 use App\Http\Resources\MapWebhookResource;
+use App\Http\Resources\MapWebhookRoleResource;
 use App\Models\Map;
 use App\Models\MapWebhook;
 use App\Models\User;
@@ -28,7 +30,7 @@ final class MapWebhookController extends Controller
     ) {}
 
     /**
-     * Show the webhooks settings page.
+     * Show the alerts settings page: webhook destinations, roles, and the alerts that use them.
      */
     public function show(Map $map): Response
     {
@@ -36,7 +38,9 @@ final class MapWebhookController extends Controller
 
         return Inertia::render('maps/settings/ShowWebhooks', [
             'map' => $map->toResource(MapInfoResource::class),
-            'webhooks' => $map->mapWebhooks()->latest()->get()->toResourceCollection(MapWebhookResource::class),
+            'webhooks' => $map->mapWebhooks()->withCount('alerts')->latest()->get()->toResourceCollection(MapWebhookResource::class),
+            'roles' => $map->mapWebhookRoles()->withCount('alerts')->latest()->get()->toResourceCollection(MapWebhookRoleResource::class),
+            'alerts' => $map->mapAlerts()->latest()->get()->toResourceCollection(MapAlertResource::class),
             'permission' => $map->getUserPermission($this->user)?->value,
         ]);
     }
@@ -48,7 +52,7 @@ final class MapWebhookController extends Controller
     {
         $action->handle($request->validated());
 
-        return back()->notify('Webhook created', message: 'You will be notified in Discord when the trigger fires.');
+        return back()->notify('Webhook created', message: 'You can now point alerts at this Discord channel.');
     }
 
     /**
@@ -73,6 +77,14 @@ final class MapWebhookController extends Controller
     public function destroy(MapWebhook $mapWebhook, DeleteMapWebhookAction $action): RedirectResponse
     {
         Gate::authorize('delete', $mapWebhook);
+
+        if ($mapWebhook->alerts()->exists()) {
+            return back()->notify(
+                'Webhook in use',
+                message: 'Remove or reassign its alerts before deleting this webhook.',
+                type: 'error',
+            );
+        }
 
         $action->handle($mapWebhook);
 

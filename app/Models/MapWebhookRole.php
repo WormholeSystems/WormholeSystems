@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Carbon\CarbonImmutable;
-use Database\Factories\MapWebhookFactory;
+use Database\Factories\MapWebhookRoleFactory;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,25 +14,25 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * A reusable Discord webhook destination (a channel URL) that alerts post to.
+ * A reusable Discord role that an alert can ping when it fires.
  *
  * @property int $id
  * @property int $map_id
  * @property string $name
- * @property string $discord_webhook_url
+ * @property string $discord_role_id
  * @property-read string|CarbonImmutable $created_at
  * @property-read string|CarbonImmutable $updated_at
  * @property-read Map $map
  * @property-read Collection<int, MapAlert> $alerts
  */
-#[UseFactory(MapWebhookFactory::class)]
-final class MapWebhook extends Model
+#[UseFactory(MapWebhookRoleFactory::class)]
+final class MapWebhookRole extends Model
 {
-    /** @use HasFactory<MapWebhookFactory> */
+    /** @use HasFactory<MapWebhookRoleFactory> */
     use HasFactory;
 
     /**
-     * The map this webhook belongs to.
+     * The map this role belongs to.
      *
      * @return BelongsTo<Map, $this>
      */
@@ -42,22 +42,12 @@ final class MapWebhook extends Model
     }
 
     /**
-     * The alerts that deliver to this webhook.
+     * The alerts that ping this role.
      *
      * @return HasMany<MapAlert, $this>
      */
     public function alerts(): HasMany
     {
         return $this->hasMany(MapAlert::class);
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'discord_webhook_url' => 'encrypted',
-        ];
     }
 }

@@ -8,9 +8,9 @@ use App\Enums\KillmailFilterSubject;
 use App\Enums\MapWebhookType;
 use App\Models\Killmail;
 use App\Models\Map;
+use App\Models\MapAlert;
 use App\Models\MapIgnoredSolarsystem;
 use App\Models\MapSolarsystem;
-use App\Models\MapWebhook;
 use App\Models\Type;
 use App\Services\DiscordWebhookService;
 use App\Services\Killmails\KillmailWebhookMatcher;
@@ -46,12 +46,13 @@ final class EvaluateKillmailWebhooksJob implements ShouldBeUnique, ShouldQueue
 
     public function handle(MapProximityPathfinder $pathfinder, DiscordWebhookService $discord, KillmailWebhookMatcher $matcher): void
     {
-        $webhooks = MapWebhook::query()
+        $alerts = MapAlert::query()
             ->where('type', MapWebhookType::Killmail)
             ->where('is_active', true)
+            ->with(['webhook', 'role'])
             ->get();
 
-        if ($webhooks->isEmpty()) {
+        if ($alerts->isEmpty()) {
             return;
         }
 
@@ -64,18 +65,18 @@ final class EvaluateKillmailWebhooksJob implements ShouldBeUnique, ShouldQueue
         /** @var array<string, mixed> $data */
         $data = json_decode(json_encode($killmail->data), true) ?: [];
 
-        $typeGroupMap = $this->resolveTypeGroupMap($webhooks, $data);
-        $mapData = $this->loadMapData($webhooks->pluck('map_id')->unique()->all());
+        $typeGroupMap = $this->resolveTypeGroupMap($alerts, $data);
+        $mapData = $this->loadMapData($alerts->pluck('map_id')->unique()->all());
 
-        // Index the killmail once; every webhook's filters query the same pools.
+        // Index the killmail once; every alert's filters query the same pools.
         $pools = $matcher->buildPools($data, $typeGroupMap);
 
-        foreach ($webhooks as $webhook) {
-            if (! $matcher->matches($pools, $webhook->filters, $webhook->filter_match)) {
+        foreach ($alerts as $alert) {
+            if (! $matcher->matches($pools, $alert->filters, $alert->filter_match)) {
                 continue;
             }
 
-            $map = $mapData[$webhook->map_id] ?? null;
+            $map = $mapData[$alert->map_id] ?? null;
             if ($map === null) {
                 continue;
             }
@@ -88,33 +89,33 @@ final class EvaluateKillmailWebhooksJob implements ShouldBeUnique, ShouldQueue
                 $killmail->solarsystem_id,
                 $map['edges'],
                 $map['ignored'],
-                $webhook->max_jumps,
+                $alert->max_jumps,
             );
 
             if (! $result instanceof ProximityResult) {
                 continue;
             }
 
-            $matchedFilters = $matcher->matchingRules($pools, $webhook->filters);
+            $matchedFilters = $matcher->matchingRules($pools, $alert->filters);
 
-            $discord->sendKillmailAlert($webhook, $killmail, $result, $matchedFilters);
+            $discord->sendKillmailAlert($alert, $killmail, $result, $matchedFilters);
 
-            $webhook->update(['last_fired_at' => now()]);
+            $alert->update(['last_fired_at' => now()]);
         }
     }
 
     /**
-     * Resolve ship_type_id => group_id for the kill's ships, but only when a webhook
+     * Resolve ship_type_id => group_id for the kill's ships, but only when an alert
      * actually filters on ship group.
      *
-     * @param  Collection<int, MapWebhook>  $webhooks
+     * @param  Collection<int, MapAlert>  $alerts
      * @param  array<string, mixed>  $data
      * @return array<int, int>
      */
-    private function resolveTypeGroupMap(Collection $webhooks, array $data): array
+    private function resolveTypeGroupMap(Collection $alerts, array $data): array
     {
-        $needsGroups = $webhooks->contains(
-            fn (MapWebhook $webhook): bool => $webhook->filters->contains(
+        $needsGroups = $alerts->contains(
+            fn (MapAlert $alert): bool => $alert->filters->contains(
                 fn ($rule): bool => $rule->subject === KillmailFilterSubject::ShipGroup,
             ),
         );

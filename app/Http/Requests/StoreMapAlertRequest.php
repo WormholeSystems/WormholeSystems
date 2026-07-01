@@ -4,16 +4,22 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
-use App\Models\MapWebhook;
+use App\Http\Requests\Concerns\HasMapAlertRules;
+use App\Models\Map;
+use App\Models\MapAlert;
 use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-final class UpdateMapWebhookRequest extends FormRequest
+final class StoreMapAlertRequest extends FormRequest
 {
-    public MapWebhook $mapWebhook {
-        get => $this->route('map_webhook');
+    use HasMapAlertRules;
+
+    public Map $map {
+        get => Map::query()->findOrFail(
+            $this->integer('map_id'),
+        );
     }
 
     /**
@@ -21,22 +27,24 @@ final class UpdateMapWebhookRequest extends FormRequest
      */
     public function authorize(#[CurrentUser] User $user): bool
     {
-        return $user->can('update', $this->mapWebhook);
+        return $user->can('create', [MapAlert::class, $this->map]);
     }
 
     /**
      * Get the validation rules that apply to the request.
-     *
-     * The Discord URL is optional on update so the secret never needs to round-trip
-     * to the client; leaving it blank keeps the stored value.
      *
      * @return array<string, ValidationRule|array|string>
      */
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
-            'discord_webhook_url' => ['nullable', 'url', 'regex:#^https://discord(app)?\.com/api/webhooks/#'],
+            'map_id' => ['required', 'integer', 'exists:maps,id'],
+            ...$this->alertRules(),
         ];
+    }
+
+    protected function alertMap(): Map
+    {
+        return $this->map;
     }
 }

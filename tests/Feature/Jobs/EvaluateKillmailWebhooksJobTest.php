@@ -5,8 +5,10 @@ declare(strict_types=1);
 use App\Jobs\Webhooks\EvaluateKillmailWebhooksJob;
 use App\Models\Killmail;
 use App\Models\Map;
+use App\Models\MapAlert;
 use App\Models\MapSolarsystem;
 use App\Models\MapWebhook;
+use App\Models\MapWebhookRole;
 use Illuminate\Support\Facades\Http;
 
 function makeKillmail(int $solarsystemId, array $overrides = []): Killmail
@@ -38,6 +40,22 @@ function mapWithSystem(int $solarsystemId): Map
     return $map;
 }
 
+/**
+ * A killmail alert on the map, delivering to a fresh webhook destination.
+ *
+ * @param  array<int, array{subject: string, side: string, mode: string, ids: int[]}>  $filters
+ * @param  array<string, mixed>  $attributes
+ */
+function killmailAlert(Map $map, array $filters = [], array $attributes = []): MapAlert
+{
+    $webhook = MapWebhook::factory()->for($map)->create();
+
+    return MapAlert::factory()->killmail($filters)->create(array_merge([
+        'map_id' => $map->id,
+        'map_webhook_id' => $webhook->id,
+    ], $attributes));
+}
+
 function runKillmailEval(int $killmailId): void
 {
     app()->call([new EvaluateKillmailWebhooksJob($killmailId), 'handle']);
@@ -50,16 +68,16 @@ beforeEach(function () {
 it('fires when a matching kill occurs in a system on the map', function () {
     $sid = makeSolarsystem(30009401);
     $map = mapWithSystem($sid);
-    $webhook = MapWebhook::factory()->for($map)->killmail([
+    $alert = killmailAlert($map, [
         ['subject' => 'corporation', 'side' => 'either', 'mode' => 'include', 'ids' => [201]],
-    ])->create(['max_jumps' => 3]);
+    ], ['max_jumps' => 3]);
 
     $killmail = makeKillmail($sid);
 
     runKillmailEval($killmail->id);
 
     Http::assertSentCount(1);
-    expect($webhook->refresh()->last_fired_at)->not->toBeNull();
+    expect($alert->refresh()->last_fired_at)->not->toBeNull();
 });
 
 it('fires across a real stargate hop within range', function () {
@@ -73,9 +91,9 @@ it('fires across a real stargate hop within range', function () {
 
     $map = Map::factory()->create();
     MapSolarsystem::factory()->for($map)->create(['solarsystem_id' => $origin, 'alias' => 'HOME']);
-    MapWebhook::factory()->for($map)->killmail([
+    killmailAlert($map, [
         ['subject' => 'corporation', 'side' => 'either', 'mode' => 'include', 'ids' => [201]],
-    ])->create(['max_jumps' => 1]);
+    ], ['max_jumps' => 1]);
 
     $killmail = makeKillmail($killSystem);
 
@@ -103,7 +121,8 @@ it('fires across a real stargate hop within range', function () {
 it('pings the configured role when one is set', function () {
     $sid = makeSolarsystem(30009610);
     $map = mapWithSystem($sid);
-    MapWebhook::factory()->for($map)->killmail()->create(['max_jumps' => 3, 'discord_role_id' => '123456789']);
+    $role = MapWebhookRole::factory()->for($map)->create(['discord_role_id' => '123456789']);
+    killmailAlert($map, [], ['max_jumps' => 3, 'map_webhook_role_id' => $role->id]);
 
     runKillmailEval(makeKillmail($sid)->id);
 
@@ -116,7 +135,7 @@ it('pings the configured role when one is set', function () {
 it('does not add a mention when no role is set', function () {
     $sid = makeSolarsystem(30009611);
     $map = mapWithSystem($sid);
-    MapWebhook::factory()->for($map)->killmail()->create(['max_jumps' => 3]);
+    killmailAlert($map, [], ['max_jumps' => 3]);
 
     runKillmailEval(makeKillmail($sid)->id);
 
@@ -126,7 +145,7 @@ it('does not add a mention when no role is set', function () {
 it('marks an in-chain kill as inside the chain rather than a route', function () {
     $sid = makeSolarsystem(30009601);
     $map = mapWithSystem($sid);
-    MapWebhook::factory()->for($map)->killmail()->create(['max_jumps' => 3]);
+    killmailAlert($map, [], ['max_jumps' => 3]);
 
     $killmail = makeKillmail($sid);
 
@@ -162,7 +181,7 @@ it('does not fire for a kill beyond max jumps over real stargates', function () 
     makeSolarsystem($twoHop);
 
     $map = mapWithSystem($origin);
-    MapWebhook::factory()->for($map)->killmail()->create(['max_jumps' => 1]);
+    killmailAlert($map, [], ['max_jumps' => 1]);
 
     $killmail = makeKillmail($twoHop);
 
@@ -177,7 +196,7 @@ it('does not treat an unplaced map solarsystem as being on the map', function ()
 
     $map = mapWithSystem($placed);
     // A system that is not placed on the map is not on the chain.
-    MapWebhook::factory()->for($map)->killmail()->create(['max_jumps' => 1]);
+    killmailAlert($map, [], ['max_jumps' => 1]);
 
     $killmail = makeKillmail($unplaced);
 
@@ -190,7 +209,7 @@ it('does not fire when the kill is out of range', function () {
     $mapSystem = makeSolarsystem(30009402);
     $killSystem = makeSolarsystem(30009403);
     $map = mapWithSystem($mapSystem);
-    MapWebhook::factory()->for($map)->killmail()->create(['max_jumps' => 3]);
+    killmailAlert($map, [], ['max_jumps' => 3]);
 
     $killmail = makeKillmail($killSystem);
 
@@ -202,9 +221,9 @@ it('does not fire when the kill is out of range', function () {
 it('does not fire when filters do not match even if in range', function () {
     $sid = makeSolarsystem(30009404);
     $map = mapWithSystem($sid);
-    MapWebhook::factory()->for($map)->killmail([
+    killmailAlert($map, [
         ['subject' => 'corporation', 'side' => 'either', 'mode' => 'include', 'ids' => [999999]],
-    ])->create(['max_jumps' => 3]);
+    ], ['max_jumps' => 3]);
 
     $killmail = makeKillmail($sid);
 
@@ -217,10 +236,10 @@ it('fires in any-match mode when only one of several include filters matches', f
     $sid = makeSolarsystem(30009420);
     $map = mapWithSystem($sid);
     // Victim corp is 200; the second rule (999) never matches, but "any" only needs one.
-    MapWebhook::factory()->for($map)->killmail([
+    killmailAlert($map, [
         ['subject' => 'corporation', 'side' => 'victim', 'mode' => 'include', 'ids' => [200]],
         ['subject' => 'corporation', 'side' => 'victim', 'mode' => 'include', 'ids' => [999]],
-    ])->create(['max_jumps' => 3, 'filter_match' => 'any']);
+    ], ['max_jumps' => 3, 'filter_match' => 'any']);
 
     runKillmailEval(makeKillmail($sid)->id);
 
@@ -230,10 +249,10 @@ it('fires in any-match mode when only one of several include filters matches', f
 it('does not fire in all-match mode unless every include filter matches', function () {
     $sid = makeSolarsystem(30009421);
     $map = mapWithSystem($sid);
-    MapWebhook::factory()->for($map)->killmail([
+    killmailAlert($map, [
         ['subject' => 'corporation', 'side' => 'victim', 'mode' => 'include', 'ids' => [200]],
         ['subject' => 'corporation', 'side' => 'victim', 'mode' => 'include', 'ids' => [999]],
-    ])->create(['max_jumps' => 3, 'filter_match' => 'all']);
+    ], ['max_jumps' => 3, 'filter_match' => 'all']);
 
     runKillmailEval(makeKillmail($sid)->id);
 
@@ -244,10 +263,10 @@ it('lists only the filters that actually matched the kill in the embed', functio
     $sid = makeSolarsystem(30009422);
     $map = mapWithSystem($sid);
     // Victim corp is 200; the 999 rule does not match and must not appear in the embed.
-    MapWebhook::factory()->for($map)->killmail([
+    killmailAlert($map, [
         ['subject' => 'corporation', 'side' => 'victim', 'mode' => 'include', 'ids' => [200]],
         ['subject' => 'corporation', 'side' => 'victim', 'mode' => 'include', 'ids' => [999]],
-    ])->create(['max_jumps' => 3, 'filter_match' => 'any']);
+    ], ['max_jumps' => 3, 'filter_match' => 'any']);
 
     runKillmailEval(makeKillmail($sid)->id);
 
@@ -263,9 +282,9 @@ it('lists only the filters that actually matched the kill in the embed', functio
 it('honours an exclude filter', function () {
     $sid = makeSolarsystem(30009405);
     $map = mapWithSystem($sid);
-    MapWebhook::factory()->for($map)->killmail([
+    killmailAlert($map, [
         ['subject' => 'alliance', 'side' => 'attacker', 'mode' => 'exclude', 'ids' => [301]],
-    ])->create(['max_jumps' => 3]);
+    ], ['max_jumps' => 3]);
 
     $killmail = makeKillmail($sid);
 
@@ -274,10 +293,10 @@ it('honours an exclude filter', function () {
     Http::assertNothingSent();
 });
 
-it('skips inactive killmail webhooks', function () {
+it('skips inactive killmail alerts', function () {
     $sid = makeSolarsystem(30009406);
     $map = mapWithSystem($sid);
-    MapWebhook::factory()->for($map)->killmail()->inactive()->create(['max_jumps' => 3]);
+    killmailAlert($map, [], ['max_jumps' => 3, 'is_active' => false]);
 
     $killmail = makeKillmail($sid);
 
@@ -286,10 +305,16 @@ it('skips inactive killmail webhooks', function () {
     Http::assertNothingSent();
 });
 
-it('ignores proximity webhooks and returns early when no killmail webhooks exist', function () {
+it('ignores proximity alerts and returns early when no killmail alerts exist', function () {
     $sid = makeSolarsystem(30009407);
     $map = mapWithSystem($sid);
-    MapWebhook::factory()->for($map)->create(['target_solarsystem_id' => $sid, 'max_jumps' => 3]);
+    $webhook = MapWebhook::factory()->for($map)->create();
+    MapAlert::factory()->create([
+        'map_id' => $map->id,
+        'map_webhook_id' => $webhook->id,
+        'target_solarsystem_id' => $sid,
+        'max_jumps' => 3,
+    ]);
 
     $killmail = makeKillmail($sid);
 

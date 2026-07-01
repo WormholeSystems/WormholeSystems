@@ -6,6 +6,7 @@ use App\Enums\Permission;
 use App\Models\Character;
 use App\Models\Map;
 use App\Models\MapAccess;
+use App\Models\MapAlert;
 use App\Models\MapWebhook;
 use App\Models\User;
 
@@ -22,12 +23,8 @@ function validWebhookPayload(Map $map, array $overrides = []): array
 {
     return array_merge([
         'map_id' => $map->id,
-        'name' => 'Jita alert',
+        'name' => 'Home channel',
         'discord_webhook_url' => 'https://discord.com/api/webhooks/123456789/abcdefg',
-        'type' => 'proximity',
-        'target_solarsystem_id' => makeSolarsystem(30009100),
-        'max_jumps' => 5,
-        'is_active' => true,
     ], $overrides);
 }
 
@@ -40,35 +37,39 @@ it('lets a manager create a webhook', function () {
     expect(MapWebhook::query()->where('map_id', $map->id)->count())->toBe(1);
 });
 
-it('lets a manager update a webhook', function () {
+it('lets a manager rename a webhook without resending the url', function () {
     $map = Map::factory()->create();
-    $webhook = MapWebhook::factory()->for($map)->create([
-        'name' => 'Old',
-        'max_jumps' => 5,
-        'target_solarsystem_id' => makeSolarsystem(30009101),
-    ]);
+    $webhook = MapWebhook::factory()->for($map)->create(['name' => 'Old']);
     actingAs(webhookManager($map, Permission::Manager));
 
-    $this->put(route('map-webhooks.update', $webhook), [
-        'name' => 'New',
-        'type' => 'proximity',
-        'target_solarsystem_id' => $webhook->target_solarsystem_id,
-        'max_jumps' => 10,
-        'is_active' => true,
-    ])->assertRedirect();
+    $this->put(route('map-webhooks.update', $webhook), ['name' => 'New'])->assertRedirect();
 
-    expect($webhook->refresh()->name)->toBe('New')
-        ->and($webhook->max_jumps)->toBe(10);
+    expect($webhook->refresh()->name)->toBe('New');
 });
 
-it('lets a manager delete a webhook', function () {
+it('lets a manager delete an unused webhook', function () {
     $map = Map::factory()->create();
-    $webhook = MapWebhook::factory()->for($map)->create(['target_solarsystem_id' => makeSolarsystem(30009103)]);
+    $webhook = MapWebhook::factory()->for($map)->create();
     actingAs(webhookManager($map, Permission::Manager));
 
     $this->delete(route('map-webhooks.destroy', $webhook))->assertRedirect();
 
     expect(MapWebhook::query()->whereKey($webhook->id)->exists())->toBeFalse();
+});
+
+it('blocks deleting a webhook that still has alerts', function () {
+    $map = Map::factory()->create();
+    $webhook = MapWebhook::factory()->for($map)->create();
+    MapAlert::factory()->create([
+        'map_id' => $map->id,
+        'map_webhook_id' => $webhook->id,
+        'target_solarsystem_id' => makeSolarsystem(30009120),
+    ]);
+    actingAs(webhookManager($map, Permission::Manager));
+
+    $this->delete(route('map-webhooks.destroy', $webhook))->assertRedirect();
+
+    expect(MapWebhook::query()->whereKey($webhook->id)->exists())->toBeTrue();
 });
 
 it('forbids a member from creating a webhook', function () {
@@ -82,7 +83,7 @@ it('forbids a member from creating a webhook', function () {
 
 it('forbids a viewer from deleting a webhook', function () {
     $map = Map::factory()->create();
-    $webhook = MapWebhook::factory()->for($map)->create(['target_solarsystem_id' => makeSolarsystem(30009104)]);
+    $webhook = MapWebhook::factory()->for($map)->create();
     actingAs(webhookManager($map, Permission::Viewer));
 
     $this->delete(route('map-webhooks.destroy', $webhook))->assertForbidden();
@@ -99,16 +100,12 @@ it('validates the webhook payload', function (array $overrides, string $invalidF
 })->with([
     'malformed url' => [['discord_webhook_url' => 'not-a-url'], 'discord_webhook_url'],
     'non-discord url' => [['discord_webhook_url' => 'https://example.com/hook'], 'discord_webhook_url'],
-    'max jumps too high' => [['max_jumps' => 99], 'max_jumps'],
-    'missing target' => [['target_solarsystem_id' => 999999999], 'target_solarsystem_id'],
+    'missing name' => [['name' => ''], 'name'],
 ]);
 
 it('never exposes the discord url on the settings page', function () {
     $map = Map::factory()->create();
-    MapWebhook::factory()->for($map)->create([
-        'name' => 'Secret keeper',
-        'target_solarsystem_id' => makeSolarsystem(30009105),
-    ]);
+    MapWebhook::factory()->for($map)->create(['name' => 'Secret keeper']);
     $owner = User::factory()->ownsMap($map)->create();
     $owner->update(['preferred_character_id' => $owner->characters->first()->id]);
     actingAs($owner);

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\Killmail;
+use App\Models\MapAlert;
 use App\Models\MapSolarsystem;
-use App\Models\MapWebhook;
 use App\Models\Solarsystem;
 use App\Models\Type;
 use App\Services\Killmails\KillmailFilterDescriber;
@@ -30,18 +30,18 @@ final readonly class DiscordWebhookService
     ) {}
 
     /**
-     * POST a proximity alert embed to the webhook's Discord URL, coloured by the
+     * POST a proximity alert embed to the alert's webhook URL, coloured by the
      * target system's security status.
      */
-    public function sendProximityAlert(MapWebhook $webhook, ProximityResult $result): void
+    public function sendProximityAlert(MapAlert $alert, ProximityResult $result): void
     {
-        $systems = $this->resolveSystems($webhook, $result);
+        $systems = $this->resolveSystems($alert, $result);
 
-        $target = $systems[$webhook->target_solarsystem_id] ?? ['name' => (string) $webhook->target_solarsystem_id, 'security' => 0.0];
+        $target = $systems[$alert->target_solarsystem_id] ?? ['name' => (string) $alert->target_solarsystem_id, 'security' => 0.0];
         $originName = $systems[$result->matchedOriginSolarsystemId]['name'] ?? (string) $result->matchedOriginSolarsystemId;
         $routeNames = array_map(fn (int $id): string => $systems[$id]['name'] ?? (string) $id, $result->route);
 
-        $this->deliver($webhook, [
+        $this->deliver($alert, [
             'title' => sprintf('Found new %d %s %s connection', $result->jumps, $result->jumps === 1 ? 'jump' : 'jumps', $target['name']),
             'description' => sprintf('**%s** was just added to your map, putting **%s** within range.', $originName, $target['name']),
             'color' => $this->colorForSecurity((float) $target['security']),
@@ -55,13 +55,12 @@ final readonly class DiscordWebhookService
     }
 
     /**
-     * POST a killmail alert embed to the webhook's Discord URL when a kill matching the
-     * webhook's filters occurs within range of the map.
-     */
-    /**
+     * POST a killmail alert embed to the alert's webhook URL when a kill matching the
+     * alert's filters occurs within range of the map.
+     *
      * @param  Collection<int, KillmailFilterRule>  $matchedFilters
      */
-    public function sendKillmailAlert(MapWebhook $webhook, Killmail $killmail, ProximityResult $result, Collection $matchedFilters): void
+    public function sendKillmailAlert(MapAlert $alert, Killmail $killmail, ProximityResult $result, Collection $matchedFilters): void
     {
         $data = json_decode(json_encode($killmail->data), true) ?: [];
         $victim = is_array($data['victim'] ?? null) ? $data['victim'] : [];
@@ -92,7 +91,7 @@ final readonly class DiscordWebhookService
             $description = 'A matching killmail occurred **inside your chain**.';
         } else {
             $description = sprintf('A matching killmail occurred **%d %s** from your chain.', $result->jumps, $result->jumps === 1 ? 'jump' : 'jumps');
-            $fields[] = ['name' => 'Exit from', 'value' => $this->resolveExit($webhook, $result, $systems), 'inline' => true];
+            $fields[] = ['name' => 'Exit from', 'value' => $this->resolveExit($alert, $result, $systems), 'inline' => true];
             $fields[] = ['name' => 'Jumps from chain', 'value' => (string) $result->jumps, 'inline' => true];
             $fields[] = ['name' => 'Route', 'value' => implode(' → ', array_map(fn (int $id): string => $systems[$id]->name ?? (string) $id, $result->route))];
         }
@@ -119,32 +118,34 @@ final readonly class DiscordWebhookService
             $embed['thumbnail'] = ['url' => sprintf('https://images.evetech.net/types/%d/render?size=128', $shipTypeId)];
         }
 
-        $this->deliver($webhook, $embed);
+        $this->deliver($alert, $embed);
     }
 
     /**
-     * POST a single embed to the webhook's Discord URL, pinging the configured role when
+     * POST a single embed to the alert's webhook URL, pinging the configured role when
      * one is set. Delivery failures are logged but never bubble up.
      *
      * @param  array<string, mixed>  $embed
      */
-    private function deliver(MapWebhook $webhook, array $embed): void
+    private function deliver(MapAlert $alert, array $embed): void
     {
         $payload = ['embeds' => [$embed]];
 
-        if ($webhook->discord_role_id !== null) {
-            $payload['content'] = sprintf('<@&%s>', $webhook->discord_role_id);
-            $payload['allowed_mentions'] = ['roles' => [$webhook->discord_role_id]];
+        $roleId = $alert->role?->discord_role_id;
+
+        if ($roleId !== null) {
+            $payload['content'] = sprintf('<@&%s>', $roleId);
+            $payload['allowed_mentions'] = ['roles' => [$roleId]];
         }
 
         try {
             Http::timeout(10)
                 ->retry(3, 200)
-                ->post($webhook->discord_webhook_url, $payload)
+                ->post($alert->webhook->discord_webhook_url, $payload)
                 ->throw();
         } catch (Throwable $e) {
             Log::warning('Discord webhook delivery failed', [
-                'map_webhook_id' => $webhook->id,
+                'map_alert_id' => $alert->id,
                 'message' => $e->getMessage(),
             ]);
         }
@@ -156,13 +157,13 @@ final readonly class DiscordWebhookService
      *
      * @param  Collection<int, Solarsystem>  $systems
      */
-    private function resolveExit(MapWebhook $webhook, ProximityResult $result, Collection $systems): string
+    private function resolveExit(MapAlert $alert, ProximityResult $result, Collection $systems): string
     {
         $originId = $result->matchedOriginSolarsystemId;
         $name = $systems[$originId]->name ?? (string) $originId;
 
         $alias = MapSolarsystem::query()
-            ->where('map_id', $webhook->map_id)
+            ->where('map_id', $alert->map_id)
             ->isSolarsystem($originId)
             ->value('alias');
 
@@ -190,10 +191,10 @@ final readonly class DiscordWebhookService
     /**
      * @return array<int, array{name: string, security: float}>
      */
-    private function resolveSystems(MapWebhook $webhook, ProximityResult $result): array
+    private function resolveSystems(MapAlert $alert, ProximityResult $result): array
     {
         $ids = array_unique([
-            $webhook->target_solarsystem_id,
+            $alert->target_solarsystem_id,
             $result->matchedOriginSolarsystemId,
             ...$result->route,
         ]);

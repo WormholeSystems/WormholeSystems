@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use App\Models\Map;
-use App\Models\MapWebhook;
+use App\Models\MapWebhookRole;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<MapWebhook>
+ * @extends Factory<MapWebhookRole>
  */
-final class MapWebhookFactory extends Factory
+final class MapWebhookRoleFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -23,7 +23,7 @@ final class MapWebhookFactory extends Factory
         return [
             'map_id' => Map::factory(),
             'name' => fake()->words(2, true),
-            'discord_webhook_url' => 'https://discord.com/api/webhooks/'.fake()->randomNumber(8, true).'/'.fake()->sha1(),
+            'discord_role_id' => (string) fake()->randomNumber(9, true),
         ];
     }
 }
