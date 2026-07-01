@@ -98,6 +98,9 @@ function formatLifetime(hours: number | null): string {
                         {{ system.effect.name }}
                     </span>
                 </div>
+                <div v-if="map_solarsystem.occupier_alias" class="mt-1 text-[11px] text-muted-foreground">
+                    Occupied by <span class="font-medium text-foreground">{{ map_solarsystem.occupier_alias }}</span>
+                </div>
                 <div class="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground">
                     <span>{{ system?.region?.name }}</span>
                     <span v-if="system?.constellation?.name">· {{ system.constellation.name }}</span>
