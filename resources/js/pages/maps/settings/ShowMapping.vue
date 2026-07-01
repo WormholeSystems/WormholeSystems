@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import MapUserSettingController from '@/actions/App/Http/Controllers/MapUserSettingController';
 import PlusIcon from '@/components/icons/PlusIcon.vue';
+import BookmarkFormatCard from '@/components/map/BookmarkFormatCard.vue';
 import SolarsystemEffect from '@/components/map/SolarsystemEffect.vue';
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import { Button } from '@/components/ui/button';
@@ -26,7 +27,8 @@ const { map, map_user_settings, map_ignored_systems } = defineProps<{
     map_ignored_systems: number[];
 }>();
 
-const { canEdit } = usePermission();
+const { canEdit, isAtLeast } = usePermission();
+const canManageSettings = computed(() => isAtLeast('manager'));
 const { ignoreSolarsystem, unignoreSolarsystem, clearIgnoreList } = useMapIgnoredSystems();
 const { staticData, loadStaticData } = useStaticData();
 
@@ -163,6 +165,8 @@ function handleSolarsystemSelect(solarsystem: TStaticSolarsystem) {
                     </div>
                 </CardContent>
             </Card>
+
+            <BookmarkFormatCard :map="map" :can-edit="canManageSettings" />
 
             <Card>
                 <CardHeader class="flex flex-row items-start justify-between gap-4">
