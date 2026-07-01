@@ -1,0 +1,96 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Enums\BookmarkToken;
+use App\Enums\Permission;
+use App\Models\Character;
+use App\Models\Map;
+use App\Models\MapAccess;
+use App\Models\User;
+
+use function Pest\Laravel\actingAs;
+
+function bookmarkFormatUser(Map $map, Permission $permission): User
+{
+    $user = User::factory()
+        ->has(Character::factory()->has(MapAccess::factory(['permission' => $permission])->for($map)))
+        ->create();
+
+    $user->forceFill(['preferred_character_id' => $user->characters()->value('id')])->save();
+
+    return $user->refresh();
+}
+
+it('defaults a new map to the default bookmark formats', function () {
+    $map = Map::factory()->create()->fresh();
+
+    expect($map->bookmark_format_wormhole)->toBe(BookmarkToken::DEFAULT_WORMHOLE)
+        ->and($map->bookmark_format_kspace)->toBe(BookmarkToken::DEFAULT_KSPACE);
+});
+
+it('lets a manager update the bookmark formats', function () {
+    $map = Map::factory()->create();
+
+    actingAs(bookmarkFormatUser($map, Permission::Manager))
+        ->put("/maps/{$map->slug}/bookmark-format", [
+            'bookmark_format_wormhole' => '{sig} {class} {alias}',
+            'bookmark_format_kspace' => '{name} {region}',
+        ])
+        ->assertRedirect();
+
+    $map->refresh();
+
+    expect($map->bookmark_format_wormhole)->toBe('{sig} {class} {alias}')
+        ->and($map->bookmark_format_kspace)->toBe('{name} {region}');
+});
+
+it('forbids a member from updating the bookmark formats', function () {
+    $map = Map::factory()->create();
+
+    actingAs(bookmarkFormatUser($map, Permission::Member))
+        ->put("/maps/{$map->slug}/bookmark-format", ['bookmark_format_wormhole' => '{sig}'])
+        ->assertForbidden();
+
+    expect($map->fresh()->bookmark_format_wormhole)->toBe(BookmarkToken::DEFAULT_WORMHOLE);
+});
+
+it('forbids a viewer from updating the bookmark formats', function () {
+    $map = Map::factory()->create();
+
+    actingAs(bookmarkFormatUser($map, Permission::Viewer))
+        ->put("/maps/{$map->slug}/bookmark-format", ['bookmark_format_wormhole' => '{sig}'])
+        ->assertForbidden();
+});
+
+it('rejects a format containing an unknown token', function () {
+    $map = Map::factory()->create();
+
+    actingAs(bookmarkFormatUser($map, Permission::Manager))
+        ->put("/maps/{$map->slug}/bookmark-format", ['bookmark_format_wormhole' => '{alias} {nonsense}'])
+        ->assertSessionHasErrors('bookmark_format_wormhole');
+
+    expect($map->fresh()->bookmark_format_wormhole)->toBe(BookmarkToken::DEFAULT_WORMHOLE);
+});
+
+it('accepts the connection tokens', function () {
+    $map = Map::factory()->create();
+
+    actingAs(bookmarkFormatUser($map, Permission::Manager))
+        ->put("/maps/{$map->slug}/bookmark-format", ['bookmark_format_wormhole' => '{alias} {occupier} {wh} {size} {mass} {life}'])
+        ->assertRedirect()
+        ->assertSessionHasNoErrors();
+
+    expect($map->fresh()->bookmark_format_wormhole)->toBe('{alias} {occupier} {wh} {size} {mass} {life}');
+});
+
+it('accepts a format with literal text around known tokens', function () {
+    $map = Map::factory()->create();
+
+    actingAs(bookmarkFormatUser($map, Permission::Manager))
+        ->put("/maps/{$map->slug}/bookmark-format", ['bookmark_format_wormhole' => '[{alias}] {sig}'])
+        ->assertRedirect()
+        ->assertSessionHasNoErrors();
+
+    expect($map->fresh()->bookmark_format_wormhole)->toBe('[{alias}] {sig}');
+});
