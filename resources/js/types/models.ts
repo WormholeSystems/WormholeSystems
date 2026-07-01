@@ -296,7 +296,20 @@ export type TEveSearchResult = {
 export type TMapWebhook = {
     id: number;
     name: string;
-    discord_role_id: string | null;
+    alerts_count?: number;
+};
+
+export type TMapWebhookRole = {
+    id: number;
+    name: string;
+    discord_role_id: string;
+    alerts_count?: number;
+};
+
+export type TMapAlert = {
+    id: number;
+    map_webhook_id: number;
+    map_webhook_role_id: number | null;
     type: TMapWebhookType;
     target_solarsystem_id: number | null;
     max_jumps: number;
