@@ -78,8 +78,10 @@ final class EveSearchController extends Controller
      */
     private function matching(Builder $builder, array $ids, string $query): Builder
     {
+        // Resolving explicit ids (labelling saved chips when editing) must return every
+        // one of them; the limit only guards the open-ended typeahead search below.
         if ($ids !== []) {
-            return $builder->whereIn('id', $ids)->orderBy('name')->limit(self::LIMIT);
+            return $builder->whereIn('id', $ids)->orderBy('name');
         }
 
         return $builder
