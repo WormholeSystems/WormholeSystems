@@ -298,6 +298,8 @@ useEventListener('pointerup', handleDragEnd);
                 :to_normal="toNormal"
                 :bend="bend"
                 :variant="variant"
+                :type="connection.type"
+                :preserve_mass="connection.preserve_mass"
                 :ship_size="connection.ship_size"
                 :mass_status="connection.mass_status"
                 :lifetime="connection.lifetime_status"

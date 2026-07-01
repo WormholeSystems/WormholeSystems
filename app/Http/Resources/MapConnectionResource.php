@@ -27,6 +27,8 @@ final class MapConnectionResource extends JsonResource
             'id' => $this->id,
             'from_map_solarsystem_id' => $this->from_map_solarsystem_id,
             'to_map_solarsystem_id' => $this->to_map_solarsystem_id,
+            'type' => $this->type,
+            'preserve_mass' => $this->preserve_mass,
             'mass_status' => $this->mass_status,
             'lifetime_status' => $this->lifetime,
             'lifetime_status_updated_at' => $this->lifetime_updated_at,

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Builders\MapConnectionBuilder;
+use App\Enums\ConnectionType;
 use App\Enums\LifetimeStatus;
 use App\Enums\MassStatus;
 use App\Enums\ShipSize;
@@ -27,6 +28,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $from_map_solarsystem_id
  * @property int $to_map_solarsystem_id
  * @property int|null $wormhole_id
+ * @property string|ConnectionType $type
+ * @property bool $preserve_mass
  * @property string|MassStatus $mass_status
  * @property string|ShipSize $ship_size
  * @property LifetimeStatus $lifetime
@@ -50,6 +53,8 @@ final class MapConnection extends Model
         'connected_at' => 'immutable_datetime',
         'created_at' => 'immutable_datetime',
         'updated_at' => 'immutable_datetime',
+        'type' => ConnectionType::class,
+        'preserve_mass' => 'boolean',
         'mass_status' => MassStatus::class,
         'ship_size' => ShipSize::class,
         'lifetime' => LifetimeStatus::class,

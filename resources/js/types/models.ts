@@ -26,6 +26,8 @@ export type TLifetimeStatus = 'healthy' | 'eol' | 'critical';
 
 export type TShipSize = 'frigate' | 'medium' | 'large' | 'xlarge';
 
+export type TConnectionType = 'wormhole' | 'stargate';
+
 export type TSovereignty = {
     id: number;
     alliance: TAlliance | null;

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Data;
 
+use App\Enums\ConnectionType;
 use App\Enums\LifetimeStatus;
 use App\Enums\MassStatus;
 use App\Enums\ShipSize;
@@ -22,6 +23,8 @@ final class MapConnectionData extends Data
 {
     public function __construct(
         public int|Optional|null $wormhole_id,
+        public ConnectionType|Optional $type,
+        public bool|Optional $preserve_mass,
         public MassStatus|Optional|null $mass_status,
         public ShipSize|Optional|null $ship_size,
         public LifetimeStatus|Optional $lifetime,
@@ -33,6 +36,8 @@ final class MapConnectionData extends Data
     {
         return [
             'wormhole_id' => ['nullable', 'sometimes', 'integer', 'exists:wormholes,id'],
+            'type' => ['sometimes', Rule::enum(ConnectionType::class)],
+            'preserve_mass' => ['sometimes', 'boolean'],
             'mass_status' => ['nullable', 'sometimes', Rule::enum(MassStatus::class)],
             'ship_size' => ['nullable', 'sometimes', Rule::enum(ShipSize::class)],
             'lifetime' => ['nullable', 'sometimes', Rule::enum(LifetimeStatus::class)],

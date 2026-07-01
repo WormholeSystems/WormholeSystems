@@ -15,7 +15,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { deleteSignature, TProcessedConnection, updateSignature } from '@/composables/map';
+import { deleteSignature, TProcessedConnection, updateMapConnection, updateSignature } from '@/composables/map';
 import { Data } from '@/composables/map/utils/data';
 import { useMapUserSettings } from '@/composables/useMapUserSettings';
 import usePermission from '@/composables/usePermission';
@@ -26,7 +26,7 @@ import type { TResolvedSelectedMapSolarsystem } from '@/pages/maps';
 import { TSignature } from '@/types/models';
 import { UTCDate } from '@date-fns/utc';
 import { syncRefs } from '@vueuse/core';
-import { Cloud, Database, Fan, Gem, Landmark, MoreVertical, Shield, Swords } from 'lucide-vue-next';
+import { Check, Cloud, Database, Fan, Gem, Heart, Landmark, MoreVertical, Shield, Swords } from 'lucide-vue-next';
 import { AcceptableValue } from 'reka-ui';
 import { type Component, computed, nextTick, ref, toRef } from 'vue';
 
@@ -192,6 +192,11 @@ function handleMassStatusChange(mass_status: AcceptableValue) {
     const value = mass_status === 'unknown' ? null : mass_status;
     handleChange({ mass_status: value as string | null });
 }
+
+function handleTogglePreserveMass() {
+    if (!selected_connection.value) return;
+    updateMapConnection(selected_connection.value, { preserve_mass: !selected_connection.value.preserve_mass });
+}
 </script>
 
 <template>
@@ -348,6 +353,16 @@ function handleMassStatusChange(mass_status: AcceptableValue) {
                         </DropdownMenuRadioGroup>
 
                         <DropdownMenuSeparator />
+
+                        <template v-if="selected_connection">
+                            <DropdownMenuItem @select.prevent="handleTogglePreserveMass" class="text-xs">
+                                <Heart class="mr-2 size-3.5" />
+                                Preserve mass
+                                <Check v-if="selected_connection.preserve_mass" class="ml-auto size-3.5" />
+                            </DropdownMenuItem>
+
+                            <DropdownMenuSeparator />
+                        </template>
                     </template>
 
                     <!-- Delete Option -->
