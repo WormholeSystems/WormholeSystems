@@ -246,14 +246,19 @@ function confirmPendingDelete() {
                     <ul v-else class="divide-y divide-border rounded-lg border">
                         <li v-for="webhook in webhooks" :key="webhook.id" class="flex items-center gap-3 px-3 py-2">
                             <span class="min-w-0 truncate font-medium">{{ webhook.name }}</span>
-                            <span class="text-sm text-muted-foreground">{{ webhook.alerts_count ?? 0 }} alert{{ webhook.alerts_count === 1 ? '' : 's' }}</span>
+                            <span class="text-sm text-muted-foreground"
+                                >{{ webhook.alerts_count ?? 0 }} alert{{ webhook.alerts_count === 1 ? '' : 's' }}</span
+                            >
                             <div v-if="canManageAccess" class="ml-auto flex items-center gap-1">
                                 <Button variant="ghost" size="icon" class="text-muted-foreground" @click="openEditWebhook(webhook)">
                                     <Pencil class="h-4 w-4" />
                                 </Button>
                                 <Tooltip v-if="webhook.alerts_count" :delay-duration="300">
                                     <TooltipTrigger as-child>
-                                        <span><Button variant="ghost" size="icon" class="text-muted-foreground" disabled><Trash2 class="h-4 w-4" /></Button></span>
+                                        <span
+                                            ><Button variant="ghost" size="icon" class="text-muted-foreground" disabled
+                                                ><Trash2 class="h-4 w-4" /></Button
+                                        ></span>
                                     </TooltipTrigger>
                                     <TooltipContent>Remove its alerts before deleting this webhook.</TooltipContent>
                                 </Tooltip>
@@ -262,7 +267,9 @@ function confirmPendingDelete() {
                                     variant="ghost"
                                     size="icon"
                                     class="text-muted-foreground hover:text-destructive"
-                                    @click="askDelete('Delete webhook?', `This removes the “${webhook.name}” webhook.`, () => deleteWebhook(webhook.id))"
+                                    @click="
+                                        askDelete('Delete webhook?', `This removes the “${webhook.name}” webhook.`, () => deleteWebhook(webhook.id))
+                                    "
                                 >
                                     <Trash2 class="h-4 w-4" />
                                 </Button>
@@ -280,7 +287,9 @@ function confirmPendingDelete() {
                             <AtSign class="size-5 text-muted-foreground" />
                             Roles
                         </CardTitle>
-                        <CardDescription>Discord roles an alert can ping. Add a role once, then pick it on any alert that should mention it.</CardDescription>
+                        <CardDescription
+                            >Discord roles an alert can ping. Add a role once, then pick it on any alert that should mention it.</CardDescription
+                        >
                     </div>
                     <Button v-if="canManageAccess" variant="outline" size="sm" @click="openCreateRole">
                         <PlusIcon class="mr-2 h-4 w-4" />
@@ -301,7 +310,11 @@ function confirmPendingDelete() {
                                     variant="ghost"
                                     size="icon"
                                     class="text-muted-foreground hover:text-destructive"
-                                    @click="askDelete('Delete role?', `Alerts using “${role.name}” will keep firing, just without a ping.`, () => deleteRole(role.id))"
+                                    @click="
+                                        askDelete('Delete role?', `Alerts using “${role.name}” will keep firing, just without a ping.`, () =>
+                                            deleteRole(role.id),
+                                        )
+                                    "
                                 >
                                     <Trash2 class="h-4 w-4" />
                                 </Button>
@@ -325,7 +338,9 @@ function confirmPendingDelete() {
                     </div>
                     <Tooltip v-if="canManageAccess && webhooks.length === 0" :delay-duration="300">
                         <TooltipTrigger as-child>
-                            <span><Button variant="outline" size="sm" disabled><PlusIcon class="mr-2 h-4 w-4" />Add alert</Button></span>
+                            <span
+                                ><Button variant="outline" size="sm" disabled><PlusIcon class="mr-2 h-4 w-4" />Add alert</Button></span
+                            >
                         </TooltipTrigger>
                         <TooltipContent>Add a webhook first.</TooltipContent>
                     </Tooltip>
@@ -347,7 +362,9 @@ function confirmPendingDelete() {
                             <div class="min-w-0">
                                 <div class="flex items-center gap-2">
                                     <span class="truncate font-medium">{{ webhookName(alert.map_webhook_id) }}</span>
-                                    <Badge v-if="roleName(alert.map_webhook_role_id)" variant="secondary">@{{ roleName(alert.map_webhook_role_id) }}</Badge>
+                                    <Badge v-if="roleName(alert.map_webhook_role_id)" variant="secondary"
+                                        >@{{ roleName(alert.map_webhook_role_id) }}</Badge
+                                    >
                                     <Badge v-if="!alert.is_active" variant="outline">Inactive</Badge>
                                 </div>
                                 <div class="text-sm text-muted-foreground">
@@ -370,7 +387,11 @@ function confirmPendingDelete() {
                                     variant="ghost"
                                     size="icon"
                                     class="text-muted-foreground hover:text-destructive"
-                                    @click="askDelete('Delete alert?', `This removes the alert posting to “${webhookName(alert.map_webhook_id)}”.`, () => deleteAlert(alert.id))"
+                                    @click="
+                                        askDelete('Delete alert?', `This removes the alert posting to “${webhookName(alert.map_webhook_id)}”.`, () =>
+                                            deleteAlert(alert.id),
+                                        )
+                                    "
                                 >
                                     <Trash2 class="h-4 w-4" />
                                 </Button>
@@ -395,7 +416,12 @@ function confirmPendingDelete() {
                     </div>
                     <div class="space-y-1.5">
                         <Label for="wh-url">Discord webhook URL</Label>
-                        <Input id="wh-url" v-model="webhookForm.discord_webhook_url" placeholder="https://discord.com/api/webhooks/…" :type="editingWebhook ? 'text' : 'url'" />
+                        <Input
+                            id="wh-url"
+                            v-model="webhookForm.discord_webhook_url"
+                            placeholder="https://discord.com/api/webhooks/…"
+                            :type="editingWebhook ? 'text' : 'url'"
+                        />
                         <p v-if="editingWebhook" class="text-xs text-muted-foreground">Leave blank to keep the current URL.</p>
                     </div>
                 </div>
@@ -442,10 +468,15 @@ function confirmPendingDelete() {
                     <section class="grid gap-4 sm:grid-cols-2">
                         <div class="space-y-1.5">
                             <Label>Webhook</Label>
-                            <Select :model-value="alertForm.map_webhook_id?.toString()" @update:model-value="(v) => (alertForm.map_webhook_id = Number(v))">
+                            <Select
+                                :model-value="alertForm.map_webhook_id?.toString()"
+                                @update:model-value="(v) => (alertForm.map_webhook_id = Number(v))"
+                            >
                                 <SelectTrigger class="w-full"><SelectValue placeholder="Select a webhook" /></SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem v-for="webhook in webhooks" :key="webhook.id" :value="webhook.id.toString()">{{ webhook.name }}</SelectItem>
+                                    <SelectItem v-for="webhook in webhooks" :key="webhook.id" :value="webhook.id.toString()">{{
+                                        webhook.name
+                                    }}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -473,7 +504,11 @@ function confirmPendingDelete() {
                             </Select>
                         </div>
                         <div class="flex items-end gap-2 pb-1.5">
-                            <Checkbox id="alert-active" :model-value="alertForm.is_active" @update:model-value="(v) => (alertForm.is_active = v === true)" />
+                            <Checkbox
+                                id="alert-active"
+                                :model-value="alertForm.is_active"
+                                @update:model-value="(v) => (alertForm.is_active = v === true)"
+                            />
                             <Label for="alert-active" class="text-sm font-medium">Active</Label>
                         </div>
                     </section>
@@ -493,7 +528,11 @@ function confirmPendingDelete() {
                                 </ComboboxAnchor>
                                 <ComboboxList align="start">
                                     <ComboboxEmpty>No results found</ComboboxEmpty>
-                                    <ComboboxGroup heading="Search Results" v-if="filteredSolarsystems.length > 0" class="grid grid-cols-[auto_1fr_auto]">
+                                    <ComboboxGroup
+                                        heading="Search Results"
+                                        v-if="filteredSolarsystems.length > 0"
+                                        class="grid grid-cols-[auto_1fr_auto]"
+                                    >
                                         <ComboboxItem
                                             v-for="solarsystem in filteredSolarsystems"
                                             :key="solarsystem.id"
@@ -505,7 +544,9 @@ function confirmPendingDelete() {
                                                 <SolarsystemClass :solarsystem_class="solarsystem.class" :name="solarsystem.name" />
                                             </div>
                                             <span class="whitespace-nowrap">{{ solarsystem.name }}</span>
-                                            <span class="truncate text-muted-foreground" v-if="!solarsystem.class">{{ solarsystem.region?.name }}</span>
+                                            <span class="truncate text-muted-foreground" v-if="!solarsystem.class">{{
+                                                solarsystem.region?.name
+                                            }}</span>
                                             <div class="justify-self-end" v-else-if="solarsystem.effect">
                                                 <SolarsystemEffect :effect="solarsystem.effect" />
                                             </div>
@@ -520,12 +561,19 @@ function confirmPendingDelete() {
                                 <Label for="alert-jumps">{{ isKillmail ? 'Max jumps from chain' : 'Max gate jumps' }}</Label>
                                 <Input id="alert-jumps" type="number" min="1" max="20" v-model.number="alertForm.max_jumps" />
                                 <p class="text-xs text-muted-foreground">
-                                    {{ isKillmail ? 'Gate and wormhole jumps from any chain system (1–20).' : 'Stargate jumps from the added system to the target (1–20).' }}
+                                    {{
+                                        isKillmail
+                                            ? 'Gate and wormhole jumps from any chain system (1–20).'
+                                            : 'Stargate jumps from the added system to the target (1–20).'
+                                    }}
                                 </p>
                             </div>
                             <div v-if="isKillmail" class="space-y-1.5">
                                 <Label>Match</Label>
-                                <Select :model-value="alertForm.filter_match" @update:model-value="(v) => (alertForm.filter_match = v as TKillmailFilterMatch)">
+                                <Select
+                                    :model-value="alertForm.filter_match"
+                                    @update:model-value="(v) => (alertForm.filter_match = v as TKillmailFilterMatch)"
+                                >
                                     <SelectTrigger class="w-full"><SelectValue /></SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="any">Match any filter</SelectItem>
