@@ -9,7 +9,25 @@ use App\Models\MapAlert;
 use App\Models\MapSolarsystem;
 use App\Models\MapWebhook;
 use App\Models\MapWebhookRole;
+use App\Services\NameResolver;
 use Illuminate\Support\Facades\Http;
+
+/**
+ * @param  array<int, string>  $names
+ */
+function fakeNameResolver(array $names = []): void
+{
+    app()->instance(NameResolver::class, new class($names) implements NameResolver
+    {
+        /** @param array<int, string> $names */
+        public function __construct(private array $names) {}
+
+        public function resolve(array $ids): array
+        {
+            return array_intersect_key($this->names, array_flip($ids));
+        }
+    });
+}
 
 function makeKillmail(int $solarsystemId, array $overrides = []): Killmail
 {
@@ -63,6 +81,8 @@ function runKillmailEval(int $killmailId): void
 
 beforeEach(function () {
     Http::fake();
+    // Resolve no names by default so tests don't hit ESI and the Discord post stays the only request.
+    fakeNameResolver();
 });
 
 it('fires when a matching kill occurs in a system on the map', function () {
@@ -325,4 +345,28 @@ it('ignores proximity alerts and returns early when no killmail alerts exist', f
 
 it('builds a stable unique id for de-duplication', function () {
     expect((new EvaluateKillmailWebhooksJob(42))->uniqueId())->toBe('killmail:42');
+});
+
+it('names the victim, affiliation and final-blow attacker in the killmail embed', function () {
+    $sid = makeSolarsystem(30009411);
+    $map = mapWithSystem($sid);
+    killmailAlert($map);
+    fakeNameResolver([100 => 'Vic Tim', 200 => 'Test Corp', 300 => 'Test Alliance', 101 => 'The Killer']);
+
+    $killmail = makeKillmail($sid);
+    runKillmailEval($killmail->id);
+
+    Http::assertSent(function ($request) {
+        $embed = $request->data()['embeds'][0];
+        $pilot = collect($embed['fields'])->firstWhere('name', 'Pilot');
+        $affiliation = collect($embed['fields'])->firstWhere('name', 'Corp / Alliance');
+        $finalBlow = collect($embed['fields'])->firstWhere('name', 'Final blow');
+
+        return $pilot['value'] === 'Vic Tim'
+            && $affiliation['value'] === 'Test Corp · Test Alliance'
+            && str_contains($finalBlow['value'] ?? '', 'The Killer')
+            && str_contains($embed['description'], 'Vic Tim')
+            && str_contains($embed['description'], 'lost a')
+            && str_contains($embed['description'], 'flown by **The Killer**');
+    });
 });
