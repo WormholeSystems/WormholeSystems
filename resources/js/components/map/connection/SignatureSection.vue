@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import { TTailoredSignature } from '@/pages/maps';
 
 defineProps<{
@@ -21,13 +22,11 @@ defineProps<{
                 <span>Signature ID</span>
                 <span class="text-right">{{ signature.signature_id || 'Unknown' }}</span>
             </div>
-            <div class="col-span-full grid grid-cols-subgrid" v-if="signature.wormhole?.leads_to">
+            <div class="col-span-full grid grid-cols-subgrid" v-if="signature.target_class">
                 <span>Leads To</span>
-                <span
-                    :data-leads-to="signature.wormhole?.leads_to"
-                    class="text-right uppercase data-[leads-to=c1]:text-c1 data-[leads-to=c2]:text-c2 data-[leads-to=c3]:text-c3 data-[leads-to=c4]:text-c4 data-[leads-to=c5]:text-c5 data-[leads-to=c6]:text-c6 data-[leads-to=h]:text-hs data-[leads-to=l]:text-ls data-[leads-to=n]:text-ns"
-                    >{{ signature.wormhole?.leads_to }}</span
-                >
+                <span class="flex justify-end text-right">
+                    <SolarsystemClass :solarsystem_class="signature.target_class" />
+                </span>
             </div>
         </div>
     </div>

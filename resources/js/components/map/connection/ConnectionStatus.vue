@@ -4,6 +4,7 @@ import { useNowUTC } from '@/composables/useNowUTC';
 import { TMapConnection } from '@/pages/maps';
 import { UTCDate } from '@date-fns/utc';
 import { differenceInDays, differenceInHours, differenceInMinutes, format, formatDistanceStrict, max, min } from 'date-fns';
+import { Heart } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 const props = defineProps<{
@@ -12,7 +13,24 @@ const props = defineProps<{
 
 const now = useNowUTC();
 
-const massStatusDisplay = computed(() => props.connection.mass_status);
+const massMeta = computed(() => {
+    switch (props.connection.mass_status) {
+        case 'fresh':
+            return { label: 'Fresh', text: 'text-green-500', dot: 'bg-green-500' };
+        case 'reduced':
+            return { label: 'Reduced', text: 'text-amber-500', dot: 'bg-amber-500' };
+        case 'critical':
+            return { label: 'Critical', text: 'text-red-500', dot: 'bg-red-500' };
+        default:
+            return { label: 'Unknown', text: 'text-muted-foreground', dot: 'bg-neutral-500' };
+    }
+});
+
+const typeMeta = computed(() =>
+    props.connection.type === 'stargate'
+        ? { label: 'Stargate', text: 'text-sky-500', dot: 'bg-sky-500' }
+        : { label: 'Wormhole', text: 'text-foreground', dot: 'bg-neutral-500' },
+);
 
 const createdDate = computed(() => {
     const dates = [props.connection.created_at];
@@ -88,16 +106,16 @@ const lifetimeAgo = computed(() => {
     });
 });
 
-const lifetimeDisplay = computed(() => {
+const lifetimeMeta = computed(() => {
     switch (props.connection.lifetime_status) {
         case 'healthy':
-            return 'Healthy';
+            return { label: 'Healthy', text: 'text-green-500', dot: 'bg-green-500' };
         case 'eol':
-            return 'End of Life (<4h)';
+            return { label: 'End of Life (<4h)', text: 'text-purple-500', dot: 'bg-purple-500' };
         case 'critical':
-            return 'Critical (<1h)';
+            return { label: 'Critical (<1h)', text: 'text-red-500', dot: 'bg-red-500' };
         default:
-            return 'Unknown';
+            return { label: 'Unknown', text: 'text-muted-foreground', dot: 'bg-neutral-500' };
     }
 });
 </script>
@@ -107,29 +125,39 @@ const lifetimeDisplay = computed(() => {
         <div class="border-b pb-1 text-xs font-medium text-foreground">Status</div>
         <div class="grid grid-cols-2 divide-y truncate text-xs text-muted-foreground *:py-1">
             <div class="col-span-full grid grid-cols-subgrid">
+                <span>Type</span>
+                <span class="flex items-center justify-end gap-1.5 text-right" :class="typeMeta.text">
+                    <span class="inline-block size-2 rounded-full" :class="typeMeta.dot" />
+                    {{ typeMeta.label }}
+                </span>
+            </div>
+            <div class="col-span-full grid grid-cols-subgrid">
                 <span>Lifetime</span>
-                <span
-                    class="data-lifetime-status=critical:text-red-500 data-lifetime-status=eol:text-purple-500 text-right"
-                    :data-lifetime-status="connection.lifetime_status"
-                >
+                <span class="flex items-center justify-end gap-1.5 text-right" :class="lifetimeMeta.text">
+                    <span class="inline-block size-2 shrink-0 rounded-full" :class="lifetimeMeta.dot" />
                     <template v-if="lifetimeAt && connection.lifetime_status !== 'healthy'">
                         <Tooltip>
                             <TooltipTrigger as-child>
-                                <span class="cursor-help">{{ lifetimeDisplay }}</span>
+                                <span class="cursor-help">{{ lifetimeMeta.label }}</span>
                             </TooltipTrigger>
                             <TooltipContent> {{ lifetimeAt }} ({{ lifetimeAgo }}) </TooltipContent>
                         </Tooltip>
                     </template>
-                    <span v-else>{{ lifetimeDisplay }}</span>
+                    <span v-else>{{ lifetimeMeta.label }}</span>
                 </span>
             </div>
             <div class="col-span-full grid grid-cols-subgrid">
                 <span>Mass Status</span>
-                <span
-                    :data-mass-status="connection.mass_status"
-                    class="data-mass-status=critical:text-red-500 data-mass-status=fresh:text-green-500 data-mass-status=reduced:text-yellow-500 text-right capitalize"
-                >
-                    {{ massStatusDisplay }}
+                <span class="flex items-center justify-end gap-1.5 text-right" :class="massMeta.text">
+                    <span class="inline-block size-2 rounded-full" :class="massMeta.dot" />
+                    {{ massMeta.label }}
+                </span>
+            </div>
+            <div v-if="connection.preserve_mass" class="col-span-full grid grid-cols-subgrid">
+                <span>Preserve mass</span>
+                <span class="flex items-center justify-end gap-1.5 text-right text-emerald-500">
+                    <Heart class="size-3" />
+                    Yes
                 </span>
             </div>
             <div class="col-span-full grid grid-cols-subgrid">
