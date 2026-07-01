@@ -7,6 +7,8 @@ namespace App\Providers;
 use App\DTO\CTA;
 use App\Models\ServerStatus;
 use App\Policies\PersonalAccessTokenPolicy;
+use App\Services\EsiNameResolver;
+use App\Services\NameResolver;
 use Carbon\CarbonImmutable;
 use Illuminate\Console\Scheduling\Event as ScheduledEvent;
 use Illuminate\Database\Eloquent\Model;
@@ -31,7 +33,7 @@ final class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(NameResolver::class, EsiNameResolver::class);
     }
 
     /**

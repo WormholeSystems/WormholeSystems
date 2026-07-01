@@ -27,6 +27,7 @@ final readonly class DiscordWebhookService
 
     public function __construct(
         private KillmailFilterDescriber $filterDescriber,
+        private NameResolver $nameResolver,
     ) {}
 
     /**
@@ -77,20 +78,65 @@ final readonly class DiscordWebhookService
         $shipName = $this->typeName($shipTypeId);
         $totalValue = (float) (data_get($killmail->zkb, 'totalValue') ?? 0.0);
 
+        $attackers = is_array($data['attackers'] ?? null) ? $data['attackers'] : [];
+        $finalBlow = collect($attackers)->first(fn ($attacker): bool => is_array($attacker) && ($attacker['final_blow'] ?? false) === true);
+        $finalBlow = is_array($finalBlow) ? $finalBlow : [];
+        $attackerCharacterId = (int) ($finalBlow['character_id'] ?? 0);
+        $attackerShipId = (int) ($finalBlow['ship_type_id'] ?? 0);
+
+        $names = $this->nameResolver->resolve([
+            (int) ($victim['character_id'] ?? 0),
+            (int) ($victim['corporation_id'] ?? 0),
+            (int) ($victim['alliance_id'] ?? 0),
+            $attackerCharacterId,
+        ]);
+        $pilot = $names[(int) ($victim['character_id'] ?? 0)] ?? null;
+        $affiliation = collect([$names[(int) ($victim['corporation_id'] ?? 0)] ?? null, $names[(int) ($victim['alliance_id'] ?? 0)] ?? null])
+            ->filter()
+            ->implode(' · ');
+        $attackerName = $names[$attackerCharacterId] ?? null;
+        $attackerShip = $attackerShipId > 0 ? $this->typeName($attackerShipId) : null;
+
         $fields = [
             ['name' => 'System', 'value' => sprintf('%s (%.1f)', $systemName, $security), 'inline' => true],
             ['name' => 'Ship', 'value' => $shipName, 'inline' => true],
             ['name' => 'Value', 'value' => sprintf('%s ISK', number_format($totalValue)), 'inline' => true],
         ];
 
+        if ($pilot !== null) {
+            $fields[] = ['name' => 'Pilot', 'value' => $pilot, 'inline' => true];
+        }
+
+        if ($affiliation !== '') {
+            $fields[] = ['name' => 'Corp / Alliance', 'value' => $affiliation, 'inline' => true];
+        }
+
+        $finalBlowLabel = collect([$attackerName, $attackerShip])->filter()->implode(' — ');
+        if ($finalBlowLabel !== '') {
+            $fields[] = ['name' => 'Final blow', 'value' => $finalBlowLabel, 'inline' => true];
+        }
+
         if ($killmail->time !== null) {
             $fields[] = ['name' => 'When', 'value' => sprintf('<t:%d:R>', $killmail->time->timestamp), 'inline' => true];
         }
 
+        // Lead with a human-readable sentence, e.g.
+        // "Pilot Foo (Corp · Alliance) lost a Raven in Jita to a Raichu flown by Bar".
+        $killedBy = match (true) {
+            $attackerName !== null && $attackerShip !== null => sprintf(' to a **%s** flown by **%s**', $attackerShip, $attackerName),
+            $attackerName !== null => sprintf(' to **%s**', $attackerName),
+            $attackerShip !== null => sprintf(' to a **%s**', $attackerShip),
+            default => '',
+        };
+        $subject = $pilot !== null ? sprintf('**%s**%s', $pilot, $affiliation !== '' ? sprintf(' (%s)', $affiliation) : '') : sprintf('A **%s**', $shipName);
+        $lostLine = $pilot !== null
+            ? sprintf('%s lost a **%s** in **%s**%s.', $subject, $shipName, $systemName, $killedBy)
+            : sprintf('%s was destroyed in **%s**%s.', $subject, $systemName, $killedBy);
+
         if ($result->jumps === 0) {
-            $description = 'A matching killmail occurred **inside your chain**.';
+            $description = $lostLine.' A matching killmail occurred **inside your chain**.';
         } else {
-            $description = sprintf('A matching killmail occurred **%d %s** from your chain.', $result->jumps, $result->jumps === 1 ? 'jump' : 'jumps');
+            $description = $lostLine.sprintf(' A matching killmail occurred **%d %s** from your chain.', $result->jumps, $result->jumps === 1 ? 'jump' : 'jumps');
             $fields[] = ['name' => 'Exit from', 'value' => $this->resolveExit($alert, $result, $systems), 'inline' => true];
             $fields[] = ['name' => 'Jumps from chain', 'value' => (string) $result->jumps, 'inline' => true];
             $fields[] = ['name' => 'Route', 'value' => implode(' → ', array_map(fn (int $id): string => $systems[$id]->name ?? (string) $id, $result->route))];
