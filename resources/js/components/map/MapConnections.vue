@@ -43,6 +43,13 @@ function nodeBox(anchor: Coordinates, id: number): NodeBox | null {
     return { minX, maxX, minY, maxY, centerX: (minX + maxX) / 2, centerY: (minY + maxY) / 2 };
 }
 
+/** The scaled centre of a node, falling back to the raw anchor until it has been measured. */
+function nodeCenter(anchor: Coordinates | null, id: number): Coordinates | null {
+    if (!anchor) return null;
+    const box = nodeBox(anchor, id);
+    return box ? { x: box.centerX, y: box.centerY } : anchor;
+}
+
 type Endpoints = { from: Coordinates; to: Coordinates; fromNormal: Coordinates; toNormal: Coordinates };
 
 /**
@@ -137,12 +144,13 @@ type RoutedConnection = RenderedConnection & {
 };
 
 const drawnConnections = computed<RenderedConnection[]>(() => {
-    // The free layout keeps the original anchor-to-anchor connections and styling.
+    // The free layout keeps the original curve styling, but runs each connection between
+    // the two node centres rather than their stored top-left anchors.
     if (!is_layout_locked.value) {
         return connections.value.map((connection) => ({
             connection,
-            from: connection.source.position,
-            to: connection.target.position,
+            from: nodeCenter(connection.source.position, connection.source.id),
+            to: nodeCenter(connection.target.position, connection.target.id),
             variant: 'default',
         }));
     }
