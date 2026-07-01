@@ -93,7 +93,7 @@ return new class extends Migration
 
                 $roleId = $roleIds[$key] ??= DB::table('map_webhook_roles')->insertGetId([
                     'map_id' => $webhook->map_id,
-                    'name' => 'Role '.mb_substr($webhook->discord_role_id, -4),
+                    'name' => 'Role '.mb_substr((string) $webhook->discord_role_id, -4),
                     'discord_role_id' => $webhook->discord_role_id,
                     'created_at' => $webhook->created_at,
                     'updated_at' => $webhook->updated_at,

@@ -34,7 +34,7 @@ final readonly class KillmailFilterRule
             subject: KillmailFilterSubject::from($data['subject']),
             side: KillmailFilterSide::from($data['side']),
             mode: KillmailFilterMode::from($data['mode']),
-            ids: array_values(array_map(intval(...), $data['ids'] ?? [])),
+            ids: array_values(array_map(intval(...), $data['ids'])),
         );
     }
 

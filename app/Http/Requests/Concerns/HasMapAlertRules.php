@@ -10,7 +10,6 @@ use App\Enums\KillmailFilterSide;
 use App\Enums\KillmailFilterSubject;
 use App\Enums\MapWebhookType;
 use App\Models\Map;
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Validation\Rule;
 
 trait HasMapAlertRules
@@ -24,7 +23,7 @@ trait HasMapAlertRules
      * Validation rules shared by storing and updating an alert. The store request adds
      * its own `map_id` rule around these.
      *
-     * @return array<string, array<int, ValidationRule|string>>
+     * @return array<string, array<int, mixed>>
      */
     protected function alertRules(): array
     {

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Builders\MapAccessBuilder;
 use App\Enums\Permission;
 use App\Models\Map;
 use App\Models\User;
@@ -22,7 +23,10 @@ final class DeleteMapSelectionRequest extends FormRequest
     {
         return Map::query()
             ->whereHas('mapSolarsystems', fn (Builder $query) => $query->whereIn('id', $this->array('map_solarsystem_ids')))
-            ->whereDoesntHave('mapAccessors', fn (Builder $query) => $query->notExpired()->whereIn('accessible_id', $user->getAccessibleIds())->whereIn('permission', [Permission::Member, Permission::Manager]))
+            ->whereDoesntHave('mapAccessors', function (Builder $query) use ($user): void {
+                assert($query instanceof MapAccessBuilder);
+                $query->notExpired()->whereIn('accessible_id', $user->getAccessibleIds())->whereIn('permission', [Permission::Member, Permission::Manager]);
+            })
             ->doesntExist();
     }
 

@@ -172,10 +172,7 @@ final class EvaluateKillmailWebhooksJob implements ShouldBeUnique, ShouldQueue
 
         foreach ($maps as $map) {
             $edges = $map->mapConnections
-                ->map(fn ($connection): ?array => $connection->fromMapSolarsystem && $connection->toMapSolarsystem
-                    ? [$connection->fromMapSolarsystem->solarsystem_id, $connection->toMapSolarsystem->solarsystem_id]
-                    : null)
-                ->filter()
+                ->map(fn ($connection): array => [$connection->fromMapSolarsystem->solarsystem_id, $connection->toMapSolarsystem->solarsystem_id])
                 ->values()
                 ->all();
 

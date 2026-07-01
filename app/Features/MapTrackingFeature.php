@@ -64,8 +64,6 @@ final readonly class MapTrackingFeature implements ProvidesInertiaProperties
 
     /**
      * Get the target solarsystem for tracking
-     *
-     * @throws Throwable
      */
     private function getTrackingTarget(): ?array
     {

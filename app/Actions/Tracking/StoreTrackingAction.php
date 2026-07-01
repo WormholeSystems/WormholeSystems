@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Actions\Tracking;
 
 use App\Actions\MapConnections\CreateMapConnectionAction;
-use App\Actions\MapConnections\UpdateMapConnectionAction;
 use App\Actions\MapSolarsystem\StoreMapSolarsystemAction;
 use App\Actions\Signatures\UpdateSignatureAction;
 use App\Data\SignatureData;
@@ -43,7 +42,6 @@ final readonly class StoreTrackingAction
         private StoreMapSolarsystemAction $storeMapSolarsystemAction,
         private CreateMapConnectionAction $storeMapConnectionRequest,
         private UpdateSignatureAction $updateSignatureAction,
-        private UpdateMapConnectionAction $updateMapConnectionAction,
         #[Config('map.max_size.x')]
         private int $max_x,
         #[Config('map.max_size.y')]

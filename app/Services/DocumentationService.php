@@ -103,8 +103,8 @@ final class DocumentationService
 
                         return [
                             'slug' => $slug,
-                            'title' => $frontmatter['title'] ?? $this->firstHeading($body) ?? $this->humanize($pageSlug),
-                            'category' => $frontmatter['category'] ?? $categoryTitle,
+                            'title' => (string) ($frontmatter['title'] ?? $this->firstHeading($body) ?? $this->humanize($pageSlug)),
+                            'category' => (string) ($frontmatter['category'] ?? $categoryTitle),
                             'body' => $body,
                             'url' => '/documentation/'.$slug,
                             'path' => 'resources/docs/'.$categoryDir.'/'.$file->getFilename(),
