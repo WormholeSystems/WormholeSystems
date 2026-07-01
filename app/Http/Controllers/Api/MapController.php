@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Actions\Map\UpdateMapAction;
+use App\Builders\MapAccessBuilder;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateMapRequest;
 use App\Http\Resources\MapResource;
@@ -35,7 +36,10 @@ final class MapController extends Controller
         $search = $request->string('search', '');
 
         $maps = Map::query()
-            ->whereHas('mapAccessors', fn (Builder $builder) => $builder->notExpired()->whereIn('accessible_id', $this->user->getAccessibleIds()))
+            ->whereHas('mapAccessors', function (Builder $builder): void {
+                assert($builder instanceof MapAccessBuilder);
+                $builder->notExpired()->whereIn('accessible_id', $this->user->getAccessibleIds());
+            })
             ->when($search->isNotEmpty(), fn (Builder $query) => $query->whereLike('name', sprintf('%%%s%%', $search)))
             ->withCount([
                 'mapSolarsystems' => fn (Builder $builder) => $builder->whereNotNull('position_x'),

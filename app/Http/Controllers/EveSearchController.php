@@ -48,7 +48,7 @@ final class EveSearchController extends Controller
             ->map(fn (Type $type): array => [
                 'id' => $type->id,
                 'name' => $type->name,
-                'group_name' => $type->group?->name,
+                'group_name' => $type->group->name,
             ])
             ->all();
     }
@@ -64,7 +64,7 @@ final class EveSearchController extends Controller
             ->map(fn (Group $group): array => [
                 'id' => $group->id,
                 'name' => $group->name,
-                'category_name' => $group->category?->name,
+                'category_name' => $group->category->name,
             ])
             ->all();
     }
@@ -74,7 +74,11 @@ final class EveSearchController extends Controller
      * results are ranked by relevance (exact match, then prefix, then substring) so the
      * closest match isn't pushed past the limit by alphabetically-earlier partial hits.
      *
+     * @template TModel of \Illuminate\Database\Eloquent\Model
+     *
+     * @param  Builder<TModel>  $builder
      * @param  int[]  $ids
+     * @return Builder<TModel>
      */
     private function matching(Builder $builder, array $ids, string $query): Builder
     {

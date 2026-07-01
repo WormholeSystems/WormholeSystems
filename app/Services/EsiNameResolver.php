@@ -14,10 +14,10 @@ use Throwable;
  * ESI's bulk names endpoint, caching each name forever since they effectively never
  * change. Resolution is best-effort: ids that can't be resolved are simply omitted.
  */
-final class EsiNameResolver implements NameResolver
+final readonly class EsiNameResolver implements NameResolver
 {
     public function __construct(
-        private readonly Esi $esi,
+        private Esi $esi,
     ) {}
 
     /**

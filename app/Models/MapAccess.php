@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Builders\MapAccessBuilder;
 use App\Enums\Permission;
 use Carbon\CarbonImmutable;
 use Database\Factories\MapAccessFactory;
+use Illuminate\Database\Eloquent\Attributes\UseEloquentBuilder;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -28,6 +29,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  * @property-read Map $map
  */
 #[UseFactory(MapAccessFactory::class)]
+#[UseEloquentBuilder(MapAccessBuilder::class)]
 final class MapAccess extends Model
 {
     /** @use HasFactory<MapAccessFactory> */
@@ -43,20 +45,6 @@ final class MapAccess extends Model
     public function map(): BelongsTo
     {
         return $this->belongsTo(Map::class);
-    }
-
-    /**
-     * Scope to only include non-expired access entries.
-     *
-     * @param  Builder<self>  $query
-     * @return Builder<self>
-     */
-    public function scopeNotExpired(Builder $query): Builder
-    {
-        return $query->where(fn (Builder $query) => $query
-            ->whereNull('expires_at')
-            ->orWhere('expires_at', '>', now())
-        );
     }
 
     public function isExpired(): bool

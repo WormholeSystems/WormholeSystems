@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\Map\CreateMapAction;
 use App\Actions\Map\UpdateMapAction;
+use App\Builders\MapAccessBuilder;
 use App\Enums\KillmailFilter;
 use App\Features\EveScoutConnectionsFeature;
 use App\Features\MapCharactersFeature;
@@ -106,7 +107,10 @@ final class MapController extends Controller
 
         return Inertia::render('maps/ShowAllMaps', [
             'maps' => Map::query()
-                ->whereHas('mapAccessors', fn (Builder $builder) => $builder->notExpired()->whereIn('accessible_id', $accessibleIds))
+                ->whereHas('mapAccessors', function (Builder $builder) use ($accessibleIds): void {
+                    assert($builder instanceof MapAccessBuilder);
+                    $builder->notExpired()->whereIn('accessible_id', $accessibleIds);
+                })
                 ->when($search->isNotEmpty(), fn (Builder $query) => $query->whereLike('name', sprintf('%%%s%%', $search)))
                 ->withCount([
                     'mapSolarsystems' => fn (Builder $builder) => $builder->whereNotNull('position_x'),

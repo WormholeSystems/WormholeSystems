@@ -66,9 +66,7 @@ final readonly class KillmailAlertEmbed
             'fields' => $this->fields($alert, $killmail, $result, $systems, $systemName, $security, $shipName, $pilot, $affiliation, $attackerName, $attackerShip, $matchedFilters),
         ];
 
-        if ($killmail->time !== null) {
-            $embed['timestamp'] = $killmail->time->toIso8601String();
-        }
+        $embed['timestamp'] = $killmail->time->toIso8601String();
 
         if ($shipTypeId > 0) {
             $embed['thumbnail'] = ['url' => sprintf('https://images.evetech.net/types/%d/render?size=128', $shipTypeId)];
@@ -158,9 +156,7 @@ final readonly class KillmailAlertEmbed
             $fields[] = ['name' => 'Final blow', 'value' => $finalBlowLabel, 'inline' => true];
         }
 
-        if ($killmail->time !== null) {
-            $fields[] = ['name' => 'When', 'value' => sprintf('<t:%d:R>', $killmail->time->timestamp), 'inline' => true];
-        }
+        $fields[] = ['name' => 'When', 'value' => sprintf('<t:%d:R>', $killmail->time->timestamp), 'inline' => true];
 
         if ($result->jumps > 0) {
             $fields[] = ['name' => 'Exit from', 'value' => $this->resolveExit($alert, $result, $systems), 'inline' => true];
@@ -212,6 +208,6 @@ final readonly class KillmailAlertEmbed
             return 'Unknown ship';
         }
 
-        return Type::query()->find($typeId)?->name ?? (string) $typeId;
+        return (string) (Type::query()->whereKey($typeId)->value('name') ?? $typeId);
     }
 }
