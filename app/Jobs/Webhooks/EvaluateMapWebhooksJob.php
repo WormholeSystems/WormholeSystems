@@ -7,7 +7,8 @@ namespace App\Jobs\Webhooks;
 use App\Enums\MapWebhookType;
 use App\Models\MapAlert;
 use App\Models\MapIgnoredSolarsystem;
-use App\Services\DiscordWebhookService;
+use App\Services\Discord\DiscordDelivery;
+use App\Services\Discord\ProximityAlertEmbed;
 use App\Services\Routing\MapProximityPathfinder;
 use App\Services\Routing\ProximityResult;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -38,7 +39,7 @@ final class EvaluateMapWebhooksJob implements ShouldBeUnique, ShouldQueue
         return $this->map_id.':'.$this->solarsystem_id;
     }
 
-    public function handle(MapProximityPathfinder $pathfinder, DiscordWebhookService $discord): void
+    public function handle(MapProximityPathfinder $pathfinder, ProximityAlertEmbed $embed, DiscordDelivery $delivery): void
     {
         $alerts = MapAlert::query()
             ->where('map_id', $this->map_id)
@@ -69,7 +70,7 @@ final class EvaluateMapWebhooksJob implements ShouldBeUnique, ShouldQueue
                 continue;
             }
 
-            $discord->sendProximityAlert($alert, $result);
+            $delivery->deliver($alert, $embed->build($alert, $result));
 
             $alert->update(['last_fired_at' => now()]);
         }
