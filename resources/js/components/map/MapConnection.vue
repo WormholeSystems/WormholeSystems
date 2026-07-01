@@ -289,8 +289,8 @@ function getDashArray() {
         />
         <!-- Original style draws solid endpoints; the orthogonal style meets the node edge instead. -->
         <template v-if="!isOrthogonal">
-            <circle :cx="from.x" :cy="from.y" r="8" fill="currentColor" />
-            <circle :cx="to.x" :cy="to.y" r="8" fill="currentColor" />
+            <circle :cx="from.x" :cy="from.y" r="4" fill="currentColor" />
+            <circle :cx="to.x" :cy="to.y" r="4" fill="currentColor" />
         </template>
     </g>
 </template>
