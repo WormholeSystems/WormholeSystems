@@ -50,6 +50,20 @@ function nodeCenter(anchor: Coordinates | null, id: number): Coordinates | null 
     return box ? { x: box.centerX, y: box.centerY } : anchor;
 }
 
+/**
+ * The point on a node's edge facing `target`: where the straight line from the node's
+ * centre to `target` crosses the node's bounding box. Keeps the whole connection visible
+ * instead of running it under the node.
+ */
+function edgePointToward(box: NodeBox, target: Coordinates): Coordinates {
+    const dx = target.x - box.centerX;
+    const dy = target.y - box.centerY;
+    const halfWidth = (box.maxX - box.minX) / 2;
+    const halfHeight = (box.maxY - box.minY) / 2;
+    const t = Math.min(dx !== 0 ? halfWidth / Math.abs(dx) : Infinity, dy !== 0 ? halfHeight / Math.abs(dy) : Infinity);
+    return { x: box.centerX + dx * t, y: box.centerY + dy * t };
+}
+
 type Endpoints = { from: Coordinates; to: Coordinates; fromNormal: Coordinates; toNormal: Coordinates };
 
 /**
@@ -144,15 +158,32 @@ type RoutedConnection = RenderedConnection & {
 };
 
 const drawnConnections = computed<RenderedConnection[]>(() => {
-    // The free layout keeps the original curve styling, but runs each connection between
-    // the two node centres rather than their stored top-left anchors.
+    // The free layout keeps the original curve styling, but anchors each connection to the
+    // node edge facing the other system rather than the stored top-left anchor.
     if (!is_layout_locked.value) {
-        return connections.value.map((connection) => ({
-            connection,
-            from: nodeCenter(connection.source.position, connection.source.id),
-            to: nodeCenter(connection.target.position, connection.target.id),
-            variant: 'default',
-        }));
+        return connections.value.map((connection) => {
+            const sourceBox = connection.source.position ? nodeBox(connection.source.position, connection.source.id) : null;
+            const targetBox = connection.target.position ? nodeBox(connection.target.position, connection.target.id) : null;
+
+            // Until both nodes are measured, fall back to node centres (or raw anchors).
+            if (!sourceBox || !targetBox) {
+                return {
+                    connection,
+                    from: nodeCenter(connection.source.position, connection.source.id),
+                    to: nodeCenter(connection.target.position, connection.target.id),
+                    variant: 'default',
+                };
+            }
+
+            const sourceCenter = { x: sourceBox.centerX, y: sourceBox.centerY };
+            const targetCenter = { x: targetBox.centerX, y: targetBox.centerY };
+            return {
+                connection,
+                from: edgePointToward(sourceBox, targetCenter),
+                to: edgePointToward(targetBox, sourceCenter),
+                variant: 'default',
+            };
+        });
     }
 
     const routed: RoutedConnection[] = [];
