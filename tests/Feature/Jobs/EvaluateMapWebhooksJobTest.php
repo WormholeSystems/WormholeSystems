@@ -4,12 +4,28 @@ declare(strict_types=1);
 
 use App\Jobs\Webhooks\EvaluateMapWebhooksJob;
 use App\Models\Map;
+use App\Models\MapAlert;
 use App\Models\MapWebhook;
 use Illuminate\Support\Facades\Http;
 
 function runWebhookEval(Map $map, int $solarsystemId): void
 {
     app()->call([new EvaluateMapWebhooksJob($map->id, $solarsystemId), 'handle']);
+}
+
+/**
+ * A proximity alert on the map, delivering to a fresh webhook destination.
+ *
+ * @param  array<string, mixed>  $attributes
+ */
+function proximityAlert(Map $map, array $attributes = []): MapAlert
+{
+    $webhook = MapWebhook::factory()->for($map)->create();
+
+    return MapAlert::factory()->create(array_merge([
+        'map_id' => $map->id,
+        'map_webhook_id' => $webhook->id,
+    ], $attributes));
 }
 
 beforeEach(function () {
@@ -19,16 +35,13 @@ beforeEach(function () {
 it('fires when the added system is within range of the target', function () {
     $sid = makeSolarsystem(30009001);
     $map = Map::factory()->create();
-    $webhook = MapWebhook::factory()->for($map)->create([
-        'target_solarsystem_id' => $sid,
-        'max_jumps' => 3,
-    ]);
+    $alert = proximityAlert($map, ['target_solarsystem_id' => $sid, 'max_jumps' => 3]);
 
     runWebhookEval($map, $sid);
 
     Http::assertSentCount(1);
 
-    expect($webhook->refresh()->last_fired_at)->not->toBeNull();
+    expect($alert->refresh()->last_fired_at)->not->toBeNull();
 });
 
 it('does not fire when the added system is out of range', function () {
@@ -36,23 +49,17 @@ it('does not fire when the added system is out of range', function () {
     $target = makeSolarsystem(30009003);
 
     $map = Map::factory()->create();
-    MapWebhook::factory()->for($map)->create([
-        'target_solarsystem_id' => $target,
-        'max_jumps' => 3,
-    ]);
+    proximityAlert($map, ['target_solarsystem_id' => $target, 'max_jumps' => 3]);
 
     runWebhookEval($map, $origin);
 
     Http::assertNothingSent();
 });
 
-it('skips inactive webhooks', function () {
+it('skips inactive alerts', function () {
     $sid = makeSolarsystem(30009001);
     $map = Map::factory()->create();
-    MapWebhook::factory()->for($map)->inactive()->create([
-        'target_solarsystem_id' => $sid,
-        'max_jumps' => 3,
-    ]);
+    proximityAlert($map, ['target_solarsystem_id' => $sid, 'max_jumps' => 3, 'is_active' => false]);
 
     runWebhookEval($map, $sid);
 
@@ -69,10 +76,7 @@ it('fires across a real stargate hop', function () {
     makeSolarsystem($target);
 
     $map = Map::factory()->create();
-    MapWebhook::factory()->for($map)->create([
-        'target_solarsystem_id' => $target,
-        'max_jumps' => 1,
-    ]);
+    proximityAlert($map, ['target_solarsystem_id' => $target, 'max_jumps' => 1]);
 
     runWebhookEval($map, $origin);
 
@@ -82,7 +86,7 @@ it('fires across a real stargate hop', function () {
 it('colours the embed green for a highsec target', function () {
     $sid = makeSolarsystem(30009010, 0.9);
     $map = Map::factory()->create();
-    MapWebhook::factory()->for($map)->create(['target_solarsystem_id' => $sid, 'max_jumps' => 1]);
+    proximityAlert($map, ['target_solarsystem_id' => $sid, 'max_jumps' => 1]);
 
     runWebhookEval($map, $sid);
 
@@ -92,7 +96,7 @@ it('colours the embed green for a highsec target', function () {
 it('colours the embed red for a nullsec target', function () {
     $sid = makeSolarsystem(30009011, -0.5);
     $map = Map::factory()->create();
-    MapWebhook::factory()->for($map)->create(['target_solarsystem_id' => $sid, 'max_jumps' => 1]);
+    proximityAlert($map, ['target_solarsystem_id' => $sid, 'max_jumps' => 1]);
 
     runWebhookEval($map, $sid);
 
@@ -106,10 +110,7 @@ it('does not count wormhole connections, only k-space jumps', function () {
     $target = makeSolarsystem(30009005);
 
     $map = Map::factory()->create();
-    MapWebhook::factory()->for($map)->create([
-        'target_solarsystem_id' => $target,
-        'max_jumps' => 20,
-    ]);
+    proximityAlert($map, ['target_solarsystem_id' => $target, 'max_jumps' => 20]);
 
     runWebhookEval($map, $origin);
 

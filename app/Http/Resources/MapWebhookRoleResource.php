@@ -4,19 +4,17 @@ declare(strict_types=1);
 
 namespace App\Http\Resources;
 
-use App\Models\MapWebhook;
+use App\Models\MapWebhookRole;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin MapWebhook
+ * @mixin MapWebhookRole
  */
-final class MapWebhookResource extends JsonResource
+final class MapWebhookRoleResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
-     *
-     * The Discord webhook URL is a credential and is never exposed to the client.
      *
      * @return array<string, mixed>
      */
@@ -25,6 +23,7 @@ final class MapWebhookResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'discord_role_id' => $this->discord_role_id,
             'alerts_count' => $this->whenCounted('alerts'),
         ];
     }

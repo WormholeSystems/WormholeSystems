@@ -15,6 +15,7 @@ use App\Http\Controllers\IgnoreListController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MapAccessController;
+use App\Http\Controllers\MapAlertController;
 use App\Http\Controllers\MapBackgroundImageController;
 use App\Http\Controllers\MapBookmarkFormatController;
 use App\Http\Controllers\MapConnectionController;
@@ -30,6 +31,7 @@ use App\Http\Controllers\MapSettingsController;
 use App\Http\Controllers\MapSolarsystemController;
 use App\Http\Controllers\MapUserSettingController;
 use App\Http\Controllers\MapWebhookController;
+use App\Http\Controllers\MapWebhookRoleController;
 use App\Http\Controllers\PasteSignatureController;
 use App\Http\Controllers\PingController;
 use App\Http\Controllers\PreferredCharacterController;
@@ -122,6 +124,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('ignore-systems', [IgnoreListController::class, 'destroyAll'])->name('ignore-systems.destroy-all');
 
     Route::resource('map-webhooks', MapWebhookController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('map-webhook-roles', MapWebhookRoleController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('map-alerts', MapAlertController::class)->only(['store', 'update', 'destroy']);
     Route::get('eve/ship-search', [EveSearchController::class, 'index'])->name('eve.ship-search');
 
     Route::post('map-ignored-solarsystems', [MapIgnoredSolarsystemController::class, 'store'])->name('map-ignored-solarsystems.store');

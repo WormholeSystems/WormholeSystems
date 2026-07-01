@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
-use App\Http\Requests\Concerns\HasMapWebhookRules;
 use App\Models\Map;
 use App\Models\MapWebhook;
 use App\Models\User;
@@ -14,8 +13,6 @@ use Illuminate\Foundation\Http\FormRequest;
 
 final class StoreMapWebhookRequest extends FormRequest
 {
-    use HasMapWebhookRules;
-
     public Map $map {
         get => Map::query()->findOrFail(
             $this->integer('map_id'),
@@ -39,8 +36,8 @@ final class StoreMapWebhookRequest extends FormRequest
     {
         return [
             'map_id' => ['required', 'integer', 'exists:maps,id'],
+            'name' => ['required', 'string', 'max:255'],
             'discord_webhook_url' => ['required', 'url', 'regex:#^https://discord(app)?\.com/api/webhooks/#'],
-            ...$this->webhookRules(),
         ];
     }
 }
