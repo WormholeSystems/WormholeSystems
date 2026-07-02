@@ -63,6 +63,16 @@ const resolvedSolarsystem = computed(() => ({
 
 const open = ref(false);
 
+/**
+ * The form snapshots the record at mount, but the alias can change afterwards
+ * (tracker dialog, another user's edit) — reseed it whenever the editor opens.
+ */
+function openEditor() {
+    form.defaults({ alias: system.alias ?? '', occupier_alias: system.occupier_alias ?? '' });
+    form.reset();
+    open.value = true;
+}
+
 /** Exposed so MapNode can observe the card's border-box size for the store. */
 const root = useTemplateRef<HTMLElement>('root');
 defineExpose({ root });
@@ -113,7 +123,7 @@ function handleSubmit() {
         :data-threat-level="threatLevel"
         class="grid h-[40px] rounded border border-neutral-300 bg-white text-left text-xs ring-offset-2 ring-offset-neutral-50 transition-colors duration-200 ease-in-out select-none hover:bg-white focus:bg-white data-[has-pilots=true]:h-[60px] data-[hovered=true]:outline-2 data-[hovered=true]:outline-yellow-500 data-[is-active=true]:ring-2 data-[is-active=true]:ring-amber-500 data-[selected=true]:bg-amber-100 data-[status=active]:border-active data-[status=empty]:border-empty data-[status=friendly]:border-friendly data-[status=hostile]:border-hostile data-[status=unknown]:border-unknown data-[is-active=false]:data-[threat-level=critical]:ring-2 data-[is-active=false]:data-[threat-level=critical]:ring-threat-critical data-[is-active=false]:data-[threat-level=high]:ring-2 data-[is-active=false]:data-[threat-level=high]:ring-threat-high dark:border-neutral-700 dark:bg-neutral-900 dark:ring-offset-neutral-900 dark:hover:bg-neutral-800 dark:focus:bg-neutral-800 dark:data-[is-active=true]:ring-2 dark:data-[is-active=true]:ring-amber-500 dark:data-[selected=true]:bg-amber-900 dark:data-[status=active]:border-active dark:data-[status=empty]:border-empty dark:data-[status=friendly]:border-friendly dark:data-[status=hostile]:border-hostile dark:data-[status=unscanned]:border-unscanned"
         :class="{ 'w-[180px]': fixedWidth }"
-        @dblclick="open = true"
+        @dblclick="openEditor()"
         @drag.prevent
     >
         <div class="row-start-1 grid grid-cols-[auto_1fr_auto] items-center justify-center gap-x-1 px-2">
