@@ -19,7 +19,7 @@ export function updateMapSelection(positions: { id: number; position_x: number; 
         {
             preserveState: true,
             preserveScroll: true,
-            only: ['errors'],
+            only: ['map'],
             onSuccess: () => store.clearSelection(),
             onError: () => router.reload({ only: ['map'] }),
         },

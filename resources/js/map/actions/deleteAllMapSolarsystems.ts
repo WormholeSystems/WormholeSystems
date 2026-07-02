@@ -11,7 +11,7 @@ export function deleteAllMapSolarsystems(): void {
         },
         preserveState: true,
         preserveScroll: true,
-        only: ['map_navigation', 'selected_map_solarsystem'],
+        only: ['map', 'map_navigation', 'selected_map_solarsystem'],
         onError: () => router.reload({ only: ['map'] }),
     });
 }

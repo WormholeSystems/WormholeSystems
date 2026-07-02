@@ -20,7 +20,7 @@ export function updateMapSolarsystem(
     return router.put(MapSolarsystems.update(map_solarsystem.id).url, data, {
         preserveState: true,
         preserveScroll: true,
-        only: isDetailPanelTarget ? ['selected_map_solarsystem'] : ['errors'],
+        only: isDetailPanelTarget ? ['map', 'selected_map_solarsystem'] : ['map'],
         onError: () => router.reload({ only: ['map'] }),
     });
 }

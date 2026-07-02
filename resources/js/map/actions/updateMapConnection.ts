@@ -17,7 +17,7 @@ export function updateMapConnection(
     return router.put(MapConnections.update(map_connection.id).url, data, {
         preserveScroll: true,
         preserveState: true,
-        only: ['map_navigation', 'selected_map_solarsystem'],
+        only: ['map', 'map_navigation', 'selected_map_solarsystem'],
         onError: () => router.reload({ only: ['map'] }),
     });
 }

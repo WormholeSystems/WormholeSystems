@@ -11,7 +11,7 @@ export function cleanStaleMapConnections(map: Pick<TMap, 'slug'>): void {
     return router.delete(BulkMapConnectionController.destroy(map.slug).url, {
         preserveScroll: true,
         preserveState: true,
-        only: ['map_navigation'],
+        only: ['map', 'map_navigation'],
         onError: () => router.reload({ only: ['map'] }),
     });
 }

@@ -20,7 +20,7 @@ export function createTracking(from_map_solarsystem_id: number, to_solarsystem_i
         {
             preserveScroll: true,
             preserveState: true,
-            only: ['map_navigation', 'selected_map_solarsystem'],
+            only: ['map', 'map_navigation', 'selected_map_solarsystem'],
             onError: () => router.reload({ only: ['map'] }),
         },
     );

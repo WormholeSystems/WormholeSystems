@@ -14,7 +14,10 @@ declare(strict_types=1);
 */
 
 pest()->extend(Tests\TestCase::class)
-    ->in('Feature', 'Browser');
+    ->in('Feature');
+
+pest()->extend(Tests\BrowserTestCase::class)
+    ->in('Browser');
 
 pest()->use(Tests\Browser\Concerns\InteractsWithMap::class)
     ->in('Browser');

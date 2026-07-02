@@ -13,7 +13,7 @@ export function createSignature(map_solarsystem_id: number): void {
         {
             preserveScroll: true,
             preserveState: true,
-            only: ['selected_map_solarsystem'],
+            only: ['map', 'selected_map_solarsystem'],
             onError: () => router.reload({ only: ['map'] }),
         },
     );

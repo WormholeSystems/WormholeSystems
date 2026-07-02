@@ -17,7 +17,7 @@ export function deleteMapSolarsystem(map_solarsystem: TMapSolarsystem): void {
     return router.delete(MapSolarsystems.destroy(map_solarsystem.id).url, {
         preserveState: true,
         preserveScroll: true,
-        only: ['map_navigation', 'selected_map_solarsystem'],
+        only: ['map', 'map_navigation', 'selected_map_solarsystem'],
         onError: () => router.reload({ only: ['map'] }),
     });
 }

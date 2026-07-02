@@ -31,11 +31,10 @@ export function organizeMapSolarsystems(spacing: number = 1): void {
             preserveState: true,
             preserveScroll: true,
             onSuccess: () => store.clearSelection(),
-            // "Reload nothing": Inertia treats an empty `only` array as a full
-            // reload, so actions with no per-user props left to refresh request
-            // the always-cheap 'errors' prop instead. The map itself is patched
-            // by the sync layer from broadcast events, never reloaded here.
-            only: ['errors'],
+            // The originator refreshes the map prop on success so the result is
+            // visible even without a websocket; collaborators get the payload
+            // event, and reconcileMap keeps the reload a cheap keyed diff.
+            only: ['map'],
             onError: () => router.reload({ only: ['map'] }),
         },
     );

@@ -4,18 +4,16 @@ declare(strict_types=1);
 
 namespace Tests;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 
 abstract class TestCase extends BaseTestCase
 {
+    use RefreshDatabase;
+
     protected function setUp(): void
     {
         parent::setUp();
-        $this->artisan('migrate:fresh')->run();
-
-        if ($this->artisan('db:restore')->execute()) {
-            $this->artisan('db:seed')->run();
-            $this->artisan('db:cache')->run();
-        }
+        $this->withoutVite();
     }
 }

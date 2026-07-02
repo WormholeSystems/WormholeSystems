@@ -7,7 +7,7 @@ export function updateSignature(signature: TSignature, data: Record<string, Form
     return router.put(Signatures.update(signature.id).url, data, {
         preserveScroll: true,
         preserveState: true,
-        only: ['selected_map_solarsystem'],
+        only: ['map', 'selected_map_solarsystem'],
         onError: () => router.reload({ only: ['map'] }),
     });
 }
