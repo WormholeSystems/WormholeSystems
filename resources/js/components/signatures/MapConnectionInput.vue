@@ -2,7 +2,7 @@
 import ConnectionOption from '@/components/signatures/ConnectionOption.vue';
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { TProcessedConnection } from '@/composables/map';
+import type { TProcessedConnection } from '@/map/api';
 import { TSignatureType } from '@/types/models';
 import { computed, ref } from 'vue';
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { TProcessedConnection } from '@/composables/map';
 import { useNowUTC } from '@/composables/useNowUTC';
+import type { TProcessedConnection } from '@/map/api';
 import { TSignature } from '@/types/models';
 import { UTCDate } from '@date-fns/utc';
 import { differenceInDays, differenceInHours, differenceInMinutes, format, formatDistanceStrict, min } from 'date-fns';

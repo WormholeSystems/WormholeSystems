@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import DestinationContextMenu from '@/components/autopilot/DestinationContextMenu.vue';
 import KillmailView from '@/components/map-killmails/KillmailView.vue';
-import { useMapSolarsystems } from '@/composables/map';
 import { useStaticSolarsystems } from '@/composables/useStaticSolarsystems';
+import { useMapSolarsystems } from '@/map/api';
 import { TKillmail } from '@/types/models';
 import { computed } from 'vue';
 

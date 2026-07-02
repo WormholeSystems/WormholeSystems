@@ -7,6 +7,7 @@ namespace App\Actions\Signatures;
 use App\Actions\MapConnections\DeleteMapConnectionAction;
 use App\Events\Signatures\SignatureDeletedEvent;
 use App\Models\Signature;
+use App\Support\Broadcasting\MapBroadcaster;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -17,6 +18,7 @@ final readonly class DeleteSignatureAction
      */
     public function __construct(
         private DeleteMapConnectionAction $deleteMapConnectionAction,
+        private MapBroadcaster $mapBroadcaster,
     ) {
         //
     }
@@ -27,9 +29,15 @@ final readonly class DeleteSignatureAction
     public function handle(Signature $signature, bool $without_events = false, bool $remove_map_solarsystem = false): bool
     {
         return DB::transaction(function () use ($signature, $without_events, $remove_map_solarsystem): true {
-            broadcast_unless($without_events, new SignatureDeletedEvent($signature->mapSolarsystem->map_id))->toOthers();
+            $map_solarsystem = $signature->mapSolarsystem;
+
+            broadcast_unless($without_events, new SignatureDeletedEvent($map_solarsystem->map_id))->toOthers();
             $this->deleteMapConnection($signature, $remove_map_solarsystem);
             $signature->delete();
+
+            if (! $without_events) {
+                $this->mapBroadcaster->signaturesChanged($map_solarsystem);
+            }
 
             return true;
         });

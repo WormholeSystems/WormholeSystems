@@ -3,7 +3,7 @@ import MapScopeController from '@/actions/App/Http/Controllers/MapScopeControlle
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
-import { updateMapUserSettings } from '@/composables/map';
+import { updateMapUserSettings } from '@/map/api';
 import { TMapUserSetting } from '@/types/models';
 import { useLocalStorage } from '@vueuse/core';
 import { ArrowLeft, ArrowRight, CheckCircle, ExternalLink, Eye, MapPin, Route, Settings, Shield, Zap } from 'lucide-vue-next';

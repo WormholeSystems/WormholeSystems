@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\Actions\MapSelection;
 
-use App\Events\MapSolarsystems\MapSolarsystemsUpdatedEvent;
-use App\Models\Map;
 use App\Models\MapSolarsystem;
-use Illuminate\Database\Eloquent\Builder;
+use App\Support\Broadcasting\MapBroadcaster;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
 final class UpdateMapSelectionAction
 {
+    public function __construct(private readonly MapBroadcaster $mapBroadcaster) {}
+
     /**
      * @throws Throwable
      */
@@ -34,9 +34,18 @@ final class UpdateMapSelectionAction
                 ]);
             });
 
-            Map::query()
-                ->whereHas('mapSolarsystems', fn (Builder $query) => $query->whereIn('id', $models->pluck('id')))
-                ->each(fn (Map $map) => broadcast(new MapSolarsystemsUpdatedEvent($map->id))->toOthers());
+            // A selection always belongs to a single map.
+            $map_id = $models->first()?->map_id;
+
+            if ($map_id === null) {
+                return;
+            }
+
+            $this->mapBroadcaster->systemsUpserted($map_id, MapSolarsystem::query()
+                ->whereIn('id', $models->pluck('id'))
+                ->with('details')
+                ->withCount('signatures', 'wormholeSignatures', 'mapConnections', 'uncategorizedSignatures')
+                ->get());
         });
     }
 }

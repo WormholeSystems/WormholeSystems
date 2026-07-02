@@ -10,12 +10,15 @@ use App\Enums\MassStatus;
 use App\Events\Signatures\SignatureUpdatedEvent;
 use App\Models\Signature;
 use App\Models\SignatureType;
+use App\Support\Broadcasting\MapBroadcaster;
 use Illuminate\Support\Facades\DB;
 use Spatie\LaravelData\Optional;
 use Throwable;
 
 final class UpdateSignatureAction
 {
+    public function __construct(private readonly MapBroadcaster $mapBroadcaster) {}
+
     /**
      * @throws Throwable
      */
@@ -35,6 +38,8 @@ final class UpdateSignatureAction
             $this->syncMassAndLifetime($signature, $data);
 
             broadcast(new SignatureUpdatedEvent($signature->mapSolarsystem->map_id))->toOthers();
+
+            $this->mapBroadcaster->signaturesChanged($signature->mapSolarsystem);
 
             return $signature;
         });

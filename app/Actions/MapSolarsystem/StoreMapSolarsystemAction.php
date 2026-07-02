@@ -5,16 +5,19 @@ declare(strict_types=1);
 namespace App\Actions\MapSolarsystem;
 
 use App\Actions\MapConnections\CreateMapConnectionAction;
-use App\Events\MapSolarsystems\MapSolarsystemCreatedEvent;
 use App\Jobs\Webhooks\EvaluateMapWebhooksJob;
 use App\Models\Map;
 use App\Models\MapConnection;
 use App\Models\MapSolarsystem;
+use App\Support\Broadcasting\MapBroadcaster;
 use Illuminate\Database\Eloquent\Builder;
 
 final readonly class StoreMapSolarsystemAction
 {
-    public function __construct(private CreateMapConnectionAction $createMapConnection) {}
+    public function __construct(
+        private CreateMapConnectionAction $createMapConnection,
+        private MapBroadcaster $mapBroadcaster,
+    ) {}
 
     public function handle(Map $map, array $data): MapSolarsystem
     {
@@ -37,12 +40,15 @@ final readonly class StoreMapSolarsystemAction
         }
         $map_solarsystem->save();
 
-        broadcast(new MapSolarsystemCreatedEvent($map->id))
-            ->toOthers();
-
         EvaluateMapWebhooksJob::dispatch($map->id, $map_solarsystem->solarsystem_id)->afterCommit();
 
         $this->connectToOrigin($map, $map_solarsystem, $data['connect_to_map_solarsystem_id'] ?? null);
+
+        $this->mapBroadcaster->systemsUpserted($map->id, MapSolarsystem::query()
+            ->whereKey($map_solarsystem->id)
+            ->with('details')
+            ->withCount('signatures', 'wormholeSignatures', 'mapConnections', 'uncategorizedSignatures')
+            ->get());
 
         return $map_solarsystem;
     }

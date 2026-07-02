@@ -17,9 +17,11 @@ final readonly class DeleteMapRouteSolarsystemAction
     public function handle(MapRouteSolarsystem $mapRouteSolarsystem): bool
     {
         return DB::transaction(function () use ($mapRouteSolarsystem): bool {
+            $map_id = $mapRouteSolarsystem->map_id;
+
             $mapRouteSolarsystem->delete();
 
-            broadcast(new MapRouteSolarsystemsUpdatedEvent($mapRouteSolarsystem->id))->toOthers();
+            broadcast(new MapRouteSolarsystemsUpdatedEvent($map_id))->toOthers();
 
             return true;
         });

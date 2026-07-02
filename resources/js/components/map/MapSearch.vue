@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import SolarsystemSearchResult from '@/components/solarsystem/SolarsystemSearchResult.vue';
 import { Combobox, ComboboxAnchor, ComboboxEmpty, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxList } from '@/components/ui/combobox';
-import { createMapSolarsystem, useSolarsystemSearch } from '@/composables/map';
+import { createMapSolarsystem, useSolarsystemSearch } from '@/map/api';
 import type { TMap } from '@/pages/maps';
 import type { TStaticSolarsystem } from '@/types/static-data';
 import { ref } from 'vue';

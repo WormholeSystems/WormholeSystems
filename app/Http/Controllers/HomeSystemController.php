@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Events\Maps\MapUpdatedEvent;
 use App\Models\Map;
+use App\Support\Broadcasting\MapBroadcaster;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -13,7 +13,7 @@ use Illuminate\Validation\Rule;
 
 final class HomeSystemController extends Controller
 {
-    public function store(Request $request, Map $map): RedirectResponse
+    public function store(Request $request, Map $map, MapBroadcaster $mapBroadcaster): RedirectResponse
     {
         Gate::authorize('update', $map);
 
@@ -23,7 +23,7 @@ final class HomeSystemController extends Controller
 
         $map->update(['home_solarsystem_id' => $validated['solarsystem_id']]);
 
-        broadcast(new MapUpdatedEvent($map))->toOthers();
+        $mapBroadcaster->metadataUpdated($map);
 
         return back();
     }

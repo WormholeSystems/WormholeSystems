@@ -9,17 +9,14 @@ function getEventName<const T extends string[]>(...parts: T): JoinWithBackslash<
 }
 
 export const KillmailReceivedEvent = getEventName('Killmails', 'KillmailReceivedEvent');
-export const MapUpdatedEvent = getEventName('Maps', 'MapUpdatedEvent');
 
-export const MapSolarsystemCreatedEvent = getEventName('MapSolarsystems', 'MapSolarsystemCreatedEvent');
-export const MapSolarsystemUpdatedEvent = getEventName('MapSolarsystems', 'MapSolarsystemUpdatedEvent');
-export const MapSolarsystemDeletedEvent = getEventName('MapSolarsystems', 'MapSolarsystemDeletedEvent');
-export const MapSolarsystemsUpdatedEvent = getEventName('MapSolarsystems', 'MapSolarsystemsUpdatedEvent');
-export const MapSolarsystemsDeletedEvent = getEventName('MapSolarsystems', 'MapSolarsystemsDeletedEvent');
-
-export const MapConnectionCreatedEvent = getEventName('MapConnections', 'MapConnectionCreatedEvent');
-export const MapConnectionUpdatedEvent = getEventName('MapConnections', 'MapConnectionUpdatedEvent');
-export const MapConnectionDeletedEvent = getEventName('MapConnections', 'MapConnectionDeletedEvent');
+export const MapSolarsystemsUpsertedEvent = getEventName('MapSolarsystems', 'MapSolarsystemsUpsertedEvent');
+export const MapSolarsystemsRemovedEvent = getEventName('MapSolarsystems', 'MapSolarsystemsRemovedEvent');
+export const MapConnectionsUpsertedEvent = getEventName('MapConnections', 'MapConnectionsUpsertedEvent');
+export const MapConnectionsRemovedEvent = getEventName('MapConnections', 'MapConnectionsRemovedEvent');
+export const MapMetadataUpdatedEvent = getEventName('Maps', 'MapMetadataUpdatedEvent');
+export const MapResyncEvent = getEventName('Maps', 'MapResyncEvent');
+export const SignaturesChangedEvent = getEventName('Signatures', 'SignaturesChangedEvent');
 
 export const CharacterStatusUpdatedEvent = getEventName('Characters', 'CharacterStatusUpdatedEvent');
 export const UserCharacterStatusUpdatedEvent = getEventName('Characters', 'UserCharacterStatusUpdatedEvent');

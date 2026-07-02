@@ -4,17 +4,18 @@ declare(strict_types=1);
 
 namespace App\Actions\MapConnections;
 
-use App\Events\MapConnections\MapConnectionsDeletedEvent;
-use App\Events\MapSolarsystems\MapSolarsystemDeletedEvent;
 use App\Models\Map;
 use App\Models\MapConnection;
 use App\Models\MapSolarsystem;
+use App\Support\Broadcasting\MapBroadcaster;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
 final readonly class CleanStaleMapConnectionsAction
 {
+    public function __construct(private MapBroadcaster $mapBroadcaster) {}
+
     /**
      * Remove stale (long-critical) connections from the map and cascade away any systems that are
      * left unreachable from an anchor (a pinned system, or the home system as a fallback).
@@ -44,16 +45,31 @@ final readonly class CleanStaleMapConnectionsAction
 
             $anchor_ids = $this->resolveAnchorIds($map, $systems);
 
+            $removed_system_ids = [];
+
             if ($anchor_ids !== []) {
                 $reachable = $this->reachableFrom($anchor_ids, $surviving_connections);
 
-                $systems
+                $removed_systems = $systems
                     ->reject(fn (MapSolarsystem $system): bool => $system->pinned || in_array($system->id, $reachable, true))
                     ->each(fn (MapSolarsystem $system) => $system->delete());
+
+                $removed_system_ids = $removed_systems->pluck('id')->all();
             }
 
-            broadcast(new MapConnectionsDeletedEvent($map->id))->toOthers();
-            broadcast(new MapSolarsystemDeletedEvent($map->id))->toOthers();
+            // Surviving connections touching a cascade-removed system are cascade-deleted
+            // by the database, so they are included in the removal payload.
+            $cascaded_connection_ids = $surviving_connections
+                ->filter(fn (MapConnection $connection): bool => in_array($connection->from_map_solarsystem_id, $removed_system_ids, true)
+                    || in_array($connection->to_map_solarsystem_id, $removed_system_ids, true))
+                ->pluck('id')
+                ->all();
+
+            $this->mapBroadcaster->connectionsRemoved(
+                $map->id,
+                array_values(array_unique([...$stale_ids, ...$cascaded_connection_ids])),
+                $removed_system_ids,
+            );
 
             return $stale_connections->count();
         });

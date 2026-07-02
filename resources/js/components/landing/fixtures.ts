@@ -1,7 +1,7 @@
 import type { TCharacterViewModel } from '@/components/characters/CharactersView.vue';
 import type { TKillmailViewModel } from '@/components/map-killmails/KillmailsView.vue';
-import type { TDataMapSolarSystem, TProcessedConnection } from '@/composables/map';
-import type { TResolvedSolarsystem, TSolarsystem } from '@/pages/maps';
+import type { TProcessedConnection } from '@/map/api';
+import type { TMapSolarsystem, TResolvedSolarsystem, TSolarsystem } from '@/pages/maps';
 import type { TCharacter, TSignature, TSignatureType, TType } from '@/types/models';
 import type { TStaticSolarsystem } from '@/types/static-data';
 
@@ -152,9 +152,9 @@ function node(
     id: number,
     system: TSolarsystem,
     position: { x: number; y: number },
-    status: TDataMapSolarSystem['status'],
-    extra: Partial<TDataMapSolarSystem> = {},
-): TDataMapSolarSystem {
+    status: TMapSolarsystem['status'],
+    extra: Partial<TMapSolarsystem> = {},
+): TMapSolarsystem {
     return {
         id,
         map_id: 1,
@@ -192,12 +192,12 @@ const NODES = {
     delta: node(4, SYSTEMS.delta, { x: 560, y: 300 }, 'hostile', { threat_level: 'critical', signatures_count: 6, map_connections_count: 1 }),
 };
 
-export const MAP_SOLARSYSTEMS: TDataMapSolarSystem[] = Object.values(NODES);
+export const MAP_SOLARSYSTEMS: TMapSolarsystem[] = Object.values(NODES);
 
 function connection(
     id: number,
-    source: TDataMapSolarSystem,
-    target: TDataMapSolarSystem,
+    source: TMapSolarsystem,
+    target: TMapSolarsystem,
     mass_status: TProcessedConnection['mass_status'],
     lifetime_status: TProcessedConnection['lifetime_status'],
     ship_size: TProcessedConnection['ship_size'],

@@ -1,5 +1,5 @@
-import { updateMapUserSettings } from '@/composables/map/actions/updateMapUserSettings';
 import { CARD_INERTIA_PROPS, DEFAULT_BREAKPOINTS } from '@/const/layoutDefaults';
+import { updateMapUserSettings } from '@/map/api';
 import { BreakpointDefinition, BreakpointsConfig, LayoutItem } from '@/types/layout';
 import { TMapUserSetting } from '@/types/models';
 import { useWindowSize } from '@vueuse/core';

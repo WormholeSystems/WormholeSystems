@@ -7,14 +7,16 @@ namespace App\Actions\MapConnections;
 use App\Data\MapConnectionData;
 use App\Enums\LifetimeStatus;
 use App\Enums\MassStatus;
-use App\Events\MapConnections\MapConnectionUpdatedEvent;
 use App\Models\MapConnection;
+use App\Support\Broadcasting\MapBroadcaster;
 use Illuminate\Support\Facades\DB;
 use Spatie\LaravelData\Optional;
 use Throwable;
 
 final class UpdateMapConnectionAction
 {
+    public function __construct(private readonly MapBroadcaster $mapBroadcaster) {}
+
     /**
      * @throws Throwable
      */
@@ -32,7 +34,10 @@ final class UpdateMapConnectionAction
 
             $this->syncMassAndLifetime($mapConnection, $data);
 
-            broadcast(new MapConnectionUpdatedEvent($mapConnection->map_id))->toOthers();
+            $this->mapBroadcaster->connectionsUpserted($mapConnection->map_id, MapConnection::query()
+                ->whereKey($mapConnection->id)
+                ->with('signatures.signatureType', 'signatures.wormhole')
+                ->get());
 
             return $mapConnection;
         });

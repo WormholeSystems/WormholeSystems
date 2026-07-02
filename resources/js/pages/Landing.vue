@@ -7,7 +7,6 @@ import CountUp from '@/components/landing/CountUp.vue';
 import { buildKillmails, buildSignatures, CHARACTERS, MAP_CONNECTIONS, MAP_PILOTS, MAP_SOLARSYSTEMS } from '@/components/landing/fixtures';
 import WormholeBackground from '@/components/landing/WormholeBackground.vue';
 import KillmailsView from '@/components/map-killmails/KillmailsView.vue';
-import MapView from '@/components/map/MapView.vue';
 import SignaturesView from '@/components/signatures/SignaturesView.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,6 +16,7 @@ import Notifications from '@/components/user/Notifications.vue';
 import useUser from '@/composables/useUser';
 import Appearance from '@/layouts/Appearance.vue';
 import SeoHead from '@/layouts/SeoHead.vue';
+import MapReadonly from '@/map/components/MapReadonly.vue';
 import { documentation, home } from '@/routes';
 import Eve from '@/routes/eve';
 import { UTCDate } from '@date-fns/utc';
@@ -272,7 +272,7 @@ const vReveal = {
                                     </div>
                                 </div>
                                 <div class="relative h-[380px] w-full overflow-hidden rounded-b-xl sm:h-[460px]">
-                                    <MapView
+                                    <MapReadonly
                                         :solarsystems="MAP_SOLARSYSTEMS"
                                         :connections="MAP_CONNECTIONS"
                                         :pilots="MAP_PILOTS"

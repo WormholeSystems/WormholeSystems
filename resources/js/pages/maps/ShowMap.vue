@@ -6,7 +6,6 @@ import EveScoutConnections from '@/components/eve-scout/EveScoutConnections.vue'
 import LayoutEditorToolbar from '@/components/layout/LayoutEditorToolbar.vue';
 import MapKillmails from '@/components/map-killmails/MapKillmails.vue';
 import MapSkyhooks from '@/components/map-skyhooks/MapSkyhooks.vue';
-import MapComponent from '@/components/map/MapComponent.vue';
 import MapIntroduction from '@/components/map/MapIntroduction.vue';
 import MapStatusBar from '@/components/map/MapStatusBar.vue';
 import ShipHistory from '@/components/ship-history/ShipHistory.vue';
@@ -16,7 +15,6 @@ import SolarsystemDetails from '@/components/solarsystem/SolarsystemDetails.vue'
 import SystemInfo from '@/components/solarsystem/SystemInfo.vue';
 import SystemInfoEmptyState from '@/components/solarsystem/SystemInfoEmptyState.vue';
 import ThreatAnalysis from '@/components/threat-analysis/ThreatAnalysis.vue';
-import { is_map_dragging } from '@/composables/map';
 import { useDisableTextSelection } from '@/composables/useDisableTextSelection';
 import { useMapLayout } from '@/composables/useMapLayout';
 import { useOnClient } from '@/composables/useOnClient';
@@ -25,6 +23,8 @@ import { useRallyRoute } from '@/composables/useRallyRoute';
 import { useStaticSolarsystems } from '@/composables/useStaticSolarsystems';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SeoHead from '@/layouts/SeoHead.vue';
+import { useIsMapGestureActive } from '@/map/api';
+import MapRoot from '@/map/components/MapRoot.vue';
 import { TMap, TResolvedMapNavigation, TResolvedSelectedMapSolarsystem, TShowMapProps } from '@/pages/maps/index';
 import { router, usePage } from '@inertiajs/vue3';
 import { echo } from '@laravel/echo-vue';
@@ -150,7 +150,8 @@ useOnClient(() =>
 
 // Prevent text selection while in edit mode or while dragging a node / new connection
 // (drag events fire too late to prevent it reactively)
-useDisableTextSelection(() => layout.isEditMode.value || is_map_dragging.value);
+const isMapGestureActive = useIsMapGestureActive();
+useDisableTextSelection(() => layout.isEditMode.value || isMapGestureActive.value);
 
 const isDragging = ref(false);
 const isResizing = ref(false);
@@ -211,7 +212,7 @@ const handleResizeEnd = () => {
         >
             <!-- Map Section -->
             <GridItem v-bind="getLayoutItem('map').value" @resize="handleResizeStart" @resized="handleResizeEnd">
-                <MapComponent :map="resolvedMap" :config="config" />
+                <MapRoot :map="resolvedMap" :config="config" />
             </GridItem>
 
             <!-- System Info Section -->

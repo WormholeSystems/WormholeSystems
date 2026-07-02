@@ -9,18 +9,24 @@ use App\Events\Signatures\SignatureCreatedEvent;
 use App\Models\MapSolarsystem;
 use App\Models\Signature;
 use App\Models\SignatureType;
+use App\Support\Broadcasting\MapBroadcaster;
 use Illuminate\Support\Facades\DB;
 use Spatie\LaravelData\Optional;
 use Throwable;
 
 final class StoreSignatureAction
 {
+    public function __construct(private readonly MapBroadcaster $mapBroadcaster) {}
+
     /**
+     * Store a signature. $without_signatures_changed_event lets bulk callers (paste) suppress
+     * the per-row payload event and emit a single one themselves; the legacy ping is unaffected.
+     *
      * @throws Throwable
      */
-    public function handle(MapSolarsystem $mapSolarsystem, NewSignatureData $data): Signature
+    public function handle(MapSolarsystem $mapSolarsystem, NewSignatureData $data, bool $without_signatures_changed_event = false): Signature
     {
-        return DB::transaction(function () use ($mapSolarsystem, $data) {
+        return DB::transaction(function () use ($mapSolarsystem, $data, $without_signatures_changed_event) {
 
             $signature_id = $data->signature_id instanceof Optional ? null : $data->signature_id;
             $signature_category_id = $data->signature_category_id instanceof Optional ? null : $data->signature_category_id;
@@ -39,6 +45,10 @@ final class StoreSignatureAction
             ]);
 
             broadcast(new SignatureCreatedEvent($mapSolarsystem->map_id))->toOthers();
+
+            if (! $without_signatures_changed_event) {
+                $this->mapBroadcaster->signaturesChanged($mapSolarsystem);
+            }
 
             return $signature;
         }, attempts: 5);

@@ -11,8 +11,8 @@ import {
     ContextMenuSubTrigger,
     ContextMenuTrigger,
 } from '@/components/ui/context-menu';
-import { createMapSolarsystem, useMapSolarsystems } from '@/composables/map';
 import { useNavigationSystems } from '@/composables/useNavigationSystems';
+import { createMapSolarsystem, useMapSolarsystems } from '@/map/api';
 import usePermission from '@/composables/usePermission';
 import { useRallyPoint } from '@/composables/useRallyPoint';
 import { useStaticSolarsystem } from '@/composables/useStaticSolarsystems';

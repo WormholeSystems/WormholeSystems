@@ -3,9 +3,9 @@ import DestinationContextMenu from '@/components/autopilot/DestinationContextMen
 import RoutePopover from '@/components/autopilot/RoutePopover.vue';
 import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useMapSolarsystems } from '@/composables/map';
 import { usePath } from '@/composables/usePath';
 import { useStaticSolarsystems } from '@/composables/useStaticSolarsystems';
+import { useMapSolarsystems } from '@/map/api';
 import type { TRaidableSkyhook, TResolvedSolarsystem } from '@/pages/maps';
 import { UTCDate } from '@date-fns/utc';
 import { vElementHover } from '@vueuse/components';

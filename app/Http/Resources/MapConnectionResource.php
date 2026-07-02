@@ -32,7 +32,7 @@ final class MapConnectionResource extends JsonResource
             'mass_status' => $this->mass_status,
             'lifetime_status' => $this->lifetime,
             'lifetime_status_updated_at' => $this->lifetime_updated_at,
-            'signatures' => $this->signatures->toResourceCollection(MapSignatureResource::class),
+            'signatures' => $this->signatures->toResourceCollection(MapConnectionSignatureResource::class),
             'ship_size' => $this->ship_size,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

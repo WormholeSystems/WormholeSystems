@@ -13,7 +13,6 @@ use App\Enums\LifetimeStatus;
 use App\Enums\MassStatus;
 use App\Enums\ShipSize;
 use App\Enums\SignatureCategory;
-use App\Events\MapSolarsystems\MapSolarsystemCreatedEvent;
 use App\Models\Map;
 use App\Models\MapConnection;
 use App\Models\MapSolarsystem;
@@ -157,7 +156,6 @@ final readonly class AddEveScoutConnectionToMapAction
                 );
             }
 
-            broadcast(new MapSolarsystemCreatedEvent($map->id))->toOthers();
         }, attempts: 5);
     }
 

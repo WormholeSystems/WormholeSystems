@@ -15,16 +15,17 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { deleteSignature, TProcessedConnection, updateMapConnection, updateSignature } from '@/composables/map';
-import { Data } from '@/composables/map/utils/data';
 import { useMapUserSettings } from '@/composables/useMapUserSettings';
 import usePermission from '@/composables/usePermission';
 import { getTypesByCategory, signatureCategories } from '@/const/signatures';
 import { classSortWeight } from '@/const/solarsystemClasses';
+import { Data } from '@/lib/data';
 import { formatDateToISO } from '@/lib/utils';
+import { deleteSignature, TProcessedConnection, updateMapConnection, updateSignature } from '@/map/api';
 import type { TResolvedSelectedMapSolarsystem } from '@/pages/maps';
 import { TSignature } from '@/types/models';
 import { UTCDate } from '@date-fns/utc';
+import type { FormDataConvertible } from '@inertiajs/core';
 import { syncRefs } from '@vueuse/core';
 import { Check, Cloud, Database, Fan, Gem, Heart, Landmark, MoreVertical, Shield, Swords } from 'lucide-vue-next';
 import { AcceptableValue } from 'reka-ui';
@@ -125,7 +126,7 @@ function getCategoryAbbrev(name?: string | null): string {
     return name ? (categoryAbbrev[name] ?? name) : '—';
 }
 
-function handleChange(data: Record<string, unknown>) {
+function handleChange(data: Record<string, FormDataConvertible>) {
     updateSignature(signature, data);
 }
 

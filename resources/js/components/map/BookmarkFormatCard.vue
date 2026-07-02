@@ -10,7 +10,7 @@ import {
     DEFAULT_BOOKMARK_FORMAT_WORMHOLE,
     renderBookmarkTemplate,
     TBookmarkToken,
-} from '@/composables/map/utils/bookmark';
+} from '@/lib/bookmark';
 import { TMapSummary } from '@/pages/maps';
 import { router } from '@inertiajs/vue3';
 import { computed, reactive, ref } from 'vue';

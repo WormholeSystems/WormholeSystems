@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Actions\MapSolarsystem;
 
-use App\Events\MapSolarsystems\MapSolarsystemsUpdatedEvent;
 use App\Models\MapSolarsystem;
+use App\Support\Broadcasting\MapBroadcaster;
 use Illuminate\Support\Arr;
 
 final class UpdateMapSolarsystemAction
 {
+    public function __construct(private readonly MapBroadcaster $mapBroadcaster) {}
+
     /**
      * @param  array<string, mixed>  $data
      */
@@ -28,8 +30,11 @@ final class UpdateMapSolarsystemAction
             $mapSolarsystem->details->update($details_data);
         }
 
-        broadcast(new MapSolarsystemsUpdatedEvent($mapSolarsystem->map_id))
-            ->toOthers();
+        $this->mapBroadcaster->systemsUpserted($mapSolarsystem->map_id, MapSolarsystem::query()
+            ->whereKey($mapSolarsystem->id)
+            ->with('details')
+            ->withCount('signatures', 'wormholeSignatures', 'mapConnections', 'uncategorizedSignatures')
+            ->get());
 
         return $mapSolarsystem;
     }

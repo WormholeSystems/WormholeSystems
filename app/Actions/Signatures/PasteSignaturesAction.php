@@ -11,6 +11,7 @@ use App\Models\MapSolarsystem;
 use App\Models\Signature;
 use App\Models\SignatureCategory;
 use App\Models\SignatureType;
+use App\Support\Broadcasting\MapBroadcaster;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Spatie\LaravelData\Optional;
@@ -23,6 +24,7 @@ final readonly class PasteSignaturesAction
     public function __construct(
         public StoreSignatureAction $storeSignatureAction,
         public UpdateSignatureAction $updateSignatureAction,
+        private MapBroadcaster $mapBroadcaster,
     ) {
         $this->wormholeCategory = SignatureCategory::query()->firstWhere('code', \App\Enums\SignatureCategory::Wormhole);
     }
@@ -55,7 +57,8 @@ final readonly class PasteSignaturesAction
 
                 return $this->storeSignatureAction->handle(
                     $map_solarsystem,
-                    NewSignatureData::from($data)
+                    NewSignatureData::from($data),
+                    without_signatures_changed_event: true,
                 );
             });
 
@@ -79,6 +82,11 @@ final readonly class PasteSignaturesAction
                     'raw_type_name' => $raw_type_name,
                 ]);
             });
+
+            // A paste of N signatures emits a single counts event for the system.
+            if ($signatures->isNotEmpty()) {
+                $this->mapBroadcaster->signaturesChanged($map_solarsystem);
+            }
         });
     }
 

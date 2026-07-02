@@ -2,7 +2,7 @@
 import SignatureTimeDetails from '@/components/signatures/SignatureTimeDetails.vue';
 import WormholeOption from '@/components/signatures/WormholeOption.vue';
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
-import type { TProcessedConnection } from '@/composables/map';
+import type { TProcessedConnection } from '@/map/api';
 import { TSignature } from '@/types/models';
 import { Cloud, Database, Fan, Gem, Landmark, Shield, Swords } from 'lucide-vue-next';
 import { type Component, computed } from 'vue';

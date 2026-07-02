@@ -5,14 +5,17 @@ declare(strict_types=1);
 namespace App\Actions\MapConnections;
 
 use App\Actions\MapSolarsystem\DeleteMapSolarsystemAction;
-use App\Events\MapConnections\MapConnectionDeletedEvent;
 use App\Models\MapConnection;
 use App\Models\MapSolarsystem;
+use App\Support\Broadcasting\MapBroadcaster;
 use Throwable;
 
 final readonly class DeleteMapConnectionAction
 {
-    public function __construct(private DeleteMapSolarsystemAction $deleteMapSolarsystemAction) {}
+    public function __construct(
+        private DeleteMapSolarsystemAction $deleteMapSolarsystemAction,
+        private MapBroadcaster $mapBroadcaster,
+    ) {}
 
     /**
      * @throws Throwable
@@ -31,8 +34,14 @@ final readonly class DeleteMapConnectionAction
             $this->checkAndRemoveMapSolarsystem($to_map_solarsystem);
         }
 
-        broadcast(new MapConnectionDeletedEvent($map->id))
-            ->toOthers();
+        // Deleting the placement flips $exists on the very instances passed above, which
+        // is how the cascade-removed systems are detected here.
+        $removed_system_ids = collect([$from_map_solarsystem, $to_map_solarsystem])
+            ->reject(fn (MapSolarsystem $map_solarsystem): bool => $map_solarsystem->exists)
+            ->pluck('id')
+            ->all();
+
+        $this->mapBroadcaster->connectionsRemoved($map->id, [$mapConnection->id], $removed_system_ids);
     }
 
     /**

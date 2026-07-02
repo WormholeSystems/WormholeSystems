@@ -7,9 +7,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { updateMapUserSettings } from '@/composables/map';
 import { useMapUserSettings } from '@/composables/useMapUserSettings';
 import { useShowMap } from '@/composables/useShowMap';
+import { updateMapUserSettings } from '@/map/api';
 import { TLifetimeStatus, TMassStatus } from '@/types/models';
 import type { AcceptableValue } from 'reka-ui';
 import { ref, watch } from 'vue';

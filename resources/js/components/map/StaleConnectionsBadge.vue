@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useStaleConnections } from '@/composables/map/composables/useStaleConnections';
+import { useStaleConnections } from '@/composables/signatures/useStaleConnections';
 import usePermission from '@/composables/usePermission';
 import { Trash2, Unplug } from 'lucide-vue-next';
 import { ref } from 'vue';

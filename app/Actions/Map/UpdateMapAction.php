@@ -4,24 +4,18 @@ declare(strict_types=1);
 
 namespace App\Actions\Map;
 
-use App\Events\Maps\MapUpdatedEvent;
 use App\Models\Map;
+use App\Support\Broadcasting\MapBroadcaster;
 
 final class UpdateMapAction
 {
-    /**
-     * Create a new class instance.
-     */
-    public function __construct()
-    {
-        //
-    }
+    public function __construct(private readonly MapBroadcaster $mapBroadcaster) {}
 
     public function handle(Map $map, array $data): Map
     {
         $map->update($data);
 
-        broadcast(new MapUpdatedEvent($map))->toOthers();
+        $this->mapBroadcaster->metadataUpdated($map);
 
         return $map;
     }
