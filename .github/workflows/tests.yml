@@ -103,17 +103,25 @@ jobs:
           cp .env.example .env
           php artisan key:generate
 
+      # The typecheck imports the generated resources/static JSON as modules.
+      - name: Cache Static Data
+        id: static-data
+        uses: actions/cache@v4
+        with:
+          path: resources/static
+          key: static-data-${{ hashFiles('composer.lock', 'app/Console/Commands/GenerateStaticDataCommand.php') }}
+
+      - name: Generate Static Data
+        if: steps.static-data.outputs.cache-hit != 'true'
+        run: |
+          php artisan sde:download
+          php artisan generate:static-data
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
-
-      # Written to the home directory so the committed project .npmrc
-      # (legacy-peer-deps=true, which the lock file was generated under)
-      # stays in place — overwriting it makes `npm ci` reject the lock.
-      - name: Use .npmrc
-        run: echo "${{ secrets.NPMRC }}" > ~/.npmrc
 
       - name: Install JS Dependencies
         run: npm ci
@@ -185,14 +193,12 @@ jobs:
           node-version: '22'
           cache: npm
 
-      # Written to the home directory so the committed project .npmrc
-      # (legacy-peer-deps=true, which the lock file was generated under)
-      # stays in place — overwriting it makes `npm ci` reject the lock.
-      - name: Use .npmrc
-        run: echo "${{ secrets.NPMRC }}" > ~/.npmrc
-
       - name: Install JS Dependencies
         run: npm ci
+
+      # The build's vue-tsc pass needs the gitignored Wayfinder helpers.
+      - name: Generate Wayfinder Types
+        run: php artisan wayfinder:generate
 
       - name: Build Frontend
         run: npm run build
