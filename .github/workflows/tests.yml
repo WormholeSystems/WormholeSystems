@@ -1,0 +1,202 @@
+name: tests
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+  pull_request:
+    branches:
+      - develop
+      - main
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DB_HOST: 127.0.0.1
+  DB_USERNAME: root
+  DB_PASSWORD: root
+  BROADCAST_CONNECTION: log
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: test_database
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+
+      - name: Install Dependencies
+        run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+      - name: Prepare Environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      # resources/static is generated from the EVE SDE (a ~600MB download), so the
+      # 8MB output is cached and only regenerated when the SDE package or the
+      # generator itself changes.
+      - name: Cache Static Data
+        id: static-data
+        uses: actions/cache@v4
+        with:
+          path: resources/static
+          key: static-data-${{ hashFiles('composer.lock', 'app/Console/Commands/GenerateStaticDataCommand.php') }}
+
+      - name: Generate Static Data
+        if: steps.static-data.outputs.cache-hit != 'true'
+        run: |
+          php artisan sde:download
+          php artisan generate:static-data
+
+      - name: Run Backend Tests
+        run: php artisan test --testsuite=Unit --testsuite=Feature
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+
+      - name: Install PHP Dependencies
+        run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+      - name: Prepare Environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Use .npmrc
+        uses: bduff9/use-npmrc@v1.2
+        with:
+          dot-npmrc: ${{ secrets.NPMRC }}
+
+      - name: Install JS Dependencies
+        run: npm ci
+
+      # The Wayfinder route/action helpers are gitignored generated code.
+      - name: Generate Wayfinder Types
+        run: php artisan wayfinder:generate
+
+      - name: Typecheck
+        run: npx vue-tsc --noEmit
+
+      - name: Run Frontend Tests
+        run: npm test
+
+  browser:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: test_database
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+
+      - name: Install PHP Dependencies
+        run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+      - name: Prepare Environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Cache Static Data
+        id: static-data
+        uses: actions/cache@v4
+        with:
+          path: resources/static
+          key: static-data-${{ hashFiles('composer.lock', 'app/Console/Commands/GenerateStaticDataCommand.php') }}
+
+      - name: Generate Static Data
+        if: steps.static-data.outputs.cache-hit != 'true'
+        run: |
+          php artisan sde:download
+          php artisan generate:static-data
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Use .npmrc
+        uses: bduff9/use-npmrc@v1.2
+        with:
+          dot-npmrc: ${{ secrets.NPMRC }}
+
+      - name: Install JS Dependencies
+        run: npm ci
+
+      - name: Build Frontend
+        run: npm run build
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Browser Tests
+        run: php artisan test --testsuite=Browser
