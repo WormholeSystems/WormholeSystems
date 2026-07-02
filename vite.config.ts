@@ -10,6 +10,11 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 function generateStaticDataPlugin() {
     const runGenerateStaticData = () => {
+        // CI provides resources/static from a cache and has no SDE download
+        // to regenerate it from.
+        if (process.env.SKIP_STATIC_DATA_GENERATION) {
+            return;
+        }
         execSync('php artisan generate:static-data --no-interaction', {
             stdio: 'inherit',
         });
