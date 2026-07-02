@@ -109,15 +109,11 @@ jobs:
           node-version: '22'
           cache: npm
 
-      # The lock file is written by npm 11; the runner image ships npm 10,
-      # whose stricter lockfile validation rejects it during `npm ci`.
-      - name: Pin npm
-        run: npm install -g npm@11
-
+      # Written to the home directory so the committed project .npmrc
+      # (legacy-peer-deps=true, which the lock file was generated under)
+      # stays in place — overwriting it makes `npm ci` reject the lock.
       - name: Use .npmrc
-        uses: bduff9/use-npmrc@v1.2
-        with:
-          dot-npmrc: ${{ secrets.NPMRC }}
+        run: echo "${{ secrets.NPMRC }}" > ~/.npmrc
 
       - name: Install JS Dependencies
         run: npm ci
@@ -189,15 +185,11 @@ jobs:
           node-version: '22'
           cache: npm
 
-      # The lock file is written by npm 11; the runner image ships npm 10,
-      # whose stricter lockfile validation rejects it during `npm ci`.
-      - name: Pin npm
-        run: npm install -g npm@11
-
+      # Written to the home directory so the committed project .npmrc
+      # (legacy-peer-deps=true, which the lock file was generated under)
+      # stays in place — overwriting it makes `npm ci` reject the lock.
       - name: Use .npmrc
-        uses: bduff9/use-npmrc@v1.2
-        with:
-          dot-npmrc: ${{ secrets.NPMRC }}
+        run: echo "${{ secrets.NPMRC }}" > ~/.npmrc
 
       - name: Install JS Dependencies
         run: npm ci
