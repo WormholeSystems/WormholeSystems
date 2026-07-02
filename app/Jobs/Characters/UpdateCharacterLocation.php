@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Jobs\Characters;
 
+use App\Actions\MapConnections\RecordMapConnectionJumpAction;
 use App\Actions\ShipHistories\UpdateShipHistoryAction;
 use App\Models\CharacterStatus;
 use Illuminate\Bus\Batchable;
@@ -37,7 +38,7 @@ final class UpdateCharacterLocation implements ShouldQueue
      * @throws Throwable
      * @throws ConnectionException
      */
-    public function handle(Esi $esi, UpdateShipHistoryAction $action): void
+    public function handle(Esi $esi, UpdateShipHistoryAction $action, RecordMapConnectionJumpAction $recordJumpAction): void
     {
         $characterStatus = CharacterStatus::query()->find($this->character_status_id);
 
@@ -67,6 +68,8 @@ final class UpdateCharacterLocation implements ShouldQueue
         assert($location instanceof Location);
         assert($ship instanceof Ship);
 
+        $previous_solarsystem_id = $characterStatus->solarsystem_id;
+
         $characterStatus->update([
             'solarsystem_id' => $location->solar_system_id,
             'station_id' => $location->station_id,
@@ -87,6 +90,8 @@ final class UpdateCharacterLocation implements ShouldQueue
             // Mark that event should be dispatched
             $characterStatus->update(['event_queued_at' => now()]);
         }
+
+        $this->recordJump($recordJumpAction, $characterStatus, $previous_solarsystem_id, $location, $ship);
     }
 
     /**
@@ -97,5 +102,34 @@ final class UpdateCharacterLocation implements ShouldQueue
     public function middleware(): array
     {
         return [new WithoutOverlapping((string) $this->character_status_id)->dontRelease()->expireAfter(60)];
+    }
+
+    /**
+     * A jump-log failure must never break location polling.
+     */
+    private function recordJump(
+        RecordMapConnectionJumpAction $recordJumpAction,
+        CharacterStatus $characterStatus,
+        ?int $previous_solarsystem_id,
+        Location $location,
+        Ship $ship,
+    ): void {
+        if ($previous_solarsystem_id === null || $previous_solarsystem_id === $location->solar_system_id) {
+            return;
+        }
+
+        try {
+            $recordJumpAction->handle(
+                $characterStatus->character_id,
+                $previous_solarsystem_id,
+                $location->solar_system_id,
+                $ship->ship_type_id,
+                $ship->ship_name,
+            );
+        } catch (Throwable $exception) {
+            Log::warning(sprintf('Failed to record connection jump for character %d', $characterStatus->character_id), [
+                'exception' => $exception,
+            ]);
+        }
     }
 }

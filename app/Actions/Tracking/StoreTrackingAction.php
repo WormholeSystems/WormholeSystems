@@ -21,10 +21,10 @@ use App\Models\Signature;
 use App\Models\SignatureCategory;
 use App\Models\Solarsystem;
 use App\Traits\PositionsMapSolarsystems;
+use App\Utilities\StargatePairDetector;
 use App\Utilities\WormholeConnectionClassifier;
 use Illuminate\Container\Attributes\Config;
 use Illuminate\Support\Facades\DB;
-use NicolasKion\SDE\Models\SolarsystemConnection;
 use Random\RandomException;
 use Throwable;
 
@@ -40,6 +40,7 @@ final readonly class StoreTrackingAction
 
     public function __construct(
         private WormholeConnectionClassifier $connectionClassifier,
+        private StargatePairDetector $stargatePairDetector,
         private StoreMapSolarsystemAction $storeMapSolarsystemAction,
         private UpdateMapSolarsystemAction $updateMapSolarsystemAction,
         private CreateMapConnectionAction $storeMapConnectionRequest,
@@ -73,10 +74,7 @@ final readonly class StoreTrackingAction
                 return;
             }
 
-            if (
-                $this->isKSpaceToKSpaceConnection($origin->solarsystem, $to_solarsystem) &&
-                $this->systemsAreConnectedPerStargates($origin->solarsystem, $to_solarsystem)
-            ) {
+            if ($this->stargatePairDetector->isStargatePair($origin->solarsystem, $to_solarsystem)) {
                 return;
             }
 
@@ -147,11 +145,6 @@ final readonly class StoreTrackingAction
                 ...$this->guessGoodPositionForNewSolarsystem($origin),
             ]
         );
-    }
-
-    private function isKSpaceToKSpaceConnection(Solarsystem $from, Solarsystem $to): bool
-    {
-        return $from->type === 'eve' && $to->type === 'eve';
     }
 
     /**
@@ -239,14 +232,6 @@ final readonly class StoreTrackingAction
         return $mapConnection->toMapSolarsystem->is($origin)
             ? $mapConnection->fromMapSolarsystem
             : $mapConnection->toMapSolarsystem;
-    }
-
-    private function systemsAreConnectedPerStargates(Solarsystem $from, Solarsystem $to): bool
-    {
-        return SolarsystemConnection::query()
-            ->where('from_solarsystem_id', $from->id)
-            ->where('to_solarsystem_id', $to->id)
-            ->exists();
     }
 
     /**

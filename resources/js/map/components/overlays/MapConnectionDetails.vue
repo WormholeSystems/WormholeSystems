@@ -3,6 +3,7 @@ import { PopoverContent } from '@/components/ui/popover';
 import { TMapConnection, TMapSolarsystem } from '@/pages/maps';
 import { computed } from 'vue';
 import ConnectionStatus from './connection/ConnectionStatus.vue';
+import MassTracking from './connection/MassTracking.vue';
 import SignatureSection from './connection/SignatureSection.vue';
 import WormholeProperties from './connection/WormholeProperties.vue';
 
@@ -26,6 +27,10 @@ const inSignature = computed(() => {
 const wormhole = computed(() => {
     return outSignature.value?.wormhole || inSignature.value?.wormhole || null;
 });
+
+const showMassTracking = computed(() => {
+    return connection.type === 'wormhole' && (connection.jumps_count > 0 || wormhole.value !== null);
+});
 </script>
 
 <template>
@@ -38,6 +43,7 @@ const wormhole = computed(() => {
             </div>
             <ConnectionStatus :connection="connection" />
             <WormholeProperties v-if="wormhole" :wormhole="wormhole" />
+            <MassTracking v-if="showMassTracking" :connection="connection" :wormhole="wormhole" />
         </div>
     </PopoverContent>
 </template>

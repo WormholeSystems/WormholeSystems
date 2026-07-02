@@ -34,6 +34,9 @@ final class MapConnectionResource extends JsonResource
             'lifetime_status_updated_at' => $this->lifetime_updated_at,
             'signatures' => $this->signatures->toResourceCollection(MapConnectionSignatureResource::class),
             'ship_size' => $this->ship_size,
+            'jumps_mass_sum' => $this->whenHas('jumps_mass_sum', fn (int|string|null $mass_sum): int => (int) $mass_sum, 0),
+            'jumps_count' => $this->whenHas('jumps_count', fn (int|string|null $count): int => (int) $count, 0),
+            'jumps' => $this->whenLoaded('jumps', fn () => $this->jumps->toResourceCollection(MapConnectionJumpResource::class)),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

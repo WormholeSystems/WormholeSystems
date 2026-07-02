@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Scopes;
 
+use App\Builders\MapConnectionBuilder;
 use App\Models\Map;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -18,7 +19,11 @@ final class WithVisibleSolarsystems
     {
         return $query->with([
             'mapSolarsystems' => fn (Relation $query) => $query->withCount('signatures', 'wormholeSignatures', 'mapConnections', 'uncategorizedSignatures')->with('wormholeSystem:id,threat_level', 'details'),
-            'mapConnections',
+            'mapConnections' => function (Relation $query): void {
+                $builder = $query->getQuery();
+                assert($builder instanceof MapConnectionBuilder);
+                $builder->withJumpSummary();
+            },
         ]);
     }
 }

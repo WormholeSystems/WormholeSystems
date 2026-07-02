@@ -208,8 +208,24 @@ export type TMapConnection = {
     lifetime_status_updated_at: string | null;
     signatures: TTailoredSignature[] | null;
     ship_size: TShipSize;
+    jumps_mass_sum: number;
+    jumps_count: number;
+    jumps?: TConnectionJump[];
     created_at: string;
     updated_at: string;
+};
+
+export type TConnectionJump = {
+    id: number;
+    character_id: number;
+    character_name: string;
+    ship_type_id: number | null;
+    ship_type_name: string | null;
+    ship_name: string | null;
+    mass: number;
+    from_solarsystem_id: number;
+    to_solarsystem_id: number;
+    created_at: string;
 };
 
 export type TWormhole = {

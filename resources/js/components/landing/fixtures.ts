@@ -214,6 +214,8 @@ function connection(
         lifetime_status_updated_at: null,
         signatures: null,
         ship_size,
+        jumps_mass_sum: 0,
+        jumps_count: 0,
         created_at: ago(120),
         updated_at: ago(20),
         source,

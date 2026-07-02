@@ -39,6 +39,22 @@ final class MapConnectionBuilder extends Builder
             ->where('lifetime_updated_at', '<=', now()->subHour());
     }
 
+    /**
+     * Load the jump-log aggregates and the recent jumps every
+     * MapConnectionResource serialization expects.
+     */
+    public function withJumpSummary(): self
+    {
+        return $this
+            ->withCount('jumps')
+            ->withSum('jumps as jumps_mass_sum', 'mass')
+            ->with(['jumps' => fn ($query) => $query
+                ->with('character:id,name', 'shipType:id,name')
+                ->latest('id')
+                ->limit(10),
+            ]);
+    }
+
     public function connectsSolarsystemsInMap(int $map_id, int $first_solarsystem_id, int $second_solarsystem_id): self
     {
         return $this->whereRelation('map', 'id', $map_id)

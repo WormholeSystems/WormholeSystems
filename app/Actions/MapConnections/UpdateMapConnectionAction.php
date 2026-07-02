@@ -13,9 +13,9 @@ use Illuminate\Support\Facades\DB;
 use Spatie\LaravelData\Optional;
 use Throwable;
 
-final class UpdateMapConnectionAction
+final readonly class UpdateMapConnectionAction
 {
-    public function __construct(private readonly MapBroadcaster $mapBroadcaster) {}
+    public function __construct(private MapBroadcaster $mapBroadcaster) {}
 
     /**
      * @throws Throwable
@@ -37,6 +37,7 @@ final class UpdateMapConnectionAction
             $this->mapBroadcaster->connectionsUpserted($mapConnection->map_id, MapConnection::query()
                 ->whereKey($mapConnection->id)
                 ->with('signatures.signatureType', 'signatures.wormhole')
+                ->withJumpSummary()
                 ->get());
 
             return $mapConnection;

@@ -41,6 +41,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read MapSolarsystem $toMapSolarsystem
  * @property-read Map $map
  * @property-read Collection<int, Signature> $signatures
+ * @property-read Collection<int, MapConnectionJump> $jumps
+ * @property-read int|null $jumps_count
+ * @property-read int|string|null $jumps_mass_sum
  */
 #[UseFactory(MapConnectionFactory::class)]
 #[UseEloquentBuilder(MapConnectionBuilder::class)]
@@ -107,5 +110,15 @@ final class MapConnection extends Model
     public function wormhole(): BelongsTo
     {
         return $this->belongsTo(Wormhole::class);
+    }
+
+    /**
+     * The ship jumps observed through this connection.
+     *
+     * @return HasMany<MapConnectionJump, $this>
+     */
+    public function jumps(): HasMany
+    {
+        return $this->hasMany(MapConnectionJump::class);
     }
 }
