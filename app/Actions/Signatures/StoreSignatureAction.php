@@ -14,9 +14,9 @@ use Illuminate\Support\Facades\DB;
 use Spatie\LaravelData\Optional;
 use Throwable;
 
-final class StoreSignatureAction
+final readonly class StoreSignatureAction
 {
-    public function __construct(private readonly MapBroadcaster $mapBroadcaster) {}
+    public function __construct(private MapBroadcaster $mapBroadcaster) {}
 
     /**
      * Store a signature. $without_signatures_changed_event lets bulk callers (paste) suppress

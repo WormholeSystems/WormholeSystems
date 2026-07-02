@@ -1,6 +1,6 @@
+import { isWormholeClass } from '@/const/solarsystemClasses';
 import type { Vec2 } from '@/map/core/types';
 import type { MapStore } from '@/map/store/mapStore';
-import { isWormholeClass } from '@/const/solarsystemClasses';
 import type { TMapSolarsystem } from '@/pages/maps';
 import MapConnections from '@/routes/map-connections';
 import { router } from '@inertiajs/vue3';

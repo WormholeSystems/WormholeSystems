@@ -15,9 +15,9 @@ use Illuminate\Support\Facades\DB;
 use Spatie\LaravelData\Optional;
 use Throwable;
 
-final class UpdateSignatureAction
+final readonly class UpdateSignatureAction
 {
-    public function __construct(private readonly MapBroadcaster $mapBroadcaster) {}
+    public function __construct(private MapBroadcaster $mapBroadcaster) {}
 
     /**
      * @throws Throwable

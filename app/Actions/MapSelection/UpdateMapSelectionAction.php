@@ -9,9 +9,9 @@ use App\Support\Broadcasting\MapBroadcaster;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
-final class UpdateMapSelectionAction
+final readonly class UpdateMapSelectionAction
 {
-    public function __construct(private readonly MapBroadcaster $mapBroadcaster) {}
+    public function __construct(private MapBroadcaster $mapBroadcaster) {}
 
     /**
      * @throws Throwable

@@ -35,7 +35,15 @@ describe('elbowCorners', () => {
 
 describe('roundedElbowPath', () => {
     it('draws a straight segment with no interior corners', () => {
-        expect(roundedElbowPath([{ x: 0, y: 0 }, { x: 100, y: 0 }], 10)).toBe('M 0 0 L 100 0');
+        expect(
+            roundedElbowPath(
+                [
+                    { x: 0, y: 0 },
+                    { x: 100, y: 0 },
+                ],
+                10,
+            ),
+        ).toBe('M 0 0 L 100 0');
     });
 
     it('rounds one corner with a quadratic curve', () => {

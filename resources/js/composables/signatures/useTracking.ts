@@ -1,13 +1,13 @@
 import { useActiveMapCharacter } from '@/composables/useActiveMapCharacter';
-import { suggestAlias } from '@/lib/alias';
-import { formatBookmarkName } from '@/lib/bookmark';
-import { isWormholeSystem } from '@/lib/solarsystem';
-import { createTracking, updateMapUserSettings, useMapSolarsystems } from '@/map/api';
 import { useMapIgnoredSystems } from '@/composables/useMapIgnoredSystems';
 import { useMapUserSettings } from '@/composables/useMapUserSettings';
 import { useShowMap } from '@/composables/useShowMap';
 import { useStaticData } from '@/composables/useStaticData';
 import { useTrackingSystems } from '@/composables/useTrackingSystems';
+import { suggestAlias } from '@/lib/alias';
+import { formatBookmarkName } from '@/lib/bookmark';
+import { isWormholeSystem } from '@/lib/solarsystem';
+import { createTracking, updateMapUserSettings, useMapSolarsystems } from '@/map/api';
 import { TLifetimeStatus, TMassStatus, TSignature } from '@/types/models';
 import { computed, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';

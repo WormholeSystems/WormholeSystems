@@ -142,9 +142,7 @@ describe('reconcileMap', () => {
         const keptConnection = store.connections.get(10)!;
 
         // Fresh-but-equal payload objects (new references, same data).
-        store.reconcileMap(
-            mapPayload([system(1, { solarsystem: shared }), system(2, { alias: 'CHANGED' }), system(3)], [connection(10, 1, 2)]),
-        );
+        store.reconcileMap(mapPayload([system(1, { solarsystem: shared }), system(2, { alias: 'CHANGED' }), system(3)], [connection(10, 1, 2)]));
 
         expect(store.systems.get(1)).toBe(keptSystem);
         expect(store.connections.get(10)).toBe(keptConnection);

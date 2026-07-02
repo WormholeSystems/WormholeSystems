@@ -12,12 +12,12 @@ import {
     ContextMenuTrigger,
 } from '@/components/ui/context-menu';
 import { useNavigationSystems } from '@/composables/useNavigationSystems';
-import { createMapSolarsystem, useMapSolarsystems } from '@/map/api';
 import usePermission from '@/composables/usePermission';
 import { useRallyPoint } from '@/composables/useRallyPoint';
 import { useStaticSolarsystem } from '@/composables/useStaticSolarsystems';
 import useUser from '@/composables/useUser';
 import { useWaypoint } from '@/composables/useWaypoint';
+import { createMapSolarsystem, useMapSolarsystems } from '@/map/api';
 import { Compass, Flag, MapPin, Navigation, Plus, Route, Users } from 'lucide-vue-next';
 import { computed } from 'vue';
 

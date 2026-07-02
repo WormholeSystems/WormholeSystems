@@ -10,8 +10,8 @@ import {
     MapSolarsystemsUpsertedEvent,
     SignaturesChangedEvent,
 } from '@/const/events';
-import type { SystemCounts } from '@/map/store/entities';
 import type { TMapMeta } from '@/map/store/derived';
+import type { SystemCounts } from '@/map/store/entities';
 import { TMapConnection, TMapSolarsystem, TResolvedSolarsystem, TServerMapSolarsystem } from '@/pages/maps';
 
 /**

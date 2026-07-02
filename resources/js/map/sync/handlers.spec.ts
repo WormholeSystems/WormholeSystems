@@ -38,11 +38,7 @@ const resolve: ResolveSolarsystem = (id) => ({ id, name: `J${id}` }) as TResolve
 describe('mapEventHandlers', () => {
     it('upserts systems with the static solarsystem resolved and flags the detail panel for them', () => {
         const store = fakeStore();
-        const effect = mapEventHandlers[MapSolarsystemsUpsertedEvent](
-            store,
-            { map_solarsystems: [{ id: 7, solarsystem_id: 31000001 }] },
-            resolve,
-        );
+        const effect = mapEventHandlers[MapSolarsystemsUpsertedEvent](store, { map_solarsystems: [{ id: 7, solarsystem_id: 31000001 }] }, resolve);
 
         expect(store.upserted).toHaveLength(1);
         expect((store.upserted[0] as { solarsystem: { name: string } }).solarsystem.name).toBe('J31000001');
@@ -52,11 +48,7 @@ describe('mapEventHandlers', () => {
 
     it('removes systems and their cascaded connections', () => {
         const store = fakeStore();
-        const effect = mapEventHandlers[MapSolarsystemsRemovedEvent](
-            store,
-            { map_solarsystem_ids: [1, 2], map_connection_ids: [10] },
-            resolve,
-        );
+        const effect = mapEventHandlers[MapSolarsystemsRemovedEvent](store, { map_solarsystem_ids: [1, 2], map_connection_ids: [10] }, resolve);
 
         expect(store.removedSystems).toEqual([1, 2]);
         expect(store.removedConnections).toEqual([10]);
@@ -94,7 +86,9 @@ describe('mapEventHandlers', () => {
         );
 
         expect(store.metaPatches).toHaveLength(1);
-        expect(store.countPatches).toEqual([{ id: 5, counts: { signatures_count: 3, wormhole_signatures_count: 1, uncategorized_signatures_count: 0 } }]);
+        expect(store.countPatches).toEqual([
+            { id: 5, counts: { signatures_count: 3, wormhole_signatures_count: 1, uncategorized_signatures_count: 0 } },
+        ]);
         expect(countsEffect.reloadIfSelected).toEqual([5]);
     });
 

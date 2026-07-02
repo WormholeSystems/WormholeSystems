@@ -8,9 +8,9 @@ use App\Models\MapSolarsystem;
 use App\Support\Broadcasting\MapBroadcaster;
 use Illuminate\Support\Arr;
 
-final class UpdateMapSolarsystemAction
+final readonly class UpdateMapSolarsystemAction
 {
-    public function __construct(private readonly MapBroadcaster $mapBroadcaster) {}
+    public function __construct(private MapBroadcaster $mapBroadcaster) {}
 
     /**
      * @param  array<string, mixed>  $data

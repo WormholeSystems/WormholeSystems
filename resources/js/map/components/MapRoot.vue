@@ -2,8 +2,8 @@
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useLayout } from '@/composables/useLayout';
 import { useMapUserSettings } from '@/composables/useMapUserSettings';
-import usePermission from '@/composables/usePermission';
 import { usePath } from '@/composables/usePath';
+import usePermission from '@/composables/usePermission';
 import { useRallyRoute } from '@/composables/useRallyRoute';
 import { useUserEvents } from '@/composables/useUserEvents';
 import { deleteSelectedMapSolarsystems } from '@/map/actions/deleteSelectedMapSolarsystems';
@@ -18,14 +18,14 @@ import MapOptions from '@/map/components/overlays/MapOptions.vue';
 import MapRallyBadge from '@/map/components/overlays/MapRallyBadge.vue';
 import MapSolarsystemContextMenu from '@/map/components/overlays/MapSolarsystemContextMenu.vue';
 import type { Vec2 } from '@/map/core/types';
+import type { Gesture } from '@/map/interactions/gestures';
 import { createLinkDragGesture } from '@/map/interactions/linkDrag';
 import { createMarqueeGesture } from '@/map/interactions/marquee';
 import { createNodeDragGesture } from '@/map/interactions/nodeDrag';
 import { createPanGesture } from '@/map/interactions/pan';
-import type { Gesture } from '@/map/interactions/gestures';
 import { useIsUsingInput } from '@/map/interactions/useIsUsingInput';
-import { useMapSync } from '@/map/sync/useMapSync';
 import { createMapStore, provideMapStore } from '@/map/store/mapStore';
+import { useMapSync } from '@/map/sync/useMapSync';
 import { TMap, TMapConnection, TSolarsystem } from '@/pages/maps';
 import { TMapConfig } from '@/types/map';
 import { useMagicKeys, whenever } from '@vueuse/core';
@@ -182,7 +182,12 @@ whenever(Delete, () => {
 </script>
 
 <template>
-    <MapViewport ref="viewport" :gestures="gestures" @context-menu-open-change="handleContextMenuOpenChange" @surface-context-menu="handleSurfaceContextMenu">
+    <MapViewport
+        ref="viewport"
+        :gestures="gestures"
+        @context-menu-open-change="handleContextMenuOpenChange"
+        @surface-context-menu="handleSurfaceContextMenu"
+    >
         <EdgeLayer
             :pending-from="pendingFrom"
             :pending-to="pendingTo"

@@ -1,10 +1,10 @@
 import { useActiveMapCharacter } from '@/composables/useActiveMapCharacter';
-import { deleteSignatures, pasteSignatures, useIsUsingInput } from '@/map/api';
 import { useOnClient } from '@/composables/useOnClient';
 import { useShowMap } from '@/composables/useShowMap';
 import { getMapChannelName } from '@/const/channels';
 import { SignatureCreatedEvent, SignatureDeletedEvent, SignatureUpdatedEvent } from '@/const/events';
 import { signatureParser, TRawSignature } from '@/lib/SignatureParser';
+import { deleteSignatures, pasteSignatures, useIsUsingInput } from '@/map/api';
 import { TSelectedMapSolarsystem } from '@/pages/maps';
 import { TSignature } from '@/types/models';
 import { useEcho } from '@laravel/echo-vue';

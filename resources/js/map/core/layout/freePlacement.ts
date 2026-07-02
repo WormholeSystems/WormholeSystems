@@ -24,7 +24,8 @@ export function findFreePosition(occupied: Vec2[], options: FreePlacementOptions
     for (let x = padding; x < maxSize.x - padding; x += gridSize) {
         for (let y = padding; y < maxSize.y - padding; y += gridSize) {
             const overlaps = occupied.some(
-                (anchor) => anchor.x >= x + CLEARANCE.x1 && anchor.x <= x + CLEARANCE.x2 && anchor.y >= y + CLEARANCE.y1 && anchor.y <= y + CLEARANCE.y2,
+                (anchor) =>
+                    anchor.x >= x + CLEARANCE.x1 && anchor.x <= x + CLEARANCE.x2 && anchor.y >= y + CLEARANCE.y1 && anchor.y <= y + CLEARANCE.y2,
             );
             if (!overlaps) {
                 return { x, y };

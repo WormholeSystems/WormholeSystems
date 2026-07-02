@@ -1,5 +1,5 @@
-import { compareSystems } from '@/map/core/sorting';
 import { computeTreeLayout, type TreeLayoutInput } from '@/map/core/layout/treeLayout';
+import { compareSystems } from '@/map/core/sorting';
 import type { Vec2 } from '@/map/core/types';
 import { TMap, TMapConnection, TMapSolarsystem, TSolarsystem } from '@/pages/maps';
 import { computed, type ComputedRef, type Ref, type ShallowRef } from 'vue';

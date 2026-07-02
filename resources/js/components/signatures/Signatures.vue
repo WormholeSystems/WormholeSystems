@@ -15,8 +15,8 @@ import { usePasteSignatures } from '@/composables/signatures/usePasteSignatures'
 import { useSignatures } from '@/composables/signatures/useSignatures';
 import { useSortableSignatures } from '@/composables/signatures/useSortedSignatures';
 import { useActiveMapCharacter } from '@/composables/useActiveMapCharacter';
-import { createSignature } from '@/map/api';
 import usePermission from '@/composables/usePermission';
+import { createSignature } from '@/map/api';
 import type { TResolvedSelectedMapSolarsystem } from '@/pages/maps';
 import { useLocalStorage } from '@vueuse/core';
 import { ArrowDown, ArrowUp, CircleHelp, Cloud, Database, Fan, Gem, Landmark, Shield, Swords } from 'lucide-vue-next';

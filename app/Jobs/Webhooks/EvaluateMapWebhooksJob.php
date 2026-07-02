@@ -132,8 +132,13 @@ final class EvaluateMapWebhooksJob implements ShouldBeUnique, ShouldQueue
             }
 
             $target = $targets[$alert->target_solarsystem_id] ?? null;
-
-            if ($target === null || $alert->ship_type === null || $alert->jdc_level === null) {
+            if ($target === null) {
+                continue;
+            }
+            if ($alert->ship_type === null) {
+                continue;
+            }
+            if ($alert->jdc_level === null) {
                 continue;
             }
 

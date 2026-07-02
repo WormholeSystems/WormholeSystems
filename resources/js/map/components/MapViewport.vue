@@ -117,11 +117,7 @@ const {
     onTrackMousedown,
     onScrollAreaEnter,
     onScrollAreaMousemove,
-} = useMapScrollbars(
-    surface,
-    () => contentSize.value,
-    store.scale,
-);
+} = useMapScrollbars(surface, () => contentSize.value, store.scale);
 
 /** The live marquee box in screen pixels within the canvas. */
 const marqueeRect = computed(() => {
