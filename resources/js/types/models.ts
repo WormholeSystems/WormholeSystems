@@ -269,7 +269,9 @@ export type TMapUserSetting = {
     layout_override: 'manual' | 'tree' | null;
 };
 
-export type TMapWebhookType = 'proximity' | 'killmail';
+export type TMapWebhookType = 'proximity' | 'killmail' | 'jump_range';
+
+export type TJumpShipType = 'dreadnought' | 'carrier' | 'force_auxiliary' | 'supercarrier' | 'titan' | 'jump_freighter' | 'rorqual' | 'black_ops';
 
 export type TKillmailFilterSubject = 'ship_type' | 'ship_group' | 'character' | 'corporation' | 'alliance';
 
@@ -312,7 +314,10 @@ export type TMapAlert = {
     map_webhook_role_id: number | null;
     type: TMapWebhookType;
     target_solarsystem_id: number | null;
-    max_jumps: number;
+    ship_type: TJumpShipType | null;
+    jdc_level: number | null;
+    include_highsec: boolean;
+    max_jumps: number | null;
     filter_match: TKillmailFilterMatch;
     filters: TKillmailFilterRule[];
     is_active: boolean;

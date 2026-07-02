@@ -8,12 +8,14 @@ enum MapWebhookType: string
 {
     case Proximity = 'proximity';
     case Killmail = 'killmail';
+    case JumpRange = 'jump_range';
 
     public function label(): string
     {
         return match ($this) {
-            self::Proximity => 'Known-space connection',
-            self::Killmail => 'Killmail in range',
+            self::Proximity => 'System near chain',
+            self::Killmail => 'Kills near chain',
+            self::JumpRange => 'Capital jump range',
         };
     }
 }

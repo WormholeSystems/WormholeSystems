@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Enums\JumpShipType;
 use App\Enums\MapWebhookType;
 use App\Models\MapAlert;
 use App\Models\MapWebhook;
@@ -36,6 +37,17 @@ final class MapAlertFactory extends Factory
     public function inactive(): self
     {
         return $this->state(fn (): array => ['is_active' => false]);
+    }
+
+    public function jumpRange(JumpShipType $ship = JumpShipType::Dreadnought, int $jdcLevel = 5, bool $includeHighsec = false): self
+    {
+        return $this->state(fn (): array => [
+            'type' => MapWebhookType::JumpRange,
+            'ship_type' => $ship,
+            'jdc_level' => $jdcLevel,
+            'include_highsec' => $includeHighsec,
+            'max_jumps' => null,
+        ]);
     }
 
     /**

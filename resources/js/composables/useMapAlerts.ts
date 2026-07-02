@@ -1,6 +1,6 @@
 import MapAlertController from '@/actions/App/Http/Controllers/MapAlertController';
 import { AppPageProps } from '@/types';
-import { TKillmailFilterMatch, TKillmailFilterRule, TMapAlert, TMapWebhookType } from '@/types/models';
+import { TJumpShipType, TKillmailFilterMatch, TKillmailFilterRule, TMapAlert, TMapWebhookType } from '@/types/models';
 import { VisitHelperOptions } from '@inertiajs/core';
 import { router, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
@@ -10,7 +10,10 @@ export type TMapAlertPayload = {
     map_webhook_role_id: number | null;
     type: TMapWebhookType;
     target_solarsystem_id?: number | null;
-    max_jumps: number;
+    ship_type?: TJumpShipType | null;
+    jdc_level?: number | null;
+    include_highsec?: boolean;
+    max_jumps: number | null;
     filter_match?: TKillmailFilterMatch;
     filters?: TKillmailFilterRule[];
     is_active: boolean;

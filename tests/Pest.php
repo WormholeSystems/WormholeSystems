@@ -54,7 +54,7 @@ function something()
  * Insert a single solar system (and its parent region/constellation) into the
  * otherwise-empty test database, returning its id. The SDE is not seeded in tests.
  */
-function makeSolarsystem(int $id, float $security = 0.5): int
+function makeSolarsystem(int $id, float $security = 0.5, string $type = 'normal', float $posX = 0.0, float $posY = 0.0, float $posZ = 0.0): int
 {
     Illuminate\Support\Facades\DB::table('regions')->insertOrIgnore(['id' => 10009000, 'name' => 'Test Region', 'type' => 'normal']);
     Illuminate\Support\Facades\DB::table('constellations')->insertOrIgnore(['id' => 20009000, 'name' => 'Test Constellation', 'region_id' => 10009000, 'type' => 'normal']);
@@ -64,10 +64,10 @@ function makeSolarsystem(int $id, float $security = 0.5): int
         'constellation_id' => 20009000,
         'region_id' => 10009000,
         'security' => $security,
-        'pos_x' => 0,
-        'pos_y' => 0,
-        'pos_z' => 0,
-        'type' => 'normal',
+        'pos_x' => $posX,
+        'pos_y' => $posY,
+        'pos_z' => $posZ,
+        'type' => $type,
     ]);
 
     return $id;

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Casts\KillmailFiltersCast;
+use App\Enums\JumpShipType;
 use App\Enums\KillmailFilterMatch;
 use App\Enums\MapWebhookType;
 use App\Services\Killmails\KillmailFilterRule;
@@ -18,8 +19,9 @@ use Illuminate\Support\Collection;
 
 /**
  * An alert that fires to a webhook (and optionally pings a role) when a target
- * system comes within range of the map (proximity) or a matching killmail occurs
- * within range (killmail).
+ * system comes within range of the map (proximity), a matching killmail occurs
+ * within range (killmail), or a new k-space exit lands within a capital's jump
+ * range of the target system (jump_range).
  *
  * @property int $id
  * @property int $map_id
@@ -27,7 +29,10 @@ use Illuminate\Support\Collection;
  * @property int|null $map_webhook_role_id
  * @property MapWebhookType $type
  * @property int|null $target_solarsystem_id
- * @property int $max_jumps
+ * @property JumpShipType|null $ship_type
+ * @property int|null $jdc_level
+ * @property bool $include_highsec
+ * @property int|null $max_jumps
  * @property Collection<int, KillmailFilterRule> $filters
  * @property KillmailFilterMatch $filter_match
  * @property bool $is_active
@@ -92,6 +97,9 @@ final class MapAlert extends Model
     {
         return [
             'type' => MapWebhookType::class,
+            'ship_type' => JumpShipType::class,
+            'jdc_level' => 'integer',
+            'include_highsec' => 'boolean',
             'max_jumps' => 'integer',
             'filters' => KillmailFiltersCast::class,
             'filter_match' => KillmailFilterMatch::class,

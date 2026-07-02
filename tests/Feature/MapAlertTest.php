@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\JumpShipType;
 use App\Enums\Permission;
 use App\Models\Map;
 use App\Models\MapAlert;
@@ -58,6 +59,57 @@ it('lets a manager create a killmail alert with filters and a null target', func
         ->and($alert->target_solarsystem_id)->toBeNull()
         ->and($alert->filters)->toHaveCount(1)
         ->and($alert->filters->first()->ids)->toBe([98000001, 98000002]);
+});
+
+it('lets a manager create a jump-range alert', function () {
+    $map = Map::factory()->create();
+    $webhook = MapWebhook::factory()->for($map)->create();
+    actingAs(webhookManager($map, Permission::Manager));
+
+    $this->post(route('map-alerts.store'), validAlertPayload($map, $webhook, [
+        'type' => 'jump_range',
+        'max_jumps' => null,
+        'ship_type' => 'dreadnought',
+        'jdc_level' => 5,
+        'include_highsec' => true,
+    ]))->assertRedirect();
+
+    $alert = MapAlert::query()->where('map_id', $map->id)->sole();
+
+    expect($alert->type->value)->toBe('jump_range')
+        ->and($alert->ship_type)->toBe(JumpShipType::Dreadnought)
+        ->and($alert->jdc_level)->toBe(5)
+        ->and($alert->include_highsec)->toBeTrue()
+        ->and($alert->max_jumps)->toBeNull();
+});
+
+it('validates jump-range alert fields', function (array $overrides, string $invalidField) {
+    $map = Map::factory()->create();
+    $webhook = MapWebhook::factory()->for($map)->create();
+    actingAs(webhookManager($map, Permission::Manager));
+
+    $this->post(route('map-alerts.store'), validAlertPayload($map, $webhook, array_merge([
+        'type' => 'jump_range',
+        'max_jumps' => null,
+        'ship_type' => 'dreadnought',
+        'jdc_level' => 5,
+    ], $overrides)))->assertInvalid([$invalidField]);
+})->with([
+    'missing target' => [['target_solarsystem_id' => null], 'target_solarsystem_id'],
+    'missing ship' => [['ship_type' => null], 'ship_type'],
+    'invalid ship' => [['ship_type' => 'battleship'], 'ship_type'],
+    'missing jdc' => [['jdc_level' => null], 'jdc_level'],
+    'jdc too low' => [['jdc_level' => 0], 'jdc_level'],
+    'jdc too high' => [['jdc_level' => 6], 'jdc_level'],
+]);
+
+it('still requires max jumps for non jump-range alerts', function () {
+    $map = Map::factory()->create();
+    $webhook = MapWebhook::factory()->for($map)->create();
+    actingAs(webhookManager($map, Permission::Manager));
+
+    $this->post(route('map-alerts.store'), validAlertPayload($map, $webhook, ['max_jumps' => null]))
+        ->assertInvalid(['max_jumps']);
 });
 
 it('requires a target for proximity alerts', function () {

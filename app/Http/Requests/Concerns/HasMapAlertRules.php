@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Concerns;
 
+use App\Enums\JumpShipType;
 use App\Enums\KillmailFilterMatch;
 use App\Enums\KillmailFilterMode;
 use App\Enums\KillmailFilterSide;
@@ -33,8 +34,11 @@ trait HasMapAlertRules
             'map_webhook_id' => ['required', 'integer', Rule::exists('map_webhooks', 'id')->where('map_id', $mapId)],
             'map_webhook_role_id' => ['nullable', 'integer', Rule::exists('map_webhook_roles', 'id')->where('map_id', $mapId)],
             'type' => ['required', Rule::enum(MapWebhookType::class)],
-            'target_solarsystem_id' => ['nullable', 'integer', 'exists:solarsystems,id', 'required_if:type,'.MapWebhookType::Proximity->value],
-            'max_jumps' => ['required', 'integer', 'between:1,20'],
+            'target_solarsystem_id' => ['nullable', 'integer', 'exists:solarsystems,id', 'required_if:type,'.MapWebhookType::Proximity->value.','.MapWebhookType::JumpRange->value],
+            'ship_type' => ['nullable', Rule::enum(JumpShipType::class), 'required_if:type,'.MapWebhookType::JumpRange->value],
+            'jdc_level' => ['nullable', 'integer', 'between:1,5', 'required_if:type,'.MapWebhookType::JumpRange->value],
+            'include_highsec' => ['boolean'],
+            'max_jumps' => ['nullable', 'integer', 'between:1,20', 'required_unless:type,'.MapWebhookType::JumpRange->value],
             'filter_match' => ['nullable', Rule::enum(KillmailFilterMatch::class)],
             'filters' => ['nullable', 'array'],
             'filters.*.subject' => ['required', Rule::enum(KillmailFilterSubject::class)],
