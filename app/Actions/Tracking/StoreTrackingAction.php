@@ -6,6 +6,7 @@ namespace App\Actions\Tracking;
 
 use App\Actions\MapConnections\CreateMapConnectionAction;
 use App\Actions\MapSolarsystem\StoreMapSolarsystemAction;
+use App\Actions\MapSolarsystem\UpdateMapSolarsystemAction;
 use App\Actions\Signatures\UpdateSignatureAction;
 use App\Data\SignatureData;
 use App\Data\TrackingData;
@@ -40,6 +41,7 @@ final readonly class StoreTrackingAction
     public function __construct(
         private WormholeConnectionClassifier $connectionClassifier,
         private StoreMapSolarsystemAction $storeMapSolarsystemAction,
+        private UpdateMapSolarsystemAction $updateMapSolarsystemAction,
         private CreateMapConnectionAction $storeMapConnectionRequest,
         private UpdateSignatureAction $updateSignatureAction,
         #[Config('map.max_size.x')]
@@ -87,8 +89,12 @@ final readonly class StoreTrackingAction
             $target_map_solarsystem = $this->getMapSolarsystemOnMap($origin->map, $to_solarsystem)
                 ?? $this->addSolarsystemToMap($origin, $to_solarsystem);
 
+            /* The alias goes through the update action so the broadcast payload
+             * carries it — a raw update() here left other viewers (and the
+             * originator's own echo) with an alias-less system.
+             */
             if (filled($data->alias)) {
-                $target_map_solarsystem->update(['alias' => $data->alias]);
+                $this->updateMapSolarsystemAction->handle($target_map_solarsystem, ['alias' => $data->alias]);
             }
 
             $signature = Signature::query()->find($data->signature_id);
