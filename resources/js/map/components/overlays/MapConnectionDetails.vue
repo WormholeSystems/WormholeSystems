@@ -29,7 +29,7 @@ const wormhole = computed(() => {
 });
 
 const showMassTracking = computed(() => {
-    return connection.type === 'wormhole' && (connection.jumps_count > 0 || wormhole.value !== null);
+    return connection.type === 'wormhole';
 });
 </script>
 

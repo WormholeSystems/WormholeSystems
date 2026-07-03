@@ -218,12 +218,13 @@ export type TMapConnection = {
 
 export type TConnectionJump = {
     id: number;
-    character_id: number;
-    character_name: string;
+    character_id: number | null;
+    character_name: string | null;
     ship_type_id: number | null;
     ship_type_name: string | null;
     ship_name: string | null;
     mass: number;
+    is_manual: boolean;
     from_solarsystem_id: number;
     to_solarsystem_id: number;
     created_at: string;

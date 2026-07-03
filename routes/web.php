@@ -19,6 +19,7 @@ use App\Http\Controllers\MapAlertController;
 use App\Http\Controllers\MapBackgroundImageController;
 use App\Http\Controllers\MapBookmarkFormatController;
 use App\Http\Controllers\MapConnectionController;
+use App\Http\Controllers\MapConnectionJumpController;
 use App\Http\Controllers\MapController;
 use App\Http\Controllers\MapIgnoredSolarsystemController;
 use App\Http\Controllers\MapLayoutController;
@@ -88,6 +89,7 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('map-solarsystems', MapSolarsystemController::class)->only(['store', 'update', 'destroy']);
     Route::resource('map-connections', MapConnectionController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('map-connection-jumps', MapConnectionJumpController::class)->only(['store', 'update', 'destroy']);
     Route::delete('maps/{map}/stale-connections', [BulkMapConnectionController::class, 'destroy'])
         ->name('maps.stale-connections.destroy');
     Route::put('map-selection', [MapSelectionController::class, 'update'])->name('map-selection.update');

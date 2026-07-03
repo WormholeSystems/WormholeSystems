@@ -109,3 +109,27 @@ it('validates the kind parameter', function () {
 it('requires authentication', function () {
     getJson(route('eve.ship-search', ['kind' => 'type', 'q' => 'Raven']))->assertUnauthorized();
 });
+
+it('narrows a type search to the given category', function () {
+    seedShipReferenceData();
+    actingAs(User::factory()->create());
+
+    $response = getJson(route('eve.ship-search', ['kind' => 'type', 'q' => 'Raven', 'category_id' => 6]));
+
+    $response->assertOk();
+    $ids = collect($response->json('data'))->pluck('id');
+
+    // Only the ship matches; the blueprint sits in another category.
+    expect($ids)->toContain(638)
+        ->and($ids)->not->toContain(700);
+});
+
+it('includes the type mass in search results', function () {
+    seedShipReferenceData();
+    Type::query()->whereKey(638)->update(['mass' => 99_300_000]);
+    actingAs(User::factory()->create());
+
+    $response = getJson(route('eve.ship-search', ['kind' => 'type', 'q' => 'Raven', 'category_id' => 6]));
+
+    expect(collect($response->json('data'))->firstWhere('id', 638)['mass'])->toBe(99_300_000);
+});

@@ -18,7 +18,7 @@ export function useEveSearch() {
     const searchHttp = useHttp<Record<string, never>, TEveSearchResponse>({});
     const resolveHttp = useHttp<Record<string, never>, TEveSearchResponse>({});
 
-    async function run(kind: TEveSearchKind, term: string): Promise<void> {
+    async function run(kind: TEveSearchKind, term: string, filters: { category_id?: number } = {}): Promise<void> {
         const query = term.trim();
 
         if (query.length < 1) {
@@ -26,7 +26,7 @@ export function useEveSearch() {
             return;
         }
 
-        await searchHttp.get(EveSearchController.index.url({ query: { kind, q: query } }), {
+        await searchHttp.get(EveSearchController.index.url({ query: { kind, q: query, ...filters } }), {
             onSuccess: (response) => {
                 results.value = response?.data ?? [];
             },

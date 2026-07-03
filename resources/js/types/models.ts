@@ -293,6 +293,7 @@ export type TEveSearchResult = {
     name: string;
     group_name?: string | null;
     category_name?: string | null;
+    mass?: number;
 };
 
 export type TMapWebhook = {

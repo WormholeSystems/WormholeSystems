@@ -29,6 +29,7 @@ final class EveSearchRequest extends FormRequest
             'q' => ['nullable', 'string', 'max:100'],
             'ids' => ['nullable', 'array'],
             'ids.*' => ['integer'],
+            'category_id' => ['nullable', 'integer'],
         ];
     }
 }

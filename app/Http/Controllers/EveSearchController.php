@@ -12,10 +12,11 @@ use Illuminate\Http\JsonResponse;
 
 /**
  * Read-only typeahead over the static EVE reference data, used by the killmail webhook
- * filter editor to look up types and groups by name (or resolve ids to names when
- * editing). Unfiltered by category or published flag — structures, deployables, fighters
- * and unpublished NPC/officer entities (e.g. "Asteroid Serpentis Officer") all turn up on
- * killmails, so all of them must be searchable.
+ * filter editor and the manual jump log to look up types and groups by name (or resolve
+ * ids to names when editing). Unfiltered by category or published flag by default —
+ * structures, deployables, fighters and unpublished NPC/officer entities (e.g. "Asteroid
+ * Serpentis Officer") all turn up on killmails, so all of them must be searchable. Pass
+ * a category_id to narrow type searches, e.g. to ships only.
  */
 final class EveSearchController extends Controller
 {
@@ -32,23 +33,24 @@ final class EveSearchController extends Controller
 
         $results = $request->string('kind')->value() === 'group'
             ? $this->groups($ids, $query)
-            : $this->types($ids, $query);
+            : $this->types($ids, $query, $request->filled('category_id') ? $request->integer('category_id') : null);
 
         return response()->json(['data' => $results]);
     }
 
     /**
      * @param  int[]  $ids
-     * @return array<int, array{id: int, name: string, group_name: string|null}>
+     * @return array<int, array{id: int, name: string, group_name: string|null, mass: int}>
      */
-    private function types(array $ids, string $query): array
+    private function types(array $ids, string $query, ?int $category_id = null): array
     {
-        return $this->matching(Type::query()->with('group:id,name'), $ids, $query)
-            ->get(['id', 'name', 'group_id'])
+        return $this->matching(Type::query()->with('group:id,name')->when($category_id, fn ($query) => $query->whereRelation('group', 'category_id', $category_id)), $ids, $query)
+            ->get(['id', 'name', 'group_id', 'mass'])
             ->map(fn (Type $type): array => [
                 'id' => $type->id,
                 'name' => $type->name,
                 'group_name' => $type->group->name,
+                'mass' => (int) round($type->mass ?? 0),
             ])
             ->all();
     }

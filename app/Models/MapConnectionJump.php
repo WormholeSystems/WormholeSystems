@@ -20,17 +20,18 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $id
  * @property int $map_id
  * @property int|null $map_connection_id
- * @property int $character_id
+ * @property int|null $character_id
  * @property int $from_solarsystem_id
  * @property int $to_solarsystem_id
  * @property int|null $ship_type_id
  * @property string|null $ship_name
  * @property int $mass
+ * @property bool $is_manual
  * @property CarbonImmutable|string $created_at
  * @property CarbonImmutable|string $updated_at
  * @property-read Map $map
  * @property-read MapConnection|null $mapConnection
- * @property-read Character $character
+ * @property-read Character|null $character
  * @property-read Type|null $shipType
  */
 #[UseFactory(MapConnectionJumpFactory::class)]
@@ -77,6 +78,7 @@ final class MapConnectionJump extends Model
             'created_at' => 'immutable_datetime',
             'updated_at' => 'immutable_datetime',
             'mass' => 'integer',
+            'is_manual' => 'boolean',
         ];
     }
 }

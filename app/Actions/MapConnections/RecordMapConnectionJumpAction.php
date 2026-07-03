@@ -11,7 +11,6 @@ use App\Models\MapConnectionJump;
 use App\Models\MapSolarsystem;
 use App\Models\Solarsystem;
 use App\Models\Type;
-use App\Support\Broadcasting\MapBroadcaster;
 use App\Utilities\StargatePairDetector;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -27,7 +26,7 @@ use Illuminate\Database\Eloquent\Collection;
 final readonly class RecordMapConnectionJumpAction
 {
     public function __construct(
-        private MapBroadcaster $mapBroadcaster,
+        private BroadcastMapConnectionAction $broadcastMapConnection,
         private StargatePairDetector $stargatePairDetector,
     ) {}
 
@@ -110,7 +109,7 @@ final readonly class RecordMapConnectionJumpAction
             $jump->update(['map_connection_id' => $connection->id]);
         }
 
-        $this->broadcastConnection($connection);
+        $this->broadcastMapConnection->handle($connection);
     }
 
     /**
@@ -141,14 +140,5 @@ final readonly class RecordMapConnectionJumpAction
             ->where('solarsystem_id', $solarsystem_id)
             ->whereNotNull('position_x')
             ->exists();
-    }
-
-    private function broadcastConnection(MapConnection $connection): void
-    {
-        $this->mapBroadcaster->connectionsUpserted($connection->map_id, MapConnection::query()
-            ->whereKey($connection->id)
-            ->with('signatures.signatureType', 'signatures.wormhole')
-            ->withJumpSummary()
-            ->get());
     }
 }

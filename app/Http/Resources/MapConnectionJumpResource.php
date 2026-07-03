@@ -26,11 +26,12 @@ final class MapConnectionJumpResource extends JsonResource
         return [
             'id' => $this->id,
             'character_id' => $this->character_id,
-            'character_name' => $this->character->name,
+            'character_name' => $this->character?->name,
             'ship_type_id' => $this->ship_type_id,
             'ship_type_name' => $this->shipType?->name,
             'ship_name' => $this->ship_name,
             'mass' => $this->mass,
+            'is_manual' => $this->is_manual,
             'from_solarsystem_id' => $this->from_solarsystem_id,
             'to_solarsystem_id' => $this->to_solarsystem_id,
             'created_at' => $this->created_at,
