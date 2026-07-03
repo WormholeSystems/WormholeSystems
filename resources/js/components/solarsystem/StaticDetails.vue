@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatKilotons } from '@/lib/utils';
 import type { TStatic } from '@/pages/maps';
 import { computed } from 'vue';
 
@@ -20,9 +21,7 @@ const shipSize = computed(() => {
 
 function formatMass(mass: number): string {
     if (!mass) return '—';
-    if (mass >= 1_000_000_000) return `${(mass / 1_000_000_000).toLocaleString()}B kg`;
-    if (mass >= 1_000_000) return `${(mass / 1_000_000).toLocaleString()}M kg`;
-    return `${mass.toLocaleString()} kg`;
+    return `${formatKilotons(mass)} kt`;
 }
 </script>
 

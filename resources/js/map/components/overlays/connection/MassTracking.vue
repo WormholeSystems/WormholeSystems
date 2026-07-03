@@ -3,6 +3,7 @@ import { CharacterImage, TypeImage } from '@/components/images';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useNowUTC } from '@/composables/useNowUTC';
+import { formatKilotons } from '@/lib/utils';
 import { TConnectionJump, TMapConnection, TMapSolarsystem } from '@/pages/maps';
 import { UTCDate } from '@date-fns/utc';
 import { differenceInDays, differenceInHours, differenceInMinutes, format } from 'date-fns';
@@ -38,10 +39,6 @@ const barColor = computed(() => {
     if (remainingPercent.value <= 50) return 'bg-amber-500';
     return 'bg-green-500';
 });
-
-function formatKilotons(mass_kg: number): string {
-    return (mass_kg / 1_000_000).toLocaleString('en-US', { maximumFractionDigits: 1 });
-}
 
 function isOutbound(jump: TConnectionJump): boolean {
     return jump.from_solarsystem_id === props.connection.source.solarsystem_id;

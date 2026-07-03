@@ -21,6 +21,13 @@ const compactNumberFormat = new Intl.NumberFormat('en-US', {
     notation: 'compact',
 });
 
+/**
+ * Formats a mass in kilograms as kilotons (1 kt = 1,000,000 kg), without unit suffix.
+ */
+export function formatKilotons(massKg: number): string {
+    return (massKg / 1_000_000).toLocaleString('en-US', { maximumFractionDigits: 1 });
+}
+
 export function formatISK(value: number): string {
     if (value === 0) return '0 ISK';
 

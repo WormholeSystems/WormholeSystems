@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatKilotons } from '@/lib/utils';
 import { computed } from 'vue';
 
 const { wormhole } = defineProps<{
@@ -12,11 +13,8 @@ const { wormhole } = defineProps<{
 
 const maximumLifetime = computed(() => wormhole.maximum_lifetime / 3600);
 
-const maximumJumpMass = computed(() => wormhole.maximum_jump_mass / 1_000_000);
-const totalMass = computed(() => wormhole.total_mass / 1_000_000);
-
 const ship_size = computed(() => {
-    const jump_mass = maximumJumpMass.value!;
+    const jump_mass = wormhole.maximum_jump_mass / 1_000_000;
 
     if (jump_mass >= 1_000) return 'XL';
     if (jump_mass >= 62) return 'L';
@@ -24,10 +22,6 @@ const ship_size = computed(() => {
 
     return 'S';
 });
-
-function formatMass(mass: number): string {
-    return mass.toLocaleString('en-US');
-}
 </script>
 
 <template>
@@ -36,11 +30,11 @@ function formatMass(mass: number): string {
         <div class="grid grid-cols-2 divide-y truncate text-xs text-muted-foreground *:py-1">
             <div class="col-span-full grid grid-cols-subgrid">
                 <span>Total Mass</span>
-                <span class="text-right">{{ formatMass(totalMass) }}</span>
+                <span class="text-right">{{ formatKilotons(wormhole.total_mass) }} kt</span>
             </div>
             <div class="col-span-full grid grid-cols-subgrid">
                 <span>Maximum Jump Mass</span>
-                <span class="text-right">{{ formatMass(maximumJumpMass) }}</span>
+                <span class="text-right">{{ formatKilotons(wormhole.maximum_jump_mass) }} kt</span>
             </div>
             <div class="col-span-full grid grid-cols-subgrid">
                 <span>Maximum Lifetime</span>
