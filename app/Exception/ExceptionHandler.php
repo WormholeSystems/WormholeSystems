@@ -6,7 +6,6 @@ namespace App\Exception;
 
 use App\Http\Middleware\HandleInertiaRequests;
 use Exception;
-use Illuminate\Container\Attributes\Config;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -17,13 +16,8 @@ use Throwable;
 
 final readonly class ExceptionHandler
 {
-    public function __construct(
-        #[Config('sentry.dsn')] private ?string $dsn = null,
-    ) {}
-
     public function __invoke(Exceptions $exceptions): void
     {
-
         $this->notifySentry($exceptions);
 
         $exceptions->respond(function (Response $response, Throwable $exception, Request $request): Response {
@@ -42,7 +36,7 @@ final readonly class ExceptionHandler
 
     private function notifySentry(Exceptions $exceptions): void
     {
-        if (! $this->dsn) {
+        if (! config('sentry.dsn')) {
             return;
         }
 
