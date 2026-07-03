@@ -64,6 +64,14 @@
     <!-- PWA Manifest -->
     <link rel="manifest" href="/build/manifest.webmanifest">
 
+    @production
+        <script>
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+            }
+        </script>
+    @endproduction
+
     @vite(['resources/js/app.ts', "resources/js/pages/{$page['component']}.vue", 'resources/css/app.css'])
     <x-inertia::head />
 </head>

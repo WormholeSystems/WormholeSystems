@@ -5,6 +5,8 @@
 /public/hot
 /public/storage
 /public/workers
+/public/sw.js
+/public/workbox-*.js
 /storage/*.key
 /storage/pail
 /vendor

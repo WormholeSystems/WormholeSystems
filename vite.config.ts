@@ -57,8 +57,29 @@ export default defineConfig({
         wayfinder(),
         VitePWA({
             registerType: 'autoUpdate',
+            /* The worker must live at /sw.js with scope '/': that is where the
+             * legacy hand-written worker was registered, so shipping the new one
+             * at the same URL is what replaces it on users' machines. It is
+             * registered from app.blade.php; the plugin's injected registration
+             * would point into /build/ and only ever control that path.
+             */
+            outDir: 'public',
+            filename: 'sw.js',
+            base: '/',
+            scope: '/',
+            injectRegister: null,
             workbox: {
-                globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+                /* This is a server-rendered app: navigations must always reach
+                 * Laravel (no navigateFallback), only hashed build assets are
+                 * precached. The legacy cleanup script drops the old worker's
+                 * cache once the new worker activates.
+                 */
+                globDirectory: 'public/build',
+                globPatterns: ['**/*.{js,css,ico,png,svg}'],
+                modifyURLPrefix: { '': '/build/' },
+                navigateFallback: null,
+                cleanupOutdatedCaches: true,
+                importScripts: ['/sw-legacy-cleanup.js'],
                 maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
             },
             manifest: {
