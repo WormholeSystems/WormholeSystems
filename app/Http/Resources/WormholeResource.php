@@ -22,6 +22,7 @@ final class WormholeResource extends JsonResource
             'ship_size' => $this->ship_size,
             'maximum_lifetime' => $this->maximum_lifetime,
             'leads_to' => $this->leads_to,
+            'signature_strength' => $this->signature_strength,
             'type_id' => $this->type_id,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

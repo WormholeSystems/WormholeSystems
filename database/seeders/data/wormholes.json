@@ -10,7 +10,8 @@
         "lifetime": 16,
         "total_mass": 2000000000,
         "sibling_groups": null,
-        "typeID": 30683
+        "typeID": 30683,
+        "signature_strength": 6.67
     },
     "R943": {
         "mass_regen": 0,
@@ -25,7 +26,8 @@
         "lifetime": 16,
         "total_mass": 750000000,
         "sibling_groups": null,
-        "typeID": 30583
+        "typeID": 30583,
+        "signature_strength": 6.67
     },
     "B041": {
         "mass_regen": 0,
@@ -38,7 +40,8 @@
         "lifetime": 48,
         "total_mass": 3000000000,
         "sibling_groups": null,
-        "typeID": 30645
+        "typeID": 30645,
+        "signature_strength": null
     },
     "S804": {
         "mass_regen": 0,
@@ -51,7 +54,8 @@
         "lifetime": 24,
         "total_mass": 1000000000,
         "sibling_groups": null,
-        "typeID": 30665
+        "typeID": 30665,
+        "signature_strength": 1.25
     },
     "Q063": {
         "mass_regen": 0,
@@ -64,7 +68,8 @@
         "lifetime": 16,
         "total_mass": 500000000,
         "sibling_groups": null,
-        "typeID": 34368
+        "typeID": 34368,
+        "signature_strength": null
     },
     "K329": {
         "mass_regen": 0,
@@ -77,7 +82,8 @@
         "lifetime": 16,
         "total_mass": 5000000000,
         "sibling_groups": null,
-        "typeID": 30697
+        "typeID": 30697,
+        "signature_strength": null
     },
     "B520": {
         "mass_regen": 0,
@@ -90,7 +96,8 @@
         "lifetime": 48,
         "total_mass": 3000000000,
         "sibling_groups": null,
-        "typeID": 30713
+        "typeID": 30713,
+        "signature_strength": null
     },
     "M267": {
         "mass_regen": 0,
@@ -103,7 +110,8 @@
         "lifetime": 16,
         "total_mass": 1000000000,
         "sibling_groups": [],
-        "typeID": 30700
+        "typeID": 30700,
+        "signature_strength": 1.25
     },
     "V911": {
         "mass_regen": 0,
@@ -116,7 +124,8 @@
         "lifetime": 24,
         "total_mass": 3300000000,
         "sibling_groups": [],
-        "typeID": 30711
+        "typeID": 30711,
+        "signature_strength": 10
     },
     "O883": {
         "mass_regen": 0,
@@ -129,7 +138,8 @@
         "lifetime": 16,
         "total_mass": 1000000000,
         "sibling_groups": null,
-        "typeID": 30662
+        "typeID": 30662,
+        "signature_strength": 5
     },
     "W237": {
         "mass_regen": 0,
@@ -142,7 +152,8 @@
         "lifetime": 24,
         "total_mass": 3300000000,
         "sibling_groups": [],
-        "typeID": 30712
+        "typeID": 30712,
+        "signature_strength": 6.67
     },
     "L031": {
         "mass_regen": 0,
@@ -155,7 +166,8 @@
         "lifetime": 16,
         "total_mass": 3000000000,
         "sibling_groups": null,
-        "typeID": 34367
+        "typeID": 34367,
+        "signature_strength": null
     },
     "H121": {
         "mass_regen": 0,
@@ -168,7 +180,8 @@
         "lifetime": 16,
         "total_mass": 500000000,
         "sibling_groups": null,
-        "typeID": 30660
+        "typeID": 30660,
+        "signature_strength": 10
     },
     "E004": {
         "mass_regen": 3000000000,
@@ -179,7 +192,8 @@
         "lifetime": 4.5,
         "total_mass": 3000000000,
         "sibling_groups": null,
-        "typeID": 34134
+        "typeID": 34134,
+        "signature_strength": null
     },
     "V753": {
         "mass_regen": 0,
@@ -192,7 +206,8 @@
         "lifetime": 24,
         "total_mass": 3300000000,
         "sibling_groups": [],
-        "typeID": 30703
+        "typeID": 30703,
+        "signature_strength": 6.67
     },
     "C008": {
         "mass_regen": 3000000000,
@@ -203,7 +218,8 @@
         "lifetime": 4.5,
         "total_mass": 3000000000,
         "sibling_groups": null,
-        "typeID": 34138
+        "typeID": 34138,
+        "signature_strength": null
     },
     "F353": {
         "mass_regen": 0,
@@ -216,7 +232,8 @@
         "lifetime": 16,
         "total_mass": 100000000,
         "sibling_groups": null,
-        "typeID": 34371
+        "typeID": 34371,
+        "signature_strength": null
     },
     "U319": {
         "mass_regen": 0,
@@ -230,7 +247,8 @@
         "lifetime": 48,
         "total_mass": 3300000000,
         "sibling_groups": null,
-        "typeID": 30646
+        "typeID": 30646,
+        "signature_strength": null
     },
     "Z457": {
         "mass_regen": 0,
@@ -243,7 +261,8 @@
         "lifetime": 16,
         "total_mass": 2000000000,
         "sibling_groups": [],
-        "typeID": 30710
+        "typeID": 30710,
+        "signature_strength": 4
     },
     "X877": {
         "mass_regen": 0,
@@ -256,7 +275,8 @@
         "lifetime": 16,
         "total_mass": 2000000000,
         "sibling_groups": null,
-        "typeID": 30692
+        "typeID": 30692,
+        "signature_strength": 6.67
     },
     "Y683": {
         "mass_regen": 0,
@@ -273,7 +293,8 @@
                 "B274"
             ]
         ],
-        "typeID": 30674
+        "typeID": 30674,
+        "signature_strength": 4
     },
     "O128": {
         "mass_regen": 0,
@@ -288,7 +309,8 @@
         "lifetime": 24,
         "total_mass": 1000000000,
         "sibling_groups": null,
-        "typeID": 30642
+        "typeID": 30642,
+        "signature_strength": null
     },
     "C414": {
         "mass_regen": 0,
@@ -299,7 +321,8 @@
         "lifetime": 16,
         "total_mass": 750000000,
         "sibling_groups": null,
-        "typeID": 35653
+        "typeID": 35653,
+        "signature_strength": null
     },
     "A009": {
         "mass_regen": 3000000000,
@@ -310,7 +333,8 @@
         "lifetime": 16,
         "total_mass": 3000000000,
         "sibling_groups": null,
-        "typeID": 34439
+        "typeID": 34439,
+        "signature_strength": null
     },
     "L614": {
         "mass_regen": 0,
@@ -323,7 +347,8 @@
         "lifetime": 24,
         "total_mass": 1000000000,
         "sibling_groups": null,
-        "typeID": 30664
+        "typeID": 30664,
+        "signature_strength": 2.5
     },
     "B274": {
         "mass_regen": 0,
@@ -346,7 +371,8 @@
                 "Y683"
             ]
         ],
-        "typeID": 30677
+        "typeID": 30677,
+        "signature_strength": 10
     },
     "H900": {
         "mass_regen": 0,
@@ -359,7 +385,8 @@
         "lifetime": 24,
         "total_mass": 3000000000,
         "sibling_groups": null,
-        "typeID": 30693
+        "typeID": 30693,
+        "signature_strength": 2.5
     },
     "O477": {
         "mass_regen": 0,
@@ -376,7 +403,8 @@
                 "B274"
             ]
         ],
-        "typeID": 30673
+        "typeID": 30673,
+        "signature_strength": 5
     },
     "L005": {
         "mass_regen": 3000000000,
@@ -387,7 +415,8 @@
         "lifetime": 4.5,
         "total_mass": 3000000000,
         "sibling_groups": null,
-        "typeID": 34135
+        "typeID": 34135,
+        "signature_strength": null
     },
     "E175": {
         "mass_regen": 0,
@@ -400,7 +429,8 @@
         "lifetime": 16,
         "total_mass": 2000000000,
         "sibling_groups": [],
-        "typeID": 30701
+        "typeID": 30701,
+        "signature_strength": 5
     },
     "K346": {
         "mass_regen": 0,
@@ -413,7 +443,8 @@
         "lifetime": 16,
         "total_mass": 3000000000,
         "sibling_groups": [],
-        "typeID": 30688
+        "typeID": 30688,
+        "signature_strength": 2.5
     },
     "Z006": {
         "mass_regen": 3000000000,
@@ -424,7 +455,8 @@
         "lifetime": 4.5,
         "total_mass": 3000000000,
         "sibling_groups": null,
-        "typeID": 34136
+        "typeID": 34136,
+        "signature_strength": null
     },
     "P060": {
         "mass_regen": 0,
@@ -437,7 +469,8 @@
         "lifetime": 16,
         "total_mass": 500000000,
         "sibling_groups": null,
-        "typeID": 30689
+        "typeID": 30689,
+        "signature_strength": 5
     },
     "A239": {
         "mass_regen": 0,
@@ -454,7 +487,8 @@
                 "D382"
             ]
         ],
-        "typeID": 30678
+        "typeID": 30678,
+        "signature_strength": 5
     },
     "C125": {
         "mass_regen": 0,
@@ -467,7 +501,8 @@
         "lifetime": 16,
         "total_mass": 1000000000,
         "sibling_groups": null,
-        "typeID": 30661
+        "typeID": 30661,
+        "signature_strength": 6.67
     },
     "Z142": {
         "mass_regen": 0,
@@ -481,7 +516,8 @@
         "lifetime": 16,
         "total_mass": 3300000000,
         "sibling_groups": null,
-        "typeID": 30706
+        "typeID": 30706,
+        "signature_strength": 10
     },
     "R051": {
         "mass_regen": 0,
@@ -494,7 +530,8 @@
         "lifetime": 16,
         "total_mass": 3000000000,
         "sibling_groups": null,
-        "typeID": 30658
+        "typeID": 30658,
+        "signature_strength": 5
     },
     "N770": {
         "mass_regen": 0,
@@ -507,7 +544,8 @@
         "lifetime": 24,
         "total_mass": 3000000000,
         "sibling_groups": null,
-        "typeID": 30684
+        "typeID": 30684,
+        "signature_strength": 2.5
     },
     "Y790": {
         "mass_regen": 0,
@@ -520,7 +558,8 @@
         "lifetime": 16,
         "total_mass": 500000000,
         "sibling_groups": [],
-        "typeID": 30698
+        "typeID": 30698,
+        "signature_strength": 2.5
     },
     "V898": {
         "mass_regen": 0,
@@ -533,7 +572,8 @@
         "lifetime": 16,
         "total_mass": 2000000000,
         "sibling_groups": null,
-        "typeID": 34369
+        "typeID": 34369,
+        "signature_strength": null
     },
     "A641": {
         "mass_regen": 0,
@@ -546,7 +586,8 @@
         "lifetime": 16,
         "total_mass": 2000000000,
         "sibling_groups": null,
-        "typeID": 30657
+        "typeID": 30657,
+        "signature_strength": 10
     },
     "M164": {
         "mass_regen": 0,
@@ -559,7 +600,8 @@
         "lifetime": 16,
         "total_mass": 2000000000,
         "sibling_groups": null,
-        "typeID": 34366
+        "typeID": 34366,
+        "signature_strength": null
     },
     "B735": {
         "mass_regen": 0,
@@ -570,7 +612,8 @@
         "lifetime": 16,
         "total_mass": 750000000,
         "sibling_groups": null,
-        "typeID": 35651
+        "typeID": 35651,
+        "signature_strength": null
     },
     "I182": {
         "mass_regen": 0,
@@ -583,7 +626,8 @@
         "lifetime": 16,
         "total_mass": 2000000000,
         "sibling_groups": null,
-        "typeID": 30681
+        "typeID": 30681,
+        "signature_strength": 4
     },
     "N290": {
         "mass_regen": 0,
@@ -596,7 +640,8 @@
         "lifetime": 24,
         "total_mass": 3300000000,
         "sibling_groups": null,
-        "typeID": 30696
+        "typeID": 30696,
+        "signature_strength": null
     },
     "S877": {
         "mass_regen": 0,
@@ -607,7 +652,8 @@
         "lifetime": 16,
         "total_mass": 750000000,
         "sibling_groups": null,
-        "typeID": 35650
+        "typeID": 35650,
+        "signature_strength": null
     },
     "D364": {
         "mass_regen": 0,
@@ -620,7 +666,8 @@
         "lifetime": 16,
         "total_mass": 1000000000,
         "sibling_groups": [],
-        "typeID": 30699
+        "typeID": 30699,
+        "signature_strength": 1.25
     },
     "N766": {
         "mass_regen": 0,
@@ -633,7 +680,8 @@
         "lifetime": 16,
         "total_mass": 2000000000,
         "sibling_groups": null,
-        "typeID": 30690
+        "typeID": 30690,
+        "signature_strength": 4
     },
     "U210": {
         "mass_regen": 0,
@@ -646,7 +694,8 @@
         "lifetime": 24,
         "total_mass": 3000000000,
         "sibling_groups": [],
-        "typeID": 30687
+        "typeID": 30687,
+        "signature_strength": 10
     },
     "Z971": {
         "mass_regen": 0,
@@ -661,7 +710,8 @@
         "lifetime": 16,
         "total_mass": 100000000,
         "sibling_groups": null,
-        "typeID": 30579
+        "typeID": 30579,
+        "signature_strength": 10
     },
     "Z060": {
         "mass_regen": 0,
@@ -674,7 +724,8 @@
         "lifetime": 16,
         "total_mass": 1000000000,
         "sibling_groups": [],
-        "typeID": 30668
+        "typeID": 30668,
+        "signature_strength": 2.5
     },
     "H296": {
         "mass_regen": 0,
@@ -687,7 +738,8 @@
         "lifetime": 24,
         "total_mass": 3300000000,
         "sibling_groups": [],
-        "typeID": 30702
+        "typeID": 30702,
+        "signature_strength": 10
     },
     "Q317": {
         "mass_regen": 0,
@@ -700,7 +752,8 @@
         "lifetime": 16,
         "total_mass": 500000000,
         "sibling_groups": [],
-        "typeID": 30707
+        "typeID": 30707,
+        "signature_strength": 2.5
     },
     "A982": {
         "mass_regen": 0,
@@ -713,7 +766,8 @@
         "lifetime": 24,
         "total_mass": 3000000000,
         "sibling_groups": null,
-        "typeID": 30685
+        "typeID": 30685,
+        "signature_strength": 2.22
     },
     "X702": {
         "mass_regen": 0,
@@ -728,7 +782,8 @@
         "lifetime": 24,
         "total_mass": 1000000000,
         "sibling_groups": null,
-        "typeID": 30584
+        "typeID": 30584,
+        "signature_strength": 10
     },
     "V301": {
         "mass_regen": 0,
@@ -741,7 +796,8 @@
         "lifetime": 16,
         "total_mass": 500000000,
         "sibling_groups": null,
-        "typeID": 30680
+        "typeID": 30680,
+        "signature_strength": 5
     },
     "C391": {
         "mass_regen": 0,
@@ -754,7 +810,8 @@
         "lifetime": 48,
         "total_mass": 3300000000,
         "sibling_groups": null,
-        "typeID": 30714
+        "typeID": 30714,
+        "signature_strength": null
     },
     "M555": {
         "mass_regen": 0,
@@ -767,7 +824,8 @@
         "lifetime": 24,
         "total_mass": 3000000000,
         "sibling_groups": null,
-        "typeID": 30644
+        "typeID": 30644,
+        "signature_strength": 2.5
     },
     "F135": {
         "mass_regen": 0,
@@ -781,7 +839,8 @@
         "lifetime": 16,
         "total_mass": 750000000,
         "sibling_groups": null,
-        "typeID": 34372
+        "typeID": 34372,
+        "signature_strength": null
     },
     "E545": {
         "mass_regen": 0,
@@ -801,7 +860,8 @@
                 "R474"
             ]
         ],
-        "typeID": 30679
+        "typeID": 30679,
+        "signature_strength": 2.5
     },
     "D382": {
         "mass_regen": 0,
@@ -818,7 +878,8 @@
                 "A239"
             ]
         ],
-        "typeID": 30672
+        "typeID": 30672,
+        "signature_strength": 6.67
     },
     "M609": {
         "mass_regen": 0,
@@ -831,7 +892,8 @@
         "lifetime": 16,
         "total_mass": 1000000000,
         "sibling_groups": null,
-        "typeID": 30663
+        "typeID": 30663,
+        "signature_strength": 4
     },
     "S047": {
         "mass_regen": 0,
@@ -844,7 +906,8 @@
         "lifetime": 24,
         "total_mass": 3000000000,
         "sibling_groups": null,
-        "typeID": 30686
+        "typeID": 30686,
+        "signature_strength": null
     },
     "R474": {
         "mass_regen": 0,
@@ -861,7 +924,8 @@
                 "E545"
             ]
         ],
-        "typeID": 30676
+        "typeID": 30676,
+        "signature_strength": 2.22
     },
     "N062": {
         "mass_regen": 0,
@@ -878,7 +942,8 @@
                 "E545"
             ]
         ],
-        "typeID": 30675
+        "typeID": 30675,
+        "signature_strength": 2.5
     },
     "E587": {
         "mass_regen": 0,
@@ -891,7 +956,8 @@
         "lifetime": 16,
         "total_mass": 3000000000,
         "sibling_groups": null,
-        "typeID": 34370
+        "typeID": 34370,
+        "signature_strength": null
     },
     "S199": {
         "mass_regen": 0,
@@ -905,7 +971,8 @@
         "lifetime": 16,
         "total_mass": 3300000000,
         "sibling_groups": null,
-        "typeID": 30649
+        "typeID": 30649,
+        "signature_strength": 10
     },
     "Z647": {
         "mass_regen": 0,
@@ -922,7 +989,8 @@
                 "B274"
             ]
         ],
-        "typeID": 30671
+        "typeID": 30671,
+        "signature_strength": 10
     },
     "C247": {
         "mass_regen": 0,
@@ -935,7 +1003,8 @@
         "lifetime": 16,
         "total_mass": 2000000000,
         "sibling_groups": null,
-        "typeID": 30691
+        "typeID": 30691,
+        "signature_strength": 10
     },
     "Q003": {
         "mass_regen": 3000000000,
@@ -946,7 +1015,8 @@
         "lifetime": 4.5,
         "total_mass": 3000000000,
         "sibling_groups": null,
-        "typeID": 34140
+        "typeID": 34140,
+        "signature_strength": null
     },
     "N944": {
         "mass_regen": 0,
@@ -960,7 +1030,8 @@
         "lifetime": 24,
         "total_mass": 3300000000,
         "sibling_groups": null,
-        "typeID": 30648
+        "typeID": 30648,
+        "signature_strength": 10
     },
     "D792": {
         "mass_regen": 0,
@@ -974,7 +1045,8 @@
         "lifetime": 24,
         "total_mass": 3000000000,
         "sibling_groups": null,
-        "typeID": 30704
+        "typeID": 30704,
+        "signature_strength": 2.5
     },
     "N110": {
         "mass_regen": 0,
@@ -987,7 +1059,8 @@
         "lifetime": 24,
         "total_mass": 1000000000,
         "sibling_groups": [],
-        "typeID": 30666
+        "typeID": 30666,
+        "signature_strength": 10
     },
     "M001": {
         "mass_regen": 3000000000,
@@ -998,7 +1071,8 @@
         "lifetime": 4.5,
         "total_mass": 3000000000,
         "sibling_groups": null,
-        "typeID": 34137
+        "typeID": 34137,
+        "signature_strength": null
     },
     "K162": {
         "mass_regen": null,
@@ -1009,7 +1083,8 @@
         "lifetime": null,
         "total_mass": null,
         "sibling_groups": null,
-        "typeID": 30831
+        "typeID": 30831,
+        "signature_strength": null
     },
     "G008": {
         "mass_regen": 3000000000,
@@ -1020,7 +1095,8 @@
         "lifetime": 4.5,
         "total_mass": 3000000000,
         "sibling_groups": null,
-        "typeID": 34139
+        "typeID": 34139,
+        "signature_strength": null
     },
     "C248": {
         "mass_regen": 0,
@@ -1033,7 +1109,8 @@
         "lifetime": 16,
         "total_mass": 3300000000,
         "sibling_groups": null,
-        "typeID": 30715
+        "typeID": 30715,
+        "signature_strength": null
     },
     "V928": {
         "mass_regen": 0,
@@ -1044,7 +1121,8 @@
         "lifetime": 16,
         "total_mass": 750000000,
         "sibling_groups": null,
-        "typeID": 35652
+        "typeID": 35652,
+        "signature_strength": null
     },
     "D845": {
         "mass_regen": 0,
@@ -1057,7 +1135,8 @@
         "lifetime": 24,
         "total_mass": 5000000000,
         "sibling_groups": [],
-        "typeID": 30695
+        "typeID": 30695,
+        "signature_strength": 5
     },
     "R259": {
         "mass_regen": 0,
@@ -1068,7 +1147,8 @@
         "lifetime": 16,
         "total_mass": 750000000,
         "sibling_groups": null,
-        "typeID": 35654
+        "typeID": 35654,
+        "signature_strength": null
     },
     "N968": {
         "mass_regen": 0,
@@ -1081,7 +1161,8 @@
         "lifetime": 16,
         "total_mass": 2000000000,
         "sibling_groups": null,
-        "typeID": 30682
+        "typeID": 30682,
+        "signature_strength": 10
     },
     "T458": {
         "mass_regen": 0,
@@ -1094,7 +1175,8 @@
         "lifetime": 16,
         "total_mass": 500000000,
         "sibling_groups": null,
-        "typeID": 34338
+        "typeID": 34338,
+        "signature_strength": null
     },
     "V283": {
         "mass_regen": 0,
@@ -1107,7 +1189,8 @@
         "lifetime": 16,
         "total_mass": 3000000000,
         "sibling_groups": null,
-        "typeID": 30659
+        "typeID": 30659,
+        "signature_strength": 2.5
     },
     "C140": {
         "mass_regen": 0,
@@ -1121,7 +1204,8 @@
         "lifetime": 24,
         "total_mass": 3300000000,
         "sibling_groups": null,
-        "typeID": 30705
+        "typeID": 30705,
+        "signature_strength": 5
     },
     "U574": {
         "mass_regen": 0,
@@ -1134,7 +1218,8 @@
         "lifetime": 24,
         "total_mass": 3000000000,
         "sibling_groups": null,
-        "typeID": 30694
+        "typeID": 30694,
+        "signature_strength": 1.25
     },
     "N432": {
         "mass_regen": 0,
@@ -1148,7 +1233,8 @@
         "lifetime": 24,
         "total_mass": 3300000000,
         "sibling_groups": null,
-        "typeID": 30643
+        "typeID": 30643,
+        "signature_strength": 10
     },
     "B449": {
         "mass_regen": 0,
@@ -1162,7 +1248,8 @@
         "lifetime": 16,
         "total_mass": 2000000000,
         "sibling_groups": null,
-        "typeID": 30647
+        "typeID": 30647,
+        "signature_strength": 2.5
     },
     "G024": {
         "mass_regen": 0,
@@ -1175,7 +1262,8 @@
         "lifetime": 16,
         "total_mass": 2000000000,
         "sibling_groups": [],
-        "typeID": 30708
+        "typeID": 30708,
+        "signature_strength": 1.25
     },
     "J244": {
         "mass_regen": 0,
@@ -1188,7 +1276,8 @@
         "lifetime": 24,
         "total_mass": 1000000000,
         "sibling_groups": [],
-        "typeID": 30667
+        "typeID": 30667,
+        "signature_strength": 5
     },
     "L477": {
         "mass_regen": 0,
@@ -1201,7 +1290,8 @@
         "lifetime": 16,
         "total_mass": 2000000000,
         "sibling_groups": [],
-        "typeID": 30709
+        "typeID": 30709,
+        "signature_strength": 5
     },
     "J492": {
         "mass_regen": 0,
@@ -1219,6 +1309,7 @@
         "lifetime": 24,
         "total_mass": 1000000000,
         "sibling_groups": null,
-        "typeID": 87827
+        "typeID": 87827,
+        "signature_strength": null
     }
 }

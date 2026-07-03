@@ -518,6 +518,7 @@ final class GenerateStaticDataCommand extends Command
                 'maximum_lifetime' => (int) (($wormhole['lifetime'] ?? 0) * 60 * 60),
                 'maximum_jump_mass' => (int) ($wormhole['max_mass_per_jump'] ?? 0),
                 'total_mass' => (int) ($wormhole['total_mass'] ?? 0),
+                'signature_strength' => isset($wormhole['signature_strength']) ? (float) $wormhole['signature_strength'] : null,
             ];
         }
 

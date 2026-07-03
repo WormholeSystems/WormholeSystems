@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $ship_size
  * @property int $maximum_lifetime
  * @property string $leads_to
+ * @property float|null $signature_strength
  * @property int $type_id
  * @property-read string|CarbonImmutable $created_at
  * @property-read string|CarbonImmutable $updated_at
@@ -33,5 +34,15 @@ final class Wormhole extends Model
     public function type(): BelongsTo
     {
         return $this->belongsTo(Type::class);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'signature_strength' => 'float',
+        ];
     }
 }

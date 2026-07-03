@@ -36,6 +36,7 @@ final class WormholeSeeder extends Seeder
                 'total_mass' => $details['total_mass'] ?? 0,
                 'type_id' => $details['typeID'],
                 'maximum_jump_mass' => $details['max_mass_per_jump'] ?? 0,
+                'signature_strength' => $details['signature_strength'] ?? null,
                 'maximum_lifetime' => $details['lifetime'] * 60 * 60, // Convert from hours to seconds
             ]);
         }
