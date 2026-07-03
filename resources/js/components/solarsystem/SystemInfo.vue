@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
+import StaticDetails from '@/components/solarsystem/StaticDetails.vue';
 import MapPanel from '@/components/ui/map-panel/MapPanel.vue';
 import MapPanelContent from '@/components/ui/map-panel/MapPanelContent.vue';
 import MapPanelHeader from '@/components/ui/map-panel/MapPanelHeader.vue';
@@ -44,42 +45,6 @@ const dotlanLink = computed(() => {
     }
     return `https://evemaps.dotlan.net/map/${region}/${name}`;
 });
-
-// Static leads-to colors
-function getLeadsToColor(leadsTo: string): string {
-    if (leadsTo.startsWith('C')) {
-        const num = parseInt(leadsTo.slice(1));
-        if (num === 1) return 'text-cyan-400';
-        if (num === 2) return 'text-blue-400';
-        if (num === 3) return 'text-purple-400';
-        if (num === 4) return 'text-violet-400';
-        if (num === 5) return 'text-orange-400';
-        if (num === 6) return 'text-red-400';
-    }
-    if (leadsTo === 'Highsec' || leadsTo === 'H') return 'text-green-400';
-    if (leadsTo === 'Lowsec' || leadsTo === 'L') return 'text-amber-400';
-    if (leadsTo === 'Nullsec' || leadsTo === 'N') return 'text-red-400';
-    return 'text-muted-foreground';
-}
-
-function formatLeadsTo(leadsTo: string): string {
-    if (leadsTo === 'Highsec') return 'HS';
-    if (leadsTo === 'Lowsec') return 'LS';
-    if (leadsTo === 'Nullsec') return 'NS';
-    return leadsTo;
-}
-
-function formatMass(mass: number | null): string {
-    if (!mass) return '—';
-    if (mass >= 1_000_000_000) return `${(mass / 1_000_000_000).toFixed(1)}B kg`;
-    if (mass >= 1_000_000) return `${(mass / 1_000_000).toFixed(0)}M kg`;
-    return `${mass.toLocaleString()} kg`;
-}
-
-function formatLifetime(hours: number | null): string {
-    if (!hours) return '—';
-    return `${hours}h`;
-}
 </script>
 
 <template>
@@ -132,33 +97,15 @@ function formatLifetime(hours: number | null): string {
                         <Popover v-for="(wh, idx) in system.statics" :key="idx">
                             <PopoverTrigger as-child>
                                 <button
-                                    class="font-mono text-xs font-medium transition-opacity hover:opacity-70"
-                                    :class="getLeadsToColor(wh.leads_to)"
+                                    :data-leads-to="wh.leads_to"
+                                    class="font-mono text-xs font-medium transition-opacity hover:opacity-70 data-[leads-to=c1]:text-c1 data-[leads-to=c2]:text-c2 data-[leads-to=c3]:text-c3 data-[leads-to=c4]:text-c4 data-[leads-to=c5]:text-c5 data-[leads-to=c6]:text-c6 data-[leads-to=hs]:text-hs data-[leads-to=ls]:text-ls data-[leads-to=ns]:text-ns"
                                 >
                                     {{ wh.name }}
-                                    <span class="opacity-60">{{ formatLeadsTo(wh.leads_to) }}</span>
+                                    <span class="uppercase opacity-60">{{ wh.leads_to.replace('s', '') }}</span>
                                 </button>
                             </PopoverTrigger>
-                            <PopoverContent class="w-44 p-0" align="start">
-                                <div class="border-b border-border/50 px-3 py-2">
-                                    <div class="font-mono text-xs font-medium" :class="getLeadsToColor(wh.leads_to)">
-                                        {{ wh.name }} → {{ wh.leads_to }}
-                                    </div>
-                                </div>
-                                <div class="space-y-1 px-3 py-2 text-[11px]">
-                                    <div class="flex justify-between">
-                                        <span class="text-muted-foreground">Mass</span>
-                                        <span>{{ formatMass(wh.total_mass) }}</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span class="text-muted-foreground">Jump</span>
-                                        <span>{{ formatMass(wh.maximum_jump_mass) }}</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span class="text-muted-foreground">Lifetime</span>
-                                        <span>{{ formatLifetime(wh.maximum_lifetime) }}</span>
-                                    </div>
-                                </div>
+                            <PopoverContent class="w-48 p-0" align="start">
+                                <StaticDetails :wormhole="wh" />
                             </PopoverContent>
                         </Popover>
                     </div>

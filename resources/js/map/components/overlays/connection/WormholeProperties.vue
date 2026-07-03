@@ -6,6 +6,7 @@ const { wormhole } = defineProps<{
         maximum_lifetime: number;
         maximum_jump_mass: number;
         total_mass: number;
+        signature_strength?: number | null;
     };
 }>();
 
@@ -48,6 +49,10 @@ function formatMass(mass: number): string {
             <div class="col-span-full grid grid-cols-subgrid">
                 <span>Ship Size</span>
                 <span class="text-right">{{ ship_size }}</span>
+            </div>
+            <div v-if="wormhole.signature_strength != null" class="col-span-full grid grid-cols-subgrid">
+                <span>Sig Strength</span>
+                <span class="text-right">{{ wormhole.signature_strength }}%</span>
             </div>
         </div>
     </div>

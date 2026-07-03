@@ -183,6 +183,7 @@ export type TStatic = {
     maximum_lifetime: number;
     maximum_jump_mass: number;
     total_mass: number;
+    signature_strength: number | null;
 };
 
 export type TEffect = {
@@ -236,6 +237,7 @@ export type TWormhole = {
     ship_size: string;
     maximum_lifetime: number;
     leads_to: string;
+    signature_strength: number | null;
 };
 
 export type TTailoredSignature = {
@@ -286,6 +288,7 @@ export type TSelectedMapSolarsystemStatic = {
     maximum_lifetime: number;
     maximum_jump_mass: number;
     total_mass: number;
+    signature_strength: number | null;
 };
 
 export type TTailoredConstellation = {
