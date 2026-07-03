@@ -115,31 +115,31 @@ const stats = [
 const secondaryFeatures = [
     {
         icon: Route,
-        color: 'text-c2',
+        color: 'text-orange-400',
         title: 'Smart routing',
         body: 'Finds the shortest way home through the chain, taking wormhole mass limits and any systems you have chosen to avoid into account.',
     },
     {
         icon: Sparkles,
-        color: 'text-c5',
+        color: 'text-orange-400',
         title: 'Intelligence',
         body: 'Keeps notes on your systems automatically, so nobody re-scans what your group already figured out.',
     },
     {
         icon: Crosshair,
-        color: 'text-hostile',
+        color: 'text-orange-400',
         title: 'Threat analysis',
         body: 'Flags systems with recent kills, so you know what you might be jumping into.',
     },
     {
         icon: Bell,
-        color: 'text-active',
+        color: 'text-orange-400',
         title: 'Discord alerts',
         body: 'Sends proximity and killmail alerts to your Discord, filtered however you like.',
     },
     {
         icon: Telescope,
-        color: 'text-unscanned',
+        color: 'text-orange-400',
         title: 'EVE Scout',
         body: 'Pulls in Thera and Turnur connections and keeps them current, so routing can use them too.',
     },
@@ -169,37 +169,46 @@ const vReveal = {
 
 <template>
     <TooltipProvider :delay-duration="300">
-        <div class="relative min-h-screen overflow-x-hidden bg-background text-foreground">
+        <div class="relative isolate min-h-screen overflow-x-hidden bg-background text-foreground" style="--sec: var(--color-orange-400)">
             <SeoHead :title="seoData.title" :description="seoData.description" :keywords="seoData.keywords" />
             <WormholeBackground class="fixed inset-0 -z-10" />
 
-            <!-- Nav -->
-            <nav class="fixed inset-x-0 top-0 z-50 border-b border-border/40 bg-background/70 backdrop-blur-xl">
-                <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 sm:px-8">
+            <!-- Stronger blur over the central column: content reads against calm,
+                 heavily blurred space while the margins keep more detail. -->
+            <div class="center-veil" aria-hidden="true" />
+
+            <!-- Structural frame: the content lives in a central column bounded by two
+                 rails; the margins outside carry a fine hatch pattern and signal pulses
+                 travel down the rails. Purely decorative, wide screens only. -->
+            <div class="page-frame" aria-hidden="true">
+                <div class="frame-margin frame-margin--left" />
+                <div class="frame-margin frame-margin--right" />
+                <div class="rail rail--left"><span class="rail-pulse" /></div>
+                <div class="rail rail--right"><span class="rail-pulse rail-pulse--alt" /></div>
+            </div>
+
+            <!-- Nav: same instrument-panel language as the windows — hairline accent
+                 border, mono HUD links, chamfered action. -->
+            <nav class="fixed inset-x-0 top-0 z-50 border-b border-orange-400/15 bg-background/70 backdrop-blur-xl">
+                <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 sm:px-12 lg:px-24">
                     <div class="flex items-center gap-3">
                         <Logo class="h-7 w-7 text-foreground" />
                         <span class="font-display text-lg font-bold tracking-tight text-foreground">WormholeSystems</span>
                     </div>
-                    <div class="flex items-center gap-3">
-                        <Link
-                            :href="documentation().url"
-                            class="hidden items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground sm:flex"
-                        >
-                            <BookOpen class="h-4 w-4" />
+                    <div class="flex items-center gap-4">
+                        <Link :href="documentation().url" class="nav-link hidden items-center gap-2 sm:flex">
+                            <BookOpen class="h-3.5 w-3.5" />
                             Docs
                         </Link>
-                        <a
-                            :href="page.props.discord.invite"
-                            class="hidden items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground sm:flex"
-                        >
-                            <DiscordIcon class="h-4 w-4" />
+                        <a :href="page.props.discord.invite" class="nav-link hidden items-center gap-2 sm:flex">
+                            <DiscordIcon class="h-3.5 w-3.5" />
                             Discord
                         </a>
                         <Appearance />
-                        <Button v-if="!user" asChild variant="outline" size="sm">
+                        <Button v-if="!user" asChild variant="outline" size="sm" class="hud-btn">
                             <a :href="Eve.show().url" class="text-sm font-medium">Sign in</a>
                         </Button>
-                        <Button v-else asChild size="sm" variant="outline">
+                        <Button v-else asChild size="sm" variant="outline" class="hud-btn">
                             <Link :href="home()" class="text-sm font-medium" prefetch>Go to maps</Link>
                         </Button>
                     </div>
@@ -208,18 +217,19 @@ const vReveal = {
 
             <main class="relative pt-16">
                 <!-- Hero -->
-                <section class="mx-auto max-w-7xl px-6 sm:px-8">
-                    <div class="grid items-center gap-16 py-20 lg:grid-cols-[1.05fr_1fr] lg:py-32">
+                <section class="mx-auto max-w-7xl px-6 sm:px-12 lg:px-24">
+                    <div class="grid items-center gap-16 py-28 lg:grid-cols-[1.05fr_1fr] lg:py-44">
                         <div class="hero-intro">
                             <div class="chip">
-                                <span class="size-1.5 animate-pulse rounded-full bg-unscanned shadow-[0_0_8px_var(--color-cyan-400)]" />
+                                <span class="size-1.5 animate-pulse rounded-full bg-orange-400 shadow-[0_0_8px_var(--color-orange-400)]" />
                                 Live, interactive wormhole maps
                             </div>
                             <h1
                                 class="mt-7 font-display text-6xl leading-[0.95] font-extrabold tracking-tight text-foreground sm:text-7xl lg:text-8xl"
                             >
                                 Navigate the
-                                <span class="text-glow bg-gradient-to-br from-cyan-300 via-sky-400 to-violet-500 bg-clip-text text-transparent"
+                                <span
+                                    class="text-glow gradient-drift bg-gradient-to-br from-amber-300 via-orange-400 to-red-500 bg-clip-text text-transparent"
                                     >Unknown</span
                                 >
                             </h1>
@@ -229,19 +239,19 @@ const vReveal = {
                             </p>
                             <div class="mt-10 flex flex-wrap items-center gap-4">
                                 <template v-if="!user">
-                                    <Button asChild size="lg">
+                                    <Button asChild size="lg" class="hud-btn">
                                         <a :href="Eve.show().url" class="group inline-flex items-center gap-2">
                                             Sign in with EVE
                                             <ArrowRight class="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                                         </a>
                                     </Button>
-                                    <Button asChild size="lg" variant="outline">
+                                    <Button asChild size="lg" variant="outline" class="hud-btn">
                                         <a :href="Eve.show({ query: { without_scopes: true } }).url" class="inline-flex items-center gap-2">
                                             Sign in without scopes
                                         </a>
                                     </Button>
                                 </template>
-                                <Button asChild size="lg" v-else>
+                                <Button asChild size="lg" v-else class="hud-btn">
                                     <Link :href="home()" class="group inline-flex items-center gap-2" prefetch>
                                         Explore Maps
                                         <ArrowRight class="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -262,7 +272,7 @@ const vReveal = {
                             <div class="window">
                                 <div class="window-bar">
                                     <div class="flex items-center gap-2 font-hud text-[11px] tracking-wide text-muted-foreground">
-                                        <Radar class="h-3.5 w-3.5 text-unscanned" />
+                                        <Radar class="h-3.5 w-3.5 text-orange-400" />
                                         home.map · J152820
                                     </div>
                                     <div class="flex items-center gap-1.5">
@@ -271,7 +281,7 @@ const vReveal = {
                                         <span class="size-2 rounded-full bg-empty/70" />
                                     </div>
                                 </div>
-                                <div class="relative h-[380px] w-full overflow-hidden rounded-b-xl sm:h-[460px]">
+                                <div class="relative h-[380px] w-full overflow-hidden sm:h-[460px]">
                                     <MapReadonly
                                         :solarsystems="MAP_SOLARSYSTEMS"
                                         :connections="MAP_CONNECTIONS"
@@ -287,13 +297,10 @@ const vReveal = {
                 </section>
 
                 <!-- Stat strip -->
-                <section class="mx-auto max-w-7xl px-6 pb-10 sm:px-8">
-                    <div
-                        v-reveal
-                        class="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-border/60 bg-border/40 text-center md:grid-cols-4"
-                    >
-                        <div v-for="stat in stats" :key="stat.k" class="bg-card/70 px-6 py-8 backdrop-blur-sm">
-                            <div class="font-display text-4xl font-extrabold tracking-tight text-foreground">
+                <section class="mx-auto max-w-7xl px-6 pb-10 sm:px-12 lg:px-24">
+                    <div v-reveal class="grid grid-cols-2 gap-px overflow-hidden border border-border/60 bg-border/40 text-center md:grid-cols-4">
+                        <div v-for="stat in stats" :key="stat.k" class="stat-cell relative bg-card/70 px-6 py-10 backdrop-blur-sm">
+                            <div class="stat-num font-display text-4xl font-extrabold tracking-tight text-foreground">
                                 <CountUp :to="stat.to" :suffix="stat.suffix" :decimals="stat.decimals" />
                             </div>
                             <div class="mt-2 font-hud text-[11px] tracking-[0.15em] text-muted-foreground uppercase">{{ stat.k }}</div>
@@ -301,74 +308,69 @@ const vReveal = {
                     </div>
                 </section>
 
-                <!-- Open source & self-hosting (surfaced early — it's a core differentiator) -->
-                <section class="mx-auto max-w-7xl px-6 pb-10 sm:px-8">
-                    <div v-reveal class="overflow-hidden rounded-2xl border border-emerald-400/30 bg-emerald-500/[0.04] p-8 sm:p-10">
-                        <div class="grid gap-8 lg:grid-cols-[1fr_1.1fr] lg:items-center">
-                            <div>
-                                <div
-                                    class="inline-flex items-center gap-2 rounded-full border border-emerald-400/35 bg-emerald-500/10 px-3.5 py-1.5 font-hud text-[11px] tracking-[0.2em] text-emerald-300 uppercase"
-                                >
-                                    <Github class="h-3.5 w-3.5" />
-                                    100% open source
-                                </div>
-                                <h2 class="mt-5 font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                                    Free, open source, and yours to self-host
-                                </h2>
-                                <p class="mt-4 max-w-xl text-[15px] leading-7 text-muted-foreground">
-                                    Use the hosted version, dig into the code, or spin up your own private instance with the ready-made container
-                                    setup. No lock-in — it's all out in the open.
-                                </p>
+                <!-- Open source & self-hosting (surfaced early — it's a core differentiator).
+                     Deliberately unboxed: a quiet statement with a link list, not a card. -->
+                <section class="mx-auto max-w-7xl px-6 py-24 sm:px-12 sm:py-32 lg:px-24">
+                    <div v-reveal class="grid items-start gap-14 lg:grid-cols-[1.1fr_1fr] lg:gap-24">
+                        <div>
+                            <div
+                                class="inline-flex items-center gap-2 border-l-2 border-orange-400 pl-3 font-hud text-[11px] tracking-[0.2em] text-orange-300 uppercase"
+                            >
+                                <Github class="h-3.5 w-3.5" />
+                                100% open source
                             </div>
-                            <div class="grid gap-4 sm:grid-cols-2">
-                                <a
-                                    href="https://github.com/WormholeSystems/WormholeSystems"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    class="group rounded-xl border border-border/60 bg-card/50 p-5 transition-colors hover:border-emerald-400/60 hover:bg-card"
-                                >
-                                    <div class="feat-icon">
-                                        <Github class="h-5 w-5 text-emerald-400" />
-                                    </div>
-                                    <h3 class="mt-4 flex items-center gap-2 font-display text-lg font-bold text-foreground">
-                                        Source code
-                                        <ArrowRight class="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-                                    </h3>
-                                    <p class="mt-2 text-sm leading-6 text-muted-foreground">
+                            <h2 class="mt-7 font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                                Free, open source, and yours to self-host
+                            </h2>
+                            <p class="mt-6 max-w-xl text-[15px] leading-7 text-muted-foreground">
+                                Use the hosted version, dig into the code, or spin up your own private instance with the ready-made container setup.
+                                No lock-in — it's all out in the open.
+                            </p>
+                        </div>
+                        <div class="lg:pt-9">
+                            <a
+                                href="https://github.com/WormholeSystems/WormholeSystems"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="oss-link group"
+                            >
+                                <Github class="mt-0.5 h-5 w-5 shrink-0 text-orange-400" />
+                                <span class="min-w-0 flex-1">
+                                    <span class="block font-display text-base font-bold text-foreground">Source code</span>
+                                    <span class="mt-1 block text-sm leading-6 text-muted-foreground">
                                         Browse the full source, open issues, and contribute on GitHub.
-                                    </p>
-                                </a>
-                                <a
-                                    href="https://github.com/WormholeSystems/wormholesystems-containers"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    class="group rounded-xl border border-border/60 bg-card/50 p-5 transition-colors hover:border-emerald-400/60 hover:bg-card"
-                                >
-                                    <div class="feat-icon">
-                                        <Container class="h-5 w-5 text-emerald-400" />
-                                    </div>
-                                    <h3 class="mt-4 flex items-center gap-2 font-display text-lg font-bold text-foreground">
-                                        Self-host
-                                        <ArrowRight class="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-                                    </h3>
-                                    <p class="mt-2 text-sm leading-6 text-muted-foreground">
+                                    </span>
+                                </span>
+                                <ArrowRight class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                            </a>
+                            <a
+                                href="https://github.com/WormholeSystems/wormholesystems-containers"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="oss-link group"
+                            >
+                                <Container class="mt-0.5 h-5 w-5 shrink-0 text-orange-400" />
+                                <span class="min-w-0 flex-1">
+                                    <span class="block font-display text-base font-bold text-foreground">Self-host</span>
+                                    <span class="mt-1 block text-sm leading-6 text-muted-foreground">
                                         A ready-to-run Docker setup for your own private instance.
-                                    </p>
-                                </a>
-                            </div>
+                                    </span>
+                                </span>
+                                <ArrowRight class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                            </a>
                         </div>
                     </div>
                 </section>
 
                 <!-- Section 01: Shared mapping (copy left / map-style window right) -->
                 <section class="feature-section">
-                    <div class="mx-auto max-w-7xl px-6 sm:px-8">
-                        <div v-reveal class="marker" style="--sec: var(--color-cyan-400)">
+                    <div class="mx-auto max-w-7xl px-6 sm:px-12 lg:px-24">
+                        <div v-reveal class="marker">
                             <span class="idx">01</span>
                             <span class="tag"><Users class="h-3.5 w-3.5" /> Shared mapping</span>
                             <span class="line" />
                         </div>
-                        <div class="grid items-center gap-12 pt-14 lg:grid-cols-2 lg:gap-20">
+                        <div class="grid items-center gap-16 pt-20 lg:grid-cols-2 lg:gap-24">
                             <div v-reveal="'left'">
                                 <h2 class="section-title">Everyone on the same map, live</h2>
                                 <p class="section-lead">
@@ -376,9 +378,9 @@ const vReveal = {
                                     into chat, no side spreadsheet to keep in sync.
                                 </p>
                                 <ul class="points">
-                                    <li><span class="dot bg-unscanned" /> See who is online, what they fly, and where they are</li>
-                                    <li><span class="dot bg-c5" /> Each pilot's route home, with the jump count</li>
-                                    <li><span class="dot bg-empty" /> Every change shows up for everyone instantly</li>
+                                    <li><span class="dot" /> See who is online, what they fly, and where they are</li>
+                                    <li><span class="dot" /> Each pilot's route home, with the jump count</li>
+                                    <li><span class="dot" /> Every change shows up for everyone instantly</li>
                                 </ul>
                             </div>
                             <div v-reveal="'right'" class="window">
@@ -388,7 +390,7 @@ const vReveal = {
                                         <span class="text-amber-400">{{ CHARACTERS.length }}</span>
                                     </span>
                                 </div>
-                                <div class="overflow-x-auto rounded-b-xl bg-card/40">
+                                <div class="overflow-x-auto bg-card/40">
                                     <CharactersView :characters="CHARACTERS" />
                                 </div>
                             </div>
@@ -398,13 +400,13 @@ const vReveal = {
 
                 <!-- Section 02: Kill activity (full-width feed) -->
                 <section class="feature-section feature-section--alt">
-                    <div class="mx-auto max-w-7xl px-6 sm:px-8">
-                        <div v-reveal class="marker" style="--sec: var(--color-amber-400)">
+                    <div class="mx-auto max-w-7xl px-6 sm:px-12 lg:px-24">
+                        <div v-reveal class="marker">
                             <span class="idx">02</span>
                             <span class="tag"><Activity class="h-3.5 w-3.5" /> Kill activity</span>
                             <span class="line" />
                         </div>
-                        <div class="grid gap-8 pt-14 lg:grid-cols-2 lg:items-end">
+                        <div class="grid gap-8 pt-20 lg:grid-cols-2 lg:items-end">
                             <div v-reveal="'left'">
                                 <h2 class="section-title">See every kill in your chain</h2>
                                 <p class="section-lead">
@@ -414,20 +416,20 @@ const vReveal = {
                             </div>
                             <div v-reveal="'right'">
                                 <ul class="points lg:pb-1">
-                                    <li><span class="dot bg-hostile" /> Who died, who got the kill, how many were involved, and the ISK lost</li>
-                                    <li><span class="dot bg-active" /> Filter to wormhole space, known space, or everything</li>
-                                    <li><span class="dot bg-c4" /> Click any kill to jump to that system on the map</li>
+                                    <li><span class="dot" /> Who died, who got the kill, how many were involved, and the ISK lost</li>
+                                    <li><span class="dot" /> Filter to wormhole space, known space, or everything</li>
+                                    <li><span class="dot" /> Click any kill to jump to that system on the map</li>
                                 </ul>
                             </div>
                         </div>
-                        <div v-reveal class="window mt-12">
+                        <div v-reveal class="window mt-16">
                             <div class="window-bar">
                                 <span class="font-hud text-[11px] tracking-wide text-muted-foreground"
                                     >Killmails <span class="text-amber-400">{{ KILLMAILS.length }}</span></span
                                 >
                                 <span class="font-hud text-[10px] tracking-wide text-muted-foreground/60">via zKillboard</span>
                             </div>
-                            <div class="min-h-[13rem] overflow-x-auto rounded-b-xl bg-card/40 py-1">
+                            <div class="min-h-[13rem] overflow-x-auto bg-card/40 py-1">
                                 <KillmailsView v-if="mounted" :items="KILLMAILS" />
                             </div>
                         </div>
@@ -436,20 +438,20 @@ const vReveal = {
 
                 <!-- Section 03: Signatures (window left / copy right + paste hint) -->
                 <section class="feature-section">
-                    <div class="mx-auto max-w-7xl px-6 sm:px-8">
-                        <div v-reveal class="marker" style="--sec: var(--color-violet-400)">
+                    <div class="mx-auto max-w-7xl px-6 sm:px-12 lg:px-24">
+                        <div v-reveal class="marker">
                             <span class="idx">03</span>
                             <span class="tag"><Crosshair class="h-3.5 w-3.5" /> Signatures</span>
                             <span class="line" />
                         </div>
-                        <div class="grid items-center gap-12 pt-14 lg:grid-cols-2 lg:gap-20">
+                        <div class="grid items-center gap-16 pt-20 lg:grid-cols-2 lg:gap-24">
                             <div v-reveal="'left'" class="window lg:order-1">
                                 <div class="window-bar">
                                     <span class="font-hud text-[11px] tracking-wide text-muted-foreground"
                                         >Signatures <span class="text-amber-400">{{ SIGNATURES.length }}</span></span
                                     >
                                 </div>
-                                <div class="min-h-[18rem] overflow-x-auto rounded-b-xl bg-card/40">
+                                <div class="min-h-[18rem] overflow-x-auto bg-card/40">
                                     <SignaturesView v-if="mounted" :signatures="SIGNATURES" :connections="MAP_CONNECTIONS" />
                                 </div>
                             </div>
@@ -466,9 +468,9 @@ const vReveal = {
                                     <span class="paste-text">Paste straight from the in-game probe scanner</span>
                                 </div>
                                 <ul class="points">
-                                    <li><span class="dot bg-sky-400" /> No formatting and no manual entry</li>
-                                    <li><span class="dot bg-c3" /> Old signatures and dead connections are cleaned up for you</li>
-                                    <li><span class="dot bg-red-400" /> Mass and lifetime tracked for you, with end-of-life and critical warnings</li>
+                                    <li><span class="dot" /> No formatting and no manual entry</li>
+                                    <li><span class="dot" /> Old signatures and dead connections are cleaned up for you</li>
+                                    <li><span class="dot" /> Mass and lifetime tracked for you, with end-of-life and critical warnings</li>
                                 </ul>
                             </div>
                         </div>
@@ -477,13 +479,13 @@ const vReveal = {
 
                 <!-- Section 04: Customisable widget layout -->
                 <section class="feature-section feature-section--alt">
-                    <div class="mx-auto max-w-7xl px-6 sm:px-8">
-                        <div v-reveal class="marker" style="--sec: var(--color-emerald-400)">
+                    <div class="mx-auto max-w-7xl px-6 sm:px-12 lg:px-24">
+                        <div v-reveal class="marker">
                             <span class="idx">04</span>
                             <span class="tag"><LayoutGrid class="h-3.5 w-3.5" /> Customisable layout</span>
                             <span class="line" />
                         </div>
-                        <div class="grid items-center gap-12 pt-14 lg:grid-cols-2 lg:gap-20">
+                        <div class="grid items-center gap-16 pt-20 lg:grid-cols-2 lg:gap-24">
                             <div v-reveal="'left'">
                                 <h2 class="section-title">Build the map around you</h2>
                                 <p class="section-lead">
@@ -491,11 +493,9 @@ const vReveal = {
                                     off the panels you do not use. Layouts are saved per device, with a separate arrangement for each screen size.
                                 </p>
                                 <ul class="points">
-                                    <li><span class="dot bg-empty" /> Drag and resize any card, from the map to autopilot to killmails</li>
-                                    <li><span class="dot bg-c5" /> Four cards stay put; eight more can be hidden and brought back any time</li>
-                                    <li>
-                                        <span class="dot bg-unscanned" /> Responsive breakpoints from mobile to wide desktop, each with its own layout
-                                    </li>
+                                    <li><span class="dot" /> Drag and resize any card, from the map to autopilot to killmails</li>
+                                    <li><span class="dot" /> Four cards stay put; eight more can be hidden and brought back any time</li>
+                                    <li><span class="dot" /> Responsive breakpoints from mobile to wide desktop, each with its own layout</li>
                                 </ul>
                             </div>
                             <div v-reveal="'right'" class="window">
@@ -505,7 +505,7 @@ const vReveal = {
                                     </span>
                                     <span class="font-hud text-[10px] tracking-wide text-muted-foreground/60">J152820</span>
                                 </div>
-                                <div class="relative rounded-b-xl bg-card/40 p-3 pb-20">
+                                <div class="relative bg-card/40 p-3 pb-20">
                                     <div class="wg-grid">
                                         <div class="wg-tile wg-map">Map</div>
                                         <div class="wg-tile">Signatures</div>
@@ -541,13 +541,13 @@ const vReveal = {
 
                 <!-- Section 05: Access control -->
                 <section class="feature-section">
-                    <div class="mx-auto max-w-7xl px-6 sm:px-8">
-                        <div v-reveal class="marker" style="--sec: var(--color-sky-400)">
+                    <div class="mx-auto max-w-7xl px-6 sm:px-12 lg:px-24">
+                        <div v-reveal class="marker">
                             <span class="idx">05</span>
                             <span class="tag"><ShieldCheck class="h-3.5 w-3.5" /> Access control</span>
                             <span class="line" />
                         </div>
-                        <div class="grid items-center gap-12 pt-14 lg:grid-cols-2 lg:gap-20">
+                        <div class="grid items-center gap-16 pt-20 lg:grid-cols-2 lg:gap-24">
                             <div v-reveal="'left'" class="window lg:order-1">
                                 <div class="window-bar">
                                     <span class="font-hud text-[11px] tracking-wide text-muted-foreground">Access · J152820</span>
@@ -626,9 +626,9 @@ const vReveal = {
                                     connections, Managers handle access and settings, and the Owner runs the whole thing.
                                 </p>
                                 <ul class="points">
-                                    <li><span class="dot bg-sky-400" /> Grant access to a character, a corporation, or a whole alliance</li>
-                                    <li><span class="dot bg-friendly" /> Viewer, Member, Manager, and Owner roles, each with clear limits</li>
-                                    <li><span class="dot bg-c2" /> Set an optional expiry for temporary or diplomatic access</li>
+                                    <li><span class="dot" /> Grant access to a character, a corporation, or a whole alliance</li>
+                                    <li><span class="dot" /> Viewer, Member, Manager, and Owner roles, each with clear limits</li>
+                                    <li><span class="dot" /> Set an optional expiry for temporary or diplomatic access</li>
                                 </ul>
                             </div>
                         </div>
@@ -637,17 +637,17 @@ const vReveal = {
 
                 <!-- Section 06: Everything else -->
                 <section class="feature-section feature-section--alt">
-                    <div class="mx-auto max-w-7xl px-6 sm:px-8">
-                        <div v-reveal class="marker" style="--sec: var(--color-pink-400)">
+                    <div class="mx-auto max-w-7xl px-6 sm:px-12 lg:px-24">
+                        <div v-reveal class="marker">
                             <span class="idx">06</span>
                             <span class="tag"><Sparkles class="h-3.5 w-3.5" /> Everything else</span>
                             <span class="line" />
                         </div>
-                        <div v-reveal="'left'" class="max-w-3xl pt-14">
+                        <div v-reveal="'left'" class="max-w-3xl pt-20">
                             <h2 class="section-title">Everything else you need to live in a wormhole</h2>
                             <p class="section-lead">The rest of the tools that make day-to-day wormhole life easier.</p>
                         </div>
-                        <div class="mt-16 grid gap-x-10 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
+                        <div class="mt-20 grid gap-x-12 gap-y-16 sm:grid-cols-2 lg:grid-cols-3">
                             <div v-for="feature in secondaryFeatures" :key="feature.title" v-reveal="'up'" class="group">
                                 <div class="feat-icon">
                                     <component :is="feature.icon" class="h-5 w-5" :class="feature.color" />
@@ -663,15 +663,15 @@ const vReveal = {
                 <section class="cta">
                     <div class="cta-core" aria-hidden="true" />
                     <div class="cta-grid" aria-hidden="true" />
-                    <div v-reveal class="relative mx-auto max-w-3xl px-6 text-center sm:px-8">
+                    <div v-reveal class="relative mx-auto max-w-3xl px-6 text-center sm:px-12 lg:px-24">
                         <div class="cta-eyebrow">
-                            <span class="size-1.5 rounded-full bg-unscanned shadow-[0_0_8px_var(--color-cyan-400)]" />
+                            <span class="size-1.5 rounded-full bg-orange-400 shadow-[0_0_8px_var(--color-orange-400)]" />
                             Drop your first probe
                         </div>
                         <h2 class="cta-title">Ready to map the <span class="cta-void">void</span>?</h2>
                         <p class="cta-lead">Set up a map for your corp, your alliance, or just yourself, and start mapping in minutes.</p>
                         <div class="mt-12 flex justify-center">
-                            <Button asChild size="lg">
+                            <Button asChild size="lg" class="hud-btn">
                                 <a :href="Eve.show().url" class="group inline-flex items-center gap-2">
                                     Start exploring
                                     <ArrowRight class="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -683,7 +683,7 @@ const vReveal = {
             </main>
 
             <footer class="relative border-t border-border/60 bg-background/70 backdrop-blur-sm">
-                <div class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-12 sm:flex-row sm:px-8">
+                <div class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-12 sm:flex-row sm:px-12 lg:px-24">
                     <div class="flex items-center gap-3">
                         <Logo class="h-6 w-6 text-muted-foreground/60" />
                         <span class="font-display text-sm font-bold text-muted-foreground">WormholeSystems</span>
@@ -728,47 +728,260 @@ const vReveal = {
 }
 
 .text-glow {
-    filter: drop-shadow(0 0 32px color-mix(in oklab, var(--color-cyan-400) 55%, transparent));
+    filter: drop-shadow(0 0 32px color-mix(in oklab, var(--color-orange-400) 55%, transparent));
+}
+
+/* Chamfered primary actions, matching the instrument-panel windows. */
+:deep(.hud-btn) {
+    border-radius: 2px;
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%);
+}
+
+/* Hero: slow drift through the gradient on the key word. */
+.gradient-drift {
+    background-size: 220% 220%;
+    animation: gradient-drift 9s ease-in-out infinite alternate;
+}
+
+@keyframes gradient-drift {
+    from {
+        background-position: 0% 35%;
+    }
+    to {
+        background-position: 100% 65%;
+    }
+}
+
+/* Stat strip: a HUD tick above each figure, soft glow on the numerals. */
+.stat-cell::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    height: 2px;
+    width: 2.75rem;
+    background: linear-gradient(to right, transparent, color-mix(in oklab, var(--color-orange-400) 80%, transparent), transparent);
+}
+
+.stat-num {
+    text-shadow: 0 0 28px color-mix(in oklab, var(--color-orange-400) 35%, transparent);
 }
 
 .chip {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    border-radius: 9999px;
-    border: 1px solid color-mix(in oklab, var(--color-cyan-400) 35%, var(--border));
-    background: color-mix(in oklab, var(--color-cyan-500) 8%, var(--card));
-    padding: 0.3rem 0.85rem;
+    gap: 0.6rem;
+    border-left: 2px solid var(--color-orange-400);
+    padding-left: 0.85rem;
     font-family: var(--font-hud);
     font-size: 11px;
     letter-spacing: 0.2em;
     text-transform: uppercase;
-    color: color-mix(in oklab, var(--color-cyan-300) 80%, var(--foreground));
-    box-shadow: 0 0 24px -8px color-mix(in oklab, var(--color-cyan-400) 50%, transparent);
+    color: color-mix(in oklab, var(--color-orange-300) 80%, var(--foreground));
 }
 
-/* Section separation */
+/* Stronger blur band over the central content column. The rails mark its
+   edges, so the sharp blur boundary reads as part of the frame. */
+.center-veil {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    z-index: -6;
+    width: min(100vw, 80rem);
+    transform: translateX(-50%);
+    pointer-events: none;
+    backdrop-filter: blur(18px);
+    background: color-mix(in oklab, var(--background) 22%, transparent);
+}
+
+/* Nav: HUD link + status styling. */
+.nav-link {
+    font-family: var(--font-hud);
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+    transition: color 0.2s ease;
+}
+
+.nav-link:hover {
+    color: var(--foreground);
+}
+
+/* Structural frame: two full-height rails mark the edges of the content column
+   (max-w-7xl = 80rem), with ruler ticks on their outer side, a fine diagonal
+   hatch in the margins, and signal pulses travelling down the rails. */
+.page-frame {
+    position: fixed;
+    inset: 0;
+    z-index: -5;
+    display: none;
+    pointer-events: none;
+}
+
+@media (min-width: 90rem) {
+    .page-frame {
+        display: block;
+    }
+}
+
+.rail {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: linear-gradient(
+        to bottom,
+        transparent,
+        color-mix(in oklab, var(--foreground) 25%, transparent) 10%,
+        color-mix(in oklab, var(--foreground) 25%, transparent) 90%,
+        transparent
+    );
+}
+
+.rail--left {
+    left: calc(50vw - 40rem);
+}
+
+.rail--right {
+    right: calc(50vw - 40rem);
+}
+
+/* Ruler ticks on the outer side of each rail. */
+.rail::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 9px;
+    background: repeating-linear-gradient(to bottom, color-mix(in oklab, var(--foreground) 45%, transparent) 0 1px, transparent 1px 48px);
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent);
+    mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent);
+}
+
+.rail--left::before {
+    left: -11px;
+}
+
+.rail--right::before {
+    right: -11px;
+}
+
+.frame-margin {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: calc(50vw - 40rem - 1rem);
+    background: repeating-linear-gradient(45deg, color-mix(in oklab, var(--foreground) 9%, transparent) 0 1px, transparent 1px 12px);
+}
+
+.frame-margin--left {
+    left: 0;
+    -webkit-mask-image: linear-gradient(to right, transparent 10%, #000);
+    mask-image: linear-gradient(to right, transparent 10%, #000);
+}
+
+.frame-margin--right {
+    right: 0;
+    -webkit-mask-image: linear-gradient(to left, transparent 10%, #000);
+    mask-image: linear-gradient(to left, transparent 10%, #000);
+}
+
+/* Signal pulses: a short glowing dash riding each rail, like traffic on the chain. */
+.rail-pulse {
+    position: absolute;
+    top: 0;
+    left: -1.5px;
+    width: 4px;
+    height: 110px;
+    background: linear-gradient(to bottom, transparent, color-mix(in oklab, var(--color-orange-400) 90%, transparent), transparent);
+    filter: drop-shadow(0 0 6px color-mix(in oklab, var(--color-orange-400) 70%, transparent));
+    animation: rail-travel 13s linear infinite;
+}
+
+.rail-pulse--alt {
+    background: linear-gradient(to bottom, transparent, color-mix(in oklab, var(--color-orange-400) 90%, transparent), transparent);
+    filter: drop-shadow(0 0 6px color-mix(in oklab, var(--color-orange-400) 70%, transparent));
+    animation-duration: 17s;
+    animation-delay: -9s;
+}
+
+@keyframes rail-travel {
+    from {
+        transform: translateY(-130px);
+    }
+    to {
+        transform: translateY(100vh);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .rail-pulse {
+        display: none;
+    }
+}
+
+/* Section separation. Each section carries its accent in --sec: the marker, the
+   chain connector, the ambient light, and the window chrome all key off it. */
 .feature-section {
     position: relative;
+    isolation: isolate;
     border-top: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
-    padding-block: 6rem;
+    padding-block: 9rem 6rem;
 }
 
 @media (min-width: 640px) {
     .feature-section {
-        padding-block: 8rem;
+        padding-block: 12rem 8rem;
     }
 }
 
 .feature-section--alt {
-    background: color-mix(in oklab, var(--card) 22%, transparent);
+    background: color-mix(in oklab, var(--card) 14%, transparent);
+}
+
+/* Ambient section light: a soft radial wash in the section's own wormhole-class
+   colour, so each scroll stop sits in its own atmosphere. Alt sections are lit
+   from the other side to keep the page from feeling stamped. */
+.feature-section::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(44% 48% at 78% 20%, color-mix(in oklab, var(--sec, var(--color-orange-400)) 6%, transparent), transparent 70%);
+}
+
+.feature-section--alt::before {
+    background: radial-gradient(44% 48% at 22% 20%, color-mix(in oklab, var(--sec, var(--color-orange-400)) 6%, transparent), transparent 70%);
 }
 
 /* Techy section marker: 01 // TAG ───────── (accent set per-section via --sec) */
 .marker {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 1rem;
+}
+
+/* Chain connector: a dashed wormhole-style connection dropping into each marker,
+   the same visual language the map uses for connections between systems. */
+.marker::before {
+    content: '';
+    position: absolute;
+    bottom: calc(100% + 0.6rem);
+    left: clamp(0.8rem, 0.55rem + 1vw, 1.3rem);
+    width: 2px;
+    height: clamp(4rem, 3rem + 5vw, 9rem);
+    background: repeating-linear-gradient(
+        to bottom,
+        color-mix(in oklab, var(--sec, var(--color-orange-400)) 75%, transparent) 0 5px,
+        transparent 5px 11px
+    );
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 70%);
+    mask-image: linear-gradient(to bottom, transparent, #000 70%);
 }
 
 .marker .idx {
@@ -776,8 +989,8 @@ const vReveal = {
     font-size: clamp(1.75rem, 1.2rem + 2vw, 2.75rem);
     font-weight: 700;
     line-height: 1;
-    color: var(--sec, var(--color-cyan-400));
-    text-shadow: 0 0 24px color-mix(in oklab, var(--sec, var(--color-cyan-400)) 60%, transparent);
+    color: var(--sec, var(--color-orange-400));
+    text-shadow: 0 0 24px color-mix(in oklab, var(--sec, var(--color-orange-400)) 60%, transparent);
 }
 
 .marker .tag {
@@ -792,13 +1005,13 @@ const vReveal = {
 }
 
 .marker .tag svg {
-    color: var(--sec, var(--color-cyan-400));
+    color: var(--sec, var(--color-orange-400));
 }
 
 .marker .line {
     height: 1px;
     flex: 1;
-    background: linear-gradient(to right, color-mix(in oklab, var(--sec, var(--color-cyan-400)) 65%, transparent), transparent);
+    background: linear-gradient(to right, color-mix(in oklab, var(--sec, var(--color-orange-400)) 65%, transparent), transparent);
 }
 
 /* Section copy: big + bold */
@@ -821,7 +1034,7 @@ const vReveal = {
 }
 
 .points {
-    margin-top: 2.25rem;
+    margin-top: 2.75rem;
     display: flex;
     flex-direction: column;
     gap: 1rem;
@@ -838,12 +1051,31 @@ const vReveal = {
 }
 
 .dot {
+    background: var(--sec, var(--color-orange-400));
     margin-top: 0.55rem;
     height: 0.45rem;
     width: 0.45rem;
     flex-shrink: 0;
     border-radius: 9999px;
     box-shadow: 0 0 10px currentColor;
+}
+
+/* Open-source link list: hairline rows instead of cards. */
+.oss-link {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    border-top: 1px solid color-mix(in oklab, var(--border) 80%, transparent);
+    padding-block: 1.5rem;
+    transition: border-color 0.25s ease;
+}
+
+.oss-link:last-child {
+    border-bottom: 1px solid color-mix(in oklab, var(--border) 80%, transparent);
+}
+
+.oss-link:hover {
+    border-top-color: color-mix(in oklab, var(--color-orange-400) 50%, var(--border));
 }
 
 /* Paste hint chip */
@@ -853,8 +1085,8 @@ const vReveal = {
     align-items: center;
     gap: 0.5rem;
     border-radius: 0.75rem;
-    border: 1px dashed color-mix(in oklab, var(--color-violet-400) 45%, var(--border));
-    background: color-mix(in oklab, var(--color-violet-500) 7%, var(--card));
+    border: 1px dashed color-mix(in oklab, var(--color-orange-400) 45%, var(--border));
+    background: color-mix(in oklab, var(--color-red-500) 7%, var(--card));
     padding: 0.6rem 0.9rem;
 }
 
@@ -889,7 +1121,7 @@ const vReveal = {
     align-items: center;
     justify-content: center;
     border-radius: 0.85rem;
-    border: 1px solid color-mix(in oklab, var(--color-cyan-400) 25%, var(--border));
+    border: 1px solid color-mix(in oklab, var(--color-orange-400) 25%, var(--border));
     background: color-mix(in oklab, var(--card) 70%, transparent);
     backdrop-filter: blur(8px);
     transition:
@@ -899,8 +1131,8 @@ const vReveal = {
 }
 
 .group:hover .feat-icon {
-    border-color: color-mix(in oklab, var(--color-cyan-400) 60%, var(--border));
-    box-shadow: 0 0 28px -8px color-mix(in oklab, var(--color-cyan-400) 60%, transparent);
+    border-color: color-mix(in oklab, var(--color-orange-400) 60%, var(--border));
+    box-shadow: 0 0 28px -8px color-mix(in oklab, var(--color-orange-400) 60%, transparent);
     transform: translateY(-2px);
 }
 
@@ -931,17 +1163,17 @@ const vReveal = {
     height: 0.5rem;
     width: 0.5rem;
     align-self: flex-end;
-    border-right: 2px solid color-mix(in oklab, var(--color-emerald-400) 60%, transparent);
-    border-bottom: 2px solid color-mix(in oklab, var(--color-emerald-400) 60%, transparent);
+    border-right: 2px solid color-mix(in oklab, var(--color-orange-400) 60%, transparent);
+    border-bottom: 2px solid color-mix(in oklab, var(--color-orange-400) 60%, transparent);
 }
 
 .wg-map {
     grid-column: 1 / -1;
     min-height: 5rem;
     border-style: solid;
-    border-color: color-mix(in oklab, var(--color-emerald-400) 40%, var(--border));
-    background: color-mix(in oklab, var(--color-emerald-500) 8%, transparent);
-    color: color-mix(in oklab, var(--color-emerald-300) 70%, var(--foreground));
+    border-color: color-mix(in oklab, var(--color-orange-400) 40%, var(--border));
+    background: color-mix(in oklab, var(--color-orange-500) 8%, transparent);
+    color: color-mix(in oklab, var(--color-orange-300) 70%, var(--foreground));
 }
 
 .le-toolbar {
@@ -1054,18 +1286,19 @@ const vReveal = {
     color: var(--foreground);
 }
 
-/* App-window frame around real components */
+/* App-window frame around real components, styled as a ship instrument panel:
+   sharp symmetric corners, hairline accent border, bracket details — no glow. */
 .window {
     position: relative;
     z-index: 1;
     overflow: hidden;
-    border-radius: 1rem;
-    border: 1px solid color-mix(in oklab, var(--border) 75%, transparent);
-    background: color-mix(in oklab, var(--card) 80%, transparent);
-    box-shadow: 0 28px 70px -28px rgb(0 0 0 / 0.5);
+    border: 1px solid color-mix(in oklab, var(--sec, var(--color-orange-400)) 30%, var(--border));
+    background: color-mix(in oklab, var(--card) 88%, transparent);
+    box-shadow: inset 0 1px 0 color-mix(in oklab, var(--foreground) 6%, transparent);
     backdrop-filter: blur(12px);
 }
 
+/* Corner brackets, top-left and bottom-right. */
 .window::before,
 .window::after {
     content: '';
@@ -1073,20 +1306,20 @@ const vReveal = {
     z-index: 3;
     height: 14px;
     width: 14px;
-    border: 2px solid color-mix(in oklab, var(--color-cyan-400) 70%, transparent);
+    border: 2px solid color-mix(in oklab, var(--sec, var(--color-orange-400)) 80%, transparent);
     pointer-events: none;
 }
 
 .window::before {
-    top: 7px;
-    left: 7px;
+    top: 0;
+    left: 0;
     border-right: 0;
     border-bottom: 0;
 }
 
 .window::after {
-    right: 7px;
-    bottom: 7px;
+    right: 0;
+    bottom: 0;
     border-left: 0;
     border-top: 0;
 }
@@ -1095,8 +1328,12 @@ const vReveal = {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
-    background: color-mix(in oklab, var(--muted) 35%, transparent);
+    border-bottom: 1px solid color-mix(in oklab, var(--sec, var(--color-orange-400)) 14%, var(--border));
+    background: linear-gradient(
+        to bottom,
+        color-mix(in oklab, var(--sec, var(--color-orange-400)) 7%, color-mix(in oklab, var(--muted) 45%, transparent)),
+        color-mix(in oklab, var(--muted) 30%, transparent)
+    );
     padding: 0.7rem 0.95rem;
 }
 
@@ -1109,7 +1346,7 @@ const vReveal = {
     position: absolute;
     inset: -14% -10% 0 -10%;
     z-index: 0;
-    background: radial-gradient(60% 60% at 62% 35%, color-mix(in oklab, var(--color-cyan-400) 32%, transparent), transparent 70%);
+    background: radial-gradient(60% 60% at 62% 35%, color-mix(in oklab, var(--color-orange-400) 32%, transparent), transparent 70%);
     filter: blur(56px);
 }
 
@@ -1118,12 +1355,12 @@ const vReveal = {
     position: relative;
     overflow: hidden;
     border-top: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
-    padding-block: 9rem;
+    padding-block: 12rem;
 }
 
 @media (min-width: 640px) {
     .cta {
-        padding-block: 11rem;
+        padding-block: 15rem;
     }
 }
 
@@ -1137,8 +1374,8 @@ const vReveal = {
     border-radius: 9999px;
     background: radial-gradient(
         circle,
-        color-mix(in oklab, var(--color-cyan-400) 34%, transparent),
-        color-mix(in oklab, var(--color-violet-500) 20%, transparent) 45%,
+        color-mix(in oklab, var(--color-orange-400) 34%, transparent),
+        color-mix(in oklab, var(--color-red-500) 20%, transparent) 45%,
         transparent 70%
     );
     filter: blur(56px);
@@ -1176,7 +1413,7 @@ const vReveal = {
     font-size: 0.7rem;
     letter-spacing: 0.24em;
     text-transform: uppercase;
-    color: color-mix(in oklab, var(--color-cyan-300) 80%, var(--foreground));
+    color: color-mix(in oklab, var(--color-orange-300) 80%, var(--foreground));
 }
 
 .cta-title {
@@ -1190,11 +1427,11 @@ const vReveal = {
 }
 
 .cta-void {
-    background: linear-gradient(135deg, var(--color-cyan-300), var(--color-sky-400), var(--color-violet-500));
+    background: linear-gradient(135deg, var(--color-orange-300), var(--color-orange-400), var(--color-red-500));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    filter: drop-shadow(0 0 36px color-mix(in oklab, var(--color-cyan-400) 60%, transparent));
+    filter: drop-shadow(0 0 36px color-mix(in oklab, var(--color-orange-400) 60%, transparent));
 }
 
 .cta-lead {
@@ -1285,7 +1522,8 @@ const vReveal = {
 
 @media (prefers-reduced-motion: reduce) {
     .hero-intro,
-    .hero-console {
+    .hero-console,
+    .gradient-drift {
         animation: none;
     }
 }

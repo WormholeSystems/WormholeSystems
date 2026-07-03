@@ -11,6 +11,7 @@ interface Particle {
 }
 
 const canvas = ref<HTMLCanvasElement | null>(null);
+const ready = ref(false);
 
 let ctx: CanvasRenderingContext2D | null = null;
 let frame = 0;
@@ -26,7 +27,7 @@ let prefersReduced = false;
 let observer: MutationObserver | null = null;
 let resizeObserver: ResizeObserver | null = null;
 
-const PALETTE = [190, 200, 280, 28]; // cyan, blue, violet, amber — wormhole class hues
+const PALETTE = [22, 32, 42]; // one warm family: the accretion disk's oranges
 
 function syncTheme(): void {
     isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
@@ -46,7 +47,7 @@ function spawn(seed = false): Particle {
     return {
         angle: Math.random() * Math.PI * 2,
         radius: r,
-        speed: 0.0009 + Math.random() * 0.0016,
+        speed: 0.0004 + Math.random() * 0.0008,
         size: 0.6 + Math.random() * 1.8,
         hue: PALETTE[Math.floor(Math.random() * PALETTE.length)],
         trail: 6 + Math.random() * 22,
@@ -55,14 +56,14 @@ function spawn(seed = false): Particle {
 
 function build(): void {
     const area = width * height;
-    const count = Math.min(420, Math.max(140, Math.round(area / 5200)));
+    const count = Math.min(260, Math.max(100, Math.round(area / 8000)));
     particles = Array.from({ length: count }, () => spawn(true));
 
-    const starCount = Math.min(260, Math.max(80, Math.round(area / 9000)));
+    const starCount = Math.min(300, Math.max(90, Math.round(area / 8000)));
     stars = Array.from({ length: starCount }, () => ({
         x: Math.random() * width,
         y: Math.random() * height,
-        r: Math.random() * 1.1 + 0.2,
+        r: Math.random() * 1.6 + 0.4,
         twinkle: Math.random() * Math.PI * 2,
     }));
 }
@@ -85,18 +86,18 @@ function drawCore(): void {
         return;
     }
     const { cx, cy } = center();
-    const pulse = 1 + Math.sin(frame * 0.02) * 0.06;
+    const pulse = 1 + Math.sin(frame * 0.01) * 0.06;
     const coreR = Math.min(width, height) * 0.22 * pulse;
 
     const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, coreR);
     if (isDark) {
-        glow.addColorStop(0, 'rgba(125, 240, 255, 0.50)');
-        glow.addColorStop(0.25, 'rgba(56, 189, 248, 0.22)');
-        glow.addColorStop(0.6, 'rgba(99, 102, 241, 0.10)');
+        glow.addColorStop(0, 'rgba(255, 214, 165, 0.55)');
+        glow.addColorStop(0.25, 'rgba(251, 146, 60, 0.26)');
+        glow.addColorStop(0.6, 'rgba(194, 65, 12, 0.12)');
         glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
     } else {
-        glow.addColorStop(0, 'rgba(8, 145, 178, 0.20)');
-        glow.addColorStop(0.4, 'rgba(56, 189, 248, 0.10)');
+        glow.addColorStop(0, 'rgba(234, 88, 12, 0.22)');
+        glow.addColorStop(0.4, 'rgba(251, 146, 60, 0.10)');
         glow.addColorStop(1, 'rgba(255, 255, 255, 0)');
     }
     ctx.fillStyle = glow;
@@ -104,12 +105,11 @@ function drawCore(): void {
     ctx.arc(cx, cy, coreR, 0, Math.PI * 2);
     ctx.fill();
 
-    // Event-horizon ring.
-    ctx.strokeStyle = isDark ? 'rgba(165, 243, 252, 0.35)' : 'rgba(14, 116, 144, 0.30)';
-    ctx.lineWidth = 1;
+    // The event horizon itself: a dark disc swallowing the glow's centre.
+    ctx.fillStyle = isDark ? 'rgba(5, 5, 8, 0.9)' : 'rgba(250, 250, 250, 0.9)';
     ctx.beginPath();
-    ctx.arc(cx, cy, coreR * 0.42, 0, Math.PI * 2);
-    ctx.stroke();
+    ctx.arc(cx, cy, coreR * 0.3, 0, Math.PI * 2);
+    ctx.fill();
 }
 
 function render(): void {
@@ -123,7 +123,7 @@ function render(): void {
     // Distant twinkling stars.
     for (const s of stars) {
         const t = 0.4 + 0.6 * Math.abs(Math.sin(frame * 0.01 + s.twinkle));
-        ctx.fillStyle = isDark ? `rgba(226, 232, 240, ${0.06 + t * 0.18})` : `rgba(15, 23, 42, ${0.03 + t * 0.07})`;
+        ctx.fillStyle = isDark ? `rgba(226, 232, 240, ${0.12 + t * 0.28})` : `rgba(15, 23, 42, ${0.05 + t * 0.1})`;
         ctx.beginPath();
         ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
         ctx.fill();
@@ -132,11 +132,15 @@ function render(): void {
     drawCore();
 
     // Spiralling accretion particles.
+    const inner = Math.min(width, height);
+    const fade_start = inner * 0.22;
+    const kill_radius = inner * 0.06;
+
     for (const p of particles) {
         p.angle += p.speed * (1 + ((maxRadius() - p.radius) / maxRadius()) * 5);
-        p.radius -= p.speed * p.radius * 0.9 + 0.15;
+        p.radius -= p.speed * p.radius * 0.5 + 0.06;
 
-        if (p.radius < Math.min(width, height) * 0.05) {
+        if (p.radius < kill_radius) {
             Object.assign(p, spawn());
         }
 
@@ -146,7 +150,8 @@ function render(): void {
         const ty = cy + Math.sin(p.angle - 0.18) * (p.radius + p.trail) * 0.62;
 
         const depth = 1 - p.radius / maxRadius();
-        const alpha = (isDark ? 0.55 : 0.32) * (0.25 + depth);
+        const core_fade = Math.min(1, Math.max(0, (p.radius - kill_radius) / (fade_start - kill_radius)));
+        const alpha = (isDark ? 0.6 : 0.35) * (0.25 + depth) * core_fade;
         const light = isDark ? 65 : 45;
 
         ctx.strokeStyle = `hsla(${p.hue}, 90%, ${light}%, ${alpha})`;
@@ -203,6 +208,11 @@ onMounted(() => {
         start();
     }
 
+    // The first frame lands a beat after mount; ease the field in instead of popping.
+    requestAnimationFrame(() => {
+        ready.value = true;
+    });
+
     observer = new MutationObserver(() => {
         syncTheme();
         if (prefersReduced) {
@@ -234,28 +244,44 @@ onBeforeUnmount(() => {
     <div class="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
         <div class="bg-void absolute inset-0" />
         <div class="aurora absolute inset-0" />
-        <canvas ref="canvas" class="absolute inset-0 h-full w-full" />
+        <div class="canvas-blur absolute inset-0" :class="{ 'canvas-blur--ready': ready }">
+            <canvas ref="canvas" class="absolute inset-0 h-full w-full" />
+        </div>
         <div class="bg-vignette absolute inset-0" />
     </div>
 </template>
 
 <style scoped>
+/* Blur lives on a wrapper: Chromium can drop a filter set directly on a
+   canvas once it promotes the repainting canvas to its own compositor layer.
+   The field fades in once the first frame has rendered. */
+.canvas-blur {
+    filter: blur(10px);
+    transform: translateZ(0);
+    opacity: 0;
+    transition: opacity 2.2s ease-out;
+}
+
+.canvas-blur--ready {
+    opacity: 1;
+}
+
 .bg-void {
     background:
-        radial-gradient(120% 90% at 72% 30%, rgba(14, 165, 233, 0.12), transparent 55%),
-        radial-gradient(90% 70% at 15% 90%, rgba(124, 58, 237, 0.1), transparent 50%), var(--background);
+        radial-gradient(120% 90% at 72% 30%, rgba(251, 146, 60, 0.1), transparent 55%),
+        radial-gradient(90% 70% at 15% 90%, rgba(194, 65, 12, 0.07), transparent 50%), var(--background);
 }
 
 .bg-vignette {
-    background: radial-gradient(120% 120% at 50% 45%, transparent 35%, color-mix(in oklab, var(--background) 78%, transparent) 100%);
+    background: radial-gradient(120% 120% at 50% 45%, transparent 42%, color-mix(in oklab, var(--background) 80%, transparent) 100%);
 }
 
 /* Slow-drifting ambient colour wash behind the particle field. */
 .aurora {
     background:
-        radial-gradient(38% 38% at 28% 32%, color-mix(in oklab, var(--color-cyan-500) 16%, transparent), transparent 70%),
-        radial-gradient(34% 34% at 76% 66%, color-mix(in oklab, var(--color-violet-500) 14%, transparent), transparent 70%);
-    filter: blur(40px);
+        radial-gradient(38% 38% at 28% 32%, color-mix(in oklab, var(--color-orange-500) 16%, transparent), transparent 70%),
+        radial-gradient(34% 34% at 76% 66%, color-mix(in oklab, var(--color-red-600) 11%, transparent), transparent 70%);
+    filter: blur(44px);
     animation: aurora-drift 26s ease-in-out infinite alternate;
     will-change: transform;
 }
