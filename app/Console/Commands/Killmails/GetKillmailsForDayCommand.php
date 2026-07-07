@@ -4,19 +4,24 @@ declare(strict_types=1);
 
 namespace App\Console\Commands\Killmails;
 
-use App\Actions\EnsureOrganisationExistsAction;
 use App\Console\Commands\AppCommand;
+use App\Models\Alliance;
+use App\Models\Corporation;
 use App\Models\Killmail;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
+use PharData;
+use RecursiveIteratorIterator;
 
 use function Laravel\Prompts\progress;
 
 final class GetKillmailsForDayCommand extends AppCommand
 {
+    private const int CHUNK_SIZE = 500;
+
     /**
      * The name and signature of the console command.
      *
@@ -36,18 +41,22 @@ final class GetKillmailsForDayCommand extends AppCommand
      *
      * @throws ConnectionException
      */
-    public function handle(EnsureOrganisationExistsAction $ensureOrganisationExistsAction): int
+    public function handle(): int
     {
         $date = CarbonImmutable::parse($this->argument('date'));
 
         $remote_file = $this->getRemoteFileName($date);
-        $local_file = $this->getLocalFileName($date);
+        $local_file = sprintf('killmails/%s.tar.bz2', $date->format('Y-m-d'));
 
         $this->info(sprintf('Downloading %s to %s', $remote_file, $local_file));
 
-        $response = Http::retry(5, throw: false)->get($remote_file);
+        Storage::makeDirectory('killmails');
+
+        $response = Http::retry(5, throw: false)->sink(Storage::path($local_file))->get($remote_file);
 
         if ($response->failed()) {
+            Storage::delete($local_file);
+
             if ($response->notFound()) {
                 $this->info(sprintf('No killmails found for %s', $date->toDateString()));
 
@@ -58,16 +67,11 @@ final class GetKillmailsForDayCommand extends AppCommand
             return self::FAILURE;
         }
 
-        Storage::put($local_file, $response->body());
-
         $this->info(sprintf('Successfully downloaded %s', $local_file));
 
-        $this->extractKillmails($local_file);
-
-        $this->processKillmails($ensureOrganisationExistsAction);
+        $this->processKillmails(Storage::path($local_file));
 
         Storage::delete($local_file);
-        Storage::deleteDirectory('killmails/killmails');
 
         return self::SUCCESS;
     }
@@ -83,72 +87,78 @@ final class GetKillmailsForDayCommand extends AppCommand
         );
     }
 
-    private function getLocalFileName(CarbonImmutable $date): string
+    /** The upsert leaves `zkb` untouched so re-imports keep the live listener's data. */
+    private function processKillmails(string $archive_path): void
     {
-        return sprintf(
-            '%s/%s.tar.bz2',
-            Storage::path('killmails'),
-            $date->format('Y-m-d')
-        );
-    }
+        $archive = new PharData($archive_path);
+        $entries = array_keys(iterator_to_array(new RecursiveIteratorIterator($archive)));
 
-    private function extractKillmails(string $local_file): void
-    {
-
-        $this->info(sprintf('Extracting %s', $local_file));
-
-        $extracted_path = Storage::path('killmails/');
-        if (! Storage::exists($extracted_path)) {
-            Storage::makeDirectory('killmails/');
-        }
-
-        $command = sprintf('tar -xjf %s -C %s', Storage::path($local_file), $extracted_path);
-
-        $res = Process::run($command);
-
-        if ($res->successful()) {
-            $this->info(sprintf('Successfully extracted %s', $local_file));
-        } else {
-            $this->error(sprintf('Failed to extract %s: %s', $local_file, $res->errorOutput()));
-        }
-
-    }
-
-    private function processKillmails(EnsureOrganisationExistsAction $ensureOrganisationExistsAction): void
-    {
-        $files = Storage::files('killmails/killmails');
-
-        if (empty($files)) {
+        if ($entries === []) {
             $this->info('No killmail files to process.');
 
             return;
         }
 
+        $corporation_ids = [];
+        $alliance_ids = [];
+
         progress(
             label: 'Processing killmails...',
-            steps: $files,
-            callback: function (string $file) use ($ensureOrganisationExistsAction): void {
-                $content = Storage::json($file);
-                if (! $content) {
-                    return;
-                }
+            steps: collect($entries)->chunk(self::CHUNK_SIZE),
+            callback: function (Collection $chunk) use (&$corporation_ids, &$alliance_ids): void {
+                $now = now();
+                $rows = [];
 
-                Killmail::query()->firstOrCreate(
-                    [
+                foreach ($chunk as $entry) {
+                    $content = json_decode((string) file_get_contents($entry), true);
+                    if (! $content) {
+                        continue;
+                    }
+
+                    $rows[] = [
                         'id' => $content['killmail_id'],
                         'hash' => $content['killmail_hash'],
-                    ],
-                    [
-                        'time' => $content['killmail_time'],
+                        'time' => CarbonImmutable::parse($content['killmail_time'])->toDateTimeString(),
                         'solarsystem_id' => $content['solar_system_id'],
-                        'data' => $content,
-                        'zkb' => [],
-                    ]
-                );
+                        'data' => json_encode($content),
+                        'zkb' => json_encode([]),
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ];
 
-                $ensureOrganisationExistsAction->ensureCorporationExists($content['victim']['corporation_id'] ?? null);
-                $ensureOrganisationExistsAction->ensureAllianceExists($content['victim']['alliance_id'] ?? null);
+                    if ($corporation_id = $content['victim']['corporation_id'] ?? null) {
+                        $corporation_ids[$corporation_id] = true;
+                    }
+
+                    if ($alliance_id = $content['victim']['alliance_id'] ?? null) {
+                        $alliance_ids[$alliance_id] = true;
+                    }
+                }
+
+                Killmail::query()->upsert($rows, ['id'], ['hash', 'time', 'solarsystem_id', 'data', 'updated_at']);
             },
+        );
+
+        $this->storeVictimOrganisations(array_keys($corporation_ids), array_keys($alliance_ids));
+    }
+
+    /**
+     * Bare id rows only — the hourly sweep resolves the names, keeping ESI off the ingest path.
+     *
+     * @param  int[]  $corporation_ids
+     * @param  int[]  $alliance_ids
+     */
+    private function storeVictimOrganisations(array $corporation_ids, array $alliance_ids): void
+    {
+        $now = now();
+        $toRow = fn (int $id): array => ['id' => $id, 'created_at' => $now, 'updated_at' => $now];
+
+        collect($corporation_ids)->chunk(self::CHUNK_SIZE)->each(
+            fn (Collection $chunk) => Corporation::query()->insertOrIgnore($chunk->map($toRow)->all()),
+        );
+
+        collect($alliance_ids)->chunk(self::CHUNK_SIZE)->each(
+            fn (Collection $chunk) => Alliance::query()->insertOrIgnore($chunk->map($toRow)->all()),
         );
     }
 }

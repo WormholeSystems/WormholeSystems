@@ -15,6 +15,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.4",
+        "ext-bz2": "*",
         "ext-pcntl": "*",
         "ext-pdo": "*",
         "inertiajs/inertia-laravel": "^3.0",
