@@ -6,6 +6,7 @@ import EveScoutConnections from '@/components/eve-scout/EveScoutConnections.vue'
 import LayoutEditorToolbar from '@/components/layout/LayoutEditorToolbar.vue';
 import MapKillmails from '@/components/map-killmails/MapKillmails.vue';
 import MapSkyhooks from '@/components/map-skyhooks/MapSkyhooks.vue';
+import CommandPalette from '@/components/map/CommandPalette.vue';
 import MapIntroduction from '@/components/map/MapIntroduction.vue';
 import MapStatusBar from '@/components/map/MapStatusBar.vue';
 import ShipHistory from '@/components/ship-history/ShipHistory.vue';
@@ -191,6 +192,9 @@ const handleResizeEnd = () => {
 
         <!-- Status Bar -->
         <MapStatusBar :map="resolvedMap" :map_user_settings="map_user_settings" :layout="layout" />
+
+        <!-- Command Palette (Cmd/Ctrl+K) -->
+        <CommandPalette />
 
         <!-- Grid Layout Container -->
         <GridLayout

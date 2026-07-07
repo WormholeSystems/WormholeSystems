@@ -1,5 +1,6 @@
 import { useSolarsystemAliases } from '@/composables/useSolarsystemAliases';
 import { useStaticData } from '@/composables/useStaticData';
+import { takeRanked } from '@/lib/searchRank';
 import type { TMapSolarsystemBase } from '@/pages/maps';
 import type { TStaticSolarsystem } from '@/types/static-data';
 import { computed, MaybeRefOrGetter, toValue } from 'vue';
@@ -26,7 +27,13 @@ export function useSolarsystemSearch(query: MaybeRefOrGetter<string>, mapSolarsy
             return [] as TStaticSolarsystem[];
         }
 
-        return (staticData.value?.solarsystems ?? []).filter((solarsystem) => solarsystem.name.toLowerCase().includes(needle)).slice(0, MAX_RESULTS);
+        return takeRanked(
+            staticData.value?.solarsystems ?? [],
+            needle,
+            MAX_RESULTS,
+            (solarsystem) => [solarsystem.name],
+            (solarsystem) => solarsystem.name,
+        );
     });
 
     const new_solarsystems = computed(() => results.value.filter((solarsystem) => !onMapIds.value.has(solarsystem.id)));

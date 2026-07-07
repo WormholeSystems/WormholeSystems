@@ -22,7 +22,7 @@ import { useConnectionStatus } from '@laravel/echo-vue';
 import { ConnectionStatus } from 'laravel-echo';
 import { AlertTriangle, Eye, EyeOff, LayoutGrid, Map as MapIcon, Settings, ShieldAlert, Wifi, WifiOff } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
-import MapSearch from './MapSearch.vue';
+import CommandPaletteButton from './CommandPaletteButton.vue';
 import TrackingSignatureDialog from './TrackingSignatureDialog.vue';
 
 const { map, map_user_settings, layout } = defineProps<{
@@ -166,10 +166,9 @@ const settingsUrl = computed(() => {
         <div class="hidden h-4 w-px bg-border/50 sm:block" />
 
         <!-- Search -->
-        <div v-if="canEdit" class="hidden flex-1 sm:block">
-            <MapSearch :map="map" />
+        <div class="hidden flex-1 sm:block">
+            <CommandPaletteButton />
         </div>
-        <div v-else class="hidden flex-1 sm:block" />
 
         <!-- Spacer for mobile -->
         <div class="flex-1 sm:hidden" />

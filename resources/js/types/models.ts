@@ -211,6 +211,34 @@ export type TThreatAnalysis = {
     threat_analyzed_at: string | null;
 };
 
+export type TThreatSearchSystem = {
+    solarsystem_id: number;
+    kills: number;
+    occupier_alias: string | null;
+};
+
+export type TThreatSearchResult = {
+    id: number;
+    name: string;
+    type: TThreatEntity['type'];
+    total_kills: number;
+    systems_count: number;
+    systems: TThreatSearchSystem[];
+};
+
+export type TNoteSearchResult = {
+    map_solarsystem_id: number;
+    solarsystem_id: number;
+    alias: string | null;
+    occupier_alias: string | null;
+    note_excerpt: string;
+};
+
+export type TOccupierSearchResult = {
+    solarsystem_id: number;
+    occupier_alias: string | null;
+};
+
 export type TCharacter = {
     id: number;
     name: string;
