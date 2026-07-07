@@ -25,7 +25,6 @@ import { TMapSolarsystem } from '@/pages/maps';
 import { TMapSolarsystemStatus } from '@/types/models';
 import { Compass, Flag, Home, Map, MapPin, Navigation, Pin, Route, Trash2, Users, Waypoints } from 'lucide-vue-next';
 import type { AcceptableValue } from 'reka-ui';
-import { computed } from 'vue';
 
 /**
  * The per-node context menu, ported from the old tree as content-only: the new
@@ -38,15 +37,12 @@ const { map_solarsystem } = defineProps<{
 
 const user = useUser();
 
-// Waypoints can only be set for characters that are online in-game.
-const onlineCharacters = computed(() => user.value?.characters.filter((character) => character.status?.is_online) ?? []);
-
 const { canEdit: can_write } = usePermission();
 
 const { isHome, toggleHomeSystem } = useHomeSystem(() => map_solarsystem.solarsystem_id);
 const { isRally, toggleRallyPoint } = useRallyPoint(() => map_solarsystem.solarsystem_id);
 
-const { setWaypoint, setWaypointAll } = useWaypoint();
+const { setWaypoint, setWaypointAll, onlineCharacters } = useWaypoint();
 
 const { setFromSystem, setToSystem } = useNavigationSystems();
 

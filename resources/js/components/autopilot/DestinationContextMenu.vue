@@ -15,7 +15,6 @@ import { useNavigationSystems } from '@/composables/useNavigationSystems';
 import usePermission from '@/composables/usePermission';
 import { useRallyPoint } from '@/composables/useRallyPoint';
 import { useStaticSolarsystem } from '@/composables/useStaticSolarsystems';
-import useUser from '@/composables/useUser';
 import { useWaypoint } from '@/composables/useWaypoint';
 import { createMapSolarsystem, useMapSolarsystems } from '@/map/api';
 import { Compass, Flag, MapPin, Navigation, Plus, Route, Users } from 'lucide-vue-next';
@@ -25,13 +24,7 @@ const { solarsystem_id } = defineProps<{
     solarsystem_id: number;
 }>();
 
-const user = useUser();
-
-// Waypoints can only be set for characters that are online in-game, so the
-// destination/waypoint menus only offer online characters.
-const onlineCharacters = computed(() => user.value?.characters.filter((character) => character.status?.is_online) ?? []);
-
-const { setWaypoint, setWaypointAll } = useWaypoint();
+const { setWaypoint, setWaypointAll, onlineCharacters } = useWaypoint();
 
 const { map_solarsystems } = useMapSolarsystems();
 

@@ -1,8 +1,15 @@
 import BulkWaypointController from '@/actions/App/Http/Controllers/BulkWaypointController';
+import useUser from '@/composables/useUser';
 import Waypoints from '@/routes/waypoints';
 import { router } from '@inertiajs/vue3';
+import { computed } from 'vue';
 
 export function useWaypoint() {
+    const user = useUser();
+
+    /** Waypoints can only be set for characters that are online in-game. */
+    const onlineCharacters = computed(() => user.value?.characters.filter((character) => character.status?.is_online) ?? []);
+
     function setWaypoint(character_id: number, solarsystem_id: number, clear_other_waypoints: boolean = true, add_to_beginning: boolean = false) {
         router.post(
             Waypoints.store().url,
@@ -36,5 +43,5 @@ export function useWaypoint() {
         );
     }
 
-    return { setWaypoint, setWaypointAll };
+    return { setWaypoint, setWaypointAll, onlineCharacters };
 }
