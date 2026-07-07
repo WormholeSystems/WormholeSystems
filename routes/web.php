@@ -27,6 +27,7 @@ use App\Http\Controllers\MapPreferencesController;
 use App\Http\Controllers\MapRouteSolarsystemController;
 use App\Http\Controllers\MapRoutingSettingsController;
 use App\Http\Controllers\MapScopeController;
+use App\Http\Controllers\MapSearchController;
 use App\Http\Controllers\MapSelectionController;
 use App\Http\Controllers\MapSettingsController;
 use App\Http\Controllers\MapSolarsystemController;
@@ -129,6 +130,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('map-webhook-roles', MapWebhookRoleController::class)->only(['store', 'update', 'destroy']);
     Route::resource('map-alerts', MapAlertController::class)->only(['store', 'update', 'destroy']);
     Route::get('eve/ship-search', [EveSearchController::class, 'index'])->name('eve.ship-search');
+    Route::get('maps/{map}/search', [MapSearchController::class, 'index'])->name('maps.search');
 
     Route::post('map-ignored-solarsystems', [MapIgnoredSolarsystemController::class, 'store'])->name('map-ignored-solarsystems.store');
     Route::delete('maps/{map}/ignored-solarsystems/{solarsystem_id}', [MapIgnoredSolarsystemController::class, 'destroy'])->name('map-ignored-solarsystems.destroy');
