@@ -15,6 +15,13 @@ export type TNotification = {
     };
 };
 
+/**
+ * The flash notification can ride on more than one Inertia response (a redirect and a
+ * concurrent partial reload racing the session flash), and each response delivers a new
+ * prop object. Tracked module-wide so the same notification is only ever toasted once.
+ */
+let last_notification_id: string | null = null;
+
 export function useNotifications() {
     const page = usePage<
         AppPageProps<{
@@ -26,6 +33,12 @@ export function useNotifications() {
         () => page.props.notification,
         (notification) => {
             if (notification) {
+                if (notification.id && notification.id === last_notification_id) {
+                    return;
+                }
+
+                last_notification_id = notification.id ?? null;
+
                 const options = {
                     description: notification.message,
                     action: getToastAction(notification.action),

@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\PersonalAccessToken;
 use SocialiteProviders\Eveonline\Provider;
 use SocialiteProviders\Manager\SocialiteWasCalled;
@@ -76,6 +77,7 @@ final class AppServiceProvider extends ServiceProvider
             }
 
             $notification = [
+                'id' => (string) Str::uuid(),
                 'title' => $title,
                 'message' => $message,
                 'type' => $type,
