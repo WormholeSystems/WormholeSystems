@@ -72,9 +72,18 @@ trait InteractsWithMap
         return $page
             ->drag($source, $target)
             ->script(sprintf(
-                'document.querySelector(%s)?.dispatchEvent(new PointerEvent(%s, { bubbles: true }))',
+                <<<'JS'
+                const target = document.querySelector(%s);
+                if (target) {
+                    const rect = target.getBoundingClientRect();
+                    target.dispatchEvent(new PointerEvent('pointerup', {
+                        bubbles: true,
+                        clientX: rect.left + rect.width / 2,
+                        clientY: rect.top + rect.height / 2,
+                    }));
+                }
+                JS,
                 json_encode($target),
-                json_encode('pointerup'),
             ));
     }
 
