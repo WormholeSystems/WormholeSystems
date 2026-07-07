@@ -2,17 +2,17 @@
 import DestinationContextMenu from '@/components/autopilot/DestinationContextMenu.vue';
 import ExtraWormholeIcon from '@/components/icons/ExtraWormholeIcon.vue';
 import { CharacterImage } from '@/components/images';
-import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue';
-import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
-import SolarsystemEffect from '@/components/solarsystem/SolarsystemEffect.vue';
+import SolarsystemSearchResult from '@/components/solarsystem/SolarsystemSearchResult.vue';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useIgnoreList } from '@/composables/useIgnoreList';
 import { usePath } from '@/composables/usePath';
+import { useSolarsystemAliases } from '@/composables/useSolarsystemAliases';
 import useUser from '@/composables/useUser';
 import { useWaypoint } from '@/composables/useWaypoint';
+import { useMapSolarsystems } from '@/map/api';
 import type { TResolvedSolarsystem } from '@/pages/maps';
 import { vElementHover } from '@vueuse/components';
 import { Navigation, Users, X } from 'lucide-vue-next';
@@ -25,8 +25,10 @@ interface Props {
 const props = defineProps<Props>();
 
 const { ignoreSolarsystem, clearIgnoreList, ignored_systems } = useIgnoreList();
+const { map_solarsystems } = useMapSolarsystems();
+const { getAlias } = useSolarsystemAliases(map_solarsystems);
 const { setPath } = usePath();
-const { setWaypoint, setWaypointAll } = useWaypoint();
+const { setWaypoint, setWaypointAll, onlineCharacters } = useWaypoint();
 const user = useUser();
 
 const hasRoute = computed(() => props.route && props.route.length > 0);
@@ -77,29 +79,22 @@ function onHover(hovered: boolean) {
         <PopoverContent class="w-72 p-0" align="end" side="bottom">
             <div v-element-hover="onHover">
                 <!-- Header -->
-                <div class="flex items-center justify-between border-b border-border/50 bg-muted/30 px-3 py-2">
-                    <div class="flex items-center gap-2">
+                <div class="flex items-center justify-between gap-2 border-b border-border/50 bg-muted/30 px-3 py-2">
+                    <div class="flex min-w-0 items-baseline gap-2">
                         <span class="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">Route</span>
-                        <span v-if="hasRoute" class="font-mono text-xs font-medium">{{ jumpCount }} jumps</span>
+                        <span v-if="hasRoute" class="font-mono text-xs font-medium whitespace-nowrap">{{ jumpCount }} jumps</span>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <button
-                            v-if="ignored_systems.length"
-                            @click="handleClearIgnoreList"
-                            class="text-[10px] text-muted-foreground hover:text-foreground"
-                        >
-                            Clear {{ ignored_systems.length }} ignored
-                        </button>
-                        <DropdownMenu v-if="user && destination">
-                            <DropdownMenuTrigger as-child>
-                                <Button variant="secondary" size="sm" class="h-6 gap-1 px-2 text-[10px]">
-                                    <Navigation class="size-3" />
-                                    Set Destination
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" class="w-48">
+                    <DropdownMenu v-if="user && destination">
+                        <DropdownMenuTrigger as-child>
+                            <Button variant="secondary" size="sm" class="h-6 shrink-0 gap-1 px-2 text-[10px] whitespace-nowrap">
+                                <Navigation class="size-3" />
+                                Set Destination
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" class="w-48">
+                            <template v-if="onlineCharacters.length">
                                 <DropdownMenuItem
-                                    v-for="character in user.characters"
+                                    v-for="character in onlineCharacters"
                                     :key="character.id"
                                     @select="handleSetDestination(character.id)"
                                     class="gap-2 text-xs"
@@ -107,28 +102,24 @@ function onHover(hovered: boolean) {
                                     <CharacterImage :character_id="character.id" :character_name="character.name" class="size-5 rounded" />
                                     {{ character.name }}
                                 </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem @select="handleSetDestinationAll" class="gap-2 text-xs">
+                                <DropdownMenuSeparator v-if="onlineCharacters.length > 1" />
+                                <DropdownMenuItem v-if="onlineCharacters.length > 1" @select="handleSetDestinationAll" class="gap-2 text-xs">
                                     <Users class="size-4" />
                                     All Characters
                                 </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
+                            </template>
+                            <DropdownMenuItem v-else disabled class="text-xs">No characters online</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
 
                 <!-- Route List -->
-                <div v-if="hasRoute" class="max-h-64 overflow-y-auto">
+                <div v-if="hasRoute" class="grid max-h-64 grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)_auto_auto_auto] overflow-y-auto">
                     <DestinationContextMenu v-for="(solarsystem, index) in route" :key="index" :solarsystem_id="solarsystem.id">
-                        <div class="flex items-center gap-1.5 border-b border-border/30 px-3 py-0.5 last:border-0 hover:bg-muted/30">
-                            <SolarsystemClass :solarsystem_class="solarsystem.class" class="shrink-0" />
-                            <span class="min-w-0 flex-1 truncate text-xs">{{ solarsystem.name }}</span>
-                            <span class="shrink-0 truncate text-[10px] text-muted-foreground">{{ solarsystem.region?.name }}</span>
-                            <SolarsystemSovereignty :sovereignty="solarsystem.sovereignty" :solarsystem-id="solarsystem.id" class="size-4 shrink-0">
-                                <template #fallback>
-                                    <SolarsystemEffect v-if="solarsystem.effect" :effect="solarsystem.effect.name" />
-                                </template>
-                            </SolarsystemSovereignty>
+                        <div
+                            class="col-span-6 grid grid-cols-subgrid items-center gap-x-1.5 border-b border-border/30 px-3 py-0.5 last:border-0 hover:bg-muted/30"
+                        >
+                            <SolarsystemSearchResult :solarsystem="solarsystem" :alias="getAlias(solarsystem.id)" />
                             <Tooltip
                                 v-if="
                                     route &&
@@ -138,7 +129,7 @@ function onHover(hovered: boolean) {
                             >
                                 <TooltipTrigger as-child>
                                     <ExtraWormholeIcon
-                                        class="size-3.5 shrink-0"
+                                        class="size-3.5"
                                         :class="route[index].connection_type === 'evescout' ? 'text-blue-400' : 'text-amber-500'"
                                     />
                                 </TooltipTrigger>
@@ -146,15 +137,15 @@ function onHover(hovered: boolean) {
                                     {{ route[index].connection_type === 'evescout' ? 'EVE Scout' : 'Wormhole' }}
                                 </TooltipContent>
                             </Tooltip>
-                            <span v-else class="size-3.5 shrink-0"></span>
+                            <span v-else class="size-3.5"></span>
                             <button
                                 v-if="route && index !== 0 && index !== route.length - 1"
-                                class="shrink-0 text-muted-foreground/40 hover:text-destructive"
+                                class="text-muted-foreground/40 hover:text-destructive"
                                 @click.stop="handleIgnoreSolarsystem(solarsystem.id)"
                             >
                                 <X class="size-3" />
                             </button>
-                            <span v-else class="size-3 shrink-0"></span>
+                            <span v-else class="size-3"></span>
                         </div>
                     </DestinationContextMenu>
                 </div>
@@ -162,6 +153,16 @@ function onHover(hovered: boolean) {
                 <!-- Empty State -->
                 <div v-else class="flex items-center justify-center p-4">
                     <span class="font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">No route available</span>
+                </div>
+
+                <!-- Ignored Systems -->
+                <div v-if="ignored_systems.length" class="flex items-center justify-between border-t border-border/50 bg-muted/30 px-3 py-1.5">
+                    <span class="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
+                        {{ ignored_systems.length }} {{ ignored_systems.length === 1 ? 'system' : 'systems' }} ignored
+                    </span>
+                    <button @click="handleClearIgnoreList" class="text-[10px] whitespace-nowrap text-muted-foreground hover:text-foreground">
+                        Clear
+                    </button>
                 </div>
             </div>
         </PopoverContent>
