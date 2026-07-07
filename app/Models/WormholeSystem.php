@@ -20,16 +20,18 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $effect_id
  * @property-read SolarsystemClass $class
  * @property ThreatLevel $threat_level
- * @property array|null $threat_data
  * @property CarbonImmutable|null $threat_analyzed_at
  * @property-read string|CarbonImmutable $created_at
  * @property-read string|CarbonImmutable $updated_at
  * @property-read WormholeEffect $effect
  * @property-read Solarsystem $solarsystem
  * @property-read Collection<int,WormholeStatic> $wormholeStatics
+ * @property-read Collection<int,WormholeSystemThreat> $threats
  */
 final class WormholeSystem extends Model
 {
+    public $incrementing = false;
+
     /**
      * The effect of the wormhole system.
      *
@@ -61,6 +63,16 @@ final class WormholeSystem extends Model
     }
 
     /**
+     * The alliances and corporations active in this system, from the daily killmail analysis.
+     *
+     * @return HasMany<WormholeSystemThreat, $this>
+     */
+    public function threats(): HasMany
+    {
+        return $this->hasMany(WormholeSystemThreat::class);
+    }
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array
@@ -68,7 +80,6 @@ final class WormholeSystem extends Model
         return [
             'class' => SolarsystemClassCast::class,
             'threat_level' => ThreatLevel::class,
-            'threat_data' => 'array',
             'threat_analyzed_at' => 'immutable_datetime',
             'created_at' => 'immutable_datetime',
             'updated_at' => 'immutable_datetime',

@@ -21,7 +21,10 @@ final class ThreatAnalysisResource extends JsonResource
         return [
             'solarsystem_id' => $this->id,
             'threat_level' => $this->threat_level,
-            'threat_data' => $this->threat_data ?? [],
+            'threat_data' => $this->threats
+                ->sortByDesc('kills')
+                ->values()
+                ->toResourceCollection(WormholeSystemThreatResource::class),
             'threat_analyzed_at' => $this->threat_analyzed_at?->toISOString(),
         ];
     }

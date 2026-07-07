@@ -80,3 +80,37 @@ it('generates structured threat data with entity details', function () {
         ->and($result->threatData)->toHaveCount(1)
         ->and($result->threatData[0])->toHaveKeys(['id', 'name', 'type', 'kills']);
 });
+
+it('persists the analyzed threat entities and replaces them on re-analysis', function () {
+    makeSolarsystem(31000501);
+    $wormholeSystem = App\Models\WormholeSystem::query()->create(['id' => 31000501]);
+    App\Models\Corporation::query()->create(['id' => 98000401, 'name' => 'Threat Corp']);
+
+    foreach (range(1, 3) as $index) {
+        App\Models\Killmail::query()->create([
+            'id' => 910000 + $index,
+            'hash' => 'hash-analyze-'.$index,
+            'time' => now()->subDays($index),
+            'solarsystem_id' => 31000501,
+            'data' => [
+                'victim' => ['corporation_id' => 98000401],
+                'attackers' => [],
+            ],
+            'zkb' => [],
+        ]);
+    }
+
+    $this->artisan('app:analyze-wormhole-systems', ['--days-active' => 1])->assertSuccessful();
+
+    $threats = $wormholeSystem->refresh()->threats;
+
+    expect($threats)->toHaveCount(1)
+        ->and($threats->first()->entity_id)->toBe(98000401)
+        ->and($threats->first()->entity_type)->toBe('corporation')
+        ->and($threats->first()->name)->toBe('Threat Corp')
+        ->and($threats->first()->kills)->toBe(3);
+
+    $this->artisan('app:analyze-wormhole-systems', ['--days-active' => 1])->assertSuccessful();
+
+    expect($wormholeSystem->refresh()->threats)->toHaveCount(1);
+});

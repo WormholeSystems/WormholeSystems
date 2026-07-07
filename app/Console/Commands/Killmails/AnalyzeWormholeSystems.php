@@ -14,6 +14,7 @@ use App\Models\WormholeSystem;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use NicolasKion\Esi\Enums\NameCategory;
 use NicolasKion\Esi\Esi;
 use Psr\SimpleCache\InvalidArgumentException;
@@ -132,11 +133,23 @@ final class AnalyzeWormholeSystems extends AppCommand
 
     private function updateWormholeSystem(WormholeSystem $wormholeSystem, SystemAnalysisResult $analysisResult): void
     {
-        $wormholeSystem->update([
-            'threat_level' => $analysisResult->threatLevel,
-            'threat_data' => $analysisResult->threatData,
-            'threat_analyzed_at' => now(),
-        ]);
+        DB::transaction(function () use ($wormholeSystem, $analysisResult): void {
+            $wormholeSystem->update([
+                'threat_level' => $analysisResult->threatLevel,
+                'threat_analyzed_at' => now(),
+            ]);
+
+            $wormholeSystem->threats()->delete();
+            $wormholeSystem->threats()->createMany(array_map(
+                fn (array $entity): array => [
+                    'entity_id' => $entity['id'],
+                    'entity_type' => $entity['type'],
+                    'name' => $entity['name'],
+                    'kills' => $entity['kills'],
+                ],
+                $analysisResult->threatData,
+            ));
+        });
     }
 
     /**

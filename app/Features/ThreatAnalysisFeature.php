@@ -40,6 +40,7 @@ final readonly class ThreatAnalysisFeature implements ProvidesInertiaProperties
         }
 
         $wormholeSystem = WormholeSystem::query()
+            ->with('threats')
             ->where('id', $this->selectedSolarsystem->solarsystem_id)
             ->first();
 
