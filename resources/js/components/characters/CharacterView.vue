@@ -108,8 +108,8 @@ function onRouteHover(hovered: boolean): void {
 
         <div class="min-w-0 truncate text-xs">
             <span v-if="alias" class="font-medium">{{ alias }}</span>
-            <span v-else-if="static_solarsystem" class="font-medium">{{ static_solarsystem.name }}</span>
-            <span v-else class="text-muted-foreground">--</span>
+            <span v-if="static_solarsystem" :class="alias ? 'text-muted-foreground' : 'font-medium'"> {{ static_solarsystem.name }}</span>
+            <span v-else-if="!alias" class="text-muted-foreground">--</span>
             <span v-if="static_solarsystem?.region" class="text-muted-foreground"> · {{ static_solarsystem.region.name }}</span>
         </div>
 

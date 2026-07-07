@@ -17,6 +17,15 @@ const currentSolarsystem = useStaticSolarsystem(() => character?.status?.solarsy
 
 const currentSolarsystemName = computed(() => currentSolarsystem.value?.name ?? 'Unknown');
 
+const targetSystemLabel = computed(() => {
+    const name = targetSystem?.solarsystem?.name;
+    if (!name) {
+        return '';
+    }
+
+    return targetSystem?.alias ? `${targetSystem.alias} (${name})` : name;
+});
+
 const emit = defineEmits<{
     confirm: [];
     cancel: [];
@@ -44,7 +53,7 @@ function handleOpenChange(isOpen: boolean) {
                 <DialogTitle>System Mismatch Warning</DialogTitle>
                 <DialogDescription>
                     You are pasting signatures into
-                    <strong class="text-foreground">{{ targetSystem.solarsystem.name }}</strong
+                    <strong class="text-foreground">{{ targetSystemLabel }}</strong
                     >, but your tracked character is currently in <strong class="text-foreground">{{ currentSolarsystemName }}</strong
                     >.
                 </DialogDescription>

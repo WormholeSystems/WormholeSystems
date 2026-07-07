@@ -30,6 +30,16 @@ const resolvedSelectedSolarsystem = computed(() => {
     };
 });
 
+const systemLabel = computed(() => {
+    const resolved = resolvedSelectedSolarsystem.value;
+    const name = resolved?.solarsystem?.name;
+    if (!name) {
+        return null;
+    }
+
+    return resolved.alias ? `${resolved.alias} (${name})` : name;
+});
+
 const action = computed(() => {
     if (audit.event === 'created') {
         return 'added';
@@ -77,7 +87,7 @@ const updated_values = computed(() => {
     }
 
     if (column === 'pinned') {
-        const name = resolvedSelectedSolarsystem.value?.solarsystem?.name ?? 'the system';
+        const name = systemLabel.value ?? 'the system';
         return audit.new_values.pinned ? `pinned ${name}` : `unpinned ${name}`;
     }
 
@@ -141,13 +151,13 @@ const actor = computed(() => {
         <div v-else class="flex size-5 shrink-0 items-center justify-center rounded bg-muted text-[10px] text-muted-foreground">S</div>
 
         <span class="flex-1 truncate text-xs text-muted-foreground" v-if="action === 'added'">
-            <span class="text-foreground">{{ actor }}</span> added {{ resolvedSelectedSolarsystem?.solarsystem?.name ?? 'system' }}
+            <span class="text-foreground">{{ actor }}</span> added {{ systemLabel ?? 'system' }}
         </span>
         <span class="flex-1 truncate text-xs text-muted-foreground" v-else-if="action === 'removed'">
-            <span class="text-foreground">{{ actor }}</span> removed {{ resolvedSelectedSolarsystem?.solarsystem?.name ?? 'system' }}
+            <span class="text-foreground">{{ actor }}</span> removed {{ systemLabel ?? 'system' }}
         </span>
         <span class="flex-1 truncate text-xs text-muted-foreground" v-else-if="action === 'moved'">
-            <span class="text-foreground">{{ actor }}</span> moved {{ resolvedSelectedSolarsystem?.solarsystem?.name ?? 'system' }}
+            <span class="text-foreground">{{ actor }}</span> moved {{ systemLabel ?? 'system' }}
         </span>
         <span class="flex-1 truncate text-xs text-muted-foreground" v-else-if="action === 'updated'">
             <span class="text-foreground">{{ actor }}</span> {{ updated_values }}

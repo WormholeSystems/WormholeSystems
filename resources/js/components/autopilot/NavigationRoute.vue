@@ -131,6 +131,16 @@ function handleClearIgnoreList() {
     });
 }
 
+function systemLabel(solarsystem?: TStaticSolarsystem): string {
+    if (!solarsystem) {
+        return '';
+    }
+
+    const alias = aliases.value.get(solarsystem.id);
+
+    return alias ? `${alias} (${solarsystem.name})` : solarsystem.name;
+}
+
 function clearFrom() {
     clearFromSystem();
 }
@@ -150,7 +160,8 @@ function clearTo() {
                         <span class="font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">From</span>
                         <SolarsystemClass :solarsystem_class="fromSystem.class" class="shrink-0 text-xs" />
                         <span class="min-w-0 flex-1 truncate text-sm">
-                            {{ fromSystem.name }}
+                            <span v-if="aliases.get(fromSystem.id)" class="mr-1">{{ aliases.get(fromSystem.id) }}</span>
+                            <span :class="{ 'text-muted-foreground': aliases.get(fromSystem.id) }">{{ fromSystem.name }}</span>
                             <span class="text-xs text-muted-foreground">· {{ fromSystem.region?.name }}</span>
                         </span>
                         <SolarsystemSovereignty :sovereignty="fromSystem.sovereignty" :solarsystem-id="fromSystem.id" class="shrink-0">
@@ -184,7 +195,14 @@ function clearTo() {
                 @click="handleFromSystemSelect(selected_map_solarsystem.solarsystem)"
             >
                 <SolarsystemClass :solarsystem_class="selected_map_solarsystem.solarsystem.class" class="shrink-0 text-[10px]" />
-                <span>{{ selected_map_solarsystem.solarsystem.name }}</span>
+                <span>
+                    <span v-if="aliases.get(selected_map_solarsystem.solarsystem.id)" class="mr-1">{{
+                        aliases.get(selected_map_solarsystem.solarsystem.id)
+                    }}</span>
+                    <span :class="{ 'text-muted-foreground': aliases.get(selected_map_solarsystem.solarsystem.id) }">{{
+                        selected_map_solarsystem.solarsystem.name
+                    }}</span>
+                </span>
                 <MapPin class="size-3 shrink-0 text-muted-foreground" />
             </button>
             <button
@@ -193,7 +211,10 @@ function clearTo() {
                 @click="handleFromSystemSelect(activeCharacterSystem)"
             >
                 <SolarsystemClass :solarsystem_class="activeCharacterSystem.class" class="shrink-0 text-[10px]" />
-                <span>{{ activeCharacterSystem.name }}</span>
+                <span>
+                    <span v-if="aliases.get(activeCharacterSystem.id)" class="mr-1">{{ aliases.get(activeCharacterSystem.id) }}</span>
+                    <span :class="{ 'text-muted-foreground': aliases.get(activeCharacterSystem.id) }">{{ activeCharacterSystem.name }}</span>
+                </span>
                 <Navigation class="size-3 shrink-0 text-muted-foreground" />
             </button>
             <button
@@ -203,7 +224,10 @@ function clearTo() {
                 @click="handleFromSystemSelect(dest.solarsystem)"
             >
                 <SolarsystemClass :solarsystem_class="dest.solarsystem.class" class="shrink-0 text-[10px]" />
-                <span>{{ dest.solarsystem.name }}</span>
+                <span>
+                    <span v-if="aliases.get(dest.solarsystem.id)" class="mr-1">{{ aliases.get(dest.solarsystem.id) }}</span>
+                    <span :class="{ 'text-muted-foreground': aliases.get(dest.solarsystem.id) }">{{ dest.solarsystem.name }}</span>
+                </span>
             </button>
         </div>
     </div>
@@ -225,7 +249,8 @@ function clearTo() {
                         <span class="font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">To</span>
                         <SolarsystemClass :solarsystem_class="toSystem.class" class="shrink-0 text-xs" />
                         <span class="min-w-0 flex-1 truncate text-sm">
-                            {{ toSystem.name }}
+                            <span v-if="aliases.get(toSystem.id)" class="mr-1">{{ aliases.get(toSystem.id) }}</span>
+                            <span :class="{ 'text-muted-foreground': aliases.get(toSystem.id) }">{{ toSystem.name }}</span>
                             <span class="text-xs text-muted-foreground">· {{ toSystem.region?.name }}</span>
                         </span>
                         <SolarsystemSovereignty :sovereignty="toSystem.sovereignty" :solarsystem-id="toSystem.id" class="shrink-0">
@@ -259,7 +284,14 @@ function clearTo() {
                 @click="handleToSystemSelect(selected_map_solarsystem.solarsystem)"
             >
                 <SolarsystemClass :solarsystem_class="selected_map_solarsystem.solarsystem.class" class="shrink-0 text-[10px]" />
-                <span>{{ selected_map_solarsystem.solarsystem.name }}</span>
+                <span>
+                    <span v-if="aliases.get(selected_map_solarsystem.solarsystem.id)" class="mr-1">{{
+                        aliases.get(selected_map_solarsystem.solarsystem.id)
+                    }}</span>
+                    <span :class="{ 'text-muted-foreground': aliases.get(selected_map_solarsystem.solarsystem.id) }">{{
+                        selected_map_solarsystem.solarsystem.name
+                    }}</span>
+                </span>
                 <MapPin class="size-3 shrink-0 text-muted-foreground" />
             </button>
             <button
@@ -268,7 +300,10 @@ function clearTo() {
                 @click="handleToSystemSelect(activeCharacterSystem)"
             >
                 <SolarsystemClass :solarsystem_class="activeCharacterSystem.class" class="shrink-0 text-[10px]" />
-                <span>{{ activeCharacterSystem.name }}</span>
+                <span>
+                    <span v-if="aliases.get(activeCharacterSystem.id)" class="mr-1">{{ aliases.get(activeCharacterSystem.id) }}</span>
+                    <span :class="{ 'text-muted-foreground': aliases.get(activeCharacterSystem.id) }">{{ activeCharacterSystem.name }}</span>
+                </span>
                 <Navigation class="size-3 shrink-0 text-muted-foreground" />
             </button>
             <button
@@ -278,7 +313,10 @@ function clearTo() {
                 @click="handleToSystemSelect(dest.solarsystem)"
             >
                 <SolarsystemClass :solarsystem_class="dest.solarsystem.class" class="shrink-0 text-[10px]" />
-                <span>{{ dest.solarsystem.name }}</span>
+                <span>
+                    <span v-if="aliases.get(dest.solarsystem.id)" class="mr-1">{{ aliases.get(dest.solarsystem.id) }}</span>
+                    <span :class="{ 'text-muted-foreground': aliases.get(dest.solarsystem.id) }">{{ dest.solarsystem.name }}</span>
+                </span>
             </button>
         </div>
     </div>
@@ -304,7 +342,8 @@ function clearTo() {
                 <SolarsystemClass :solarsystem_class="entry.solarsystem.class" class="justify-self-center" />
 
                 <span class="min-w-0 truncate text-xs">
-                    {{ entry.solarsystem.name }}
+                    <span v-if="aliases.get(entry.solarsystem.id)" class="mr-1">{{ aliases.get(entry.solarsystem.id) }}</span>
+                    <span :class="{ 'text-muted-foreground': aliases.get(entry.solarsystem.id) }">{{ entry.solarsystem.name }}</span>
                     <span class="text-[10px] text-muted-foreground">· {{ entry.solarsystem.region?.name }}</span>
                 </span>
 
@@ -334,8 +373,8 @@ function clearTo() {
                         <TooltipContent>
                             {{
                                 enrichedRoute[index]?.connection_type === 'evescout'
-                                    ? `EVE Scout to ${enrichedRoute[index + 1]?.solarsystem.name}`
-                                    : `Take wormhole to ${enrichedRoute[index + 1]?.solarsystem.name}`
+                                    ? `EVE Scout to ${systemLabel(enrichedRoute[index + 1]?.solarsystem)}`
+                                    : `Take wormhole to ${systemLabel(enrichedRoute[index + 1]?.solarsystem)}`
                             }}
                         </TooltipContent>
                     </Tooltip>

@@ -27,6 +27,15 @@ const props = defineProps<{
 const page = useShowMap();
 const search = ref('');
 
+const originSystemLabel = computed(() => {
+    const origin = props.originMapSolarsystem;
+    if (!origin) {
+        return '';
+    }
+
+    return origin.alias ? `${origin.alias} (${origin.solarsystem.name})` : origin.solarsystem.name;
+});
+
 const filtered = computed(() => {
     if (!props.signatures) return [];
     if (!search.value) return props.signatures;
@@ -123,7 +132,7 @@ function formatDate(date: string) {
             <DialogHeader>
                 <DialogTitle>Which signature did you jump?</DialogTitle>
                 <DialogDescription>
-                    You jumped from <strong>{{ originMapSolarsystem.solarsystem.name }}</strong> to <strong>{{ targetSolarsystemName }}</strong
+                    You jumped from <strong>{{ originSystemLabel }}</strong> to <strong>{{ targetSolarsystemName }}</strong
                     >. Please select which wormhole connection you used.
                 </DialogDescription>
             </DialogHeader>

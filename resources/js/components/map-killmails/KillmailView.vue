@@ -112,8 +112,10 @@ const finalBlow = computed(() => killmail.data.attackers.find((a) => a.final_blo
         <!-- Location -->
         <SolarsystemClass :solarsystem_class="solarsystem.class" class="justify-self-center" />
 
-        <span v-if="alias" class="truncate font-mono text-xs font-medium">{{ alias }}</span>
-        <span v-else class="truncate font-mono text-xs">{{ solarsystem.name }}</span>
+        <span class="truncate font-mono text-xs">
+            <span v-if="alias" class="font-medium">{{ alias }} </span>
+            <span :class="{ 'text-muted-foreground': alias }">{{ solarsystem.name }}</span>
+        </span>
 
         <span class="truncate text-[10px] text-muted-foreground">{{ solarsystem.region?.name }}</span>
 

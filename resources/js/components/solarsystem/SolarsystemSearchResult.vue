@@ -2,10 +2,10 @@
 import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue';
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import SolarsystemEffect from '@/components/solarsystem/SolarsystemEffect.vue';
-import type { TStaticSolarsystem } from '@/types/static-data';
+import type { TResolvedSolarsystem } from '@/pages/maps';
 
 const { solarsystem, alias = null } = defineProps<{
-    solarsystem: TStaticSolarsystem;
+    solarsystem: TResolvedSolarsystem;
     alias?: string | null;
 }>();
 </script>
@@ -17,8 +17,8 @@ const { solarsystem, alias = null } = defineProps<{
             <SolarsystemClass :solarsystem_class="solarsystem.class" />
         </span>
         <span class="min-w-0 truncate">
-            <span class="font-medium text-foreground">{{ solarsystem.name }}</span>
-            <span v-if="alias" class="text-muted-foreground"> ({{ alias }})</span>
+            <span v-if="alias" class="mr-1 font-medium text-foreground">{{ alias }}</span>
+            <span class="font-medium" :class="alias ? 'text-muted-foreground' : 'text-foreground'">{{ solarsystem.name }}</span>
         </span>
         <span class="min-w-0 truncate text-muted-foreground">{{ solarsystem.region?.name }}</span>
         <span class="flex justify-center">

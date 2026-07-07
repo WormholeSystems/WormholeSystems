@@ -5,12 +5,19 @@ import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue'
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import { Button } from '@/components/ui/button';
 import { usePath } from '@/composables/usePath';
+import { useSolarsystemAliases } from '@/composables/useSolarsystemAliases';
+import { useMapSolarsystems } from '@/map/api';
 import type { TResolvedMapRouteSolarsystem } from '@/pages/maps';
 import { vElementHover } from '@vueuse/components';
+import { computed } from 'vue';
 
 const { destination } = defineProps<{
     destination: TResolvedMapRouteSolarsystem;
 }>();
+
+const { map_solarsystems } = useMapSolarsystems();
+const { getAlias } = useSolarsystemAliases(map_solarsystems);
+const alias = computed(() => getAlias(destination.solarsystem.id));
 
 const { setPath } = usePath();
 
@@ -32,7 +39,10 @@ function onHover(hovered: boolean) {
         >
             <SolarsystemClass :solarsystem_class="destination.solarsystem.class" />
 
-            <span class="truncate text-xs font-medium">{{ destination.solarsystem.name }}</span>
+            <span class="truncate text-xs font-medium">
+                <span v-if="alias" class="mr-1">{{ alias }}</span>
+                <span :class="{ 'text-muted-foreground': alias }">{{ destination.solarsystem.name }}</span>
+            </span>
 
             <SolarsystemSovereignty :sovereignty="destination.solarsystem.sovereignty" :solarsystem-id="destination.solarsystem.id" class="size-3" />
 

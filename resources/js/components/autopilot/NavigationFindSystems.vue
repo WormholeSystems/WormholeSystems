@@ -171,7 +171,8 @@ function clearSystem() {
                     <div class="flex h-8 items-center gap-1.5 rounded-md bg-muted/30 px-2">
                         <SolarsystemClass :solarsystem_class="fromSystem.class" class="shrink-0 text-xs" />
                         <span class="min-w-0 flex-1 truncate text-sm">
-                            {{ fromSystem.name }}
+                            <span v-if="aliases.get(fromSystem.id)" class="mr-1">{{ aliases.get(fromSystem.id) }}</span>
+                            <span :class="{ 'text-muted-foreground': aliases.get(fromSystem.id) }">{{ fromSystem.name }}</span>
                             <span class="text-[10px] text-muted-foreground">· {{ fromSystem.region?.name }}</span>
                         </span>
                         <button class="shrink-0 text-muted-foreground/40 hover:text-foreground" @click="clearSystem">
@@ -199,7 +200,14 @@ function clearSystem() {
                 @click="handleSystemSelect(selected_map_solarsystem.solarsystem)"
             >
                 <SolarsystemClass :solarsystem_class="selected_map_solarsystem.solarsystem.class" class="shrink-0 text-[10px]" />
-                <span>{{ selected_map_solarsystem.solarsystem.name }}</span>
+                <span>
+                    <span v-if="aliases.get(selected_map_solarsystem.solarsystem.id)" class="mr-1">{{
+                        aliases.get(selected_map_solarsystem.solarsystem.id)
+                    }}</span>
+                    <span :class="{ 'text-muted-foreground': aliases.get(selected_map_solarsystem.solarsystem.id) }">{{
+                        selected_map_solarsystem.solarsystem.name
+                    }}</span>
+                </span>
                 <MapPin class="size-3 shrink-0 text-muted-foreground" />
             </button>
             <button
@@ -208,7 +216,10 @@ function clearSystem() {
                 @click="handleSystemSelect(activeCharacterSystem)"
             >
                 <SolarsystemClass :solarsystem_class="activeCharacterSystem.class" class="shrink-0 text-[10px]" />
-                <span>{{ activeCharacterSystem.name }}</span>
+                <span>
+                    <span v-if="aliases.get(activeCharacterSystem.id)" class="mr-1">{{ aliases.get(activeCharacterSystem.id) }}</span>
+                    <span :class="{ 'text-muted-foreground': aliases.get(activeCharacterSystem.id) }">{{ activeCharacterSystem.name }}</span>
+                </span>
                 <Navigation class="size-3 shrink-0 text-muted-foreground" />
             </button>
             <button
@@ -218,7 +229,10 @@ function clearSystem() {
                 @click="handleSystemSelect(dest.solarsystem)"
             >
                 <SolarsystemClass :solarsystem_class="dest.solarsystem.class" class="shrink-0 text-[10px]" />
-                <span>{{ dest.solarsystem.name }}</span>
+                <span>
+                    <span v-if="aliases.get(dest.solarsystem.id)" class="mr-1">{{ aliases.get(dest.solarsystem.id) }}</span>
+                    <span :class="{ 'text-muted-foreground': aliases.get(dest.solarsystem.id) }">{{ dest.solarsystem.name }}</span>
+                </span>
             </button>
         </div>
     </div>
@@ -288,7 +302,10 @@ function clearSystem() {
             <div class="col-span-full grid grid-cols-subgrid items-center border-b border-border/30 px-3 py-1.5 hover:bg-muted/30">
                 <SolarsystemClass :solarsystem_class="result.solarsystem.class" class="justify-self-center" />
 
-                <span class="truncate text-xs">{{ result.solarsystem.name }}</span>
+                <span class="truncate text-xs">
+                    <span v-if="aliases.get(result.solarsystem.id)" class="mr-1">{{ aliases.get(result.solarsystem.id) }}</span>
+                    <span :class="{ 'text-muted-foreground': aliases.get(result.solarsystem.id) }">{{ result.solarsystem.name }}</span>
+                </span>
 
                 <span class="truncate text-[10px] text-muted-foreground">{{ result.solarsystem.region?.name ?? '' }}</span>
 

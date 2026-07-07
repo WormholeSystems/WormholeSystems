@@ -8,14 +8,21 @@ import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import SolarsystemEffect from '@/components/solarsystem/SolarsystemEffect.vue';
 import { usePath } from '@/composables/usePath';
 import usePermission from '@/composables/usePermission';
+import { useSolarsystemAliases } from '@/composables/useSolarsystemAliases';
+import { useMapSolarsystems } from '@/map/api';
 import type { TResolvedMapRouteSolarsystem } from '@/pages/maps';
 import MapRouteSolarsystems from '@/routes/map-route-solarsystems';
 import { router } from '@inertiajs/vue3';
 import { vElementHover } from '@vueuse/components';
+import { computed } from 'vue';
 
 const { map_route } = defineProps<{
     map_route: TResolvedMapRouteSolarsystem;
 }>();
+
+const { map_solarsystems } = useMapSolarsystems();
+const { getAlias } = useSolarsystemAliases(map_solarsystems);
+const alias = computed(() => getAlias(map_route.solarsystem.id));
 
 const { setPath } = usePath();
 
@@ -61,7 +68,10 @@ function removeRoute() {
         >
             <SolarsystemClass :solarsystem_class="map_route.solarsystem.class" class="justify-self-center" />
 
-            <span class="truncate text-xs">{{ map_route.solarsystem.name }}</span>
+            <span class="truncate text-xs">
+                <span v-if="alias" class="mr-1">{{ alias }}</span>
+                <span :class="{ 'text-muted-foreground': alias }">{{ map_route.solarsystem.name }}</span>
+            </span>
 
             <span class="truncate text-[10px] text-muted-foreground">{{ map_route.solarsystem.region?.name || '' }}</span>
 
