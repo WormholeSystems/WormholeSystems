@@ -68,6 +68,8 @@ const filteredSignatures = computed(() =>
     }),
 );
 
+const hiddenSignaturesCount = computed(() => signatures.value.length - filteredSignatures.value.length);
+
 const { sortPreferences, sorted, updateSortPreferences } = useSortableSignatures(filteredSignatures);
 
 const connected_connections = computed(() => {
@@ -113,6 +115,7 @@ function createNewSignature() {
         <MapPanelHeader>
             Signatures
             <span v-if="filteredSignatures.length" class="ml-1 text-amber-400">{{ filteredSignatures.length }}</span>
+            <span v-if="hiddenSignaturesCount > 0" class="ml-1 text-muted-foreground/70">{{ hiddenSignaturesCount }} hidden</span>
             <template #actions>
                 <ToggleGroup v-model="activeCategoryFilters" type="multiple" size="sm" variant="outline">
                     <Tooltip v-for="option in categoryFilterOptions" :key="option.value">
@@ -204,7 +207,9 @@ function createNewSignature() {
                 />
             </template>
             <div v-else class="flex h-full flex-col items-center justify-center gap-2 p-4">
-                <p class="font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">No signatures</p>
+                <p class="font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">
+                    {{ hiddenSignaturesCount > 0 ? `${hiddenSignaturesCount} hidden by filters` : 'No signatures' }}
+                </p>
             </div>
         </MapPanelContent>
     </MapPanel>
