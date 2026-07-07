@@ -1,45 +1,49 @@
-import { useMap } from '@/composables/useMap';
 import { useSelectedMapSolarsystem } from '@/composables/useSelectedMapSolarsystem';
 import type { TProcessedConnection } from '@/map/api';
+import { useMapSolarsystems } from '@/map/api';
 import { TMapSolarsystem } from '@/pages/maps';
 import { computed } from 'vue';
 
 export function useSignatures() {
-    const map = useMap();
     const selected_map_solarsystem = useSelectedMapSolarsystem();
+    const { map_solarsystems: live_map_solarsystems } = useMapSolarsystems();
 
     const solarsystem_class = computed(() => selected_map_solarsystem.value?.solarsystem.class);
     const solarsystem_security = computed(() => selected_map_solarsystem.value?.solarsystem?.security);
 
+    /**
+     * Keyed off the realtime-patched store, not the `map` page prop: broadcast events
+     * upsert new systems into the store only, so the prop can be stale when the selected
+     * system's connections are reloaded and already reference a freshly added system.
+     */
     const map_solarsystems = computed(() => {
-        return map.value.map_solarsystems?.reduce(
-            (acc, system) => {
-                acc[system.id] = system;
-                return acc;
-            },
-            {} as Record<number, TMapSolarsystem>,
-        );
+        return new Map<number, TMapSolarsystem>(live_map_solarsystems.value.map((system) => [system.id, system]));
     });
 
     const connections = computed(() => {
-        return selected_map_solarsystem
-            .value!.map_connections!.map((connection) => {
+        const selected = selected_map_solarsystem.value;
+
+        if (!selected?.map_connections) {
+            return [];
+        }
+
+        return selected.map_connections
+            .map((connection): TProcessedConnection | null => {
                 const other_id =
-                    connection.from_map_solarsystem_id === selected_map_solarsystem.value?.id
-                        ? connection.to_map_solarsystem_id
-                        : connection.from_map_solarsystem_id;
-                const other_system = map_solarsystems.value![other_id];
+                    connection.from_map_solarsystem_id === selected.id ? connection.to_map_solarsystem_id : connection.from_map_solarsystem_id;
+                const other_system = map_solarsystems.value.get(other_id);
 
                 if (!other_system) {
-                    throw new Error(`Connection to unknown system with ID ${other_id}`);
+                    return null;
                 }
 
                 return {
                     ...connection,
-                    source: selected_map_solarsystem.value!,
+                    source: selected,
                     target: other_system,
-                } satisfies TProcessedConnection;
+                };
             })
+            .filter((connection): connection is TProcessedConnection => connection !== null)
             .toSorted((a, b) => {
                 if (a.target.alias && b.target.alias) {
                     return a.target.alias.localeCompare(b.target.alias);
