@@ -51,7 +51,7 @@ it('removes a system via its context menu and keeps the persistent details', fun
         ->and(MapSolarsystemDetails::where('map_id', $map->id)->where('solarsystem_id', JITA)->exists())->toBeTrue();
 });
 
-it('adds a system to the map via the status bar search', function () {
+it('adds a system to the map via the command palette', function () {
     $map = Map::factory()->create();
     $this->actAsMapOwner($map);
     makeSolarsystem(JITA);
@@ -59,6 +59,7 @@ it('adds a system to the map via the status bar search', function () {
     expect(MapSolarsystem::where('map_id', $map->id)->count())->toBe(0);
 
     visit(route('maps.show', $map))
+        ->click('Search...')
         ->type('[data-slot="command-input"]', 'Jita')
         ->click('Jita')
         ->assertSeeIn('.bg-grid', 'Jita');

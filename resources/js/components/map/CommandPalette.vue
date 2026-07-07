@@ -192,6 +192,7 @@ function handleThreatSystemSelect(system: TThreatSystemMatch) {
                         <ComboboxInput
                             v-model="search"
                             auto-focus
+                            data-slot="command-input"
                             placeholder="Search systems, aliases, occupiers, threats..."
                             class="h-11 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
                             @keydown.esc.prevent="open = false"
