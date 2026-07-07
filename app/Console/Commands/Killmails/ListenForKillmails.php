@@ -140,6 +140,11 @@ final class ListenForKillmails extends AppCommand
         $this->ensureOrganisationExistsAction->ensureCorporationExists($killmail->getVictimCorporationId());
         $this->ensureOrganisationExistsAction->ensureAllianceExists($killmail->getVictimAllianceId());
 
+        // zKillboard replays killmails on reconnect; alerts may only fire on first ingest.
+        if (! $stored->wasRecentlyCreated) {
+            return;
+        }
+
         $this->notifyMaps($stored);
 
         EvaluateKillmailWebhooksJob::dispatch($stored->id);
