@@ -93,6 +93,7 @@ final class Alliance extends Model
     {
         return [
             'date_founded' => 'datetime',
+            'unresolvable_at' => 'immutable_datetime',
         ];
     }
 }

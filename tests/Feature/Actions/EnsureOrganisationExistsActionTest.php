@@ -141,3 +141,42 @@ it('handles ESI failures without throwing for alliance', function () {
 
     expect(Alliance::query()->find($allianceId))->toBeNull();
 });
+
+it('refreshes a corporation that exists but has no name yet', function () {
+    Corporation::factory()->create(['id' => 98000100, 'name' => null]);
+
+    $esiCorporation = new NicolasKion\Esi\DTO\Corporation(
+        alliance_id: null,
+        ceo_id: 90000001,
+        creator_id: 90000002,
+        date_founded: '2003-01-01T00:00:00Z',
+        description: 'Test corporation',
+        faction_id: null,
+        home_station_id: null,
+        member_count: 10,
+        name: 'Filled In Corp',
+        shares: 1000,
+        tax_rate: 0.1,
+        ticker: 'FILL',
+        url: 'https://example.com',
+        war_eligible: true,
+    );
+
+    $esi = $this->mock(Esi::class);
+    $esi->shouldReceive('getCorporation')->with(98000100)->once()->andReturn(new EsiResult(data: $esiCorporation));
+
+    app(EnsureOrganisationExistsAction::class)->ensureCorporationExists(98000100);
+
+    expect(Corporation::query()->find(98000100))
+        ->name->toBe('Filled In Corp')
+        ->creator_id->toBe(90000002);
+});
+
+it('skips corporations already marked unresolvable', function () {
+    Corporation::factory()->create(['id' => 98000101, 'name' => null, 'unresolvable_at' => now()]);
+
+    $esi = $this->mock(Esi::class);
+    $esi->shouldNotReceive('getCorporation');
+
+    app(EnsureOrganisationExistsAction::class)->ensureCorporationExists(98000101);
+});

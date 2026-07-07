@@ -22,20 +22,33 @@ final readonly class EnsureOrganisationExistsAction
             return;
         }
 
-        $exists = Cache::memo()->remember(
-            key: "corporation_exists_{$corporation_id}",
+        $resolved = Cache::memo()->remember(
+            key: "corporation_resolved_{$corporation_id}",
             ttl: null,
-            callback: fn (): bool => Corporation::query()->where('id', $corporation_id)->exists(),
+            callback: fn (): bool => Corporation::query()
+                ->whereKey($corporation_id)
+                ->where(fn ($query) => $query->whereNotNull('name')->orWhereNotNull('unresolvable_at'))
+                ->exists(),
         );
 
-        if ($exists) {
+        if ($resolved) {
             return;
         }
 
+        $this->refreshCorporation($corporation_id);
+    }
+
+    /** A 404 marks the row unresolvable so the periodic name sweep stops retrying it. */
+    public function refreshCorporation(int $corporation_id): void
+    {
         try {
             $response = $this->esi->getCorporation($corporation_id);
 
             if ($response->failed()) {
+                if ($response->error?->code === 404) {
+                    Corporation::query()->whereKey($corporation_id)->update(['unresolvable_at' => now()]);
+                }
+
                 Log::info(sprintf('Failed to fetch corporation with ID %d', $corporation_id));
 
                 return;
@@ -72,10 +85,11 @@ final readonly class EnsureOrganisationExistsAction
                     'date_founded' => $corp_data->date_founded,
                     'creator_id' => $corp_data->creator_id,
                     'last_updated' => now(),
+                    'unresolvable_at' => null,
                 ]
             );
 
-            Cache::memo()->put("corporation_exists_{$corporation_id}", true);
+            Cache::memo()->put("corporation_resolved_{$corporation_id}", true);
         } catch (Throwable $e) {
             Log::error(sprintf('Error ensuring corporation %d exists: %s', $corporation_id, $e->getMessage()));
         }
@@ -87,20 +101,33 @@ final readonly class EnsureOrganisationExistsAction
             return;
         }
 
-        $exists = Cache::memo()->remember(
-            key: "alliance_exists_{$alliance_id}",
+        $resolved = Cache::memo()->remember(
+            key: "alliance_resolved_{$alliance_id}",
             ttl: null,
-            callback: fn (): bool => Alliance::query()->where('id', $alliance_id)->exists(),
+            callback: fn (): bool => Alliance::query()
+                ->whereKey($alliance_id)
+                ->where(fn ($query) => $query->whereNotNull('name')->orWhereNotNull('unresolvable_at'))
+                ->exists(),
         );
 
-        if ($exists) {
+        if ($resolved) {
             return;
         }
 
+        $this->refreshAlliance($alliance_id);
+    }
+
+    /** A 404 marks the row unresolvable so the periodic name sweep stops retrying it. */
+    public function refreshAlliance(int $alliance_id): void
+    {
         try {
             $response = $this->esi->getAlliance($alliance_id);
 
             if ($response->failed()) {
+                if ($response->error?->code === 404) {
+                    Alliance::query()->whereKey($alliance_id)->update(['unresolvable_at' => now()]);
+                }
+
                 Log::info(sprintf('Failed to fetch alliance with ID %d', $alliance_id));
 
                 return;
@@ -131,10 +158,11 @@ final readonly class EnsureOrganisationExistsAction
                     'creator_corporation_id' => $alliance_data->creator_corporation_id,
                     'date_founded' => $alliance_data->date_founded,
                     'last_updated' => now(),
+                    'unresolvable_at' => null,
                 ]
             );
 
-            Cache::memo()->put("alliance_exists_{$alliance_id}", true);
+            Cache::memo()->put("alliance_resolved_{$alliance_id}", true);
         } catch (Throwable $e) {
             Log::error(sprintf('Error ensuring alliance %d exists: %s', $alliance_id, $e->getMessage()));
         }

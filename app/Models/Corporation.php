@@ -113,6 +113,7 @@ final class Corporation extends Model
             'date_founded' => 'immutable_datetime',
             'war_eligible' => 'boolean',
             'npc' => 'boolean',
+            'unresolvable_at' => 'immutable_datetime',
         ];
     }
 }
