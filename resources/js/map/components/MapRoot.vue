@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useLayout } from '@/composables/useLayout';
 import { useMapUserSettings } from '@/composables/useMapUserSettings';
 import { usePath } from '@/composables/usePath';
@@ -205,16 +204,6 @@ whenever(Delete, () => {
         </template>
         <template #overlays>
             <MapRallyBadge />
-            <Tooltip v-if="store.isTreeLayout.value" :delay-duration="300">
-                <TooltipTrigger as-child>
-                    <span
-                        class="pointer-events-auto absolute bottom-3 left-3 z-20 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold tracking-wider text-white uppercase shadow-sm select-none dark:bg-amber-600"
-                    >
-                        Beta
-                    </span>
-                </TooltipTrigger>
-                <TooltipContent>Automatic placement is experimental and still a work in progress.</TooltipContent>
-            </Tooltip>
             <MapOptions />
         </template>
     </MapViewport>

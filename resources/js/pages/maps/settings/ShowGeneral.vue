@@ -38,9 +38,9 @@ function deleteMap() {
     router.delete(destroy(map.slug));
 }
 
-const placementOptions: { value: 'manual' | 'tree'; label: string; hint: string; icon: LucideIcon; beta?: boolean }[] = [
+const placementOptions: { value: 'manual' | 'tree'; label: string; hint: string; icon: LucideIcon }[] = [
     { value: 'manual', label: 'Custom', hint: 'Place systems anywhere yourself', icon: Waypoints },
-    { value: 'tree', label: 'Automatic', hint: 'Systems arrange into branches from the pinned ones', icon: Workflow, beta: true },
+    { value: 'tree', label: 'Automatic', hint: 'Systems arrange into branches from the pinned ones', icon: Workflow },
 ];
 
 function setPlacement(layout: 'manual' | 'tree') {
@@ -171,12 +171,6 @@ function copyShareLink() {
                             <span>
                                 <span class="flex items-center gap-1.5 text-sm font-medium">
                                     {{ option.label }}
-                                    <span
-                                        v-if="option.beta"
-                                        class="rounded-full bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-white uppercase dark:bg-amber-600"
-                                    >
-                                        Beta
-                                    </span>
                                 </span>
                                 <span class="block text-xs text-muted-foreground">{{ option.hint }}</span>
                             </span>
