@@ -18,8 +18,6 @@ use NicolasKion\Esi\DTO\Ship;
 use NicolasKion\Esi\Esi;
 use Throwable;
 
-use function assert;
-
 final class UpdateCharacterLocation implements ShouldQueue
 {
     use Batchable, Queueable;
@@ -64,9 +62,6 @@ final class UpdateCharacterLocation implements ShouldQueue
 
         $location = $location_request->data;
         $ship = $ship_request->data;
-
-        assert($location instanceof Location);
-        assert($ship instanceof Ship);
 
         $previous_solarsystem_id = $characterStatus->solarsystem_id;
 
