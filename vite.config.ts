@@ -15,9 +15,14 @@ function generateStaticDataPlugin() {
         if (process.env.SKIP_STATIC_DATA_GENERATION) {
             return;
         }
-        execSync('php artisan generate:static-data --no-interaction', {
-            stdio: 'inherit',
-        });
+        try {
+            execSync('php artisan generate:static-data --no-interaction', {
+                stdio: 'inherit',
+            });
+        } catch {
+            // eslint-disable-next-line no-console
+            console.error('Failed to generate static data! Make sure you downloaded the data using "php artisan sde:download"')
+        }
     };
 
     return {
