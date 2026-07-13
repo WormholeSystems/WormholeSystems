@@ -1,17 +1,17 @@
 import { useMapStore } from '@/map/store/mapStore';
 import MapSelection from '@/routes/map-selection';
 import { router } from '@inertiajs/vue3';
-import { getClearableMapSolarsystems } from './clearableMapSolarsystems';
+import { getOrphanedMapSolarsystems } from './orphanedMapSolarsystems';
 
-export function deleteAllMapSolarsystems(): void {
+export function cleanMapSolarsystems(): void {
     const store = useMapStore();
-    const clearable = getClearableMapSolarsystems(store);
+    const orphaned = getOrphanedMapSolarsystems(store);
 
-    if (clearable.length === 0) return;
+    if (orphaned.length === 0) return;
 
     router.delete(MapSelection.destroy().url, {
         data: {
-            map_solarsystem_ids: clearable.map((system) => system.id),
+            map_solarsystem_ids: orphaned.map((system) => system.id),
         },
         preserveState: true,
         preserveScroll: true,

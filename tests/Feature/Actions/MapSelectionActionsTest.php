@@ -8,6 +8,7 @@ use App\Models\Map;
 use App\Models\MapConnection;
 use App\Models\MapSolarsystem;
 use App\Models\MapSolarsystemDetails;
+use App\Rules\NotHomeSystem;
 
 it('repositions the selected systems', function () {
     $map = Map::factory()->create();
@@ -38,4 +39,29 @@ it('removes the selected systems and cascades their connections while keeping de
     expect(MapSolarsystem::whereIn('id', [$a->id, $b->id])->count())->toBe(0)
         ->and(MapConnection::find($connection->id))->toBeNull()
         ->and(MapSolarsystemDetails::where('map_id', $map->id)->count())->toBe(2);
+});
+
+it('rejects deleting the home system through the selection endpoint', function () {
+    $map = Map::factory()->create();
+    $home = placeMapSolarsystem($map, 30008004);
+    $map->update(['home_solarsystem_id' => $home->solarsystem_id]);
+
+    $failed = false;
+    new NotHomeSystem()->validate('map_solarsystem_ids.0', $home->id, function () use (&$failed): void {
+        $failed = true;
+    });
+
+    expect($failed)->toBeTrue();
+});
+
+it('allows deleting a system that is not the home system', function () {
+    $map = Map::factory()->create();
+    $system = placeMapSolarsystem($map, 30008005);
+
+    $failed = false;
+    new NotHomeSystem()->validate('map_solarsystem_ids.0', $system->id, function () use (&$failed): void {
+        $failed = true;
+    });
+
+    expect($failed)->toBeFalse();
 });
