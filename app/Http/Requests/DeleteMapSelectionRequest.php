@@ -8,6 +8,7 @@ use App\Builders\MapAccessBuilder;
 use App\Enums\Permission;
 use App\Models\Map;
 use App\Models\User;
+use App\Rules\NotHomeSystem;
 use App\Rules\NotPinned;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -39,7 +40,7 @@ final class DeleteMapSelectionRequest extends FormRequest
     {
         return [
             'map_solarsystem_ids' => ['required', 'array'],
-            'map_solarsystem_ids.*' => ['required', 'integer', 'exists:map_solarsystems,id', new NotPinned],
+            'map_solarsystem_ids.*' => ['required', 'integer', 'exists:map_solarsystems,id', new NotPinned, new NotHomeSystem],
         ];
     }
 }
