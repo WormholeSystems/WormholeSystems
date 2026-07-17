@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Actions\MapConnections;
 
+use App\Enums\ShipSize;
 use App\Models\MapConnection;
 use App\Models\MapSolarsystem;
+use App\Models\Wormhole;
 use App\Support\Broadcasting\MapBroadcaster;
 
 final readonly class CreateMapConnectionAction
@@ -20,6 +22,16 @@ final readonly class CreateMapConnectionAction
         $map_id = MapSolarsystem::query()
             ->where('id', $data['from_map_solarsystem_id'])
             ->value('map_id');
+
+        /* A known wormhole type dictates the ship size regardless of what the
+         * caller passed; the hole's physics are not a matter of preference.
+         */
+        if (isset($data['wormhole_id'])) {
+            $wormhole_ship_size = ShipSize::fromJumpMass(Wormhole::query()->whereKey($data['wormhole_id'])->value('maximum_jump_mass'));
+            if ($wormhole_ship_size instanceof ShipSize) {
+                $data['ship_size'] = $wormhole_ship_size;
+            }
+        }
 
         $map_connection = MapConnection::create([
             ...$data,

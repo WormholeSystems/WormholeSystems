@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Signatures;
 
+use App\Actions\MapConnections\SyncConnectionShipSizeAction;
 use App\Data\NewSignatureData;
 use App\Events\Signatures\SignatureCreatedEvent;
 use App\Models\MapSolarsystem;
@@ -16,7 +17,10 @@ use Throwable;
 
 final readonly class StoreSignatureAction
 {
-    public function __construct(private MapBroadcaster $mapBroadcaster) {}
+    public function __construct(
+        private MapBroadcaster $mapBroadcaster,
+        private SyncConnectionShipSizeAction $syncConnectionShipSizeAction,
+    ) {}
 
     /**
      * Store a signature. $without_signatures_changed_event lets bulk callers (paste) suppress
@@ -43,6 +47,8 @@ final readonly class StoreSignatureAction
                 'wormhole_id' => $wormhole_id,
                 'raw_type_name' => $raw_type_name,
             ]);
+
+            $this->syncConnectionShipSizeAction->handle($signature);
 
             broadcast(new SignatureCreatedEvent($mapSolarsystem->map_id))->toOthers();
 

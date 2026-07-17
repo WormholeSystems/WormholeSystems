@@ -220,3 +220,22 @@ it('does not share pinned maps the user can no longer access', function () {
 
     $this->get(route('home'))->assertInertia(fn ($page) => $page->has('pinned_maps', 0));
 });
+
+// --- Preselect first signature setting ---
+
+it('persists the preselect signature setting', function () {
+    $map = Map::factory()->create();
+    $user = User::factory()->ownsMap($map)->create();
+
+    actingAs($user);
+
+    $this->put(route('maps.user-settings.update', $map), [
+        'preselect_signature_enabled' => true,
+    ])->assertRedirect();
+
+    expect(MapUserSetting::query()
+        ->where('user_id', $user->id)
+        ->where('map_id', $map->id)
+        ->value('preselect_signature_enabled')
+    )->toBeTruthy();
+});

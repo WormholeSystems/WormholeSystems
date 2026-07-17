@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { SHIP_SIZE_LETTERS, shipSizeFromJumpMass } from '@/lib/shipSize';
 import { formatKilotons } from '@/lib/utils';
 import { computed } from 'vue';
 
@@ -14,13 +15,8 @@ const { wormhole } = defineProps<{
 const maximumLifetime = computed(() => wormhole.maximum_lifetime / 3600);
 
 const ship_size = computed(() => {
-    const jump_mass = wormhole.maximum_jump_mass / 1_000_000;
-
-    if (jump_mass >= 1_000) return 'XL';
-    if (jump_mass >= 62) return 'L';
-    if (jump_mass >= 5) return 'M';
-
-    return 'S';
+    const size = shipSizeFromJumpMass(wormhole.maximum_jump_mass);
+    return size ? SHIP_SIZE_LETTERS[size] : '—';
 });
 </script>
 

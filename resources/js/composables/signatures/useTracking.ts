@@ -6,10 +6,10 @@ import { useStaticData } from '@/composables/useStaticData';
 import { useTrackingSystems } from '@/composables/useTrackingSystems';
 import { suggestAlias } from '@/lib/alias';
 import { formatBookmarkName } from '@/lib/bookmark';
-import { signatureCanLeadToClass } from '@/lib/signatureCompatibility';
+import { groupSignatureOptions } from '@/lib/signatureCompatibility';
 import { isWormholeSystem } from '@/lib/solarsystem';
 import { createTracking, updateMapUserSettings, useMapSolarsystems } from '@/map/api';
-import { TLifetimeStatus, TMassStatus, TSignature } from '@/types/models';
+import { TLifetimeStatus, TMassStatus, TShipSize, TSignature } from '@/types/models';
 import { computed, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
 
@@ -31,9 +31,7 @@ export function useTracking() {
     // All of the origin's signatures; the dialog demotes the ones that cannot
     // lead to the target instead of hiding them.
     const signatures = computed(() => origin_map_solarsystem.value?.signatures?.toSorted(sortSignatures));
-    const possible_signatures = computed(
-        () => signatures.value?.filter((signature) => signatureCanLeadToClass(signature, target_solarsystem.value?.class)) ?? [],
-    );
+    const possible_signatures = computed(() => groupSignatureOptions(signatures.value ?? [], target_solarsystem.value?.class).likely);
     const existing_map_solarsystem = computed(() => map_solarsystems.value.find((s) => s.solarsystem_id === target_solarsystem.value?.id));
     const existing_connection = computed(() => {
         if (!existing_map_solarsystem.value) return null;
@@ -97,9 +95,7 @@ export function useTracking() {
 
     function sortSignatures(a: TSignature, b: TSignature) {
         if (!a.signature_id || !b.signature_id) return 0;
-        if (a.map_connection_id && !b.map_connection_id) return 1;
-        if (!a.map_connection_id && b.map_connection_id) return -1;
-        return a.signature_id?.localeCompare(b.signature_id);
+        return a.signature_id.localeCompare(b.signature_id);
     }
 
     function performJump() {
@@ -125,6 +121,7 @@ export function useTracking() {
         alias: string | null;
         lifetime: TLifetimeStatus;
         massStatus: TMassStatus;
+        shipSize: TShipSize | null;
     }) {
         show_signature_modal.value = false;
         if (!origin_map_solarsystem.value || !target_solarsystem.value) return;
@@ -134,6 +131,7 @@ export function useTracking() {
             alias: selection.alias,
             lifetime: selection.lifetime,
             mass_status: selection.massStatus,
+            ship_size: selection.shipSize,
         });
     }
 

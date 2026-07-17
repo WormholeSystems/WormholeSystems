@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Signatures;
 
+use App\Actions\MapConnections\SyncConnectionShipSizeAction;
 use App\Data\NewSignatureData;
 use App\Data\RawSignatureData;
 use App\Data\SignaturesData;
@@ -25,6 +26,7 @@ final readonly class PasteSignaturesAction
         public StoreSignatureAction $storeSignatureAction,
         public UpdateSignatureAction $updateSignatureAction,
         private MapBroadcaster $mapBroadcaster,
+        private SyncConnectionShipSizeAction $syncConnectionShipSizeAction,
     ) {
         $this->wormholeCategory = SignatureCategory::query()->firstWhere('code', \App\Enums\SignatureCategory::Wormhole);
     }
@@ -81,6 +83,8 @@ final readonly class PasteSignaturesAction
                     'wormhole_id' => $wormhole_id,
                     'raw_type_name' => $raw_type_name,
                 ]);
+
+                $this->syncConnectionShipSizeAction->handle($existing_signature);
             });
 
             // A paste of N signatures emits a single counts event for the system.

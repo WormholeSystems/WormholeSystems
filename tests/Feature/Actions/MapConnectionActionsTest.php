@@ -8,6 +8,7 @@ use App\Actions\MapConnections\DeleteMapConnectionAction;
 use App\Actions\MapConnections\UpdateMapConnectionAction;
 use App\Data\MapConnectionData;
 use App\Enums\MassStatus;
+use App\Enums\ShipSize;
 use App\Models\Map;
 use App\Models\MapConnection;
 
@@ -65,4 +66,57 @@ it('deletes a connection', function () {
     app(DeleteMapConnectionAction::class)->handle($connection);
 
     expect(MapConnection::find($connection->id))->toBeNull();
+});
+
+it('derives the ship size from the wormhole type when creating a connection', function () {
+    $map = Map::factory()->create();
+    $from = placeMapSolarsystem($map, 30004020);
+    $to = placeMapSolarsystem($map, 30004021);
+
+    $connection = app(CreateMapConnectionAction::class)->handle([
+        'from_map_solarsystem_id' => $from->id,
+        'to_map_solarsystem_id' => $to->id,
+        'wormhole_id' => makeWormhole()->id,
+        'ship_size' => 'medium',
+    ]);
+
+    expect($connection->ship_size)->toBe(ShipSize::ExtraLarge);
+});
+
+it('keeps the ship size locked to a linked signature wormhole type on updates', function () {
+    $map = Map::factory()->create();
+    $from = placeMapSolarsystem($map, 30004022);
+    $to = placeMapSolarsystem($map, 30004023);
+    $connection = MapConnection::factory()->create([
+        'map_id' => $map->id,
+        'from_map_solarsystem_id' => $from->id,
+        'to_map_solarsystem_id' => $to->id,
+        'ship_size' => ShipSize::ExtraLarge,
+    ]);
+    $from->signatures()->create([
+        'signature_id' => 'AAA-111',
+        'map_connection_id' => $connection->id,
+        'wormhole_id' => makeWormhole()->id,
+        'lifetime' => 'healthy',
+    ]);
+
+    app(UpdateMapConnectionAction::class)->handle($connection, MapConnectionData::from(['ship_size' => 'frigate']));
+
+    expect($connection->fresh()->ship_size)->toBe(ShipSize::ExtraLarge);
+});
+
+it('allows manual ship size changes when no wormhole type is identified', function () {
+    $map = Map::factory()->create();
+    $from = placeMapSolarsystem($map, 30004024);
+    $to = placeMapSolarsystem($map, 30004025);
+    $connection = MapConnection::factory()->create([
+        'map_id' => $map->id,
+        'from_map_solarsystem_id' => $from->id,
+        'to_map_solarsystem_id' => $to->id,
+        'ship_size' => ShipSize::Large,
+    ]);
+
+    app(UpdateMapConnectionAction::class)->handle($connection, MapConnectionData::from(['ship_size' => 'frigate']));
+
+    expect($connection->fresh()->ship_size)->toBe(ShipSize::Frigate);
 });

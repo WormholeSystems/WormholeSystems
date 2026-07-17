@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Signatures;
 
+use App\Actions\MapConnections\SyncConnectionShipSizeAction;
 use App\Data\SignatureData;
 use App\Enums\LifetimeStatus;
 use App\Enums\MassStatus;
@@ -17,7 +18,10 @@ use Throwable;
 
 final readonly class UpdateSignatureAction
 {
-    public function __construct(private MapBroadcaster $mapBroadcaster) {}
+    public function __construct(
+        private MapBroadcaster $mapBroadcaster,
+        private SyncConnectionShipSizeAction $syncConnectionShipSizeAction,
+    ) {}
 
     /**
      * @throws Throwable
@@ -36,6 +40,7 @@ final readonly class UpdateSignatureAction
             $signature->update($updateData);
 
             $this->syncMassAndLifetime($signature, $data);
+            $this->syncConnectionShipSizeAction->handle($signature);
 
             broadcast(new SignatureUpdatedEvent($signature->mapSolarsystem->map_id))->toOthers();
 

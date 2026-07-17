@@ -15,7 +15,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $name
  * @property float $total_mass
  * @property float $maximum_jump_mass
- * @property string $ship_size
  * @property int $maximum_lifetime
  * @property string $leads_to
  * @property float|null $signature_strength

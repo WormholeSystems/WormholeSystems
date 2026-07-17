@@ -1,5 +1,5 @@
 import Tracking from '@/routes/tracking';
-import { TLifetimeStatus, TMassStatus } from '@/types/models';
+import { TLifetimeStatus, TMassStatus, TShipSize } from '@/types/models';
 import { router } from '@inertiajs/vue3';
 
 type TrackingOptions = {
@@ -7,6 +7,7 @@ type TrackingOptions = {
     alias?: string | null;
     lifetime?: TLifetimeStatus | null;
     mass_status?: TMassStatus | null;
+    ship_size?: TShipSize | null;
 };
 
 export function createTracking(from_map_solarsystem_id: number, to_solarsystem_id: number, options: TrackingOptions = {}): void {

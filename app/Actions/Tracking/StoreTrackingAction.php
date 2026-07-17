@@ -106,7 +106,7 @@ final readonly class StoreTrackingAction
                     'to_map_solarsystem_id' => $target_map_solarsystem->id,
                     'wormhole_id' => null,
                     'mass_status' => $mass_status,
-                    'ship_size' => $ship_size ?? ShipSize::Large,
+                    'ship_size' => $this->getWormholeShipSize($signature) ?? $data->ship_size ?? $this->getShipSizeForSignature($signature) ?? $ship_size ?? ShipSize::Large,
                     'lifetime' => $lifetime_status,
                 ]
             );
@@ -279,6 +279,16 @@ final readonly class StoreTrackingAction
         return SignatureCategory::query()
             ->where('code', SignatureCategoryEnum::Wormhole)
             ->value('id');
+    }
+
+    private function getWormholeShipSize(?Signature $signature): ?ShipSize
+    {
+        return ShipSize::fromWormhole($signature?->wormhole);
+    }
+
+    private function getShipSizeForSignature(?Signature $signature): ?ShipSize
+    {
+        return $signature?->ship_size;
     }
 
     private function getMassStatusForSignature(?Signature $signature): MassStatus

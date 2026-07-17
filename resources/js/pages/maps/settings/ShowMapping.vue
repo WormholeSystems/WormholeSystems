@@ -62,6 +62,12 @@ function handlePromptForSignatureChange(value: boolean | 'indeterminate') {
     }
 }
 
+function handlePreselectSignatureChange(value: boolean | 'indeterminate') {
+    if (typeof value === 'boolean') {
+        updateMapUserSettings({ preselect_signature_enabled: value });
+    }
+}
+
 function handleSuggestAliasChange(value: boolean | 'indeterminate') {
     if (typeof value === 'boolean') {
         updateMapUserSettings({ suggest_alias_enabled: value });
@@ -162,6 +168,16 @@ function handleSolarsystemSelect(solarsystem: TStaticSolarsystem) {
                             :model-value="map_user_settings.prompt_for_signature_enabled"
                             @update:model-value="handlePromptForSignatureChange"
                         />
+                    </div>
+
+                    <div class="flex items-center justify-between" v-if="map_user_settings.prompt_for_signature_enabled">
+                        <div class="space-y-0.5">
+                            <Label class="text-sm font-medium">Preselect First Signature</Label>
+                            <div class="text-sm text-muted-foreground">
+                                Pre-select the first likely signature in the jump prompt, so working through holes alphabetically only takes Enter
+                            </div>
+                        </div>
+                        <Checkbox :model-value="map_user_settings.preselect_signature_enabled" @update:model-value="handlePreselectSignatureChange" />
                     </div>
 
                     <div class="flex items-center justify-between">

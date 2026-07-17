@@ -7,6 +7,7 @@ namespace App\Data;
 use App\Enums\LifetimeStatus;
 use App\Enums\MassStatus;
 use App\Enums\Permission;
+use App\Enums\ShipSize;
 use App\Models\Map;
 use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
@@ -29,6 +30,7 @@ final class TrackingData extends Data
         public ?string $alias = null,
         public ?LifetimeStatus $lifetime = null,
         public ?MassStatus $mass_status = null,
+        public ?ShipSize $ship_size = null,
     ) {}
 
     /**
