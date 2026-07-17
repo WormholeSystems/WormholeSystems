@@ -134,10 +134,34 @@ function handleLifetimeChange(lifetime: AcceptableValue) {
             </ContextMenuSubTrigger>
             <ContextMenuSubContent>
                 <ContextMenuRadioGroup :model-value="map_connection.ship_size" @update:model-value="handleShipSizeChange">
-                    <ContextMenuRadioItem value="frigate">Frigate</ContextMenuRadioItem>
-                    <ContextMenuRadioItem value="medium">Medium</ContextMenuRadioItem>
-                    <ContextMenuRadioItem value="large">Large</ContextMenuRadioItem>
-                    <ContextMenuRadioItem value="xlarge">Extra Large</ContextMenuRadioItem>
+                    <ContextMenuRadioItem value="frigate" class="flex items-center gap-2">
+                        <span
+                            class="inline-flex w-6 justify-center rounded-sm border border-border/60 font-mono text-[10px] leading-4 text-muted-foreground"
+                            >S</span
+                        >
+                        Frigate
+                    </ContextMenuRadioItem>
+                    <ContextMenuRadioItem value="medium" class="flex items-center gap-2">
+                        <span
+                            class="inline-flex w-6 justify-center rounded-sm border border-border/60 font-mono text-[10px] leading-4 text-muted-foreground"
+                            >M</span
+                        >
+                        Medium
+                    </ContextMenuRadioItem>
+                    <ContextMenuRadioItem value="large" class="flex items-center gap-2">
+                        <span
+                            class="inline-flex w-6 justify-center rounded-sm border border-border/60 font-mono text-[10px] leading-4 text-muted-foreground"
+                            >L</span
+                        >
+                        Large
+                    </ContextMenuRadioItem>
+                    <ContextMenuRadioItem value="xlarge" class="flex items-center gap-2">
+                        <span
+                            class="inline-flex w-6 justify-center rounded-sm border border-border/60 font-mono text-[10px] leading-4 text-muted-foreground"
+                            >XL</span
+                        >
+                        Extra Large
+                    </ContextMenuRadioItem>
                 </ContextMenuRadioGroup>
             </ContextMenuSubContent>
         </ContextMenuSub>

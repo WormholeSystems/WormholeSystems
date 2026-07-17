@@ -3,7 +3,7 @@ import TrackingSignatureDialog from '@/components/map/TrackingSignatureDialog.vu
 import { Button } from '@/components/ui/button';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import Appearance from '@/layouts/Appearance.vue';
-import { TMapSolarsystem } from '@/pages/maps';
+import { TMapConnection, TMapSolarsystem } from '@/pages/maps';
 import { TLifetimeStatus, TMassStatus, TSignature, TStringedSolarsystemClass } from '@/types/models';
 import { RotateCcw } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
@@ -37,7 +37,8 @@ function sig(input: {
     targetClass?: TStringedSolarsystemClass | 'unknown';
     extra?: string | null;
     rawTypeName?: string;
-    connected?: boolean;
+    /** Marks the signature as already tied to a connection leading to this map solarsystem id. */
+    connectedToId?: number;
     lifetime?: TLifetimeStatus;
     massStatus?: TMassStatus;
     createdMinutesAgo?: number;
@@ -51,7 +52,10 @@ function sig(input: {
         signature_type_id: input.code ? id : null,
         signature_category_id: input.category ? id : null,
         raw_type_name: input.rawTypeName ?? null,
-        map_connection_id: input.connected ? id : null,
+        map_connection_id: input.connectedToId ? id : null,
+        map_connection: input.connectedToId
+            ? ({ id, from_map_solarsystem_id: ORIGIN_ID, to_map_solarsystem_id: input.connectedToId } as TMapConnection)
+            : null,
         signature_type: input.code
             ? {
                   id,
@@ -74,17 +78,26 @@ function sig(input: {
     } as TSignature;
 }
 
+const ORIGIN_ID = 1;
+
 const ORIGIN = {
-    id: 1,
+    id: ORIGIN_ID,
     alias: 'HOME',
     solarsystem: { name: 'J152820' },
 } as TMapSolarsystem;
+
+/** Map systems the connected fixtures can lead to. */
+const MAP_SOLARSYSTEMS = [
+    ORIGIN,
+    { id: 2, alias: 'HOME-A', solarsystem: { name: 'J145510' } } as TMapSolarsystem,
+    { id: 3, alias: null, solarsystem: { name: 'J104859' } } as TMapSolarsystem,
+];
 
 const scenarios: TScenario[] = [
     {
         key: 'typical-c4',
         title: 'Typical C4 jump',
-        description: 'Mixed bag: matching types, wrong classes, sites, a connected hole, and unscanned signatures.',
+        description: 'Mixed bag: matching types, wrong classes, a connected hole, unscanned signatures, and a gas site that must not appear.',
         targetName: 'J145510',
         targetClass: '4',
         suggestedAlias: 'HOME-A',
@@ -95,7 +108,7 @@ const scenarios: TScenario[] = [
             sig({ signatureId: 'JKL-012', category: 'wormhole', code: 'Z142', targetClass: 'n', createdMinutesAgo: 200 }),
             sig({ signatureId: 'MNO-345', category: 'gas', code: undefined, rawTypeName: 'Bountiful Frontier Reservoir' }),
             sig({ signatureId: 'PQR-678' }),
-            sig({ signatureId: 'STU-901', category: 'wormhole', code: 'X877', targetClass: '4', connected: true, createdMinutesAgo: 300 }),
+            sig({ signatureId: 'STU-901', category: 'wormhole', code: 'X877', targetClass: '4', connectedToId: 2, createdMinutesAgo: 300 }),
         ],
     },
     {
@@ -115,7 +128,7 @@ const scenarios: TScenario[] = [
     {
         key: 'all-unlikely',
         title: 'Everything unlikely',
-        description: 'No signature fits the destination: only the demoted section has options.',
+        description: 'No signature fits the destination: only the demoted section has options, and the sites are hidden entirely.',
         targetName: 'J105830',
         targetClass: '5',
         suggestedAlias: 'HOME-B',
@@ -137,7 +150,7 @@ const scenarios: TScenario[] = [
     {
         key: 'crowded',
         title: 'Crowded system',
-        description: 'A C5 with two dozen signatures: scrolling, search, and both sections populated.',
+        description: 'A C6 with two dozen signatures: scrolling, search, and all three sections populated.',
         targetName: 'J104859',
         targetClass: '6',
         suggestedAlias: 'DEEP-1',
@@ -152,7 +165,7 @@ const scenarios: TScenario[] = [
                     code: 'V753',
                     targetClass: '6',
                     createdMinutesAgo: index * 15,
-                    connected: index === 1,
+                    connectedToId: index === 1 ? 3 : undefined,
                 });
             return sig({ signatureId, createdMinutesAgo: index * 10 });
         }),
@@ -240,6 +253,7 @@ function handleSelection(selection: Record<string, unknown>): void {
                 :target-solarsystem-class="activeScenario?.targetClass ?? null"
                 :signatures="activeSignatures"
                 :suggested-alias="activeScenario?.suggestedAlias"
+                :map-solarsystems="MAP_SOLARSYSTEMS"
                 @select-signature="handleSelection"
             />
         </div>

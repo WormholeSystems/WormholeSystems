@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Actions\MapSolarsystem\UpdateMapSolarsystemAction;
 use App\Actions\Tracking\StoreTrackingAction;
 use App\Data\TrackingData;
+use App\Enums\ShipSize;
 use App\Events\MapSolarsystems\MapSolarsystemsUpsertedEvent;
 use App\Models\Map;
 use App\Models\MapConnection;
@@ -113,4 +114,18 @@ it('updates the alias and occupier of a tracked system afterwards', function () 
                 && $system['alias'] === 'STAGING'
                 && $system['occupier_alias'] === 'Lazerhawks');
     });
+});
+
+it('applies an explicitly chosen ship size to the tracked connection', function () {
+    $map = Map::factory()->create();
+    $origin = placeMapSolarsystem($map, 30012005);
+    $targetId = makeSolarsystem(30012006);
+
+    app(StoreTrackingAction::class)->handle(TrackingData::from([
+        'from_map_solarsystem_id' => $origin->id,
+        'to_solarsystem_id' => $targetId,
+        'ship_size' => 'frigate',
+    ]));
+
+    expect(MapConnection::where('map_id', $map->id)->value('ship_size'))->toBe(ShipSize::Frigate);
 });

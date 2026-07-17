@@ -14,7 +14,7 @@ import { UseMapLayoutReturn } from '@/composables/useMapLayout';
 import usePermission from '@/composables/usePermission';
 import { usePing } from '@/composables/usePing';
 import { useStaticSolarsystem } from '@/composables/useStaticSolarsystems';
-import { updateMapUserSettings } from '@/map/api';
+import { updateMapUserSettings, useMapSolarsystems } from '@/map/api';
 import type { TMap } from '@/pages/maps';
 import type { TMapUserSetting } from '@/types/models';
 import { Link } from '@inertiajs/vue3';
@@ -56,6 +56,8 @@ const {
     target_solarsystem,
     suggested_alias,
 } = useTracking();
+
+const { map_solarsystems } = useMapSolarsystems();
 
 const targetSolarsystemName = computed(() => target_solarsystem.value?.name || currentSolarsystem.value?.name || null);
 
@@ -326,6 +328,7 @@ const settingsUrl = computed(() => {
         :origin-map-solarsystem="origin_map_solarsystem"
         :target-solarsystem-name="targetSolarsystemName"
         :target-solarsystem-class="target_solarsystem?.class ?? null"
+        :map-solarsystems="map_solarsystems"
         :signatures="signatures"
         :suggested-alias="suggested_alias"
         @select-signature="handleSelectSignature"

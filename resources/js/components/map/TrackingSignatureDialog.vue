@@ -5,18 +5,17 @@ import { Dialog, DialogDescription, DialogFooter, DialogHeader, DialogScrollCont
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useShowMap } from '@/composables/useShowMap';
 import { Data } from '@/lib/data';
-import { signatureCanLeadToClass } from '@/lib/signatureCompatibility';
+import { groupSignatureOptions } from '@/lib/signatureCompatibility';
 import { updateMapUserSettings } from '@/map/api';
 import { TMapSolarsystem } from '@/pages/maps';
-import { TLifetimeStatus, TMassStatus, TSignature, TStringedSolarsystemClass } from '@/types/models';
-import { UTCDate } from '@date-fns/utc';
-import { formatDistanceToNowStrict } from 'date-fns';
+import { TLifetimeStatus, TMassStatus, TShipSize, TSignature, TStringedSolarsystemClass } from '@/types/models';
+import { SearchIcon } from 'lucide-vue-next';
 import { AcceptableValue } from 'reka-ui';
-import { computed, ref, watch } from 'vue';
+import { computed, nextTick, ref, useTemplateRef, watch } from 'vue';
 
 const props = defineProps<{
     originMapSolarsystem: TMapSolarsystem | null;
@@ -24,6 +23,8 @@ const props = defineProps<{
     targetSolarsystemClass?: TStringedSolarsystemClass | null;
     signatures: TSignature[] | null | undefined;
     suggestedAlias?: string | null;
+    /** The map's systems, used to name where already-connected signatures lead. */
+    mapSolarsystems?: TMapSolarsystem[];
 }>();
 
 const page = useShowMap();
@@ -50,27 +51,76 @@ const filtered = computed(() => {
     });
 });
 
-// Signatures whose assigned type can lead to the jumped-to system come first;
-// the rest (wrong destination class, non-wormhole sites) are demoted to a
-// clearly separated section but stay selectable in case a type was mis-assigned.
-const likelyOptions = computed(() => filtered.value.filter((signature) => signatureCanLeadToClass(signature, props.targetSolarsystemClass)));
-const unlikelyOptions = computed(() => filtered.value.filter((signature) => !signatureCanLeadToClass(signature, props.targetSolarsystemClass)));
+// Three sections: unmapped signatures that can be the jumped hole, ones already
+// tied to a mapped connection, and ones typed with a destination class that
+// cannot match. Site signatures are dropped entirely. Everything stays
+// selectable in case a signature was mistyped or a connection is stale.
+const groups = computed(() => groupSignatureOptions(filtered.value, props.targetSolarsystemClass));
 
 const sections = computed(() => [
-    { key: 'likely', label: null, options: likelyOptions.value },
-    { key: 'unlikely', label: 'Unlikely · leads elsewhere', options: unlikelyOptions.value },
+    { key: 'likely', label: null, options: groups.value.likely },
+    { key: 'connected', label: 'Already connected', options: groups.value.connected },
+    { key: 'unlikely', label: 'Unlikely · leads elsewhere', options: groups.value.unlikely },
 ]);
+
+const listElement = useTemplateRef<InstanceType<typeof RadioGroup>>('signatureList');
+
+/** All selectable option ids in visual order, starting with the Unknown row. */
+const orderedIds = computed<(number | null)[]>(() => [null, ...sections.value.flatMap((section) => section.options.map((option) => option.id))]);
+
+/**
+ * Arrow keys in the search field walk the visible options without leaving the
+ * field, wrapping at both ends. The checked row is kept scrolled into view.
+ */
+function moveSelection(delta: number): void {
+    const ids = orderedIds.value;
+    if (!ids.length) return;
+
+    const index = ids.indexOf(selectedSignatureId.value);
+    selectedSignatureId.value = ids[(index + delta + ids.length) % ids.length];
+
+    void nextTick(() => {
+        listElement.value?.$el?.querySelector('[data-state="checked"]')?.closest('label')?.scrollIntoView({ block: 'nearest' });
+    });
+}
+
+/** Focus the search field when the dialog opens instead of the first input. */
+function focusSearch(): void {
+    document.getElementById('tracking-search')?.focus();
+}
+
+/** The system on the far side of an already-connected signature's connection. */
+function connectionDestinationLabel(signature: TSignature): string | null {
+    const connection = signature.map_connection;
+    const origin = props.originMapSolarsystem;
+    if (!connection || !origin) return null;
+
+    const destinationId = connection.to_map_solarsystem_id === origin.id ? connection.from_map_solarsystem_id : connection.to_map_solarsystem_id;
+    const destination = props.mapSolarsystems?.find((solarsystem) => solarsystem.id === destinationId);
+    if (!destination) return null;
+
+    return destination.alias ? `${destination.alias} (${destination.solarsystem.name})` : destination.solarsystem.name;
+}
 
 const open = defineModel<boolean>('open', { required: true });
 
 const emit = defineEmits<{
-    selectSignature: [selection: { signatureId: number | null; alias: string | null; lifetime: TLifetimeStatus; massStatus: TMassStatus }];
+    selectSignature: [
+        selection: {
+            signatureId: number | null;
+            alias: string | null;
+            lifetime: TLifetimeStatus;
+            massStatus: TMassStatus;
+            shipSize: TShipSize | null;
+        },
+    ];
 }>();
 
 const selectedSignatureId = ref<number | null>(null);
 const alias = ref('');
 const lifetime = ref<TLifetimeStatus>('healthy');
 const massStatus = ref<TMassStatus>('fresh');
+const shipSize = ref<TShipSize | 'auto'>('auto');
 
 // Reset inputs when the dialog opens. The alias is prefilled with the suggested
 // chain alias (or the target's existing alias when it is already on the map).
@@ -80,11 +130,12 @@ watch(open, (isOpen) => {
         alias.value = props.suggestedAlias ?? '';
         lifetime.value = 'healthy';
         massStatus.value = 'fresh';
+        shipSize.value = 'auto';
     }
 });
 
-// Adopt the signature's lifetime / mass when it carries a meaningful value,
-// otherwise keep whatever the user manually selected.
+// Adopt the signature's lifetime / mass / ship size when it carries a
+// meaningful value, otherwise keep whatever the user manually selected.
 watch(selectedSignatureId, (id) => {
     const signature = props.signatures?.find((s) => s.id === id);
     if (!signature) return;
@@ -94,6 +145,9 @@ watch(selectedSignatureId, (id) => {
     if (signature.mass_status) {
         massStatus.value = signature.mass_status;
     }
+    if (signature.ship_size) {
+        shipSize.value = signature.ship_size;
+    }
 });
 
 function buildSelection(signatureId: number | null) {
@@ -102,6 +156,7 @@ function buildSelection(signatureId: number | null) {
         alias: alias.value.trim() || null,
         lifetime: lifetime.value,
         massStatus: massStatus.value,
+        shipSize: shipSize.value === 'auto' ? null : shipSize.value,
     };
 }
 
@@ -134,77 +189,150 @@ function handleMassStatusChange(value: AcceptableValue) {
     }
 }
 
-function formatDate(date: string) {
-    return formatDistanceToNowStrict(new UTCDate(date)) + ' ago';
+function handleShipSizeChange(value: AcceptableValue) {
+    if (value === 'auto' || value === 'frigate' || value === 'medium' || value === 'large' || value === 'xlarge') {
+        shipSize.value = value;
+    }
 }
+
+/* The same indicators the options carry, mirrored on the closed triggers. */
+const lifetimeMeta: Record<TLifetimeStatus, { label: string; dot: string }> = {
+    healthy: { label: 'Healthy', dot: 'bg-neutral-500' },
+    eol: { label: 'End of Life', dot: 'bg-purple-500' },
+    critical: { label: 'Critical', dot: 'bg-red-500' },
+};
+
+const massMeta: Record<TMassStatus, { label: string; dot: string }> = {
+    fresh: { label: 'Fresh', dot: 'bg-neutral-500' },
+    reduced: { label: 'Reduced', dot: 'bg-amber-500' },
+    critical: { label: 'Critical', dot: 'bg-red-500' },
+};
+
+const shipSizeMeta: Record<TShipSize | 'auto', { label: string; badge: string }> = {
+    auto: { label: 'Auto', badge: '·' },
+    frigate: { label: 'Frigate', badge: 'S' },
+    medium: { label: 'Medium', badge: 'M' },
+    large: { label: 'Large', badge: 'L' },
+    xlarge: { label: 'Extra Large', badge: 'XL' },
+};
 </script>
 
 <template>
     <Dialog v-model:open="open" @update:open="handleOpenChange">
-        <DialogScrollContent v-if="originMapSolarsystem && targetSolarsystemName" class="max-w-md translate-y-0">
-            <DialogHeader>
+        <DialogScrollContent
+            v-if="originMapSolarsystem && targetSolarsystemName"
+            class="max-w-lg translate-y-0 gap-0 overflow-hidden p-0"
+            @open-auto-focus.prevent="focusSearch"
+        >
+            <!-- Header -->
+            <DialogHeader class="gap-1.5 border-b border-border/50 bg-muted/30 px-6 py-4 text-left">
                 <DialogTitle>Which signature did you jump?</DialogTitle>
                 <DialogDescription>
                     You jumped from <strong>{{ originSystemLabel }}</strong> to <strong>{{ targetSolarsystemName }}</strong
-                    >. Please select which wormhole connection you used.
+                    >. Select the wormhole connection you used.
                 </DialogDescription>
             </DialogHeader>
             <form @submit.prevent="handleConfirm" class="contents">
-                <Input v-model:model-value="search" placeholder="Search" />
-                <RadioGroup
-                    class="grid max-h-full grid-cols-[auto_auto_auto_1fr] gap-0 gap-x-4 divide-y overflow-y-auto rounded-lg border"
-                    v-model:model-value="selectedSignatureId"
-                    @keydown.enter="handleConfirm"
-                    autofocus
-                >
-                    <label class="col-span-4 grid grid-cols-subgrid items-center-safe p-1.5 text-left text-xs">
-                        <RadioGroupItem :value="null" />
-                        <div class="font-medium">Unknown</div>
-                        <div class="text-muted-foreground">—</div>
-                        <div class="text-right text-xs text-muted-foreground">—</div>
-                    </label>
-                    <template v-for="section in sections" :key="section.key">
-                        <div
-                            v-if="section.label && section.options.length"
-                            class="col-span-4 bg-muted/30 p-1.5 font-mono text-[10px] tracking-wider text-muted-foreground uppercase"
-                        >
-                            {{ section.label }}
+                <!-- Connection details -->
+                <div class="grid gap-3 px-6 py-5">
+                    <div class="grid grid-cols-3 gap-3">
+                        <div class="col-span-2 grid gap-1.5">
+                            <Label for="tracking-alias" class="text-xs">Alias</Label>
+                            <Input id="tracking-alias" v-model:model-value="alias" placeholder="Optional system alias" />
                         </div>
-                        <label
-                            v-for="option in section.options"
-                            :key="option.id"
-                            class="col-span-4 grid grid-cols-subgrid items-center-safe p-1.5 text-left text-xs data-connected:opacity-50 data-demoted:opacity-60"
-                            :data-connected="Data(Boolean(option.map_connection_id))"
-                            :data-demoted="Data(section.key === 'unlikely')"
-                        >
-                            <RadioGroupItem :value="option.id" />
-                            <div class="font-medium">{{ option.signature_id }}</div>
-                            <WormholeOption :wormhole="option.signature_type" v-if="option.signature_type" />
-                            <div class="text-muted-foreground" v-else-if="option.raw_type_name">{{ option.raw_type_name }}</div>
-                            <div class="text-muted-foreground" v-else-if="option.map_connection_id">Already connected</div>
-                            <div class="text-muted-foreground" v-else>Unknown</div>
-                            <div class="text-right text-xs text-muted-foreground">
-                                {{ option.created_at ? formatDate(option.created_at) : 'Unknown' }}
-                            </div>
-                        </label>
-                    </template>
-                </RadioGroup>
-                <div class="grid gap-3">
-                    <div class="grid gap-1.5">
-                        <Label for="tracking-alias" class="text-xs">Alias</Label>
-                        <Input id="tracking-alias" v-model:model-value="alias" placeholder="Optional system alias" />
+                        <div class="grid content-start gap-1.5">
+                            <Label class="text-xs">Ship size</Label>
+                            <Select :model-value="shipSize" @update:model-value="handleShipSizeChange">
+                                <SelectTrigger class="w-full">
+                                    <span class="flex items-center gap-2">
+                                        <span
+                                            class="inline-flex w-6 justify-center rounded-sm border border-border/60 font-mono text-[10px] leading-4 text-muted-foreground"
+                                            >{{ shipSizeMeta[shipSize].badge }}</span
+                                        >
+                                        {{ shipSizeMeta[shipSize].label }}
+                                    </span>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="auto">
+                                        <span class="flex items-center gap-2">
+                                            <span
+                                                class="inline-flex w-6 justify-center rounded-sm border border-border/60 font-mono text-[10px] leading-4 text-muted-foreground"
+                                                >·</span
+                                            >
+                                            Auto
+                                        </span>
+                                    </SelectItem>
+                                    <SelectItem value="frigate">
+                                        <span class="flex items-center gap-2">
+                                            <span
+                                                class="inline-flex w-6 justify-center rounded-sm border border-border/60 font-mono text-[10px] leading-4 text-muted-foreground"
+                                                >S</span
+                                            >
+                                            Frigate
+                                        </span>
+                                    </SelectItem>
+                                    <SelectItem value="medium">
+                                        <span class="flex items-center gap-2">
+                                            <span
+                                                class="inline-flex w-6 justify-center rounded-sm border border-border/60 font-mono text-[10px] leading-4 text-muted-foreground"
+                                                >M</span
+                                            >
+                                            Medium
+                                        </span>
+                                    </SelectItem>
+                                    <SelectItem value="large">
+                                        <span class="flex items-center gap-2">
+                                            <span
+                                                class="inline-flex w-6 justify-center rounded-sm border border-border/60 font-mono text-[10px] leading-4 text-muted-foreground"
+                                                >L</span
+                                            >
+                                            Large
+                                        </span>
+                                    </SelectItem>
+                                    <SelectItem value="xlarge">
+                                        <span class="flex items-center gap-2">
+                                            <span
+                                                class="inline-flex w-6 justify-center rounded-sm border border-border/60 font-mono text-[10px] leading-4 text-muted-foreground"
+                                                >XL</span
+                                            >
+                                            Extra Large
+                                        </span>
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div class="grid gap-1.5">
                             <Label class="text-xs">Lifetime</Label>
                             <Select :model-value="lifetime" @update:model-value="handleLifetimeChange">
                                 <SelectTrigger class="w-full">
-                                    <SelectValue />
+                                    <span class="flex items-center gap-2">
+                                        <span class="inline-block size-2 rounded-full" :class="lifetimeMeta[lifetime].dot" />
+                                        {{ lifetimeMeta[lifetime].label }}
+                                    </span>
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="healthy">Healthy</SelectItem>
-                                    <SelectItem value="eol">End of Life</SelectItem>
-                                    <SelectItem value="critical">Critical</SelectItem>
+                                    <SelectItem value="healthy">
+                                        <span class="flex items-center gap-2">
+                                            <span class="inline-block size-2 rounded-full bg-neutral-500" />
+                                            Healthy
+                                        </span>
+                                    </SelectItem>
+                                    <SelectItem value="eol">
+                                        <span class="flex items-center gap-2">
+                                            <span class="inline-block size-2 rounded-full bg-purple-500" />
+                                            End of Life
+                                            <span class="text-muted-foreground">&lt; 4h</span>
+                                        </span>
+                                    </SelectItem>
+                                    <SelectItem value="critical">
+                                        <span class="flex items-center gap-2">
+                                            <span class="inline-block size-2 rounded-full bg-red-500" />
+                                            Critical
+                                            <span class="text-muted-foreground">&lt; 1h</span>
+                                        </span>
+                                    </SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -212,18 +340,95 @@ function formatDate(date: string) {
                             <Label class="text-xs">Mass</Label>
                             <Select :model-value="massStatus" @update:model-value="handleMassStatusChange">
                                 <SelectTrigger class="w-full">
-                                    <SelectValue />
+                                    <span class="flex items-center gap-2">
+                                        <span class="inline-block size-2 rounded-full" :class="massMeta[massStatus].dot" />
+                                        {{ massMeta[massStatus].label }}
+                                    </span>
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="fresh">Fresh</SelectItem>
-                                    <SelectItem value="reduced">Reduced</SelectItem>
-                                    <SelectItem value="critical">Critical</SelectItem>
+                                    <SelectItem value="fresh">
+                                        <span class="flex items-center gap-2">
+                                            <span class="inline-block size-2 rounded-full bg-neutral-500" />
+                                            Fresh
+                                            <span class="text-muted-foreground">&ge; 50%</span>
+                                        </span>
+                                    </SelectItem>
+                                    <SelectItem value="reduced">
+                                        <span class="flex items-center gap-2">
+                                            <span class="inline-block size-2 rounded-full bg-amber-500" />
+                                            Reduced
+                                            <span class="text-muted-foreground">&lt; 50%</span>
+                                        </span>
+                                    </SelectItem>
+                                    <SelectItem value="critical">
+                                        <span class="flex items-center gap-2">
+                                            <span class="inline-block size-2 rounded-full bg-red-500" />
+                                            Critical
+                                            <span class="text-muted-foreground">&le; 15%</span>
+                                        </span>
+                                    </SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                     </div>
                 </div>
-                <DialogFooter class="sm:justify-between">
+                <!-- Signature list -->
+                <div class="flex flex-col gap-3 px-6 pb-5">
+                    <div class="relative">
+                        <SearchIcon class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                            id="tracking-search"
+                            v-model:model-value="search"
+                            placeholder="Search signatures"
+                            class="pl-9"
+                            @keydown.down.prevent="moveSelection(1)"
+                            @keydown.up.prevent="moveSelection(-1)"
+                        />
+                    </div>
+                    <RadioGroup
+                        ref="signatureList"
+                        class="grid h-64 grid-cols-[auto_auto_auto_1fr] content-start gap-0 gap-x-4 overflow-y-auto"
+                        v-model:model-value="selectedSignatureId"
+                        @keydown.enter="handleConfirm"
+                    >
+                        <label
+                            class="col-span-4 grid grid-cols-subgrid items-center-safe rounded-sm p-2 text-left text-xs transition-colors hover:bg-muted/40 has-data-[state=checked]:bg-muted/60"
+                        >
+                            <RadioGroupItem :value="null" />
+                            <div class="font-medium">Unknown</div>
+                            <div class="text-muted-foreground">—</div>
+                            <div />
+                        </label>
+                        <template v-for="section in sections" :key="section.key">
+                            <div
+                                v-if="section.label && section.options.length"
+                                class="col-span-4 mt-2 border-t border-border/50 px-2 pt-2.5 pb-1 font-mono text-[10px] tracking-wider text-muted-foreground uppercase"
+                            >
+                                {{ section.label }}
+                            </div>
+                            <label
+                                v-for="option in section.options"
+                                :key="option.id"
+                                class="col-span-4 grid grid-cols-subgrid items-center-safe rounded-sm p-2 text-left text-xs transition-colors hover:bg-muted/40 has-data-[state=checked]:bg-muted/60 has-data-[state=checked]:opacity-100 data-demoted:opacity-60"
+                                :data-demoted="Data(section.key !== 'likely')"
+                            >
+                                <RadioGroupItem :value="option.id" />
+                                <div class="font-medium">{{ option.signature_id }}</div>
+                                <WormholeOption :wormhole="option.signature_type" v-if="option.signature_type" />
+                                <div class="text-muted-foreground" v-else-if="option.raw_type_name">{{ option.raw_type_name }}</div>
+                                <div class="text-muted-foreground" v-else>Unknown</div>
+                                <div class="truncate text-right text-xs text-muted-foreground">
+                                    <template v-if="connectionDestinationLabel(option)">→ {{ connectionDestinationLabel(option) }}</template>
+                                </div>
+                            </label>
+                        </template>
+                        <div v-if="search && !filtered.length" class="col-span-4 px-2 py-3 text-xs text-muted-foreground">
+                            No signatures match "{{ search }}"
+                        </div>
+                    </RadioGroup>
+                </div>
+                <!-- Footer -->
+                <DialogFooter class="border-t border-border/50 bg-muted/30 px-6 py-4 sm:justify-between">
                     <Tooltip>
                         <TooltipTrigger as-child>
                             <Button @click="handleDontAskAgain" variant="outline" role="button" type="button">Disable</Button>
