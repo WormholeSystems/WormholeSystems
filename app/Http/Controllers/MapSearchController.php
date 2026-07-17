@@ -13,6 +13,7 @@ use App\Models\Map;
 use App\Models\MapSolarsystemDetails;
 use App\Models\User;
 use App\Models\WormholeSystemThreat;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
@@ -48,7 +49,7 @@ final class MapSearchController extends Controller
     /**
      * EVE ids are unique across entity types, so entity_id alone identifies an organisation.
      *
-     * @return Collection<int, Collection<int, WormholeSystemThreat>>
+     * @return Collection<int, EloquentCollection<int, WormholeSystemThreat>>
      */
     private function threats(Map $map, string $needle, string $contains, string $prefix): Collection
     {
@@ -75,6 +76,7 @@ final class MapSearchController extends Controller
             ->orderByDesc('top_entities.total_kills')
             ->get()
             ->groupBy('entity_id')
+            ->toBase()
             ->values();
     }
 
