@@ -325,6 +325,7 @@ const settingsUrl = computed(() => {
         v-model:open="show_signature_modal"
         :origin-map-solarsystem="origin_map_solarsystem"
         :target-solarsystem-name="targetSolarsystemName"
+        :target-solarsystem-class="target_solarsystem?.class ?? null"
         :signatures="signatures"
         :suggested-alias="suggested_alias"
         @select-signature="handleSelectSignature"
