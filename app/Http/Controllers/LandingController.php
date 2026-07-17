@@ -15,7 +15,7 @@ final class LandingController extends Controller
     public function index(): Response
     {
         return Inertia::render('Landing', [
-            'killmails' => fn (): ResourceCollection => $this->getLatestKillmails(),
+            'killmails' => $this->getLatestKillmails(...),
         ]);
     }
 

@@ -128,14 +128,12 @@ const off_map_systems = computed(() => {
 const threat_entities = computed(() =>
     threat_results.value.map((entity) => ({
         ...entity,
-        systems: entity.systems.map(
-            (system): TThreatSystemMatch => ({
-                kills: system.kills,
-                occupier_alias: system.occupier_alias,
-                solarsystem: resolveSolarsystem(system.solarsystem_id),
-                map_solarsystem: systemsBySolarsystemId.value.get(system.solarsystem_id) ?? null,
-            }),
-        ),
+        systems: entity.systems.map((system): TThreatSystemMatch => ({
+            kills: system.kills,
+            occupier_alias: system.occupier_alias,
+            solarsystem: resolveSolarsystem(system.solarsystem_id),
+            map_solarsystem: systemsBySolarsystemId.value.get(system.solarsystem_id) ?? null,
+        })),
     })),
 );
 
