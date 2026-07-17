@@ -240,7 +240,7 @@ function handleSort(column: SkyhookSortColumn) {
                         <span v-if="tabCounts.ice" class="ml-1 text-amber-400">{{ tabCounts.ice }}</span>
                     </TabsTrigger>
                 </TabsList>
-                <div class="flex-1 overflow-y-auto">
+                <div class="flex-1 overflow-x-hidden overflow-y-auto">
                     <Deferred data="map_skyhooks">
                         <template v-if="sortedSkyhooks.length">
                             <div class="grid grid-cols-[1rem_auto_auto_1rem_2rem_auto] gap-x-2">
