@@ -9,6 +9,7 @@ use App\Enums\ShipSize;
 use App\Events\MapSolarsystems\MapSolarsystemsUpsertedEvent;
 use App\Models\Map;
 use App\Models\MapConnection;
+use App\Models\Signature;
 use Illuminate\Support\Facades\Event;
 
 it('adds the target system and connects it when tracking a jump', function () {
@@ -128,4 +129,45 @@ it('applies an explicitly chosen ship size to the tracked connection', function 
     ]));
 
     expect(MapConnection::where('map_id', $map->id)->value('ship_size'))->toBe(ShipSize::Frigate);
+});
+
+it('falls back to the signature ship size when none is chosen explicitly', function () {
+    $map = Map::factory()->create();
+    $origin = placeMapSolarsystem($map, 30012007);
+    $targetId = makeSolarsystem(30012008);
+
+    $signature = Signature::create([
+        'map_solarsystem_id' => $origin->id,
+        'signature_id' => 'ABC-123',
+        'ship_size' => 'medium',
+    ]);
+
+    app(StoreTrackingAction::class)->handle(TrackingData::from([
+        'from_map_solarsystem_id' => $origin->id,
+        'to_solarsystem_id' => $targetId,
+        'signature_id' => $signature->id,
+    ]));
+
+    expect(MapConnection::where('map_id', $map->id)->value('ship_size'))->toBe(ShipSize::Medium);
+});
+
+it('prefers the explicit ship size over the signature ship size', function () {
+    $map = Map::factory()->create();
+    $origin = placeMapSolarsystem($map, 30012009);
+    $targetId = makeSolarsystem(30012010);
+
+    $signature = Signature::create([
+        'map_solarsystem_id' => $origin->id,
+        'signature_id' => 'DEF-456',
+        'ship_size' => 'medium',
+    ]);
+
+    app(StoreTrackingAction::class)->handle(TrackingData::from([
+        'from_map_solarsystem_id' => $origin->id,
+        'to_solarsystem_id' => $targetId,
+        'signature_id' => $signature->id,
+        'ship_size' => 'xlarge',
+    ]));
+
+    expect(MapConnection::where('map_id', $map->id)->value('ship_size'))->toBe(ShipSize::ExtraLarge);
 });
