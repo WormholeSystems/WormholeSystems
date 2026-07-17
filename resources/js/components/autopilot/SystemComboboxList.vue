@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import SolarsystemSearchResult from '@/components/solarsystem/SolarsystemSearchResult.vue';
-import { ComboboxEmpty, ComboboxItem, ComboboxList } from '@/components/ui/combobox';
+import VirtualizedSolarsystemList from '@/components/solarsystem/VirtualizedSolarsystemList.vue';
+import { type TComboboxSection } from '@/lib/comboboxSections';
 import type { TStaticSolarsystem } from '@/types/static-data';
+import { computed } from 'vue';
 
 const { solarsystems, aliases } = defineProps<{
     solarsystems: TStaticSolarsystem[];
@@ -12,24 +13,17 @@ const emit = defineEmits<{
     select: [system: TStaticSolarsystem];
 }>();
 
+const sections = computed<TComboboxSection<TStaticSolarsystem>[]>(() => [{ key: 'systems', heading: '', items: solarsystems }]);
+
 function handleSelect(system: TStaticSolarsystem) {
     emit('select', system);
+}
+
+function getAlias(solarsystemId: number): string | null {
+    return aliases?.get(solarsystemId) ?? null;
 }
 </script>
 
 <template>
-    <ComboboxList class="w-[600px]">
-        <ComboboxEmpty class="p-2">No systems found.</ComboboxEmpty>
-        <div class="grid grid-cols-[auto_1fr_1fr_auto] items-center gap-x-2 p-1">
-            <ComboboxItem
-                v-for="system in solarsystems"
-                :key="system.id"
-                :value="system.name"
-                @select="handleSelect(system)"
-                class="col-span-full grid grid-cols-subgrid"
-            >
-                <SolarsystemSearchResult :solarsystem="system" :alias="aliases?.get(system.id) ?? null" />
-            </ComboboxItem>
-        </div>
-    </ComboboxList>
+    <VirtualizedSolarsystemList class="w-[600px]" :sections="sections" :get-alias="getAlias" @select="handleSelect" />
 </template>

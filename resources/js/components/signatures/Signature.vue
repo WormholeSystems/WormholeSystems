@@ -257,8 +257,8 @@ function handleTogglePreserveMass() {
             </Select>
         </div>
 
-        <!-- Type / Wormhole Info -->
-        <div class="min-w-0 flex-1">
+        <!-- Type / Wormhole Info: capped for wormhole rows so the connection column gets the extra room. -->
+        <div class="min-w-0 flex-1" :class="{ 'max-w-44': isWormhole }">
             <WormholeTypeInput
                 v-if="isWormhole"
                 :model-value="signature.signature_type_id"

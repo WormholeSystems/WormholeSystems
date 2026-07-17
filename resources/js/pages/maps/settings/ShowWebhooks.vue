@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import PlusIcon from '@/components/icons/PlusIcon.vue';
-import SolarsystemEffect from '@/components/map/SolarsystemEffect.vue';
 import KillmailFilterEditor from '@/components/maps/webhooks/KillmailFilterEditor.vue';
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
+import VirtualizedSolarsystemList from '@/components/solarsystem/VirtualizedSolarsystemList.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Combobox, ComboboxAnchor, ComboboxEmpty, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxList } from '@/components/ui/combobox';
+import { Combobox, ComboboxAnchor, ComboboxInput } from '@/components/ui/combobox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,6 +21,8 @@ import usePermission from '@/composables/usePermission';
 import { useStaticData } from '@/composables/useStaticData';
 import { jumpShipLabel, jumpShipTypes, maxRangeLy } from '@/const/jumpShipTypes';
 import SettingsLayout from '@/layouts/SettingsLayout.vue';
+import { type TComboboxSection } from '@/lib/comboboxSections';
+import { MAX_SEARCH_RESULTS, takeRanked } from '@/lib/searchRank';
 import { TMapSummary } from '@/pages/maps';
 import { TJumpShipType, TKillmailFilterMatch, TKillmailFilterRule, TMapAlert, TMapWebhook, TMapWebhookRole, TMapWebhookType } from '@/types/models';
 import { TStaticSolarsystem } from '@/types/static-data';
@@ -183,8 +185,18 @@ const formJumpRangeLy = computed(() => maxRangeLy(alertForm.ship_type, alertForm
 const filteredSolarsystems = computed(() => {
     const query = search.value.trim().toLowerCase();
     if (!query) return [] as TStaticSolarsystem[];
-    return solarsystems.value.filter((solarsystem) => solarsystem.name.toLowerCase().includes(query)).slice(0, 25);
+    return takeRanked(
+        solarsystems.value,
+        query,
+        MAX_SEARCH_RESULTS,
+        (solarsystem) => [solarsystem.name],
+        (solarsystem) => solarsystem.name,
+    );
 });
+
+const search_sections = computed<TComboboxSection<TStaticSolarsystem>[]>(() => [
+    { key: 'results', heading: 'Search Results', items: filteredSolarsystems.value },
+]);
 
 const canSubmitAlert = computed(
     () =>
@@ -559,37 +571,11 @@ function confirmPendingDelete() {
                                     <SolarsystemClass :solarsystem_class="selectedTarget.class" :name="selectedTarget.name" />
                                     <span class="font-medium">{{ selectedTarget.name }}</span>
                                 </div>
-                                <Combobox class="rounded-lg border bg-neutral-900">
+                                <Combobox class="rounded-lg border bg-neutral-900" :ignore-filter="true">
                                     <ComboboxAnchor>
                                         <ComboboxInput v-model="search" placeholder="Search for a system…" />
                                     </ComboboxAnchor>
-                                    <ComboboxList align="start">
-                                        <ComboboxEmpty>No results found</ComboboxEmpty>
-                                        <ComboboxGroup
-                                            heading="Search Results"
-                                            v-if="filteredSolarsystems.length > 0"
-                                            class="grid grid-cols-[auto_1fr_auto]"
-                                        >
-                                            <ComboboxItem
-                                                v-for="solarsystem in filteredSolarsystems"
-                                                :key="solarsystem.id"
-                                                :value="solarsystem.name"
-                                                @select.prevent="() => handleTargetSelect(solarsystem)"
-                                                class="col-span-full grid grid-cols-subgrid"
-                                            >
-                                                <div class="justify-self-center">
-                                                    <SolarsystemClass :solarsystem_class="solarsystem.class" :name="solarsystem.name" />
-                                                </div>
-                                                <span class="whitespace-nowrap">{{ solarsystem.name }}</span>
-                                                <span class="truncate text-muted-foreground" v-if="!solarsystem.class">{{
-                                                    solarsystem.region?.name
-                                                }}</span>
-                                                <div class="justify-self-end" v-else-if="solarsystem.effect">
-                                                    <SolarsystemEffect :effect="solarsystem.effect" />
-                                                </div>
-                                            </ComboboxItem>
-                                        </ComboboxGroup>
-                                    </ComboboxList>
+                                    <VirtualizedSolarsystemList align="start" :sections="search_sections" @select="handleTargetSelect" />
                                 </Combobox>
                                 <p v-if="isJumpRange" class="text-xs text-muted-foreground">
                                     Jump range is measured between this system and new exits on the map.

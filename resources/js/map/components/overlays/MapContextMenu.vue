@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import SolarsystemSearchResult from '@/components/solarsystem/SolarsystemSearchResult.vue';
+import VirtualizedSolarsystemList from '@/components/solarsystem/VirtualizedSolarsystemList.vue';
 import { Button } from '@/components/ui/button';
-import { Combobox, ComboboxAnchor, ComboboxEmpty, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxList } from '@/components/ui/combobox';
+import { Combobox, ComboboxAnchor, ComboboxInput } from '@/components/ui/combobox';
 import {
     ContextMenuContent,
     ContextMenuItem,
@@ -13,6 +13,7 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { NumberField, NumberFieldContent, NumberFieldDecrement, NumberFieldIncrement, NumberFieldInput } from '@/components/ui/number-field';
+import { type TComboboxSection } from '@/lib/comboboxSections';
 import { cleanMapSolarsystems } from '@/map/actions/cleanMapSolarsystems';
 import { getClearableMapSolarsystems } from '@/map/actions/clearableMapSolarsystems';
 import { createMapSolarsystem } from '@/map/actions/createMapSolarsystem';
@@ -57,6 +58,11 @@ const { new_solarsystems, existing_solarsystems, getAlias } = useSolarsystemSear
 const adding = ref(false);
 
 const spacing = ref(0);
+
+const search_sections = computed<TComboboxSection<TStaticSolarsystem>[]>(() => [
+    { key: 'new', heading: 'Search Results', items: new_solarsystems.value },
+    { key: 'existing', heading: 'Already in Map', items: existing_solarsystems.value, selectable: false },
+]);
 
 function handleSolarsystemSelect(solarsystem: TStaticSolarsystem) {
     createMapSolarsystem(solarsystem.id, position);
@@ -154,42 +160,11 @@ function handleConfirmClean() {
                 <DialogTitle> Add Solarsystem</DialogTitle>
                 <DialogDescription> Add a solarsystem to the map;</DialogDescription>
             </DialogHeader>
-            <Combobox class="rounded-lg border bg-neutral-900">
+            <Combobox class="rounded-lg border bg-neutral-900" :ignore-filter="true">
                 <ComboboxAnchor>
                     <ComboboxInput v-model="search" auto-focus />
                 </ComboboxAnchor>
-                <ComboboxList>
-                    <ComboboxEmpty> No results found</ComboboxEmpty>
-                    <ComboboxGroup
-                        heading="Search Results"
-                        v-if="new_solarsystems.length > 0"
-                        class="grid grid-cols-[auto_1fr_1fr_auto] items-center gap-x-2"
-                    >
-                        <ComboboxItem
-                            v-for="solarsystem in new_solarsystems"
-                            :key="solarsystem.id"
-                            :value="solarsystem.name"
-                            @select.prevent="() => handleSolarsystemSelect(solarsystem)"
-                            class="col-span-full grid grid-cols-subgrid"
-                        >
-                            <SolarsystemSearchResult :solarsystem="solarsystem" :alias="getAlias(solarsystem.id)" />
-                        </ComboboxItem>
-                    </ComboboxGroup>
-                    <ComboboxGroup
-                        heading="Already in Map"
-                        v-if="existing_solarsystems.length > 0"
-                        class="grid grid-cols-[auto_1fr_1fr_auto] items-center gap-x-2"
-                    >
-                        <ComboboxItem
-                            v-for="solarsystem in existing_solarsystems"
-                            :key="solarsystem.id"
-                            :value="solarsystem.name"
-                            class="col-span-full grid grid-cols-subgrid"
-                        >
-                            <SolarsystemSearchResult :solarsystem="solarsystem" :alias="getAlias(solarsystem.id)" />
-                        </ComboboxItem>
-                    </ComboboxGroup>
-                </ComboboxList>
+                <VirtualizedSolarsystemList :sections="search_sections" :get-alias="getAlias" @select="handleSolarsystemSelect" />
             </Combobox>
         </DialogContent>
     </Dialog>
