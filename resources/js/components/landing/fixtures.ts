@@ -35,9 +35,12 @@ const SHIPS = {
 /**
  * Real solar systems pulled from resources/static/solarsystems.json (the same
  * dataset the live app uses) so every name, class, region, static and effect is
- * authentic. Class of each system matches the wormhole it connects through.
+ * authentic. The chain is static-accurate too: every connection is either a
+ * static of its source system or an inbound K162 opened by the other side's
+ * static, so the topology could exist in game exactly as drawn.
  */
 const SYSTEMS = {
+    /** C5 home. Its H296 static leads to another C5 (alpha). */
     home: {
         id: 31001880,
         name: 'J152820',
@@ -62,96 +65,91 @@ const SYSTEMS = {
         effect: { name: 'Pulsar', effects: [] },
         connection_type: null,
     },
+    /** C5 behind home's H296 static; its own V753 static leads on to the C6 (delta). */
     alpha: {
-        id: 31000880,
-        name: 'J160650',
-        region_id: 11000009,
-        constellation_id: 21000076,
-        class: '3',
+        id: 31002063,
+        name: 'J154846',
+        region_id: 11000026,
+        constellation_id: 21000256,
+        class: '5',
         security: -1,
         type: 'wh',
-        region: { id: 11000009, name: 'C-R00009' },
+        region: { id: 11000026, name: 'E-R00026' },
         sovereignty: null,
         statics: [
             {
-                id: 30687,
-                leads_to: 'ls',
-                name: 'U210',
+                id: 30703,
+                leads_to: 'c6',
+                name: 'V753',
                 maximum_lifetime: 86400,
-                maximum_jump_mass: 375_000_000,
-                total_mass: 3_000_000_000,
-                signature_strength: 10,
+                maximum_jump_mass: 2_000_000_000,
+                total_mass: 3_300_000_000,
+                signature_strength: 6.67,
             },
         ],
-        effect: null,
+        effect: { name: 'Wolf-Rayet Star', effects: [] },
         connection_type: null,
     },
-    thera: {
-        id: 31001375,
-        name: 'J160225',
-        region_id: 11000016,
-        constellation_id: 21000153,
+    /** C4 whose H900 static opened the K162 into home; its C247 static leads to the C3 (gamma). */
+    beta: {
+        id: 31001663,
+        name: 'J231710',
+        region_id: 11000021,
+        constellation_id: 21000197,
         class: '4',
         security: -1,
         type: 'wh',
-        region: { id: 11000016, name: 'D-R00016' },
+        region: { id: 11000021, name: 'D-R00021' },
         sovereignty: null,
         statics: [
             {
-                id: 30692,
-                leads_to: 'c4',
-                name: 'X877',
-                maximum_lifetime: 57600,
-                maximum_jump_mass: 375_000_000,
-                total_mass: 2_000_000_000,
-                signature_strength: 6.67,
-            },
-            {
-                id: 30690,
-                leads_to: 'c2',
-                name: 'N766',
-                maximum_lifetime: 57600,
-                maximum_jump_mass: 375_000_000,
-                total_mass: 2_000_000_000,
-                signature_strength: 4,
-            },
-        ],
-        effect: null,
-        connection_type: null,
-    },
-    beta: {
-        id: 31000355,
-        name: 'J164417',
-        region_id: 11000004,
-        constellation_id: 21000021,
-        class: '2',
-        security: -1,
-        type: 'wh',
-        region: { id: 11000004, name: 'B-R00004' },
-        sovereignty: null,
-        statics: [
-            {
-                id: 30677,
-                leads_to: 'hs',
-                name: 'B274',
+                id: 30693,
+                leads_to: 'c5',
+                name: 'H900',
                 maximum_lifetime: 86400,
+                maximum_jump_mass: 375_000_000,
+                total_mass: 3_000_000_000,
+                signature_strength: 2.5,
+            },
+            {
+                id: 30691,
+                leads_to: 'c3',
+                name: 'C247',
+                maximum_lifetime: 57600,
                 maximum_jump_mass: 375_000_000,
                 total_mass: 2_000_000_000,
                 signature_strength: 10,
             },
+        ],
+        effect: { name: 'Magnetar', effects: [] },
+        connection_type: null,
+    },
+    /** C3 behind the C4's C247 static; its D845 highsec static is the chain's exit to Jita. */
+    gamma: {
+        id: 31001073,
+        name: 'J121856',
+        region_id: 11000012,
+        constellation_id: 21000106,
+        class: '3',
+        security: -1,
+        type: 'wh',
+        region: { id: 11000012, name: 'C-R00012' },
+        sovereignty: null,
+        statics: [
             {
-                id: 30673,
-                leads_to: 'c3',
-                name: 'O477',
-                maximum_lifetime: 57600,
+                id: 30695,
+                leads_to: 'hs',
+                name: 'D845',
+                maximum_lifetime: 86400,
                 maximum_jump_mass: 375_000_000,
-                total_mass: 2_000_000_000,
+                total_mass: 5_000_000_000,
                 signature_strength: 5,
             },
         ],
         effect: null,
         connection_type: null,
     },
+    /** C6 behind alpha's V753 static — the dangerous end of the chain. */
     delta: {
         id: 31002367,
         name: 'J104859',
@@ -176,20 +174,32 @@ const SYSTEMS = {
         effect: { name: 'Pulsar', effects: [] },
         connection_type: null,
     },
-    amarr: {
-        id: 30002187,
-        name: 'Amarr',
-        region_id: 10000043,
-        constellation_id: 20000322,
-        class: 'h',
-        security: 1,
-        type: 'eve',
-        region: { id: 10000043, name: 'Domain' },
+    /** Neighbouring C5 whose H296 static opened a second K162 into home. */
+    epsilon: {
+        id: 31001881,
+        name: 'J135100',
+        region_id: 11000024,
+        constellation_id: 21000232,
+        class: '5',
+        security: -1,
+        type: 'wh',
+        region: { id: 11000024, name: 'E-R00024' },
         sovereignty: null,
-        statics: null,
+        statics: [
+            {
+                id: 30702,
+                leads_to: 'c5',
+                name: 'H296',
+                maximum_lifetime: 86400,
+                maximum_jump_mass: 2_000_000_000,
+                total_mass: 3_300_000_000,
+                signature_strength: 10,
+            },
+        ],
         effect: null,
         connection_type: null,
     },
+    /** Highsec exit behind the C3's D845 static. */
     jita: {
         id: 30000142,
         name: 'Jita',
@@ -239,19 +249,18 @@ function node(
 }
 
 /**
- * Laid out as a tidy left-to-right tree on the grid (positions are multiples of
- * the grid size). HOME is the hub on the left with three branches; each branch
- * carries one downstream system, including two known-space exits (Jita, Amarr).
- * The right-hand connections run parallel so no curves cross.
+ * A free-flow chain layout (positions are multiples of the grid size). HOME
+ * sits on the left with its H296 static going up the chain toward the C6 and
+ * two inbound K162s; the exit route runs through the C4 and C3 to Jita.
  */
 const NODES = {
-    home: node(1, SYSTEMS.home, { x: 80, y: 320 }, 'friendly', { signatures_count: 8, map_connections_count: 3, wormhole_signatures_count: 4 }),
-    alpha: node(2, SYSTEMS.alpha, { x: 340, y: 180 }, 'unscanned', { signatures_count: 3, map_connections_count: 2 }),
-    thera: node(5, SYSTEMS.thera, { x: 340, y: 320 }, 'empty', { signatures_count: 2, map_connections_count: 2 }),
-    beta: node(3, SYSTEMS.beta, { x: 340, y: 460 }, 'active', { signatures_count: 5, map_connections_count: 2 }),
-    jita: node(7, SYSTEMS.jita, { x: 600, y: 180 }, 'unknown', { map_connections_count: 1 }),
-    amarr: node(6, SYSTEMS.amarr, { x: 600, y: 320 }, 'unknown', { map_connections_count: 1 }),
-    delta: node(4, SYSTEMS.delta, { x: 600, y: 460 }, 'hostile', { threat_level: 'critical', signatures_count: 6, map_connections_count: 1 }),
+    home: node(1, SYSTEMS.home, { x: 80, y: 340 }, 'friendly', { signatures_count: 8, map_connections_count: 3, wormhole_signatures_count: 4 }),
+    alpha: node(2, SYSTEMS.alpha, { x: 340, y: 180 }, 'empty', { signatures_count: 3, map_connections_count: 2 }),
+    beta: node(3, SYSTEMS.beta, { x: 340, y: 340 }, 'active', { signatures_count: 5, map_connections_count: 2 }),
+    gamma: node(4, SYSTEMS.gamma, { x: 600, y: 300 }, 'active', { signatures_count: 2, map_connections_count: 2 }),
+    delta: node(5, SYSTEMS.delta, { x: 600, y: 120 }, 'hostile', { threat_level: 'critical', signatures_count: 6, map_connections_count: 1 }),
+    epsilon: node(6, SYSTEMS.epsilon, { x: 340, y: 500 }, 'unscanned', { map_connections_count: 1 }),
+    jita: node(7, SYSTEMS.jita, { x: 600, y: 460 }, 'unknown', { map_connections_count: 1 }),
 };
 
 export const MAP_SOLARSYSTEMS: TMapSolarsystem[] = Object.values(NODES);
@@ -287,12 +296,12 @@ function connection(
 }
 
 export const MAP_CONNECTIONS: TProcessedConnection[] = [
-    connection(1, NODES.home, NODES.alpha, 'fresh', 'healthy', 'large'),
-    connection(2, NODES.home, NODES.thera, 'fresh', 'eol', 'medium', true),
-    connection(3, NODES.home, NODES.beta, 'reduced', 'healthy', 'large'),
-    connection(4, NODES.alpha, NODES.jita, 'fresh', 'healthy', 'large'),
-    connection(5, NODES.thera, NODES.amarr, 'fresh', 'healthy', 'large', true),
-    connection(6, NODES.beta, NODES.delta, 'critical', 'critical', 'medium'),
+    connection(1, NODES.home, NODES.alpha, 'fresh', 'healthy', 'xlarge'),
+    connection(2, NODES.beta, NODES.home, 'fresh', 'healthy', 'large', true),
+    connection(3, NODES.epsilon, NODES.home, 'reduced', 'eol', 'xlarge'),
+    connection(4, NODES.alpha, NODES.delta, 'critical', 'critical', 'xlarge'),
+    connection(5, NODES.beta, NODES.gamma, 'fresh', 'healthy', 'large', true),
+    connection(6, NODES.gamma, NODES.jita, 'reduced', 'healthy', 'large', true),
 ];
 
 function character(
@@ -343,9 +352,9 @@ export const CHARACTERS: TCharacterViewModel[] = [
         static_solarsystem: toStatic(SYSTEMS.alpha),
     },
     {
-        ...character(2112000003, 'Aura Vex', SHIPS.stratios, SYSTEMS.thera),
-        route: route([SYSTEMS.home, SYSTEMS.thera, SYSTEMS.amarr]),
-        static_solarsystem: toStatic(SYSTEMS.thera),
+        ...character(2112000003, 'Aura Vex', SHIPS.stratios, SYSTEMS.gamma),
+        route: route([SYSTEMS.home, SYSTEMS.beta, SYSTEMS.gamma]),
+        static_solarsystem: toStatic(SYSTEMS.gamma),
     },
     {
         ...character(2112000004, 'Dagan Khar', SHIPS.buzzard, SYSTEMS.beta),
@@ -361,7 +370,7 @@ export const CHARACTERS: TCharacterViewModel[] = [
 
 export const MAP_PILOTS: Record<number, TCharacter[]> = {
     [NODES.home.id]: [CHARACTERS[0], CHARACTERS[4]],
-    [NODES.thera.id]: [CHARACTERS[2]],
+    [NODES.gamma.id]: [CHARACTERS[2]],
 };
 
 function killmail(
@@ -430,7 +439,7 @@ export function buildKillmails(): TKillmailViewModel[] {
         killmail(101, SHIPS.astero, SYSTEMS.delta, 142_000_000, 1),
         killmail(102, SHIPS.drake, SYSTEMS.beta, 88_000_000, 6, { solo: true }),
         killmail(103, SHIPS.sabre, SYSTEMS.home, 61_000_000, 12),
-        killmail(104, SHIPS.legion, SYSTEMS.thera, 412_000_000, 23),
+        killmail(104, SHIPS.legion, SYSTEMS.gamma, 412_000_000, 23),
         killmail(105, SHIPS.venture, SYSTEMS.alpha, 12_000_000, 41),
     ];
 }
@@ -515,13 +524,14 @@ function signature(input: SignatureInput): TSignature {
 /** Built per-render (call inside setup) — see {@link buildKillmails}. */
 export function buildSignatures(): TSignature[] {
     return [
-        // Wormholes, wired to the mapped connections (target class matches the linked system).
+        // Wormholes in HOME, wired to the mapped connections: the H296 static
+        // plus the K162 sides of the holes the C4 and C5 opened into us.
         signature({
             id: 701,
             signature_id: 'AZX-114',
             categoryName: 'Wormhole',
-            code: 'C247',
-            target_class: '3',
+            code: 'H296',
+            target_class: '5',
             map_connection_id: 1,
             minutesAgo: 18,
         }),
@@ -529,11 +539,9 @@ export function buildSignatures(): TSignature[] {
             id: 702,
             signature_id: 'JKL-204',
             categoryName: 'Wormhole',
-            code: 'X877',
+            code: 'K162',
             target_class: '4',
             map_connection_id: 2,
-            lifetime: 'eol',
-            mass: 'reduced',
             minutesAgo: 124,
         }),
         signature({
@@ -541,14 +549,14 @@ export function buildSignatures(): TSignature[] {
             signature_id: 'QRS-557',
             categoryName: 'Wormhole',
             code: 'K162',
-            target_class: '2',
+            target_class: '5',
             map_connection_id: 3,
-            lifetime: 'critical',
-            mass: 'critical',
+            lifetime: 'eol',
+            mass: 'reduced',
             minutesAgo: 6,
         }),
-        // Unconnected static wormhole, not yet linked to a system.
-        signature({ id: 704, signature_id: 'HMF-301', categoryName: 'Wormhole', code: 'H296', target_class: '5', minutesAgo: 41 }),
+        // Wandering K162, not yet linked to a system on the map.
+        signature({ id: 704, signature_id: 'HMF-301', categoryName: 'Wormhole', code: 'K162', target_class: '3', minutesAgo: 41 }),
         // Cosmic signatures (no connection).
         signature({ id: 705, signature_id: 'DAT-209', categoryName: 'Data Site', typeName: 'Unsecured Frontier Database', minutesAgo: 63 }),
         signature({

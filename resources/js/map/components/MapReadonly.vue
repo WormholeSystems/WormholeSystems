@@ -2,16 +2,15 @@
 import Edge from '@/map/components/edges/Edge.vue';
 import NodeCard from '@/map/components/nodes/NodeCard.vue';
 import { ANCHOR_OFFSET, nodeRect } from '@/map/core/coords';
-import { computeTreeEdgeGeometries } from '@/map/core/geometry/treeRouting';
-import type { EdgeGeometry, EdgeInput, Rect, Size, Vec2 } from '@/map/core/types';
+import { freeEdgeGeometry } from '@/map/core/geometry/freeRouting';
+import type { EdgeGeometry, Size } from '@/map/core/types';
 import type { TMapConnection, TMapSolarsystem } from '@/pages/maps';
 import { TCharacter } from '@/types/models';
-import { computed } from 'vue';
 
 /**
  * Store-free, read-only rendering of plain map data (the landing page's demo
  * map). Same contract as the old MapView: base-unit positions scaled by the
- * `scale` prop, non-interactive cards, and the same tree-routed elbow edges
+ * `scale` prop, non-interactive cards, and the same free-layout curved edges
  * the live map draws.
  */
 type TReadonlyConnection = TMapConnection & {
@@ -43,47 +42,18 @@ const {
  * Fixed-width node cards keep the edge routing fully deterministic: the
  * geometry is correct on the very first paint (no post-mount measurement pass,
  * so no connection jump while the map fades in) and costs nothing to compute.
+ * Nodes are assumed to span two grid fields high (the card's base height).
  */
-const NODE_WIDTH = 180;
-
-function nodeSize(system: TMapSolarsystem): Size {
-    return {
-        width: NODE_WIDTH,
-        height: (pilots[system.id]?.length ?? 0) > 0 ? 60 : 40,
-    };
-}
+const NODE_SIZE: Size = { width: 180, height: 40 };
 
 /**
- * The same global tree-routing pass the live map runs: all edges routed
- * together so fan-outs at shared nodes space themselves out.
+ * The same per-edge free-layout routing the live map uses when the layout is
+ * unlocked: rounded curves between rail endpoints on each node.
  */
-const treeGeometries = computed<Map<number, EdgeGeometry>>(() => {
-    const edges: EdgeInput[] = connections.map((connection) => ({
-        id: connection.id,
-        sourceId: connection.source.id,
-        targetId: connection.target.id,
-    }));
-
-    const rects = new Map<number, Rect>();
-    const anchors = new Map<number, Vec2>();
-    for (const system of solarsystems) {
-        const anchor = system.position ?? { x: 0, y: 0 };
-        anchors.set(system.id, anchor);
-        rects.set(system.id, nodeRect(anchor, nodeSize(system)));
-    }
-
-    return computeTreeEdgeGeometries(edges, rects, anchors);
-});
-
 function connectionGeometry(connection: TReadonlyConnection): EdgeGeometry {
-    return (
-        treeGeometries.value.get(connection.id) ?? {
-            id: connection.id,
-            kind: 'curve',
-            from: connection.source.position ?? { x: 0, y: 0 },
-            to: connection.target.position ?? { x: 0, y: 0 },
-        }
-    );
+    const sourceAnchor = connection.source.position ?? { x: 0, y: 0 };
+    const targetAnchor = connection.target.position ?? { x: 0, y: 0 };
+    return freeEdgeGeometry(connection.id, nodeRect(sourceAnchor, NODE_SIZE), nodeRect(targetAnchor, NODE_SIZE));
 }
 
 /** The node's top-left in screen pixels: the scaled anchor minus the scaled anchor offset. */
