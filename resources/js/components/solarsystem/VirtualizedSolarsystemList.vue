@@ -22,7 +22,8 @@ const emit = defineEmits<{
 const rows = computed(() => flattenComboboxSections(sections));
 
 function handleSelect(row: TComboboxRow<TStaticSolarsystem>) {
-    if (row.kind !== 'option') {
+    // The disabled binding alone does not stop the select event from firing.
+    if (row.kind !== 'option' || !row.selectable) {
         return;
     }
     emit('select', row.value, row.section);

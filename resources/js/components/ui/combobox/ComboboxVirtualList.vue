@@ -34,7 +34,7 @@ const props = withDefaults(
 );
 
 defineSlots<{
-    default(props: { option: T }): unknown;
+    default?(props: { option: T }): unknown;
     header?(): unknown;
     empty?(): unknown;
 }>();
@@ -48,7 +48,12 @@ defineSlots<{
                 <slot name="empty">{{ emptyText }}</slot>
             </div>
             <ComboboxVirtualizer v-slot="{ option }" :options="options" :estimate-size="estimateSize" :text-content="textContent">
-                <slot :option="option as T" />
+                <!-- The virtualizer clones its slot's first vnode to position the row, and a
+                     forwarded slot is a Fragment it cannot clone — so the row root must be a
+                     concrete element owned by this component. -->
+                <div class="w-full">
+                    <slot :option="option as T" />
+                </div>
             </ComboboxVirtualizer>
         </ComboboxViewport>
     </ComboboxList>
