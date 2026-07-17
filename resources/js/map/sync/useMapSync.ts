@@ -8,11 +8,12 @@ import { usePage } from '@inertiajs/vue3';
 import { echo, useEcho } from '@laravel/echo-vue';
 import { computed, MaybeRefOrGetter, onMounted, onUnmounted, toValue } from 'vue';
 import { ALL_MAP_PROPS, mapEventHandlers, type SyncEffect } from './handlers';
+import { type ConnectionStateChange, createReconnectListener } from './reconnect';
 import { createReloadCoalescer } from './reloadCoalescer';
 
 type PusherConnection = {
-    bind(event: 'state_change', callback: (states: { previous: string; current: string }) => void): void;
-    unbind(event: 'state_change', callback: (states: { previous: string; current: string }) => void): void;
+    bind(event: 'state_change', callback: (states: ConnectionStateChange) => void): void;
+    unbind(event: 'state_change', callback: (states: ConnectionStateChange) => void): void;
 };
 
 /**
@@ -50,11 +51,7 @@ export function useMapSync(store: MapStore, mapId: MaybeRefOrGetter<number>): vo
         );
     }
 
-    const handleConnectionStateChange = ({ previous, current }: { previous: string; current: string }): void => {
-        if (current === 'connected' && previous !== 'initialized') {
-            coalescer.schedule(ALL_MAP_PROPS);
-        }
-    };
+    const handleConnectionStateChange = createReconnectListener(() => coalescer.schedule(ALL_MAP_PROPS));
 
     onMounted(() => {
         connection()?.bind('state_change', handleConnectionStateChange);
