@@ -77,24 +77,36 @@ it('draws a connection between two systems from the connection handle', function
 
     $page = visit(route('maps.show', $map));
 
+    $connectionCount = fn (): int => MapConnection::where('map_id', $map->id)->count();
+
     /* The drag gesture is occasionally dropped entirely on slow CI runners, so retry
-     * it a few times. Each retry only starts after the previous attempt's async-POST
-     * window has fully elapsed, so a gesture that did land is never repeated.
+     * it a few times. Before each retry the page is reloaded: the test server handles
+     * requests one at a time, so the reload completing guarantees any in-flight create
+     * POST from the previous attempt has finished. A zero count after the reload is
+     * therefore authoritative, and a retry can never duplicate a landed gesture.
      */
     foreach (range(1, 3) as $attempt) {
+        if ($attempt > 1) {
+            $page->navigate(route('maps.show', $map));
+
+            if ($connectionCount() > 0) {
+                break;
+            }
+        }
+
         $this->connectSystems($page, JITA, AMARR);
 
-        $deadline = microtime(true) + 5;
-        while (MapConnection::where('map_id', $map->id)->count() === 0 && microtime(true) < $deadline) {
+        $deadline = microtime(true) + 10;
+        while ($connectionCount() === 0 && microtime(true) < $deadline) {
             usleep(100_000);
         }
 
-        if (MapConnection::where('map_id', $map->id)->count() > 0) {
+        if ($connectionCount() > 0) {
             break;
         }
     }
 
-    expect(MapConnection::where('map_id', $map->id)->count())->toBe(1);
+    expect($connectionCount())->toBe(1);
 });
 
 it('prefills the alias editor with an alias assigned after the page loaded', function () {
