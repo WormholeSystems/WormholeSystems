@@ -6,7 +6,7 @@ import { computeTreeEdgeGeometries } from '@/map/core/geometry/treeRouting';
 import type { EdgeGeometry, EdgeInput, Rect, Size, Vec2 } from '@/map/core/types';
 import type { TMapConnection, TMapSolarsystem } from '@/pages/maps';
 import { TCharacter } from '@/types/models';
-import { computed, onMounted, ref, type ComponentPublicInstance } from 'vue';
+import { computed } from 'vue';
 
 /**
  * Store-free, read-only rendering of plain map data (the landing page's demo
@@ -40,39 +40,17 @@ const {
 }>();
 
 /**
- * Node sizes for edge routing: measured from the DOM after mount, with the
- * card's known base dimensions as the SSR/first-paint estimate.
+ * Fixed-width node cards keep the edge routing fully deterministic: the
+ * geometry is correct on the very first paint (no post-mount measurement pass,
+ * so no connection jump while the map fades in) and costs nothing to compute.
  */
-const ESTIMATED_NODE_WIDTH = 120;
-
-const nodeEls = new Map<number, HTMLElement>();
-const measuredSizes = ref<Map<number, Size>>(new Map());
-
-function registerNode(id: number, el: Element | ComponentPublicInstance | null) {
-    if (el instanceof HTMLElement) {
-        nodeEls.set(id, el);
-    } else {
-        nodeEls.delete(id);
-    }
-}
-
-onMounted(() => {
-    const sizes = new Map<number, Size>();
-    for (const [id, el] of nodeEls) {
-        const card = el.firstElementChild as HTMLElement | null;
-        if (!card) continue;
-        sizes.set(id, { width: card.offsetWidth, height: card.offsetHeight });
-    }
-    measuredSizes.value = sizes;
-});
+const NODE_WIDTH = 180;
 
 function nodeSize(system: TMapSolarsystem): Size {
-    return (
-        measuredSizes.value.get(system.id) ?? {
-            width: ESTIMATED_NODE_WIDTH,
-            height: (pilots[system.id]?.length ?? 0) > 0 ? 60 : 40,
-        }
-    );
+    return {
+        width: NODE_WIDTH,
+        height: (pilots[system.id]?.length ?? 0) > 0 ? 60 : 40,
+    };
 }
 
 /**
@@ -132,7 +110,6 @@ function nodeTransform(system: TMapSolarsystem): string {
         <div
             v-for="solarsystem in solarsystems"
             :key="solarsystem.id"
-            :ref="(el) => registerNode(solarsystem.id, el)"
             class="pointer-events-none absolute select-none"
             :style="{ transform: nodeTransform(solarsystem) }"
         >
@@ -145,7 +122,7 @@ function nodeTransform(system: TMapSolarsystem): string {
                     :is-active="false"
                     :is-home="home_solarsystem_id === solarsystem.id"
                     :is-rally="rally_solarsystem_id === solarsystem.solarsystem_id"
-                    :fixed-width="false"
+                    :fixed-width="true"
                 />
             </div>
         </div>

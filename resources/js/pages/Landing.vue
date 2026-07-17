@@ -64,7 +64,7 @@ const currentYear = format(new UTCDate(), 'yyyy');
 const user = useUser();
 const page = usePage();
 
-const isCompact = useMediaQuery('(max-width: 1024px)');
+const isCompact = useMediaQuery('(max-width: 1279px)');
 
 // The killmail and signature panels show relative timestamps. Render them only
 // after mount so the server markup and the client's first paint always match.
@@ -241,7 +241,7 @@ const vReveal = {
                 <section class="relative overflow-hidden border-b border-border bg-muted/20">
                     <div class="hero-backdrop" aria-hidden="true" />
                     <div class="relative mx-auto max-w-7xl px-6 sm:px-10">
-                        <div class="grid items-center gap-14 py-24 lg:grid-cols-[1.05fr_1fr] lg:py-32">
+                        <div class="grid items-center gap-14 py-24 lg:grid-cols-[0.85fr_1.15fr] lg:py-32">
                             <div class="hero-intro">
                                 <div class="section-label">
                                     <span class="size-1.5 animate-pulse rounded-full bg-green-500" />
@@ -303,13 +303,13 @@ const vReveal = {
                                             </span>
                                         </template>
                                     </MapPanelHeader>
-                                    <div class="relative h-[380px] w-full overflow-hidden sm:h-[460px]">
+                                    <div class="relative h-[420px] w-full overflow-hidden sm:h-[460px] xl:h-[540px]">
                                         <MapReadonly
                                             :solarsystems="MAP_SOLARSYSTEMS"
                                             :connections="MAP_CONNECTIONS"
                                             :pilots="MAP_PILOTS"
                                             :home_solarsystem_id="1"
-                                            :scale="isCompact ? 0.58 : 0.8"
+                                            :scale="isCompact ? 0.62 : 0.85"
                                         />
                                     </div>
                                 </div>

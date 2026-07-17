@@ -245,13 +245,13 @@ function node(
  * The right-hand connections run parallel so no curves cross.
  */
 const NODES = {
-    home: node(1, SYSTEMS.home, { x: 120, y: 180 }, 'friendly', { signatures_count: 8, map_connections_count: 3, wormhole_signatures_count: 4 }),
-    alpha: node(2, SYSTEMS.alpha, { x: 340, y: 60 }, 'unscanned', { signatures_count: 3, map_connections_count: 2 }),
-    thera: node(5, SYSTEMS.thera, { x: 340, y: 180 }, 'empty', { signatures_count: 2, map_connections_count: 2 }),
-    beta: node(3, SYSTEMS.beta, { x: 340, y: 300 }, 'active', { signatures_count: 5, map_connections_count: 2 }),
-    jita: node(7, SYSTEMS.jita, { x: 560, y: 60 }, 'unknown', { map_connections_count: 1 }),
-    amarr: node(6, SYSTEMS.amarr, { x: 560, y: 180 }, 'unknown', { map_connections_count: 1 }),
-    delta: node(4, SYSTEMS.delta, { x: 560, y: 300 }, 'hostile', { threat_level: 'critical', signatures_count: 6, map_connections_count: 1 }),
+    home: node(1, SYSTEMS.home, { x: 80, y: 320 }, 'friendly', { signatures_count: 8, map_connections_count: 3, wormhole_signatures_count: 4 }),
+    alpha: node(2, SYSTEMS.alpha, { x: 340, y: 180 }, 'unscanned', { signatures_count: 3, map_connections_count: 2 }),
+    thera: node(5, SYSTEMS.thera, { x: 340, y: 320 }, 'empty', { signatures_count: 2, map_connections_count: 2 }),
+    beta: node(3, SYSTEMS.beta, { x: 340, y: 460 }, 'active', { signatures_count: 5, map_connections_count: 2 }),
+    jita: node(7, SYSTEMS.jita, { x: 600, y: 180 }, 'unknown', { map_connections_count: 1 }),
+    amarr: node(6, SYSTEMS.amarr, { x: 600, y: 320 }, 'unknown', { map_connections_count: 1 }),
+    delta: node(4, SYSTEMS.delta, { x: 600, y: 460 }, 'hostile', { threat_level: 'critical', signatures_count: 6, map_connections_count: 1 }),
 };
 
 export const MAP_SOLARSYSTEMS: TMapSolarsystem[] = Object.values(NODES);
