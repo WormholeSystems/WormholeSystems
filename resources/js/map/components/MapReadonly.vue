@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import Edge from '@/map/components/edges/Edge.vue';
 import NodeCard from '@/map/components/nodes/NodeCard.vue';
-import { ANCHOR_OFFSET } from '@/map/core/coords';
-import type { EdgeGeometry } from '@/map/core/types';
+import { ANCHOR_OFFSET, nodeRect } from '@/map/core/coords';
+import { freeEdgeGeometry } from '@/map/core/geometry/freeRouting';
+import type { EdgeGeometry, Size } from '@/map/core/types';
 import type { TMapConnection, TMapSolarsystem } from '@/pages/maps';
 import { TCharacter } from '@/types/models';
 
 /**
  * Store-free, read-only rendering of plain map data (the landing page's demo
  * map). Same contract as the old MapView: base-unit positions scaled by the
- * `scale` prop, curve edges only, non-interactive cards.
+ * `scale` prop, non-interactive cards, and the same free-layout curved edges
+ * the live map draws.
  */
 type TReadonlyConnection = TMapConnection & {
     source: TMapSolarsystem;
@@ -36,14 +38,22 @@ const {
     pilots?: Record<number, TCharacter[]>;
 }>();
 
-/** The free-layout curve between the two stored anchors, in base units. */
+/**
+ * Fixed-width node cards keep the edge routing fully deterministic: the
+ * geometry is correct on the very first paint (no post-mount measurement pass,
+ * so no connection jump while the map fades in) and costs nothing to compute.
+ * Nodes are assumed to span two grid fields high (the card's base height).
+ */
+const NODE_SIZE: Size = { width: 180, height: 40 };
+
+/**
+ * The same per-edge free-layout routing the live map uses when the layout is
+ * unlocked: rounded curves between rail endpoints on each node.
+ */
 function connectionGeometry(connection: TReadonlyConnection): EdgeGeometry {
-    return {
-        id: connection.id,
-        kind: 'curve',
-        from: connection.source.position ?? { x: 0, y: 0 },
-        to: connection.target.position ?? { x: 0, y: 0 },
-    };
+    const sourceAnchor = connection.source.position ?? { x: 0, y: 0 };
+    const targetAnchor = connection.target.position ?? { x: 0, y: 0 };
+    return freeEdgeGeometry(connection.id, nodeRect(sourceAnchor, NODE_SIZE), nodeRect(targetAnchor, NODE_SIZE));
 }
 
 /** The node's top-left in screen pixels: the scaled anchor minus the scaled anchor offset. */
@@ -82,7 +92,7 @@ function nodeTransform(system: TMapSolarsystem): string {
                     :is-active="false"
                     :is-home="home_solarsystem_id === solarsystem.id"
                     :is-rally="rally_solarsystem_id === solarsystem.solarsystem_id"
-                    :fixed-width="false"
+                    :fixed-width="true"
                 />
             </div>
         </div>

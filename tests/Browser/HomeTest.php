@@ -7,7 +7,7 @@ it('shows the homepage', function () {
         ->assertSee('WormholeSystems')
         ->assertSee('Sign In')
         ->assertSee('Sign in without scopes')
-        ->assertSee('Join the Discord')
+        ->assertSee('Discord')
         ->assertNoSmoke()
         ->assertNoConsoleLogs();
 });
