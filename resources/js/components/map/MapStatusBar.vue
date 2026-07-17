@@ -329,6 +329,7 @@ const settingsUrl = computed(() => {
         :target-solarsystem-name="targetSolarsystemName"
         :target-solarsystem-class="target_solarsystem?.class ?? null"
         :map-solarsystems="map_solarsystems"
+        :preselect-first-signature="map_user_settings.preselect_signature_enabled"
         :signatures="signatures"
         :suggested-alias="suggested_alias"
         @select-signature="handleSelectSignature"

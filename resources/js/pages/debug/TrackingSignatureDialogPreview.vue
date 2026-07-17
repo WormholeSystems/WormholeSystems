@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import TrackingSignatureDialog from '@/components/map/TrackingSignatureDialog.vue';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import Appearance from '@/layouts/Appearance.vue';
 import { TMapConnection, TMapSolarsystem } from '@/pages/maps';
@@ -184,6 +185,8 @@ const scenarios: TScenario[] = [
     },
 ];
 
+const preselectFirst = ref(false);
+
 const activeScenario = ref<TScenario | null>(null);
 const dialogOpen = ref(false);
 const lastSelection = ref<Record<string, unknown> | null>(null);
@@ -231,6 +234,11 @@ function handleSelection(selection: Record<string, unknown>): void {
                     </button>
                 </div>
 
+                <label class="mt-6 flex w-fit items-center gap-2 text-sm text-muted-foreground">
+                    <Checkbox :model-value="preselectFirst" @update:model-value="(value) => (preselectFirst = value === true)" />
+                    Preselect the first likely signature
+                </label>
+
                 <div v-if="activeScenario" class="mt-8 flex items-center gap-3">
                     <Button variant="outline" size="sm" class="gap-2" @click="dialogOpen = true">
                         <RotateCcw class="size-3.5" />
@@ -254,6 +262,7 @@ function handleSelection(selection: Record<string, unknown>): void {
                 :signatures="activeSignatures"
                 :suggested-alias="activeScenario?.suggestedAlias"
                 :map-solarsystems="MAP_SOLARSYSTEMS"
+                :preselect-first-signature="preselectFirst"
                 @select-signature="handleSelection"
             />
         </div>

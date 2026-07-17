@@ -25,6 +25,8 @@ const props = defineProps<{
     suggestedAlias?: string | null;
     /** The map's systems, used to name where already-connected signatures lead. */
     mapSolarsystems?: TMapSolarsystem[];
+    /** Pre-select the first likely signature on open so Enter confirms it immediately. */
+    preselectFirstSignature?: boolean;
 }>();
 
 const page = useShowMap();
@@ -123,10 +125,13 @@ const massStatus = ref<TMassStatus>('fresh');
 const shipSize = ref<TShipSize | 'auto'>('auto');
 
 // Reset inputs when the dialog opens. The alias is prefilled with the suggested
-// chain alias (or the target's existing alias when it is already on the map).
+// chain alias (or the target's existing alias when it is already on the map),
+// and with the preselect setting the first likely signature starts checked so
+// jumping holes in alphabetical order only takes Enter.
 watch(open, (isOpen) => {
     if (isOpen) {
-        selectedSignatureId.value = null;
+        search.value = '';
+        selectedSignatureId.value = props.preselectFirstSignature ? (groups.value.likely[0]?.id ?? null) : null;
         alias.value = props.suggestedAlias ?? '';
         lifetime.value = 'healthy';
         massStatus.value = 'fresh';
@@ -245,18 +250,16 @@ const shipSizeMeta: Record<TShipSize | 'auto', { label: string; badge: string }>
                             <Select :model-value="shipSize" @update:model-value="handleShipSizeChange">
                                 <SelectTrigger class="w-full">
                                     <span class="flex items-center gap-2">
-                                        <span
-                                            class="inline-flex w-6 justify-center rounded-sm border border-border/60 font-mono text-[10px] leading-4 text-muted-foreground"
-                                            >{{ shipSizeMeta[shipSize].badge }}</span
-                                        >
+                                        <span class="inline-flex w-6 justify-center font-mono text-[10px] leading-4 text-muted-foreground">{{
+                                            shipSizeMeta[shipSize].badge
+                                        }}</span>
                                         {{ shipSizeMeta[shipSize].label }}
                                     </span>
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="auto">
                                         <span class="flex items-center gap-2">
-                                            <span
-                                                class="inline-flex w-6 justify-center rounded-sm border border-border/60 font-mono text-[10px] leading-4 text-muted-foreground"
+                                            <span class="inline-flex w-6 justify-center font-mono text-[10px] leading-4 text-muted-foreground"
                                                 >·</span
                                             >
                                             Auto
@@ -264,8 +267,7 @@ const shipSizeMeta: Record<TShipSize | 'auto', { label: string; badge: string }>
                                     </SelectItem>
                                     <SelectItem value="frigate">
                                         <span class="flex items-center gap-2">
-                                            <span
-                                                class="inline-flex w-6 justify-center rounded-sm border border-border/60 font-mono text-[10px] leading-4 text-muted-foreground"
+                                            <span class="inline-flex w-6 justify-center font-mono text-[10px] leading-4 text-muted-foreground"
                                                 >S</span
                                             >
                                             Frigate
@@ -273,8 +275,7 @@ const shipSizeMeta: Record<TShipSize | 'auto', { label: string; badge: string }>
                                     </SelectItem>
                                     <SelectItem value="medium">
                                         <span class="flex items-center gap-2">
-                                            <span
-                                                class="inline-flex w-6 justify-center rounded-sm border border-border/60 font-mono text-[10px] leading-4 text-muted-foreground"
+                                            <span class="inline-flex w-6 justify-center font-mono text-[10px] leading-4 text-muted-foreground"
                                                 >M</span
                                             >
                                             Medium
@@ -282,8 +283,7 @@ const shipSizeMeta: Record<TShipSize | 'auto', { label: string; badge: string }>
                                     </SelectItem>
                                     <SelectItem value="large">
                                         <span class="flex items-center gap-2">
-                                            <span
-                                                class="inline-flex w-6 justify-center rounded-sm border border-border/60 font-mono text-[10px] leading-4 text-muted-foreground"
+                                            <span class="inline-flex w-6 justify-center font-mono text-[10px] leading-4 text-muted-foreground"
                                                 >L</span
                                             >
                                             Large
@@ -291,8 +291,7 @@ const shipSizeMeta: Record<TShipSize | 'auto', { label: string; badge: string }>
                                     </SelectItem>
                                     <SelectItem value="xlarge">
                                         <span class="flex items-center gap-2">
-                                            <span
-                                                class="inline-flex w-6 justify-center rounded-sm border border-border/60 font-mono text-[10px] leading-4 text-muted-foreground"
+                                            <span class="inline-flex w-6 justify-center font-mono text-[10px] leading-4 text-muted-foreground"
                                                 >XL</span
                                             >
                                             Extra Large
