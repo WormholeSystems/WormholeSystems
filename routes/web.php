@@ -47,6 +47,8 @@ use App\Http\Controllers\UserCharacterController;
 use App\Http\Controllers\WaypointController;
 use App\Http\Middleware\SetMapShareToken;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
+use Inertia\Response;
 
 Route::get('/', [LandingController::class, 'index'])->name('landing')->middleware('guest');
 Route::get('documentation/{path?}', [DocumentationController::class, 'index'])->where('path', '.*')->name('documentation');
@@ -54,6 +56,12 @@ Route::get('login', [LoginController::class, 'show'])->name('login');
 Route::get('auth', [AuthController::class, 'show'])->name('auth');
 Route::get('eve', [EveController::class, 'show'])->name('eve.show');
 Route::get('eve/callback', [EveController::class, 'store'])->name('eve.store');
+
+if (! app()->environment('production')) {
+    Route::get('debug/tracking-signature-dialog', fn (): Response => Inertia::render('debug/TrackingSignatureDialogPreview', [
+        'map' => ['slug' => 'debug-preview'],
+    ]))->name('debug.tracking-signature-dialog');
+}
 
 Route::middleware('auth')->group(function () {
 
