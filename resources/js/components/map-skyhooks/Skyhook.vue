@@ -100,31 +100,37 @@ const hasRoute = computed(() => route !== null && route.length > 1);
 </script>
 
 <template>
-    <DestinationContextMenu :solarsystem_id="skyhook.solarsystem_id">
-        <div v-element-hover="onHover" class="col-span-full grid grid-cols-subgrid items-center px-3 py-1.5 hover:bg-muted/20">
-            <span class="size-2 rounded-full" :class="statusColor" />
-            <span class="truncate text-xs">{{ planetLabel }}</span>
-            <span class="truncate font-mono text-[10px] text-muted-foreground">{{ staticSolarsystem.region?.name ?? '' }}</span>
-            <SolarsystemSovereignty :solarsystem-id="skyhook.solarsystem_id" class="size-4" />
-            <RoutePopover v-if="hasRoute" :route="route ?? undefined">
-                <span class="cursor-pointer text-right font-mono text-[10px] tracking-wider uppercase hover:text-foreground" :class="jumpsClass">{{
-                    jumpsLabel
-                }}</span>
-            </RoutePopover>
-            <span v-else class="text-right font-mono text-[10px] tracking-wider uppercase" :class="jumpsClass">{{ jumpsLabel }}</span>
-            <Tooltip>
-                <TooltipTrigger as-child>
+    <!-- The context menu root renders no element, but the parent TransitionGroup
+         needs an element root to animate — same wrapper pattern as Killmail.vue. -->
+    <div class="col-span-full grid grid-cols-subgrid">
+        <DestinationContextMenu :solarsystem_id="skyhook.solarsystem_id">
+            <div v-element-hover="onHover" class="col-span-full grid grid-cols-subgrid items-center px-3 py-1.5 hover:bg-muted/20">
+                <span class="size-2 rounded-full" :class="statusColor" />
+                <span class="truncate text-xs">{{ planetLabel }}</span>
+                <span class="truncate font-mono text-[10px] text-muted-foreground">{{ staticSolarsystem.region?.name ?? '' }}</span>
+                <SolarsystemSovereignty :solarsystem-id="skyhook.solarsystem_id" class="size-4" />
+                <RoutePopover v-if="hasRoute" :route="route ?? undefined">
                     <span
-                        class="cursor-help justify-self-end font-mono text-[10px] font-semibold tracking-wider uppercase"
-                        :class="statusTimeClass"
-                        >{{ statusTime }}</span
+                        class="cursor-pointer text-right font-mono text-[10px] tracking-wider uppercase hover:text-foreground"
+                        :class="jumpsClass"
+                        >{{ jumpsLabel }}</span
                     >
-                </TooltipTrigger>
-                <TooltipContent class="flex flex-col gap-0.5">
-                    <span>{{ tooltipHeadline }}</span>
-                    <span class="font-mono text-[10px] text-muted-foreground">{{ tooltipWindow }}</span>
-                </TooltipContent>
-            </Tooltip>
-        </div>
-    </DestinationContextMenu>
+                </RoutePopover>
+                <span v-else class="text-right font-mono text-[10px] tracking-wider uppercase" :class="jumpsClass">{{ jumpsLabel }}</span>
+                <Tooltip>
+                    <TooltipTrigger as-child>
+                        <span
+                            class="cursor-help justify-self-end font-mono text-[10px] font-semibold tracking-wider uppercase"
+                            :class="statusTimeClass"
+                            >{{ statusTime }}</span
+                        >
+                    </TooltipTrigger>
+                    <TooltipContent class="flex flex-col gap-0.5">
+                        <span>{{ tooltipHeadline }}</span>
+                        <span class="font-mono text-[10px] text-muted-foreground">{{ tooltipWindow }}</span>
+                    </TooltipContent>
+                </Tooltip>
+            </div>
+        </DestinationContextMenu>
+    </div>
 </template>
