@@ -292,6 +292,7 @@ export type TMapUserSetting = {
     show_threat_level: boolean;
     show_statics_first: boolean;
     is_archived: boolean;
+    is_pinned: boolean;
     background_image_url: string | null;
     background_image_mode: 'grid' | 'viewport';
     layout_override: 'manual' | 'tree' | null;

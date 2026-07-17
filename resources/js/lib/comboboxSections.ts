@@ -19,14 +19,12 @@ export function flattenComboboxSections<T>(sections: TComboboxSection<T>[]): TCo
             ? []
             : [
                   ...(section.heading === '' ? [] : [{ kind: 'heading', label: section.heading } satisfies TComboboxRow<T>]),
-                  ...section.items.map(
-                      (value): TComboboxRow<T> => ({
-                          kind: 'option',
-                          value,
-                          section: section.key,
-                          selectable: section.selectable ?? true,
-                      }),
-                  ),
+                  ...section.items.map((value): TComboboxRow<T> => ({
+                      kind: 'option',
+                      value,
+                      section: section.key,
+                      selectable: section.selectable ?? true,
+                  })),
               ],
     );
 }

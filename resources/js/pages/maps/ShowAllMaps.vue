@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import MapController from '@/actions/App/Http/Controllers/MapController';
 import Logo from '@/components/icons/Logo.vue';
 import PlusIcon from '@/components/icons/PlusIcon.vue';
+import CreateMapDialog from '@/components/map/CreateMapDialog.vue';
 import MapCard from '@/components/map/MapCard.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +9,6 @@ import { useSearch } from '@/composables/useSearch';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SeoHead from '@/layouts/SeoHead.vue';
 import { TMapSummary } from '@/pages/maps/index';
-import { Link } from '@inertiajs/vue3';
 import { Archive, ChevronDown, SearchIcon } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 
@@ -47,25 +46,22 @@ const stats = computed(() => [
             <!-- Header -->
             <div class="flex flex-wrap items-end justify-between gap-4">
                 <div>
-                    <h1 class="text-3xl font-bold tracking-tight text-foreground">Maps</h1>
+                    <h1 class="font-display text-3xl font-bold tracking-tight text-foreground">Maps</h1>
                     <p class="mt-2 text-muted-foreground">Manage and explore your wormhole mapping networks</p>
                 </div>
-                <Link :href="MapController.create()" prefetch>
+                <CreateMapDialog>
                     <Button class="flex items-center gap-2">
                         <PlusIcon class="h-4 w-4" />
                         Create New Map
                     </Button>
-                </Link>
+                </CreateMapDialog>
             </div>
 
             <!-- Summary -->
-            <div
-                v-if="maps.length > 0"
-                class="mt-8 grid grid-cols-3 divide-x divide-border/60 overflow-hidden rounded-xl border border-border/60 bg-card"
-            >
+            <div v-if="maps.length > 0" class="mt-8 grid grid-cols-3 divide-x divide-border/50 overflow-hidden rounded bg-card ring-1 ring-border">
                 <div v-for="stat in stats" :key="stat.label" class="px-5 py-4">
-                    <div class="text-2xl font-bold tracking-tight tabular-nums">{{ stat.value.toLocaleString() }}</div>
-                    <div class="mt-1 text-xs tracking-wide text-muted-foreground/70 uppercase">{{ stat.label }}</div>
+                    <div class="font-display text-2xl font-bold tracking-tight tabular-nums">{{ stat.value.toLocaleString() }}</div>
+                    <div class="mt-1 font-mono text-[10px] tracking-wider text-muted-foreground uppercase">{{ stat.label }}</div>
                 </div>
             </div>
 
@@ -83,7 +79,7 @@ const stats = computed(() => [
             </div>
 
             <!-- Active maps -->
-            <div v-if="activeMaps.length > 0" class="mt-6 grid grid-cols-[repeat(auto-fill,minmax(22rem,1fr))] gap-5">
+            <div v-if="activeMaps.length > 0" class="mt-6 grid grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] gap-4">
                 <MapCard v-for="map in activeMaps" :key="map.id" :map="map" />
             </div>
 
@@ -105,10 +101,10 @@ const stats = computed(() => [
             <!-- Archived maps -->
             <div v-if="showArchived && archivedMaps.length > 0" class="mt-10">
                 <div class="flex items-center gap-3">
-                    <h2 class="text-sm font-semibold tracking-wide text-muted-foreground/70 uppercase">Archived</h2>
-                    <span class="h-px flex-1 bg-border/60" />
+                    <h2 class="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">Archived · {{ archivedMaps.length }}</h2>
+                    <span class="h-px flex-1 bg-border/50" />
                 </div>
-                <div class="mt-5 grid grid-cols-[repeat(auto-fill,minmax(22rem,1fr))] gap-5">
+                <div class="mt-5 grid grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] gap-4">
                     <MapCard v-for="map in archivedMaps" :key="map.id" :map="map" />
                 </div>
             </div>
@@ -130,12 +126,12 @@ const stats = computed(() => [
                 </p>
                 <div class="flex gap-2">
                     <Button v-if="search" variant="outline" @click="search = ''">Clear Search</Button>
-                    <Link :href="MapController.create()" prefetch>
+                    <CreateMapDialog>
                         <Button class="flex items-center gap-2">
                             <PlusIcon class="h-4 w-4" />
                             {{ search ? 'Create New Map' : 'Create Your First Map' }}
                         </Button>
-                    </Link>
+                    </CreateMapDialog>
                 </div>
             </div>
         </div>

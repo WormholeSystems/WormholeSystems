@@ -36,6 +36,13 @@ export type AppPageProps<T extends Record<string, unknown> = Record<string, unkn
         signatures: SortPreference;
     };
     missing_scopes: TCharacter[];
+    pinned_maps: TPinnedMap[];
+};
+
+export type TPinnedMap = {
+    id: number;
+    name: string;
+    slug: string;
 };
 
 export interface User {

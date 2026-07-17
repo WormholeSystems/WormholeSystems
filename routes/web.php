@@ -58,9 +58,8 @@ Route::get('eve/callback', [EveController::class, 'store'])->name('eve.store');
 Route::middleware('auth')->group(function () {
 
     Route::get('maps/{map}/ping', [PingController::class, 'show'])->name('maps.ping');
-    Route::resource('maps', MapController::class)->except(['show'])->names([
+    Route::resource('maps', MapController::class)->except(['show', 'create'])->names([
         'index' => 'home',
-        'create' => 'maps.create',
         'store' => 'maps.store',
         'edit' => 'maps.edit',
         'update' => 'maps.update',

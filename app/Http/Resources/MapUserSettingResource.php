@@ -43,6 +43,7 @@ final class MapUserSettingResource extends JsonResource
             'show_threat_level' => $this->show_threat_level,
             'show_statics_first' => $this->show_statics_first,
             'is_archived' => $this->is_archived ?? false,
+            'is_pinned' => $this->is_pinned ?? false,
             'background_image_url' => $this->background_image_path
                 ? Storage::disk('public')->url($this->background_image_path)
                 : null,

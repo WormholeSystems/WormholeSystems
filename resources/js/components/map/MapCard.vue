@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import MapController from '@/actions/App/Http/Controllers/MapController';
 import MapUserSettingController from '@/actions/App/Http/Controllers/MapUserSettingController';
-import Logo from '@/components/icons/Logo.vue';
 import SatelliteDish from '@/components/icons/SatelliteDish.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,7 +16,7 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { TMapSummary } from '@/pages/maps';
 import { Link, router } from '@inertiajs/vue3';
-import { Archive, ArchiveRestore, ArrowRight, Crown, Eye, Globe, Lock, MoreVertical, Pencil, Settings, Spline } from 'lucide-vue-next';
+import { Archive, ArchiveRestore, ArrowRight, Crown, Eye, Globe, Lock, MoreVertical, Pencil, Pin, PinOff, Settings, Spline } from 'lucide-vue-next';
 import { computed, ref, type Component } from 'vue';
 
 const { map } = defineProps<{
@@ -27,6 +26,7 @@ const { map } = defineProps<{
 const open = ref(false);
 
 const isArchived = computed(() => Boolean(map.map_user_setting?.is_archived));
+const isPinned = computed(() => Boolean(map.map_user_setting?.is_pinned));
 const trackingAllowed = computed(() => Boolean(map.map_user_setting?.tracking_allowed));
 
 const roleMeta: Record<NonNullable<TMapSummary['role']>, { label: string; icon: Component; class: string }> = {
@@ -41,26 +41,29 @@ const role = computed(() => (map.role ? roleMeta[map.role] : null));
 function setArchived(value: boolean): void {
     router.put(MapUserSettingController.update(map.slug).url, { is_archived: value }, { preserveScroll: true, only: ['maps'] });
 }
+
+function setPinned(value: boolean): void {
+    router.put(MapUserSettingController.update(map.slug).url, { is_pinned: value }, { preserveScroll: true, only: ['maps', 'pinned_maps'] });
+}
 </script>
 
 <template>
     <div
-        class="group relative flex flex-col rounded-xl border border-border/60 bg-card p-5 transition-all hover:border-border hover:shadow-lg hover:shadow-black/5"
+        class="group relative flex flex-col overflow-hidden rounded bg-card ring-1 ring-border transition-shadow hover:ring-foreground/25"
         :class="{ 'opacity-70': isArchived }"
     >
-        <!-- Header -->
-        <div class="flex items-start justify-between gap-3">
-            <Link :href="MapController.show(map.slug)" prefetch class="group/title flex min-w-0 items-center gap-3">
-                <div class="rounded-lg bg-primary/10 p-2">
-                    <Logo class="h-5 w-5 text-primary" />
-                </div>
-                <h3 class="truncate font-semibold tracking-tight transition-colors group-hover/title:text-primary">{{ map.name }}</h3>
-            </Link>
+        <!-- Panel header -->
+        <div class="flex h-9 shrink-0 items-center justify-between gap-2 border-b border-border/50 bg-muted/30 pr-1.5 pl-3">
+            <span class="flex min-w-0 items-center gap-1.5 font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
+                <component :is="map.is_public ? Globe : Lock" class="size-3 shrink-0" />
+                <span class="truncate">map · {{ map.is_public ? 'public' : 'private' }}</span>
+                <Pin v-if="isPinned" class="size-3 shrink-0 text-orange-400" />
+            </span>
 
             <DropdownMenu>
                 <DropdownMenuTrigger as-child>
-                    <button class="-mr-1 shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
-                        <MoreVertical class="size-4" />
+                    <button class="shrink-0 rounded-sm p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+                        <MoreVertical class="size-3.5" />
                     </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" class="w-48">
@@ -71,6 +74,14 @@ function setArchived(value: boolean): void {
                         </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
+                    <DropdownMenuItem v-if="!isPinned" @select="setPinned(true)">
+                        <Pin class="size-4" />
+                        Pin to navbar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem v-else @select="setPinned(false)">
+                        <PinOff class="size-4" />
+                        Unpin from navbar
+                    </DropdownMenuItem>
                     <DropdownMenuItem v-if="!isArchived" @select="setArchived(true)">
                         <Archive class="size-4" />
                         Archive map
@@ -83,40 +94,42 @@ function setArchived(value: boolean): void {
             </DropdownMenu>
         </div>
 
-        <!-- Stats -->
-        <div class="mt-5 flex flex-wrap items-center gap-2">
-            <span class="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-muted/30 px-2 py-1 text-xs font-medium">
-                <SatelliteDish class="size-3.5 text-muted-foreground" />
-                {{ map.map_solarsystems_count }}
-                <span class="text-muted-foreground">systems</span>
-            </span>
-            <span class="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-muted/30 px-2 py-1 text-xs font-medium">
-                <Spline class="size-3.5 text-muted-foreground" />
-                {{ map.map_connections_count }}
-                <span class="text-muted-foreground">connections</span>
-            </span>
-        </div>
-
-        <!-- Footer -->
-        <div class="mt-5 flex items-center justify-between gap-2 border-t border-border/50 pt-4">
-            <div class="flex min-w-0 items-center gap-2">
-                <span v-if="role" class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium" :class="role.class">
-                    <component :is="role.icon" class="size-3" />
-                    {{ role.label }}
+        <!-- Body: name and stats, one large click target -->
+        <Link :href="MapController.show(map.slug)" prefetch class="group/body flex flex-1 flex-col gap-3 p-4">
+            <h3 class="truncate font-display text-lg font-bold tracking-tight transition-colors group-hover/body:text-primary">
+                {{ map.name }}
+            </h3>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
+                <span class="inline-flex items-center gap-1.5">
+                    <SatelliteDish class="size-3" />
+                    {{ map.map_solarsystems_count }} systems
                 </span>
-                <span class="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                    <component :is="map.is_public ? Globe : Lock" class="size-3.5" />
-                    {{ map.is_public ? 'Public' : 'Private' }}
+                <span class="inline-flex items-center gap-1.5">
+                    <Spline class="size-3" />
+                    {{ map.map_connections_count }} connections
                 </span>
             </div>
+        </Link>
+
+        <!-- Footer -->
+        <div class="flex items-center justify-between gap-2 border-t border-border/50 px-3 py-2">
+            <span
+                v-if="role"
+                class="inline-flex items-center gap-1 rounded-sm border px-1.5 py-0.5 font-mono text-[10px] tracking-wider uppercase"
+                :class="role.class"
+            >
+                <component :is="role.icon" class="size-3" />
+                {{ role.label }}
+            </span>
+            <span v-else />
 
             <Dialog v-model:open="open">
                 <DialogTrigger as-child>
                     <button
-                        class="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border/60 px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                        class="inline-flex shrink-0 items-center gap-1.5 rounded-sm border border-border/60 px-1.5 py-0.5 font-mono text-[10px] tracking-wider text-muted-foreground uppercase transition-colors hover:text-foreground"
                         :title="trackingAllowed ? 'Location sharing is on' : 'Location sharing is off'"
                     >
-                        <span class="size-2 rounded-full" :class="trackingAllowed ? 'bg-green-500' : 'bg-red-500'" />
+                        <span class="size-1.5 rounded-full" :class="trackingAllowed ? 'bg-green-500' : 'bg-red-500'" />
                         {{ trackingAllowed ? 'Tracking' : 'Hidden' }}
                     </button>
                 </DialogTrigger>

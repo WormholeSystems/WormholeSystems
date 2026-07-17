@@ -60,6 +60,7 @@ final class UpdateMapUserSettingRequest extends FormRequest
             'show_threat_level' => ['boolean'],
             'show_statics_first' => ['boolean'],
             'is_archived' => ['boolean'],
+            'is_pinned' => ['boolean'],
             'background_image_mode' => ['nullable', 'string', Rule::enum(MapBackgroundMode::class)],
             'layout_override' => ['nullable', 'sometimes', Rule::enum(MapLayout::class)],
         ];
