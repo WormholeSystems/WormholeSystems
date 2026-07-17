@@ -5,15 +5,15 @@ import Logo from '@/components/icons/Logo.vue';
 import { AllianceLogo, CharacterImage, CorporationLogo } from '@/components/images';
 import CountUp from '@/components/landing/CountUp.vue';
 import { buildKillmails, buildSignatures, CHARACTERS, MAP_CONNECTIONS, MAP_PILOTS, MAP_SOLARSYSTEMS } from '@/components/landing/fixtures';
-import KillmailsView from '@/components/map-killmails/KillmailsView.vue';
+import KillmailsView, { type TKillmailViewModel } from '@/components/map-killmails/KillmailsView.vue';
 import SignaturesView from '@/components/signatures/SignaturesView.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import MapPanel from '@/components/ui/map-panel/MapPanel.vue';
 import MapPanelHeader from '@/components/ui/map-panel/MapPanelHeader.vue';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import Notifications from '@/components/user/Notifications.vue';
+import { useStaticSolarsystems } from '@/composables/useStaticSolarsystems';
 import useUser from '@/composables/useUser';
 import Appearance from '@/layouts/Appearance.vue';
 import SeoHead from '@/layouts/SeoHead.vue';
@@ -21,7 +21,8 @@ import MapReadonly from '@/map/components/MapReadonly.vue';
 import { documentation, home } from '@/routes';
 import Eve from '@/routes/eve';
 import { UTCDate } from '@date-fns/utc';
-import { Link, usePage } from '@inertiajs/vue3';
+import type { TKillmail } from '@/types/models';
+import { Link, usePage, usePoll } from '@inertiajs/vue3';
 import { useMediaQuery } from '@vueuse/core';
 import { format } from 'date-fns';
 import {
@@ -29,7 +30,9 @@ import {
     ArrowRight,
     Bell,
     BookOpen,
+    Check,
     Container,
+    Copy,
     Crosshair,
     Crown,
     Eye,
@@ -51,7 +54,11 @@ import {
     Users,
     X,
 } from 'lucide-vue-next';
-import { onMounted, ref, type Component } from 'vue';
+import { computed, onMounted, ref, type Component } from 'vue';
+
+const { killmails } = defineProps<{
+    killmails?: TKillmail[];
+}>();
 
 const currentYear = format(new UTCDate(), 'yyyy');
 const user = useUser();
@@ -68,7 +75,42 @@ onMounted(() => {
 
 // Built per-render so relative timestamps stay in sync between SSR and client.
 const KILLMAILS = buildKillmails();
+
+// The killmail feed is real: the latest J-space kills from the database,
+// refreshed while the page is open. The demo fixtures only step in when the
+// database has none (e.g. a fresh self-hosted instance).
+const thirty_seconds_in_ms = 30_000;
+usePoll(thirty_seconds_in_ms, { only: ['killmails'] });
+
+const { resolveSolarsystem } = useStaticSolarsystems();
+
+const killmailItems = computed<TKillmailViewModel[]>(() => {
+    if (!killmails?.length) {
+        return KILLMAILS;
+    }
+    return killmails.map((killmail) => ({
+        killmail,
+        solarsystem: resolveSolarsystem(killmail.solarsystem_id),
+        alias: null,
+    }));
+});
 const SIGNATURES = buildSignatures();
+
+// Self-hosting: the interactive setup wizard from the containers repo.
+const installCommand = "curl --proto '=https' --tlsv1.2 -sSf https://install.wormhole.systems | sh";
+const commandCopied = ref(false);
+let copyResetTimer: ReturnType<typeof setTimeout> | null = null;
+
+async function copyInstallCommand() {
+    await navigator.clipboard.writeText(installCommand);
+    commandCopied.value = true;
+    if (copyResetTimer !== null) {
+        clearTimeout(copyResetTimer);
+    }
+    copyResetTimer = setTimeout(() => {
+        commandCopied.value = false;
+    }, 2000);
+}
 
 // Layout editor showcase. Mirrors the real floating toolbar + card grid.
 // Four cards are always present (map, system info, signatures, notes); these
@@ -167,10 +209,6 @@ const vReveal = {
         <div class="relative isolate min-h-screen overflow-x-hidden bg-background text-foreground">
             <SeoHead :title="seoData.title" :description="seoData.description" :keywords="seoData.keywords" />
 
-            <!-- The whole page is a map canvas: the same grid the map uses, with
-                 the sections floating on it as cards, chained down the middle. -->
-            <div class="page-grid" aria-hidden="true" />
-
             <!-- Nav: the app's hairline-and-blur chrome. -->
             <nav class="fixed inset-x-0 top-0 z-50 border-b border-border bg-background/85 backdrop-blur-xl">
                 <div class="mx-auto flex h-14 max-w-7xl items-center justify-between px-6 sm:px-10">
@@ -199,420 +237,450 @@ const vReveal = {
             </nav>
 
             <main class="relative pt-14">
-                <!-- Hero -->
-                <section class="mx-auto max-w-7xl px-6 sm:px-10">
-                    <div class="grid items-center gap-14 py-24 lg:grid-cols-[1.05fr_1fr] lg:py-32">
-                        <div class="hero-intro">
-                            <div class="section-label">
-                                <span class="size-1.5 animate-pulse rounded-full bg-green-500" />
-                                Live, interactive wormhole maps
-                            </div>
-                            <h1 class="mt-7 font-display text-5xl leading-[0.98] font-bold tracking-tight text-foreground sm:text-6xl lg:text-7xl">
-                                Navigate the
-                                <span class="text-orange-400">Unknown</span>
-                            </h1>
-                            <p class="mt-7 max-w-xl text-lg leading-8 text-muted-foreground">
-                                Map your wormhole chain, track signatures, and watch for hostiles together. Fly solo, with your corp, or a whole
-                                alliance. Everyone shares the same live map.
-                            </p>
-                            <div class="mt-9 flex flex-wrap items-center gap-3">
-                                <template v-if="!user">
-                                    <Button asChild size="lg">
-                                        <a :href="Eve.show().url" class="group inline-flex items-center gap-2">
-                                            Sign in with EVE
-                                            <ArrowRight class="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                                        </a>
-                                    </Button>
-                                    <Button asChild size="lg" variant="outline">
-                                        <a :href="Eve.show({ query: { without_scopes: true } }).url" class="inline-flex items-center gap-2">
-                                            Sign in without scopes
-                                        </a>
-                                    </Button>
-                                </template>
-                                <Button asChild size="lg" v-else>
-                                    <Link :href="home()" class="group inline-flex items-center gap-2" prefetch>
-                                        Explore Maps
-                                        <ArrowRight class="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                                    </Link>
-                                </Button>
-                                <Button as-child size="lg" variant="ghost">
-                                    <a :href="page.props.discord.invite" class="inline-flex items-center gap-2">
-                                        <DiscordIcon class="h-4 w-4" />
-                                        Join the Discord
-                                    </a>
-                                </Button>
-                            </div>
-                            <p class="mt-8 font-mono text-[10px] tracking-wider text-muted-foreground/70 uppercase">
-                                ESI-secure · No client install · Free to use
-                            </p>
-                        </div>
-
-                        <!-- The real map, framed exactly like an in-app card. -->
-                        <div class="hero-console">
-                            <MapPanel>
-                                <MapPanelHeader>
-                                    home.map · J152820
-                                    <template #actions>
-                                        <span class="flex items-center gap-1.5">
-                                            <span class="size-2 rounded-full bg-hostile/70" />
-                                            <span class="size-2 rounded-full bg-active/70" />
-                                            <span class="size-2 rounded-full bg-empty/70" />
-                                        </span>
-                                    </template>
-                                </MapPanelHeader>
-                                <div class="relative h-[380px] w-full overflow-hidden sm:h-[460px]">
-                                    <MapReadonly
-                                        :solarsystems="MAP_SOLARSYSTEMS"
-                                        :connections="MAP_CONNECTIONS"
-                                        :pilots="MAP_PILOTS"
-                                        :home_solarsystem_id="1"
-                                        :scale="isCompact ? 0.58 : 0.8"
-                                    />
+                <!-- Hero: its own solid band, closed off with a hairline. -->
+                <section class="relative overflow-hidden border-b border-border bg-muted/20">
+                    <div class="hero-backdrop" aria-hidden="true" />
+                    <div class="relative mx-auto max-w-7xl px-6 sm:px-10">
+                        <div class="grid items-center gap-14 py-24 lg:grid-cols-[1.05fr_1fr] lg:py-32">
+                            <div class="hero-intro">
+                                <div class="section-label">
+                                    <span class="size-1.5 animate-pulse rounded-full bg-green-500" />
+                                    Live, interactive wormhole maps
                                 </div>
-                            </MapPanel>
+                                <h1
+                                    class="mt-7 font-display text-5xl leading-[0.98] font-bold tracking-tight text-foreground sm:text-6xl lg:text-7xl"
+                                >
+                                    Navigate the
+                                    <span class="text-orange-400">Unknown</span>
+                                </h1>
+                                <p class="mt-7 max-w-xl text-lg leading-8 text-muted-foreground">
+                                    Map your wormhole chain, track signatures, and watch for hostiles together. Fly solo, with your corp, or a whole
+                                    alliance. Everyone shares the same live map.
+                                </p>
+                                <div class="mt-9 flex flex-wrap items-center gap-3">
+                                    <template v-if="!user">
+                                        <Button asChild size="lg">
+                                            <a :href="Eve.show().url" class="group inline-flex items-center gap-2">
+                                                Sign in with EVE
+                                                <ArrowRight class="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                                            </a>
+                                        </Button>
+                                        <Button asChild size="lg" variant="outline">
+                                            <a :href="Eve.show({ query: { without_scopes: true } }).url" class="inline-flex items-center gap-2">
+                                                Sign in without scopes
+                                            </a>
+                                        </Button>
+                                    </template>
+                                    <Button asChild size="lg" v-else>
+                                        <Link :href="home()" class="group inline-flex items-center gap-2" prefetch>
+                                            Explore Maps
+                                            <ArrowRight class="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                                        </Link>
+                                    </Button>
+                                    <Button as-child size="lg" variant="ghost">
+                                        <a :href="page.props.discord.invite" class="inline-flex items-center gap-2">
+                                            <DiscordIcon class="h-4 w-4" />
+                                            Join the Discord
+                                        </a>
+                                    </Button>
+                                </div>
+                                <p class="mt-8 font-mono text-[10px] tracking-wider text-muted-foreground/70 uppercase">
+                                    ESI-secure · No client install · Free to use
+                                </p>
+                            </div>
+
+                            <!-- The real map, framed as an elevated card. The map grid
+                                 lives inside this card, where it belongs. -->
+                            <div class="hero-console">
+                                <div class="section-card">
+                                    <MapPanelHeader>
+                                        home.map · J152820
+                                        <template #actions>
+                                            <span class="flex items-center gap-1.5">
+                                                <span class="size-2 rounded-full bg-hostile/70" />
+                                                <span class="size-2 rounded-full bg-active/70" />
+                                                <span class="size-2 rounded-full bg-empty/70" />
+                                            </span>
+                                        </template>
+                                    </MapPanelHeader>
+                                    <div class="relative h-[380px] w-full overflow-hidden sm:h-[460px]">
+                                        <MapReadonly
+                                            :solarsystems="MAP_SOLARSYSTEMS"
+                                            :connections="MAP_CONNECTIONS"
+                                            :pilots="MAP_PILOTS"
+                                            :home_solarsystem_id="1"
+                                            :scale="isCompact ? 0.58 : 0.8"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </section>
 
-                <!-- The chain: every section is a card on the map canvas, linked
-                     down the middle column like systems in a wormhole chain. -->
-                <div class="mx-auto max-w-6xl px-6 pb-8 sm:px-10">
-                    <!-- Stats -->
-                    <div class="chain" aria-hidden="true" />
-                    <div v-reveal class="grid grid-cols-2 gap-px bg-border text-center ring-1 ring-border md:grid-cols-4">
-                        <div v-for="stat in stats" :key="stat.k" class="bg-card px-6 py-10">
-                            <div class="font-display text-4xl font-bold tracking-tight text-foreground">
-                                <CountUp :to="stat.to" :suffix="stat.suffix" :decimals="stat.decimals" />
-                            </div>
-                            <div class="mt-2 font-mono text-[10px] tracking-wider text-muted-foreground uppercase">{{ stat.k }}</div>
-                        </div>
-                    </div>
-
-                    <!-- Open source & self-hosting (surfaced early — it's a core differentiator). -->
-                    <div class="chain" aria-hidden="true" />
-                    <MapPanel v-reveal>
-                        <MapPanelHeader>
-                            <span class="flex items-center gap-2"><Github class="h-3.5 w-3.5" /> 100% open source</span>
-                        </MapPanelHeader>
-                        <div class="grid divide-y divide-border/50 lg:grid-cols-[1.1fr_1fr] lg:divide-x lg:divide-y-0">
-                            <div class="p-8 sm:p-12">
-                                <h2 class="section-title">Free, open source, and yours to self-host</h2>
-                                <p class="section-lead">
-                                    Use the hosted version, dig into the code, or spin up your own private instance with the ready-made container
-                                    setup. No lock-in — it's all out in the open.
-                                </p>
-                            </div>
-                            <div class="flex flex-col divide-y divide-border/50">
-                                <a
-                                    href="https://github.com/WormholeSystems/WormholeSystems"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    class="oss-link group"
-                                >
-                                    <Github class="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
-                                    <span class="min-w-0 flex-1">
-                                        <span class="block font-display text-base font-bold text-foreground">Source code</span>
-                                        <span class="mt-1 block text-sm leading-6 text-muted-foreground">
-                                            Browse the full source, open issues, and contribute on GitHub.
-                                        </span>
-                                    </span>
-                                    <ArrowRight
-                                        class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
-                                    />
-                                </a>
-                                <a
-                                    href="https://github.com/WormholeSystems/wormholesystems-containers"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    class="oss-link group"
-                                >
-                                    <Container class="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
-                                    <span class="min-w-0 flex-1">
-                                        <span class="block font-display text-base font-bold text-foreground">Self-host</span>
-                                        <span class="mt-1 block text-sm leading-6 text-muted-foreground">
-                                            A ready-to-run Docker setup for your own private instance.
-                                        </span>
-                                    </span>
-                                    <ArrowRight
-                                        class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
-                                    />
-                                </a>
+                <!-- The chain: every section is a card, linked down the middle
+                     column like systems in a wormhole chain. -->
+                <div class="relative">
+                    <div class="canvas-backdrop" aria-hidden="true" />
+                    <div class="relative mx-auto max-w-6xl px-6 pb-24 sm:px-10">
+                        <!-- Stats -->
+                        <div class="chain" aria-hidden="true" />
+                        <div v-reveal class="section-card">
+                            <div class="hairline-grid grid grid-cols-2 gap-px text-center md:grid-cols-4">
+                                <div v-for="stat in stats" :key="stat.k" class="surface-cell px-6 py-10">
+                                    <div class="font-display text-4xl font-bold tracking-tight text-foreground">
+                                        <CountUp :to="stat.to" :suffix="stat.suffix" :decimals="stat.decimals" />
+                                    </div>
+                                    <div class="mt-2 font-mono text-[10px] tracking-wider text-muted-foreground uppercase">{{ stat.k }}</div>
+                                </div>
                             </div>
                         </div>
-                    </MapPanel>
 
-                    <!-- 01: Shared mapping -->
-                    <div class="chain" aria-hidden="true" />
-                    <MapPanel v-reveal>
-                        <MapPanelHeader>
-                            <span class="flex items-center gap-2"><Users class="h-3.5 w-3.5" /> 01 · Shared mapping</span>
-                        </MapPanelHeader>
-                        <div class="grid divide-y divide-border/50 lg:grid-cols-2 lg:divide-x lg:divide-y-0">
-                            <div class="p-8 sm:p-12">
-                                <h2 class="section-title">Everyone on the same map, live</h2>
-                                <p class="section-lead">
-                                    When anyone moves, scans a connection, or updates a system, every pilot sees it right away. No pasting bookmarks
-                                    into chat, no side spreadsheet to keep in sync.
-                                </p>
-                                <ul class="points">
-                                    <li><span class="dot" /> See who is online, what they fly, and where they are</li>
-                                    <li><span class="dot" /> Each pilot's route home, with the jump count</li>
-                                    <li><span class="dot" /> Every change shows up for everyone instantly</li>
-                                </ul>
+                        <!-- Open source & self-hosting (surfaced early — it's a core differentiator). -->
+                        <div class="chain" aria-hidden="true" />
+                        <div v-reveal class="section-card">
+                            <MapPanelHeader>
+                                <span class="flex items-center gap-2"><Github class="h-3.5 w-3.5" /> 100% open source</span>
+                            </MapPanelHeader>
+                            <div class="grid divide-y divide-border/50 lg:grid-cols-[1.1fr_1fr] lg:divide-x lg:divide-y-0">
+                                <div class="p-8 sm:p-12">
+                                    <h2 class="section-title">Self-hosting is one command away</h2>
+                                    <p class="section-lead">
+                                        Use the hosted version, dig into the code, or run your own private instance. One command launches the
+                                        interactive setup wizard — no lock-in, it's all out in the open.
+                                    </p>
+                                    <div class="cmd group mt-8">
+                                        <code class="cmd-text">{{ installCommand }}</code>
+                                        <button
+                                            type="button"
+                                            class="cmd-copy"
+                                            :aria-label="commandCopied ? 'Copied' : 'Copy command'"
+                                            @click="copyInstallCommand"
+                                        >
+                                            <Check v-if="commandCopied" class="size-4 text-green-500" />
+                                            <Copy v-else class="size-4" />
+                                        </button>
+                                    </div>
+                                    <p class="mt-3 font-mono text-[10px] tracking-wider text-muted-foreground/70 uppercase">
+                                        All you need is a Linux server with Docker — the wizard handles the rest
+                                    </p>
+                                </div>
+                                <div class="flex flex-col divide-y divide-border/50">
+                                    <a
+                                        href="https://github.com/WormholeSystems/WormholeSystems"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="oss-link group"
+                                    >
+                                        <Github class="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
+                                        <span class="min-w-0 flex-1">
+                                            <span class="block font-display text-base font-bold text-foreground">Source code</span>
+                                            <span class="mt-1 block text-sm leading-6 text-muted-foreground">
+                                                Browse the full source, open issues, and contribute on GitHub.
+                                            </span>
+                                        </span>
+                                        <ArrowRight
+                                            class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+                                        />
+                                    </a>
+                                    <a
+                                        href="https://github.com/WormholeSystems/wormholesystems-containers"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="oss-link group"
+                                    >
+                                        <Container class="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
+                                        <span class="min-w-0 flex-1">
+                                            <span class="block font-display text-base font-bold text-foreground">Container stack</span>
+                                            <span class="mt-1 block text-sm leading-6 text-muted-foreground">
+                                                The Docker setup and setup wizard behind the one-liner.
+                                            </span>
+                                        </span>
+                                        <ArrowRight
+                                            class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+                                        />
+                                    </a>
+                                </div>
                             </div>
-                            <div class="flex flex-col">
+                        </div>
+
+                        <!-- 01: Shared mapping -->
+                        <div class="chain" aria-hidden="true" />
+                        <div v-reveal class="section-card">
+                            <MapPanelHeader>
+                                <span class="flex items-center gap-2"><Users class="h-3.5 w-3.5" /> 01 · Shared mapping</span>
+                            </MapPanelHeader>
+                            <div class="grid divide-y divide-border/50 lg:grid-cols-2 lg:divide-x lg:divide-y-0">
+                                <div class="p-8 sm:p-12">
+                                    <h2 class="section-title">Everyone on the same map, live</h2>
+                                    <p class="section-lead">
+                                        When anyone moves, scans a connection, or updates a system, every pilot sees it right away. No pasting
+                                        bookmarks into chat, no side spreadsheet to keep in sync.
+                                    </p>
+                                    <ul class="points">
+                                        <li><span class="dot" /> See who is online, what they fly, and where they are</li>
+                                        <li><span class="dot" /> Each pilot's route home, with the jump count</li>
+                                        <li><span class="dot" /> Every change shows up for everyone instantly</li>
+                                    </ul>
+                                </div>
+                                <div class="flex flex-col">
+                                    <div class="cell-header">
+                                        <span class="size-1.5 animate-pulse rounded-full bg-green-500" />
+                                        Pilots · {{ CHARACTERS.length }}
+                                    </div>
+                                    <div class="flex-1 overflow-x-auto">
+                                        <CharactersView :characters="CHARACTERS" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 02: Kill activity -->
+                        <div class="chain" aria-hidden="true" />
+                        <div v-reveal class="section-card">
+                            <MapPanelHeader>
+                                <span class="flex items-center gap-2"><Activity class="h-3.5 w-3.5" /> 02 · Kill activity</span>
+                                <template #actions>
+                                    <span class="font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">via zKillboard</span>
+                                </template>
+                            </MapPanelHeader>
+                            <div class="grid divide-y divide-border/50 lg:grid-cols-2 lg:divide-x lg:divide-y-0">
+                                <div class="p-8 sm:p-12">
+                                    <h2 class="section-title">See every kill in your chain</h2>
+                                    <p class="section-lead">
+                                        Killmails from your systems show up on their own, straight from zKillboard, so you always know where the
+                                        fighting is and how much got blown up.
+                                    </p>
+                                </div>
+                                <div class="p-8 sm:p-12">
+                                    <ul class="points mt-0">
+                                        <li><span class="dot" /> Who died, who got the kill, how many were involved, and the ISK lost</li>
+                                        <li><span class="dot" /> Filter to wormhole space, known space, or everything</li>
+                                        <li><span class="dot" /> Click any kill to jump to that system on the map</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="border-t border-border/50">
                                 <div class="cell-header">
                                     <span class="size-1.5 animate-pulse rounded-full bg-green-500" />
-                                    Pilots · {{ CHARACTERS.length }}
+                                    Live · Latest J-space kills · {{ killmailItems.length }}
                                 </div>
-                                <div class="flex-1 overflow-x-auto">
-                                    <CharactersView :characters="CHARACTERS" />
+                                <div class="min-h-[13rem] overflow-x-auto py-1">
+                                    <KillmailsView v-if="mounted" :items="killmailItems" />
                                 </div>
                             </div>
                         </div>
-                    </MapPanel>
 
-                    <!-- 02: Kill activity -->
-                    <div class="chain" aria-hidden="true" />
-                    <MapPanel v-reveal>
-                        <MapPanelHeader>
-                            <span class="flex items-center gap-2"><Activity class="h-3.5 w-3.5" /> 02 · Kill activity</span>
-                            <template #actions>
-                                <span class="font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">via zKillboard</span>
-                            </template>
-                        </MapPanelHeader>
-                        <div class="grid divide-y divide-border/50 lg:grid-cols-2 lg:divide-x lg:divide-y-0">
-                            <div class="p-8 sm:p-12">
-                                <h2 class="section-title">See every kill in your chain</h2>
-                                <p class="section-lead">
-                                    Killmails from your systems show up on their own, straight from zKillboard, so you always know where the fighting
-                                    is and how much got blown up.
-                                </p>
-                            </div>
-                            <div class="p-8 sm:p-12">
-                                <ul class="points mt-0">
-                                    <li><span class="dot" /> Who died, who got the kill, how many were involved, and the ISK lost</li>
-                                    <li><span class="dot" /> Filter to wormhole space, known space, or everything</li>
-                                    <li><span class="dot" /> Click any kill to jump to that system on the map</li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="border-t border-border/50">
-                            <div class="cell-header">Killmails · {{ KILLMAILS.length }}</div>
-                            <div class="min-h-[13rem] overflow-x-auto py-1">
-                                <KillmailsView v-if="mounted" :items="KILLMAILS" />
-                            </div>
-                        </div>
-                    </MapPanel>
-
-                    <!-- 03: Signatures -->
-                    <div class="chain" aria-hidden="true" />
-                    <MapPanel v-reveal>
-                        <MapPanelHeader>
-                            <span class="flex items-center gap-2"><Crosshair class="h-3.5 w-3.5" /> 03 · Signatures</span>
-                        </MapPanelHeader>
-                        <div class="grid divide-y divide-border/50 lg:grid-cols-2 lg:divide-x lg:divide-y-0">
-                            <div class="flex flex-col lg:order-1">
-                                <div class="cell-header">Signatures · {{ SIGNATURES.length }}</div>
-                                <div class="min-h-[18rem] flex-1 overflow-x-auto">
-                                    <SignaturesView v-if="mounted" :signatures="SIGNATURES" :connections="MAP_CONNECTIONS" />
-                                </div>
-                            </div>
-                            <div class="p-8 sm:p-12 lg:order-2">
-                                <h2 class="section-title">Scanning is just copy and paste</h2>
-                                <p class="section-lead">
-                                    Copy your probe scanner results in game, paste them in, and the map sorts it all out. New signatures get added,
-                                    the ones that are gone get removed, and wormhole types line up with their connections automatically.
-                                </p>
-                                <div class="paste-hint">
-                                    <span class="kbd">Ctrl</span>
-                                    <span class="plus">+</span>
-                                    <span class="kbd">V</span>
-                                    <span class="paste-text">Paste straight from the in-game probe scanner</span>
-                                </div>
-                                <ul class="points">
-                                    <li><span class="dot" /> No formatting and no manual entry</li>
-                                    <li><span class="dot" /> Old signatures and dead connections are cleaned up for you</li>
-                                    <li><span class="dot" /> Mass and lifetime tracked for you, with end-of-life and critical warnings</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </MapPanel>
-
-                    <!-- 04: Customisable widget layout -->
-                    <div class="chain" aria-hidden="true" />
-                    <MapPanel v-reveal>
-                        <MapPanelHeader>
-                            <span class="flex items-center gap-2"><LayoutGrid class="h-3.5 w-3.5" /> 04 · Customisable layout</span>
-                        </MapPanelHeader>
-                        <div class="grid divide-y divide-border/50 lg:grid-cols-2 lg:divide-x lg:divide-y-0">
-                            <div class="p-8 sm:p-12">
-                                <h2 class="section-title">Build the map around you</h2>
-                                <p class="section-lead">
-                                    The map is a grid of cards you can drag, resize, and hide. Keep the systems you watch front and centre and switch
-                                    off the panels you do not use. Layouts are saved per device, with a separate arrangement for each screen size.
-                                </p>
-                                <ul class="points">
-                                    <li><span class="dot" /> Drag and resize any card, from the map to autopilot to killmails</li>
-                                    <li><span class="dot" /> Four cards stay put; eight more can be hidden and brought back any time</li>
-                                    <li><span class="dot" /> Responsive breakpoints from mobile to wide desktop, each with its own layout</li>
-                                </ul>
-                            </div>
-                            <div class="flex flex-col">
-                                <div class="cell-header">
-                                    <span class="size-1.5 animate-pulse rounded-full bg-empty" />
-                                    Editing layout
-                                    <span class="ml-auto font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">J152820</span>
-                                </div>
-                                <div class="relative flex-1 p-3 pb-20">
-                                    <div class="wg-grid">
-                                        <div class="wg-tile wg-map">Map</div>
-                                        <div class="wg-tile">Signatures</div>
-                                        <div class="wg-tile">Autopilot</div>
-                                        <div class="wg-tile">Characters</div>
-                                        <div class="wg-tile">Killmails</div>
+                        <!-- 03: Signatures -->
+                        <div class="chain" aria-hidden="true" />
+                        <div v-reveal class="section-card">
+                            <MapPanelHeader>
+                                <span class="flex items-center gap-2"><Crosshair class="h-3.5 w-3.5" /> 03 · Signatures</span>
+                            </MapPanelHeader>
+                            <div class="grid divide-y divide-border/50 lg:grid-cols-2 lg:divide-x lg:divide-y-0">
+                                <div class="flex flex-col lg:order-1">
+                                    <div class="cell-header">Signatures · {{ SIGNATURES.length }}</div>
+                                    <div class="min-h-[18rem] flex-1 overflow-x-auto">
+                                        <SignaturesView v-if="mounted" :signatures="SIGNATURES" :connections="MAP_CONNECTIONS" />
                                     </div>
-                                    <!-- Faithful replica of the real floating layout-editor toolbar -->
-                                    <div class="le-toolbar">
-                                        <span class="le-btn"><X class="size-4" /></span>
-                                        <span class="le-sep" />
-                                        <span class="le-seg">
-                                            <span class="le-seg-item"><Smartphone class="size-4" /></span>
-                                            <span class="le-seg-item"><Tablet class="size-4" /></span>
-                                            <span class="le-seg-item"><Laptop class="size-4" /></span>
-                                            <span class="le-seg-item is-active"><Monitor class="size-4" /> Large</span>
-                                        </span>
-                                        <span class="le-btn"><Plus class="size-4" /></span>
-                                        <span class="le-sep" />
-                                        <span class="le-btn relative">
-                                            <LayoutGrid class="size-4" />
-                                            <span class="le-badge">{{ hiddenCardCount }}</span>
-                                        </span>
-                                        <span class="le-sep" />
-                                        <span class="le-save"><Save class="size-3.5" /> Save</span>
-                                        <span class="le-btn"><MoreHorizontal class="size-4" /></span>
+                                </div>
+                                <div class="p-8 sm:p-12 lg:order-2">
+                                    <h2 class="section-title">Scanning is just copy and paste</h2>
+                                    <p class="section-lead">
+                                        Copy your probe scanner results in game, paste them in, and the map sorts it all out. New signatures get
+                                        added, the ones that are gone get removed, and wormhole types line up with their connections automatically.
+                                    </p>
+                                    <div class="paste-hint">
+                                        <span class="kbd">Ctrl</span>
+                                        <span class="plus">+</span>
+                                        <span class="kbd">V</span>
+                                        <span class="paste-text">Paste straight from the in-game probe scanner</span>
+                                    </div>
+                                    <ul class="points">
+                                        <li><span class="dot" /> No formatting and no manual entry</li>
+                                        <li><span class="dot" /> Old signatures and dead connections are cleaned up for you</li>
+                                        <li><span class="dot" /> Mass and lifetime tracked for you, with end-of-life and critical warnings</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 04: Customisable widget layout -->
+                        <div class="chain" aria-hidden="true" />
+                        <div v-reveal class="section-card">
+                            <MapPanelHeader>
+                                <span class="flex items-center gap-2"><LayoutGrid class="h-3.5 w-3.5" /> 04 · Customisable layout</span>
+                            </MapPanelHeader>
+                            <div class="grid divide-y divide-border/50 lg:grid-cols-2 lg:divide-x lg:divide-y-0">
+                                <div class="p-8 sm:p-12">
+                                    <h2 class="section-title">Build the map around you</h2>
+                                    <p class="section-lead">
+                                        The map is a grid of cards you can drag, resize, and hide. Keep the systems you watch front and centre and
+                                        switch off the panels you do not use. Layouts are saved per device, with a separate arrangement for each
+                                        screen size.
+                                    </p>
+                                    <ul class="points">
+                                        <li><span class="dot" /> Drag and resize any card, from the map to autopilot to killmails</li>
+                                        <li><span class="dot" /> Four cards stay put; eight more can be hidden and brought back any time</li>
+                                        <li><span class="dot" /> Responsive breakpoints from mobile to wide desktop, each with its own layout</li>
+                                    </ul>
+                                </div>
+                                <div class="flex flex-col">
+                                    <div class="cell-header">
+                                        <span class="size-1.5 animate-pulse rounded-full bg-empty" />
+                                        Editing layout
+                                        <span class="ml-auto font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">J152820</span>
+                                    </div>
+                                    <div class="relative flex-1 p-3 pb-20">
+                                        <div class="wg-grid">
+                                            <div class="wg-tile wg-map">Map</div>
+                                            <div class="wg-tile">Signatures</div>
+                                            <div class="wg-tile">Autopilot</div>
+                                            <div class="wg-tile">Characters</div>
+                                            <div class="wg-tile">Killmails</div>
+                                        </div>
+                                        <!-- Faithful replica of the real floating layout-editor toolbar -->
+                                        <div class="le-toolbar">
+                                            <span class="le-btn"><X class="size-4" /></span>
+                                            <span class="le-sep" />
+                                            <span class="le-seg">
+                                                <span class="le-seg-item"><Smartphone class="size-4" /></span>
+                                                <span class="le-seg-item"><Tablet class="size-4" /></span>
+                                                <span class="le-seg-item"><Laptop class="size-4" /></span>
+                                                <span class="le-seg-item is-active"><Monitor class="size-4" /> Large</span>
+                                            </span>
+                                            <span class="le-btn"><Plus class="size-4" /></span>
+                                            <span class="le-sep" />
+                                            <span class="le-btn relative">
+                                                <LayoutGrid class="size-4" />
+                                                <span class="le-badge">{{ hiddenCardCount }}</span>
+                                            </span>
+                                            <span class="le-sep" />
+                                            <span class="le-save"><Save class="size-3.5" /> Save</span>
+                                            <span class="le-btn"><MoreHorizontal class="size-4" /></span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </MapPanel>
 
-                    <!-- 05: Access control -->
-                    <div class="chain" aria-hidden="true" />
-                    <MapPanel v-reveal>
-                        <MapPanelHeader>
-                            <span class="flex items-center gap-2"><ShieldCheck class="h-3.5 w-3.5" /> 05 · Access control</span>
-                        </MapPanelHeader>
-                        <div class="grid divide-y divide-border/50 lg:grid-cols-2 lg:divide-x lg:divide-y-0">
-                            <div class="flex flex-col lg:order-1">
-                                <div class="cell-header">Access · J152820</div>
-                                <div class="flex-1 px-2 py-1">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow class="border-border/50 hover:bg-transparent">
-                                                <TableHead class="w-10" />
-                                                <TableHead>Name</TableHead>
-                                                <TableHead>Type</TableHead>
-                                                <TableHead>Access level</TableHead>
-                                                <TableHead>Expires</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            <TableRow
-                                                v-for="entity in accessEntities"
-                                                :key="entity.type + entity.id"
-                                                class="border-border/50 hover:bg-muted/30"
-                                            >
-                                                <TableCell>
-                                                    <CharacterImage
-                                                        v-if="entity.type === 'character'"
-                                                        :character_id="entity.id"
-                                                        :character_name="entity.name"
-                                                        class="size-8 rounded-lg"
-                                                    />
-                                                    <CorporationLogo
-                                                        v-else-if="entity.type === 'corporation'"
-                                                        :corporation_id="entity.id"
-                                                        :corporation_name="entity.name"
-                                                        class="size-8 rounded-lg"
-                                                    />
-                                                    <AllianceLogo
-                                                        v-else
-                                                        :alliance_id="entity.id"
-                                                        :alliance_name="entity.name"
-                                                        class="size-8 rounded-lg"
-                                                    />
-                                                </TableCell>
-                                                <TableCell class="font-medium whitespace-nowrap">{{ entity.name }}</TableCell>
-                                                <TableCell>
-                                                    <Badge variant="outline" class="capitalize">{{ entity.type }}</Badge>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Badge
-                                                        v-if="entity.permission === 'owner'"
-                                                        class="bg-amber-500/10 text-amber-500 hover:bg-amber-500/10"
-                                                    >
-                                                        <Crown class="mr-1 size-3" />
-                                                        Owner
-                                                    </Badge>
-                                                    <span v-else class="access-pill">
-                                                        <component
-                                                            :is="permissionMeta[entity.permission].icon"
-                                                            class="size-4"
-                                                            :class="permissionMeta[entity.permission].class"
+                        <!-- 05: Access control -->
+                        <div class="chain" aria-hidden="true" />
+                        <div v-reveal class="section-card">
+                            <MapPanelHeader>
+                                <span class="flex items-center gap-2"><ShieldCheck class="h-3.5 w-3.5" /> 05 · Access control</span>
+                            </MapPanelHeader>
+                            <div class="grid divide-y divide-border/50 lg:grid-cols-2 lg:divide-x lg:divide-y-0">
+                                <div class="flex flex-col lg:order-1">
+                                    <div class="cell-header">Access · J152820</div>
+                                    <div class="flex-1 px-2 py-1">
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow class="border-border/50 hover:bg-transparent">
+                                                    <TableHead class="w-10" />
+                                                    <TableHead>Name</TableHead>
+                                                    <TableHead>Type</TableHead>
+                                                    <TableHead>Access level</TableHead>
+                                                    <TableHead>Expires</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                <TableRow
+                                                    v-for="entity in accessEntities"
+                                                    :key="entity.type + entity.id"
+                                                    class="border-border/50 hover:bg-muted/30"
+                                                >
+                                                    <TableCell>
+                                                        <CharacterImage
+                                                            v-if="entity.type === 'character'"
+                                                            :character_id="entity.id"
+                                                            :character_name="entity.name"
+                                                            class="size-8 rounded-lg"
                                                         />
-                                                        {{ permissionMeta[entity.permission].label }}
-                                                    </span>
-                                                </TableCell>
-                                                <TableCell class="whitespace-nowrap text-muted-foreground">
-                                                    <span v-if="entity.permission === 'owner'" class="text-muted-foreground/40">—</span>
-                                                    <span v-else>{{ entity.expires ?? 'Never' }}</span>
-                                                </TableCell>
-                                            </TableRow>
-                                        </TableBody>
-                                    </Table>
+                                                        <CorporationLogo
+                                                            v-else-if="entity.type === 'corporation'"
+                                                            :corporation_id="entity.id"
+                                                            :corporation_name="entity.name"
+                                                            class="size-8 rounded-lg"
+                                                        />
+                                                        <AllianceLogo
+                                                            v-else
+                                                            :alliance_id="entity.id"
+                                                            :alliance_name="entity.name"
+                                                            class="size-8 rounded-lg"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell class="font-medium whitespace-nowrap">{{ entity.name }}</TableCell>
+                                                    <TableCell>
+                                                        <Badge variant="outline" class="capitalize">{{ entity.type }}</Badge>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Badge
+                                                            v-if="entity.permission === 'owner'"
+                                                            class="bg-amber-500/10 text-amber-500 hover:bg-amber-500/10"
+                                                        >
+                                                            <Crown class="mr-1 size-3" />
+                                                            Owner
+                                                        </Badge>
+                                                        <span v-else class="access-pill">
+                                                            <component
+                                                                :is="permissionMeta[entity.permission].icon"
+                                                                class="size-4"
+                                                                :class="permissionMeta[entity.permission].class"
+                                                            />
+                                                            {{ permissionMeta[entity.permission].label }}
+                                                        </span>
+                                                    </TableCell>
+                                                    <TableCell class="whitespace-nowrap text-muted-foreground">
+                                                        <span v-if="entity.permission === 'owner'" class="text-muted-foreground/40">—</span>
+                                                        <span v-else>{{ entity.expires ?? 'Never' }}</span>
+                                                    </TableCell>
+                                                </TableRow>
+                                            </TableBody>
+                                        </Table>
+                                    </div>
+                                </div>
+                                <div class="p-8 sm:p-12 lg:order-2">
+                                    <h2 class="section-title">Decide exactly who sees what</h2>
+                                    <p class="section-lead">
+                                        Four levels of access, from view-only to full control. Viewers read the map, Members contribute signatures and
+                                        connections, Managers handle access and settings, and the Owner runs the whole thing.
+                                    </p>
+                                    <ul class="points">
+                                        <li><span class="dot" /> Grant access to a character, a corporation, or a whole alliance</li>
+                                        <li><span class="dot" /> Viewer, Member, Manager, and Owner roles, each with clear limits</li>
+                                        <li><span class="dot" /> Set an optional expiry for temporary or diplomatic access</li>
+                                    </ul>
                                 </div>
                             </div>
-                            <div class="p-8 sm:p-12 lg:order-2">
-                                <h2 class="section-title">Decide exactly who sees what</h2>
-                                <p class="section-lead">
-                                    Four levels of access, from view-only to full control. Viewers read the map, Members contribute signatures and
-                                    connections, Managers handle access and settings, and the Owner runs the whole thing.
-                                </p>
-                                <ul class="points">
-                                    <li><span class="dot" /> Grant access to a character, a corporation, or a whole alliance</li>
-                                    <li><span class="dot" /> Viewer, Member, Manager, and Owner roles, each with clear limits</li>
-                                    <li><span class="dot" /> Set an optional expiry for temporary or diplomatic access</li>
-                                </ul>
-                            </div>
                         </div>
-                    </MapPanel>
 
-                    <!-- 06: Everything else -->
-                    <div class="chain" aria-hidden="true" />
-                    <MapPanel v-reveal>
-                        <MapPanelHeader>
-                            <span class="flex items-center gap-2"><Sparkles class="h-3.5 w-3.5" /> 06 · Everything else</span>
-                        </MapPanelHeader>
-                        <div class="p-8 sm:p-12">
-                            <h2 class="section-title">Everything else you need to live in a wormhole</h2>
-                            <p class="section-lead">The rest of the tools that make day-to-day wormhole life easier.</p>
-                        </div>
-                        <div class="grid gap-px border-t border-border/50 bg-border/50 sm:grid-cols-2 lg:grid-cols-3">
-                            <div v-for="feature in secondaryFeatures" :key="feature.title" class="group bg-card p-7">
-                                <div class="feat-icon">
-                                    <component
-                                        :is="feature.icon"
-                                        class="h-4.5 w-4.5 text-muted-foreground transition-colors group-hover:text-foreground"
-                                    />
-                                </div>
-                                <h3 class="mt-5 font-display text-lg font-bold text-foreground">{{ feature.title }}</h3>
-                                <p class="mt-2.5 text-[15px] leading-7 text-muted-foreground">{{ feature.body }}</p>
+                        <!-- 06: Everything else -->
+                        <div class="chain" aria-hidden="true" />
+                        <div v-reveal class="section-card">
+                            <MapPanelHeader>
+                                <span class="flex items-center gap-2"><Sparkles class="h-3.5 w-3.5" /> 06 · Everything else</span>
+                            </MapPanelHeader>
+                            <div class="p-8 sm:p-12">
+                                <h2 class="section-title">Everything else you need to live in a wormhole</h2>
+                                <p class="section-lead">The rest of the tools that make day-to-day wormhole life easier.</p>
                             </div>
-                            <!-- Filler cell so the hairline grid stays rectangular on wide screens. -->
-                            <div class="hidden bg-card p-7 lg:block" aria-hidden="true" />
+                            <div class="hairline-grid grid gap-px border-t border-border/50 sm:grid-cols-2 lg:grid-cols-3">
+                                <div v-for="feature in secondaryFeatures" :key="feature.title" class="surface-cell group p-7">
+                                    <div class="feat-icon">
+                                        <component
+                                            :is="feature.icon"
+                                            class="h-4.5 w-4.5 text-muted-foreground transition-colors group-hover:text-foreground"
+                                        />
+                                    </div>
+                                    <h3 class="mt-5 font-display text-lg font-bold text-foreground">{{ feature.title }}</h3>
+                                    <p class="mt-2.5 text-[15px] leading-7 text-muted-foreground">{{ feature.body }}</p>
+                                </div>
+                                <!-- Filler cell so the hairline grid stays rectangular on wide screens. -->
+                                <div class="surface-cell hidden p-7 lg:block" aria-hidden="true" />
+                            </div>
                         </div>
-                    </MapPanel>
+                    </div>
                 </div>
 
                 <!-- CTA: the end of the chain. -->
@@ -677,14 +745,73 @@ const vReveal = {
     font-family: var(--font-display);
 }
 
-/* The map canvas: the same grid the map uses, across the whole page. */
-.page-grid {
-    position: fixed;
+/* Section cards wear the map node-card surface: elevated above the page
+   background exactly like a system card sits above the map canvas. */
+.section-card {
+    --surface: var(--color-white);
+    --surface-border: var(--color-neutral-300);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 0.25rem;
+    border: 1px solid var(--surface-border);
+    background: var(--surface);
+    box-shadow: 0 20px 45px -20px rgb(0 0 0 / 0.35);
+}
+
+.dark .section-card {
+    --surface: var(--color-neutral-900);
+    --surface-border: var(--color-neutral-700);
+    box-shadow: 0 20px 45px -20px rgb(0 0 0 / 0.8);
+}
+
+/* Cells that must repeat the card surface inside hairline grids. */
+.surface-cell {
+    background: var(--surface);
+}
+
+/* Hairline separators between surface cells, at the same strength as the
+   card's internal dividers. */
+.hairline-grid {
+    background: color-mix(in oklab, var(--border) 50%, var(--surface));
+}
+
+/* Hero backdrop: dotted canvas plus a soft glow behind the map card, masked
+   away from the copy column so text contrast stays untouched. */
+.hero-backdrop {
+    position: absolute;
     inset: 0;
-    z-index: -10;
-    background-image: linear-gradient(to right, var(--grid) 1px, transparent 1px), linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
-    background-size: 32px 32px;
-    opacity: 0.55;
+    pointer-events: none;
+    background-image:
+        radial-gradient(50rem 30rem at 78% 34%, color-mix(in oklab, var(--color-orange-400) 8%, transparent), transparent 70%),
+        radial-gradient(circle, var(--grid) 1px, transparent 1px);
+    background-size:
+        auto,
+        28px 28px;
+    -webkit-mask-image: linear-gradient(100deg, transparent 30%, #000 62%);
+    mask-image: linear-gradient(100deg, transparent 30%, #000 62%);
+}
+
+/* Chain canvas backdrop: a dotted map canvas with faint nebula washes. Dots
+   instead of grid lines, so nothing fights the card borders, faded out where
+   the canvas meets the hero and the CTA. */
+.canvas-backdrop {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+        radial-gradient(60rem 44rem at 82% 4%, color-mix(in oklab, var(--color-orange-400) 5%, transparent), transparent 70%),
+        radial-gradient(52rem 40rem at 12% 38%, color-mix(in oklab, var(--color-sky-400) 4%, transparent), transparent 70%),
+        radial-gradient(56rem 42rem at 85% 78%, color-mix(in oklab, var(--color-purple-400) 4%, transparent), transparent 70%),
+        radial-gradient(circle, var(--grid) 1px, transparent 1px);
+    background-size:
+        auto,
+        auto,
+        auto,
+        28px 28px;
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 5rem, #000 calc(100% - 5rem), transparent);
+    mask-image: linear-gradient(to bottom, transparent, #000 5rem, #000 calc(100% - 5rem), transparent);
 }
 
 /* Chain connector between section cards: the map's neutral connection stroke
@@ -807,6 +934,47 @@ const vReveal = {
     width: 0.375rem;
     flex-shrink: 0;
     background: var(--color-orange-400);
+}
+
+/* One-command install: inset code row with a copy affordance. */
+.cmd {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 0.25rem;
+    border: 1px solid var(--surface-border);
+    background: var(--background);
+    padding: 0.35rem 0.35rem 0.35rem 0.9rem;
+}
+
+.cmd-text {
+    flex: 1;
+    overflow-x: auto;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.8rem;
+    line-height: 1.9;
+    white-space: nowrap;
+    color: var(--foreground);
+}
+
+.cmd-copy {
+    display: flex;
+    height: 2rem;
+    width: 2rem;
+    flex-shrink: 0;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.25rem;
+    color: var(--muted-foreground);
+    transition:
+        color 0.2s ease,
+        background-color 0.2s ease;
+}
+
+.cmd-copy:hover {
+    background: color-mix(in oklab, var(--muted) 60%, transparent);
+    color: var(--foreground);
 }
 
 /* Open-source link rows inside the card. */
@@ -1017,7 +1185,7 @@ const vReveal = {
     color: var(--foreground);
 }
 
-/* CTA: quiet finale on the open canvas. */
+/* CTA: quiet finale. */
 .cta {
     position: relative;
     padding-block: 9rem;

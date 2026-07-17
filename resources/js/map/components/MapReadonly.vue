@@ -1,15 +1,18 @@
 <script setup lang="ts">
 import Edge from '@/map/components/edges/Edge.vue';
 import NodeCard from '@/map/components/nodes/NodeCard.vue';
-import { ANCHOR_OFFSET } from '@/map/core/coords';
-import type { EdgeGeometry } from '@/map/core/types';
+import { ANCHOR_OFFSET, nodeRect } from '@/map/core/coords';
+import { computeTreeEdgeGeometries } from '@/map/core/geometry/treeRouting';
+import type { EdgeGeometry, EdgeInput, Rect, Size, Vec2 } from '@/map/core/types';
 import type { TMapConnection, TMapSolarsystem } from '@/pages/maps';
 import { TCharacter } from '@/types/models';
+import { computed, onMounted, ref, type ComponentPublicInstance } from 'vue';
 
 /**
  * Store-free, read-only rendering of plain map data (the landing page's demo
  * map). Same contract as the old MapView: base-unit positions scaled by the
- * `scale` prop, curve edges only, non-interactive cards.
+ * `scale` prop, non-interactive cards, and the same tree-routed elbow edges
+ * the live map draws.
  */
 type TReadonlyConnection = TMapConnection & {
     source: TMapSolarsystem;
@@ -36,14 +39,73 @@ const {
     pilots?: Record<number, TCharacter[]>;
 }>();
 
-/** The free-layout curve between the two stored anchors, in base units. */
-function connectionGeometry(connection: TReadonlyConnection): EdgeGeometry {
-    return {
+/**
+ * Node sizes for edge routing: measured from the DOM after mount, with the
+ * card's known base dimensions as the SSR/first-paint estimate.
+ */
+const ESTIMATED_NODE_WIDTH = 120;
+
+const nodeEls = new Map<number, HTMLElement>();
+const measuredSizes = ref<Map<number, Size>>(new Map());
+
+function registerNode(id: number, el: Element | ComponentPublicInstance | null) {
+    if (el instanceof HTMLElement) {
+        nodeEls.set(id, el);
+    } else {
+        nodeEls.delete(id);
+    }
+}
+
+onMounted(() => {
+    const sizes = new Map<number, Size>();
+    for (const [id, el] of nodeEls) {
+        const card = el.firstElementChild as HTMLElement | null;
+        if (!card) continue;
+        sizes.set(id, { width: card.offsetWidth, height: card.offsetHeight });
+    }
+    measuredSizes.value = sizes;
+});
+
+function nodeSize(system: TMapSolarsystem): Size {
+    return (
+        measuredSizes.value.get(system.id) ?? {
+            width: ESTIMATED_NODE_WIDTH,
+            height: (pilots[system.id]?.length ?? 0) > 0 ? 60 : 40,
+        }
+    );
+}
+
+/**
+ * The same global tree-routing pass the live map runs: all edges routed
+ * together so fan-outs at shared nodes space themselves out.
+ */
+const treeGeometries = computed<Map<number, EdgeGeometry>>(() => {
+    const edges: EdgeInput[] = connections.map((connection) => ({
         id: connection.id,
-        kind: 'curve',
-        from: connection.source.position ?? { x: 0, y: 0 },
-        to: connection.target.position ?? { x: 0, y: 0 },
-    };
+        sourceId: connection.source.id,
+        targetId: connection.target.id,
+    }));
+
+    const rects = new Map<number, Rect>();
+    const anchors = new Map<number, Vec2>();
+    for (const system of solarsystems) {
+        const anchor = system.position ?? { x: 0, y: 0 };
+        anchors.set(system.id, anchor);
+        rects.set(system.id, nodeRect(anchor, nodeSize(system)));
+    }
+
+    return computeTreeEdgeGeometries(edges, rects, anchors);
+});
+
+function connectionGeometry(connection: TReadonlyConnection): EdgeGeometry {
+    return (
+        treeGeometries.value.get(connection.id) ?? {
+            id: connection.id,
+            kind: 'curve',
+            from: connection.source.position ?? { x: 0, y: 0 },
+            to: connection.target.position ?? { x: 0, y: 0 },
+        }
+    );
 }
 
 /** The node's top-left in screen pixels: the scaled anchor minus the scaled anchor offset. */
@@ -70,6 +132,7 @@ function nodeTransform(system: TMapSolarsystem): string {
         <div
             v-for="solarsystem in solarsystems"
             :key="solarsystem.id"
+            :ref="(el) => registerNode(solarsystem.id, el)"
             class="pointer-events-none absolute select-none"
             :style="{ transform: nodeTransform(solarsystem) }"
         >
