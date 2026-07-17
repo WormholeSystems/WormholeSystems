@@ -16,7 +16,7 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { TMapSummary } from '@/pages/maps';
 import { Link, router } from '@inertiajs/vue3';
-import { Archive, ArchiveRestore, ArrowRight, Crown, Eye, Globe, Lock, MoreVertical, Pencil, Settings, Spline } from 'lucide-vue-next';
+import { Archive, ArchiveRestore, ArrowRight, Crown, Eye, Globe, Lock, MoreVertical, Pencil, Pin, PinOff, Settings, Spline } from 'lucide-vue-next';
 import { computed, ref, type Component } from 'vue';
 
 const { map } = defineProps<{
@@ -26,6 +26,7 @@ const { map } = defineProps<{
 const open = ref(false);
 
 const isArchived = computed(() => Boolean(map.map_user_setting?.is_archived));
+const isPinned = computed(() => Boolean(map.map_user_setting?.is_pinned));
 const trackingAllowed = computed(() => Boolean(map.map_user_setting?.tracking_allowed));
 
 const roleMeta: Record<NonNullable<TMapSummary['role']>, { label: string; icon: Component; class: string }> = {
@@ -40,6 +41,10 @@ const role = computed(() => (map.role ? roleMeta[map.role] : null));
 function setArchived(value: boolean): void {
     router.put(MapUserSettingController.update(map.slug).url, { is_archived: value }, { preserveScroll: true, only: ['maps'] });
 }
+
+function setPinned(value: boolean): void {
+    router.put(MapUserSettingController.update(map.slug).url, { is_pinned: value }, { preserveScroll: true, only: ['maps', 'pinned_maps'] });
+}
 </script>
 
 <template>
@@ -52,6 +57,7 @@ function setArchived(value: boolean): void {
             <span class="flex min-w-0 items-center gap-1.5 font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
                 <component :is="map.is_public ? Globe : Lock" class="size-3 shrink-0" />
                 <span class="truncate">map · {{ map.is_public ? 'public' : 'private' }}</span>
+                <Pin v-if="isPinned" class="size-3 shrink-0 text-orange-400" />
             </span>
 
             <DropdownMenu>
@@ -68,6 +74,14 @@ function setArchived(value: boolean): void {
                         </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
+                    <DropdownMenuItem v-if="!isPinned" @select="setPinned(true)">
+                        <Pin class="size-4" />
+                        Pin to navbar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem v-else @select="setPinned(false)">
+                        <PinOff class="size-4" />
+                        Unpin from navbar
+                    </DropdownMenuItem>
                     <DropdownMenuItem v-if="!isArchived" @select="setArchived(true)">
                         <Archive class="size-4" />
                         Archive map

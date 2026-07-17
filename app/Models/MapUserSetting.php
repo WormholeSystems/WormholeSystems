@@ -37,6 +37,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property bool $show_threat_level
  * @property bool $show_statics_first
  * @property bool $is_archived
+ * @property bool $is_pinned
  * @property string|null $background_image_path
  * @property string|MapBackgroundMode $background_image_mode
  * @property CarbonImmutable|string $created_at
@@ -86,6 +87,7 @@ final class MapUserSetting extends Model
             'show_threat_level' => 'boolean',
             'show_statics_first' => 'boolean',
             'is_archived' => 'boolean',
+            'is_pinned' => 'boolean',
             'background_image_mode' => MapBackgroundMode::class,
             'layout_override' => MapLayout::class,
         ];

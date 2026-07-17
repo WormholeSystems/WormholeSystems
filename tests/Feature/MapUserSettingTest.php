@@ -169,3 +169,54 @@ it('prevents a guest from updating settings on a private map', function () {
         'killmail_filter' => 'jspace',
     ])->assertForbidden();
 });
+
+// --- Pinning maps to the navbar ---
+
+it('pins a map and shares it with the navbar', function () {
+    $map = Map::factory()->create();
+    $user = User::factory()->ownsMap($map)->create();
+
+    actingAs($user);
+
+    $this->put(route('maps.user-settings.update', $map), [
+        'is_pinned' => true,
+    ])->assertRedirect();
+
+    expect(MapUserSetting::query()
+        ->where('user_id', $user->id)
+        ->where('map_id', $map->id)
+        ->value('is_pinned')
+    )->toBeTruthy();
+
+    $this->get(route('home'))->assertInertia(fn ($page) => $page
+        ->has('pinned_maps', 1)
+        ->where('pinned_maps.0.name', $map->name)
+        ->where('pinned_maps.0.slug', $map->slug)
+    );
+});
+
+it('removes an unpinned map from the navbar', function () {
+    $map = Map::factory()->create();
+    $user = User::factory()->ownsMap($map)->create();
+    $user->mapUserSettings()->create(['map_id' => $map->id, 'is_pinned' => true]);
+
+    actingAs($user);
+
+    $this->put(route('maps.user-settings.update', $map), [
+        'is_pinned' => false,
+    ])->assertRedirect();
+
+    $this->get(route('home'))->assertInertia(fn ($page) => $page->has('pinned_maps', 0));
+});
+
+it('does not share pinned maps the user can no longer access', function () {
+    $map = Map::factory()->create(['is_public' => false]);
+    $user = User::factory()->ownsMap($map)->create();
+    $user->mapUserSettings()->create(['map_id' => $map->id, 'is_pinned' => true]);
+
+    MapAccess::query()->where('map_id', $map->id)->delete();
+
+    actingAs($user);
+
+    $this->get(route('home'))->assertInertia(fn ($page) => $page->has('pinned_maps', 0));
+});

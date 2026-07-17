@@ -9,6 +9,7 @@ use App\DTO\SortPreferences;
 use App\Enums\SortDirection;
 use App\Http\Resources\CharacterResource;
 use App\Http\Resources\UserResource;
+use App\Models\MapUserSetting;
 use App\Models\ServerStatus;
 use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
@@ -73,6 +74,7 @@ final class HandleInertiaRequests extends Middleware
                 $request->session()->get('notification')
             ),
             'missing_scopes' => $this->getMissingScopes(),
+            'pinned_maps' => fn (): array => $this->getPinnedMaps($request->user()),
             'discord' => fn (): array => [
                 'invite' => config('services.discord.invite'),
             ],
@@ -97,6 +99,31 @@ final class HandleInertiaRequests extends Middleware
             ->get();
 
         return $characters_with_missing_scopes->toResourceCollection(CharacterResource::class);
+    }
+
+    /**
+     * The maps the user pinned to the navigation bar.
+     *
+     * @return array<int, array{id: int, name: string, slug: string}>
+     */
+    private function getPinnedMaps(?User $user): array
+    {
+        if (! $user instanceof User) {
+            return [];
+        }
+
+        return $user->mapUserSettings()
+            ->where('is_pinned', true)
+            ->with('map:id,name,is_public,share_token')
+            ->get()
+            ->filter(fn (MapUserSetting $setting): bool => $setting->map !== null && $user->can('view', $setting->map))
+            ->map(fn (MapUserSetting $setting): array => [
+                'id' => $setting->map->id,
+                'name' => $setting->map->name,
+                'slug' => $setting->map->slug,
+            ])
+            ->values()
+            ->all();
     }
 
     private function getLayout(Request $request): array

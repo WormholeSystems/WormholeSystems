@@ -5,7 +5,7 @@ import MapController from '@/actions/App/Http/Controllers/MapController';
 import ScopeController from '@/actions/App/Http/Controllers/ScopeController';
 import { CharacterImage } from '@/components/images';
 import ServerStatus from '@/components/server-status/ServerStatus.vue';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import UserMenuContent from '@/components/user/UserMenuContent.vue';
 import useUser from '@/composables/useUser';
@@ -15,7 +15,7 @@ import { home } from '@/routes';
 import type { AppPageProps, NavItem } from '@/types';
 import { TCharacter } from '@/types/models';
 import { Link, usePage } from '@inertiajs/vue3';
-import { AlertTriangle, CircleHelp, LayoutGrid, LogIn, Menu, Shield } from 'lucide-vue-next';
+import { AlertTriangle, CircleHelp, LayoutGrid, LogIn, Map as MapIcon, Menu, Shield } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 const page = usePage<
@@ -27,26 +27,37 @@ const user = useUser();
 
 const isCurrentRoute = computed(() => (url: string) => page.url === url);
 
+const pinnedMaps = computed(() => page.props.pinned_maps ?? []);
+
+/**
+ * Only a handful of pinned maps render as inline navbar links; the rest move
+ * into a "+N" dropdown so they can never crowd the server status column.
+ */
+const inline_pinned_limit = 4;
+const inlinePinnedMaps = computed(() => pinnedMaps.value.slice(0, inline_pinned_limit));
+const overflowPinnedMaps = computed(() => pinnedMaps.value.slice(inline_pinned_limit));
+
 const mainNavItems: NavItem[] = [
     {
         title: 'Maps',
         href: MapController.index().url,
         icon: LayoutGrid,
     },
-    {
-        title: 'Documentation',
-        href: DocumentationController.index().url,
-        icon: CircleHelp,
-    },
 ];
+
+const documentationItem: NavItem = {
+    title: 'Documentation',
+    href: DocumentationController.index().url,
+    icon: CircleHelp,
+};
 </script>
 
 <template>
     <div>
         <div class="border-b border-border/50 bg-card">
-            <div class="grid h-16 grid-cols-[1fr_auto] items-center px-4 md:grid-cols-3">
+            <div class="grid h-16 grid-cols-[1fr_auto] items-center px-4 md:grid-cols-[1fr_auto_1fr]">
                 <!-- Left: Mobile menu + Logo + Divider + Desktop nav -->
-                <div class="flex items-center gap-4">
+                <div class="flex min-w-0 items-center gap-4">
                     <!-- Mobile Menu -->
                     <div class="lg:hidden">
                         <Sheet>
@@ -62,7 +73,7 @@ const mainNavItems: NavItem[] = [
                                 </SheetHeader>
                                 <div class="flex h-full flex-1 flex-col justify-between space-y-4 py-6">
                                     <nav class="-mx-2 space-y-1">
-                                        <template v-for="item in mainNavItems" :key="item.title">
+                                        <template v-for="item in [...mainNavItems, documentationItem]" :key="item.title">
                                             <Link
                                                 v-if="!item.isExternal"
                                                 :href="item.href"
@@ -84,6 +95,17 @@ const mainNavItems: NavItem[] = [
                                                 {{ item.title }}
                                             </a>
                                         </template>
+                                        <Link
+                                            v-for="pinned in pinnedMaps"
+                                            :key="`pinned-${pinned.id}`"
+                                            :href="MapController.show(pinned.slug).url"
+                                            class="flex items-center gap-3 rounded-md px-2 py-2 text-sm font-medium text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                                            :class="{ 'bg-muted/50 text-foreground': isCurrentRoute(MapController.show(pinned.slug).url) }"
+                                            prefetch
+                                        >
+                                            <MapIcon class="size-4" />
+                                            <span class="truncate">{{ pinned.name }}</span>
+                                        </Link>
                                     </nav>
                                     <div class="flex flex-col space-y-4">
                                         <div v-if="user" class="border-t border-border/50 pt-4">
@@ -123,7 +145,7 @@ const mainNavItems: NavItem[] = [
                     <div class="hidden h-6 border-l border-border/50 lg:block"></div>
 
                     <!-- Desktop Menu -->
-                    <nav class="hidden items-center gap-1 lg:flex">
+                    <nav class="hidden min-w-0 flex-1 items-center gap-1 overflow-hidden lg:flex">
                         <template v-for="(item, index) in mainNavItems" :key="index">
                             <Link
                                 v-if="!item.isExternal"
@@ -146,6 +168,35 @@ const mainNavItems: NavItem[] = [
                                 {{ item.title }}
                             </a>
                         </template>
+                        <Link
+                            v-for="pinned in inlinePinnedMaps"
+                            :key="`pinned-${pinned.id}`"
+                            :href="MapController.show(pinned.slug).url"
+                            class="flex max-w-44 min-w-0 shrink items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                            :class="{ 'bg-muted/50 text-foreground': isCurrentRoute(MapController.show(pinned.slug).url) }"
+                            prefetch
+                        >
+                            <MapIcon class="size-3.5 shrink-0" />
+                            <span class="truncate">{{ pinned.name }}</span>
+                        </Link>
+                        <DropdownMenu v-if="overflowPinnedMaps.length">
+                            <DropdownMenuTrigger as-child>
+                                <button
+                                    class="flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                                >
+                                    <MapIcon class="size-3.5" />
+                                    +{{ overflowPinnedMaps.length }}
+                                </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" class="w-56">
+                                <DropdownMenuItem v-for="pinned in overflowPinnedMaps" :key="`pinned-overflow-${pinned.id}`" as-child>
+                                    <Link :href="MapController.show(pinned.slug).url" prefetch class="flex w-full items-center gap-2">
+                                        <MapIcon class="size-4" />
+                                        <span class="truncate">{{ pinned.name }}</span>
+                                    </Link>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </nav>
                 </div>
 
@@ -156,6 +207,20 @@ const mainNavItems: NavItem[] = [
 
                 <!-- Right: Actions -->
                 <div class="flex items-center justify-end gap-4 md:col-start-3">
+                    <!-- Documentation -->
+                    <Link
+                        :href="documentationItem.href"
+                        class="hidden items-center gap-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground lg:flex"
+                        :class="{ 'text-foreground': isCurrentRoute(documentationItem.href) }"
+                        prefetch
+                    >
+                        <CircleHelp class="size-4" />
+                        <span>Documentation</span>
+                    </Link>
+
+                    <!-- Divider -->
+                    <div class="hidden h-6 border-l border-border/50 lg:block"></div>
+
                     <!-- Scopes status -->
                     <template v-if="user">
                         <Link
