@@ -277,12 +277,6 @@ const vReveal = {
                                             <ArrowRight class="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                                         </Link>
                                     </Button>
-                                    <Button as-child size="lg" variant="ghost">
-                                        <a :href="page.props.discord.invite" class="inline-flex items-center gap-2">
-                                            <DiscordIcon class="h-4 w-4" />
-                                            Join the Discord
-                                        </a>
-                                    </Button>
                                 </div>
                                 <p class="mt-8 font-mono text-[10px] tracking-wider text-muted-foreground/70 uppercase">
                                     ESI-secure · No client install · Free to use
@@ -338,9 +332,15 @@ const vReveal = {
 
                         <!-- Open source & self-hosting (surfaced early — it's a core differentiator). -->
                         <div class="chain" aria-hidden="true" />
-                        <div v-reveal class="section-card">
+                        <div v-reveal class="section-card section-card--featured">
                             <MapPanelHeader>
                                 <span class="flex items-center gap-2"><Github class="h-3.5 w-3.5" /> 100% open source</span>
+                                <template #actions>
+                                    <span class="flex items-center gap-1.5 font-mono text-[10px] tracking-wider text-orange-400 uppercase">
+                                        <span class="size-1.5 bg-orange-400" />
+                                        Self-host ready
+                                    </span>
+                                </template>
                             </MapPanelHeader>
                             <div class="grid divide-y divide-border/50 lg:grid-cols-[1.1fr_1fr] lg:divide-x lg:divide-y-0">
                                 <div class="p-8 sm:p-12">
@@ -764,6 +764,30 @@ const vReveal = {
     --surface: var(--color-neutral-900);
     --surface-border: var(--color-neutral-700);
     box-shadow: 0 20px 45px -20px rgb(0 0 0 / 0.8);
+}
+
+/* Featured card (self-hosting): the accent-coloured node in the chain. An
+   orange-tinted border, a soft glow, and a faint wash behind the command. */
+.section-card--featured {
+    --surface-border: color-mix(in oklab, var(--color-orange-400) 45%, var(--color-neutral-300));
+    box-shadow:
+        0 20px 45px -20px rgb(0 0 0 / 0.35),
+        0 0 55px -18px color-mix(in oklab, var(--color-orange-400) 55%, transparent);
+}
+
+.dark .section-card--featured {
+    --surface-border: color-mix(in oklab, var(--color-orange-400) 40%, var(--color-neutral-700));
+    box-shadow:
+        0 20px 45px -20px rgb(0 0 0 / 0.8),
+        0 0 55px -18px color-mix(in oklab, var(--color-orange-400) 45%, transparent);
+}
+
+.section-card--featured::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(42rem 22rem at 12% 0%, color-mix(in oklab, var(--color-orange-400) 7%, transparent), transparent 70%);
 }
 
 /* Cells that must repeat the card surface inside hairline grids. */
