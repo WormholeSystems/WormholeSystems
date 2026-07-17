@@ -10,6 +10,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
  * @mixin WormholeSystemThreat
+ *
+ * @property string|null $occupier_alias Subquery alias selected by the threat search query.
  */
 final class MapThreatSearchSystemResource extends JsonResource
 {
