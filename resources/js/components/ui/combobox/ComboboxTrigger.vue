@@ -13,6 +13,15 @@ const props = withDefaults(defineProps<ComboboxTriggerProps & { class?: HTMLAttr
 const delegatedProps = reactiveOmit(props, 'class', 'size');
 
 const forwarded = useForwardProps(delegatedProps);
+
+/**
+ * Size styles are plain classes (not data-[size] variants) so consumer class
+ * overrides win via tailwind-merge instead of losing on selector specificity.
+ */
+const sizeClasses: Record<'sm' | 'default', string> = {
+    default: 'h-9 px-3 text-sm',
+    sm: 'h-6 px-3 text-xs',
+};
 </script>
 
 <template>
@@ -22,7 +31,8 @@ const forwarded = useForwardProps(delegatedProps);
         v-bind="forwarded"
         :class="
             cn(
-                `border-input focus-visible:border-ring focus-visible:ring-ring/50 dark:bg-input/30 dark:hover:bg-input/50 flex w-full items-center justify-between gap-1 rounded-md border bg-transparent whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-9 data-[size=default]:px-3 data-[size=default]:text-sm data-[size=sm]:h-6 data-[size=sm]:px-2 data-[size=sm]:text-xs [&_svg]:pointer-events-none [&_svg]:shrink-0`,
+                `border-input focus-visible:border-ring focus-visible:ring-ring/50 dark:bg-input/30 dark:hover:bg-input/50 flex w-full items-center justify-between gap-2 rounded-md border bg-transparent whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0`,
+                sizeClasses[size],
                 props.class,
             )
         "
