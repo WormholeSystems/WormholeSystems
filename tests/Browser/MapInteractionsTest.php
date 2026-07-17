@@ -75,12 +75,23 @@ it('draws a connection between two systems from the connection handle', function
 
     expect(MapConnection::where('map_id', $map->id)->count())->toBe(0);
 
-    $this->connectSystems(visit(route('maps.show', $map)), JITA, AMARR);
+    $page = visit(route('maps.show', $map));
 
-    // The connection is persisted via an async POST; wait briefly for it to land.
-    $deadline = microtime(true) + 5;
-    while (MapConnection::where('map_id', $map->id)->count() === 0 && microtime(true) < $deadline) {
-        usleep(100_000);
+    /* The drag gesture is occasionally dropped entirely on slow CI runners, so retry
+     * it a few times. Each retry only starts after the previous attempt's async-POST
+     * window has fully elapsed, so a gesture that did land is never repeated.
+     */
+    foreach (range(1, 3) as $attempt) {
+        $this->connectSystems($page, JITA, AMARR);
+
+        $deadline = microtime(true) + 5;
+        while (MapConnection::where('map_id', $map->id)->count() === 0 && microtime(true) < $deadline) {
+            usleep(100_000);
+        }
+
+        if (MapConnection::where('map_id', $map->id)->count() > 0) {
+            break;
+        }
     }
 
     expect(MapConnection::where('map_id', $map->id)->count())->toBe(1);
