@@ -5,7 +5,7 @@ declare(strict_types=1);
 use App\Models\Killmail;
 use App\Models\User;
 
-function makeKillmail(int $id, int $solarsystemId): Killmail
+function makeLandingKillmail(int $id, int $solarsystemId): Killmail
 {
     return Killmail::query()->forceCreate([
         'id' => $id,
@@ -40,8 +40,8 @@ it('serves the latest wormhole killmails', function () {
     $wormholeSystem = makeSolarsystem(31000001, -1.0, 'wormhole');
     $knownSpaceSystem = makeSolarsystem(30000142, 0.9, 'eve');
 
-    $wormholeKillmail = makeKillmail(1001, $wormholeSystem);
-    makeKillmail(1002, $knownSpaceSystem);
+    $wormholeKillmail = makeLandingKillmail(1001, $wormholeSystem);
+    makeLandingKillmail(1002, $knownSpaceSystem);
 
     $response = $this->get(route('landing'));
 
