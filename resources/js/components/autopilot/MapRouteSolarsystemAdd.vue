@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import PlusIcon from '@/components/icons/PlusIcon.vue';
-import SolarsystemSearchResult from '@/components/solarsystem/SolarsystemSearchResult.vue';
-import { Combobox, ComboboxAnchor, ComboboxEmpty, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxList } from '@/components/ui/combobox';
+import VirtualizedSolarsystemList from '@/components/solarsystem/VirtualizedSolarsystemList.vue';
+import { Combobox, ComboboxAnchor, ComboboxInput } from '@/components/ui/combobox';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import MapPanelHeaderActionButton from '@/components/ui/map-panel/MapPanelHeaderActionButton.vue';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useSolarsystemAliases } from '@/composables/useSolarsystemAliases';
 import { useStaticData } from '@/composables/useStaticData';
+import { type TComboboxSection } from '@/lib/comboboxSections';
+import { MAX_SEARCH_RESULTS, takeRanked } from '@/lib/searchRank';
 import type { TMap, TResolvedMapRouteSolarsystem } from '@/pages/maps';
 import MapRouteSolarsystems from '@/routes/map-route-solarsystems';
 import { TStaticSolarsystem } from '@/types/static-data';
@@ -34,15 +36,29 @@ const filteredSolarsystems = computed(() => {
         return [] as TStaticSolarsystem[];
     }
 
-    return solarsystems.value.filter((solarsystem) => solarsystem.name.toLowerCase().includes(query)).slice(0, 25);
+    return takeRanked(
+        solarsystems.value,
+        query,
+        MAX_SEARCH_RESULTS,
+        (solarsystem) => [solarsystem.name],
+        (solarsystem) => solarsystem.name,
+    );
 });
 
-const new_solarsystems = computed(() => {
-    return filteredSolarsystems.value.filter((solarsystem) => !map_route_solarsystems?.some((route) => route.solarsystem.id === solarsystem.id));
-});
+const routeSolarsystemIds = computed(() => new Set((map_route_solarsystems ?? []).map((route) => route.solarsystem.id)));
 
-const existing_solarsystems = computed(() => {
-    return filteredSolarsystems.value.filter((solarsystem) => map_route_solarsystems?.some((route) => route.solarsystem.id === solarsystem.id));
+const search_sections = computed<TComboboxSection<TStaticSolarsystem>[]>(() => {
+    const new_solarsystems: TStaticSolarsystem[] = [];
+    const existing_solarsystems: TStaticSolarsystem[] = [];
+
+    for (const solarsystem of filteredSolarsystems.value) {
+        (routeSolarsystemIds.value.has(solarsystem.id) ? existing_solarsystems : new_solarsystems).push(solarsystem);
+    }
+
+    return [
+        { key: 'new', heading: 'Search Results', items: new_solarsystems },
+        { key: 'existing', heading: 'Already in Watchlist', items: existing_solarsystems, selectable: false },
+    ];
 });
 
 function handleSolarsystemSelect(solarsystem: TStaticSolarsystem) {
@@ -82,43 +98,17 @@ function handleSolarsystemSelect(solarsystem: TStaticSolarsystem) {
                     Add a solarsystem to the route list. You can select a solarsystem from the map or enter its ID manually.
                 </DialogDescription>
             </DialogHeader>
-            <Combobox class="rounded-lg border bg-neutral-900">
+            <Combobox class="rounded-lg border bg-neutral-900" :ignore-filter="true">
                 <ComboboxAnchor>
                     <ComboboxInput v-model="search" auto-focus />
                 </ComboboxAnchor>
-                <ComboboxList class="w-115" align="start">
-                    <ComboboxEmpty> No results found</ComboboxEmpty>
-                    <ComboboxGroup
-                        heading="Search Results"
-                        v-if="new_solarsystems.length > 0"
-                        class="grid grid-cols-[auto_1fr_1fr_auto] items-center gap-x-2"
-                    >
-                        <ComboboxItem
-                            v-for="solarsystem in new_solarsystems"
-                            :key="solarsystem.id"
-                            :value="solarsystem.name"
-                            @select.prevent="() => handleSolarsystemSelect(solarsystem)"
-                            class="col-span-full grid grid-cols-subgrid"
-                        >
-                            <SolarsystemSearchResult :solarsystem="solarsystem" :alias="getAlias(solarsystem.id)" />
-                        </ComboboxItem>
-                    </ComboboxGroup>
-                    <ComboboxGroup
-                        heading="Already in Watchlist"
-                        v-if="existing_solarsystems.length > 0"
-                        class="grid grid-cols-[auto_1fr_1fr_auto] items-center gap-x-2"
-                    >
-                        <ComboboxItem
-                            v-for="solarsystem in existing_solarsystems"
-                            :key="solarsystem.id"
-                            :value="solarsystem.name"
-                            disabled
-                            class="col-span-full grid grid-cols-subgrid"
-                        >
-                            <SolarsystemSearchResult :solarsystem="solarsystem" :alias="getAlias(solarsystem.id)" />
-                        </ComboboxItem>
-                    </ComboboxGroup>
-                </ComboboxList>
+                <VirtualizedSolarsystemList
+                    class="w-115"
+                    align="start"
+                    :sections="search_sections"
+                    :get-alias="getAlias"
+                    @select="handleSolarsystemSelect"
+                />
             </Combobox>
         </DialogContent>
     </Dialog>

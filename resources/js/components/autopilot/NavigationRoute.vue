@@ -13,6 +13,7 @@ import { usePath } from '@/composables/usePath';
 import { useRouteCalculator } from '@/composables/useRouteCalculator';
 import { useSolarsystemAliases } from '@/composables/useSolarsystemAliases';
 import { useStaticSolarsystem, useStaticSolarsystems } from '@/composables/useStaticSolarsystems';
+import { MAX_SEARCH_RESULTS, takeRanked } from '@/lib/searchRank';
 import type { TMap, TResolvedMapRouteSolarsystem, TResolvedSelectedMapSolarsystem, TResolvedSolarsystem } from '@/pages/maps';
 import type { ConnectionType } from '@/routing/types';
 import type { TCharacter, TCharacterStatus } from '@/types/models';
@@ -89,7 +90,13 @@ const filteredSolarsystems = computed(() => {
         return [] as TStaticSolarsystem[];
     }
 
-    return solarsystems.filter((solarsystem) => solarsystem.name.toLowerCase().includes(query)).slice(0, 25);
+    return takeRanked(
+        solarsystems,
+        query,
+        MAX_SEARCH_RESULTS,
+        (solarsystem) => [solarsystem.name],
+        (solarsystem) => solarsystem.name,
+    );
 });
 
 watch(

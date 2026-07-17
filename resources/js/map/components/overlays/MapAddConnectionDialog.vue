@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import SolarsystemSearchResult from '@/components/solarsystem/SolarsystemSearchResult.vue';
-import { Combobox, ComboboxAnchor, ComboboxEmpty, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxList } from '@/components/ui/combobox';
+import VirtualizedSolarsystemList from '@/components/solarsystem/VirtualizedSolarsystemList.vue';
+import { Combobox, ComboboxAnchor, ComboboxInput } from '@/components/ui/combobox';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { type TComboboxSection } from '@/lib/comboboxSections';
 import { createMapSolarsystem } from '@/map/actions/createMapSolarsystem';
 import { useAddConnectionDialog } from '@/map/interactions/useAddConnectionDialog';
 import { useSolarsystemSearch } from '@/map/interactions/useSolarsystemSearch';
@@ -35,6 +36,11 @@ watch(origin, (value) => {
 
 const originName = computed(() => origin.value?.alias || origin.value?.solarsystem?.name || 'this system');
 
+const search_sections = computed<TComboboxSection<TStaticSolarsystem>[]>(() => [
+    { key: 'new', heading: 'New systems', items: new_solarsystems.value },
+    { key: 'existing', heading: 'Already on the map', items: existing_solarsystems.value },
+]);
+
 // Works for both groups: a new system is created and linked, an existing one is just
 // linked (the backend finds it in place without moving it and skips a duplicate link).
 function handleSolarsystemSelect(solarsystem: TStaticSolarsystem) {
@@ -54,43 +60,11 @@ function handleSolarsystemSelect(solarsystem: TStaticSolarsystem) {
                 <DialogTitle> Add connection</DialogTitle>
                 <DialogDescription> Search for a system to connect to {{ originName }}.</DialogDescription>
             </DialogHeader>
-            <Combobox class="rounded-lg border bg-neutral-900">
+            <Combobox class="rounded-lg border bg-neutral-900" :ignore-filter="true">
                 <ComboboxAnchor>
                     <ComboboxInput v-model="search" auto-focus />
                 </ComboboxAnchor>
-                <ComboboxList>
-                    <ComboboxEmpty> No results found</ComboboxEmpty>
-                    <ComboboxGroup
-                        heading="New systems"
-                        v-if="new_solarsystems.length > 0"
-                        class="grid grid-cols-[auto_1fr_1fr_auto] items-center gap-x-2"
-                    >
-                        <ComboboxItem
-                            v-for="solarsystem in new_solarsystems"
-                            :key="solarsystem.id"
-                            :value="solarsystem.name"
-                            @select.prevent="() => handleSolarsystemSelect(solarsystem)"
-                            class="col-span-full grid grid-cols-subgrid"
-                        >
-                            <SolarsystemSearchResult :solarsystem="solarsystem" :alias="getAlias(solarsystem.id)" />
-                        </ComboboxItem>
-                    </ComboboxGroup>
-                    <ComboboxGroup
-                        heading="Already on the map"
-                        v-if="existing_solarsystems.length > 0"
-                        class="grid grid-cols-[auto_1fr_1fr_auto] items-center gap-x-2"
-                    >
-                        <ComboboxItem
-                            v-for="solarsystem in existing_solarsystems"
-                            :key="solarsystem.id"
-                            :value="solarsystem.name"
-                            @select.prevent="() => handleSolarsystemSelect(solarsystem)"
-                            class="col-span-full grid grid-cols-subgrid"
-                        >
-                            <SolarsystemSearchResult :solarsystem="solarsystem" :alias="getAlias(solarsystem.id)" />
-                        </ComboboxItem>
-                    </ComboboxGroup>
-                </ComboboxList>
+                <VirtualizedSolarsystemList :sections="search_sections" :get-alias="getAlias" @select="handleSolarsystemSelect" />
             </Combobox>
         </DialogContent>
     </Dialog>

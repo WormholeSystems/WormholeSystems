@@ -1,11 +1,9 @@
 import { useSolarsystemAliases } from '@/composables/useSolarsystemAliases';
 import { useStaticData } from '@/composables/useStaticData';
-import { takeRanked } from '@/lib/searchRank';
+import { MAX_SEARCH_RESULTS, takeRanked } from '@/lib/searchRank';
 import type { TMapSolarsystemBase } from '@/pages/maps';
 import type { TStaticSolarsystem } from '@/types/static-data';
 import { computed, MaybeRefOrGetter, toValue } from 'vue';
-
-const MAX_RESULTS = 25;
 
 /**
  * Shared system-search used by the map context menu and the add-connection dialog:
@@ -30,14 +28,25 @@ export function useSolarsystemSearch(query: MaybeRefOrGetter<string>, mapSolarsy
         return takeRanked(
             staticData.value?.solarsystems ?? [],
             needle,
-            MAX_RESULTS,
+            MAX_SEARCH_RESULTS,
             (solarsystem) => [solarsystem.name],
             (solarsystem) => solarsystem.name,
         );
     });
 
-    const new_solarsystems = computed(() => results.value.filter((solarsystem) => !onMapIds.value.has(solarsystem.id)));
-    const existing_solarsystems = computed(() => results.value.filter((solarsystem) => onMapIds.value.has(solarsystem.id)));
+    const partitioned = computed(() => {
+        const new_solarsystems: TStaticSolarsystem[] = [];
+        const existing_solarsystems: TStaticSolarsystem[] = [];
+
+        for (const solarsystem of results.value) {
+            (onMapIds.value.has(solarsystem.id) ? existing_solarsystems : new_solarsystems).push(solarsystem);
+        }
+
+        return { new_solarsystems, existing_solarsystems };
+    });
+
+    const new_solarsystems = computed(() => partitioned.value.new_solarsystems);
+    const existing_solarsystems = computed(() => partitioned.value.existing_solarsystems);
 
     return { new_solarsystems, existing_solarsystems, getAlias };
 }
