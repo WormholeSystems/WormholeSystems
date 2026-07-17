@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/u
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useShowMap } from '@/composables/useShowMap';
 import { Data } from '@/lib/data';
+import { shipSizeFromJumpMass } from '@/lib/shipSize';
 import { groupSignatureOptions } from '@/lib/signatureCompatibility';
 import { updateMapUserSettings } from '@/map/api';
 import { TMapSolarsystem } from '@/pages/maps';
@@ -124,6 +125,14 @@ const lifetime = ref<TLifetimeStatus>('healthy');
 const massStatus = ref<TMassStatus>('fresh');
 const shipSize = ref<TShipSize | 'auto'>('auto');
 
+const selectedSignature = computed(() => props.signatures?.find((s) => s.id === selectedSignatureId.value) ?? null);
+
+/**
+ * An identified wormhole type dictates the hole's ship size, so the select is
+ * locked to it while such a signature is chosen.
+ */
+const lockedShipSize = computed(() => shipSizeFromJumpMass(selectedSignature.value?.wormhole?.maximum_jump_mass));
+
 // Reset inputs when the dialog opens. The alias is prefilled with the suggested
 // chain alias (or the target's existing alias when it is already on the map),
 // and with the preselect setting the first likely signature starts checked so
@@ -140,7 +149,8 @@ watch(open, (isOpen) => {
 });
 
 // Adopt the signature's lifetime / mass / ship size when it carries a
-// meaningful value, otherwise keep whatever the user manually selected.
+// meaningful value, otherwise keep whatever the user manually selected. The
+// wormhole type's size wins over a stored signature size.
 watch(selectedSignatureId, (id) => {
     const signature = props.signatures?.find((s) => s.id === id);
     if (!signature) return;
@@ -150,7 +160,10 @@ watch(selectedSignatureId, (id) => {
     if (signature.mass_status) {
         massStatus.value = signature.mass_status;
     }
-    if (signature.ship_size) {
+    const wormholeShipSize = shipSizeFromJumpMass(signature.wormhole?.maximum_jump_mass);
+    if (wormholeShipSize) {
+        shipSize.value = wormholeShipSize;
+    } else if (signature.ship_size) {
         shipSize.value = signature.ship_size;
     }
 });
@@ -247,7 +260,7 @@ const shipSizeMeta: Record<TShipSize | 'auto', { label: string; badge: string }>
                         </div>
                         <div class="grid content-start gap-1.5">
                             <Label class="text-xs">Ship size</Label>
-                            <Select :model-value="shipSize" @update:model-value="handleShipSizeChange">
+                            <Select :model-value="shipSize" :disabled="lockedShipSize !== null" @update:model-value="handleShipSizeChange">
                                 <SelectTrigger class="w-full">
                                     <span class="flex items-center gap-2">
                                         <span class="inline-flex w-6 justify-center font-mono text-[10px] leading-4 text-muted-foreground">{{

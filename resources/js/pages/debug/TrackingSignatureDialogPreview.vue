@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import Appearance from '@/layouts/Appearance.vue';
-import { TMapConnection, TMapSolarsystem } from '@/pages/maps';
+import { TMapConnection, TMapSolarsystem, TWormhole } from '@/pages/maps';
 import { TLifetimeStatus, TMassStatus, TSignature, TStringedSolarsystemClass } from '@/types/models';
 import { RotateCcw } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
@@ -36,6 +36,8 @@ function sig(input: {
     category?: 'wormhole' | 'gas' | 'data' | 'relic' | 'combat' | 'ore';
     code?: string;
     targetClass?: TStringedSolarsystemClass | 'unknown';
+    /** Maximum jump mass of the identified wormhole type; locks the ship size select. */
+    jumpMass?: number;
     extra?: string | null;
     rawTypeName?: string;
     /** Marks the signature as already tied to a connection leading to this map solarsystem id. */
@@ -72,6 +74,7 @@ function sig(input: {
         signature_category: input.category
             ? { id, name: input.category, code: input.category, created_at: minutesAgo(0), updated_at: minutesAgo(0) }
             : null,
+        wormhole: input.jumpMass ? ({ id, name: input.code ?? 'K162', maximum_jump_mass: input.jumpMass } as TWormhole) : null,
         lifetime: input.lifetime ?? 'healthy',
         mass_status: input.massStatus ?? null,
         created_at: minutesAgo(input.createdMinutesAgo ?? 30),
@@ -103,7 +106,7 @@ const scenarios: TScenario[] = [
         targetClass: '4',
         suggestedAlias: 'HOME-A',
         signatures: [
-            sig({ signatureId: 'ABC-123', category: 'wormhole', code: 'X877', targetClass: '4', createdMinutesAgo: 12 }),
+            sig({ signatureId: 'ABC-123', category: 'wormhole', code: 'X877', targetClass: '4', jumpMass: 375_000_000, createdMinutesAgo: 12 }),
             sig({ signatureId: 'DEF-456', category: 'wormhole', code: 'K162', targetClass: 'unknown', createdMinutesAgo: 45 }),
             sig({ signatureId: 'GHI-789', category: 'wormhole', code: 'U210', targetClass: 'l', createdMinutesAgo: 80 }),
             sig({ signatureId: 'JKL-012', category: 'wormhole', code: 'Z142', targetClass: 'n', createdMinutesAgo: 200 }),
@@ -120,7 +123,7 @@ const scenarios: TScenario[] = [
         targetClass: 'h',
         suggestedAlias: null,
         signatures: [
-            sig({ signatureId: 'AAA-111', category: 'wormhole', code: 'B274', targetClass: 'h', createdMinutesAgo: 20 }),
+            sig({ signatureId: 'AAA-111', category: 'wormhole', code: 'B274', targetClass: 'h', jumpMass: 375_000_000, createdMinutesAgo: 20 }),
             sig({ signatureId: 'BBB-222', category: 'wormhole', code: 'U210', targetClass: 'l', createdMinutesAgo: 60 }),
             sig({ signatureId: 'CCC-333', category: 'wormhole', code: 'D845', targetClass: 'h', lifetime: 'eol', createdMinutesAgo: 900 }),
             sig({ signatureId: 'DDD-444', category: 'relic', rawTypeName: 'Forgotten Frontier Quarantine Outpost' }),
@@ -158,7 +161,15 @@ const scenarios: TScenario[] = [
         signatures: Array.from({ length: 24 }, (_, index) => {
             const signatureId = `${String.fromCharCode(75 + (index % 12))}${String.fromCharCode(65 + (index % 8))}Q-${String(100 + index * 7).slice(0, 3)}`;
             if (index % 5 === 4) return sig({ signatureId, category: 'gas', rawTypeName: 'Vast Frontier Reservoir' });
-            if (index % 3 === 2) return sig({ signatureId, category: 'wormhole', code: 'H296', targetClass: '5', createdMinutesAgo: index * 30 });
+            if (index % 3 === 2)
+                return sig({
+                    signatureId,
+                    category: 'wormhole',
+                    code: 'H296',
+                    targetClass: '5',
+                    jumpMass: 2_000_000_000,
+                    createdMinutesAgo: index * 30,
+                });
             if (index % 3 === 1)
                 return sig({
                     signatureId,
@@ -179,7 +190,15 @@ const scenarios: TScenario[] = [
         targetClass: '3',
         suggestedAlias: null,
         signatures: [
-            sig({ signatureId: 'KKK-111', category: 'wormhole', code: 'C247', targetClass: '3', lifetime: 'eol', massStatus: 'reduced' }),
+            sig({
+                signatureId: 'KKK-111',
+                category: 'wormhole',
+                code: 'C247',
+                targetClass: '3',
+                jumpMass: 375_000_000,
+                lifetime: 'eol',
+                massStatus: 'reduced',
+            }),
             sig({ signatureId: 'LLL-222', category: 'wormhole', code: 'K162', targetClass: 'unknown', lifetime: 'critical', massStatus: 'critical' }),
         ],
     },

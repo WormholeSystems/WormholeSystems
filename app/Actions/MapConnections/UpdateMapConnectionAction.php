@@ -7,7 +7,9 @@ namespace App\Actions\MapConnections;
 use App\Data\MapConnectionData;
 use App\Enums\LifetimeStatus;
 use App\Enums\MassStatus;
+use App\Enums\ShipSize;
 use App\Models\MapConnection;
+use App\Models\Wormhole;
 use App\Support\Broadcasting\MapBroadcaster;
 use Illuminate\Support\Facades\DB;
 use Spatie\LaravelData\Optional;
@@ -26,6 +28,14 @@ final readonly class UpdateMapConnectionAction
 
             $data_array = $data->toArray();
 
+            /* An identified wormhole type locks the ship size: manual changes
+             * (e.g. from a stale client) are overridden by the type's value.
+             */
+            $locked_ship_size = $this->lockedShipSize($mapConnection, $data);
+            if ($locked_ship_size instanceof ShipSize) {
+                $data_array['ship_size'] = $locked_ship_size;
+            }
+
             if (! $data->lifetime instanceof Optional && $mapConnection->lifetime !== $data->lifetime) {
                 $data_array['lifetime_updated_at'] = now();
             }
@@ -42,6 +52,29 @@ final readonly class UpdateMapConnectionAction
 
             return $mapConnection;
         });
+    }
+
+    /**
+     * The ship size dictated by the connection's identified wormhole type: the
+     * connection's own wormhole (incoming update included) or the first linked
+     * signature whose wormhole carries a jump mass. Null when nothing is known.
+     */
+    private function lockedShipSize(MapConnection $mapConnection, MapConnectionData $data): ?ShipSize
+    {
+        $wormhole_id = $data->wormhole_id instanceof Optional ? $mapConnection->wormhole_id : $data->wormhole_id;
+        $size = ShipSize::fromJumpMass(Wormhole::query()->find($wormhole_id)?->maximum_jump_mass);
+        if ($size instanceof ShipSize) {
+            return $size;
+        }
+
+        foreach ($mapConnection->signatures as $signature) {
+            $size = ShipSize::fromJumpMass($signature->wormhole?->maximum_jump_mass);
+            if ($size instanceof ShipSize) {
+                return $size;
+            }
+        }
+
+        return null;
     }
 
     private function syncMassAndLifetime(MapConnection $mapConnection, MapConnectionData $data): void

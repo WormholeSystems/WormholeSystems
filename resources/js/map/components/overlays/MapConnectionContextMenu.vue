@@ -10,6 +10,7 @@ import {
     ContextMenuSubTrigger,
 } from '@/components/ui/context-menu';
 import { useStaticData } from '@/composables/useStaticData';
+import { shipSizeFromJumpMass } from '@/lib/shipSize';
 import { formatDateToISO } from '@/lib/utils';
 import { deleteMapConnection } from '@/map/actions/deleteMapConnection';
 import { updateMapConnection } from '@/map/actions/updateMapConnection';
@@ -27,6 +28,16 @@ const { map_connection } = defineProps<{
 
 const { staticData, loadStaticData } = useStaticData();
 void loadStaticData();
+
+// An identified wormhole type on a linked signature dictates the ship size,
+// so the manual options are locked while one is present.
+const locked_ship_size = computed(() => {
+    for (const signature of map_connection.signatures ?? []) {
+        const size = shipSizeFromJumpMass(signature.wormhole?.maximum_jump_mass);
+        if (size) return size;
+    }
+    return null;
+});
 
 // Whether the two systems are actually joined by a stargate in the static data.
 // Used to warn (but not block) when marking a connection as a stargate.
@@ -134,23 +145,24 @@ function handleLifetimeChange(lifetime: AcceptableValue) {
             </ContextMenuSubTrigger>
             <ContextMenuSubContent>
                 <ContextMenuRadioGroup :model-value="map_connection.ship_size" @update:model-value="handleShipSizeChange">
-                    <ContextMenuRadioItem value="frigate" class="flex items-center gap-2">
+                    <ContextMenuRadioItem value="frigate" class="flex items-center gap-2" :disabled="locked_ship_size !== null">
                         <span class="inline-flex w-6 justify-center font-mono text-[10px] leading-4 text-muted-foreground">S</span>
                         Frigate
                     </ContextMenuRadioItem>
-                    <ContextMenuRadioItem value="medium" class="flex items-center gap-2">
+                    <ContextMenuRadioItem value="medium" class="flex items-center gap-2" :disabled="locked_ship_size !== null">
                         <span class="inline-flex w-6 justify-center font-mono text-[10px] leading-4 text-muted-foreground">M</span>
                         Medium
                     </ContextMenuRadioItem>
-                    <ContextMenuRadioItem value="large" class="flex items-center gap-2">
+                    <ContextMenuRadioItem value="large" class="flex items-center gap-2" :disabled="locked_ship_size !== null">
                         <span class="inline-flex w-6 justify-center font-mono text-[10px] leading-4 text-muted-foreground">L</span>
                         Large
                     </ContextMenuRadioItem>
-                    <ContextMenuRadioItem value="xlarge" class="flex items-center gap-2">
+                    <ContextMenuRadioItem value="xlarge" class="flex items-center gap-2" :disabled="locked_ship_size !== null">
                         <span class="inline-flex w-6 justify-center font-mono text-[10px] leading-4 text-muted-foreground">XL</span>
                         Extra Large
                     </ContextMenuRadioItem>
                 </ContextMenuRadioGroup>
+                <div v-if="locked_ship_size" class="px-2 py-1 text-[10px] text-muted-foreground">Locked by the identified wormhole type</div>
             </ContextMenuSubContent>
         </ContextMenuSub>
         <ContextMenuSub>

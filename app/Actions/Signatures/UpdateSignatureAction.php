@@ -7,6 +7,7 @@ namespace App\Actions\Signatures;
 use App\Data\SignatureData;
 use App\Enums\LifetimeStatus;
 use App\Enums\MassStatus;
+use App\Enums\ShipSize;
 use App\Events\Signatures\SignatureUpdatedEvent;
 use App\Models\Signature;
 use App\Models\SignatureType;
@@ -56,6 +57,15 @@ final readonly class UpdateSignatureAction
 
         $connectionUpdateData = ['mass_status' => $mass];
         $signatureUpdateData = ['mass_status' => $mass];
+
+        /* An identified wormhole type dictates the connection's ship size:
+         * whenever the signature carries one, the connection is kept in sync.
+         */
+        $signature->unsetRelation('wormhole');
+        $wormhole_ship_size = ShipSize::fromJumpMass($signature->wormhole?->maximum_jump_mass);
+        if ($wormhole_ship_size instanceof ShipSize) {
+            $connectionUpdateData['ship_size'] = $wormhole_ship_size;
+        }
 
         // Only update lifetime and timestamp if lifetime actually changed
         if ($signature->mapConnection->lifetime !== $lifetime) {

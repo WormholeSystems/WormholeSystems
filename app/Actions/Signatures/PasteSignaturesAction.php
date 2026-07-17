@@ -7,6 +7,7 @@ namespace App\Actions\Signatures;
 use App\Data\NewSignatureData;
 use App\Data\RawSignatureData;
 use App\Data\SignaturesData;
+use App\Enums\ShipSize;
 use App\Models\MapSolarsystem;
 use App\Models\Signature;
 use App\Models\SignatureCategory;
@@ -81,6 +82,8 @@ final readonly class PasteSignaturesAction
                     'wormhole_id' => $wormhole_id,
                     'raw_type_name' => $raw_type_name,
                 ]);
+
+                $this->syncConnectionShipSize($existing_signature);
             });
 
             // A paste of N signatures emits a single counts event for the system.
@@ -110,6 +113,22 @@ final readonly class PasteSignaturesAction
         }
 
         return null;
+    }
+
+    /**
+     * An identified wormhole type dictates the linked connection's ship size,
+     * mirroring the sync in UpdateSignatureAction.
+     */
+    private function syncConnectionShipSize(Signature $signature): void
+    {
+        $signature->refresh();
+
+        $wormhole_ship_size = ShipSize::fromJumpMass($signature->wormhole?->maximum_jump_mass);
+        if (! $wormhole_ship_size instanceof ShipSize || $signature->mapConnection === null) {
+            return;
+        }
+
+        $signature->mapConnection->update(['ship_size' => $wormhole_ship_size]);
     }
 
     private function getNewWormholeId(?int $signature_type_id): ?int

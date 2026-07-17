@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import TrackingSignatureDialog from '@/components/map/TrackingSignatureDialog.vue';
-import type { TMapConnection, TMapSolarsystem } from '@/pages/maps';
+import type { TMapConnection, TMapSolarsystem, TWormhole } from '@/pages/maps';
 import type { TSignature } from '@/types/models';
 import { mount, type VueWrapper } from '@vue/test-utils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -26,6 +26,7 @@ function sig(input: {
     connectedToId?: number;
     lifetime?: TSignature['lifetime'];
     shipSize?: TSignature['ship_size'];
+    jumpMass?: number;
 }): TSignature {
     const id = nextId++;
 
@@ -40,6 +41,7 @@ function sig(input: {
             : null,
         signature_type: input.targetClass ? { id, name: `X702 - ${input.targetClass}`, signature: 'X702', target_class: input.targetClass } : null,
         signature_category: input.category ? { id, name: input.category, code: input.category } : null,
+        wormhole: input.jumpMass ? ({ id, name: 'X702', maximum_jump_mass: input.jumpMass } as TWormhole) : null,
         lifetime: input.lifetime ?? 'healthy',
         mass_status: null,
         ship_size: input.shipSize ?? null,
@@ -194,5 +196,29 @@ describe('TrackingSignatureDialog', () => {
         await wrapper.vm.$nextTick();
 
         expect(document.body.textContent).toContain('No signatures match');
+    });
+
+    it('locks the ship size to the identified wormhole type', async () => {
+        const wrapper = await mountOpenDialog({
+            signatures: [sig({ signatureId: 'AAA-111', category: 'wormhole', targetClass: '4', jumpMass: 2_000_000_000, shipSize: 'frigate' })],
+            preselectFirstSignature: true,
+        });
+
+        submitForm();
+
+        expect(lastSelection(wrapper)).toMatchObject({ shipSize: 'xlarge' });
+
+        const triggers = [...document.body.querySelectorAll('button')];
+        expect(triggers.some((button) => button.textContent?.includes('Extra Large') && button.hasAttribute('disabled'))).toBe(true);
+    });
+
+    it('keeps the ship size editable for signatures without an identified wormhole', async () => {
+        await mountOpenDialog({
+            signatures: [sig({ signatureId: 'AAA-111', category: 'wormhole', targetClass: '4' })],
+            preselectFirstSignature: true,
+        });
+
+        const triggers = [...document.body.querySelectorAll('button')];
+        expect(triggers.some((button) => button.textContent?.includes('Auto') && !button.hasAttribute('disabled'))).toBe(true);
     });
 });

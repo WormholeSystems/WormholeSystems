@@ -171,3 +171,33 @@ it('prefers the explicit ship size over the signature ship size', function () {
 
     expect(MapConnection::where('map_id', $map->id)->value('ship_size'))->toBe(ShipSize::ExtraLarge);
 });
+
+it('locks the connection ship size to the signature wormhole type', function () {
+    $map = Map::factory()->create();
+    $origin = placeMapSolarsystem($map, 30012011);
+    $targetId = makeSolarsystem(30012012);
+
+    $wormhole = App\Models\Wormhole::create([
+        'name' => 'H296',
+        'total_mass' => 3_300_000_000,
+        'maximum_jump_mass' => 2_000_000_000,
+        'ship_size' => '',
+        'maximum_lifetime' => 86_400,
+        'leads_to' => 'c5',
+    ]);
+
+    $signature = Signature::create([
+        'map_solarsystem_id' => $origin->id,
+        'signature_id' => 'GHI-789',
+        'wormhole_id' => $wormhole->id,
+    ]);
+
+    app(StoreTrackingAction::class)->handle(TrackingData::from([
+        'from_map_solarsystem_id' => $origin->id,
+        'to_solarsystem_id' => $targetId,
+        'signature_id' => $signature->id,
+        'ship_size' => 'frigate',
+    ]));
+
+    expect(MapConnection::where('map_id', $map->id)->value('ship_size'))->toBe(ShipSize::ExtraLarge);
+});
