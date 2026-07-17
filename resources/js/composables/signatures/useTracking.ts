@@ -6,6 +6,7 @@ import { useStaticData } from '@/composables/useStaticData';
 import { useTrackingSystems } from '@/composables/useTrackingSystems';
 import { suggestAlias } from '@/lib/alias';
 import { formatBookmarkName } from '@/lib/bookmark';
+import { signatureCanLeadToClass } from '@/lib/signatureCompatibility';
 import { isWormholeSystem } from '@/lib/solarsystem';
 import { createTracking, updateMapUserSettings, useMapSolarsystems } from '@/map/api';
 import { TLifetimeStatus, TMassStatus, TSignature } from '@/types/models';
@@ -27,7 +28,12 @@ export function useTracking() {
     const { origin_map_solarsystem, target_solarsystem, update } = useTrackingSystems();
 
     const show_signature_modal = ref(false);
-    const signatures = computed(() => origin_map_solarsystem.value?.signatures?.toSorted(sortSignatures).filter(isPossibleSignature));
+    // All of the origin's signatures; the dialog demotes the ones that cannot
+    // lead to the target instead of hiding them.
+    const signatures = computed(() => origin_map_solarsystem.value?.signatures?.toSorted(sortSignatures));
+    const possible_signatures = computed(
+        () => signatures.value?.filter((signature) => signatureCanLeadToClass(signature, target_solarsystem.value?.class)) ?? [],
+    );
     const existing_map_solarsystem = computed(() => map_solarsystems.value.find((s) => s.solarsystem_id === target_solarsystem.value?.id));
     const existing_connection = computed(() => {
         if (!existing_map_solarsystem.value) return null;
@@ -96,18 +102,10 @@ export function useTracking() {
         return a.signature_id?.localeCompare(b.signature_id);
     }
 
-    function isPossibleSignature(signature: TSignature): boolean {
-        if (!signature.signature_type_id) return true;
-        if (!target_solarsystem.value) return true;
-        const solarsystem_class = target_solarsystem.value.class;
-        if (signature.signature_type?.target_class === solarsystem_class) return true;
-        return signature.signature_type?.target_class === null;
-    }
-
     function performJump() {
         if (existing_connection.value?.map_connection_id) return;
         const gate_connected = isGateConnected(origin_map_solarsystem.value?.solarsystem_id, target_solarsystem.value?.id);
-        if (gate_connected || !signatures.value?.length || !map_user_settings.value.prompt_for_signature_enabled) {
+        if (gate_connected || !possible_signatures.value.length || !map_user_settings.value.prompt_for_signature_enabled) {
             return createTracking(origin_map_solarsystem.value!.id, target_solarsystem.value!.id);
         }
 

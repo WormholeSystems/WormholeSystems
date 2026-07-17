@@ -9,9 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useShowMap } from '@/composables/useShowMap';
 import { Data } from '@/lib/data';
+import { signatureCanLeadToClass } from '@/lib/signatureCompatibility';
 import { updateMapUserSettings } from '@/map/api';
 import { TMapSolarsystem } from '@/pages/maps';
-import { TLifetimeStatus, TMassStatus, TSignature } from '@/types/models';
+import { TLifetimeStatus, TMassStatus, TSignature, TStringedSolarsystemClass } from '@/types/models';
 import { UTCDate } from '@date-fns/utc';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { AcceptableValue } from 'reka-ui';
@@ -20,6 +21,7 @@ import { computed, ref, watch } from 'vue';
 const props = defineProps<{
     originMapSolarsystem: TMapSolarsystem | null;
     targetSolarsystemName: string | null;
+    targetSolarsystemClass?: TStringedSolarsystemClass | null;
     signatures: TSignature[] | null | undefined;
     suggestedAlias?: string | null;
 }>();
@@ -47,6 +49,17 @@ const filtered = computed(() => {
         return sig.includes(search.value) || type.includes(search.value) || rawType.includes(search.value);
     });
 });
+
+// Signatures whose assigned type can lead to the jumped-to system come first;
+// the rest (wrong destination class, non-wormhole sites) are demoted to a
+// clearly separated section but stay selectable in case a type was mis-assigned.
+const likelyOptions = computed(() => filtered.value.filter((signature) => signatureCanLeadToClass(signature, props.targetSolarsystemClass)));
+const unlikelyOptions = computed(() => filtered.value.filter((signature) => !signatureCanLeadToClass(signature, props.targetSolarsystemClass)));
+
+const sections = computed(() => [
+    { key: 'likely', label: null, options: likelyOptions.value },
+    { key: 'unlikely', label: 'Unlikely · leads elsewhere', options: unlikelyOptions.value },
+]);
 
 const open = defineModel<boolean>('open', { required: true });
 
@@ -150,22 +163,31 @@ function formatDate(date: string) {
                         <div class="text-muted-foreground">—</div>
                         <div class="text-right text-xs text-muted-foreground">—</div>
                     </label>
-                    <label
-                        v-for="option in filtered"
-                        :key="option.id"
-                        class="col-span-4 grid grid-cols-subgrid items-center-safe p-1.5 text-left text-xs data-connected:opacity-50"
-                        :data-connected="Data(Boolean(option.map_connection_id))"
-                    >
-                        <RadioGroupItem :value="option.id" />
-                        <div class="font-medium">{{ option.signature_id }}</div>
-                        <WormholeOption :wormhole="option.signature_type" v-if="option.signature_type" />
-                        <div class="text-muted-foreground" v-else-if="option.raw_type_name">{{ option.raw_type_name }}</div>
-                        <div class="text-muted-foreground" v-else-if="option.map_connection_id">Already connected</div>
-                        <div class="text-muted-foreground" v-else>Unknown</div>
-                        <div class="text-right text-xs text-muted-foreground">
-                            {{ option.created_at ? formatDate(option.created_at) : 'Unknown' }}
+                    <template v-for="section in sections" :key="section.key">
+                        <div
+                            v-if="section.label && section.options.length"
+                            class="col-span-4 bg-muted/30 p-1.5 font-mono text-[10px] tracking-wider text-muted-foreground uppercase"
+                        >
+                            {{ section.label }}
                         </div>
-                    </label>
+                        <label
+                            v-for="option in section.options"
+                            :key="option.id"
+                            class="col-span-4 grid grid-cols-subgrid items-center-safe p-1.5 text-left text-xs data-connected:opacity-50 data-demoted:opacity-60"
+                            :data-connected="Data(Boolean(option.map_connection_id))"
+                            :data-demoted="Data(section.key === 'unlikely')"
+                        >
+                            <RadioGroupItem :value="option.id" />
+                            <div class="font-medium">{{ option.signature_id }}</div>
+                            <WormholeOption :wormhole="option.signature_type" v-if="option.signature_type" />
+                            <div class="text-muted-foreground" v-else-if="option.raw_type_name">{{ option.raw_type_name }}</div>
+                            <div class="text-muted-foreground" v-else-if="option.map_connection_id">Already connected</div>
+                            <div class="text-muted-foreground" v-else>Unknown</div>
+                            <div class="text-right text-xs text-muted-foreground">
+                                {{ option.created_at ? formatDate(option.created_at) : 'Unknown' }}
+                            </div>
+                        </label>
+                    </template>
                 </RadioGroup>
                 <div class="grid gap-3">
                     <div class="grid gap-1.5">
