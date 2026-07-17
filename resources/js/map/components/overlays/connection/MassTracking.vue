@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { CharacterImage, TypeImage } from '@/components/images';
 import { Button } from '@/components/ui/button';
-import { Combobox, ComboboxAnchor, ComboboxEmpty, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxList } from '@/components/ui/combobox';
+import { Combobox, ComboboxAnchor, ComboboxInput, ComboboxItem, ComboboxVirtualList } from '@/components/ui/combobox';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -151,6 +151,10 @@ function clearShip() {
     shipLabel.value = '';
 }
 
+function resultName(result: TEveSearchResult): string {
+    return result.name;
+}
+
 const massKg = computed<number | undefined>(() => {
     const parsed = Number(massKt.value);
     if (massKt.value === '' || !Number.isFinite(parsed) || parsed < 0) return undefined;
@@ -253,25 +257,23 @@ function submitForm() {
                                                 <ComboboxAnchor>
                                                     <ComboboxInput v-model="shipTerm" placeholder="Search ship type…" />
                                                 </ComboboxAnchor>
-                                                <ComboboxList align="start" class="w-(--reka-combobox-trigger-width)">
-                                                    <ComboboxEmpty>{{
+                                                <ComboboxVirtualList align="start" :options="results" :estimate-size="32" :text-content="resultName">
+                                                    <template #empty>{{
                                                         shipTerm.trim().length > 0 ? 'No matches' : 'Start typing to search…'
-                                                    }}</ComboboxEmpty>
-                                                    <ComboboxGroup v-if="results.length > 0">
+                                                    }}</template>
+                                                    <template #default="{ option }">
                                                         <ComboboxItem
-                                                            v-for="result in results"
-                                                            :key="result.id"
-                                                            :value="result.name"
+                                                            :value="option.name"
                                                             class="flex w-full items-center justify-between gap-3"
-                                                            @select.prevent="() => pickShip(result)"
+                                                            @select.prevent="() => pickShip(option)"
                                                         >
-                                                            <span class="truncate">{{ result.name }}</span>
-                                                            <span v-if="result.group_name" class="shrink-0 text-xs text-muted-foreground">
-                                                                {{ result.group_name }}
+                                                            <span class="truncate">{{ option.name }}</span>
+                                                            <span v-if="option.group_name" class="shrink-0 text-xs text-muted-foreground">
+                                                                {{ option.group_name }}
                                                             </span>
                                                         </ComboboxItem>
-                                                    </ComboboxGroup>
-                                                </ComboboxList>
+                                                    </template>
+                                                </ComboboxVirtualList>
                                             </Combobox>
                                             <div class="flex items-center gap-2">
                                                 <Input

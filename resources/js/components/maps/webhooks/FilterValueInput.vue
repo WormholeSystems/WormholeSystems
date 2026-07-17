@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Badge } from '@/components/ui/badge';
-import { Combobox, ComboboxAnchor, ComboboxEmpty, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxList } from '@/components/ui/combobox';
+import { Combobox, ComboboxAnchor, ComboboxInput, ComboboxItem, ComboboxVirtualList } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { useEveSearch } from '@/composables/useEveSearch';
 import { TEveSearchResult, TKillmailFilterSubject } from '@/types/models';
@@ -39,6 +39,10 @@ function pickResult(result: TEveSearchResult) {
     addId(result.id, result.name);
     term.value = '';
     results.value = [];
+}
+
+function resultName(result: TEveSearchResult): string {
+    return result.name;
 }
 
 function commitDraft() {
@@ -81,23 +85,21 @@ watch(ids, resolveMissing, { immediate: true });
             <ComboboxAnchor>
                 <ComboboxInput v-model="term" :placeholder="`Search ${subject === 'ship_group' ? 'groups' : 'types'}…`" />
             </ComboboxAnchor>
-            <ComboboxList align="start" class="w-(--reka-combobox-trigger-width)">
-                <ComboboxEmpty>{{ term.trim().length > 0 ? 'No matches' : 'Start typing to search…' }}</ComboboxEmpty>
-                <ComboboxGroup v-if="availableResults.length > 0">
+            <ComboboxVirtualList align="start" :options="availableResults" :estimate-size="32" :text-content="resultName">
+                <template #empty>{{ term.trim().length > 0 ? 'No matches' : 'Start typing to search…' }}</template>
+                <template #default="{ option }">
                     <ComboboxItem
-                        v-for="result in availableResults"
-                        :key="result.id"
-                        :value="result.name"
+                        :value="option.name"
                         class="flex w-full items-center justify-between gap-3"
-                        @select.prevent="() => pickResult(result)"
+                        @select.prevent="() => pickResult(option)"
                     >
-                        <span class="truncate">{{ result.name }}</span>
-                        <span v-if="result.group_name || result.category_name" class="shrink-0 text-xs text-muted-foreground">
-                            {{ result.group_name || result.category_name }}
+                        <span class="truncate">{{ option.name }}</span>
+                        <span v-if="option.group_name || option.category_name" class="shrink-0 text-xs text-muted-foreground">
+                            {{ option.group_name || option.category_name }}
                         </span>
                     </ComboboxItem>
-                </ComboboxGroup>
-            </ComboboxList>
+                </template>
+            </ComboboxVirtualList>
         </Combobox>
 
         <Input
