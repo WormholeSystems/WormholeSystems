@@ -167,8 +167,8 @@ const vReveal = {
         <div class="relative isolate min-h-screen overflow-x-hidden bg-background text-foreground">
             <SeoHead :title="seoData.title" :description="seoData.description" :keywords="seoData.keywords" />
 
-            <!-- The page sits on the same faint grid the map canvas uses, fading
-                 out towards the bottom so long sections rest on plain background. -->
+            <!-- The whole page is a map canvas: the same grid the map uses, with
+                 the sections floating on it as cards, chained down the middle. -->
             <div class="page-grid" aria-hidden="true" />
 
             <!-- Nav: the app's hairline-and-blur chrome. -->
@@ -200,86 +200,85 @@ const vReveal = {
 
             <main class="relative pt-14">
                 <!-- Hero -->
-                <section class="border-b border-border">
-                    <div class="mx-auto max-w-7xl px-6 sm:px-10">
-                        <div class="grid items-center gap-14 py-24 lg:grid-cols-[1.05fr_1fr] lg:py-36">
-                            <div class="hero-intro">
-                                <div class="section-label">
-                                    <span class="size-1.5 animate-pulse rounded-full bg-green-500" />
-                                    Live, interactive wormhole maps
-                                </div>
-                                <h1
-                                    class="mt-7 font-display text-5xl leading-[0.98] font-bold tracking-tight text-foreground sm:text-6xl lg:text-7xl"
-                                >
-                                    Navigate the
-                                    <span class="text-orange-400">Unknown</span>
-                                </h1>
-                                <p class="mt-7 max-w-xl text-lg leading-8 text-muted-foreground">
-                                    Map your wormhole chain, track signatures, and watch for hostiles together. Fly solo, with your corp, or a whole
-                                    alliance. Everyone shares the same live map.
-                                </p>
-                                <div class="mt-9 flex flex-wrap items-center gap-3">
-                                    <template v-if="!user">
-                                        <Button asChild size="lg">
-                                            <a :href="Eve.show().url" class="group inline-flex items-center gap-2">
-                                                Sign in with EVE
-                                                <ArrowRight class="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                                            </a>
-                                        </Button>
-                                        <Button asChild size="lg" variant="outline">
-                                            <a :href="Eve.show({ query: { without_scopes: true } }).url" class="inline-flex items-center gap-2">
-                                                Sign in without scopes
-                                            </a>
-                                        </Button>
-                                    </template>
-                                    <Button asChild size="lg" v-else>
-                                        <Link :href="home()" class="group inline-flex items-center gap-2" prefetch>
-                                            Explore Maps
+                <section class="mx-auto max-w-7xl px-6 sm:px-10">
+                    <div class="grid items-center gap-14 py-24 lg:grid-cols-[1.05fr_1fr] lg:py-32">
+                        <div class="hero-intro">
+                            <div class="section-label">
+                                <span class="size-1.5 animate-pulse rounded-full bg-green-500" />
+                                Live, interactive wormhole maps
+                            </div>
+                            <h1 class="mt-7 font-display text-5xl leading-[0.98] font-bold tracking-tight text-foreground sm:text-6xl lg:text-7xl">
+                                Navigate the
+                                <span class="text-orange-400">Unknown</span>
+                            </h1>
+                            <p class="mt-7 max-w-xl text-lg leading-8 text-muted-foreground">
+                                Map your wormhole chain, track signatures, and watch for hostiles together. Fly solo, with your corp, or a whole
+                                alliance. Everyone shares the same live map.
+                            </p>
+                            <div class="mt-9 flex flex-wrap items-center gap-3">
+                                <template v-if="!user">
+                                    <Button asChild size="lg">
+                                        <a :href="Eve.show().url" class="group inline-flex items-center gap-2">
+                                            Sign in with EVE
                                             <ArrowRight class="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                                        </Link>
-                                    </Button>
-                                    <Button as-child size="lg" variant="ghost">
-                                        <a :href="page.props.discord.invite" class="inline-flex items-center gap-2">
-                                            <DiscordIcon class="h-4 w-4" />
-                                            Join the Discord
                                         </a>
                                     </Button>
-                                </div>
-                                <p class="mt-8 font-mono text-[10px] tracking-wider text-muted-foreground/70 uppercase">
-                                    ESI-secure · No client install · Free to use
-                                </p>
+                                    <Button asChild size="lg" variant="outline">
+                                        <a :href="Eve.show({ query: { without_scopes: true } }).url" class="inline-flex items-center gap-2">
+                                            Sign in without scopes
+                                        </a>
+                                    </Button>
+                                </template>
+                                <Button asChild size="lg" v-else>
+                                    <Link :href="home()" class="group inline-flex items-center gap-2" prefetch>
+                                        Explore Maps
+                                        <ArrowRight class="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                                    </Link>
+                                </Button>
+                                <Button as-child size="lg" variant="ghost">
+                                    <a :href="page.props.discord.invite" class="inline-flex items-center gap-2">
+                                        <DiscordIcon class="h-4 w-4" />
+                                        Join the Discord
+                                    </a>
+                                </Button>
                             </div>
+                            <p class="mt-8 font-mono text-[10px] tracking-wider text-muted-foreground/70 uppercase">
+                                ESI-secure · No client install · Free to use
+                            </p>
+                        </div>
 
-                            <!-- The real map, framed exactly like an in-app card. -->
-                            <div class="hero-console">
-                                <MapPanel>
-                                    <MapPanelHeader>
-                                        home.map · J152820
-                                        <template #actions>
-                                            <span class="flex items-center gap-1.5">
-                                                <span class="size-2 rounded-full bg-hostile/70" />
-                                                <span class="size-2 rounded-full bg-active/70" />
-                                                <span class="size-2 rounded-full bg-empty/70" />
-                                            </span>
-                                        </template>
-                                    </MapPanelHeader>
-                                    <div class="relative h-[380px] w-full overflow-hidden sm:h-[460px]">
-                                        <MapReadonly
-                                            :solarsystems="MAP_SOLARSYSTEMS"
-                                            :connections="MAP_CONNECTIONS"
-                                            :pilots="MAP_PILOTS"
-                                            :home_solarsystem_id="1"
-                                            :scale="isCompact ? 0.58 : 0.8"
-                                        />
-                                    </div>
-                                </MapPanel>
-                            </div>
+                        <!-- The real map, framed exactly like an in-app card. -->
+                        <div class="hero-console">
+                            <MapPanel>
+                                <MapPanelHeader>
+                                    home.map · J152820
+                                    <template #actions>
+                                        <span class="flex items-center gap-1.5">
+                                            <span class="size-2 rounded-full bg-hostile/70" />
+                                            <span class="size-2 rounded-full bg-active/70" />
+                                            <span class="size-2 rounded-full bg-empty/70" />
+                                        </span>
+                                    </template>
+                                </MapPanelHeader>
+                                <div class="relative h-[380px] w-full overflow-hidden sm:h-[460px]">
+                                    <MapReadonly
+                                        :solarsystems="MAP_SOLARSYSTEMS"
+                                        :connections="MAP_CONNECTIONS"
+                                        :pilots="MAP_PILOTS"
+                                        :home_solarsystem_id="1"
+                                        :scale="isCompact ? 0.58 : 0.8"
+                                    />
+                                </div>
+                            </MapPanel>
                         </div>
                     </div>
                 </section>
 
-                <!-- Stat strip: cards sharing hairline borders, like the map grid. -->
-                <section class="mx-auto max-w-7xl px-6 py-16 sm:px-10">
+                <!-- The chain: every section is a card on the map canvas, linked
+                     down the middle column like systems in a wormhole chain. -->
+                <div class="mx-auto max-w-6xl px-6 pb-8 sm:px-10">
+                    <!-- Stats -->
+                    <div class="chain" aria-hidden="true" />
                     <div v-reveal class="grid grid-cols-2 gap-px bg-border text-center ring-1 ring-border md:grid-cols-4">
                         <div v-for="stat in stats" :key="stat.k" class="bg-card px-6 py-10">
                             <div class="font-display text-4xl font-bold tracking-tight text-foreground">
@@ -288,70 +287,68 @@ const vReveal = {
                             <div class="mt-2 font-mono text-[10px] tracking-wider text-muted-foreground uppercase">{{ stat.k }}</div>
                         </div>
                     </div>
-                </section>
 
-                <!-- Open source & self-hosting (surfaced early — it's a core differentiator).
-                     Deliberately unboxed: a quiet statement with a link list, not a card. -->
-                <section class="mx-auto max-w-7xl px-6 py-20 sm:px-10 sm:py-28">
-                    <div v-reveal class="grid items-start gap-14 lg:grid-cols-[1.1fr_1fr] lg:gap-24">
-                        <div>
-                            <div class="section-label">
-                                <Github class="h-3.5 w-3.5" />
-                                100% open source
+                    <!-- Open source & self-hosting (surfaced early — it's a core differentiator). -->
+                    <div class="chain" aria-hidden="true" />
+                    <MapPanel v-reveal>
+                        <MapPanelHeader>
+                            <span class="flex items-center gap-2"><Github class="h-3.5 w-3.5" /> 100% open source</span>
+                        </MapPanelHeader>
+                        <div class="grid divide-y divide-border/50 lg:grid-cols-[1.1fr_1fr] lg:divide-x lg:divide-y-0">
+                            <div class="p-8 sm:p-12">
+                                <h2 class="section-title">Free, open source, and yours to self-host</h2>
+                                <p class="section-lead">
+                                    Use the hosted version, dig into the code, or spin up your own private instance with the ready-made container
+                                    setup. No lock-in — it's all out in the open.
+                                </p>
                             </div>
-                            <h2 class="mt-6 font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                                Free, open source, and yours to self-host
-                            </h2>
-                            <p class="mt-5 max-w-xl text-[15px] leading-7 text-muted-foreground">
-                                Use the hosted version, dig into the code, or spin up your own private instance with the ready-made container setup.
-                                No lock-in — it's all out in the open.
-                            </p>
-                        </div>
-                        <div class="lg:pt-8">
-                            <a
-                                href="https://github.com/WormholeSystems/WormholeSystems"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="oss-link group"
-                            >
-                                <Github class="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
-                                <span class="min-w-0 flex-1">
-                                    <span class="block font-display text-base font-bold text-foreground">Source code</span>
-                                    <span class="mt-1 block text-sm leading-6 text-muted-foreground">
-                                        Browse the full source, open issues, and contribute on GitHub.
+                            <div class="flex flex-col divide-y divide-border/50">
+                                <a
+                                    href="https://github.com/WormholeSystems/WormholeSystems"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="oss-link group"
+                                >
+                                    <Github class="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
+                                    <span class="min-w-0 flex-1">
+                                        <span class="block font-display text-base font-bold text-foreground">Source code</span>
+                                        <span class="mt-1 block text-sm leading-6 text-muted-foreground">
+                                            Browse the full source, open issues, and contribute on GitHub.
+                                        </span>
                                     </span>
-                                </span>
-                                <ArrowRight class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-                            </a>
-                            <a
-                                href="https://github.com/WormholeSystems/wormholesystems-containers"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="oss-link group"
-                            >
-                                <Container class="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
-                                <span class="min-w-0 flex-1">
-                                    <span class="block font-display text-base font-bold text-foreground">Self-host</span>
-                                    <span class="mt-1 block text-sm leading-6 text-muted-foreground">
-                                        A ready-to-run Docker setup for your own private instance.
+                                    <ArrowRight
+                                        class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+                                    />
+                                </a>
+                                <a
+                                    href="https://github.com/WormholeSystems/wormholesystems-containers"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="oss-link group"
+                                >
+                                    <Container class="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
+                                    <span class="min-w-0 flex-1">
+                                        <span class="block font-display text-base font-bold text-foreground">Self-host</span>
+                                        <span class="mt-1 block text-sm leading-6 text-muted-foreground">
+                                            A ready-to-run Docker setup for your own private instance.
+                                        </span>
                                     </span>
-                                </span>
-                                <ArrowRight class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-                            </a>
+                                    <ArrowRight
+                                        class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+                                    />
+                                </a>
+                            </div>
                         </div>
-                    </div>
-                </section>
+                    </MapPanel>
 
-                <!-- Section 01: Shared mapping (copy left / app panel right) -->
-                <section class="feature-section">
-                    <div class="mx-auto max-w-7xl px-6 sm:px-10">
-                        <div v-reveal class="marker">
-                            <span class="idx">01</span>
-                            <span class="section-label"><Users class="h-3.5 w-3.5" /> Shared mapping</span>
-                            <span class="h-px flex-1 bg-border" />
-                        </div>
-                        <div class="grid items-center gap-14 pt-16 lg:grid-cols-2 lg:gap-24">
-                            <div v-reveal="'left'">
+                    <!-- 01: Shared mapping -->
+                    <div class="chain" aria-hidden="true" />
+                    <MapPanel v-reveal>
+                        <MapPanelHeader>
+                            <span class="flex items-center gap-2"><Users class="h-3.5 w-3.5" /> 01 · Shared mapping</span>
+                        </MapPanelHeader>
+                        <div class="grid divide-y divide-border/50 lg:grid-cols-2 lg:divide-x lg:divide-y-0">
+                            <div class="p-8 sm:p-12">
                                 <h2 class="section-title">Everyone on the same map, live</h2>
                                 <p class="section-lead">
                                     When anyone moves, scans a connection, or updates a system, every pilot sees it right away. No pasting bookmarks
@@ -363,75 +360,65 @@ const vReveal = {
                                     <li><span class="dot" /> Every change shows up for everyone instantly</li>
                                 </ul>
                             </div>
-                            <MapPanel v-reveal="'right'">
-                                <MapPanelHeader>
-                                    <span class="flex items-center gap-2">
-                                        <span class="size-1.5 animate-pulse rounded-full bg-green-500" />
-                                        Pilots · {{ CHARACTERS.length }}
-                                    </span>
-                                </MapPanelHeader>
-                                <div class="overflow-x-auto">
+                            <div class="flex flex-col">
+                                <div class="cell-header">
+                                    <span class="size-1.5 animate-pulse rounded-full bg-green-500" />
+                                    Pilots · {{ CHARACTERS.length }}
+                                </div>
+                                <div class="flex-1 overflow-x-auto">
                                     <CharactersView :characters="CHARACTERS" />
                                 </div>
-                            </MapPanel>
+                            </div>
                         </div>
-                    </div>
-                </section>
+                    </MapPanel>
 
-                <!-- Section 02: Kill activity (full-width feed) -->
-                <section class="feature-section">
-                    <div class="mx-auto max-w-7xl px-6 sm:px-10">
-                        <div v-reveal class="marker">
-                            <span class="idx">02</span>
-                            <span class="section-label"><Activity class="h-3.5 w-3.5" /> Kill activity</span>
-                            <span class="h-px flex-1 bg-border" />
-                        </div>
-                        <div class="grid gap-8 pt-16 lg:grid-cols-2 lg:items-end">
-                            <div v-reveal="'left'">
+                    <!-- 02: Kill activity -->
+                    <div class="chain" aria-hidden="true" />
+                    <MapPanel v-reveal>
+                        <MapPanelHeader>
+                            <span class="flex items-center gap-2"><Activity class="h-3.5 w-3.5" /> 02 · Kill activity</span>
+                            <template #actions>
+                                <span class="font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">via zKillboard</span>
+                            </template>
+                        </MapPanelHeader>
+                        <div class="grid divide-y divide-border/50 lg:grid-cols-2 lg:divide-x lg:divide-y-0">
+                            <div class="p-8 sm:p-12">
                                 <h2 class="section-title">See every kill in your chain</h2>
                                 <p class="section-lead">
                                     Killmails from your systems show up on their own, straight from zKillboard, so you always know where the fighting
                                     is and how much got blown up.
                                 </p>
                             </div>
-                            <div v-reveal="'right'">
-                                <ul class="points lg:pb-1">
+                            <div class="p-8 sm:p-12">
+                                <ul class="points mt-0">
                                     <li><span class="dot" /> Who died, who got the kill, how many were involved, and the ISK lost</li>
                                     <li><span class="dot" /> Filter to wormhole space, known space, or everything</li>
                                     <li><span class="dot" /> Click any kill to jump to that system on the map</li>
                                 </ul>
                             </div>
                         </div>
-                        <MapPanel v-reveal class="mt-14">
-                            <MapPanelHeader>
-                                Killmails · {{ KILLMAILS.length }}
-                                <template #actions>
-                                    <span class="font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">via zKillboard</span>
-                                </template>
-                            </MapPanelHeader>
+                        <div class="border-t border-border/50">
+                            <div class="cell-header">Killmails · {{ KILLMAILS.length }}</div>
                             <div class="min-h-[13rem] overflow-x-auto py-1">
                                 <KillmailsView v-if="mounted" :items="KILLMAILS" />
                             </div>
-                        </MapPanel>
-                    </div>
-                </section>
-
-                <!-- Section 03: Signatures (panel left / copy right + paste hint) -->
-                <section class="feature-section">
-                    <div class="mx-auto max-w-7xl px-6 sm:px-10">
-                        <div v-reveal class="marker">
-                            <span class="idx">03</span>
-                            <span class="section-label"><Crosshair class="h-3.5 w-3.5" /> Signatures</span>
-                            <span class="h-px flex-1 bg-border" />
                         </div>
-                        <div class="grid items-center gap-14 pt-16 lg:grid-cols-2 lg:gap-24">
-                            <MapPanel v-reveal="'left'" class="lg:order-1">
-                                <MapPanelHeader>Signatures · {{ SIGNATURES.length }}</MapPanelHeader>
-                                <div class="min-h-[18rem] overflow-x-auto">
+                    </MapPanel>
+
+                    <!-- 03: Signatures -->
+                    <div class="chain" aria-hidden="true" />
+                    <MapPanel v-reveal>
+                        <MapPanelHeader>
+                            <span class="flex items-center gap-2"><Crosshair class="h-3.5 w-3.5" /> 03 · Signatures</span>
+                        </MapPanelHeader>
+                        <div class="grid divide-y divide-border/50 lg:grid-cols-2 lg:divide-x lg:divide-y-0">
+                            <div class="flex flex-col lg:order-1">
+                                <div class="cell-header">Signatures · {{ SIGNATURES.length }}</div>
+                                <div class="min-h-[18rem] flex-1 overflow-x-auto">
                                     <SignaturesView v-if="mounted" :signatures="SIGNATURES" :connections="MAP_CONNECTIONS" />
                                 </div>
-                            </MapPanel>
-                            <div v-reveal="'right'" class="lg:order-2">
+                            </div>
+                            <div class="p-8 sm:p-12 lg:order-2">
                                 <h2 class="section-title">Scanning is just copy and paste</h2>
                                 <p class="section-lead">
                                     Copy your probe scanner results in game, paste them in, and the map sorts it all out. New signatures get added,
@@ -450,19 +437,16 @@ const vReveal = {
                                 </ul>
                             </div>
                         </div>
-                    </div>
-                </section>
+                    </MapPanel>
 
-                <!-- Section 04: Customisable widget layout -->
-                <section class="feature-section">
-                    <div class="mx-auto max-w-7xl px-6 sm:px-10">
-                        <div v-reveal class="marker">
-                            <span class="idx">04</span>
-                            <span class="section-label"><LayoutGrid class="h-3.5 w-3.5" /> Customisable layout</span>
-                            <span class="h-px flex-1 bg-border" />
-                        </div>
-                        <div class="grid items-center gap-14 pt-16 lg:grid-cols-2 lg:gap-24">
-                            <div v-reveal="'left'">
+                    <!-- 04: Customisable widget layout -->
+                    <div class="chain" aria-hidden="true" />
+                    <MapPanel v-reveal>
+                        <MapPanelHeader>
+                            <span class="flex items-center gap-2"><LayoutGrid class="h-3.5 w-3.5" /> 04 · Customisable layout</span>
+                        </MapPanelHeader>
+                        <div class="grid divide-y divide-border/50 lg:grid-cols-2 lg:divide-x lg:divide-y-0">
+                            <div class="p-8 sm:p-12">
                                 <h2 class="section-title">Build the map around you</h2>
                                 <p class="section-lead">
                                     The map is a grid of cards you can drag, resize, and hide. Keep the systems you watch front and centre and switch
@@ -474,17 +458,13 @@ const vReveal = {
                                     <li><span class="dot" /> Responsive breakpoints from mobile to wide desktop, each with its own layout</li>
                                 </ul>
                             </div>
-                            <MapPanel v-reveal="'right'">
-                                <MapPanelHeader>
-                                    <span class="flex items-center gap-2">
-                                        <span class="size-1.5 animate-pulse rounded-full bg-empty" />
-                                        Editing layout
-                                    </span>
-                                    <template #actions>
-                                        <span class="font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">J152820</span>
-                                    </template>
-                                </MapPanelHeader>
-                                <div class="relative p-3 pb-20">
+                            <div class="flex flex-col">
+                                <div class="cell-header">
+                                    <span class="size-1.5 animate-pulse rounded-full bg-empty" />
+                                    Editing layout
+                                    <span class="ml-auto font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">J152820</span>
+                                </div>
+                                <div class="relative flex-1 p-3 pb-20">
                                     <div class="wg-grid">
                                         <div class="wg-tile wg-map">Map</div>
                                         <div class="wg-tile">Signatures</div>
@@ -513,23 +493,20 @@ const vReveal = {
                                         <span class="le-btn"><MoreHorizontal class="size-4" /></span>
                                     </div>
                                 </div>
-                            </MapPanel>
+                            </div>
                         </div>
-                    </div>
-                </section>
+                    </MapPanel>
 
-                <!-- Section 05: Access control -->
-                <section class="feature-section">
-                    <div class="mx-auto max-w-7xl px-6 sm:px-10">
-                        <div v-reveal class="marker">
-                            <span class="idx">05</span>
-                            <span class="section-label"><ShieldCheck class="h-3.5 w-3.5" /> Access control</span>
-                            <span class="h-px flex-1 bg-border" />
-                        </div>
-                        <div class="grid items-center gap-14 pt-16 lg:grid-cols-2 lg:gap-24">
-                            <MapPanel v-reveal="'left'" class="lg:order-1">
-                                <MapPanelHeader>Access · J152820</MapPanelHeader>
-                                <div class="px-2 py-1">
+                    <!-- 05: Access control -->
+                    <div class="chain" aria-hidden="true" />
+                    <MapPanel v-reveal>
+                        <MapPanelHeader>
+                            <span class="flex items-center gap-2"><ShieldCheck class="h-3.5 w-3.5" /> 05 · Access control</span>
+                        </MapPanelHeader>
+                        <div class="grid divide-y divide-border/50 lg:grid-cols-2 lg:divide-x lg:divide-y-0">
+                            <div class="flex flex-col lg:order-1">
+                                <div class="cell-header">Access · J152820</div>
+                                <div class="flex-1 px-2 py-1">
                                     <Table>
                                         <TableHeader>
                                             <TableRow class="border-border/50 hover:bg-transparent">
@@ -595,8 +572,8 @@ const vReveal = {
                                         </TableBody>
                                     </Table>
                                 </div>
-                            </MapPanel>
-                            <div v-reveal="'right'" class="lg:order-2">
+                            </div>
+                            <div class="p-8 sm:p-12 lg:order-2">
                                 <h2 class="section-title">Decide exactly who sees what</h2>
                                 <p class="section-lead">
                                     Four levels of access, from view-only to full control. Viewers read the map, Members contribute signatures and
@@ -609,22 +586,19 @@ const vReveal = {
                                 </ul>
                             </div>
                         </div>
-                    </div>
-                </section>
+                    </MapPanel>
 
-                <!-- Section 06: Everything else, as adjoining cards sharing hairlines. -->
-                <section class="feature-section">
-                    <div class="mx-auto max-w-7xl px-6 sm:px-10">
-                        <div v-reveal class="marker">
-                            <span class="idx">06</span>
-                            <span class="section-label"><Sparkles class="h-3.5 w-3.5" /> Everything else</span>
-                            <span class="h-px flex-1 bg-border" />
-                        </div>
-                        <div v-reveal="'left'" class="max-w-3xl pt-16">
+                    <!-- 06: Everything else -->
+                    <div class="chain" aria-hidden="true" />
+                    <MapPanel v-reveal>
+                        <MapPanelHeader>
+                            <span class="flex items-center gap-2"><Sparkles class="h-3.5 w-3.5" /> 06 · Everything else</span>
+                        </MapPanelHeader>
+                        <div class="p-8 sm:p-12">
                             <h2 class="section-title">Everything else you need to live in a wormhole</h2>
                             <p class="section-lead">The rest of the tools that make day-to-day wormhole life easier.</p>
                         </div>
-                        <div v-reveal class="mt-14 grid gap-px bg-border ring-1 ring-border sm:grid-cols-2 lg:grid-cols-3">
+                        <div class="grid gap-px border-t border-border/50 bg-border/50 sm:grid-cols-2 lg:grid-cols-3">
                             <div v-for="feature in secondaryFeatures" :key="feature.title" class="group bg-card p-7">
                                 <div class="feat-icon">
                                     <component
@@ -638,12 +612,11 @@ const vReveal = {
                             <!-- Filler cell so the hairline grid stays rectangular on wide screens. -->
                             <div class="hidden bg-card p-7 lg:block" aria-hidden="true" />
                         </div>
-                    </div>
-                </section>
+                    </MapPanel>
+                </div>
 
-                <!-- CTA -->
+                <!-- CTA: the end of the chain. -->
                 <section class="cta">
-                    <div class="cta-grid" aria-hidden="true" />
                     <div v-reveal class="relative mx-auto max-w-3xl px-6 text-center sm:px-10">
                         <div class="section-label justify-center">
                             <span class="size-1.5 animate-pulse rounded-full bg-green-500" />
@@ -663,7 +636,7 @@ const vReveal = {
                 </section>
             </main>
 
-            <footer class="relative border-t border-border bg-background/70">
+            <footer class="relative border-t border-border bg-background/70 backdrop-blur-sm">
                 <div class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-12 sm:flex-row sm:px-10">
                     <div class="flex items-center gap-3">
                         <Logo class="h-6 w-6 text-muted-foreground/60" />
@@ -704,17 +677,51 @@ const vReveal = {
     font-family: var(--font-display);
 }
 
-/* The map canvas grid, projected across the whole page and faded so it only
-   reads clearly behind the hero. */
+/* The map canvas: the same grid the map uses, across the whole page. */
 .page-grid {
     position: fixed;
     inset: 0;
     z-index: -10;
     background-image: linear-gradient(to right, var(--grid) 1px, transparent 1px), linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
     background-size: 32px 32px;
-    -webkit-mask-image: linear-gradient(to bottom, #000, transparent 85%);
-    mask-image: linear-gradient(to bottom, #000, transparent 85%);
-    opacity: 0.6;
+    opacity: 0.55;
+}
+
+/* Chain connector between section cards: the map's neutral connection stroke
+   with node endpoints, running down the middle column. */
+.chain {
+    position: relative;
+    margin-inline: auto;
+    height: 5rem;
+    width: 1.5px;
+    background: color-mix(in oklab, var(--foreground) 22%, transparent);
+}
+
+@media (min-width: 640px) {
+    .chain {
+        height: 7rem;
+    }
+}
+
+.chain::before,
+.chain::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    height: 7px;
+    width: 7px;
+    transform: translateX(-50%);
+    border-radius: 9999px;
+    border: 1.5px solid color-mix(in oklab, var(--foreground) 35%, transparent);
+    background: var(--background);
+}
+
+.chain::before {
+    top: -3px;
+}
+
+.chain::after {
+    bottom: -3px;
 }
 
 /* Nav links share the panel-header voice. */
@@ -743,53 +750,43 @@ const vReveal = {
     color: var(--muted-foreground);
 }
 
-/* Section separation: hairline top borders, like adjoining cards. */
-.feature-section {
-    border-top: 1px solid var(--border);
-    padding-block: 7rem 5rem;
-}
-
-@media (min-width: 640px) {
-    .feature-section {
-        padding-block: 9rem 7rem;
-    }
-}
-
-/* Section marker: 01 · TAG ───────── in the panel-header voice. */
-.marker {
+/* Sub-header for showcase cells inside a section card, mirroring MapPanelHeader. */
+.cell-header {
     display: flex;
+    height: 2.25rem;
+    flex-shrink: 0;
     align-items: center;
-    gap: 1rem;
-}
-
-.marker .idx {
+    gap: 0.5rem;
+    border-bottom: 1px solid color-mix(in oklab, var(--border) 50%, transparent);
+    background: color-mix(in oklab, var(--muted) 30%, transparent);
+    padding-inline: 0.75rem;
     font-family: var(--font-mono, ui-monospace, monospace);
-    font-size: clamp(1.5rem, 1.1rem + 1.5vw, 2.25rem);
-    font-weight: 700;
-    line-height: 1;
-    color: color-mix(in oklab, var(--foreground) 30%, transparent);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
 }
 
 /* Section copy */
 .section-title {
     font-family: var(--font-display);
-    font-size: clamp(2rem, 1.4rem + 2.5vw, 3.25rem);
+    font-size: clamp(1.75rem, 1.3rem + 1.8vw, 2.75rem);
     font-weight: 700;
-    line-height: 1.06;
+    line-height: 1.08;
     letter-spacing: -0.02em;
     color: var(--foreground);
 }
 
 .section-lead {
-    margin-top: 1.4rem;
+    margin-top: 1.25rem;
     max-width: 36rem;
-    font-size: 1.125rem;
+    font-size: 1.0625rem;
     line-height: 1.7;
     color: var(--muted-foreground);
 }
 
 .points {
-    margin-top: 2.5rem;
+    margin-top: 2.25rem;
     display: flex;
     flex-direction: column;
     gap: 1rem;
@@ -799,35 +796,31 @@ const vReveal = {
     display: flex;
     align-items: flex-start;
     gap: 0.875rem;
-    font-size: 1.0625rem;
+    font-size: 1rem;
     line-height: 1.5;
     color: color-mix(in oklab, var(--foreground) 82%, transparent);
 }
 
 .dot {
-    margin-top: 0.6rem;
+    margin-top: 0.55rem;
     height: 0.375rem;
     width: 0.375rem;
     flex-shrink: 0;
     background: var(--color-orange-400);
 }
 
-/* Open-source link list: hairline rows instead of cards. */
+/* Open-source link rows inside the card. */
 .oss-link {
     display: flex;
-    align-items: flex-start;
+    flex: 1;
+    align-items: center;
     gap: 1rem;
-    border-top: 1px solid var(--border);
-    padding-block: 1.5rem;
-    transition: border-color 0.25s ease;
-}
-
-.oss-link:last-child {
-    border-bottom: 1px solid var(--border);
+    padding: 1.75rem 2rem;
+    transition: background-color 0.2s ease;
 }
 
 .oss-link:hover {
-    border-top-color: color-mix(in oklab, var(--foreground) 40%, var(--border));
+    background: color-mix(in oklab, var(--muted) 25%, transparent);
 }
 
 /* Paste hint chip */
@@ -1024,21 +1017,10 @@ const vReveal = {
     color: var(--foreground);
 }
 
-/* CTA: quiet finale on the map grid. */
+/* CTA: quiet finale on the open canvas. */
 .cta {
     position: relative;
-    overflow: hidden;
-    border-top: 1px solid var(--border);
-    padding-block: 10rem;
-}
-
-.cta-grid {
-    position: absolute;
-    inset: 0;
-    background-image: linear-gradient(to right, var(--grid) 1px, transparent 1px), linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
-    background-size: 32px 32px;
-    -webkit-mask-image: radial-gradient(closest-side at 50% 50%, #000, transparent 80%);
-    mask-image: radial-gradient(closest-side at 50% 50%, #000, transparent 80%);
+    padding-block: 9rem;
 }
 
 .cta-title {
