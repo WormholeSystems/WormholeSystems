@@ -126,13 +126,6 @@ final class MapController extends Controller
         ]);
     }
 
-    public function create(): Response
-    {
-        Gate::authorize('create', Map::class);
-
-        return Inertia::render('maps/CreateMap');
-    }
-
     /**
      * @throws Throwable
      */

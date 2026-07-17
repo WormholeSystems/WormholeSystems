@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import MapController from '@/actions/App/Http/Controllers/MapController';
 import Logo from '@/components/icons/Logo.vue';
 import PlusIcon from '@/components/icons/PlusIcon.vue';
+import CreateMapDialog from '@/components/map/CreateMapDialog.vue';
 import MapCard from '@/components/map/MapCard.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +9,6 @@ import { useSearch } from '@/composables/useSearch';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SeoHead from '@/layouts/SeoHead.vue';
 import { TMapSummary } from '@/pages/maps/index';
-import { Link } from '@inertiajs/vue3';
 import { Archive, ChevronDown, SearchIcon } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 
@@ -50,12 +49,12 @@ const stats = computed(() => [
                     <h1 class="font-display text-3xl font-bold tracking-tight text-foreground">Maps</h1>
                     <p class="mt-2 text-muted-foreground">Manage and explore your wormhole mapping networks</p>
                 </div>
-                <Link :href="MapController.create()" prefetch>
+                <CreateMapDialog>
                     <Button class="flex items-center gap-2">
                         <PlusIcon class="h-4 w-4" />
                         Create New Map
                     </Button>
-                </Link>
+                </CreateMapDialog>
             </div>
 
             <!-- Summary -->
@@ -127,12 +126,12 @@ const stats = computed(() => [
                 </p>
                 <div class="flex gap-2">
                     <Button v-if="search" variant="outline" @click="search = ''">Clear Search</Button>
-                    <Link :href="MapController.create()" prefetch>
+                    <CreateMapDialog>
                         <Button class="flex items-center gap-2">
                             <PlusIcon class="h-4 w-4" />
                             {{ search ? 'Create New Map' : 'Create Your First Map' }}
                         </Button>
-                    </Link>
+                    </CreateMapDialog>
                 </div>
             </div>
         </div>
