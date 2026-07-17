@@ -88,7 +88,6 @@ it('syncs the connection ship size from the signature wormhole type', function (
         'name' => 'H296',
         'total_mass' => 3_300_000_000,
         'maximum_jump_mass' => 2_000_000_000,
-        'ship_size' => '',
         'maximum_lifetime' => 86_400,
         'leads_to' => 'c5',
     ]);
@@ -120,7 +119,6 @@ it('syncs the connection ship size when pasting over a typed connected signature
         'name' => 'X877',
         'total_mass' => 2_000_000_000,
         'maximum_jump_mass' => 375_000_000,
-        'ship_size' => '',
         'maximum_lifetime' => 57_600,
         'leads_to' => 'c4',
     ]);

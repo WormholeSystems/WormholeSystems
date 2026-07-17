@@ -181,7 +181,6 @@ it('locks the connection ship size to the signature wormhole type', function () 
         'name' => 'H296',
         'total_mass' => 3_300_000_000,
         'maximum_jump_mass' => 2_000_000_000,
-        'ship_size' => '',
         'maximum_lifetime' => 86_400,
         'leads_to' => 'c5',
     ]);
