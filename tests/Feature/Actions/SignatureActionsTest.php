@@ -14,7 +14,6 @@ use App\Enums\ShipSize;
 use App\Models\Map;
 use App\Models\MapConnection;
 use App\Models\Signature;
-use App\Models\Wormhole;
 
 it('stores a signature on a system', function () {
     $map = Map::factory()->create();
@@ -84,13 +83,7 @@ it('syncs the connection ship size from the signature wormhole type', function (
         'lifetime' => 'healthy',
         'mass_status' => 'fresh',
     ]);
-    $wormhole = Wormhole::create([
-        'name' => 'H296',
-        'total_mass' => 3_300_000_000,
-        'maximum_jump_mass' => 2_000_000_000,
-        'maximum_lifetime' => 86_400,
-        'leads_to' => 'c5',
-    ]);
+    $wormhole = makeWormhole();
     $signature = $origin->signatures()->create([
         'signature_id' => 'ABC-123',
         'map_connection_id' => $connection->id,
@@ -115,13 +108,7 @@ it('syncs the connection ship size when pasting over a typed connected signature
         'lifetime' => 'healthy',
         'mass_status' => 'fresh',
     ]);
-    $wormhole = Wormhole::create([
-        'name' => 'X877',
-        'total_mass' => 2_000_000_000,
-        'maximum_jump_mass' => 375_000_000,
-        'maximum_lifetime' => 57_600,
-        'leads_to' => 'c4',
-    ]);
+    $wormhole = makeWormhole('X877', 375_000_000, 'c4');
     $signature_type = App\Models\SignatureType::query()->where('signature', 'X877')->firstOrFail();
     $origin->signatures()->create([
         'signature_id' => 'AAA-111',
@@ -137,6 +124,30 @@ it('syncs the connection ship size when pasting over a typed connected signature
         'signatures' => [
             ['signature_id' => 'AAA-111'],
         ],
+    ]));
+
+    expect($connection->fresh()->ship_size)->toBe(ShipSize::Large);
+});
+
+it('syncs the connection ship size when storing an already-connected typed signature', function () {
+    $map = Map::factory()->create();
+    $origin = placeMapSolarsystem($map, 30011014);
+    $target = placeMapSolarsystem($map, 30011015, 300, 300);
+    $connection = MapConnection::create([
+        'map_id' => $map->id,
+        'from_map_solarsystem_id' => $origin->id,
+        'to_map_solarsystem_id' => $target->id,
+        'ship_size' => 'xlarge',
+        'lifetime' => 'healthy',
+        'mass_status' => 'fresh',
+    ]);
+    makeWormhole('X877', 375_000_000, 'c4');
+    $signature_type = App\Models\SignatureType::query()->where('signature', 'X877')->firstOrFail();
+
+    app(StoreSignatureAction::class)->handle($origin, NewSignatureData::from([
+        'signature_id' => 'NEW-001',
+        'signature_type_id' => $signature_type->id,
+        'map_connection_id' => $connection->id,
     ]));
 
     expect($connection->fresh()->ship_size)->toBe(ShipSize::Large);

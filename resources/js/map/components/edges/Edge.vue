@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import EdgeBadges, { type EdgeIndicator } from '@/map/components/edges/EdgeBadges.vue';
 import { scalePoint } from '@/map/core/coords';
+import { SHIP_SIZE_LETTERS } from '@/lib/shipSize';
 import { edgePathAndCenter } from '@/map/core/geometry/paths';
 import type { EdgeGeometry } from '@/map/core/types';
 import type { TMapConnection } from '@/pages/maps';
@@ -42,11 +43,9 @@ const scaledFrom = computed(() => scalePoint(geometry.from, scale));
 const scaledTo = computed(() => scalePoint(geometry.to, scale));
 
 function getShipSizeLabel(size?: TShipSize | null): string | null {
-    if (size === 'frigate') return 'S';
-    if (size === 'medium') return 'M';
-    if (size === 'xlarge') return 'XL';
+    if (!size || size === 'large') return null;
 
-    return null;
+    return SHIP_SIZE_LETTERS[size];
 }
 
 const indicators = computed<EdgeIndicator[]>(() => {

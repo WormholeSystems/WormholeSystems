@@ -46,11 +46,21 @@ export type TSignatureOptionGroups = {
  * mapped connection cannot be the newly jumped hole regardless of its type.
  */
 export function groupSignatureOptions(signatures: TSignature[], targetClass: TStringedSolarsystemClass | null | undefined): TSignatureOptionGroups {
-    const candidates = signatures.filter(signatureCanBeConnection);
+    const groups: TSignatureOptionGroups = { likely: [], connected: [], unlikely: [] };
 
-    return {
-        likely: candidates.filter((signature) => !signature.map_connection_id && signatureCanLeadToClass(signature, targetClass)),
-        connected: candidates.filter((signature) => Boolean(signature.map_connection_id)),
-        unlikely: candidates.filter((signature) => !signature.map_connection_id && !signatureCanLeadToClass(signature, targetClass)),
-    };
+    for (const signature of signatures) {
+        if (!signatureCanBeConnection(signature)) {
+            continue;
+        }
+
+        if (signature.map_connection_id) {
+            groups.connected.push(signature);
+        } else if (signatureCanLeadToClass(signature, targetClass)) {
+            groups.likely.push(signature);
+        } else {
+            groups.unlikely.push(signature);
+        }
+    }
+
+    return groups;
 }

@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import TrackingSignatureDialog from '@/components/map/TrackingSignatureDialog.vue';
+import { MAP_SOLARSYSTEMS, ORIGIN, sig } from '@/components/map/trackingSignatureFixtures';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import Appearance from '@/layouts/Appearance.vue';
-import { TMapConnection, TMapSolarsystem, TWormhole } from '@/pages/maps';
-import { TLifetimeStatus, TMassStatus, TSignature, TStringedSolarsystemClass } from '@/types/models';
+import { TSignature, TStringedSolarsystemClass } from '@/types/models';
 import { RotateCcw } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 
@@ -25,78 +25,6 @@ type TScenario = {
     signatures: TSignature[];
 };
 
-let nextId = 1;
-
-function minutesAgo(minutes: number): string {
-    return new Date(Date.now() - minutes * 60_000).toISOString();
-}
-
-function sig(input: {
-    signatureId: string;
-    category?: 'wormhole' | 'gas' | 'data' | 'relic' | 'combat' | 'ore';
-    code?: string;
-    targetClass?: TStringedSolarsystemClass | 'unknown';
-    /** Maximum jump mass of the identified wormhole type; locks the ship size select. */
-    jumpMass?: number;
-    extra?: string | null;
-    rawTypeName?: string;
-    /** Marks the signature as already tied to a connection leading to this map solarsystem id. */
-    connectedToId?: number;
-    lifetime?: TLifetimeStatus;
-    massStatus?: TMassStatus;
-    createdMinutesAgo?: number;
-}): TSignature {
-    const id = nextId++;
-    const isWormhole = input.category === 'wormhole';
-
-    return {
-        id,
-        signature_id: input.signatureId,
-        signature_type_id: input.code ? id : null,
-        signature_category_id: input.category ? id : null,
-        raw_type_name: input.rawTypeName ?? null,
-        map_connection_id: input.connectedToId ? id : null,
-        map_connection: input.connectedToId
-            ? ({ id, from_map_solarsystem_id: ORIGIN_ID, to_map_solarsystem_id: input.connectedToId } as TMapConnection)
-            : null,
-        signature_type: input.code
-            ? {
-                  id,
-                  name: `${input.code} - ${input.targetClass ?? '?'}`,
-                  signature: input.code,
-                  signature_category_id: id,
-                  category_name: isWormhole ? 'Wormhole' : (input.category ?? null),
-                  target_class: input.targetClass ?? null,
-                  extra: input.extra ?? null,
-                  spawn_areas: null,
-              }
-            : null,
-        signature_category: input.category
-            ? { id, name: input.category, code: input.category, created_at: minutesAgo(0), updated_at: minutesAgo(0) }
-            : null,
-        wormhole: input.jumpMass ? ({ id, name: input.code ?? 'K162', maximum_jump_mass: input.jumpMass } as TWormhole) : null,
-        lifetime: input.lifetime ?? 'healthy',
-        mass_status: input.massStatus ?? null,
-        created_at: minutesAgo(input.createdMinutesAgo ?? 30),
-        updated_at: minutesAgo(input.createdMinutesAgo ?? 30),
-    } as TSignature;
-}
-
-const ORIGIN_ID = 1;
-
-const ORIGIN = {
-    id: ORIGIN_ID,
-    alias: 'HOME',
-    solarsystem: { name: 'J152820' },
-} as TMapSolarsystem;
-
-/** Map systems the connected fixtures can lead to. */
-const MAP_SOLARSYSTEMS = [
-    ORIGIN,
-    { id: 2, alias: 'HOME-A', solarsystem: { name: 'J145510' } } as TMapSolarsystem,
-    { id: 3, alias: null, solarsystem: { name: 'J104859' } } as TMapSolarsystem,
-];
-
 const scenarios: TScenario[] = [
     {
         key: 'typical-c4',
@@ -106,13 +34,13 @@ const scenarios: TScenario[] = [
         targetClass: '4',
         suggestedAlias: 'HOME-A',
         signatures: [
-            sig({ signatureId: 'ABC-123', category: 'wormhole', code: 'X877', targetClass: '4', jumpMass: 375_000_000, createdMinutesAgo: 12 }),
-            sig({ signatureId: 'DEF-456', category: 'wormhole', code: 'K162', targetClass: 'unknown', createdMinutesAgo: 45 }),
-            sig({ signatureId: 'GHI-789', category: 'wormhole', code: 'U210', targetClass: 'l', createdMinutesAgo: 80 }),
-            sig({ signatureId: 'JKL-012', category: 'wormhole', code: 'Z142', targetClass: 'n', createdMinutesAgo: 200 }),
+            sig({ signatureId: 'ABC-123', category: 'wormhole', code: 'X877', targetClass: '4', jumpMass: 375_000_000 }),
+            sig({ signatureId: 'DEF-456', category: 'wormhole', code: 'K162', targetClass: 'unknown' }),
+            sig({ signatureId: 'GHI-789', category: 'wormhole', code: 'U210', targetClass: 'l' }),
+            sig({ signatureId: 'JKL-012', category: 'wormhole', code: 'Z142', targetClass: 'n' }),
             sig({ signatureId: 'MNO-345', category: 'gas', code: undefined, rawTypeName: 'Bountiful Frontier Reservoir' }),
             sig({ signatureId: 'PQR-678' }),
-            sig({ signatureId: 'STU-901', category: 'wormhole', code: 'X877', targetClass: '4', connectedToId: 2, createdMinutesAgo: 300 }),
+            sig({ signatureId: 'STU-901', category: 'wormhole', code: 'X877', targetClass: '4', connectedToId: 2 }),
         ],
     },
     {
@@ -123,9 +51,9 @@ const scenarios: TScenario[] = [
         targetClass: 'h',
         suggestedAlias: null,
         signatures: [
-            sig({ signatureId: 'AAA-111', category: 'wormhole', code: 'B274', targetClass: 'h', jumpMass: 375_000_000, createdMinutesAgo: 20 }),
-            sig({ signatureId: 'BBB-222', category: 'wormhole', code: 'U210', targetClass: 'l', createdMinutesAgo: 60 }),
-            sig({ signatureId: 'CCC-333', category: 'wormhole', code: 'D845', targetClass: 'h', lifetime: 'eol', createdMinutesAgo: 900 }),
+            sig({ signatureId: 'AAA-111', category: 'wormhole', code: 'B274', targetClass: 'h', jumpMass: 375_000_000 }),
+            sig({ signatureId: 'BBB-222', category: 'wormhole', code: 'U210', targetClass: 'l' }),
+            sig({ signatureId: 'CCC-333', category: 'wormhole', code: 'D845', targetClass: 'h', lifetime: 'eol' }),
             sig({ signatureId: 'DDD-444', category: 'relic', rawTypeName: 'Forgotten Frontier Quarantine Outpost' }),
         ],
     },
@@ -168,7 +96,6 @@ const scenarios: TScenario[] = [
                     code: 'H296',
                     targetClass: '5',
                     jumpMass: 2_000_000_000,
-                    createdMinutesAgo: index * 30,
                 });
             if (index % 3 === 1)
                 return sig({
@@ -176,10 +103,9 @@ const scenarios: TScenario[] = [
                     category: 'wormhole',
                     code: 'V753',
                     targetClass: '6',
-                    createdMinutesAgo: index * 15,
                     connectedToId: index === 1 ? 3 : undefined,
                 });
-            return sig({ signatureId, createdMinutesAgo: index * 10 });
+            return sig({ signatureId });
         }),
     },
     {

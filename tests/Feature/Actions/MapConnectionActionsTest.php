@@ -11,7 +11,6 @@ use App\Enums\MassStatus;
 use App\Enums\ShipSize;
 use App\Models\Map;
 use App\Models\MapConnection;
-use App\Models\Wormhole;
 
 it('creates a connection between two placements', function () {
     $map = Map::factory()->create();
@@ -69,17 +68,6 @@ it('deletes a connection', function () {
     expect(MapConnection::find($connection->id))->toBeNull();
 });
 
-function makeCapitalWormhole(): Wormhole
-{
-    return Wormhole::create([
-        'name' => 'H296',
-        'total_mass' => 3_300_000_000,
-        'maximum_jump_mass' => 2_000_000_000,
-        'maximum_lifetime' => 86_400,
-        'leads_to' => 'c5',
-    ]);
-}
-
 it('derives the ship size from the wormhole type when creating a connection', function () {
     $map = Map::factory()->create();
     $from = placeMapSolarsystem($map, 30004020);
@@ -88,7 +76,7 @@ it('derives the ship size from the wormhole type when creating a connection', fu
     $connection = app(CreateMapConnectionAction::class)->handle([
         'from_map_solarsystem_id' => $from->id,
         'to_map_solarsystem_id' => $to->id,
-        'wormhole_id' => makeCapitalWormhole()->id,
+        'wormhole_id' => makeWormhole()->id,
         'ship_size' => 'medium',
     ]);
 
@@ -108,7 +96,7 @@ it('keeps the ship size locked to a linked signature wormhole type on updates', 
     $from->signatures()->create([
         'signature_id' => 'AAA-111',
         'map_connection_id' => $connection->id,
-        'wormhole_id' => makeCapitalWormhole()->id,
+        'wormhole_id' => makeWormhole()->id,
         'lifetime' => 'healthy',
     ]);
 

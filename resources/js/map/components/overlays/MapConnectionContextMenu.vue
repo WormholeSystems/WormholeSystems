@@ -10,7 +10,7 @@ import {
     ContextMenuSubTrigger,
 } from '@/components/ui/context-menu';
 import { useStaticData } from '@/composables/useStaticData';
-import { shipSizeFromJumpMass } from '@/lib/shipSize';
+import { SHIP_SIZE_OPTIONS, shipSizeFromJumpMass } from '@/lib/shipSize';
 import { formatDateToISO } from '@/lib/utils';
 import { deleteMapConnection } from '@/map/actions/deleteMapConnection';
 import { updateMapConnection } from '@/map/actions/updateMapConnection';
@@ -145,21 +145,15 @@ function handleLifetimeChange(lifetime: AcceptableValue) {
             </ContextMenuSubTrigger>
             <ContextMenuSubContent>
                 <ContextMenuRadioGroup :model-value="map_connection.ship_size" @update:model-value="handleShipSizeChange">
-                    <ContextMenuRadioItem value="frigate" class="flex items-center gap-2" :disabled="locked_ship_size !== null">
-                        <span class="inline-flex w-6 justify-center font-mono text-[10px] leading-4 text-muted-foreground">S</span>
-                        Frigate
-                    </ContextMenuRadioItem>
-                    <ContextMenuRadioItem value="medium" class="flex items-center gap-2" :disabled="locked_ship_size !== null">
-                        <span class="inline-flex w-6 justify-center font-mono text-[10px] leading-4 text-muted-foreground">M</span>
-                        Medium
-                    </ContextMenuRadioItem>
-                    <ContextMenuRadioItem value="large" class="flex items-center gap-2" :disabled="locked_ship_size !== null">
-                        <span class="inline-flex w-6 justify-center font-mono text-[10px] leading-4 text-muted-foreground">L</span>
-                        Large
-                    </ContextMenuRadioItem>
-                    <ContextMenuRadioItem value="xlarge" class="flex items-center gap-2" :disabled="locked_ship_size !== null">
-                        <span class="inline-flex w-6 justify-center font-mono text-[10px] leading-4 text-muted-foreground">XL</span>
-                        Extra Large
+                    <ContextMenuRadioItem
+                        v-for="option in SHIP_SIZE_OPTIONS"
+                        :key="option.value"
+                        :value="option.value"
+                        class="flex items-center gap-2"
+                        :disabled="locked_ship_size !== null"
+                    >
+                        <span class="inline-flex w-6 justify-center font-mono text-[10px] leading-4 text-muted-foreground">{{ option.letter }}</span>
+                        {{ option.label }}
                     </ContextMenuRadioItem>
                 </ContextMenuRadioGroup>
                 <div v-if="locked_ship_size" class="px-2 py-1 text-[10px] text-muted-foreground">Locked by the identified wormhole type</div>

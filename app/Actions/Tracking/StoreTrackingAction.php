@@ -281,27 +281,14 @@ final readonly class StoreTrackingAction
             ->value('id');
     }
 
-    /**
-     * The size dictated by the signature's identified wormhole type. When it
-     * is known it wins over every other source, because the hole's physics
-     * are not a matter of preference.
-     */
     private function getWormholeShipSize(?Signature $signature): ?ShipSize
     {
-        if (! $signature instanceof Signature) {
-            return null;
-        }
-
-        return ShipSize::fromJumpMass($signature->wormhole?->maximum_jump_mass);
+        return ShipSize::fromWormhole($signature?->wormhole);
     }
 
     private function getShipSizeForSignature(?Signature $signature): ?ShipSize
     {
-        if (! $signature instanceof Signature) {
-            return null;
-        }
-
-        return $signature->ship_size;
+        return $signature?->ship_size;
     }
 
     private function getMassStatusForSignature(?Signature $signature): MassStatus

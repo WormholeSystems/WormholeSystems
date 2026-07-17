@@ -9,8 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/u
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useShowMap } from '@/composables/useShowMap';
 import { Data } from '@/lib/data';
-import { shipSizeFromJumpMass } from '@/lib/shipSize';
+import { SHIP_SIZE_OPTIONS, shipSizeFromJumpMass } from '@/lib/shipSize';
 import { groupSignatureOptions } from '@/lib/signatureCompatibility';
+import { aliasedSolarsystemLabel } from '@/lib/solarsystem';
 import { updateMapUserSettings } from '@/map/api';
 import { TMapSolarsystem } from '@/pages/maps';
 import { TLifetimeStatus, TMassStatus, TShipSize, TSignature, TStringedSolarsystemClass } from '@/types/models';
@@ -35,11 +36,7 @@ const search = ref('');
 
 const originSystemLabel = computed(() => {
     const origin = props.originMapSolarsystem;
-    if (!origin) {
-        return '';
-    }
-
-    return origin.alias ? `${origin.alias} (${origin.solarsystem.name})` : origin.solarsystem.name;
+    return origin ? aliasedSolarsystemLabel(origin.alias, origin.solarsystem.name) : '';
 });
 
 const filtered = computed(() => {
@@ -92,18 +89,25 @@ function focusSearch(): void {
     document.getElementById('tracking-search')?.focus();
 }
 
-/** The system on the far side of an already-connected signature's connection. */
-function connectionDestinationLabel(signature: TSignature): string | null {
-    const connection = signature.map_connection;
+/** Where each already-connected signature's connection leads, keyed by signature id. */
+const destinationLabels = computed<Map<number, string>>(() => {
+    const labels = new Map<number, string>();
     const origin = props.originMapSolarsystem;
-    if (!connection || !origin) return null;
+    if (!origin) return labels;
 
-    const destinationId = connection.to_map_solarsystem_id === origin.id ? connection.from_map_solarsystem_id : connection.to_map_solarsystem_id;
-    const destination = props.mapSolarsystems?.find((solarsystem) => solarsystem.id === destinationId);
-    if (!destination) return null;
+    for (const signature of props.signatures ?? []) {
+        const connection = signature.map_connection;
+        if (!connection) continue;
 
-    return destination.alias ? `${destination.alias} (${destination.solarsystem.name})` : destination.solarsystem.name;
-}
+        const destinationId = connection.to_map_solarsystem_id === origin.id ? connection.from_map_solarsystem_id : connection.to_map_solarsystem_id;
+        const destination = props.mapSolarsystems?.find((solarsystem) => solarsystem.id === destinationId);
+        if (destination) {
+            labels.set(signature.id, aliasedSolarsystemLabel(destination.alias, destination.solarsystem.name));
+        }
+    }
+
+    return labels;
+});
 
 const open = defineModel<boolean>('open', { required: true });
 
@@ -133,6 +137,8 @@ const selectedSignature = computed(() => props.signatures?.find((s) => s.id === 
  */
 const lockedShipSize = computed(() => shipSizeFromJumpMass(selectedSignature.value?.wormhole?.maximum_jump_mass));
 
+const effectiveShipSize = computed<TShipSize | 'auto'>(() => lockedShipSize.value ?? shipSize.value);
+
 // Reset inputs when the dialog opens. The alias is prefilled with the suggested
 // chain alias (or the target's existing alias when it is already on the map),
 // and with the preselect setting the first likely signature starts checked so
@@ -148,11 +154,10 @@ watch(open, (isOpen) => {
     }
 });
 
-// Adopt the signature's lifetime / mass / ship size when it carries a
-// meaningful value, otherwise keep whatever the user manually selected. The
-// wormhole type's size wins over a stored signature size.
-watch(selectedSignatureId, (id) => {
-    const signature = props.signatures?.find((s) => s.id === id);
+// Adopt the signature's lifetime / mass / stored ship size when it carries a
+// meaningful value, otherwise keep whatever the user manually selected. A
+// wormhole type's size is not adopted here — it is derived as lockedShipSize.
+watch(selectedSignature, (signature) => {
     if (!signature) return;
     if (signature.lifetime && signature.lifetime !== 'healthy') {
         lifetime.value = signature.lifetime;
@@ -160,10 +165,7 @@ watch(selectedSignatureId, (id) => {
     if (signature.mass_status) {
         massStatus.value = signature.mass_status;
     }
-    const wormholeShipSize = shipSizeFromJumpMass(signature.wormhole?.maximum_jump_mass);
-    if (wormholeShipSize) {
-        shipSize.value = wormholeShipSize;
-    } else if (signature.ship_size) {
+    if (!lockedShipSize.value && signature.ship_size) {
         shipSize.value = signature.ship_size;
     }
 });
@@ -174,7 +176,7 @@ function buildSelection(signatureId: number | null) {
         alias: alias.value.trim() || null,
         lifetime: lifetime.value,
         massStatus: massStatus.value,
-        shipSize: shipSize.value === 'auto' ? null : shipSize.value,
+        shipSize: lockedShipSize.value ?? (shipSize.value === 'auto' ? null : shipSize.value),
     };
 }
 
@@ -213,26 +215,25 @@ function handleShipSizeChange(value: AcceptableValue) {
     }
 }
 
-/* The same indicators the options carry, mirrored on the closed triggers. */
-const lifetimeMeta: Record<TLifetimeStatus, { label: string; dot: string }> = {
+/* One source for each select's options: dot / badge, label, and threshold hint. */
+const lifetimeMeta: Record<TLifetimeStatus, { label: string; dot: string; hint?: string }> = {
     healthy: { label: 'Healthy', dot: 'bg-neutral-500' },
-    eol: { label: 'End of Life', dot: 'bg-purple-500' },
-    critical: { label: 'Critical', dot: 'bg-red-500' },
+    eol: { label: 'End of Life', dot: 'bg-purple-500', hint: '< 4h' },
+    critical: { label: 'Critical', dot: 'bg-red-500', hint: '< 1h' },
 };
 
-const massMeta: Record<TMassStatus, { label: string; dot: string }> = {
-    fresh: { label: 'Fresh', dot: 'bg-neutral-500' },
-    reduced: { label: 'Reduced', dot: 'bg-amber-500' },
-    critical: { label: 'Critical', dot: 'bg-red-500' },
+const massMeta: Record<TMassStatus, { label: string; dot: string; hint?: string }> = {
+    fresh: { label: 'Fresh', dot: 'bg-neutral-500', hint: '≥ 50%' },
+    reduced: { label: 'Reduced', dot: 'bg-amber-500', hint: '< 50%' },
+    critical: { label: 'Critical', dot: 'bg-red-500', hint: '≤ 15%' },
 };
 
-const shipSizeMeta: Record<TShipSize | 'auto', { label: string; badge: string }> = {
-    auto: { label: 'Auto', badge: '·' },
-    frigate: { label: 'Frigate', badge: 'S' },
-    medium: { label: 'Medium', badge: 'M' },
-    large: { label: 'Large', badge: 'L' },
-    xlarge: { label: 'Extra Large', badge: 'XL' },
-};
+const shipSizeOptions: { value: TShipSize | 'auto'; label: string; letter: string }[] = [
+    { value: 'auto', label: 'Auto', letter: '·' },
+    ...SHIP_SIZE_OPTIONS,
+];
+
+const selectedShipSizeOption = computed(() => shipSizeOptions.find((option) => option.value === effectiveShipSize.value) ?? shipSizeOptions[0]);
 </script>
 
 <template>
@@ -260,54 +261,22 @@ const shipSizeMeta: Record<TShipSize | 'auto', { label: string; badge: string }>
                         </div>
                         <div class="grid content-start gap-1.5">
                             <Label class="text-xs">Ship size</Label>
-                            <Select :model-value="shipSize" :disabled="lockedShipSize !== null" @update:model-value="handleShipSizeChange">
+                            <Select :model-value="effectiveShipSize" :disabled="lockedShipSize !== null" @update:model-value="handleShipSizeChange">
                                 <SelectTrigger class="w-full">
                                     <span class="flex items-center gap-2">
                                         <span class="inline-flex w-6 justify-center font-mono text-[10px] leading-4 text-muted-foreground">{{
-                                            shipSizeMeta[shipSize].badge
+                                            selectedShipSizeOption.letter
                                         }}</span>
-                                        {{ shipSizeMeta[shipSize].label }}
+                                        {{ selectedShipSizeOption.label }}
                                     </span>
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="auto">
+                                    <SelectItem v-for="option in shipSizeOptions" :key="option.value" :value="option.value">
                                         <span class="flex items-center gap-2">
-                                            <span class="inline-flex w-6 justify-center font-mono text-[10px] leading-4 text-muted-foreground"
-                                                >·</span
-                                            >
-                                            Auto
-                                        </span>
-                                    </SelectItem>
-                                    <SelectItem value="frigate">
-                                        <span class="flex items-center gap-2">
-                                            <span class="inline-flex w-6 justify-center font-mono text-[10px] leading-4 text-muted-foreground"
-                                                >S</span
-                                            >
-                                            Frigate
-                                        </span>
-                                    </SelectItem>
-                                    <SelectItem value="medium">
-                                        <span class="flex items-center gap-2">
-                                            <span class="inline-flex w-6 justify-center font-mono text-[10px] leading-4 text-muted-foreground"
-                                                >M</span
-                                            >
-                                            Medium
-                                        </span>
-                                    </SelectItem>
-                                    <SelectItem value="large">
-                                        <span class="flex items-center gap-2">
-                                            <span class="inline-flex w-6 justify-center font-mono text-[10px] leading-4 text-muted-foreground"
-                                                >L</span
-                                            >
-                                            Large
-                                        </span>
-                                    </SelectItem>
-                                    <SelectItem value="xlarge">
-                                        <span class="flex items-center gap-2">
-                                            <span class="inline-flex w-6 justify-center font-mono text-[10px] leading-4 text-muted-foreground"
-                                                >XL</span
-                                            >
-                                            Extra Large
+                                            <span class="inline-flex w-6 justify-center font-mono text-[10px] leading-4 text-muted-foreground">{{
+                                                option.letter
+                                            }}</span>
+                                            {{ option.label }}
                                         </span>
                                     </SelectItem>
                                 </SelectContent>
@@ -325,24 +294,11 @@ const shipSizeMeta: Record<TShipSize | 'auto', { label: string; badge: string }>
                                     </span>
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="healthy">
+                                    <SelectItem v-for="(meta, value) in lifetimeMeta" :key="value" :value="value">
                                         <span class="flex items-center gap-2">
-                                            <span class="inline-block size-2 rounded-full bg-neutral-500" />
-                                            Healthy
-                                        </span>
-                                    </SelectItem>
-                                    <SelectItem value="eol">
-                                        <span class="flex items-center gap-2">
-                                            <span class="inline-block size-2 rounded-full bg-purple-500" />
-                                            End of Life
-                                            <span class="text-muted-foreground">&lt; 4h</span>
-                                        </span>
-                                    </SelectItem>
-                                    <SelectItem value="critical">
-                                        <span class="flex items-center gap-2">
-                                            <span class="inline-block size-2 rounded-full bg-red-500" />
-                                            Critical
-                                            <span class="text-muted-foreground">&lt; 1h</span>
+                                            <span class="inline-block size-2 rounded-full" :class="meta.dot" />
+                                            {{ meta.label }}
+                                            <span v-if="meta.hint" class="text-muted-foreground">{{ meta.hint }}</span>
                                         </span>
                                     </SelectItem>
                                 </SelectContent>
@@ -358,25 +314,11 @@ const shipSizeMeta: Record<TShipSize | 'auto', { label: string; badge: string }>
                                     </span>
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="fresh">
+                                    <SelectItem v-for="(meta, value) in massMeta" :key="value" :value="value">
                                         <span class="flex items-center gap-2">
-                                            <span class="inline-block size-2 rounded-full bg-neutral-500" />
-                                            Fresh
-                                            <span class="text-muted-foreground">&ge; 50%</span>
-                                        </span>
-                                    </SelectItem>
-                                    <SelectItem value="reduced">
-                                        <span class="flex items-center gap-2">
-                                            <span class="inline-block size-2 rounded-full bg-amber-500" />
-                                            Reduced
-                                            <span class="text-muted-foreground">&lt; 50%</span>
-                                        </span>
-                                    </SelectItem>
-                                    <SelectItem value="critical">
-                                        <span class="flex items-center gap-2">
-                                            <span class="inline-block size-2 rounded-full bg-red-500" />
-                                            Critical
-                                            <span class="text-muted-foreground">&le; 15%</span>
+                                            <span class="inline-block size-2 rounded-full" :class="meta.dot" />
+                                            {{ meta.label }}
+                                            <span v-if="meta.hint" class="text-muted-foreground">{{ meta.hint }}</span>
                                         </span>
                                     </SelectItem>
                                 </SelectContent>
@@ -430,7 +372,7 @@ const shipSizeMeta: Record<TShipSize | 'auto', { label: string; badge: string }>
                                 <div class="text-muted-foreground" v-else-if="option.raw_type_name">{{ option.raw_type_name }}</div>
                                 <div class="text-muted-foreground" v-else>Unknown</div>
                                 <div class="truncate text-right text-xs text-muted-foreground">
-                                    <template v-if="connectionDestinationLabel(option)">→ {{ connectionDestinationLabel(option) }}</template>
+                                    <template v-if="destinationLabels.has(option.id)">→ {{ destinationLabels.get(option.id) }}</template>
                                 </div>
                             </label>
                         </template>

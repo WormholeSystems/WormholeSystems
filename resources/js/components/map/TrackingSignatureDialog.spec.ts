@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import TrackingSignatureDialog from '@/components/map/TrackingSignatureDialog.vue';
-import type { TMapConnection, TMapSolarsystem, TWormhole } from '@/pages/maps';
+import { MAP_SOLARSYSTEMS, ORIGIN, resetSignatureIds, sig } from '@/components/map/trackingSignatureFixtures';
 import type { TSignature } from '@/types/models';
 import { mount, type VueWrapper } from '@vue/test-utils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -13,45 +13,10 @@ vi.mock('@/map/api', () => ({
     updateMapUserSettings: vi.fn(),
 }));
 
-const ORIGIN = { id: 1, alias: 'HOME', solarsystem: { name: 'J152820' } } as TMapSolarsystem;
-
-const MAP_SOLARSYSTEMS = [ORIGIN, { id: 2, alias: 'HOME-A', solarsystem: { name: 'J145510' } } as TMapSolarsystem];
-
-let nextId = 1;
-
-function sig(input: {
-    signatureId: string;
-    category?: string;
-    targetClass?: string;
-    connectedToId?: number;
-    lifetime?: TSignature['lifetime'];
-    shipSize?: TSignature['ship_size'];
-    jumpMass?: number;
-}): TSignature {
-    const id = nextId++;
-
-    return {
-        id,
-        signature_id: input.signatureId,
-        signature_type_id: input.targetClass ? id : null,
-        raw_type_name: null,
-        map_connection_id: input.connectedToId ? id : null,
-        map_connection: input.connectedToId
-            ? ({ id, from_map_solarsystem_id: ORIGIN.id, to_map_solarsystem_id: input.connectedToId } as TMapConnection)
-            : null,
-        signature_type: input.targetClass ? { id, name: `X702 - ${input.targetClass}`, signature: 'X702', target_class: input.targetClass } : null,
-        signature_category: input.category ? { id, name: input.category, code: input.category } : null,
-        wormhole: input.jumpMass ? ({ id, name: 'X702', maximum_jump_mass: input.jumpMass } as TWormhole) : null,
-        lifetime: input.lifetime ?? 'healthy',
-        mass_status: null,
-        ship_size: input.shipSize ?? null,
-    } as TSignature;
-}
-
 // Alphabetical likely order: AAA (typed C4, eol, frigate), BBB (unscanned).
 // CCC is connected, DDD leads elsewhere, EEE is a gas site and must not render.
 function makeSignatures(): TSignature[] {
-    nextId = 1;
+    resetSignatureIds();
     return [
         sig({ signatureId: 'AAA-111', category: 'wormhole', targetClass: '4', lifetime: 'eol', shipSize: 'frigate' }),
         sig({ signatureId: 'BBB-222' }),

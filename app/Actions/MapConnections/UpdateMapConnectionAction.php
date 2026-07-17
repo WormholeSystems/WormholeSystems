@@ -62,13 +62,15 @@ final readonly class UpdateMapConnectionAction
     private function lockedShipSize(MapConnection $mapConnection, MapConnectionData $data): ?ShipSize
     {
         $wormhole_id = $data->wormhole_id instanceof Optional ? $mapConnection->wormhole_id : $data->wormhole_id;
-        $size = ShipSize::fromJumpMass(Wormhole::query()->find($wormhole_id)?->maximum_jump_mass);
-        if ($size instanceof ShipSize) {
-            return $size;
+        if ($wormhole_id !== null) {
+            $size = ShipSize::fromJumpMass(Wormhole::query()->whereKey($wormhole_id)->value('maximum_jump_mass'));
+            if ($size instanceof ShipSize) {
+                return $size;
+            }
         }
 
-        foreach ($mapConnection->signatures as $signature) {
-            $size = ShipSize::fromJumpMass($signature->wormhole?->maximum_jump_mass);
+        foreach ($mapConnection->signatures->whereNotNull('wormhole_id')->loadMissing('wormhole') as $signature) {
+            $size = ShipSize::fromWormhole($signature->wormhole);
             if ($size instanceof ShipSize) {
                 return $size;
             }

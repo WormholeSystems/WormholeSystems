@@ -77,6 +77,18 @@ function makeSolarsystem(int $id, float $security = 0.5, string $type = 'normal'
  * Place a solarsystem on a map (seeding the underlying solarsystem so the FK resolves),
  * returning the placement.
  */
+/** Create a wormhole type row; defaults to a capital-capable H296. */
+function makeWormhole(string $name = 'H296', float $maximum_jump_mass = 2_000_000_000, string $leads_to = 'c5'): App\Models\Wormhole
+{
+    return App\Models\Wormhole::create([
+        'name' => $name,
+        'total_mass' => 3_300_000_000,
+        'maximum_jump_mass' => $maximum_jump_mass,
+        'maximum_lifetime' => 86_400,
+        'leads_to' => $leads_to,
+    ]);
+}
+
 function placeMapSolarsystem(App\Models\Map $map, int $solarsystemId, int $x = 100, int $y = 100): App\Models\MapSolarsystem
 {
     makeSolarsystem($solarsystemId);

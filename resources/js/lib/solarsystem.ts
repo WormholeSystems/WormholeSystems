@@ -7,3 +7,8 @@ import { TSolarsystemType } from '@/types/models';
 export function isWormholeSystem(solarsystem?: { type: TSolarsystemType } | null): boolean {
     return solarsystem?.type === 'wh';
 }
+
+/** "ALIAS (Name)" when the system carries an alias, otherwise just the name. */
+export function aliasedSolarsystemLabel(alias: string | null | undefined, name: string): string {
+    return alias ? `${alias} (${name})` : name;
+}

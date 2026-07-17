@@ -177,13 +177,7 @@ it('locks the connection ship size to the signature wormhole type', function () 
     $origin = placeMapSolarsystem($map, 30012011);
     $targetId = makeSolarsystem(30012012);
 
-    $wormhole = App\Models\Wormhole::create([
-        'name' => 'H296',
-        'total_mass' => 3_300_000_000,
-        'maximum_jump_mass' => 2_000_000_000,
-        'maximum_lifetime' => 86_400,
-        'leads_to' => 'c5',
-    ]);
+    $wormhole = makeWormhole();
 
     $signature = Signature::create([
         'map_solarsystem_id' => $origin->id,

@@ -95,9 +95,7 @@ export function useTracking() {
 
     function sortSignatures(a: TSignature, b: TSignature) {
         if (!a.signature_id || !b.signature_id) return 0;
-        if (a.map_connection_id && !b.map_connection_id) return 1;
-        if (!a.map_connection_id && b.map_connection_id) return -1;
-        return a.signature_id?.localeCompare(b.signature_id);
+        return a.signature_id.localeCompare(b.signature_id);
     }
 
     function performJump() {

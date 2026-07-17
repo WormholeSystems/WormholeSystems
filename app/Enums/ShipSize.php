@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
+use App\Models\Wormhole;
+
 enum ShipSize: string
 {
     case Frigate = 'frigate';
@@ -18,6 +20,16 @@ enum ShipSize: string
      *
      * Mirrored on the frontend in resources/js/lib/shipSize.ts.
      */
+    /**
+     * The size dictated by an identified wormhole type. When it is known it
+     * wins over every other source, because the hole's physics are not a
+     * matter of preference.
+     */
+    public static function fromWormhole(?Wormhole $wormhole): ?self
+    {
+        return $wormhole instanceof Wormhole ? self::fromJumpMass($wormhole->maximum_jump_mass) : null;
+    }
+
     public static function fromJumpMass(?float $maximum_jump_mass): ?self
     {
         return match (true) {
