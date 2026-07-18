@@ -18,7 +18,7 @@ import { TMapSolarsystem } from '@/pages/maps';
 import MapSolarsystems from '@/routes/map-solarsystems';
 import { TCharacter, TThreatLevel } from '@/types/models';
 import { useForm } from '@inertiajs/vue3';
-import { Flag as FlagIcon, Home as HomeIcon } from 'lucide-vue-next';
+import { Aperture, Flag as FlagIcon, Home as HomeIcon } from 'lucide-vue-next';
 import { computed, ref, useTemplateRef } from 'vue';
 
 /**
@@ -59,6 +59,7 @@ const resolvedSolarsystem = computed(() => ({
     region: system.solarsystem?.region ?? null,
     statics: system.solarsystem?.statics ?? null,
     effect: system.solarsystem?.effect ?? null,
+    is_shattered: system.solarsystem?.is_shattered ?? false,
 }));
 
 const open = ref(false);
@@ -166,6 +167,12 @@ function handleSubmit() {
                     <TooltipContent>{{ signatureTooltipText }}</TooltipContent>
                 </Tooltip>
                 <HasExtraConnections v-if="extra_connections_count" :extra_connections_count="extra_connections_count" />
+                <Tooltip v-if="resolvedSolarsystem.is_shattered" :delay-duration="500">
+                    <TooltipTrigger>
+                        <Aperture class="size-3 text-amber-500/90" />
+                    </TooltipTrigger>
+                    <TooltipContent>Shattered system</TooltipContent>
+                </Tooltip>
                 <SolarsystemSovereignty :sovereignty="resolvedSolarsystem.sovereignty" :solarsystem-id="resolvedSolarsystem.id">
                     <template #fallback>
                         <SolarsystemEffect :effect="resolvedSolarsystem.effect" v-if="resolvedSolarsystem.effect" />
