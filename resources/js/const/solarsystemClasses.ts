@@ -35,3 +35,11 @@ export function isWormholeClass(value: TStringedSolarsystemClass | null | undefi
 export function classSortWeight(value: TStringedSolarsystemClass | null | undefined): number {
     return classMeta(value).sort_weight;
 }
+
+/** Order systems by class (known space first, then wormhole classes), alphabetically within a class. */
+export function compareSolarsystemsByClass(
+    a: { class: TStringedSolarsystemClass; name: string },
+    b: { class: TStringedSolarsystemClass; name: string },
+): number {
+    return classSortWeight(a.class) - classSortWeight(b.class) || a.name.localeCompare(b.name);
+}

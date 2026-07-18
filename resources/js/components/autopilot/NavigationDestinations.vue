@@ -5,7 +5,7 @@ import { useMap } from '@/composables/useMap';
 import usePermission from '@/composables/usePermission';
 import { useSelectedMapSolarsystem } from '@/composables/useSelectedMapSolarsystem';
 import { useStaticSolarsystems } from '@/composables/useStaticSolarsystems';
-import { classSortWeight, isWormholeClass } from '@/const/solarsystemClasses';
+import { compareSolarsystemsByClass } from '@/const/solarsystemClasses';
 import type { TResolvedMapRouteSolarsystem } from '@/pages/maps';
 import { useLocalStorage } from '@vueuse/core';
 import { ArrowDown, ArrowUp } from 'lucide-vue-next';
@@ -65,23 +65,9 @@ const sorted = computed(() => {
         let comparison = 0;
 
         switch (sortColumn.value) {
-            case 'system': {
-                const aIsWH = isWormholeClass(a.solarsystem.class);
-                const bIsWH = isWormholeClass(b.solarsystem.class);
-
-                if (aIsWH && bIsWH) {
-                    comparison = classSortWeight(a.solarsystem.class) - classSortWeight(b.solarsystem.class);
-                } else if (!aIsWH && !bIsWH) {
-                    comparison = (b.solarsystem.security || 0) - (a.solarsystem.security || 0);
-                } else {
-                    comparison = aIsWH ? 1 : -1;
-                }
-
-                if (comparison === 0) {
-                    comparison = a.solarsystem.name.localeCompare(b.solarsystem.name);
-                }
+            case 'system':
+                comparison = compareSolarsystemsByClass(a.solarsystem, b.solarsystem);
                 break;
-            }
             case 'jumps': {
                 const aJumps = a.route ? a.route.length - 1 : 999;
                 const bJumps = b.route ? b.route.length - 1 : 999;
