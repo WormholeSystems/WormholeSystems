@@ -100,6 +100,16 @@ final readonly class MapBroadcaster
      */
     public function signaturesChanged(MapSolarsystem $map_solarsystem): void
     {
+        // Deleting signatures can also roll their connections and remove the
+        // system in the same transaction. If it is gone there are no counts to
+        // broadcast — loadCount would re-query by key, find nothing, and fatal on
+        // getAttributes(). The removal itself is announced by its own event.
+        $map_solarsystem = $map_solarsystem->fresh();
+
+        if (! $map_solarsystem instanceof MapSolarsystem) {
+            return;
+        }
+
         $map_solarsystem->loadCount(['signatures', 'wormholeSignatures', 'uncategorizedSignatures']);
 
         broadcast(new SignaturesChangedEvent(

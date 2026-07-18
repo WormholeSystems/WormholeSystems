@@ -12,6 +12,9 @@ use App\Data\SignatureData;
 use App\Data\SignaturesData;
 use App\Events\Signatures\SignaturesChangedEvent;
 use App\Models\Map;
+use App\Models\MapConnection;
+use App\Models\MapSolarsystem;
+use App\Models\Signature;
 use Illuminate\Support\Facades\Event;
 
 it('broadcasts the signature counts once when a signature is stored', function () {
@@ -89,6 +92,31 @@ it('broadcasts the signature counts once for a bulk delete', function () {
         return $payload['map_solarsystem_id'] === $system->id
             && $payload['signature_counts']['signatures_count'] === 0;
     });
+});
+
+it('does not crash when a bulk delete also removes the system', function () {
+    $map = Map::factory()->create();
+    $origin = placeMapSolarsystem($map, 30023020);
+    $target = placeMapSolarsystem($map, 30023021);
+
+    $connection = MapConnection::factory()->create([
+        'map_id' => $map->id,
+        'from_map_solarsystem_id' => $origin->id,
+        'to_map_solarsystem_id' => $target->id,
+    ]);
+
+    $signature = $origin->signatures()->create([
+        'signature_id' => 'ABC-123',
+        'map_connection_id' => $connection->id,
+    ]);
+
+    // With remove_map_solarsystems, deleting the signature rolls its connection
+    // and removes both now-disconnected endpoints — including the origin. The
+    // count broadcast must not fatal on the row it just deleted.
+    app(DeleteSignaturesAction::class)->handle($origin, [$signature->id], remove_map_solarsystems: true);
+
+    expect(MapSolarsystem::query()->whereKey($origin->id)->exists())->toBeFalse()
+        ->and(Signature::query()->whereKey($signature->id)->exists())->toBeFalse();
 });
 
 it('broadcasts the signature counts once for a paste of multiple signatures', function () {
