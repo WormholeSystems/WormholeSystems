@@ -62,6 +62,7 @@ const dotlanLink = computed(() => {
                     <span v-if="system?.effect?.name" class="shrink-0 text-[10px]" :class="effectColor">
                         {{ system.effect.name }}
                     </span>
+                    <span v-if="system?.is_shattered" class="shrink-0 text-[10px] text-amber-500">Shattered</span>
                 </div>
                 <div v-if="map_solarsystem.occupier_alias" class="mt-1 text-[11px] text-muted-foreground">
                     Occupied by <span class="font-medium text-foreground">{{ map_solarsystem.occupier_alias }}</span>
