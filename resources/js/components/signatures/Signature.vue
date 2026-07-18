@@ -202,7 +202,8 @@ function handleTogglePreserveMass() {
 
 <template>
     <div
-        class="flex items-center gap-2 border-b border-border/30 px-3 py-1.5 hover:bg-muted/30 data-deleted:bg-red-500/10 data-new:bg-green-500/10 data-updated:bg-amber-500/15"
+        class="flex items-center gap-2 border-b border-border/30 px-3 hover:bg-muted/30 data-deleted:bg-red-500/10 data-new:bg-green-500/10 data-updated:bg-amber-500/15"
+        :class="map_user_settings.compact_signature_list ? 'py-0.5' : 'py-1.5'"
         :data-deleted="Data(is_deleted)"
         :data-new="Data(is_new)"
         :data-updated="Data(is_updated)"
@@ -217,14 +218,15 @@ function handleTogglePreserveMass() {
                 @blur="saveId"
                 @keydown.enter="saveId"
                 @keydown.escape="cancelEditId"
-                class="h-6 w-full rounded border border-border/50 bg-background/50 px-1.5 font-mono text-xs uppercase focus:border-primary focus:outline-none"
+                class="w-full rounded border border-border/50 bg-background/50 px-1.5 font-mono text-xs uppercase focus:border-primary focus:outline-none"
+                :class="map_user_settings.compact_signature_list ? 'h-5' : 'h-6'"
                 maxlength="7"
                 placeholder="XXX-XXX"
             />
             <button
                 v-else
-                class="font-mono text-xs hover:text-amber-400"
-                :class="can_write ? 'cursor-pointer' : 'cursor-default'"
+                class="flex items-center font-mono text-xs hover:text-amber-400"
+                :class="[can_write ? 'cursor-pointer' : 'cursor-default', map_user_settings.compact_signature_list ? 'h-5' : 'h-6']"
                 @click="startEditId"
             >
                 {{ signature.signature_id || '---' }}
@@ -234,7 +236,7 @@ function handleTogglePreserveMass() {
         <!-- Category -->
         <div class="w-24 shrink-0">
             <Select :model-value="signature.signature_category_id" @update:modelValue="handleCategoryChange" :disabled="!can_write">
-                <SelectTrigger class="h-6 w-full text-xs">
+                <SelectTrigger class="w-full text-xs" :class="map_user_settings.compact_signature_list ? '!h-5 !py-0' : ''">
                     <SelectValue placeholder="Category">
                         <span class="flex items-center gap-1">
                             <component
@@ -301,7 +303,12 @@ function handleTogglePreserveMass() {
         <div class="w-6 shrink-0">
             <DropdownMenu v-if="can_write">
                 <DropdownMenuTrigger as-child>
-                    <Button variant="ghost" size="icon" class="size-6 text-muted-foreground hover:text-foreground">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        class="text-muted-foreground hover:text-foreground"
+                        :class="map_user_settings.compact_signature_list ? 'size-5' : 'size-6'"
+                    >
                         <MoreVertical class="size-3.5" />
                     </Button>
                 </DropdownMenuTrigger>

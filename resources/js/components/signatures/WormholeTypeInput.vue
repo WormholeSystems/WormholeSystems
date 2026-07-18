@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import WormholeOption from '@/components/signatures/WormholeOption.vue';
 import { Combobox, ComboboxAnchor, ComboboxInput, ComboboxItem, ComboboxTrigger, ComboboxVirtualList } from '@/components/ui/combobox';
+import { useMapUserSettings } from '@/composables/useMapUserSettings';
 import { comboboxRowText, flattenComboboxSections, type TComboboxRow } from '@/lib/comboboxSections';
 import type { TSignatureType } from '@/types/models';
 import { computed, ref, watch } from 'vue';
@@ -19,6 +20,8 @@ const {
 const model = defineModel<number | null>({
     required: true,
 });
+
+const map_user_settings = useMapUserSettings();
 
 const open = ref(false);
 const search = ref('');
@@ -85,7 +88,7 @@ function filterByCurrentClass(option: TSignatureType) {
 <template>
     <Combobox v-model:open="open" :ignore-filter="true" :disabled="!can_write">
         <ComboboxAnchor as-child>
-            <ComboboxTrigger class="text-xs" :disabled="!can_write">
+            <ComboboxTrigger class="text-xs" :size="map_user_settings.compact_signature_list ? 'sm' : 'default'" :disabled="!can_write">
                 <WormholeOption v-if="selected_signature" :wormhole="selected_signature" />
                 <span v-else class="truncate text-muted-foreground">Type</span>
             </ComboboxTrigger>

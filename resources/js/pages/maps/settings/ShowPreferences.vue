@@ -38,6 +38,12 @@ function handleToggleStaticsFirst(value: boolean | 'indeterminate') {
         updateMapUserSettings({ show_statics_first: value });
     }
 }
+
+function handleToggleCompactSignatureList(value: boolean | 'indeterminate') {
+    if (typeof value === 'boolean') {
+        updateMapUserSettings({ compact_signature_list: value });
+    }
+}
 </script>
 
 <template>
@@ -80,6 +86,14 @@ function handleToggleStaticsFirst(value: boolean | 'indeterminate') {
                             </div>
                         </div>
                         <Checkbox :model-value="map_user_settings.show_statics_first" @update:model-value="handleToggleStaticsFirst" />
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div class="space-y-0.5">
+                            <Label class="text-sm font-medium">Compact Signature List</Label>
+                            <div class="text-sm text-muted-foreground">Show signatures in a denser list with less spacing between rows</div>
+                        </div>
+                        <Checkbox :model-value="map_user_settings.compact_signature_list" @update:model-value="handleToggleCompactSignatureList" />
                     </div>
                 </CardContent>
             </Card>

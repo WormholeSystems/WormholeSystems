@@ -20,7 +20,7 @@ const forwarded = useForwardProps(delegatedProps);
  */
 const sizeClasses: Record<'sm' | 'default', string> = {
     default: 'h-9 px-3 text-sm',
-    sm: 'h-6 px-3 text-xs',
+    sm: 'h-5 px-3 text-xs',
 };
 </script>
 

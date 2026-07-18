@@ -292,6 +292,7 @@ export type TMapUserSetting = {
     hidden_cards: string[] | null;
     show_threat_level: boolean;
     show_statics_first: boolean;
+    compact_signature_list: boolean;
     is_archived: boolean;
     is_pinned: boolean;
     background_image_url: string | null;

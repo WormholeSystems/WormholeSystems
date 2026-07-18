@@ -2,6 +2,7 @@
 import ConnectionOption from '@/components/signatures/ConnectionOption.vue';
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useMapUserSettings } from '@/composables/useMapUserSettings';
 import type { TProcessedConnection } from '@/map/api';
 import { TSignatureType } from '@/types/models';
 import { computed, ref } from 'vue';
@@ -17,6 +18,8 @@ const { type, unconnected_connections, connected_connections, disabled } = defin
 const model = defineModel<number | null>({
     required: true,
 });
+
+const map_user_settings = useMapUserSettings();
 
 const open = ref(false);
 
@@ -43,7 +46,7 @@ function isNotFilterable(type: TSignatureType | null | undefined): type is null 
 
 <template>
     <Select v-model:model-value="model" v-model:open="open" :disabled="disabled">
-        <SelectTrigger class="h-6 w-full text-xs">
+        <SelectTrigger class="w-full text-xs" :class="map_user_settings.compact_signature_list ? '!h-5 !py-0' : ''">
             <SelectValue as-child>
                 <span>
                     <span v-if="selected" class="inline-flex items-center gap-1">
