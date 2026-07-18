@@ -59,6 +59,20 @@ final class GenerateStaticDataCommand extends Command
     protected $description = 'Generate static data files for client-side routing';
 
     /**
+     * Index into the six-entry effect strength arrays (C1-C6). Drifter systems
+     * carry C2-strength effects and the C13 small-ship shattered systems
+     * C6-strength ones; their raw classes would index out of bounds.
+     */
+    public static function effectStrengthIndex(int $class): int
+    {
+        return match (true) {
+            $class >= 14 && $class <= 18 => 1,
+            $class === 13 => 5,
+            default => $class - 1,
+        };
+    }
+
+    /**
      * @throws JsonException
      * @throws Throwable
      */
@@ -547,7 +561,7 @@ final class GenerateStaticDataCommand extends Command
 
         ['Buffs' => $buffs, 'Debuffs' => $debuffs] = $effects;
 
-        $strength = $wormholeSystem['class'] - 1;
+        $strength = self::effectStrengthIndex($wormholeSystem['class']);
 
         $buffValues = collect($buffs)
             ->map(static fn (array $strengths, string $name): array => [
