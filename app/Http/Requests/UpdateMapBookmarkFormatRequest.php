@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Enums\AliasScheme;
 use App\Enums\BookmarkToken;
 use App\Models\Map;
 use App\Models\User;
@@ -12,6 +13,7 @@ use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Container\Attributes\RouteParameter;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 final class UpdateMapBookmarkFormatRequest extends FormRequest
 {
@@ -24,13 +26,14 @@ final class UpdateMapBookmarkFormatRequest extends FormRequest
     }
 
     /**
-     * @return array<string, array<int, ValidationRule|Closure|string>>
+     * @return array<string, ValidationRule|array|string>
      */
     public function rules(): array
     {
         return [
             'bookmark_format_wormhole' => ['sometimes', 'string', 'max:255', $this->onlyKnownTokens()],
             'bookmark_format_kspace' => ['sometimes', 'string', 'max:255', $this->onlyKnownTokens()],
+            'bookmark_alias_scheme' => ['sometimes', Rule::enum(AliasScheme::class)],
         ];
     }
 

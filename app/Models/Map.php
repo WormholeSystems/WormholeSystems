@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\AliasScheme;
 use App\Enums\MapLayout;
 use App\Enums\Permission;
 use App\Traits\HasSlug;
@@ -30,6 +31,7 @@ use function sprintf;
  * @property int|null $rally_solarsystem_id
  * @property string $bookmark_format_wormhole
  * @property string $bookmark_format_kspace
+ * @property AliasScheme $bookmark_alias_scheme
  * @property-read string|CarbonImmutable $created_at
  * @property-read string|CarbonImmutable $updated_at
  * @property-read Collection<int,MapSolarsystem> $mapSolarsystems
@@ -185,6 +187,7 @@ final class Map extends Model
             'layout' => MapLayout::class,
             'allow_layout_override' => 'boolean',
             'constant_width_enabled' => 'boolean',
+            'bookmark_alias_scheme' => AliasScheme::class,
         ];
     }
 }
