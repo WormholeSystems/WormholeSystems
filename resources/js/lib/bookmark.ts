@@ -1,5 +1,7 @@
 import { isWormholeClass } from '@/const/solarsystemClasses';
+import { aliasTargetKind, guessNextAlias, TAliasScheme } from '@/lib/alias';
 import { TResolvedSolarsystem } from '@/pages/maps';
+import { TSignature, TStringedSolarsystemClass } from '@/types/models';
 
 type BookmarkSolarsystem = Pick<TResolvedSolarsystem, 'class' | 'name'> & {
     region?: { name?: string | null } | null;
@@ -16,7 +18,7 @@ const MASS_STATUS_LABELS: Record<string, string> = { reduced: 'reduced', critica
 /** Lifetime labels. Healthy intentionally resolves to nothing so the token drops out. Kept in the "EOL" vocabulary so it never collides with mass "crit". */
 const LIFETIME_LABELS: Record<string, string> = { eol: 'EOL', critical: 'EOL!' };
 
-type BookmarkSystem = {
+export type BookmarkSystem = {
     alias?: string | null;
     occupier_alias?: string | null;
     solarsystem: BookmarkSolarsystem;
@@ -116,4 +118,91 @@ export function formatBookmarkName(system: BookmarkSystem, context: TBookmarkCon
         : formats?.bookmark_format_kspace || DEFAULT_BOOKMARK_FORMAT_KSPACE;
 
     return renderBookmarkTemplate(template, getBookmarkTokenValues(system, context));
+}
+
+/**
+ * `target_class` is "known" when the signature has been identified to a real
+ * destination class; `null`/`unknown` (K162, unset type) leaves it unknown.
+ */
+function knownTargetClass(targetClass: string | null | undefined): TStringedSolarsystemClass | null {
+    if (!targetClass || targetClass === 'unknown') return null;
+    return targetClass as TStringedSolarsystemClass;
+}
+
+/**
+ * Build the destination bookmark for a WH signature row.
+ *
+ * When the signature already has a connection (`connectionTarget`), the real
+ * destination system is used, exactly like the connection context menu's
+ * target bookmark — falling back to the guessed alias only when the target
+ * itself doesn't carry one yet.
+ *
+ * With no connection, the destination is unknown, so only the guessed alias
+ * and the signature-level tokens (sig/size/mass/life/wh) are known; the
+ * name/region/occupier tokens and an unidentified class stay blank rather than
+ * rendering "UNKNOWN".
+ *
+ * Two unscanned signatures in the same system will suggest the same next
+ * alias, since the guess only sees committed aliases on the map — an
+ * uncommitted suggestion on another row is invisible here. This mirrors the
+ * existing tracking-suggestion behaviour and is not solved here.
+ */
+export function buildSignatureBookmark(params: {
+    signature: Pick<TSignature, 'signature_id' | 'ship_size' | 'mass_status' | 'lifetime'> & {
+        wormhole?: { name?: string | null } | null;
+        signature_type?: { target_class?: string | null } | null;
+    };
+    currentSystem: { alias?: string | null };
+    connectionTarget?: BookmarkSystem | null;
+    aliases: string[];
+    formats: TBookmarkFormats & { bookmark_alias_scheme?: TAliasScheme };
+}): string {
+    const { signature, currentSystem, connectionTarget, aliases, formats } = params;
+
+    const context: TBookmarkContext = {
+        signatureId: signature.signature_id,
+        shipSize: signature.ship_size,
+        massStatus: signature.mass_status,
+        lifetime: signature.lifetime,
+        wormholeCode: signature.wormhole?.name,
+    };
+
+    if (connectionTarget) {
+        const system: BookmarkSystem = connectionTarget.alias
+            ? connectionTarget
+            : {
+                  ...connectionTarget,
+                  alias: guessNextAlias(currentSystem.alias, aliases, {
+                      scheme: formats.bookmark_alias_scheme,
+                      targetKind: aliasTargetKind(isWormholeClass(connectionTarget.solarsystem.class), connectionTarget.solarsystem.class),
+                  }),
+              };
+
+        return formatBookmarkName(system, context, formats);
+    }
+
+    const knownClass = knownTargetClass(signature.signature_type?.target_class);
+    const isTargetWormhole = !knownClass || isWormholeClass(knownClass);
+
+    const values: Record<TBookmarkToken, string> = {
+        alias: guessNextAlias(currentSystem.alias, aliases, {
+            scheme: formats.bookmark_alias_scheme,
+            targetKind: aliasTargetKind(isTargetWormhole, knownClass),
+        }),
+        sig: getSignatureIdShort(context.signatureId),
+        class: knownClass ? getBookmarkClassString({ class: knownClass, name: '' }) : '',
+        name: '',
+        region: '',
+        occupier: '',
+        size: context.shipSize ? (SHIP_SIZE_LABELS[context.shipSize] ?? '') : '',
+        wh: context.wormholeCode ?? '',
+        mass: context.massStatus ? (MASS_STATUS_LABELS[context.massStatus] ?? '') : '',
+        life: context.lifetime ? (LIFETIME_LABELS[context.lifetime] ?? '') : '',
+    };
+
+    const template = isTargetWormhole
+        ? formats.bookmark_format_wormhole || DEFAULT_BOOKMARK_FORMAT_WORMHOLE
+        : formats.bookmark_format_kspace || DEFAULT_BOOKMARK_FORMAT_KSPACE;
+
+    return renderBookmarkTemplate(template, values);
 }
