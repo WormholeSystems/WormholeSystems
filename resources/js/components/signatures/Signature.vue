@@ -214,6 +214,7 @@ const bookmark_name = computed(() =>
         connectionTarget: selected_connection.value?.target ?? null,
         aliases: map_solarsystems.value.map((s) => s.alias).filter((alias): alias is string => Boolean(alias)),
         formats: page.props.map,
+        detectReturn: true,
     }),
 );
 

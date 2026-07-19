@@ -1,5 +1,5 @@
 import { isWormholeClass } from '@/const/solarsystemClasses';
-import { aliasTargetKind, guessNextAlias, TAliasScheme } from '@/lib/alias';
+import { aliasTargetKind, guessNextAlias, isIgnoredAlias, TAliasScheme } from '@/lib/alias';
 import { TResolvedSolarsystem } from '@/pages/maps';
 import { TSignature, TStringedSolarsystemClass } from '@/types/models';
 
@@ -52,10 +52,46 @@ export const DEFAULT_BOOKMARK_FORMAT_WORMHOLE = '{alias} {sig} {class}';
 /** Default template for k-space systems, e.g. "Home HS ABC Jita The Forge". */
 export const DEFAULT_BOOKMARK_FORMAT_KSPACE = '{alias} {class} {sig} {name} {region}';
 
+/**
+ * Default template for a return (up-chain / home) connection, e.g. "*Home ABC C3".
+ * The leading "*" sorts the bookmark to the top of the in-game folder.
+ */
+export const DEFAULT_BOOKMARK_FORMAT_RETURN = '*{alias} {sig} {class}';
+
 export type TBookmarkFormats = {
     bookmark_format_wormhole?: string | null;
     bookmark_format_kspace?: string | null;
+    bookmark_format_return?: string | null;
+    bookmark_ignored_alias?: string;
 };
+
+/**
+ * Whether a bookmark naming `destinationAlias` is a return (up-chain / home) bookmark
+ * when the connection's other endpoint is aliased `oppositeAlias`. True when the
+ * destination is the map's ignored alias (e.g. "HOME"), or when the destination's
+ * alias is a prefix of the opposite endpoint's alias — chain aliases extend their
+ * parent's alias (see `guessNextAlias`), so an ancestor is always a prefix. A
+ * sibling branch (e.g. "B" seen from "AB") is not a prefix and stays forward.
+ *
+ * `oppositeAlias` is required for either branch: callers that omit it (an
+ * unconnected guess, or return detection intentionally turned off) never get the
+ * return format, regardless of what the destination is aliased.
+ */
+export function isReturnBookmark(
+    destinationAlias: string | null | undefined,
+    oppositeAlias: string | null | undefined,
+    ignoredAlias: string | null | undefined,
+): boolean {
+    const opposite = (oppositeAlias ?? '').trim();
+    if (!opposite) return false;
+
+    if (isIgnoredAlias(destinationAlias, ignoredAlias)) return true;
+
+    const destination = (destinationAlias ?? '').trim();
+    if (!destination) return false;
+
+    return opposite.toLowerCase().startsWith(destination.toLowerCase());
+}
 
 /**
  * Short class label used in connection bookmarks: "C3" for wormhole systems,
@@ -111,11 +147,23 @@ export function renderBookmarkTemplate(template: string, values: Record<TBookmar
  * Build the connection bookmark name for a system using the map's configured
  * templates (falling back to the defaults). `context` carries the connection
  * data the template can reference (signature id, size, mass, lifetime, code).
+ *
+ * `oppositeAlias` is the alias of the connection's other endpoint. When given, and
+ * `system` names the up-chain / return side of the connection (see
+ * `isReturnBookmark`), the return template replaces the wormhole/k-space choice.
+ * Omitting it (the default for existing callers) never selects the return format.
  */
-export function formatBookmarkName(system: BookmarkSystem, context: TBookmarkContext, formats?: TBookmarkFormats | null): string {
-    const template = isWormholeClass(system.solarsystem.class)
-        ? formats?.bookmark_format_wormhole || DEFAULT_BOOKMARK_FORMAT_WORMHOLE
-        : formats?.bookmark_format_kspace || DEFAULT_BOOKMARK_FORMAT_KSPACE;
+export function formatBookmarkName(
+    system: BookmarkSystem,
+    context: TBookmarkContext,
+    formats?: TBookmarkFormats | null,
+    oppositeAlias?: string | null,
+): string {
+    const template = isReturnBookmark(system.alias, oppositeAlias, formats?.bookmark_ignored_alias)
+        ? formats?.bookmark_format_return || DEFAULT_BOOKMARK_FORMAT_RETURN
+        : isWormholeClass(system.solarsystem.class)
+          ? formats?.bookmark_format_wormhole || DEFAULT_BOOKMARK_FORMAT_WORMHOLE
+          : formats?.bookmark_format_kspace || DEFAULT_BOOKMARK_FORMAT_KSPACE;
 
     return renderBookmarkTemplate(template, getBookmarkTokenValues(system, context));
 }
@@ -146,6 +194,12 @@ function knownTargetClass(targetClass: string | null | undefined): TStringedSola
  * alias, since the guess only sees committed aliases on the map — an
  * uncommitted suggestion on another row is invisible here. This mirrors the
  * existing tracking-suggestion behaviour and is not solved here.
+ *
+ * `detectReturn` is an explicit opt-in (default `false`): when `true`, a
+ * connected target that is up-chain / the ignored (home) alias renders with the
+ * return template instead of the forward wormhole/k-space one. It only applies to
+ * the connected branch — a guessed alias always extends the current system's
+ * prefix, so it can never itself be a return.
  */
 export function buildSignatureBookmark(params: {
     signature: Pick<TSignature, 'signature_id' | 'ship_size' | 'mass_status' | 'lifetime'> & {
@@ -156,8 +210,9 @@ export function buildSignatureBookmark(params: {
     connectionTarget?: BookmarkSystem | null;
     aliases: string[];
     formats: TBookmarkFormats & { bookmark_alias_scheme?: TAliasScheme };
+    detectReturn?: boolean;
 }): string {
-    const { signature, currentSystem, connectionTarget, aliases, formats } = params;
+    const { signature, currentSystem, connectionTarget, aliases, formats, detectReturn = false } = params;
 
     const context: TBookmarkContext = {
         signatureId: signature.signature_id,
@@ -175,10 +230,11 @@ export function buildSignatureBookmark(params: {
                   alias: guessNextAlias(currentSystem.alias, aliases, {
                       scheme: formats.bookmark_alias_scheme,
                       targetKind: aliasTargetKind(isWormholeClass(connectionTarget.solarsystem.class), connectionTarget.solarsystem.class),
+                      ignoredAlias: formats.bookmark_ignored_alias,
                   }),
               };
 
-        return formatBookmarkName(system, context, formats);
+        return formatBookmarkName(system, context, formats, detectReturn ? currentSystem.alias : undefined);
     }
 
     const knownClass = knownTargetClass(signature.signature_type?.target_class);
@@ -188,6 +244,7 @@ export function buildSignatureBookmark(params: {
         alias: guessNextAlias(currentSystem.alias, aliases, {
             scheme: formats.bookmark_alias_scheme,
             targetKind: aliasTargetKind(isTargetWormhole, knownClass),
+            ignoredAlias: formats.bookmark_ignored_alias,
         }),
         sig: getSignatureIdShort(context.signatureId),
         class: knownClass ? getBookmarkClassString({ class: knownClass, name: '' }) : '',
