@@ -34,7 +34,9 @@ final class MapResource extends JsonResource
             'constant_width_enabled' => $this->constant_width_enabled,
             'bookmark_format_wormhole' => $this->bookmark_format_wormhole,
             'bookmark_format_kspace' => $this->bookmark_format_kspace,
+            'bookmark_format_return' => $this->bookmark_format_return,
             'bookmark_alias_scheme' => $this->bookmark_alias_scheme,
+            'bookmark_ignored_alias' => $this->bookmark_ignored_alias,
             'map_solarsystems' => $this->mapSolarsystems->toResourceCollection(MapSolarsystemResource::class),
             'map_connections' => $this->mapConnections->toResourceCollection(MapConnectionResource::class),
             'owner' => [

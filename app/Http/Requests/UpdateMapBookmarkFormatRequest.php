@@ -33,8 +33,24 @@ final class UpdateMapBookmarkFormatRequest extends FormRequest
         return [
             'bookmark_format_wormhole' => ['sometimes', 'string', 'max:255', $this->onlyKnownTokens()],
             'bookmark_format_kspace' => ['sometimes', 'string', 'max:255', $this->onlyKnownTokens()],
+            'bookmark_format_return' => ['sometimes', 'string', 'max:255', $this->onlyKnownTokens()],
             'bookmark_alias_scheme' => ['sometimes', Rule::enum(AliasScheme::class)],
+            'bookmark_ignored_alias' => ['sometimes', 'string', 'max:255'],
         ];
+    }
+
+    /**
+     * The global `ConvertEmptyStringsToNull` middleware turns a submitted empty string into
+     * `null` before validation runs, but an empty ignored alias is a valid, meaningful value
+     * (it disables the feature) rather than an absent one. Coerce only `null` back to an empty
+     * string so `string` still validates and the column (not nullable) never receives `null`;
+     * any other non-string input is left for the `string` rule to reject.
+     */
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('bookmark_ignored_alias')) {
+            $this->merge(['bookmark_ignored_alias' => $this->input('bookmark_ignored_alias') ?? '']);
+        }
     }
 
     /**

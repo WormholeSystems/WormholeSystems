@@ -31,7 +31,9 @@ use function sprintf;
  * @property int|null $rally_solarsystem_id
  * @property string $bookmark_format_wormhole
  * @property string $bookmark_format_kspace
+ * @property string $bookmark_format_return
  * @property AliasScheme $bookmark_alias_scheme
+ * @property string $bookmark_ignored_alias
  * @property-read string|CarbonImmutable $created_at
  * @property-read string|CarbonImmutable $updated_at
  * @property-read Collection<int,MapSolarsystem> $mapSolarsystems

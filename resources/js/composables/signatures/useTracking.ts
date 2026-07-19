@@ -68,6 +68,7 @@ export function useTracking() {
             aliases: known_aliases.value,
             scheme: page.props.map.bookmark_alias_scheme,
             targetKind: aliasTargetKind(targetIsWormhole, target.class),
+            ignoredAlias: page.props.map.bookmark_ignored_alias,
         });
     });
 

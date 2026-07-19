@@ -1,4 +1,4 @@
-import { guessNextAlias, suggestAlias } from '@/lib/alias';
+import { guessNextAlias, isIgnoredAlias, suggestAlias } from '@/lib/alias';
 import { describe, expect, it } from 'vitest';
 
 describe('guessNextAlias (numeric, default)', () => {
@@ -65,6 +65,77 @@ describe('guessNextAlias (alphabetical)', () => {
 
     it('lets a wormhole branch off a k-space node', () => {
         expect(guessNextAlias('AH1', [], { scheme })).toBe('AH1A');
+    });
+});
+
+describe('guessNextAlias (ignoredAlias)', () => {
+    it('resets the prefix when the parent is the ignored alias, alphabetical scheme', () => {
+        expect(guessNextAlias('HOME', [], { scheme: 'alphabetical', ignoredAlias: 'HOME' })).toBe('A');
+        expect(guessNextAlias('HOME', ['A'], { scheme: 'alphabetical', ignoredAlias: 'HOME' })).toBe('B');
+    });
+
+    it('resets the prefix when the parent is the ignored alias, numeric scheme', () => {
+        expect(guessNextAlias('HOME', [], { ignoredAlias: 'HOME' })).toBe('1');
+        expect(guessNextAlias('HOME', ['1'], { ignoredAlias: 'HOME' })).toBe('2');
+    });
+
+    it('matches the ignored alias case-insensitively', () => {
+        expect(guessNextAlias('home', [], { scheme: 'alphabetical', ignoredAlias: 'HOME' })).toBe('A');
+        expect(guessNextAlias('Home', [], { scheme: 'alphabetical', ignoredAlias: 'HOME' })).toBe('A');
+    });
+
+    it('leaves a non-ignored parent unaffected', () => {
+        expect(guessNextAlias('AB', [], { scheme: 'alphabetical', ignoredAlias: 'HOME' })).toBe('ABA');
+        expect(guessNextAlias('AB', [], { ignoredAlias: 'HOME' })).toBe('AB1');
+    });
+
+    it('is a no-op when ignoredAlias is empty', () => {
+        expect(guessNextAlias('HOME', [], { scheme: 'alphabetical', ignoredAlias: '' })).toBe('HOMEA');
+        expect(guessNextAlias('HOME', [], { ignoredAlias: '' })).toBe('HOME1');
+    });
+});
+
+describe('guessNextAlias (case handling)', () => {
+    it('upper-cases the suggestion even for a lowercase parent alias', () => {
+        expect(guessNextAlias('a', [], { scheme: 'alphabetical' })).toBe('AA');
+        expect(guessNextAlias('foo', [])).toBe('FOO1');
+    });
+
+    it('counts lowercase existing aliases as taken wormhole letters', () => {
+        expect(guessNextAlias('A', ['aa', 'Ab'], { scheme: 'alphabetical' })).toBe('AC');
+    });
+
+    it('counts lowercase existing aliases as taken k-space indexes', () => {
+        expect(guessNextAlias('a', ['ah1'], { scheme: 'alphabetical', targetKind: 'h' })).toBe('AH2');
+    });
+
+    it('counts lowercase existing aliases as taken numeric children', () => {
+        expect(guessNextAlias('foo', ['foo1', 'FOO2'])).toBe('FOO3');
+    });
+});
+
+describe('isIgnoredAlias', () => {
+    it('matches the exact, trimmed, case-insensitive alias', () => {
+        expect(isIgnoredAlias('HOME', 'HOME')).toBe(true);
+        expect(isIgnoredAlias('home', 'HOME')).toBe(true);
+        expect(isIgnoredAlias(' Home ', 'home')).toBe(true);
+    });
+
+    it('does not match a different alias', () => {
+        expect(isIgnoredAlias('AB', 'HOME')).toBe(false);
+        expect(isIgnoredAlias('HOMEA', 'HOME')).toBe(false);
+    });
+
+    it('never matches when the alias is empty', () => {
+        expect(isIgnoredAlias('', 'HOME')).toBe(false);
+        expect(isIgnoredAlias(null, 'HOME')).toBe(false);
+        expect(isIgnoredAlias(undefined, 'HOME')).toBe(false);
+    });
+
+    it('never matches when the ignored alias is empty (feature disabled)', () => {
+        expect(isIgnoredAlias('HOME', '')).toBe(false);
+        expect(isIgnoredAlias('HOME', null)).toBe(false);
+        expect(isIgnoredAlias('HOME', undefined)).toBe(false);
     });
 });
 

@@ -122,7 +122,9 @@ export type TMap = {
     constant_width_enabled: boolean;
     bookmark_format_wormhole: string;
     bookmark_format_kspace: string;
+    bookmark_format_return: string;
     bookmark_alias_scheme: TAliasScheme;
+    bookmark_ignored_alias: string;
     map_solarsystems: TMapSolarsystem[];
     map_connections: TMapConnection[];
 };
@@ -319,7 +321,9 @@ export type TMapSummary = {
     constant_width_enabled: boolean;
     bookmark_format_wormhole: string;
     bookmark_format_kspace: string;
+    bookmark_format_return: string;
     bookmark_alias_scheme: TAliasScheme;
+    bookmark_ignored_alias: string;
     is_public: boolean;
     role: 'viewer' | 'member' | 'manager' | 'owner' | null;
     map_solarsystems_count: number;

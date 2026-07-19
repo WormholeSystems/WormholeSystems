@@ -1,4 +1,4 @@
-import { buildSignatureBookmark, formatBookmarkName, TBookmarkFormats } from '@/lib/bookmark';
+import { buildSignatureBookmark, formatBookmarkName, isReturnBookmark, TBookmarkFormats } from '@/lib/bookmark';
 import { describe, expect, it } from 'vitest';
 
 const NUMERIC_FORMATS: TBookmarkFormats = {};
@@ -209,5 +209,124 @@ describe('buildSignatureBookmark (class token)', () => {
         });
 
         expect(name).toBe(`1 ABC ${label}`);
+    });
+});
+
+describe('isReturnBookmark', () => {
+    it('is true when the destination alias is a substring of the opposite alias (up-chain)', () => {
+        expect(isReturnBookmark('A', 'AB', null)).toBe(true);
+    });
+
+    it('is false when the opposite alias is a substring of the destination (down-chain)', () => {
+        expect(isReturnBookmark('AB', 'A', null)).toBe(false);
+    });
+
+    it('is false for a sibling branch whose alias is a non-prefix substring of the opposite alias', () => {
+        expect(isReturnBookmark('B', 'AB', null)).toBe(false);
+        expect(isReturnBookmark('1', '21', null)).toBe(false);
+    });
+
+    it('is true when the destination alias is the ignored alias, regardless of the opposite alias', () => {
+        expect(isReturnBookmark('HOME', 'AB', 'HOME')).toBe(true);
+    });
+
+    it('is false when either alias is empty', () => {
+        expect(isReturnBookmark('', 'AB', null)).toBe(false);
+        expect(isReturnBookmark('A', '', null)).toBe(false);
+        expect(isReturnBookmark(null, null, null)).toBe(false);
+    });
+
+    it('is false for an ignored-alias destination when the opposite alias is omitted', () => {
+        expect(isReturnBookmark('HOME', null, 'HOME')).toBe(false);
+        expect(isReturnBookmark('HOME', '', 'HOME')).toBe(false);
+    });
+});
+
+describe('formatBookmarkName (oppositeAlias / return format)', () => {
+    const system = { alias: 'A', solarsystem: { class: '3' as const, name: 'J123456' } };
+    const context = { signatureId: 'ABC-123', shipSize: null, massStatus: null, lifetime: 'healthy' as const, wormholeCode: null };
+    const formats: TBookmarkFormats = { bookmark_format_wormhole: '{alias} {sig} {class}', bookmark_format_return: '*{alias} {sig} {class}' };
+
+    it('renders the return template when the destination is up-chain of the opposite alias', () => {
+        expect(formatBookmarkName(system, context, formats, 'AB')).toBe('*A ABC C3');
+    });
+
+    it('renders the return template when the destination is the ignored alias', () => {
+        const home = { ...system, alias: 'HOME' };
+        expect(formatBookmarkName(home, context, { ...formats, bookmark_ignored_alias: 'HOME' }, 'AB')).toBe('*HOME ABC C3');
+    });
+
+    it('renders the forward wormhole/k-space template when not a return', () => {
+        expect(formatBookmarkName(system, context, formats, 'B')).toBe('A ABC C3');
+    });
+
+    it('never selects the return format when oppositeAlias is omitted (legacy callers)', () => {
+        expect(formatBookmarkName(system, context, formats)).toBe('A ABC C3');
+    });
+});
+
+describe('buildSignatureBookmark (detectReturn)', () => {
+    it('renders the return template for an up-chain connected target when detectReturn is true', () => {
+        const name = buildSignatureBookmark({
+            signature: baseSignature(),
+            currentSystem: { alias: 'AB' },
+            connectionTarget: { alias: 'A', occupier_alias: null, solarsystem: { class: '3', name: 'J1' } },
+            aliases: [],
+            formats: { ...NUMERIC_FORMATS, bookmark_format_return: '*{alias} {sig} {class}' },
+            detectReturn: true,
+        });
+
+        expect(name).toBe('*A ABC C3');
+    });
+
+    it('renders the return template for a connected target named the ignored (home) alias when detectReturn is true', () => {
+        const name = buildSignatureBookmark({
+            signature: baseSignature(),
+            currentSystem: { alias: 'AB' },
+            connectionTarget: { alias: 'HOME', occupier_alias: null, solarsystem: { class: '3', name: 'J1' } },
+            aliases: [],
+            formats: { ...NUMERIC_FORMATS, bookmark_format_return: '*{alias} {sig} {class}', bookmark_ignored_alias: 'HOME' },
+            detectReturn: true,
+        });
+
+        expect(name).toBe('*HOME ABC C3');
+    });
+
+    it('renders the normal forward template for a down-chain target when detectReturn is true', () => {
+        const name = buildSignatureBookmark({
+            signature: baseSignature(),
+            currentSystem: { alias: 'A' },
+            connectionTarget: { alias: 'AB', occupier_alias: null, solarsystem: { class: '3', name: 'J1' } },
+            aliases: [],
+            formats: { ...NUMERIC_FORMATS, bookmark_format_return: '*{alias} {sig} {class}' },
+            detectReturn: true,
+        });
+
+        expect(name).toBe('AB ABC C3');
+    });
+
+    it('stays forward for an up-chain / home target when detectReturn is omitted (the auto-copy path)', () => {
+        const name = buildSignatureBookmark({
+            signature: baseSignature(),
+            currentSystem: { alias: 'AB' },
+            connectionTarget: { alias: 'HOME', occupier_alias: null, solarsystem: { class: '3', name: 'J1' } },
+            aliases: [],
+            formats: { ...NUMERIC_FORMATS, bookmark_format_return: '*{alias} {sig} {class}', bookmark_ignored_alias: 'HOME' },
+        });
+
+        expect(name).toBe('HOME ABC C3');
+    });
+
+    it('stays forward for an up-chain target when detectReturn is explicitly false', () => {
+        const name = buildSignatureBookmark({
+            signature: baseSignature(),
+            currentSystem: { alias: 'AB' },
+            connectionTarget: { alias: 'A', occupier_alias: null, solarsystem: { class: '3', name: 'J1' } },
+            aliases: [],
+            formats: { ...NUMERIC_FORMATS, bookmark_format_return: '*{alias} {sig} {class}' },
+            detectReturn: false,
+        });
+
+        expect(name).toBe('A ABC C3');
     });
 });

@@ -28,6 +28,17 @@ enum BookmarkToken: string
     public const string DEFAULT_KSPACE = '{alias} {class} {sig} {name} {region}';
 
     /**
+     * The default bookmark format for a return (up-chain / home) connection (e.g. "*Home ABC C3").
+     * The leading "*" sorts the bookmark to the top of the in-game folder.
+     */
+    public const string DEFAULT_RETURN = '*{alias} {sig} {class}';
+
+    /**
+     * The default alias that is excluded as a suggestion prefix (e.g. the home system).
+     */
+    public const string DEFAULT_IGNORED_ALIAS = 'HOME';
+
+    /**
      * Every placeholder name that may appear inside a bookmark format template.
      *
      * @return list<string>
