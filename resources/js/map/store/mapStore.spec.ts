@@ -61,6 +61,7 @@ function mapPayload(systems: TMapSolarsystem[], connections: TMapConnection[], o
         constant_width_enabled: false,
         bookmark_format_wormhole: '',
         bookmark_format_kspace: '',
+        bookmark_alias_scheme: 'numeric',
         map_solarsystems: systems,
         map_connections: connections,
         ...overrides,

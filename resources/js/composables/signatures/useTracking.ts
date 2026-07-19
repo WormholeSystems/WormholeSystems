@@ -4,7 +4,7 @@ import { useMapUserSettings } from '@/composables/useMapUserSettings';
 import { useShowMap } from '@/composables/useShowMap';
 import { useStaticData } from '@/composables/useStaticData';
 import { useTrackingSystems } from '@/composables/useTrackingSystems';
-import { suggestAlias } from '@/lib/alias';
+import { TAliasTargetKind, suggestAlias } from '@/lib/alias';
 import { formatBookmarkName } from '@/lib/bookmark';
 import { groupSignatureOptions } from '@/lib/signatureCompatibility';
 import { isWormholeSystem } from '@/lib/solarsystem';
@@ -12,6 +12,14 @@ import { createTracking, updateMapUserSettings, useMapSolarsystems } from '@/map
 import { TLifetimeStatus, TMassStatus, TShipSize, TSignature } from '@/types/models';
 import { computed, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
+
+const KSPACE_ALIAS_TARGET_KINDS: readonly string[] = ['h', 'l', 'n', 'p'];
+
+/** The reserved k-space letter for a target's class, or undefined for wormholes/unrecognized classes. */
+function aliasTargetKind(isTargetWormhole: boolean, targetClass: string): TAliasTargetKind | undefined {
+    if (isTargetWormhole) return 'wormhole';
+    return KSPACE_ALIAS_TARGET_KINDS.includes(targetClass) ? (targetClass as TAliasTargetKind) : undefined;
+}
 
 export function useTracking() {
     const character = useActiveMapCharacter();
@@ -57,11 +65,15 @@ export function useTracking() {
         const target = target_solarsystem.value;
         if (!origin || !target) return null;
 
+        const targetIsWormhole = isWormholeSystem(target);
+
         return suggestAlias({
             parentAlias: origin.alias,
-            targetIsWormhole: isWormholeSystem(target),
+            targetIsWormhole,
             originIsWormhole: isWormholeSystem(origin.solarsystem),
             aliases: map_solarsystems.value.map((s) => s.alias).filter((alias): alias is string => Boolean(alias)),
+            scheme: page.props.map.bookmark_alias_scheme,
+            targetKind: aliasTargetKind(targetIsWormhole, target.class),
         });
     });
 

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\AliasScheme;
 use App\Enums\BookmarkToken;
 use App\Enums\Permission;
 use App\Models\Character;
@@ -26,7 +27,60 @@ it('defaults a new map to the default bookmark formats', function () {
     $map = Map::factory()->create()->fresh();
 
     expect($map->bookmark_format_wormhole)->toBe(BookmarkToken::DEFAULT_WORMHOLE)
-        ->and($map->bookmark_format_kspace)->toBe(BookmarkToken::DEFAULT_KSPACE);
+        ->and($map->bookmark_format_kspace)->toBe(BookmarkToken::DEFAULT_KSPACE)
+        ->and($map->bookmark_alias_scheme)->toBe(AliasScheme::Numeric);
+});
+
+it('lets a manager switch the alias scheme to alphabetical', function () {
+    $map = Map::factory()->create();
+
+    actingAs(bookmarkFormatUser($map, Permission::Manager))
+        ->put("/maps/{$map->slug}/bookmark-format", ['bookmark_alias_scheme' => 'alphabetical'])
+        ->assertRedirect()
+        ->assertSessionHasNoErrors();
+
+    expect($map->fresh()->bookmark_alias_scheme)->toBe(AliasScheme::Alphabetical);
+});
+
+it('forbids a member from updating the alias scheme', function () {
+    $map = Map::factory()->create();
+
+    actingAs(bookmarkFormatUser($map, Permission::Member))
+        ->put("/maps/{$map->slug}/bookmark-format", ['bookmark_alias_scheme' => 'alphabetical'])
+        ->assertForbidden();
+
+    expect($map->fresh()->bookmark_alias_scheme)->toBe(AliasScheme::Numeric);
+});
+
+it('forbids a viewer from updating the alias scheme', function () {
+    $map = Map::factory()->create();
+
+    actingAs(bookmarkFormatUser($map, Permission::Viewer))
+        ->put("/maps/{$map->slug}/bookmark-format", ['bookmark_alias_scheme' => 'alphabetical'])
+        ->assertForbidden();
+});
+
+it('rejects an invalid alias scheme value', function () {
+    $map = Map::factory()->create();
+
+    actingAs(bookmarkFormatUser($map, Permission::Manager))
+        ->put("/maps/{$map->slug}/bookmark-format", ['bookmark_alias_scheme' => 'roman-numerals'])
+        ->assertSessionHasErrors('bookmark_alias_scheme');
+
+    expect($map->fresh()->bookmark_alias_scheme)->toBe(AliasScheme::Numeric);
+});
+
+it('exposes the alias scheme to the mapping settings page', function () {
+    $map = Map::factory()->create(['bookmark_alias_scheme' => AliasScheme::Alphabetical]);
+    Character::factory()->has(MapAccess::factory(['is_owner' => true])->for($map))->create();
+
+    actingAs(bookmarkFormatUser($map, Permission::Manager))
+        ->get("/maps/{$map->slug}/settings/mapping")
+        ->assertSuccessful()
+        ->assertInertia(fn ($page) => $page
+            ->where('map.bookmark_alias_scheme', AliasScheme::Alphabetical->value)
+            ->etc()
+        );
 });
 
 it('lets a manager update the bookmark formats', function () {

@@ -35,7 +35,7 @@ If both hold, anyone can drop into the chain and read it instantly. See [why we 
 
 ## The parts
 
-- **Number** — the system's sequential [path number](/documentation/bookmarking/why-this-system). Holes are numbered per system and each one _extends its parent_: home's holes are `1`, `2`, `3`; the holes inside the `2` are `21`, `22`, `23`. The number is both a unique handle and the route to the hole.
+- **Number** — the system's sequential [path number](/documentation/bookmarking/why-this-system). Holes are numbered per system and each one _extends its parent_: home's holes are `1`, `2`, `3`; the holes inside the `2` are `21`, `22`, `23`. The number is both a unique handle and the route to the hole. Prefer letters instead? See the [alternative alias convention](/documentation/bookmarking/alternative-alias-convention).
 - **Signature** — the **letters only**, no numbers (`ABC`, not `ABC-123`).
 - **Class** — `C1`–`C6` for wormholes; `HS` / `LS` / `NS` for known space.
 

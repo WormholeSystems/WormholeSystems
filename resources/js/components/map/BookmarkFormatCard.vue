@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { TAliasScheme } from '@/lib/alias';
 import {
     BOOKMARK_TOKENS,
     DEFAULT_BOOKMARK_FORMAT_KSPACE,
@@ -19,6 +20,14 @@ const { map, canEdit } = defineProps<{
     map: TMapSummary;
     canEdit: boolean;
 }>();
+
+const aliasSchemeOptions: { value: TAliasScheme; label: string; example: string }[] = [
+    { value: 'numeric', label: 'Numeric', example: '11, 12, 13' },
+    { value: 'alphabetical', label: 'Alphabetical', example: 'AA, AB, AH1' },
+];
+
+const aliasScheme = ref<TAliasScheme>(map.bookmark_alias_scheme);
+const aliasSchemeError = ref<string | null>(null);
 
 type FieldKey = 'wormhole' | 'kspace';
 
@@ -78,7 +87,12 @@ const errors = reactive<Record<FieldKey, string | null>>({ wormhole: null, kspac
 
 const saving = ref(false);
 
-const dirty = computed(() => drafts.wormhole !== map.bookmark_format_wormhole || drafts.kspace !== map.bookmark_format_kspace);
+const dirty = computed(
+    () =>
+        drafts.wormhole !== map.bookmark_format_wormhole ||
+        drafts.kspace !== map.bookmark_format_kspace ||
+        aliasScheme.value !== map.bookmark_alias_scheme,
+);
 
 function preview(field: Field): string {
     const rendered = renderBookmarkTemplate(drafts[field.key], field.sample);
@@ -94,7 +108,7 @@ function save(): void {
 
     router.put(
         MapBookmarkFormatController.update(map.slug).url,
-        { bookmark_format_wormhole: drafts.wormhole, bookmark_format_kspace: drafts.kspace },
+        { bookmark_format_wormhole: drafts.wormhole, bookmark_format_kspace: drafts.kspace, bookmark_alias_scheme: aliasScheme.value },
         {
             preserveState: true,
             preserveScroll: true,
@@ -102,16 +116,26 @@ function save(): void {
             onSuccess: () => {
                 errors.wormhole = null;
                 errors.kspace = null;
+                aliasSchemeError.value = null;
             },
             onError: (bag) => {
                 errors.wormhole = bag.bookmark_format_wormhole ?? null;
                 errors.kspace = bag.bookmark_format_kspace ?? null;
+                aliasSchemeError.value = bag.bookmark_alias_scheme ?? null;
             },
             onFinish: () => {
                 saving.value = false;
             },
         },
     );
+}
+
+function setAliasScheme(scheme: TAliasScheme): void {
+    if (!canEdit) {
+        return;
+    }
+
+    aliasScheme.value = scheme;
 }
 
 function insertToken(field: Field, token: TBookmarkToken): void {
@@ -151,6 +175,28 @@ function resetToDefault(field: Field): void {
             </CardDescription>
         </CardHeader>
         <CardContent class="space-y-8">
+            <div class="space-y-2">
+                <Label class="text-sm font-medium">Alias scheme</Label>
+
+                <div class="grid gap-2 sm:grid-cols-2">
+                    <button
+                        v-for="option in aliasSchemeOptions"
+                        :key="option.value"
+                        type="button"
+                        class="flex items-center justify-between gap-3 rounded-lg border p-3 text-left transition-colors"
+                        :class="aliasScheme === option.value ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/40'"
+                        :disabled="!canEdit"
+                        @click="setAliasScheme(option.value)"
+                    >
+                        <span class="text-sm font-medium">{{ option.label }}</span>
+                        <span class="font-mono text-xs text-muted-foreground">{{ option.example }}</span>
+                    </button>
+                </div>
+
+                <p v-if="aliasSchemeError" class="text-sm text-destructive">{{ aliasSchemeError }}</p>
+                <p class="text-xs text-muted-foreground">How the mapper suggests the next chain alias when you jump to a new system.</p>
+            </div>
+
             <div v-for="field in fields" :key="field.key" class="space-y-2">
                 <Label class="text-sm font-medium">{{ field.label }}</Label>
 
