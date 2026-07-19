@@ -16,6 +16,14 @@ type TGuessNextAliasOptions = {
     targetKind?: TAliasTargetKind;
 };
 
+const KSPACE_ALIAS_TARGET_KINDS: readonly string[] = ['h', 'l', 'n', 'p'];
+
+/** The reserved k-space letter for a target's class, or undefined for wormholes/unrecognized classes. */
+export function aliasTargetKind(isTargetWormhole: boolean, targetClass: string | null | undefined): TAliasTargetKind | undefined {
+    if (isTargetWormhole) return 'wormhole';
+    return targetClass && KSPACE_ALIAS_TARGET_KINDS.includes(targetClass) ? (targetClass as TAliasTargetKind) : undefined;
+}
+
 /**
  * The alphabetical scheme's 22-letter alphabet: A-Z with H, L, N and P removed,
  * since those are reserved for k-space exits (high/low/null-sec, Pochven).

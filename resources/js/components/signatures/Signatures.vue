@@ -189,7 +189,7 @@ function createNewSignature() {
                     <ArrowUp v-if="sortPreferences.column === 'age' && sortPreferences.direction === 'asc'" class="size-3" />
                     <ArrowDown v-if="sortPreferences.column === 'age' && sortPreferences.direction === 'desc'" class="size-3" />
                 </button>
-                <span class="w-6 shrink-0"></span>
+                <span class="w-14 shrink-0"></span>
             </div>
 
             <!-- Signature rows -->

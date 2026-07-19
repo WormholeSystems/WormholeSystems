@@ -17,19 +17,22 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useMapUserSettings } from '@/composables/useMapUserSettings';
 import usePermission from '@/composables/usePermission';
+import { useShowMap } from '@/composables/useShowMap';
 import { getTypesByCategory, signatureCategories } from '@/const/signatures';
 import { classSortWeight } from '@/const/solarsystemClasses';
+import { buildSignatureBookmark } from '@/lib/bookmark';
 import { Data } from '@/lib/data';
 import { formatDateToISO } from '@/lib/utils';
-import { deleteSignature, TProcessedConnection, updateMapConnection, updateSignature } from '@/map/api';
+import { deleteSignature, TProcessedConnection, updateMapConnection, updateSignature, useMapSolarsystems } from '@/map/api';
 import type { TResolvedSelectedMapSolarsystem } from '@/pages/maps';
 import { TSignature } from '@/types/models';
 import { UTCDate } from '@date-fns/utc';
 import type { FormDataConvertible } from '@inertiajs/core';
 import { syncRefs } from '@vueuse/core';
-import { Check, Cloud, Database, Fan, Gem, Heart, Landmark, MoreVertical, Shield, Swords } from 'lucide-vue-next';
+import { Check, Cloud, Copy, Database, Fan, Gem, Heart, Landmark, MoreVertical, Shield, Swords } from 'lucide-vue-next';
 import { AcceptableValue } from 'reka-ui';
 import { type Component, computed, nextTick, ref, toRef } from 'vue';
+import { toast } from 'vue-sonner';
 
 const { signature, unconnected_connections, connected_connections, selected_map_solarsystem } = defineProps<{
     signature: TSignature;
@@ -198,6 +201,26 @@ function handleTogglePreserveMass() {
     if (!selected_connection.value) return;
     updateMapConnection(selected_connection.value, { preserve_mass: !selected_connection.value.preserve_mass });
 }
+
+const page = useShowMap();
+const { map_solarsystems } = useMapSolarsystems();
+
+// The destination bookmark for this hole: the real connection target when one
+// is set, otherwise the auto-suggested next chain alias.
+const bookmark_name = computed(() =>
+    buildSignatureBookmark({
+        signature,
+        currentSystem: { alias: selected_map_solarsystem.alias },
+        connectionTarget: selected_connection.value?.target ?? null,
+        aliases: map_solarsystems.value.map((s) => s.alias).filter((alias): alias is string => Boolean(alias)),
+        formats: page.props.map,
+    }),
+);
+
+function copyBookmark() {
+    navigator.clipboard.writeText(bookmark_name.value);
+    toast.success('Copied bookmark to clipboard', { description: bookmark_name.value });
+}
 </script>
 
 <template>
@@ -298,7 +321,11 @@ function handleTogglePreserveMass() {
         </div>
 
         <!-- Actions -->
-        <div class="w-6 shrink-0">
+        <div class="flex w-14 shrink-0 items-center justify-end gap-1">
+            <Button v-if="isWormhole" variant="ghost" size="icon" class="size-6 text-muted-foreground hover:text-foreground" @click="copyBookmark">
+                <Copy class="size-3.5" />
+            </Button>
+
             <DropdownMenu v-if="can_write">
                 <DropdownMenuTrigger as-child>
                     <Button variant="ghost" size="icon" class="size-6 text-muted-foreground hover:text-foreground">
