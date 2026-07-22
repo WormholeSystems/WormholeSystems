@@ -23,7 +23,7 @@ final readonly class ListDiscordMapAlertsAction
         $isManager = Gate::forUser($account->user)->allows('manageAccess', $map);
         $alerts = $map->mapAlerts()
             ->when(! $isManager, fn ($query) => $query->shared())
-            ->with(['creator:id,name', 'map:id,name', 'targetSolarsystem:id,name'])
+            ->with(['creator:id,name', 'map:id,name', 'targetSolarsystem:id,name', 'originSolarsystem:id,name'])
             ->latest()
             ->get();
 

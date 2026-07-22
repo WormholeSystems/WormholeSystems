@@ -26,18 +26,30 @@ trait BuildsCommandOptions
         return Option::string('alert')->description('Alert')->required()->autocomplete();
     }
 
+    private function fromOption(): Option
+    {
+        return Option::string('from')->description('Starting point system (defaults to the chain)')->autocomplete();
+    }
+
+    private function mentionOption(): Option
+    {
+        return Option::string('mention')
+            ->description('Who to ping')
+            ->required()
+            ->choice('Nobody', 'none')
+            ->choice('Me', 'creator')
+            ->choice('A role', 'role')
+            ->choice('Everyone', 'everyone');
+    }
+
+    private function roleOption(): Option
+    {
+        return Option::role('role')->description('Role to ping');
+    }
+
     /** @return Option[] */
     private function mentionOptions(): array
     {
-        return [
-            Option::string('mention')
-                ->description('Who to ping')
-                ->required()
-                ->choice('Nobody', 'none')
-                ->choice('Me', 'creator')
-                ->choice('A role', 'role')
-                ->choice('Everyone', 'everyone'),
-            Option::role('role')->description('Role to ping'),
-        ];
+        return [$this->mentionOption(), $this->roleOption()];
     }
 }

@@ -16,6 +16,12 @@ final readonly class ProximityAlertCommand implements AlertVariantDefinition
             $this->jumpsOption(),
         );
 
-        return $withMentions ? $subCommand->options(...$this->mentionOptions()) : $subCommand;
+        if ($withMentions) {
+            $subCommand->options($this->mentionOption());
+        }
+
+        $subCommand->options($this->fromOption());
+
+        return $withMentions ? $subCommand->options($this->roleOption()) : $subCommand;
     }
 }

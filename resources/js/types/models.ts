@@ -354,6 +354,8 @@ export type TMapAlert = {
     type: TMapAlertType;
     target_solarsystem_id: number | null;
     target_solarsystem?: { id: number; name: string } | null;
+    origin_solarsystem_id: number | null;
+    origin_solarsystem?: { id: number; name: string } | null;
     ship_type: TJumpShipType | null;
     jdc_level: number | null;
     include_highsec: boolean;

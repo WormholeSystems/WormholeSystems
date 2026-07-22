@@ -6,6 +6,7 @@ use App\Enums\MapAlertMentionMode;
 use App\Jobs\MapAlerts\EvaluateMapAlertsJob;
 use App\Models\Map;
 use App\Models\MapAlert;
+use App\Models\MapConnection;
 use App\Models\MapSolarsystem;
 use App\Models\MapWebhook;
 use App\Models\MapWebhookRole;
@@ -195,4 +196,46 @@ it('does not deliver a webhook alert twice for the same placement', function () 
 
     Http::assertSentCount(1);
     expect($alert->deliveries()->count())->toBe(1);
+});
+
+it('fires an origin based proximity alert when the chain creates the route', function () {
+    $originSid = makeSolarsystem(30009025);
+    $targetSid = makeSolarsystem(30009026);
+    $map = Map::factory()->create();
+    $originPlacement = MapSolarsystem::factory()->for($map)->create(['solarsystem_id' => $originSid]);
+    $alert = proximityAlert($map, [
+        'target_solarsystem_id' => $targetSid,
+        'origin_solarsystem_id' => $originSid,
+        'max_jumps' => 3,
+    ]);
+
+    $targetPlacement = MapSolarsystem::factory()->for($map)->create(['solarsystem_id' => $targetSid]);
+    MapConnection::factory()->create([
+        'map_id' => $map->id,
+        'from_map_solarsystem_id' => $originPlacement->id,
+        'to_map_solarsystem_id' => $targetPlacement->id,
+    ]);
+
+    app()->call([new EvaluateMapAlertsJob($targetPlacement->id), 'handle']);
+
+    Http::assertSentCount(1);
+    Http::assertSent(fn ($request): bool => str_contains((string) $request['embeds'][0]['description'], 'within range of'));
+    expect($alert->refresh()->last_fired_at)->not->toBeNull();
+});
+
+it('does not fire an origin based proximity alert for an unrelated placement', function () {
+    $originSid = makeSolarsystem(30009027);
+    $unrelatedSid = makeSolarsystem(30009028);
+    $map = Map::factory()->create();
+    MapSolarsystem::factory()->for($map)->create(['solarsystem_id' => $originSid]);
+    proximityAlert($map, [
+        'target_solarsystem_id' => $originSid,
+        'origin_solarsystem_id' => $originSid,
+        'max_jumps' => 3,
+    ]);
+
+    $unrelated = MapSolarsystem::factory()->for($map)->create(['solarsystem_id' => $unrelatedSid]);
+    app()->call([new EvaluateMapAlertsJob($unrelated->id), 'handle']);
+
+    Http::assertNothingSent();
 });

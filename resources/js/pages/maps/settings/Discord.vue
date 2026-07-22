@@ -173,6 +173,7 @@ type TAlertForm = {
     mention_mode: 'none' | 'everyone';
     type: TMapAlertType;
     target_solarsystem_id: number;
+    origin_solarsystem_id: number;
     ship_type: TJumpShipType;
     jdc_level: number;
     include_highsec: boolean;
@@ -190,6 +191,7 @@ function emptyAlertForm(type: TMapAlertType = 'proximity'): TAlertForm {
         mention_mode: 'none',
         type,
         target_solarsystem_id: 0,
+        origin_solarsystem_id: 0,
         ship_type: 'dreadnought',
         jdc_level: 5,
         include_highsec: false,
@@ -231,11 +233,13 @@ const alertForm = useForm<TAlertForm>(emptyAlertForm());
 const alertDialogOpen = ref(false);
 const alertDialogTab = ref<TAlertDialogTab>('trigger');
 const search = ref('');
+const originSearch = ref('');
 const editingAlert = computed(() => alertForm.id !== null);
 const alertErrors = computed(() => Object.values(alertForm.errors));
 const isKillmail = computed(() => alertForm.type === 'killmail');
 const isJumpRange = computed(() => alertForm.type === 'jump_range');
 const selectedTarget = computed(() => findSolarsystem(alertForm.target_solarsystem_id));
+const selectedOrigin = computed(() => findSolarsystem(alertForm.origin_solarsystem_id));
 const formJumpRangeLy = computed(() => maxRangeLy(alertForm.ship_type, alertForm.jdc_level));
 
 const filteredSolarsystems = computed(() => {
@@ -249,6 +253,22 @@ const filteredSolarsystems = computed(() => {
         (solarsystem) => solarsystem.name,
     );
 });
+
+const filteredOriginSolarsystems = computed(() => {
+    const query = originSearch.value.trim().toLowerCase();
+    if (!query) return [] as TStaticSolarsystem[];
+    return takeRanked(
+        solarsystems.value,
+        query,
+        MAX_SEARCH_RESULTS,
+        (solarsystem) => [solarsystem.name],
+        (solarsystem) => solarsystem.name,
+    );
+});
+
+const origin_search_sections = computed<TComboboxSection<TStaticSolarsystem>[]>(() => [
+    { key: 'results', heading: 'Search Results', items: filteredOriginSolarsystems.value },
+]);
 
 const search_sections = computed<TComboboxSection<TStaticSolarsystem>[]>(() => [
     { key: 'results', heading: 'Search Results', items: filteredSolarsystems.value },
@@ -268,10 +288,17 @@ watch(search, (value) => {
     }
 });
 
+watch(originSearch, (value) => {
+    if (selectedOrigin.value && value.trim() !== selectedOrigin.value.name) {
+        alertForm.origin_solarsystem_id = 0;
+    }
+});
+
 function openCreateAlert() {
     alertForm.clearErrors();
     Object.assign(alertForm, emptyAlertForm());
     search.value = '';
+    originSearch.value = '';
     alertDialogTab.value = 'trigger';
     alertDialogOpen.value = true;
 }
@@ -284,6 +311,7 @@ function openEditAlert(alert: TMapAlert) {
         map_webhook_role_id: alert.map_webhook_role_id,
         mention_mode: alert.mention_mode === 'everyone' ? 'everyone' : 'none',
         target_solarsystem_id: alert.target_solarsystem_id ?? 0,
+        origin_solarsystem_id: alert.origin_solarsystem_id ?? 0,
         ship_type: alert.ship_type ?? 'dreadnought',
         jdc_level: alert.jdc_level ?? 5,
         include_highsec: alert.include_highsec,
@@ -293,6 +321,7 @@ function openEditAlert(alert: TMapAlert) {
         is_active: alert.is_active,
     });
     search.value = findSolarsystem(alert.target_solarsystem_id)?.name ?? '';
+    originSearch.value = findSolarsystem(alert.origin_solarsystem_id)?.name ?? '';
     alertDialogTab.value = 'trigger';
     alertDialogOpen.value = true;
 }
@@ -300,6 +329,11 @@ function openEditAlert(alert: TMapAlert) {
 function handleTargetSelect(solarsystem: TStaticSolarsystem) {
     alertForm.target_solarsystem_id = solarsystem.id;
     search.value = solarsystem.name;
+}
+
+function handleOriginSelect(solarsystem: TStaticSolarsystem) {
+    alertForm.origin_solarsystem_id = solarsystem.id;
+    originSearch.value = solarsystem.name;
 }
 
 function submitAlert() {
@@ -311,6 +345,7 @@ function submitAlert() {
         mention_mode: alertForm.mention_mode,
         type: alertForm.type,
         target_solarsystem_id: isKillmail.value ? null : alertForm.target_solarsystem_id,
+        origin_solarsystem_id: alertForm.type === 'proximity' && alertForm.origin_solarsystem_id > 0 ? alertForm.origin_solarsystem_id : null,
         ship_type: isJumpRange.value ? alertForm.ship_type : null,
         jdc_level: isJumpRange.value ? alertForm.jdc_level : null,
         include_highsec: isJumpRange.value ? alertForm.include_highsec : false,
@@ -861,6 +896,23 @@ function confirmPendingDelete() {
                                 <Input id="alert-jumps" type="number" min="1" max="20" v-model.number="alertForm.max_jumps" />
                                 <p class="text-xs text-muted-foreground">Stargate jumps from the added system to the target (1–20).</p>
                             </div>
+                        </div>
+
+                        <div v-if="!isKillmail && !isJumpRange" class="space-y-1.5">
+                            <Label for="alert-origin-system">Starting point (optional)</Label>
+                            <div v-if="selectedOrigin" class="flex items-center gap-2 text-sm">
+                                <SolarsystemClass :solarsystem_class="selectedOrigin.class" :name="selectedOrigin.name" />
+                                <span class="font-medium">{{ selectedOrigin.name }}</span>
+                            </div>
+                            <Combobox class="rounded-lg border bg-neutral-900" :ignore-filter="true">
+                                <ComboboxAnchor>
+                                    <ComboboxInput id="alert-origin-system" v-model="originSearch" placeholder="Anywhere on the chain" />
+                                </ComboboxAnchor>
+                                <VirtualizedSolarsystemList align="start" :sections="origin_search_sections" @select="handleOriginSelect" />
+                            </Combobox>
+                            <p class="text-xs text-muted-foreground">
+                                Measure from this system through the chain instead of from each newly added system.
+                            </p>
                         </div>
 
                         <template v-if="isJumpRange">

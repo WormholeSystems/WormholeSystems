@@ -13,7 +13,7 @@ final readonly class ListMyDiscordAlertsAction
 
     public function handle(DiscordAccount $account): string
     {
-        $alerts = $account->user->createdMapAlerts()->bot()->with(['map:id,name', 'targetSolarsystem:id,name'])->latest()->get();
+        $alerts = $account->user->createdMapAlerts()->bot()->with(['map:id,name', 'targetSolarsystem:id,name', 'originSolarsystem:id,name'])->latest()->get();
 
         return $alerts->isEmpty()
             ? 'You have no proximity alerts.'

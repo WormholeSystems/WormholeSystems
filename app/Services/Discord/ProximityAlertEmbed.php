@@ -34,7 +34,9 @@ final readonly class ProximityAlertEmbed
         return [
             'title' => sprintf('Found new %d %s %s connection', $result->jumps, $result->jumps === 1 ? 'jump' : 'jumps', $target['name']),
             'url' => route('maps.show', $alert->map),
-            'description' => sprintf('**%s** was just added to your map, putting **%s** within range.', $originName, $target['name']),
+            'description' => $alert->origin_solarsystem_id === null
+                ? sprintf('**%s** was just added to your map, putting **%s** within range.', $originName, $target['name'])
+                : sprintf('The chain now puts **%s** within range of **%s**.', $target['name'], $originName),
             'color' => $this->colorForSecurity((float) $target['security']),
             'fields' => [
                 ['name' => 'Target', 'value' => sprintf('%s (%.1f)', $target['name'], $target['security']), 'inline' => true],

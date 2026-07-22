@@ -31,7 +31,7 @@ final class SettingsController extends Controller
         $discordAccount = $this->user->discordAccount()->first();
         $discordAlerts = $this->user->createdMapAlerts()
             ->bot()
-            ->with(['map:id,name', 'targetSolarsystem:id,name'])
+            ->with(['map:id,name', 'targetSolarsystem:id,name', 'originSolarsystem:id,name'])
             ->latest()
             ->get();
 

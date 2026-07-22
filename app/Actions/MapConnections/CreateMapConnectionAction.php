@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\MapConnections;
 
 use App\Enums\ShipSize;
+use App\Jobs\MapAlerts\EvaluateMapAlertsJob;
 use App\Models\MapConnection;
 use App\Models\MapSolarsystem;
 use App\Models\Wormhole;
@@ -42,6 +43,13 @@ final readonly class CreateMapConnectionAction
          * already carries jumps observed before the connection existed.
          */
         $this->claimPendingConnectionJumpsAction->handle($map_connection);
+
+        /* A new wormhole edge can complete a route for alerts with a fixed starting
+         * point even though no system was placed, so both endpoints re-evaluate.
+         * Deliveries already sent for an endpoint are deduplicated by the ledger.
+         */
+        EvaluateMapAlertsJob::dispatch($map_connection->from_map_solarsystem_id)->afterCommit();
+        EvaluateMapAlertsJob::dispatch($map_connection->to_map_solarsystem_id)->afterCommit();
 
         $this->mapBroadcaster->connectionsUpserted($map_id, MapConnection::query()
             ->whereKey($map_connection->id)

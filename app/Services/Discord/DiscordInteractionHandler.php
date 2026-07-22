@@ -120,7 +120,7 @@ final readonly class DiscordInteractionHandler
 
         return match ($focused->name) {
             'map' => $this->autocomplete->maps($account, (string) $focused->value),
-            'system' => $this->autocomplete->solarsystems((string) $focused->value),
+            'system', 'from' => $this->autocomplete->solarsystems((string) $focused->value),
             'alert' => $this->autocompleteAlerts->handle($account, (string) $focused->value),
             default => [],
         };

@@ -69,6 +69,7 @@ final readonly class AlertCommand implements CommandDefinition
         $systemId = $this->option($variant, 'system');
         $jumps = $this->option($variant, 'jumps');
         $jdcLevel = $this->option($variant, 'jdc');
+        $from = $this->option($variant, 'from');
 
         return $this->createAlert->handle(
             $account,
@@ -84,6 +85,7 @@ final readonly class AlertCommand implements CommandDefinition
             $interaction->guild_id === null ? null : (string) $interaction->guild_id,
             $interaction->channel_id === null ? null : (string) $interaction->channel_id,
             $roleId === null ? null : (string) $roleId,
+            $from === null ? null : (int) $from,
         );
     }
 

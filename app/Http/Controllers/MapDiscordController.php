@@ -36,10 +36,10 @@ final class MapDiscordController extends Controller
             'map' => $map->toResource(MapInfoResource::class),
             'webhooks' => fn () => $map->mapWebhooks()->withCount('alerts')->latest()->get()->toResourceCollection(MapWebhookResource::class),
             'roles' => fn () => $map->mapWebhookRoles()->withCount('alerts')->latest()->get()->toResourceCollection(MapWebhookRoleResource::class),
-            'alerts' => fn () => $map->mapAlerts()->webhook()->with('webhook')->latest()->get()->toResourceCollection(MapAlertResource::class),
+            'alerts' => fn () => $map->mapAlerts()->webhook()->with(['webhook', 'originSolarsystem'])->latest()->get()->toResourceCollection(MapAlertResource::class),
             'botAlerts' => fn () => $map->mapAlerts()
                 ->bot()
-                ->with(['creator.characters', 'targetSolarsystem'])
+                ->with(['creator.characters', 'targetSolarsystem', 'originSolarsystem'])
                 ->latest()
                 ->get()
                 ->toResourceCollection(MapAlertResource::class),
