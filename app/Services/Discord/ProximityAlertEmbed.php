@@ -33,6 +33,7 @@ final readonly class ProximityAlertEmbed
 
         return [
             'title' => sprintf('Found new %d %s %s connection', $result->jumps, $result->jumps === 1 ? 'jump' : 'jumps', $target['name']),
+            'url' => route('maps.show', $alert->map),
             'description' => sprintf('**%s** was just added to your map, putting **%s** within range.', $originName, $target['name']),
             'color' => $this->colorForSecurity((float) $target['security']),
             'fields' => [

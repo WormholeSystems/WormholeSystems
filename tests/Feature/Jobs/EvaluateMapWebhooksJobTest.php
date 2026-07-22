@@ -45,6 +45,7 @@ it('fires when the added system is within range of the target', function () {
     runWebhookEval($map, $sid);
 
     Http::assertSentCount(1);
+    Http::assertSent(fn ($request): bool => $request['embeds'][0]['url'] === route('maps.show', $map));
 
     expect($alert->refresh()->last_fired_at)->not->toBeNull();
 });

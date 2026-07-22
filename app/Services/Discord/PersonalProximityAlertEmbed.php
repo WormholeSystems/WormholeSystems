@@ -24,6 +24,7 @@ final class PersonalProximityAlertEmbed
 
         return [
             'title' => sprintf('%s is now within %d %s', $target['name'], $result->jumps, $result->jumps === 1 ? 'jump' : 'jumps'),
+            'url' => route('maps.show', $alert->map),
             'description' => sprintf('**%s** was added to **%s**.', $originName, $alert->map->name),
             'color' => $this->colorForSecurity($target['security']),
             'fields' => [

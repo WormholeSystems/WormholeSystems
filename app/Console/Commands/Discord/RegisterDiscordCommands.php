@@ -48,21 +48,24 @@ final class RegisterDiscordCommands extends Command
                 ['type' => 1, 'name' => 'status', 'description' => 'Show your account link status'],
             ]],
             ['type' => 1, 'name' => 'alerts', 'description' => 'Manage personal proximity alerts', 'options' => [
-                ['type' => 1, 'name' => 'add', 'description' => 'Create a proximity alert', 'options' => [
-                    $map,
-                    $system,
-                    ['type' => 4, 'name' => 'jumps', 'description' => 'Maximum gate jumps', 'required' => true, 'min_value' => 1, 'max_value' => 20],
-                    ['type' => 3, 'name' => 'destination', 'description' => 'Where to deliver the alert', 'required' => true, 'choices' => [
-                        ['name' => 'Direct message', 'value' => 'dm'],
-                        ['name' => 'This channel', 'value' => 'channel'],
+                ['type' => 2, 'name' => 'add', 'description' => 'Create a proximity alert', 'options' => [
+                    ['type' => 1, 'name' => 'dm', 'description' => 'Create a proximity alert delivered by direct message', 'options' => [
+                        $map,
+                        $system,
+                        ['type' => 4, 'name' => 'jumps', 'description' => 'Maximum gate jumps', 'required' => true, 'min_value' => 1, 'max_value' => 20],
                     ]],
-                    ['type' => 3, 'name' => 'mention', 'description' => 'Who to ping for channel alerts', 'required' => false, 'choices' => [
-                        ['name' => 'Nobody', 'value' => 'none'],
-                        ['name' => 'Me', 'value' => 'creator'],
-                        ['name' => 'A role', 'value' => 'role'],
-                        ['name' => 'Everyone', 'value' => 'everyone'],
+                    ['type' => 1, 'name' => 'channel', 'description' => 'Create a proximity alert posted in this channel', 'options' => [
+                        $map,
+                        $system,
+                        ['type' => 4, 'name' => 'jumps', 'description' => 'Maximum gate jumps', 'required' => true, 'min_value' => 1, 'max_value' => 20],
+                        ['type' => 3, 'name' => 'mention', 'description' => 'Who to ping', 'required' => false, 'choices' => [
+                            ['name' => 'Nobody', 'value' => 'none'],
+                            ['name' => 'Me', 'value' => 'creator'],
+                            ['name' => 'A role', 'value' => 'role'],
+                            ['name' => 'Everyone', 'value' => 'everyone'],
+                        ]],
+                        ['type' => 8, 'name' => 'role', 'description' => 'Role to ping', 'required' => false],
                     ]],
-                    ['type' => 8, 'name' => 'role', 'description' => 'Role to ping when mention is A role', 'required' => false],
                 ]],
                 ['type' => 1, 'name' => 'list', 'description' => 'List alerts you created'],
                 ['type' => 1, 'name' => 'map', 'description' => 'List alerts visible for a map', 'options' => [$map]],

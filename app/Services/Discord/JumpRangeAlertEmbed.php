@@ -32,6 +32,7 @@ final readonly class JumpRangeAlertEmbed
 
         return [
             'title' => sprintf('New exit %.2f ly from %s', $distanceLy, $target->name),
+            'url' => route('maps.show', $alert->map),
             'description' => sprintf(
                 '**%s** was just added to your map, **%.2f ly** from **%s** — within %s jump range.',
                 $exit->name,

@@ -27,13 +27,18 @@ it('registers the Discord command surface', function () {
         $commands = $request->data();
         $alerts = collect($commands)->firstWhere('name', 'alerts');
         $add = collect($alerts['options'])->firstWhere('name', 'add');
-        $mention = collect($add['options'])->firstWhere('name', 'mention');
-        $role = collect($add['options'])->firstWhere('name', 'role');
+        $dm = collect($add['options'])->firstWhere('name', 'dm');
+        $channel = collect($add['options'])->firstWhere('name', 'channel');
+        $mention = collect($channel['options'])->firstWhere('name', 'mention');
+        $role = collect($channel['options'])->firstWhere('name', 'role');
 
         return $request->method() === 'PUT'
             && str_ends_with($request->url(), '/applications/application-id/guilds/guild-id/commands')
             && collect($commands)->pluck('name')->all() === ['account', 'alerts', 'route']
             && collect($alerts['options'])->pluck('name')->all() === ['add', 'list', 'map', 'enable', 'disable', 'remove']
+            && $add['type'] === 2
+            && collect($add['options'])->pluck('name')->all() === ['dm', 'channel']
+            && collect($dm['options'])->pluck('name')->all() === ['map', 'system', 'jumps']
             && collect($mention['choices'])->pluck('value')->all() === ['none', 'creator', 'role', 'everyone']
             && $role['type'] === 8
             && $role['required'] === false;
@@ -88,7 +93,11 @@ it('registers a direct autocomplete interaction listener', function () {
     $routeCommand = Mockery::mock(RegisteredCommand::class);
     $alertsCommand->shouldReceive('addSubCommand')
         ->once()
-        ->with('add', Mockery::type('callable'))
+        ->with(['add', 'dm'], Mockery::type('callable'))
+        ->andReturnSelf();
+    $alertsCommand->shouldReceive('addSubCommand')
+        ->once()
+        ->with(['add', 'channel'], Mockery::type('callable'))
         ->andReturnSelf();
 
     $discord = Mockery::mock(Discord::class);

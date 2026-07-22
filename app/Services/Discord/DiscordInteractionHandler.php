@@ -53,7 +53,9 @@ final readonly class DiscordInteractionHandler
         $handleAlerts = fn (ApplicationCommand $interaction, Collection $params) => $this->execute($interaction, fn () => $this->alerts($interaction));
 
         $discord->listenCommand('account', fn (ApplicationCommand $interaction, Collection $params) => $this->execute($interaction, fn () => $this->account($interaction)));
-        $discord->listenCommand('alerts', $handleAlerts)->addSubCommand('add', $handleAlerts);
+        $alerts = $discord->listenCommand('alerts', $handleAlerts);
+        $alerts->addSubCommand(['add', 'dm'], $handleAlerts);
+        $alerts->addSubCommand(['add', 'channel'], $handleAlerts);
         $discord->listenCommand('route', fn (ApplicationCommand $interaction, Collection $params) => $this->execute($interaction, fn () => $this->route($interaction)));
         $discord->on(Event::INTERACTION_CREATE, function ($interaction) use ($discord): void {
             if ($interaction instanceof ApplicationCommandAutocomplete && in_array($interaction->data->name, ['alerts', 'route'], true)) {
@@ -132,21 +134,24 @@ final readonly class DiscordInteractionHandler
             'enable' => $this->enableAlert->handle($account, (int) $this->option($subcommand, 'alert')),
             'disable' => $this->disableAlert->handle($account, (int) $this->option($subcommand, 'alert')),
             'remove' => $this->deleteAlert->handle($account, (int) $this->option($subcommand, 'alert')),
-            'add' => $this->createAlert($interaction, $account, $subcommand),
+            'add' => $this->createAlert($interaction, $account, $subcommand->options->first()),
             default => 'That alert command is unavailable.',
         };
 
         $this->respond($interaction, $content);
     }
 
-    private function createAlert(ApplicationCommand $interaction, DiscordAccount $account, Option $subcommand): string
+    private function createAlert(ApplicationCommand $interaction, DiscordAccount $account, Option $variant): string
     {
-        $deliveryType = match ((string) $this->option($subcommand, 'destination')) {
+        $deliveryType = match ($variant->name) {
             'dm' => MapAlertDeliveryType::DiscordDm,
             'channel' => MapAlertDeliveryType::DiscordChannel,
             default => null,
         };
-        $mentionMode = MapAlertMentionMode::tryFrom((string) ($this->option($subcommand, 'mention') ?? 'none'));
+        $roleId = $this->option($variant, 'role');
+        $mentionMode = MapAlertMentionMode::tryFrom(
+            (string) ($this->option($variant, 'mention') ?? ($roleId === null ? 'none' : 'role')),
+        );
         $canManageChannels = $interaction->member !== null
             && ($interaction->member->permissions->administrator || $interaction->member->permissions->manage_channels);
         $canManageRoles = $interaction->member !== null
@@ -174,14 +179,14 @@ final readonly class DiscordInteractionHandler
 
         return $this->createProximityAlert->handle(
             $account,
-            (int) $this->option($subcommand, 'map'),
-            (int) $this->option($subcommand, 'system'),
-            (int) $this->option($subcommand, 'jumps'),
+            (int) $this->option($variant, 'map'),
+            (int) $this->option($variant, 'system'),
+            (int) $this->option($variant, 'jumps'),
             $deliveryType,
             $mentionMode,
             $interaction->guild_id === null ? null : (string) $interaction->guild_id,
             $interaction->channel_id === null ? null : (string) $interaction->channel_id,
-            ($roleId = $this->option($subcommand, 'role')) === null ? null : (string) $roleId,
+            $roleId === null ? null : (string) $roleId,
         );
     }
 
@@ -239,14 +244,22 @@ final readonly class DiscordInteractionHandler
 
     private function focusedOption(ApplicationCommandAutocomplete $interaction): ?Option
     {
-        foreach ($interaction->data->options as $option) {
+        return $this->findFocusedOption($interaction->data->options);
+    }
+
+    /**
+     * @param  iterable<Option>  $options
+     */
+    private function findFocusedOption(iterable $options): ?Option
+    {
+        foreach ($options as $option) {
             if ($option->focused) {
                 return $option;
             }
-            foreach ($option->options ?? [] as $nested) {
-                if ($nested->focused) {
-                    return $nested;
-                }
+
+            $nested = $this->findFocusedOption($option->options ?? []);
+            if ($nested instanceof Option) {
+                return $nested;
             }
         }
 

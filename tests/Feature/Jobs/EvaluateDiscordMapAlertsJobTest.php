@@ -45,7 +45,8 @@ it('delivers a direct message once for a newly placed system in range', function
         && $request['recipient_id'] === 'dm-user');
     Http::assertSent(fn ($request): bool => str_ends_with($request->url(), '/channels/dm-channel/messages')
         && $request['nonce'] === mb_substr(hash('sha256', $alert->id.':'.$placement->id), 0, 25)
-        && $request['enforce_nonce'] === true);
+        && $request['enforce_nonce'] === true
+        && $request['embeds'][0]['url'] === route('maps.show', $map));
     expect($alert->refresh()->last_fired_at)->not->toBeNull()
         ->and($alert->deliveries)->toHaveCount(1)
         ->and($alert->deliveries->sole()->delivered_at)->not->toBeNull();
