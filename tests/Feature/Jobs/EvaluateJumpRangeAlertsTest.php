@@ -3,16 +3,19 @@
 declare(strict_types=1);
 
 use App\Enums\JumpShipType;
-use App\Jobs\Webhooks\EvaluateMapWebhooksJob;
+use App\Jobs\MapAlerts\EvaluateMapAlertsJob;
 use App\Models\Map;
 use App\Models\MapAlert;
+use App\Models\MapSolarsystem;
 use App\Models\MapWebhook;
 use App\Services\JumpRange\JumpRangeCalculator;
 use Illuminate\Support\Facades\Http;
 
 function runJumpRangeEval(Map $map, int $solarsystemId): void
 {
-    app()->call([new EvaluateMapWebhooksJob($map->id, $solarsystemId), 'handle']);
+    $placement = MapSolarsystem::query()->where('map_id', $map->id)->where('solarsystem_id', $solarsystemId)->first()
+        ?? MapSolarsystem::factory()->for($map)->create(['solarsystem_id' => $solarsystemId]);
+    app()->call([new EvaluateMapAlertsJob($placement->id), 'handle']);
 }
 
 /**

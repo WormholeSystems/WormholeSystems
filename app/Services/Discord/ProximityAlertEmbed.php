@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services\Discord;
 
 use App\Models\MapAlert;
-use App\Models\Solarsystem;
 use App\Services\Routing\ProximityResult;
 
 /**
@@ -15,13 +14,18 @@ use App\Services\Routing\ProximityResult;
 final readonly class ProximityAlertEmbed
 {
     use ColorsBySecurity;
+    use ResolvesSolarsystems;
 
     /**
      * @return array<string, mixed>
      */
     public function build(MapAlert $alert, ProximityResult $result): array
     {
-        $systems = $this->resolveSystems($alert, $result);
+        $systems = $this->resolveSystems([
+            $alert->target_solarsystem_id,
+            $result->matchedOriginSolarsystemId,
+            ...$result->route,
+        ]);
 
         $target = $systems[$alert->target_solarsystem_id] ?? ['name' => (string) $alert->target_solarsystem_id, 'security' => 0.0];
         $originName = $systems[$result->matchedOriginSolarsystemId]['name'] ?? (string) $result->matchedOriginSolarsystemId;
@@ -38,24 +42,5 @@ final readonly class ProximityAlertEmbed
                 ['name' => 'Route', 'value' => implode(' → ', $routeNames)],
             ],
         ];
-    }
-
-    /**
-     * @return array<int, array{name: string, security: float}>
-     */
-    private function resolveSystems(MapAlert $alert, ProximityResult $result): array
-    {
-        $ids = array_unique([
-            $alert->target_solarsystem_id,
-            $result->matchedOriginSolarsystemId,
-            ...$result->route,
-        ]);
-
-        return Solarsystem::query()
-            ->whereIn('id', $ids)
-            ->get(['id', 'name', 'security'])
-            ->keyBy('id')
-            ->map(fn (Solarsystem $system): array => ['name' => $system->name, 'security' => (float) $system->security])
-            ->all();
     }
 }

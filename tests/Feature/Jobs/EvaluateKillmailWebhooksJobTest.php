@@ -325,6 +325,20 @@ it('skips inactive killmail alerts', function () {
     Http::assertNothingSent();
 });
 
+it('ignores bot killmail alerts without changing their last fired timestamp', function () {
+    $sid = makeSolarsystem(30009408);
+    $map = mapWithSystem($sid);
+    $alert = MapAlert::factory()->discordDm()->killmail()->create([
+        'map_id' => $map->id,
+        'max_jumps' => 3,
+    ]);
+
+    runKillmailEval(makeKillmail($sid)->id);
+
+    Http::assertNothingSent();
+    expect($alert->refresh()->last_fired_at)->toBeNull();
+});
+
 it('ignores proximity alerts and returns early when no killmail alerts exist', function () {
     $sid = makeSolarsystem(30009407);
     $map = mapWithSystem($sid);

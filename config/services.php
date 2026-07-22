@@ -64,5 +64,11 @@ return [
     ],
     'discord' => [
         'invite' => env('DISCORD_INVITE', ''),
+        'application_id' => env('DISCORD_APPLICATION_ID'),
+        'client_id' => env('DISCORD_CLIENT_ID'),
+        'client_secret' => env('DISCORD_CLIENT_SECRET'),
+        'bot_token' => env('DISCORD_BOT_TOKEN'),
+        'redirect' => env('DISCORD_CALLBACK', 'https://wormholesystems.test/discord/callback'),
+        'test_guild_id' => env('DISCORD_TEST_GUILD_ID'),
     ],
 ];

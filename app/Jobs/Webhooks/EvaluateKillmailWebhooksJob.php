@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Jobs\Webhooks;
 
 use App\Enums\KillmailFilterSubject;
-use App\Enums\MapWebhookType;
+use App\Enums\MapAlertType;
 use App\Models\Killmail;
 use App\Models\Map;
 use App\Models\MapAlert;
@@ -48,7 +48,8 @@ final class EvaluateKillmailWebhooksJob implements ShouldBeUnique, ShouldQueue
     public function handle(MapProximityPathfinder $pathfinder, KillmailAlertEmbed $embed, DiscordDelivery $delivery, KillmailWebhookMatcher $matcher): void
     {
         $alerts = MapAlert::query()
-            ->where('type', MapWebhookType::Killmail)
+            ->webhook()
+            ->where('type', MapAlertType::Killmail)
             ->where('is_active', true)
             ->with(['webhook', 'role'])
             ->get();

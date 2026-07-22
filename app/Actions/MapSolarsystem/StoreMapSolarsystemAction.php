@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\MapSolarsystem;
 
 use App\Actions\MapConnections\CreateMapConnectionAction;
-use App\Jobs\Webhooks\EvaluateMapWebhooksJob;
+use App\Jobs\MapAlerts\EvaluateMapAlertsJob;
 use App\Models\Map;
 use App\Models\MapConnection;
 use App\Models\MapSolarsystem;
@@ -40,7 +40,7 @@ final readonly class StoreMapSolarsystemAction
         }
         $map_solarsystem->save();
 
-        EvaluateMapWebhooksJob::dispatch($map->id, $map_solarsystem->solarsystem_id)->afterCommit();
+        EvaluateMapAlertsJob::dispatch($map_solarsystem->id)->afterCommit();
 
         $this->connectToOrigin($map, $map_solarsystem, $data['connect_to_map_solarsystem_id'] ?? null);
 

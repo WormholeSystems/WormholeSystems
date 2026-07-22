@@ -2,15 +2,20 @@
 
 declare(strict_types=1);
 
-use App\Jobs\Webhooks\EvaluateMapWebhooksJob;
+use App\Enums\MapAlertMentionMode;
+use App\Jobs\MapAlerts\EvaluateMapAlertsJob;
 use App\Models\Map;
 use App\Models\MapAlert;
+use App\Models\MapSolarsystem;
 use App\Models\MapWebhook;
+use App\Models\MapWebhookRole;
 use Illuminate\Support\Facades\Http;
 
 function runWebhookEval(Map $map, int $solarsystemId): void
 {
-    app()->call([new EvaluateMapWebhooksJob($map->id, $solarsystemId), 'handle']);
+    $placement = MapSolarsystem::query()->where('map_id', $map->id)->where('solarsystem_id', $solarsystemId)->first()
+        ?? MapSolarsystem::factory()->for($map)->create(['solarsystem_id' => $solarsystemId]);
+    app()->call([new EvaluateMapAlertsJob($placement->id), 'handle']);
 }
 
 /**
@@ -66,6 +71,21 @@ it('skips inactive alerts', function () {
     Http::assertNothingSent();
 });
 
+it('ignores bot alerts without changing their last fired timestamp', function () {
+    $sid = makeSolarsystem(30009012);
+    $map = Map::factory()->create();
+    $alert = MapAlert::factory()->discordDm()->create([
+        'map_id' => $map->id,
+        'target_solarsystem_id' => $sid,
+        'max_jumps' => 3,
+    ]);
+
+    runWebhookEval($map, $sid);
+
+    Http::assertNothingSent();
+    expect($alert->refresh()->last_fired_at)->toBeNull();
+});
+
 it('fires across a real stargate hop', function () {
     /** @var array<int|string, int[]> $raw */
     $raw = json_decode(file_get_contents(resource_path('static/connections.json')), true);
@@ -115,4 +135,63 @@ it('does not count wormhole connections, only k-space jumps', function () {
     runWebhookEval($map, $origin);
 
     Http::assertNothingSent();
+});
+
+it('pings a user mention through the webhook', function () {
+    $sid = makeSolarsystem(30009021);
+    $map = Map::factory()->create();
+    $mention = MapWebhookRole::factory()->user()->for($map)->create(['discord_role_id' => '111222333']);
+    proximityAlert($map, [
+        'target_solarsystem_id' => $sid,
+        'max_jumps' => 3,
+        'map_webhook_role_id' => $mention->id,
+    ]);
+
+    runWebhookEval($map, $sid);
+
+    Http::assertSent(fn ($request): bool => $request['content'] === '<@111222333>'
+        && $request['allowed_mentions'] === ['users' => ['111222333']]);
+});
+
+it('pings a role mention through the webhook', function () {
+    $sid = makeSolarsystem(30009022);
+    $map = Map::factory()->create();
+    $mention = MapWebhookRole::factory()->for($map)->create(['discord_role_id' => '444555666']);
+    proximityAlert($map, [
+        'target_solarsystem_id' => $sid,
+        'max_jumps' => 3,
+        'map_webhook_role_id' => $mention->id,
+    ]);
+
+    runWebhookEval($map, $sid);
+
+    Http::assertSent(fn ($request): bool => $request['content'] === '<@&444555666>'
+        && $request['allowed_mentions'] === ['roles' => ['444555666']]);
+});
+
+it('pings everyone when the alert mentions everyone', function () {
+    $sid = makeSolarsystem(30009023);
+    $map = Map::factory()->create();
+    proximityAlert($map, [
+        'target_solarsystem_id' => $sid,
+        'max_jumps' => 3,
+        'mention_mode' => MapAlertMentionMode::Everyone,
+    ]);
+
+    runWebhookEval($map, $sid);
+
+    Http::assertSent(fn ($request): bool => $request['content'] === '@everyone'
+        && $request['allowed_mentions'] === ['parse' => ['everyone']]);
+});
+
+it('does not deliver a webhook alert twice for the same placement', function () {
+    $sid = makeSolarsystem(30009024);
+    $map = Map::factory()->create();
+    $alert = proximityAlert($map, ['target_solarsystem_id' => $sid, 'max_jumps' => 3]);
+
+    runWebhookEval($map, $sid);
+    runWebhookEval($map, $sid);
+
+    Http::assertSentCount(1);
+    expect($alert->deliveries()->count())->toBe(1);
 });
