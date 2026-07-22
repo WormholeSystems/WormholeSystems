@@ -445,3 +445,53 @@ function grantMapViewAccess(Map $map, User $user): void
     $character = Character::factory()->for($user)->create();
     MapAccess::factory(['permission' => Permission::Viewer])->for($map)->for($character, 'accessible')->create();
 }
+
+it('delivers a jump range alert by direct message', function (): void {
+    Http::fake([
+        'discord.com/api/v10/users/@me/channels' => Http::response(['id' => 'dm-channel']),
+        'discord.com/api/v10/channels/dm-channel/messages' => Http::response(['id' => 'message']),
+    ]);
+    $targetId = makeSolarsystem(30010004, -0.3, 'eve');
+    $exitId = makeSolarsystem(30010003, -0.1, 'eve', 6.0 * App\Services\JumpRange\JumpRangeCalculator::METERS_PER_LIGHTYEAR);
+    $map = Map::factory()->create();
+    $user = User::factory()->create();
+    grantMapViewAccess($map, $user);
+    DiscordAccount::factory()->for($user)->create(['discord_user_id' => 'dm-user']);
+    $placement = MapSolarsystem::factory()->for($map)->create(['solarsystem_id' => $exitId]);
+    $alert = MapAlert::factory()->discordDm()->jumpRange()->create([
+        'map_id' => $map->id,
+        'created_by_user_id' => $user->id,
+        'target_solarsystem_id' => $targetId,
+        'max_jumps' => null,
+    ]);
+
+    app()->call([new EvaluateMapAlertsJob($placement->id), 'handle']);
+
+    Http::assertSentCount(2);
+    expect($alert->refresh()->last_fired_at)->not->toBeNull()
+        ->and($alert->deliveries)->toHaveCount(1);
+});
+
+it('disables a jump range bot alert missing its ship configuration', function (): void {
+    Http::fake();
+    $targetId = makeSolarsystem(30010006, -0.3, 'eve');
+    $exitId = makeSolarsystem(30010005, -0.1, 'eve', 6.0 * App\Services\JumpRange\JumpRangeCalculator::METERS_PER_LIGHTYEAR);
+    $map = Map::factory()->create();
+    $user = User::factory()->create();
+    grantMapViewAccess($map, $user);
+    DiscordAccount::factory()->for($user)->create(['discord_user_id' => 'dm-user']);
+    $placement = MapSolarsystem::factory()->for($map)->create(['solarsystem_id' => $exitId]);
+    $alert = MapAlert::factory()->discordDm()->jumpRange()->create([
+        'map_id' => $map->id,
+        'created_by_user_id' => $user->id,
+        'target_solarsystem_id' => $targetId,
+        'ship_type' => null,
+        'max_jumps' => null,
+    ]);
+
+    app()->call([new EvaluateMapAlertsJob($placement->id), 'handle']);
+
+    Http::assertNothingSent();
+    expect($alert->refresh()->is_active)->toBeFalse()
+        ->and($alert->disabled_reason)->toBe(MapAlertDisabledReason::DeliveryFailed);
+});

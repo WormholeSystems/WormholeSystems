@@ -2,13 +2,15 @@
 
 declare(strict_types=1);
 
-use App\Jobs\Webhooks\EvaluateKillmailWebhooksJob;
+use App\Jobs\MapAlerts\EvaluateKillmailAlertsJob;
+use App\Models\DiscordAccount;
 use App\Models\Killmail;
 use App\Models\Map;
 use App\Models\MapAlert;
 use App\Models\MapSolarsystem;
 use App\Models\MapWebhook;
 use App\Models\MapWebhookRole;
+use App\Models\User;
 use App\Services\NameResolver;
 use Illuminate\Support\Facades\Http;
 
@@ -76,7 +78,7 @@ function killmailAlert(Map $map, array $filters = [], array $attributes = []): M
 
 function runKillmailEval(int $killmailId): void
 {
-    app()->call([new EvaluateKillmailWebhooksJob($killmailId), 'handle']);
+    app()->call([new EvaluateKillmailAlertsJob($killmailId), 'handle']);
 }
 
 beforeEach(function () {
@@ -358,7 +360,7 @@ it('ignores proximity alerts and returns early when no killmail alerts exist', f
 });
 
 it('builds a stable unique id for de-duplication', function () {
-    expect((new EvaluateKillmailWebhooksJob(42))->uniqueId())->toBe('killmail:42');
+    expect((new EvaluateKillmailAlertsJob(42))->uniqueId())->toBe('killmail:42');
 });
 
 it('names the victim, affiliation and final-blow attacker in the killmail embed', function () {
@@ -384,3 +386,59 @@ it('names the victim, affiliation and final-blow attacker in the killmail embed'
             && str_contains($embed['description'], 'flown by **The Killer**');
     });
 });
+
+it('delivers a killmail alert by direct message through the bot', function () {
+    config()->set('services.discord.bot_token', 'bot-token');
+    Http::swap(new Illuminate\Http\Client\Factory);
+    Http::fake([
+        'discord.com/api/v10/users/@me/channels' => Http::response(['id' => 'dm-channel']),
+        'discord.com/api/v10/channels/dm-channel/messages' => Http::response(['id' => 'message']),
+    ]);
+    $sid = makeSolarsystem(30009430);
+    $map = mapWithSystem($sid);
+    $user = User::factory()->create();
+    grantKillmailMapViewAccess($map, $user);
+    DiscordAccount::factory()->for($user)->create(['discord_user_id' => 'dm-user']);
+    $alert = MapAlert::factory()->killmail()->discordDm()->create([
+        'map_id' => $map->id,
+        'created_by_user_id' => $user->id,
+        'max_jumps' => 3,
+    ]);
+
+    $killmail = makeKillmail($sid);
+
+    runKillmailEval($killmail->id);
+
+    Http::assertSentCount(2);
+    Http::assertSent(fn ($request): bool => str_ends_with($request->url(), '/channels/dm-channel/messages')
+        && $request['nonce'] === mb_substr(hash('sha256', $alert->id.':killmail:'.$killmail->id), 0, 25));
+    expect($alert->refresh()->last_fired_at)->not->toBeNull();
+});
+
+it('disables a killmail direct message alert whose creator unlinked Discord', function () {
+    config()->set('services.discord.bot_token', 'bot-token');
+    $sid = makeSolarsystem(30009431);
+    $map = mapWithSystem($sid);
+    $user = User::factory()->create();
+    grantKillmailMapViewAccess($map, $user);
+    $alert = MapAlert::factory()->killmail()->discordDm()->create([
+        'map_id' => $map->id,
+        'created_by_user_id' => $user->id,
+        'max_jumps' => 3,
+    ]);
+
+    runKillmailEval(makeKillmail($sid)->id);
+
+    Http::assertNothingSent();
+    expect($alert->refresh()->is_active)->toBeFalse()
+        ->and($alert->disabled_reason)->toBe(App\Enums\MapAlertDisabledReason::DiscordAccountDisconnected);
+});
+
+function grantKillmailMapViewAccess(Map $map, User $user): void
+{
+    $character = App\Models\Character::factory()->for($user)->create();
+    App\Models\MapAccess::factory(['permission' => App\Enums\Permission::Viewer])
+        ->for($map)
+        ->for($character, 'accessible')
+        ->create();
+}

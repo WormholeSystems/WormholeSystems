@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Jobs\Webhooks;
+namespace App\Jobs\MapAlerts;
 
 use App\Enums\KillmailFilterSubject;
 use App\Enums\MapAlertType;
@@ -14,6 +14,7 @@ use App\Models\MapSolarsystem;
 use App\Models\Type;
 use App\Services\Discord\DiscordDelivery;
 use App\Services\Discord\KillmailAlertEmbed;
+use App\Services\MapAlerts\BotAlertDeliverer;
 use App\Services\Killmails\KillmailWebhookMatcher;
 use App\Services\Routing\MapProximityPathfinder;
 use App\Services\Routing\ProximityResult;
@@ -23,14 +24,16 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Collection;
 
 /**
- * Evaluates every active killmail webhook against a freshly-ingested killmail. For each
- * webhook it first checks the (cheap) filter rules, then the (more expensive) range from
- * the map to the kill's system, and sends a single Discord alert when both pass.
+ * Evaluates every active killmail alert against a freshly-ingested killmail, regardless
+ * of how it delivers. For each alert it first checks the (cheap) filter rules, then the
+ * (more expensive) range from the map to the kill's system, and sends a single Discord
+ * message when both pass.
  *
  * Dispatched for every stored killmail, so it returns immediately when no killmail
- * webhooks exist — the common case for the global zKillboard firehose.
+ * alerts exist — the common case for the global zKillboard firehose. Killmails are only
+ * ingested once and the job runs a single attempt, so no delivery ledger is needed.
  */
-final class EvaluateKillmailWebhooksJob implements ShouldBeUnique, ShouldQueue
+final class EvaluateKillmailAlertsJob implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;
 
@@ -45,13 +48,12 @@ final class EvaluateKillmailWebhooksJob implements ShouldBeUnique, ShouldQueue
         return 'killmail:'.$this->killmail_id;
     }
 
-    public function handle(MapProximityPathfinder $pathfinder, KillmailAlertEmbed $embed, DiscordDelivery $delivery, KillmailWebhookMatcher $matcher): void
+    public function handle(MapProximityPathfinder $pathfinder, KillmailAlertEmbed $embed, DiscordDelivery $delivery, BotAlertDeliverer $botDeliverer, KillmailWebhookMatcher $matcher): void
     {
         $alerts = MapAlert::query()
-            ->webhook()
             ->where('type', MapAlertType::Killmail)
             ->where('is_active', true)
-            ->with(['webhook', 'role'])
+            ->with(['webhook', 'role', 'creator.discordAccount', 'creator.characters', 'map'])
             ->get();
 
         if ($alerts->isEmpty()) {
@@ -99,6 +101,17 @@ final class EvaluateKillmailWebhooksJob implements ShouldBeUnique, ShouldQueue
             }
 
             $matchedFilters = $matcher->matchingRules($pools, $alert->filters);
+
+            if ($alert->delivery_type->isBot()) {
+                if (! $botDeliverer->passesCreatorPrerequisites($alert)) {
+                    continue;
+                }
+
+                $nonce = mb_substr(hash('sha256', $alert->id.':killmail:'.$killmail->id), 0, 25);
+                $botDeliverer->deliver($alert, $embed->build($alert, $killmail, $result, $matchedFilters), $nonce);
+
+                continue;
+            }
 
             $delivery->deliver($alert, $embed->build($alert, $killmail, $result, $matchedFilters));
 
