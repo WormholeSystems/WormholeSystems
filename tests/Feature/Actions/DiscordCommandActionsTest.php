@@ -5,17 +5,19 @@ declare(strict_types=1);
 use App\Actions\Discord\AutocompleteDiscordAlertsAction;
 use App\Actions\Discord\CalculateDiscordRouteAction;
 use App\Actions\Discord\CreateDiscordAccountLinkAction;
-use App\Actions\Discord\CreateDiscordProximityAlertAction;
+use App\Actions\Discord\CreateDiscordAlertAction;
 use App\Actions\Discord\DeleteDiscordAlertAction;
 use App\Actions\Discord\DisableDiscordAlertAction;
 use App\Actions\Discord\EnableDiscordAlertAction;
 use App\Actions\Discord\GetDiscordAccountStatusAction;
 use App\Actions\Discord\ListDiscordMapAlertsAction;
 use App\Actions\Discord\ListMyDiscordAlertsAction;
+use App\Enums\JumpShipType;
 use App\Enums\MapAlertDeliveryType;
 use App\Enums\MapAlertDisabledReason;
 use App\Enums\MapAlertEventAction;
 use App\Enums\MapAlertMentionMode;
+use App\Enums\MapAlertType;
 use App\Enums\Permission;
 use App\Models\Character;
 use App\Models\DiscordAccount;
@@ -127,10 +129,7 @@ it('creates a transactional DM alert and lifecycle event', function () {
     $account = discordAccountWithMapAccess($map);
     $target = discordAlertTarget(30009603, 'Dodixie');
 
-    $response = app(CreateDiscordProximityAlertAction::class)->handle(
-        $account, $map->id, $target->id, 4, MapAlertDeliveryType::DiscordDm,
-        MapAlertMentionMode::None, null, null, null,
-    );
+    $response = app(CreateDiscordAlertAction::class)->handle($account, MapAlertType::Proximity, MapAlertDeliveryType::DiscordDm, $map->id, $target->id, 4, null, null, false, MapAlertMentionMode::None, null, null, null);
 
     $alert = MapAlert::query()->sole();
     expect($response)->toBe('Alert created for **Dodixie** within 4 jumps of **Home Chain**.')
@@ -144,10 +143,7 @@ it('creates channel alerts for every mention mode', function (MapAlertMentionMod
     $account = discordAccountWithMapAccess($map, Permission::Manager);
     $target = discordAlertTarget(30009604);
 
-    $response = app(CreateDiscordProximityAlertAction::class)->handle(
-        $account, $map->id, $target->id, 2, MapAlertDeliveryType::DiscordChannel,
-        $mention, 'guild', 'channel', $roleId,
-    );
+    $response = app(CreateDiscordAlertAction::class)->handle($account, MapAlertType::Proximity, MapAlertDeliveryType::DiscordChannel, $map->id, $target->id, 2, null, null, false, $mention, 'guild', 'channel', $roleId);
 
     $alert = MapAlert::query()->sole();
     expect($response)->toStartWith('Alert created')
@@ -166,34 +162,34 @@ it('rejects invalid alert creation inputs and unauthorized destinations', functi
     $viewer = discordAccountWithMapAccess($map, Permission::Viewer);
     $manager = discordAccountWithMapAccess($map, Permission::Manager);
     $target = discordAlertTarget(30009605);
-    $action = app(CreateDiscordProximityAlertAction::class);
+    $action = app(CreateDiscordAlertAction::class);
 
-    expect($action->handle($viewer, 999999, $target->id, 2, MapAlertDeliveryType::DiscordDm, MapAlertMentionMode::None, null, null, null))
-        ->toBe('Invalid map, system, destination, or jump count.')
-        ->and($action->handle($viewer, $map->id, 999999, 2, MapAlertDeliveryType::DiscordDm, MapAlertMentionMode::None, null, null, null))
-        ->toBe('Invalid map, system, destination, or jump count.')
-        ->and($action->handle($viewer, $map->id, $target->id, 0, MapAlertDeliveryType::DiscordDm, MapAlertMentionMode::None, null, null, null))
-        ->toBe('Invalid map, system, destination, or jump count.')
-        ->and($action->handle($viewer, $map->id, $target->id, 21, null, MapAlertMentionMode::None, null, null, null))
-        ->toBe('Invalid map, system, destination, or jump count.')
-        ->and($action->handle($viewer, $map->id, $target->id, 2, MapAlertDeliveryType::Webhook, MapAlertMentionMode::None, null, null, null))
-        ->toBe('Invalid map, system, destination, or jump count.')
-        ->and($action->handle($viewer, $map->id, $target->id, 2, MapAlertDeliveryType::DiscordDm, null, null, null, null))
-        ->toBe('Invalid map, system, destination, or jump count.')
-        ->and($action->handle($viewer, $map->id, $target->id, 2, MapAlertDeliveryType::DiscordChannel, MapAlertMentionMode::None, 'guild', 'channel', null))
+    expect($action->handle($viewer, MapAlertType::Proximity, MapAlertDeliveryType::DiscordDm, 999999, $target->id, 2, null, null, false, MapAlertMentionMode::None, null, null, null))
+        ->toBe('Invalid map or destination.')
+        ->and($action->handle($viewer, MapAlertType::Proximity, MapAlertDeliveryType::DiscordDm, $map->id, 999999, 2, null, null, false, MapAlertMentionMode::None, null, null, null))
+        ->toBe('That target system is unavailable.')
+        ->and($action->handle($viewer, MapAlertType::Proximity, MapAlertDeliveryType::DiscordDm, $map->id, $target->id, 0, null, null, false, MapAlertMentionMode::None, null, null, null))
+        ->toBe('The jump count must be between 1 and 20.')
+        ->and($action->handle($viewer, MapAlertType::Proximity, null, $map->id, $target->id, 21, null, null, false, MapAlertMentionMode::None, null, null, null))
+        ->toBe('Invalid map or destination.')
+        ->and($action->handle($viewer, MapAlertType::Proximity, MapAlertDeliveryType::Webhook, $map->id, $target->id, 2, null, null, false, MapAlertMentionMode::None, null, null, null))
+        ->toBe('Invalid map or destination.')
+        ->and($action->handle($viewer, MapAlertType::Proximity, MapAlertDeliveryType::DiscordDm, $map->id, $target->id, 2, null, null, false, null, null, null, null))
+        ->toBe('Invalid map or destination.')
+        ->and($action->handle($viewer, MapAlertType::Proximity, MapAlertDeliveryType::DiscordChannel, $map->id, $target->id, 2, null, null, false, MapAlertMentionMode::None, 'guild', 'channel', null))
         ->toBe('Only map managers can create channel alerts.')
-        ->and($action->handle($manager, $map->id, $target->id, 2, MapAlertDeliveryType::DiscordChannel, MapAlertMentionMode::None, null, null, null))
+        ->and($action->handle($manager, MapAlertType::Proximity, MapAlertDeliveryType::DiscordChannel, $map->id, $target->id, 2, null, null, false, MapAlertMentionMode::None, null, null, null))
         ->toBe('Channel alerts must be created inside a server channel.')
-        ->and($action->handle($viewer, $map->id, $target->id, 2, MapAlertDeliveryType::DiscordDm, MapAlertMentionMode::Creator, null, null, null))
+        ->and($action->handle($viewer, MapAlertType::Proximity, MapAlertDeliveryType::DiscordDm, $map->id, $target->id, 2, null, null, false, MapAlertMentionMode::Creator, null, null, null))
         ->toBe('Mention options can only be used for channel alerts.')
-        ->and($action->handle($manager, $map->id, $target->id, 2, MapAlertDeliveryType::DiscordChannel, MapAlertMentionMode::Role, 'guild', 'channel', null))
+        ->and($action->handle($manager, MapAlertType::Proximity, MapAlertDeliveryType::DiscordChannel, $map->id, $target->id, 2, null, null, false, MapAlertMentionMode::Role, 'guild', 'channel', null))
         ->toBe('Select a role only when the mention option is A role.')
-        ->and($action->handle($manager, $map->id, $target->id, 2, MapAlertDeliveryType::DiscordChannel, MapAlertMentionMode::None, 'guild', 'channel', 'role'))
+        ->and($action->handle($manager, MapAlertType::Proximity, MapAlertDeliveryType::DiscordChannel, $map->id, $target->id, 2, null, null, false, MapAlertMentionMode::None, 'guild', 'channel', 'role'))
         ->toBe('Select a role only when the mention option is A role.')
         ->and(MapAlert::query()->count())->toBe(0);
 
     $map->mapAccessors()->delete();
-    expect($action->handle($viewer, $map->id, $target->id, 2, MapAlertDeliveryType::DiscordDm, MapAlertMentionMode::None, null, null, null))
+    expect($action->handle($viewer, MapAlertType::Proximity, MapAlertDeliveryType::DiscordDm, $map->id, $target->id, 2, null, null, false, MapAlertMentionMode::None, null, null, null))
         ->toBe('You no longer have access to that map.');
 });
 
@@ -343,4 +339,54 @@ it('autocompletes a member creator own direct message alert', function () {
 
     expect($choices)->toHaveCount(1)
         ->and($choices[0]['value'])->toBe((string) $alert->id);
+});
+
+it('creates a jump range alert delivered by direct message', function () {
+    $map = Map::factory()->create(['name' => 'Cap Chain']);
+    $account = discordAccountWithMapAccess($map);
+    $target = discordAlertTarget(30009616, 'Staging');
+
+    $response = app(CreateDiscordAlertAction::class)->handle(
+        $account, MapAlertType::JumpRange, MapAlertDeliveryType::DiscordDm, $map->id, $target->id,
+        null, JumpShipType::Carrier, 4, true, MapAlertMentionMode::None, null, null, null,
+    );
+
+    $alert = MapAlert::query()->sole();
+    expect($response)->toStartWith('Alert created for exits within')
+        ->and($alert->type)->toBe(MapAlertType::JumpRange)
+        ->and($alert->ship_type)->toBe(JumpShipType::Carrier)
+        ->and($alert->jdc_level)->toBe(4)
+        ->and($alert->include_highsec)->toBeTrue()
+        ->and($alert->max_jumps)->toBeNull();
+});
+
+it('rejects a jump range alert without a ship class', function () {
+    $map = Map::factory()->create();
+    $account = discordAccountWithMapAccess($map);
+    $target = discordAlertTarget(30009617);
+
+    $response = app(CreateDiscordAlertAction::class)->handle(
+        $account, MapAlertType::JumpRange, MapAlertDeliveryType::DiscordDm, $map->id, $target->id,
+        null, null, 4, false, MapAlertMentionMode::None, null, null, null,
+    );
+
+    expect($response)->toBe('Jump-range alerts need a ship class and a calibration level between 1 and 5.')
+        ->and(MapAlert::query()->count())->toBe(0);
+});
+
+it('creates a killmail alert without a target system', function () {
+    $map = Map::factory()->create(['name' => 'Kill Chain']);
+    $account = discordAccountWithMapAccess($map, Permission::Manager);
+
+    $response = app(CreateDiscordAlertAction::class)->handle(
+        $account, MapAlertType::Killmail, MapAlertDeliveryType::DiscordChannel, $map->id, null,
+        6, null, null, false, MapAlertMentionMode::Everyone, 'guild', 'channel', null,
+    );
+
+    $alert = MapAlert::query()->sole();
+    expect($response)->toBe('Alert created for kills within 6 jumps of the **Kill Chain** chain.')
+        ->and($alert->type)->toBe(MapAlertType::Killmail)
+        ->and($alert->target_solarsystem_id)->toBeNull()
+        ->and($alert->max_jumps)->toBe(6)
+        ->and($alert->mention_mode)->toBe(MapAlertMentionMode::Everyone);
 });

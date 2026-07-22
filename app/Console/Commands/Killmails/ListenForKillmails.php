@@ -10,7 +10,7 @@ use App\Enums\zKillboardCacheKey;
 use App\Events\Killmails\KillmailReceivedEvent;
 use App\Http\Integrations\zKillboard\DTO\R2Z2Killmail;
 use App\Http\Integrations\zKillboard\zKillboard;
-use App\Jobs\Webhooks\EvaluateKillmailWebhooksJob;
+use App\Jobs\MapAlerts\EvaluateKillmailAlertsJob;
 use App\Models\Killmail;
 use App\Models\Map;
 use App\Models\Solarsystem;
@@ -147,7 +147,7 @@ final class ListenForKillmails extends AppCommand
 
         $this->notifyMaps($stored);
 
-        EvaluateKillmailWebhooksJob::dispatch($stored->id);
+        EvaluateKillmailAlertsJob::dispatch($stored->id);
     }
 
     private function notifyMaps(Killmail $killmail): void

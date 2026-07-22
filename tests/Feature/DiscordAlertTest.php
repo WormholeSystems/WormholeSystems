@@ -25,20 +25,27 @@ it('registers the Discord command surface', function () {
 
     Http::assertSent(function ($request): bool {
         $commands = $request->data();
+        $alert = collect($commands)->firstWhere('name', 'alert');
         $alerts = collect($commands)->firstWhere('name', 'alerts');
-        $add = collect($alerts['options'])->firstWhere('name', 'add');
-        $dm = collect($add['options'])->firstWhere('name', 'dm');
-        $channel = collect($add['options'])->firstWhere('name', 'channel');
-        $mention = collect($channel['options'])->firstWhere('name', 'mention');
-        $role = collect($channel['options'])->firstWhere('name', 'role');
+        $dm = collect($alert['options'])->firstWhere('name', 'dm');
+        $channel = collect($alert['options'])->firstWhere('name', 'channel');
+        $channelProximity = collect($channel['options'])->firstWhere('name', 'proximity');
+        $dmJumpRange = collect($dm['options'])->firstWhere('name', 'jump-range');
+        $dmKillmail = collect($dm['options'])->firstWhere('name', 'killmail');
+        $mention = collect($channelProximity['options'])->firstWhere('name', 'mention');
+        $role = collect($channelProximity['options'])->firstWhere('name', 'role');
 
         return $request->method() === 'PUT'
             && str_ends_with($request->url(), '/applications/application-id/guilds/guild-id/commands')
-            && collect($commands)->pluck('name')->all() === ['account', 'alerts', 'route']
-            && collect($alerts['options'])->pluck('name')->all() === ['add', 'list', 'map', 'enable', 'disable', 'remove']
-            && $add['type'] === 2
-            && collect($add['options'])->pluck('name')->all() === ['dm', 'channel']
-            && collect($dm['options'])->pluck('name')->all() === ['map', 'system', 'jumps']
+            && collect($commands)->pluck('name')->all() === ['account', 'alert', 'alerts', 'route']
+            && $dm['type'] === 2
+            && $channel['type'] === 2
+            && collect($dm['options'])->pluck('name')->all() === ['proximity', 'jump-range', 'killmail']
+            && collect($channel['options'])->pluck('name')->all() === ['proximity', 'jump-range', 'killmail']
+            && collect(collect($dm['options'])->firstWhere('name', 'proximity')['options'])->pluck('name')->all() === ['map', 'system', 'jumps']
+            && collect($dmJumpRange['options'])->pluck('name')->all() === ['map', 'system', 'ship', 'jdc', 'highsec']
+            && collect($dmKillmail['options'])->pluck('name')->all() === ['map', 'jumps']
+            && collect($alerts['options'])->pluck('name')->all() === ['list', 'map', 'enable', 'disable', 'remove']
             && collect($mention['choices'])->pluck('value')->all() === ['none', 'creator', 'role', 'everyone']
             && $mention['required'] === true
             && $role['type'] === 8
@@ -90,19 +97,13 @@ it('returns only maps accessible to the linked account for autocomplete', functi
 
 it('registers a direct autocomplete interaction listener', function () {
     $accountCommand = Mockery::mock(RegisteredCommand::class);
+    $alertCommand = Mockery::mock(RegisteredCommand::class);
     $alertsCommand = Mockery::mock(RegisteredCommand::class);
     $routeCommand = Mockery::mock(RegisteredCommand::class);
-    $alertsCommand->shouldReceive('addSubCommand')
-        ->once()
-        ->with(['add', 'dm'], Mockery::type('callable'))
-        ->andReturnSelf();
-    $alertsCommand->shouldReceive('addSubCommand')
-        ->once()
-        ->with(['add', 'channel'], Mockery::type('callable'))
-        ->andReturnSelf();
 
     $discord = Mockery::mock(Discord::class);
     $discord->shouldReceive('listenCommand')->once()->with('account', Mockery::type('callable'))->andReturn($accountCommand);
+    $discord->shouldReceive('listenCommand')->once()->with('alert', Mockery::type('callable'))->andReturn($alertCommand);
     $discord->shouldReceive('listenCommand')->once()->with('alerts', Mockery::type('callable'))->andReturn($alertsCommand);
     $discord->shouldReceive('listenCommand')->once()->with('route', Mockery::type('callable'))->andReturn($routeCommand);
     $discord->shouldReceive('on')->once()->with('INTERACTION_CREATE', Mockery::type('callable'));
