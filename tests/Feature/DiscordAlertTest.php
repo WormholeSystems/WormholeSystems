@@ -40,6 +40,7 @@ it('registers the Discord command surface', function () {
             && collect($add['options'])->pluck('name')->all() === ['dm', 'channel']
             && collect($dm['options'])->pluck('name')->all() === ['map', 'system', 'jumps']
             && collect($mention['choices'])->pluck('value')->all() === ['none', 'creator', 'role', 'everyone']
+            && $mention['required'] === true
             && $role['type'] === 8
             && $role['required'] === false;
     });

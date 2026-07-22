@@ -58,7 +58,7 @@ final class RegisterDiscordCommands extends Command
                         $map,
                         $system,
                         ['type' => 4, 'name' => 'jumps', 'description' => 'Maximum gate jumps', 'required' => true, 'min_value' => 1, 'max_value' => 20],
-                        ['type' => 3, 'name' => 'mention', 'description' => 'Who to ping', 'required' => false, 'choices' => [
+                        ['type' => 3, 'name' => 'mention', 'description' => 'Who to ping', 'required' => true, 'choices' => [
                             ['name' => 'Nobody', 'value' => 'none'],
                             ['name' => 'Me', 'value' => 'creator'],
                             ['name' => 'A role', 'value' => 'role'],
