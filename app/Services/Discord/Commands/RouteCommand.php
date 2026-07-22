@@ -20,6 +20,7 @@ final readonly class RouteCommand implements CommandDefinition
         return SlashCommand::make('route', 'Find the shortest route from a map')->options(
             $this->mapOption(),
             $this->systemOption(),
+            $this->fromOption(),
         );
     }
 
@@ -30,10 +31,13 @@ final readonly class RouteCommand implements CommandDefinition
 
     public function respond(ApplicationCommand $interaction, ?DiscordAccount $account): string
     {
+        $from = $this->option($interaction->data, 'from');
+
         return $this->calculateRoute->handle(
             $account,
             (int) $this->option($interaction->data, 'map'),
             (int) $this->option($interaction->data, 'system'),
+            $from === null ? null : (int) $from,
         );
     }
 }

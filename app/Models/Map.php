@@ -65,6 +65,24 @@ final class Map extends Model
     }
 
     /**
+     * The chain's wormhole connections as solarsystem id pairs, ready to extend the
+     * stargate graph for routing.
+     *
+     * @return array<int, array{0: int, 1: int}>
+     */
+    public function wormholeEdges(): array
+    {
+        return $this->mapConnections()
+            ->with(['fromMapSolarsystem:id,solarsystem_id', 'toMapSolarsystem:id,solarsystem_id'])
+            ->get()
+            ->map(fn (MapConnection $connection): array => [
+                $connection->fromMapSolarsystem->solarsystem_id,
+                $connection->toMapSolarsystem->solarsystem_id,
+            ])
+            ->all();
+    }
+
+    /**
      * The connections between solar systems in this map.
      *
      * @return HasMany<MapSolarsystem, $this>

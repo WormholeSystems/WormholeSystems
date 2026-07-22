@@ -7,6 +7,7 @@ namespace App\Actions\Discord;
 use App\Enums\MapAlertDeliveryType;
 use App\Enums\MapAlertType;
 use App\Models\MapAlert;
+use App\Models\Solarsystem;
 
 final readonly class DiscordAlertFormatter
 {
@@ -27,7 +28,9 @@ final readonly class DiscordAlertFormatter
         return match ($alert->type) {
             MapAlertType::Killmail => sprintf('killmails within %d jumps', $alert->max_jumps ?? 0),
             MapAlertType::JumpRange => sprintf('capital range of %s', $alert->targetSolarsystem->name),
-            MapAlertType::Proximity => sprintf('%s within %d jumps', $alert->targetSolarsystem->name, $alert->max_jumps ?? 0),
+            MapAlertType::Proximity => $alert->originSolarsystem instanceof Solarsystem
+                ? sprintf('%s within %d jumps of %s', $alert->targetSolarsystem->name, $alert->max_jumps ?? 0, $alert->originSolarsystem->name)
+                : sprintf('%s within %d jumps', $alert->targetSolarsystem->name, $alert->max_jumps ?? 0),
         };
     }
 }

@@ -9,13 +9,14 @@ use App\Models\Map;
 use App\Models\MapIgnoredSolarsystem;
 use App\Models\Solarsystem;
 use App\Services\Routing\MapProximityPathfinder;
+use App\Services\Routing\ProximityResult;
 use Illuminate\Support\Facades\Gate;
 
 final readonly class CalculateDiscordRouteAction
 {
     public function __construct(private MapProximityPathfinder $pathfinder) {}
 
-    public function handle(DiscordAccount $account, int $mapId, int $targetSolarsystemId): string
+    public function handle(DiscordAccount $account, int $mapId, int $targetSolarsystemId, ?int $fromSolarsystemId = null): string
     {
         $map = Map::query()->find($mapId);
         $target = Solarsystem::query()->find($targetSolarsystemId);
@@ -23,12 +24,18 @@ final readonly class CalculateDiscordRouteAction
             return 'That map or target system is unavailable.';
         }
 
-        $origins = $map->mapSolarsystems()->pluck('solarsystem_id')->all();
-        $edges = $map->mapConnections()->with(['fromMapSolarsystem:id,solarsystem_id', 'toMapSolarsystem:id,solarsystem_id'])->get()
-            ->map(fn ($connection): array => [$connection->fromMapSolarsystem->solarsystem_id, $connection->toMapSolarsystem->solarsystem_id])->all();
+        $from = $fromSolarsystemId === null ? null : Solarsystem::query()->find($fromSolarsystemId);
+        if ($fromSolarsystemId !== null && ! $from instanceof Solarsystem) {
+            return 'That starting point system is unavailable.';
+        }
+
+        $origins = $from instanceof Solarsystem
+            ? [$from->id]
+            : $map->mapSolarsystems()->pluck('solarsystem_id')->all();
+        $edges = $map->wormholeEdges();
         $ignored = MapIgnoredSolarsystem::query()->where('map_id', $map->id)->pluck('solarsystem_id')->all();
         $result = $this->pathfinder->nearest($origins, $target->id, $edges, $ignored, 100);
-        if (! $result instanceof \App\Services\Routing\ProximityResult) {
+        if (! $result instanceof ProximityResult) {
             return 'No route was found within 100 jumps.';
         }
 

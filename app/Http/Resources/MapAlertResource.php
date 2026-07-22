@@ -46,6 +46,11 @@ final class MapAlertResource extends JsonResource
                 'id' => $this->targetSolarsystem->id,
                 'name' => $this->targetSolarsystem->name,
             ] : null),
+            'origin_solarsystem_id' => $this->origin_solarsystem_id,
+            'origin_solarsystem' => $this->whenLoaded('originSolarsystem', fn (): ?array => $this->originSolarsystem ? [
+                'id' => $this->originSolarsystem->id,
+                'name' => $this->originSolarsystem->name,
+            ] : null),
             'ship_type' => $this->ship_type?->value,
             'jdc_level' => $this->jdc_level,
             'include_highsec' => $this->include_highsec,

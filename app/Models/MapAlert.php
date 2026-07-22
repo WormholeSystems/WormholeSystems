@@ -41,6 +41,7 @@ use Illuminate\Support\Collection;
  * @property string|null $discord_role_id
  * @property MapAlertType $type
  * @property int|null $target_solarsystem_id
+ * @property int|null $origin_solarsystem_id
  * @property JumpShipType|null $ship_type
  * @property int|null $jdc_level
  * @property bool $include_highsec
@@ -63,6 +64,7 @@ use Illuminate\Support\Collection;
  * @property-read MapWebhook|null $webhook
  * @property-read MapWebhookRole|null $role
  * @property-read Solarsystem|null $targetSolarsystem
+ * @property-read Solarsystem|null $originSolarsystem
  * @property-read Collection<int, MapAlertDelivery> $deliveries
  * @property-read Collection<int, MapAlertEvent> $events
  */
@@ -161,6 +163,17 @@ final class MapAlert extends Model
     public function targetSolarsystem(): BelongsTo
     {
         return $this->belongsTo(Solarsystem::class, 'target_solarsystem_id');
+    }
+
+    /**
+     * The optional fixed starting point proximity is measured from; without one the
+     * alert measures from any point of the chain.
+     *
+     * @return BelongsTo<Solarsystem, $this>
+     */
+    public function originSolarsystem(): BelongsTo
+    {
+        return $this->belongsTo(Solarsystem::class, 'origin_solarsystem_id');
     }
 
     /** @return HasMany<MapAlertDelivery, $this> */

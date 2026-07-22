@@ -37,6 +37,7 @@ trait HasMapAlertRules
             'mention_mode' => ['sometimes', Rule::in([MapAlertMentionMode::None->value, MapAlertMentionMode::Everyone->value])],
             'type' => ['required', Rule::enum(MapAlertType::class)],
             'target_solarsystem_id' => ['nullable', 'integer', 'exists:solarsystems,id', 'required_if:type,'.MapAlertType::Proximity->value.','.MapAlertType::JumpRange->value],
+            'origin_solarsystem_id' => ['nullable', 'integer', 'exists:solarsystems,id', 'prohibited_unless:type,'.MapAlertType::Proximity->value],
             'ship_type' => ['nullable', Rule::enum(JumpShipType::class), 'required_if:type,'.MapAlertType::JumpRange->value],
             'jdc_level' => ['nullable', 'integer', 'between:1,5', 'required_if:type,'.MapAlertType::JumpRange->value],
             'include_highsec' => ['boolean'],

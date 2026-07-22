@@ -34,6 +34,7 @@ final readonly class CreateDiscordAlertAction
         ?string $guildId,
         ?string $channelId,
         ?string $roleId,
+        ?int $originSolarsystemId = null,
     ): string {
         $map = Map::query()->find($mapId);
         if ($map === null || ! in_array($delivery, [MapAlertDeliveryType::DiscordDm, MapAlertDeliveryType::DiscordChannel], true) || ! $mentionMode instanceof MapAlertMentionMode) {
@@ -44,6 +45,15 @@ final readonly class CreateDiscordAlertAction
         $target = $needsTarget && $solarsystemId !== null ? Solarsystem::query()->find($solarsystemId) : null;
         if ($needsTarget && $target === null) {
             return 'That target system is unavailable.';
+        }
+
+        if ($originSolarsystemId !== null && $type !== MapAlertType::Proximity) {
+            return 'Starting points are only supported for proximity alerts.';
+        }
+
+        $origin = $originSolarsystemId === null ? null : Solarsystem::query()->find($originSolarsystemId);
+        if ($originSolarsystemId !== null && ! $origin instanceof Solarsystem) {
+            return 'That starting point system is unavailable.';
         }
 
         $needsJumps = $type !== MapAlertType::JumpRange;
@@ -75,7 +85,7 @@ final readonly class CreateDiscordAlertAction
             return 'Select a role only when the mention option is A role.';
         }
 
-        DB::transaction(function () use ($account, $map, $type, $target, $jumps, $shipType, $jdcLevel, $includeHighsec, $delivery, $mentionMode, $guildId, $channelId, $roleId, $isChannel): void {
+        DB::transaction(function () use ($account, $map, $type, $target, $origin, $jumps, $shipType, $jdcLevel, $includeHighsec, $delivery, $mentionMode, $guildId, $channelId, $roleId, $isChannel): void {
             $alert = MapAlert::query()->create([
                 'map_id' => $map->id,
                 'created_by_user_id' => $account->user_id,
@@ -88,6 +98,7 @@ final readonly class CreateDiscordAlertAction
                 'discord_role_id' => $isChannel ? $roleId : null,
                 'type' => $type,
                 'target_solarsystem_id' => $target?->id,
+                'origin_solarsystem_id' => $origin?->id,
                 'max_jumps' => $type === MapAlertType::JumpRange ? null : $jumps,
                 'ship_type' => $type === MapAlertType::JumpRange ? $shipType : null,
                 'jdc_level' => $type === MapAlertType::JumpRange ? $jdcLevel : null,
@@ -98,7 +109,9 @@ final readonly class CreateDiscordAlertAction
         });
 
         return match ($type) {
-            MapAlertType::Proximity => sprintf('Alert created for **%s** within %d jumps of **%s**.', $target->name, $jumps, $map->name),
+            MapAlertType::Proximity => $origin instanceof Solarsystem
+                ? sprintf('Alert created for **%s** within %d jumps of **%s** through the **%s** chain.', $target->name, $jumps, $origin->name, $map->name)
+                : sprintf('Alert created for **%s** within %d jumps of **%s**.', $target->name, $jumps, $map->name),
             MapAlertType::JumpRange => sprintf('Alert created for exits within %.1f ly of **%s** on **%s**.', $shipType->maxRangeLy($jdcLevel), $target->name, $map->name),
             MapAlertType::Killmail => sprintf('Alert created for kills within %d jumps of the **%s** chain.', $jumps, $map->name),
         };

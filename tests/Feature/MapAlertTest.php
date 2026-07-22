@@ -304,3 +304,29 @@ it('rejects bot-only mention modes for webhook alerts', function () {
         'mention_mode' => 'creator',
     ]))->assertInvalid(['mention_mode']);
 });
+
+it('stores an optional starting point on proximity alerts', function () {
+    $map = Map::factory()->create();
+    $webhook = MapWebhook::factory()->for($map)->create();
+    actingAs(mapAlertManager($map, Permission::Manager));
+    $originId = makeSolarsystem(30009301);
+
+    $this->post(route('map-alerts.store'), validAlertPayload($map, $webhook, [
+        'origin_solarsystem_id' => $originId,
+    ]))->assertRedirect();
+
+    expect(MapAlert::query()->where('map_id', $map->id)->sole()->origin_solarsystem_id)->toBe($originId);
+});
+
+it('rejects a starting point for killmail alerts', function () {
+    $map = Map::factory()->create();
+    $webhook = MapWebhook::factory()->for($map)->create();
+    actingAs(mapAlertManager($map, Permission::Manager));
+
+    $this->post(route('map-alerts.store'), validAlertPayload($map, $webhook, [
+        'type' => 'killmail',
+        'target_solarsystem_id' => null,
+        'origin_solarsystem_id' => makeSolarsystem(30009302),
+        'filters' => [],
+    ]))->assertInvalid(['origin_solarsystem_id']);
+});

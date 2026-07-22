@@ -24,6 +24,7 @@ use App\Models\DiscordAccount;
 use App\Models\Map;
 use App\Models\MapAccess;
 use App\Models\MapAlert;
+use App\Models\MapConnection;
 use App\Models\MapWebhook;
 use App\Models\Solarsystem;
 use App\Models\User;
@@ -389,4 +390,51 @@ it('creates a killmail alert without a target system', function () {
         ->and($alert->target_solarsystem_id)->toBeNull()
         ->and($alert->max_jumps)->toBe(6)
         ->and($alert->mention_mode)->toBe(MapAlertMentionMode::Everyone);
+});
+
+it('creates a proximity alert with a fixed starting point', function () {
+    $map = Map::factory()->create(['name' => 'Origin Chain']);
+    $account = discordAccountWithMapAccess($map);
+    $target = discordAlertTarget(30009618, 'Jita Prime');
+    $origin = discordAlertTarget(30009619, 'Turnur Prime');
+
+    $response = app(CreateDiscordAlertAction::class)->handle(
+        $account, MapAlertType::Proximity, MapAlertDeliveryType::DiscordDm, $map->id, $target->id,
+        4, null, null, false, MapAlertMentionMode::None, null, null, null, $origin->id,
+    );
+
+    $alert = MapAlert::query()->sole();
+    expect($response)->toBe('Alert created for **Jita Prime** within 4 jumps of **Turnur Prime** through the **Origin Chain** chain.')
+        ->and($alert->origin_solarsystem_id)->toBe($origin->id);
+});
+
+it('rejects a starting point on non proximity alerts', function () {
+    $map = Map::factory()->create();
+    $account = discordAccountWithMapAccess($map, Permission::Manager);
+    $origin = discordAlertTarget(30009620);
+
+    expect(app(CreateDiscordAlertAction::class)->handle(
+        $account, MapAlertType::Killmail, MapAlertDeliveryType::DiscordDm, $map->id, null,
+        6, null, null, false, MapAlertMentionMode::None, null, null, null, $origin->id,
+    ))->toBe('Starting points are only supported for proximity alerts.')
+        ->and(MapAlert::query()->count())->toBe(0);
+});
+
+it('calculates routes from an optional starting point through the chain', function () {
+    $map = Map::factory()->create();
+    $account = discordAccountWithMapAccess($map);
+    $origin = placeMapSolarsystem($map, 30009621);
+    Solarsystem::query()->whereKey($origin->solarsystem_id)->update(['name' => 'Start']);
+    $target = discordAlertTarget(30009622, 'Goal');
+    $targetPlacement = placeMapSolarsystem($map, $target->id, 200, 200);
+    MapConnection::factory()->create([
+        'map_id' => $map->id,
+        'from_map_solarsystem_id' => $origin->id,
+        'to_map_solarsystem_id' => $targetPlacement->id,
+    ]);
+    $action = app(CalculateDiscordRouteAction::class);
+
+    expect($action->handle($account, $map->id, $target->id, $origin->solarsystem_id))->toBe('**1 jumps**: Start -> Goal')
+        ->and($action->handle($account, $map->id, $target->id, $target->id))->toBe('**0 jumps**: Goal')
+        ->and($action->handle($account, $map->id, $target->id, 999999))->toBe('That starting point system is unavailable.');
 });

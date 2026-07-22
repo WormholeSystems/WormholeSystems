@@ -1,11 +1,14 @@
 import { maxRangeLy } from '@/const/jumpShipTypes';
 import type { TMapAlert } from '@/types/models';
 
-type TAlertTriggerFields = Pick<TMapAlert, 'type' | 'max_jumps' | 'ship_type' | 'jdc_level' | 'target_solarsystem' | 'target_solarsystem_id'>;
+type TAlertTriggerFields = Pick<
+    TMapAlert,
+    'type' | 'max_jumps' | 'ship_type' | 'jdc_level' | 'target_solarsystem' | 'target_solarsystem_id' | 'origin_solarsystem' | 'origin_solarsystem_id'
+>;
 
 /**
  * Human-readable description of what fires an alert, shared by every alert list.
- * Pass a resolver when the alert payload does not include its target solarsystem.
+ * Pass a resolver when the alert payload does not include its solarsystems.
  */
 export function alertTriggerLabel(alert: TAlertTriggerFields, resolveSystemName?: (id: number | null) => string): string {
     const systemName = alert.target_solarsystem?.name ?? resolveSystemName?.(alert.target_solarsystem_id) ?? 'Unknown system';
@@ -17,5 +20,9 @@ export function alertTriggerLabel(alert: TAlertTriggerFields, resolveSystemName?
     if (alert.type === 'jump_range') {
         return `Exits within ${maxRangeLy(alert.ship_type ?? 'dreadnought', alert.jdc_level ?? 5).toFixed(1)} ly of ${systemName}`;
     }
-    return `${systemName} within ${alert.max_jumps} gate jump${jumpsPlural}`;
+
+    const originName = alert.origin_solarsystem?.name ?? (alert.origin_solarsystem_id ? resolveSystemName?.(alert.origin_solarsystem_id) : null);
+    const origin = originName ? ` of ${originName} through the chain` : '';
+
+    return `${systemName} within ${alert.max_jumps} gate jump${jumpsPlural}${origin}`;
 }

@@ -70,6 +70,9 @@ final class EvaluateMapAlertsJob implements ShouldBeUnique, ShouldQueue
     /** @var array<int, MapAlertDelivery> */
     private array $reservations = [];
 
+    /** @var array<int, array{0: int, 1: int}>|null */
+    private ?array $chainEdges = null;
+
     public function __construct(public readonly int $map_solarsystem_id) {}
 
     public function uniqueId(): string
@@ -158,8 +161,22 @@ final class EvaluateMapAlertsJob implements ShouldBeUnique, ShouldQueue
             return;
         }
 
-        $result = $this->pathfinder->nearest([$placement->solarsystem_id], $alert->target_solarsystem_id, [], $ignored, $alert->max_jumps);
+        $hasOrigin = $alert->origin_solarsystem_id !== null;
+        $result = $this->pathfinder->nearest(
+            [$hasOrigin ? $alert->origin_solarsystem_id : $placement->solarsystem_id],
+            $alert->target_solarsystem_id,
+            $hasOrigin ? $this->chainEdges($placement) : [],
+            $ignored,
+            $alert->max_jumps,
+        );
         if (! $result instanceof ProximityResult) {
+            return;
+        }
+
+        // A fixed starting point re-measures the same pair on every placement; only the
+        // placement that actually participates in the route may fire, so an in-range
+        // pair does not re-alert for every unrelated system added later.
+        if ($hasOrigin && ! in_array($placement->solarsystem_id, $result->route, true)) {
             return;
         }
 
@@ -283,6 +300,17 @@ final class EvaluateMapAlertsJob implements ShouldBeUnique, ShouldQueue
         $nonce = mb_substr(hash('sha256', $alert->id.':'.$placement->id), 0, 25);
         $failure = $this->botDeliverer->deliver($alert, $embed, $nonce, $reservation);
         $this->firstFailure ??= $failure;
+    }
+
+    /**
+     * The chain's wormhole edges, loaded once per run and only when an alert with a
+     * fixed starting point needs them.
+     *
+     * @return array<int, array{0: int, 1: int}>
+     */
+    private function chainEdges(MapSolarsystem $placement): array
+    {
+        return $this->chainEdges ??= $placement->map->wormholeEdges();
     }
 
     /**
