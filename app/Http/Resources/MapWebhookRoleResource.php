@@ -23,6 +23,7 @@ final class MapWebhookRoleResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'mention_type' => $this->mention_type->value,
             'discord_role_id' => $this->discord_role_id,
             'alerts_count' => $this->whenCounted('alerts'),
         ];

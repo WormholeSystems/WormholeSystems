@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Enums\MapWebhookMentionType;
 use App\Models\Map;
 use App\Models\MapWebhookRole;
 use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 final class StoreMapWebhookRoleRequest extends FormRequest
 {
@@ -37,6 +39,7 @@ final class StoreMapWebhookRoleRequest extends FormRequest
         return [
             'map_id' => ['required', 'integer', 'exists:maps,id'],
             'name' => ['required', 'string', 'max:255'],
+            'mention_type' => ['sometimes', Rule::enum(MapWebhookMentionType::class)],
             'discord_role_id' => ['required', 'string', 'regex:/^\d+$/'],
         ];
     }

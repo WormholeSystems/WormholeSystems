@@ -4,18 +4,16 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
-use App\Enums\MapWebhookMentionType;
-use App\Models\MapWebhookRole;
+use App\Models\MapAlert;
 use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
-final class UpdateMapWebhookRoleRequest extends FormRequest
+final class UpdateMapAlertStateRequest extends FormRequest
 {
-    public MapWebhookRole $mapWebhookRole {
-        get => $this->route('map_webhook_role');
+    public MapAlert $mapAlert {
+        get => $this->route('map_alert');
     }
 
     /**
@@ -23,7 +21,7 @@ final class UpdateMapWebhookRoleRequest extends FormRequest
      */
     public function authorize(#[CurrentUser] User $user): bool
     {
-        return $user->can('update', $this->mapWebhookRole);
+        return $user->can('update', $this->mapAlert);
     }
 
     /**
@@ -33,10 +31,12 @@ final class UpdateMapWebhookRoleRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'name' => ['required', 'string', 'max:255'],
-            'mention_type' => ['sometimes', Rule::enum(MapWebhookMentionType::class)],
-            'discord_role_id' => ['required', 'string', 'regex:/^\d+$/'],
-        ];
+        return ['enabled' => ['required', 'boolean']];
+    }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return ['enabled.required' => 'Choose whether the alert should be enabled or disabled.'];
     }
 }

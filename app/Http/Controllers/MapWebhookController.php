@@ -9,42 +9,13 @@ use App\Actions\MapWebhooks\DeleteMapWebhookAction;
 use App\Actions\MapWebhooks\UpdateMapWebhookAction;
 use App\Http\Requests\StoreMapWebhookRequest;
 use App\Http\Requests\UpdateMapWebhookRequest;
-use App\Http\Resources\MapAlertResource;
-use App\Http\Resources\MapInfoResource;
-use App\Http\Resources\MapWebhookResource;
-use App\Http\Resources\MapWebhookRoleResource;
-use App\Models\Map;
 use App\Models\MapWebhook;
-use App\Models\User;
-use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
-use Inertia\Inertia;
-use Inertia\Response;
 use Throwable;
 
 final class MapWebhookController extends Controller
 {
-    public function __construct(
-        #[CurrentUser] private readonly User $user,
-    ) {}
-
-    /**
-     * Show the alerts settings page: webhook destinations, roles, and the alerts that use them.
-     */
-    public function show(Map $map): Response
-    {
-        Gate::authorize('manageAccess', $map);
-
-        return Inertia::render('maps/settings/ShowWebhooks', [
-            'map' => $map->toResource(MapInfoResource::class),
-            'webhooks' => $map->mapWebhooks()->withCount('alerts')->latest()->get()->toResourceCollection(MapWebhookResource::class),
-            'roles' => $map->mapWebhookRoles()->withCount('alerts')->latest()->get()->toResourceCollection(MapWebhookRoleResource::class),
-            'alerts' => $map->mapAlerts()->latest()->get()->toResourceCollection(MapAlertResource::class),
-            'permission' => $map->getUserPermission($this->user)?->value,
-        ]);
-    }
-
     /**
      * @throws Throwable
      */

@@ -19,14 +19,14 @@ final class MapWebhookRoleController extends Controller
     {
         $action->handle($request->validated());
 
-        return back()->notify('Role added', message: 'You can now ping this role from an alert.');
+        return back()->notify('Mention added', message: 'You can now ping it from an alert.');
     }
 
     public function update(UpdateMapWebhookRoleRequest $request, MapWebhookRole $mapWebhookRole, UpdateMapWebhookRoleAction $action): RedirectResponse
     {
         $action->handle($mapWebhookRole, $request->validated());
 
-        return back()->notify('Role updated', message: 'The role has been updated.');
+        return back()->notify('Mention updated', message: 'The mention has been updated.');
     }
 
     public function destroy(MapWebhookRole $mapWebhookRole, DeleteMapWebhookRoleAction $action): RedirectResponse
@@ -35,6 +35,6 @@ final class MapWebhookRoleController extends Controller
 
         $action->handle($mapWebhookRole);
 
-        return back()->notify('Role removed', message: 'Alerts that used it will keep firing without a ping.');
+        return back()->notify('Mention removed', message: 'Alerts that used it will keep firing without a ping.');
     }
 }

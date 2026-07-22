@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Enums\MapAlertDeliveryType;
 use App\Http\Requests\Concerns\HasMapAlertRules;
 use App\Models\Map;
 use App\Models\MapAlert;
@@ -25,7 +26,8 @@ final class UpdateMapAlertRequest extends FormRequest
      */
     public function authorize(#[CurrentUser] User $user): bool
     {
-        return $user->can('update', $this->mapAlert);
+        return $this->mapAlert->delivery_type === MapAlertDeliveryType::Webhook
+            && $user->can('update', $this->mapAlert);
     }
 
     /**

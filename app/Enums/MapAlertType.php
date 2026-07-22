@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
-enum MapWebhookType: string
+enum MapAlertType: string
 {
     case Proximity = 'proximity';
     case Killmail = 'killmail';

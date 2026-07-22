@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\MapWebhookMentionType;
 use App\Enums\Permission;
 use App\Models\Map;
 use App\Models\MapAlert;
@@ -74,4 +75,45 @@ it('forbids a member from creating a role', function () {
     ])->assertForbidden();
 
     expect(MapWebhookRole::query()->where('map_id', $map->id)->count())->toBe(0);
+});
+
+it('lets a manager create a user mention', function () {
+    $map = Map::factory()->create();
+    actingAs(webhookManager($map, Permission::Manager));
+
+    $this->post(route('map-webhook-roles.store'), [
+        'map_id' => $map->id,
+        'name' => 'FC ping',
+        'mention_type' => 'user',
+        'discord_role_id' => '123456789',
+    ])->assertRedirect();
+
+    expect(MapWebhookRole::query()->where('map_id', $map->id)->sole()->mention_type)
+        ->toBe(MapWebhookMentionType::User);
+});
+
+it('defaults to a role mention when no type is given', function () {
+    $map = Map::factory()->create();
+    actingAs(webhookManager($map, Permission::Manager));
+
+    $this->post(route('map-webhook-roles.store'), [
+        'map_id' => $map->id,
+        'name' => 'Ping squad',
+        'discord_role_id' => '987654321',
+    ])->assertRedirect();
+
+    expect(MapWebhookRole::query()->where('map_id', $map->id)->sole()->mention_type)
+        ->toBe(MapWebhookMentionType::Role);
+});
+
+it('rejects an unknown mention type', function () {
+    $map = Map::factory()->create();
+    actingAs(webhookManager($map, Permission::Manager));
+
+    $this->post(route('map-webhook-roles.store'), [
+        'map_id' => $map->id,
+        'name' => 'Ping squad',
+        'mention_type' => 'channel',
+        'discord_role_id' => '987654321',
+    ])->assertInvalid(['mention_type']);
 });
