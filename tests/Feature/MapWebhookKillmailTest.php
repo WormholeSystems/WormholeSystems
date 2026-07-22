@@ -26,10 +26,10 @@ it('exposes webhooks, roles and killmail alerts on the settings page without the
     actingAs($owner);
 
     $this->withoutExceptionHandling()
-        ->get(route('maps.settings.webhooks.show', $map))
+        ->get(route('maps.settings.discord.show', $map))
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
-            ->component('maps/settings/ShowWebhooks')
+            ->component('maps/settings/Discord')
             ->where('webhooks.0.name', 'Killmail channel')
             ->missing('webhooks.0.discord_webhook_url')
             ->where('roles.0.name', 'Fleet ping')

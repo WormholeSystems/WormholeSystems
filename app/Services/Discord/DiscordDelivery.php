@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Discord;
 
+use App\Enums\MapAlertMentionMode;
 use App\Models\MapAlert;
-use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -21,6 +21,8 @@ use Throwable;
  */
 final readonly class DiscordDelivery
 {
+    use RetriesDiscordRateLimits;
+
     /**
      * @param  array<string, mixed>  $embed
      */
@@ -28,11 +30,13 @@ final readonly class DiscordDelivery
     {
         $payload = ['embeds' => [$embed]];
 
-        $roleId = $alert->role?->discord_role_id;
-
-        if ($roleId !== null) {
-            $payload['content'] = sprintf('<@&%s>', $roleId);
-            $payload['allowed_mentions'] = ['roles' => [$roleId]];
+        if ($alert->mention_mode === MapAlertMentionMode::Everyone) {
+            $payload['content'] = '@everyone';
+            $payload['allowed_mentions'] = ['parse' => ['everyone']];
+        } elseif ($alert->role !== null) {
+            $mention = $alert->role->mention();
+            $payload['content'] = $mention['content'];
+            $payload['allowed_mentions'] = $mention['allowed_mentions'];
         }
 
         try {
@@ -50,21 +54,5 @@ final readonly class DiscordDelivery
                 'message' => $e->getMessage(),
             ]);
         }
-    }
-
-    private function wasRateLimited(Throwable $exception): bool
-    {
-        return $exception instanceof RequestException && $exception->response->status() === 429;
-    }
-
-    private function retryDelayMilliseconds(Throwable $exception): int
-    {
-        if (! $exception instanceof RequestException) {
-            return 200;
-        }
-
-        $retryAfterSeconds = (float) $exception->response->header('Retry-After');
-
-        return $retryAfterSeconds > 0 ? (int) ceil($retryAfterSeconds * 1000) : 200;
     }
 }

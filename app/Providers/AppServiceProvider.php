@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\PersonalAccessToken;
+use SocialiteProviders\Discord\Provider as DiscordProvider;
 use SocialiteProviders\Eveonline\Provider;
 use SocialiteProviders\Manager\SocialiteWasCalled;
 
@@ -60,11 +61,13 @@ final class AppServiceProvider extends ServiceProvider
 
         Event::listen(function (SocialiteWasCalled $event): void {
             $event->extendSocialite('eveonline', Provider::class);
+            $event->extendSocialite('discord', DiscordProvider::class);
         });
 
         Gate::policy(PersonalAccessToken::class, PersonalAccessTokenPolicy::class);
 
         $this->reloads('app:restart-killmail-listener', 'killmails');
+        $this->reloads('discord:restart', 'discord');
 
         $this->registerScheduleMacros();
     }

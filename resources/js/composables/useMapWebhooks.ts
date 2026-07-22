@@ -21,19 +21,21 @@ export function useMapWebhooks() {
     const webhooks = computed(() => page.props.webhooks ?? []);
 
     function createWebhook(payload: TMapWebhookPayload, options: VisitHelperOptions = {}): void {
-        router.post(
-            MapWebhookController.store().url,
-            { map_id: page.props.map.id, ...payload },
-            { preserveScroll: true, preserveState: true, only, ...options },
-        );
+        router.visit(MapWebhookController.store(), {
+            data: { map_id: page.props.map.id, ...payload },
+            preserveScroll: true,
+            preserveState: true,
+            only,
+            ...options,
+        });
     }
 
     function updateWebhook(id: number, payload: TMapWebhookPayload, options: VisitHelperOptions = {}): void {
-        router.put(MapWebhookController.update(id).url, payload, { preserveScroll: true, preserveState: true, only, ...options });
+        router.visit(MapWebhookController.update(id), { data: payload, preserveScroll: true, preserveState: true, only, ...options });
     }
 
     function deleteWebhook(id: number, options: VisitHelperOptions = {}): void {
-        router.delete(MapWebhookController.destroy(id).url, { preserveScroll: true, preserveState: true, only, ...options });
+        router.visit(MapWebhookController.destroy(id), { preserveScroll: true, preserveState: true, only, ...options });
     }
 
     return { webhooks, createWebhook, updateWebhook, deleteWebhook };

@@ -3,11 +3,18 @@
 declare(strict_types=1);
 
 use App\Enums\JumpShipType;
+use App\Enums\MapAlertDeliveryType;
+use App\Enums\MapAlertDisabledReason;
+use App\Enums\MapAlertEventAction;
+use App\Enums\MapAlertMentionMode;
 use App\Enums\Permission;
+use App\Models\Character;
 use App\Models\Map;
+use App\Models\MapAccess;
 use App\Models\MapAlert;
 use App\Models\MapWebhook;
 use App\Models\MapWebhookRole;
+use App\Models\User;
 
 use function Pest\Laravel\actingAs;
 
@@ -23,26 +30,64 @@ function validAlertPayload(Map $map, MapWebhook $webhook, array $overrides = [])
     ], $overrides);
 }
 
+function mapAlertManager(Map $map, Permission $permission): User
+{
+    return User::factory()
+        ->has(Character::factory()->has(MapAccess::factory(['permission' => $permission])->for($map)))
+        ->create();
+}
+
 it('lets a manager create a proximity alert pointing at a webhook and role', function () {
     $map = Map::factory()->create();
     $webhook = MapWebhook::factory()->for($map)->create();
     $role = MapWebhookRole::factory()->for($map)->create();
-    actingAs(webhookManager($map, Permission::Manager));
+    $manager = mapAlertManager($map, Permission::Manager);
+    actingAs($manager);
 
-    $this->post(route('map-alerts.store'), validAlertPayload($map, $webhook, ['map_webhook_role_id' => $role->id]))
+    $this->post(route('map-alerts.store'), validAlertPayload($map, $webhook, [
+        'map_webhook_role_id' => $role->id,
+        'created_by_user_id' => 999999,
+        'delivery_type' => MapAlertDeliveryType::DiscordDm->value,
+    ]))
         ->assertRedirect();
 
     $alert = MapAlert::query()->where('map_id', $map->id)->sole();
 
     expect($alert->map_webhook_id)->toBe($webhook->id)
         ->and($alert->map_webhook_role_id)->toBe($role->id)
-        ->and($alert->type->value)->toBe('proximity');
+        ->and($alert->type->value)->toBe('proximity')
+        ->and($alert->created_by_user_id)->toBe($manager->id)
+        ->and($alert->delivery_type)->toBe(MapAlertDeliveryType::Webhook)
+        ->and($alert->events()->where('action', MapAlertEventAction::Created)->count())->toBe(1)
+        ->and($alert->events()->sole()->actor_user_id)->toBe($manager->id);
+});
+
+it('creates an inactive webhook alert with disabled metadata and lifecycle events', function () {
+    $map = Map::factory()->create();
+    $webhook = MapWebhook::factory()->for($map)->create();
+    $manager = mapAlertManager($map, Permission::Manager);
+    actingAs($manager);
+
+    $this->post(route('map-alerts.store'), validAlertPayload($map, $webhook, ['is_active' => false]))
+        ->assertRedirect();
+
+    $alert = MapAlert::query()->where('map_id', $map->id)->sole();
+
+    expect($alert->is_active)->toBeFalse()
+        ->and($alert->disabled_at)->not->toBeNull()
+        ->and($alert->disabled_by_user_id)->toBe($manager->id)
+        ->and($alert->disabled_reason)->toBe(MapAlertDisabledReason::Manual)
+        ->and($alert->events()->pluck('action')->all())->toBe([
+            MapAlertEventAction::Created,
+            MapAlertEventAction::Disabled,
+        ]);
 });
 
 it('lets a manager create a killmail alert with filters and a null target', function () {
     $map = Map::factory()->create();
     $webhook = MapWebhook::factory()->for($map)->create();
-    actingAs(webhookManager($map, Permission::Manager));
+    $manager = mapAlertManager($map, Permission::Manager);
+    actingAs($manager);
 
     $this->post(route('map-alerts.store'), validAlertPayload($map, $webhook, [
         'type' => 'killmail',
@@ -64,7 +109,7 @@ it('lets a manager create a killmail alert with filters and a null target', func
 it('lets a manager create a jump-range alert', function () {
     $map = Map::factory()->create();
     $webhook = MapWebhook::factory()->for($map)->create();
-    actingAs(webhookManager($map, Permission::Manager));
+    actingAs(mapAlertManager($map, Permission::Manager));
 
     $this->post(route('map-alerts.store'), validAlertPayload($map, $webhook, [
         'type' => 'jump_range',
@@ -86,7 +131,7 @@ it('lets a manager create a jump-range alert', function () {
 it('validates jump-range alert fields', function (array $overrides, string $invalidField) {
     $map = Map::factory()->create();
     $webhook = MapWebhook::factory()->for($map)->create();
-    actingAs(webhookManager($map, Permission::Manager));
+    actingAs(mapAlertManager($map, Permission::Manager));
 
     $this->post(route('map-alerts.store'), validAlertPayload($map, $webhook, array_merge([
         'type' => 'jump_range',
@@ -106,7 +151,7 @@ it('validates jump-range alert fields', function (array $overrides, string $inva
 it('still requires max jumps for non jump-range alerts', function () {
     $map = Map::factory()->create();
     $webhook = MapWebhook::factory()->for($map)->create();
-    actingAs(webhookManager($map, Permission::Manager));
+    actingAs(mapAlertManager($map, Permission::Manager));
 
     $this->post(route('map-alerts.store'), validAlertPayload($map, $webhook, ['max_jumps' => null]))
         ->assertInvalid(['max_jumps']);
@@ -115,7 +160,7 @@ it('still requires max jumps for non jump-range alerts', function () {
 it('requires a target for proximity alerts', function () {
     $map = Map::factory()->create();
     $webhook = MapWebhook::factory()->for($map)->create();
-    actingAs(webhookManager($map, Permission::Manager));
+    actingAs(mapAlertManager($map, Permission::Manager));
 
     $this->post(route('map-alerts.store'), validAlertPayload($map, $webhook, ['target_solarsystem_id' => null]))
         ->assertInvalid(['target_solarsystem_id']);
@@ -124,7 +169,7 @@ it('requires a target for proximity alerts', function () {
 it('rejects a webhook that belongs to another map', function () {
     $map = Map::factory()->create();
     $otherWebhook = MapWebhook::factory()->create();
-    actingAs(webhookManager($map, Permission::Manager));
+    actingAs(mapAlertManager($map, Permission::Manager));
 
     $this->post(route('map-alerts.store'), validAlertPayload($map, $otherWebhook))
         ->assertInvalid(['map_webhook_id']);
@@ -134,7 +179,7 @@ it('rejects a role that belongs to another map', function () {
     $map = Map::factory()->create();
     $webhook = MapWebhook::factory()->for($map)->create();
     $otherRole = MapWebhookRole::factory()->create();
-    actingAs(webhookManager($map, Permission::Manager));
+    actingAs(mapAlertManager($map, Permission::Manager));
 
     $this->post(route('map-alerts.store'), validAlertPayload($map, $webhook, ['map_webhook_role_id' => $otherRole->id]))
         ->assertInvalid(['map_webhook_role_id']);
@@ -143,7 +188,7 @@ it('rejects a role that belongs to another map', function () {
 it('validates filter rules', function (array $filter, string $invalidField) {
     $map = Map::factory()->create();
     $webhook = MapWebhook::factory()->for($map)->create();
-    actingAs(webhookManager($map, Permission::Manager));
+    actingAs(mapAlertManager($map, Permission::Manager));
 
     $this->post(route('map-alerts.store'), validAlertPayload($map, $webhook, [
         'type' => 'killmail',
@@ -167,17 +212,24 @@ it('lets a manager update an alert', function () {
         'target_solarsystem_id' => makeSolarsystem(30009301),
         'max_jumps' => 5,
     ]);
-    actingAs(webhookManager($map, Permission::Manager));
+    actingAs(mapAlertManager($map, Permission::Manager));
 
     $this->put(route('map-alerts.update', $alert), [
         'map_webhook_id' => $webhook->id,
         'type' => 'proximity',
         'target_solarsystem_id' => $alert->target_solarsystem_id,
         'max_jumps' => 12,
-        'is_active' => true,
+        'is_active' => false,
     ])->assertRedirect();
 
-    expect($alert->refresh()->max_jumps)->toBe(12);
+    expect($alert->refresh()->max_jumps)->toBe(12)
+        ->and($alert->is_active)->toBeFalse()
+        ->and($alert->disabled_at)->not->toBeNull()
+        ->and($alert->disabled_reason)->toBe(MapAlertDisabledReason::Manual)
+        ->and($alert->events()->pluck('action')->all())->toBe([
+            MapAlertEventAction::Updated,
+            MapAlertEventAction::Disabled,
+        ]);
 });
 
 it('lets a manager delete an alert', function () {
@@ -188,19 +240,67 @@ it('lets a manager delete an alert', function () {
         'map_webhook_id' => $webhook->id,
         'target_solarsystem_id' => makeSolarsystem(30009302),
     ]);
-    actingAs(webhookManager($map, Permission::Manager));
+    $manager = mapAlertManager($map, Permission::Manager);
+    actingAs($manager);
 
     $this->delete(route('map-alerts.destroy', $alert))->assertRedirect();
 
-    expect(MapAlert::query()->whereKey($alert->id)->exists())->toBeFalse();
+    $deletedAlert = MapAlert::withTrashed()->findOrFail($alert->id);
+    $event = $deletedAlert->events()->sole();
+
+    expect(MapAlert::query()->whereKey($alert->id)->exists())->toBeFalse()
+        ->and($deletedAlert->deleted_at)->not->toBeNull()
+        ->and($deletedAlert->deleted_by_user_id)->toBe($manager->id)
+        ->and($event->action)->toBe(MapAlertEventAction::Removed)
+        ->and($event->map_id)->toBe($map->id)
+        ->and($event->actor_user_id)->toBe($manager->id)
+        ->and($event->snapshot['id'])->toBe($alert->id);
 });
 
 it('forbids a viewer from creating an alert', function () {
     $map = Map::factory()->create();
     $webhook = MapWebhook::factory()->for($map)->create();
-    actingAs(webhookManager($map, Permission::Viewer));
+    actingAs(mapAlertManager($map, Permission::Viewer));
 
     $this->post(route('map-alerts.store'), validAlertPayload($map, $webhook))->assertForbidden();
 
     expect(MapAlert::query()->where('map_id', $map->id)->count())->toBe(0);
+});
+
+it('lets a manager create an alert that pings everyone', function () {
+    $map = Map::factory()->create();
+    $webhook = MapWebhook::factory()->for($map)->create();
+    actingAs(mapAlertManager($map, Permission::Manager));
+
+    $this->post(route('map-alerts.store'), validAlertPayload($map, $webhook, [
+        'mention_mode' => 'everyone',
+        'map_webhook_role_id' => null,
+    ]))->assertRedirect();
+
+    $alert = MapAlert::query()->where('map_id', $map->id)->sole();
+
+    expect($alert->mention_mode)->toBe(MapAlertMentionMode::Everyone)
+        ->and($alert->map_webhook_role_id)->toBeNull();
+});
+
+it('rejects an everyone mention combined with a mention record', function () {
+    $map = Map::factory()->create();
+    $webhook = MapWebhook::factory()->for($map)->create();
+    $role = MapWebhookRole::factory()->for($map)->create();
+    actingAs(mapAlertManager($map, Permission::Manager));
+
+    $this->post(route('map-alerts.store'), validAlertPayload($map, $webhook, [
+        'mention_mode' => 'everyone',
+        'map_webhook_role_id' => $role->id,
+    ]))->assertInvalid(['map_webhook_role_id']);
+});
+
+it('rejects bot-only mention modes for webhook alerts', function () {
+    $map = Map::factory()->create();
+    $webhook = MapWebhook::factory()->for($map)->create();
+    actingAs(mapAlertManager($map, Permission::Manager));
+
+    $this->post(route('map-alerts.store'), validAlertPayload($map, $webhook, [
+        'mention_mode' => 'creator',
+    ]))->assertInvalid(['mention_mode']);
 });

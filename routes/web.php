@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BulkMapConnectionController;
 use App\Http\Controllers\BulkSignatureController;
 use App\Http\Controllers\BulkWaypointController;
+use App\Http\Controllers\DiscordAccountController;
 use App\Http\Controllers\DocumentationController;
 use App\Http\Controllers\EveController;
 use App\Http\Controllers\EveScoutConnectionController;
@@ -16,11 +17,13 @@ use App\Http\Controllers\LandingController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MapAccessController;
 use App\Http\Controllers\MapAlertController;
+use App\Http\Controllers\MapAlertStateController;
 use App\Http\Controllers\MapBackgroundImageController;
 use App\Http\Controllers\MapBookmarkFormatController;
 use App\Http\Controllers\MapConnectionController;
 use App\Http\Controllers\MapConnectionJumpController;
 use App\Http\Controllers\MapController;
+use App\Http\Controllers\MapDiscordController;
 use App\Http\Controllers\MapIgnoredSolarsystemController;
 use App\Http\Controllers\MapLayoutController;
 use App\Http\Controllers\MapPreferencesController;
@@ -39,6 +42,7 @@ use App\Http\Controllers\PingController;
 use App\Http\Controllers\PreferredCharacterController;
 use App\Http\Controllers\RallyPointController;
 use App\Http\Controllers\ScopeController;
+use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\SignatureController;
 use App\Http\Controllers\StatisticsController;
 use App\Http\Controllers\TokenManagementController;
@@ -56,6 +60,13 @@ Route::get('eve', [EveController::class, 'show'])->name('eve.show');
 Route::get('eve/callback', [EveController::class, 'store'])->name('eve.store');
 
 Route::middleware('auth')->group(function () {
+
+    Route::get('settings', [SettingsController::class, 'show'])->name('settings.show');
+    Route::get('discord/connect', [DiscordAccountController::class, 'redirect'])->name('discord.connect');
+    Route::get('discord/callback', [DiscordAccountController::class, 'callback'])->name('discord.callback');
+    Route::get('discord/link/{token}', [DiscordAccountController::class, 'link'])->name('discord.link');
+    Route::post('discord/link', [DiscordAccountController::class, 'confirmLink'])->name('discord.link.confirm');
+    Route::delete('discord', [DiscordAccountController::class, 'destroy'])->name('discord.destroy');
 
     Route::get('maps/{map}/ping', [PingController::class, 'show'])->name('maps.ping');
     Route::resource('maps', MapController::class)->except(['show', 'create'])->names([
@@ -82,7 +93,7 @@ Route::middleware('auth')->group(function () {
 
         Route::get('mapping', [MapIgnoredSolarsystemController::class, 'show'])->name('mapping.show');
 
-        Route::get('webhooks', [MapWebhookController::class, 'show'])->name('webhooks.show');
+        Route::get('discord', [MapDiscordController::class, 'show'])->name('discord.show');
     });
 
     Route::delete('logout', [AuthController::class, 'destroy'])->name('logout');
@@ -128,6 +139,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('map-webhooks', MapWebhookController::class)->only(['store', 'update', 'destroy']);
     Route::resource('map-webhook-roles', MapWebhookRoleController::class)->only(['store', 'update', 'destroy']);
     Route::resource('map-alerts', MapAlertController::class)->only(['store', 'update', 'destroy']);
+    Route::put('map-alerts/{map_alert}/state', [MapAlertStateController::class, 'update'])->name('map-alerts.state.update');
     Route::get('eve/ship-search', [EveSearchController::class, 'index'])->name('eve.ship-search');
     Route::get('maps/{map}/search', [MapSearchController::class, 'index'])->name('maps.search');
 

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use App\Actions\MapSolarsystem\StoreMapSolarsystemAction;
-use App\Jobs\Webhooks\EvaluateMapWebhooksJob;
+use App\Jobs\MapAlerts\EvaluateMapAlertsJob;
 use App\Models\Map;
 use Illuminate\Support\Facades\Queue;
 
@@ -22,7 +22,7 @@ it('queues an evaluation for the added system when a system joins the map', func
     ]);
 
     Queue::assertPushed(
-        EvaluateMapWebhooksJob::class,
-        fn (EvaluateMapWebhooksJob $job): bool => $job->map_id === $map->id && $job->solarsystem_id === $sid,
+        EvaluateMapAlertsJob::class,
+        fn (EvaluateMapAlertsJob $job): bool => $job->map_solarsystem_id === $map->mapSolarsystems()->sole()->id,
     );
 });

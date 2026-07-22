@@ -248,6 +248,7 @@ export type TCharacter = {
     status: TCharacterStatus | null;
     route?: TResolvedSolarsystem[]; // Fastest route
     esi_scopes?: string[];
+    is_preferred?: boolean;
 };
 
 export type TCharacterStatus = {
@@ -299,7 +300,7 @@ export type TMapUserSetting = {
     layout_override: 'manual' | 'tree' | null;
 };
 
-export type TMapWebhookType = 'proximity' | 'killmail' | 'jump_range';
+export type TMapAlertType = 'proximity' | 'killmail' | 'jump_range';
 
 export type TJumpShipType = 'dreadnought' | 'carrier' | 'force_auxiliary' | 'supercarrier' | 'titan' | 'jump_freighter' | 'rorqual' | 'black_ops';
 
@@ -335,16 +336,24 @@ export type TMapWebhook = {
 export type TMapWebhookRole = {
     id: number;
     name: string;
+    mention_type: 'role' | 'user';
     discord_role_id: string;
     alerts_count?: number;
 };
 
 export type TMapAlert = {
     id: number;
-    map_webhook_id: number;
+    map?: { id: number; name: string; slug: string | null };
+    creator_name?: string | null;
+    delivery_type: 'webhook' | 'discord_dm' | 'discord_channel';
+    destination_summary: string;
+    map_webhook_id: number | null;
     map_webhook_role_id: number | null;
-    type: TMapWebhookType;
+    mention_mode: 'none' | 'creator' | 'role' | 'everyone';
+    mention_mode_label: string;
+    type: TMapAlertType;
     target_solarsystem_id: number | null;
+    target_solarsystem?: { id: number; name: string } | null;
     ship_type: TJumpShipType | null;
     jdc_level: number | null;
     include_highsec: boolean;
@@ -352,7 +361,22 @@ export type TMapAlert = {
     filter_match: TKillmailFilterMatch;
     filters: TKillmailFilterRule[];
     is_active: boolean;
+    disabled_reason: 'manual' | 'discord_account_disconnected' | 'access_revoked' | 'discord_destination_unavailable' | 'delivery_failed' | null;
+    disabled_reason_label: string | null;
+    disabled_at: string | null;
     last_fired_at: string | null;
+    created_at: string;
+};
+
+export type TMapAlertEvent = {
+    id: number;
+    action: 'disabled' | 'removed';
+    reason: string | null;
+    actor_name: string | null;
+    delivery_type: TMapAlert['delivery_type'] | null;
+    destination_summary: string;
+    type: TMapAlertType | null;
+    created_at: string;
 };
 
 export type TShipHistory = {
@@ -381,7 +405,14 @@ export type TToken = {
     id: number;
     name: string;
     created_at: string;
-    last_used_at: string;
+    last_used_at: string | null;
+};
+
+export type TDiscordAccount = {
+    discord_user_id: string;
+    username: string;
+    display_name: string | null;
+    avatar: string | null;
 };
 
 export type TAudit = {

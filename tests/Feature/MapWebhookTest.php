@@ -111,12 +111,21 @@ it('never exposes the discord url on the settings page', function () {
     actingAs($owner);
 
     $this->withoutExceptionHandling()
-        ->get(route('maps.settings.webhooks.show', $map))
+        ->get(route('maps.settings.discord.show', $map))
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
-            ->component('maps/settings/ShowWebhooks')
+            ->component('maps/settings/Discord')
             ->where('webhooks.0.name', 'Secret keeper')
             ->missing('webhooks.0.discord_webhook_url')
             ->etc()
         );
+});
+
+it('does not expose the old webhooks settings route', function () {
+    $map = Map::factory()->create();
+    $owner = User::factory()->ownsMap($map)->create();
+
+    actingAs($owner)
+        ->get("/maps/{$map->slug}/settings/webhooks")
+        ->assertNotFound();
 });

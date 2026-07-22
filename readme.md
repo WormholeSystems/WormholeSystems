@@ -73,7 +73,7 @@ php artisan queue:work      # background jobs (killmails, locations, ...)
 php artisan schedule:work   # scheduled tasks
 ```
 
-Real-time features need **Reverb**: in Herd's Services panel, add "Reverb" under *Broadcasting* and start it (not enabled by default; runs at `reverb.herd.test:443`).
+Real-time features need **Reverb**: in Herd's Services panel, add "Reverb" under _Broadcasting_ and start it (not enabled by default; runs at `reverb.herd.test:443`).
 
 ## EVE application setup
 
@@ -82,19 +82,62 @@ SSO login requires an application at [developers.eveonline.com](https://develope
 - **Connection type:** Authentication & API Access
 - **Callback URL:** `https://wormholesystems.test/eve/callback`
 - **Scopes:**
-  - `publicData`
-  - `esi-location.read_location.v1` — character location
-  - `esi-location.read_online.v1` — online status
-  - `esi-location.read_ship_type.v1` — current ship
-  - `esi-ui.write_waypoint.v1` — set autopilot waypoints
+    - `publicData`
+    - `esi-location.read_location.v1` — character location
+    - `esi-location.read_online.v1` — online status
+    - `esi-location.read_ship_type.v1` — current ship
+    - `esi-ui.write_waypoint.v1` — set autopilot waypoints
 
 Copy the Client ID and Secret into `EVE_CLIENT_ID` / `EVE_CLIENT_SECRET`. Login works without the ESI scopes, but character tracking and autopilot features need them.
+
+## Discord application setup
+
+Account linking, slash commands and personal proximity alerts require an application at the [Discord Developer Portal](https://discord.com/developers/applications):
+
+1. Create an application and open **OAuth2**. Add `https://wormholesystems.test/discord/callback` as a redirect URL. Use the production domain instead for a production deployment.
+2. Open **Bot**, create or reset the bot token, and keep it secret.
+3. Under **Installation**, enable Guild Install with the `applications.commands` and `bot` scopes. Grant the bot **View Channels**, **Send Messages**, and **Embed Links** permissions for channel alerts.
+4. Install the application in the Discord servers where commands should be available.
+
+Channel alerts can optionally use Discord's native role picker. The selected role must be marked **Mentionable** in the server for the bot to notify its members. Granting the bot **Mention Everyone** also permits non-mentionable role pings, but is not recommended.
+
+Map managers configure alert rules, bot-managed alert oversight, delivery destinations, and role mentions on the map's **Discord settings** page at `/maps/{map}/settings/discord`. Delivery destinations may use Discord channel webhook URLs; these webhooks remain one delivery type within the broader Discord configuration.
+
+Configure the application credentials in `.env`:
+
+```dotenv
+DISCORD_APPLICATION_ID=           # Application ID from General Information
+DISCORD_CLIENT_ID=                # Usually the same value as the Application ID
+DISCORD_CLIENT_SECRET=            # OAuth2 client secret
+DISCORD_BOT_TOKEN=                # Token from the Bot page
+DISCORD_CALLBACK="${APP_URL}/discord/callback"
+
+# Optional: use guild-scoped commands for immediate updates during development
+DISCORD_TEST_GUILD_ID=
+```
+
+Register the commands globally for production:
+
+```bash
+php artisan discord:register-commands --global
+```
+
+For development, set `DISCORD_TEST_GUILD_ID` and omit `--global`. Guild commands update immediately, while global command changes can take time to propagate.
+
+The bot is a long-running CLI process and must run separately from queue workers, Reverb and Octane:
+
+```bash
+php artisan discord:listen
+```
+
+Production deployments must supervise exactly one `discord:listen` process. The process exits cleanly on `SIGTERM`/`SIGQUIT` and participates in `php artisan reload` through `discord:restart`.
 
 ## Background services
 
 - **Queue** — killmail ingest (zKillboard), character location/online updates, sovereignty data. `php artisan queue:failed` / `queue:retry all` for failures.
 - **Scheduler** — server status and character updates (seconds/minutes cadence), signature cleanup, sovereignty and killmail backfills. `php artisan schedule:list` shows everything.
 - **Reverb** — WebSockets for real-time map updates. Without Herd: `php artisan reverb:start`.
+- **Discord bot** — slash commands and personal alerts. Run one supervised `php artisan discord:listen` process.
 
 ## Useful commands
 
@@ -106,6 +149,8 @@ php artisan tinker                     # interactive shell
 php artisan migrate:fresh --seed       # reset database (destructive)
 php artisan app:listen-for-killmails   # live killmail stream
 php artisan app:get-killmails-for-day 2026-01-15
+php artisan discord:register-commands --global
+php artisan discord:listen
 ```
 
 ## Troubleshooting
@@ -114,6 +159,9 @@ php artisan app:get-killmails-for-day 2026-01-15
 - **No real-time updates** → Reverb running? Check the WebSocket connection in the browser console.
 - **Queue jobs not processing** → Redis running? Worker active (`php artisan queue:work`)?
 - **EVE SSO fails** → Client ID/Secret correct, callback URL matches the developer application exactly, scopes granted. Logs: `storage/logs/laravel.log`.
+- **Discord linking fails** → Client ID/Secret and callback URL match the Discord application exactly.
+- **Slash commands are missing** → Install the application with `applications.commands`, then register commands globally or against `DISCORD_TEST_GUILD_ID`.
+- **Discord alerts are not delivered** → Bot process and queue worker running? Check channel permissions and the configured bot token.
 
 ## Contributing
 

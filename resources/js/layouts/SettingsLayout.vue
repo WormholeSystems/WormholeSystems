@@ -1,17 +1,18 @@
 <script setup lang="ts">
 import MapAccessController from '@/actions/App/Http/Controllers/MapAccessController';
+import MapDiscordController from '@/actions/App/Http/Controllers/MapDiscordController';
 import MapIgnoredSolarsystemController from '@/actions/App/Http/Controllers/MapIgnoredSolarsystemController';
 import MapPreferencesController from '@/actions/App/Http/Controllers/MapPreferencesController';
 import MapRoutingSettingsController from '@/actions/App/Http/Controllers/MapRoutingSettingsController';
 import MapSettingsController from '@/actions/App/Http/Controllers/MapSettingsController';
-import MapWebhookController from '@/actions/App/Http/Controllers/MapWebhookController';
+import DiscordIcon from '@/components/icons/DiscordIcon.vue';
 import { Button } from '@/components/ui/button';
 import usePermission from '@/composables/usePermission';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SeoHead from '@/layouts/SeoHead.vue';
 import { TMapSummary } from '@/pages/maps';
 import { Link, usePage } from '@inertiajs/vue3';
-import { ArrowLeft, Crosshair, Route, Settings, User, Users, Webhook } from 'lucide-vue-next';
+import { ArrowLeft, Crosshair, Route, Settings, User, Users } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 interface Props {
@@ -72,13 +73,13 @@ const navigationItems = computed(() => {
         description: 'Route calculation preferences',
     });
 
-    // Webhooks - Manager+ only
+    // Discord - Manager+ only
     if (canManageAccess.value) {
         items.push({
-            name: 'Webhooks',
-            href: MapWebhookController.show(props.map.slug),
-            icon: Webhook,
-            description: 'Known-space connection alerts',
+            name: 'Discord',
+            href: MapDiscordController.show(props.map.slug),
+            icon: DiscordIcon,
+            description: 'Alerts, delivery, and oversight',
         });
     }
 

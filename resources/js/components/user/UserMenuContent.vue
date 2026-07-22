@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import MinusIcon from '@/components/icons/MinusIcon.vue';
+import SettingsController from '@/actions/App/Http/Controllers/SettingsController';
 import PlusIcon from '@/components/icons/PlusIcon.vue';
 import { CharacterImage } from '@/components/images';
 import { DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import UserInfo from '@/components/user/UserInfo.vue';
 import { auth, logout } from '@/routes';
-import tokens from '@/routes/tokens';
 import UserCharacters from '@/routes/user-characters';
 import type { User } from '@/types';
 import { Link, router } from '@inertiajs/vue3';
-import { Key, LogOut } from 'lucide-vue-next';
+import { LogOut, Settings } from 'lucide-vue-next';
 
 interface Props {
     user: User;
@@ -60,9 +60,9 @@ defineProps<Props>();
     </DropdownMenuGroup>
     <DropdownMenuSeparator />
     <DropdownMenuItem :as-child="true">
-        <Link class="block w-full" :href="tokens.index().url" prefetch>
-            <Key class="mr-2 h-4 w-4" />
-            API Tokens
+        <Link class="block w-full" :href="SettingsController.show()" prefetch>
+            <Settings class="mr-2 h-4 w-4" />
+            Settings
         </Link>
     </DropdownMenuItem>
     <DropdownMenuSeparator />
