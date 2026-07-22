@@ -1,9 +1,13 @@
 // @vitest-environment happy-dom
 import WormholeTypeInput from '@/components/signatures/WormholeTypeInput.vue';
 import { flushVirtualizer, stubElementMeasurements } from '@/components/ui/combobox/comboboxTestUtils';
-import type { TSignatureType } from '@/types/models';
+import type { TMapUserSetting, TSignatureType } from '@/types/models';
 import { mount, type VueWrapper } from '@vue/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { computed } from 'vue';
+vi.mock('@/composables/useMapUserSettings', () => ({
+    useMapUserSettings: () => computed(() => ({ compact_signature_list: false }) as unknown as TMapUserSetting),
+}));
 
 const types = [
     { id: 1, name: 'K162 - C1', signature: 'K162', target_class: '1', extra: null },
