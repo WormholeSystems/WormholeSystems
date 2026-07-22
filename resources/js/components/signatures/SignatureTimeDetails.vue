@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useMapUserSettings } from '@/composables/useMapUserSettings';
 import { useNowUTC } from '@/composables/useNowUTC';
 import type { TProcessedConnection } from '@/map/api';
 import { TSignature } from '@/types/models';
@@ -14,6 +15,7 @@ const { category, selected_connection, signature } = defineProps<{
 }>();
 
 const now = useNowUTC();
+const map_user_settings = useMapUserSettings();
 
 const created_at = computed(() => {
     if (!selected_connection) return signature.created_at;
@@ -93,7 +95,8 @@ const current_lifetime = computed(() => {
         <TooltipTrigger
             :data-lifetime="current_lifetime"
             :data-mass="selected_connection?.mass_status || signature.mass_status"
-            class="time font-mono text-xs whitespace-nowrap text-muted-foreground tabular-nums"
+            class="time flex items-center justify-end font-mono text-xs whitespace-nowrap text-muted-foreground tabular-nums"
+            :class="map_user_settings.compact_signature_list ? 'h-5' : 'h-6'"
         >
             <span>
                 {{ modified_ago }}

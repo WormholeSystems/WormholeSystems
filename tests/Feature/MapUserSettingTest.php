@@ -239,3 +239,22 @@ it('persists the preselect signature setting', function () {
         ->value('preselect_signature_enabled')
     )->toBeTruthy();
 });
+
+// --- Compact signature list setting ---
+
+it('persists the compact signature list setting', function () {
+    $map = Map::factory()->create();
+    $user = User::factory()->ownsMap($map)->create();
+
+    actingAs($user);
+
+    $this->put(route('maps.user-settings.update', $map), [
+        'compact_signature_list' => true,
+    ])->assertRedirect();
+
+    expect(MapUserSetting::query()
+        ->where('user_id', $user->id)
+        ->where('map_id', $map->id)
+        ->value('compact_signature_list')
+    )->toBeTruthy();
+});

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Combobox, ComboboxAnchor, ComboboxInput, ComboboxItem, ComboboxTrigger, ComboboxVirtualList } from '@/components/ui/combobox';
+import { useMapUserSettings } from '@/composables/useMapUserSettings';
 import { getTypeById } from '@/const/signatures';
 import { TSignatureType } from '@/types/models';
 import { computed, ref, watch } from 'vue';
@@ -16,6 +17,8 @@ const model = defineModel<number | null>({
 });
 
 const hasRawTypeName = computed(() => !model.value && rawTypeName);
+
+const map_user_settings = useMapUserSettings();
 
 const open = ref(false);
 const search = ref('');
@@ -52,7 +55,7 @@ function optionName(option: TSignatureType): string {
 <template>
     <Combobox v-model:open="open" :ignore-filter="true" :disabled="!can_write || !category">
         <ComboboxAnchor as-child>
-            <ComboboxTrigger class="text-xs" :disabled="!can_write || !category">
+            <ComboboxTrigger class="text-xs" :size="map_user_settings.compact_signature_list ? 'sm' : 'default'" :disabled="!can_write || !category">
                 <span v-if="hasRawTypeName" class="truncate text-foreground">{{ rawTypeName }}</span>
                 <span v-else-if="selected_option" class="truncate">{{ selected_option.name }}</span>
                 <span v-else class="truncate text-muted-foreground">Type</span>

@@ -15,6 +15,7 @@ import { usePasteSignatures } from '@/composables/signatures/usePasteSignatures'
 import { useSignatures } from '@/composables/signatures/useSignatures';
 import { useSortableSignatures } from '@/composables/signatures/useSortedSignatures';
 import { useActiveMapCharacter } from '@/composables/useActiveMapCharacter';
+import { useMapUserSettings } from '@/composables/useMapUserSettings';
 import usePermission from '@/composables/usePermission';
 import { createSignature } from '@/map/api';
 import type { TResolvedSelectedMapSolarsystem } from '@/pages/maps';
@@ -31,6 +32,8 @@ const { connections } = useSignatures();
 const { canEdit: can_write } = usePermission();
 
 const character = useActiveMapCharacter();
+
+const map_user_settings = useMapUserSettings();
 
 const {
     signatures,
@@ -166,7 +169,8 @@ function createNewSignature() {
         <MapPanelContent>
             <!-- Header -->
             <div
-                class="flex items-center gap-2 border-b border-border/30 bg-muted/20 px-3 py-1.5 font-mono text-[10px] tracking-wider text-muted-foreground uppercase"
+                class="flex items-center gap-2 border-b border-border/30 bg-muted/20 px-3 font-mono text-[10px] tracking-wider text-muted-foreground uppercase"
+                :class="map_user_settings.compact_signature_list ? 'py-0.5' : 'py-1.5'"
             >
                 <button class="flex w-16 shrink-0 items-center gap-1 hover:text-foreground" @click="handleSort('id')">
                     <span>ID</span>
