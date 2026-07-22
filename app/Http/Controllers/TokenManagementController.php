@@ -4,15 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\TokenResource;
 use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Session;
-use Inertia\Inertia;
-use Inertia\Response;
 use Laravel\Sanctum\PersonalAccessToken;
 use Throwable;
 
@@ -27,16 +23,11 @@ final class TokenManagementController extends Controller
      *
      * @throws Throwable
      */
-    public function index(): Response
+    public function index(): RedirectResponse
     {
         Gate::authorize('viewAny', PersonalAccessToken::class);
 
-        $tokens = $this->currentUser->tokens()->get();
-
-        return Inertia::render('ShowAllTokens', [
-            'tokens' => $tokens->toResourceCollection(TokenResource::class),
-            'token' => Session::get('token'),
-        ]);
+        return to_route('settings.show', ['section' => 'tokens']);
     }
 
     /**

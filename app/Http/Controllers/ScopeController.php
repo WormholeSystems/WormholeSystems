@@ -4,15 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\CharacterResource;
 use App\Models\Character;
 use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use Inertia\Inertia;
-use Inertia\Response;
 use Session;
 use Throwable;
 
@@ -27,18 +24,14 @@ final class ScopeController extends Controller
     /**
      * @throws Throwable
      */
-    public function index(): Response
+    public function index(): RedirectResponse
     {
-        $characters = $this->user->characters()->with('esiScopes')->get()->toResourceCollection(CharacterResource::class);
-
-        return Inertia::render('scopes/ShowAllScopes', [
-            'characters' => $characters,
-        ]);
+        return to_route('settings.show', ['section' => 'esi']);
     }
 
     public function show(Request $request): RedirectResponse
     {
-        Session::put('redirect_to', route('scopes.index'));
+        Session::put('redirect_to', route('settings.show', ['section' => 'esi']));
 
         return to_route('eve.show', [
             'add_to_account' => true,

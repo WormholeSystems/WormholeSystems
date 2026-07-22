@@ -2,7 +2,7 @@
 import DocumentationController from '@/actions/App/Http/Controllers/DocumentationController';
 import LoginController from '@/actions/App/Http/Controllers/LoginController';
 import MapController from '@/actions/App/Http/Controllers/MapController';
-import ScopeController from '@/actions/App/Http/Controllers/ScopeController';
+import SettingsController from '@/actions/App/Http/Controllers/SettingsController';
 import { CharacterImage } from '@/components/images';
 import ServerStatus from '@/components/server-status/ServerStatus.vue';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -98,7 +98,7 @@ const documentationItem: NavItem = {
                                         <Link
                                             v-for="pinned in pinnedMaps"
                                             :key="`pinned-${pinned.id}`"
-                                            :href="MapController.show(pinned.slug).url"
+                                            :href="MapController.show(pinned.slug)"
                                             class="flex items-center gap-3 rounded-md px-2 py-2 text-sm font-medium text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                                             :class="{ 'bg-muted/50 text-foreground': isCurrentRoute(MapController.show(pinned.slug).url) }"
                                             prefetch
@@ -110,7 +110,7 @@ const documentationItem: NavItem = {
                                     <div class="flex flex-col space-y-4">
                                         <div v-if="user" class="border-t border-border/50 pt-4">
                                             <Link
-                                                :href="ScopeController.index()"
+                                                :href="SettingsController.show({ query: { section: 'esi' } })"
                                                 class="flex items-center gap-3 text-sm font-medium text-muted-foreground hover:text-foreground"
                                                 :class="{ 'text-red-400': page.props.missing_scopes.length }"
                                                 prefetch
@@ -171,7 +171,7 @@ const documentationItem: NavItem = {
                         <Link
                             v-for="pinned in inlinePinnedMaps"
                             :key="`pinned-${pinned.id}`"
-                            :href="MapController.show(pinned.slug).url"
+                            :href="MapController.show(pinned.slug)"
                             class="flex max-w-44 min-w-0 shrink items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
                             :class="{ 'bg-muted/50 text-foreground': isCurrentRoute(MapController.show(pinned.slug).url) }"
                             prefetch
@@ -190,7 +190,7 @@ const documentationItem: NavItem = {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="start" class="w-56">
                                 <DropdownMenuItem v-for="pinned in overflowPinnedMaps" :key="`pinned-overflow-${pinned.id}`" as-child>
-                                    <Link :href="MapController.show(pinned.slug).url" prefetch class="flex w-full items-center gap-2">
+                                    <Link :href="MapController.show(pinned.slug)" prefetch class="flex w-full items-center gap-2">
                                         <MapIcon class="size-4" />
                                         <span class="truncate">{{ pinned.name }}</span>
                                     </Link>
@@ -224,7 +224,7 @@ const documentationItem: NavItem = {
                     <!-- Scopes status -->
                     <template v-if="user">
                         <Link
-                            :href="ScopeController.index()"
+                            :href="SettingsController.show({ query: { section: 'esi' } })"
                             class="hidden items-center gap-2 text-xs font-medium transition-colors sm:flex"
                             :class="
                                 page.props.missing_scopes.length ? 'text-red-400 hover:text-red-300' : 'text-muted-foreground hover:text-foreground'
@@ -270,7 +270,7 @@ const documentationItem: NavItem = {
                     </template>
                     <template v-else>
                         <Link
-                            :href="LoginController.show().url"
+                            :href="LoginController.show()"
                             class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
                             prefetch
                         >

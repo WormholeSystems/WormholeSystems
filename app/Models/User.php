@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Session;
@@ -24,6 +25,8 @@ use Laravel\Sanctum\HasApiTokens;
  * @property Character|null $active_character
  * @property-read Character|null $preferredCharacter
  * @property-read Collection<int,Character> $characters
+ * @property-read DiscordAccount|null $discordAccount
+ * @property-read Collection<int,MapAlert> $createdMapAlerts
  * @property-read Collection<int,MapUserSetting> $mapUserSettings
  * @property-read string|CarbonImmutable $created_at
  * @property-read string|CarbonImmutable $updated_at
@@ -97,6 +100,18 @@ final class User extends Authenticatable
         return '';
     }
 
+    public function alertDisplayName(): string
+    {
+        $preferredCharacterId = $this->hasAttribute('preferred_character_id') ? $this->preferred_character_id : null;
+        $character = $this->characters->firstWhere('id', $preferredCharacterId) ?? $this->characters->first();
+
+        if ($character !== null) {
+            return $character->name;
+        }
+
+        return $this->hasAttribute('name') && $this->name !== '' ? $this->name : 'Unknown user';
+    }
+
     public function getAccessibleIds(): array
     {
         return $this->characters->map(fn (Character $character): array => [
@@ -129,6 +144,18 @@ final class User extends Authenticatable
     public function characters(): HasMany
     {
         return $this->hasMany(Character::class, 'user_id');
+    }
+
+    /** @return HasOne<DiscordAccount, $this> */
+    public function discordAccount(): HasOne
+    {
+        return $this->hasOne(DiscordAccount::class);
+    }
+
+    /** @return HasMany<MapAlert, $this> */
+    public function createdMapAlerts(): HasMany
+    {
+        return $this->hasMany(MapAlert::class, 'created_by_user_id');
     }
 
     /**

@@ -217,7 +217,7 @@ const vReveal = {
                         <span class="font-display text-base font-bold tracking-tight text-foreground">WormholeSystems</span>
                     </div>
                     <div class="flex items-center gap-4">
-                        <Link :href="documentation().url" class="nav-link hidden items-center gap-2 sm:flex">
+                        <Link :href="documentation()" class="nav-link hidden items-center gap-2 sm:flex">
                             <BookOpen class="h-3.5 w-3.5" />
                             Docs
                         </Link>

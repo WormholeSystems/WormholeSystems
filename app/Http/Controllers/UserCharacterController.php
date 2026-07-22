@@ -18,7 +18,7 @@ final class UserCharacterController extends Controller
     public function delete(Request $request, Character $character): RedirectResponse
     {
         if (! $character->user()->is($request->user())) {
-            to_route('home')->notify('Character not removed', message: 'You do not have permission to remove this character.', type: 'error');
+            return to_route('home')->notify('Character not removed', message: 'You do not have permission to remove this character.', type: 'error');
         }
 
         if ($request->user()->characters()->count() === 1) {
@@ -28,9 +28,15 @@ final class UserCharacterController extends Controller
         $character->user()->disassociate();
         $character->save();
 
-        $this->user->active_character = $this->user->characters()->first();
+        $remainingCharacter = $this->user->characters()->firstOrFail();
 
-        return to_route('home')->notify('Character removed', message: 'You have successfully removed the character from your account.');
+        if ($this->user->preferred_character_id === $character->id) {
+            $this->user->update(['preferred_character_id' => $remainingCharacter->id]);
+        }
+
+        $this->user->active_character = $remainingCharacter;
+
+        return back()->notify('Character removed', message: 'You have successfully removed the character from your account.');
     }
 
     public function update(Request $request, Character $character): RedirectResponse
