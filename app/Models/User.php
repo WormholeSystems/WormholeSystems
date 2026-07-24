@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Carbon\CarbonImmutable;
 use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -21,6 +22,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @property int $id
  * @property string $name
  * @property int|null $preferred_character_id
+ * @property-read string|null $email
  * @property Character|null $active_character
  * @property-read Character|null $preferredCharacter
  * @property-read Collection<int,Character> $characters
@@ -139,6 +141,19 @@ final class User extends Authenticatable
     public function mapUserSettings(): HasMany
     {
         return $this->hasMany(MapUserSetting::class, 'user_id');
+    }
+
+    /**
+     * Users authenticate via EVE Online SSO and have no email address.
+     *
+     * Provided so tooling that reads `email` (e.g. Nightwatch, Pail) does not
+     * trip `Model::preventAccessingMissingAttributes()` under strict mode.
+     *
+     * @return Attribute<null, never>
+     */
+    protected function email(): Attribute
+    {
+        return Attribute::get(fn (): ?string => null);
     }
 
     /**
