@@ -7,13 +7,11 @@ import MapWebhookRoleController from '@/actions/App/Http/Controllers/MapWebhookR
 import PlusIcon from '@/components/icons/PlusIcon.vue';
 import DiscordIcon from '@/components/icons/DiscordIcon.vue';
 import KillmailFilterEditor from '@/components/maps/webhooks/KillmailFilterEditor.vue';
-import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
-import VirtualizedSolarsystemList from '@/components/solarsystem/VirtualizedSolarsystemList.vue';
+import SolarsystemPicker from '@/components/solarsystem/SolarsystemPicker.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Combobox, ComboboxAnchor, ComboboxInput } from '@/components/ui/combobox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -29,9 +27,7 @@ import usePermission from '@/composables/usePermission';
 import { useStaticData } from '@/composables/useStaticData';
 import { jumpShipLabel, jumpShipTypes, maxRangeLy } from '@/const/jumpShipTypes';
 import SettingsLayout from '@/layouts/SettingsLayout.vue';
-import { type TComboboxSection } from '@/lib/comboboxSections';
 import { alertTriggerLabel } from '@/lib/mapAlerts';
-import { MAX_SEARCH_RESULTS, takeRanked } from '@/lib/searchRank';
 import { TMapSummary } from '@/pages/maps';
 import {
     TJumpShipType,
@@ -46,7 +42,7 @@ import {
 import { TStaticSolarsystem } from '@/types/static-data';
 import { router, useForm } from '@inertiajs/vue3';
 import { AtSign, Bell, Bot, ExternalLink, Pencil, Rocket, Route, ShieldCheck, Swords, Trash2, Webhook } from 'lucide-vue-next';
-import { computed, ref, watch, type Component } from 'vue';
+import { computed, ref, type Component } from 'vue';
 
 const { map, tab, botAlerts, alertEvents, discordInviteUrl } = defineProps<{
     map: TMapSummary;
@@ -232,47 +228,11 @@ type TAlertDialogTab = 'trigger' | 'conditions' | 'delivery';
 const alertForm = useForm<TAlertForm>(emptyAlertForm());
 const alertDialogOpen = ref(false);
 const alertDialogTab = ref<TAlertDialogTab>('trigger');
-const search = ref('');
-const originSearch = ref('');
 const editingAlert = computed(() => alertForm.id !== null);
 const alertErrors = computed(() => Object.values(alertForm.errors));
 const isKillmail = computed(() => alertForm.type === 'killmail');
 const isJumpRange = computed(() => alertForm.type === 'jump_range');
-const selectedTarget = computed(() => findSolarsystem(alertForm.target_solarsystem_id));
-const selectedOrigin = computed(() => findSolarsystem(alertForm.origin_solarsystem_id));
 const formJumpRangeLy = computed(() => maxRangeLy(alertForm.ship_type, alertForm.jdc_level));
-
-const filteredSolarsystems = computed(() => {
-    const query = search.value.trim().toLowerCase();
-    if (!query) return [] as TStaticSolarsystem[];
-    return takeRanked(
-        solarsystems.value,
-        query,
-        MAX_SEARCH_RESULTS,
-        (solarsystem) => [solarsystem.name],
-        (solarsystem) => solarsystem.name,
-    );
-});
-
-const filteredOriginSolarsystems = computed(() => {
-    const query = originSearch.value.trim().toLowerCase();
-    if (!query) return [] as TStaticSolarsystem[];
-    return takeRanked(
-        solarsystems.value,
-        query,
-        MAX_SEARCH_RESULTS,
-        (solarsystem) => [solarsystem.name],
-        (solarsystem) => solarsystem.name,
-    );
-});
-
-const origin_search_sections = computed<TComboboxSection<TStaticSolarsystem>[]>(() => [
-    { key: 'results', heading: 'Search Results', items: filteredOriginSolarsystems.value },
-]);
-
-const search_sections = computed<TComboboxSection<TStaticSolarsystem>[]>(() => [
-    { key: 'results', heading: 'Search Results', items: filteredSolarsystems.value },
-]);
 
 const canSubmitAlert = computed(
     () =>
@@ -282,23 +242,9 @@ const canSubmitAlert = computed(
         (!isKillmail.value || alertForm.filters.every((filter) => filter.ids.length > 0)),
 );
 
-watch(search, (value) => {
-    if (selectedTarget.value && value.trim() !== selectedTarget.value.name) {
-        alertForm.target_solarsystem_id = 0;
-    }
-});
-
-watch(originSearch, (value) => {
-    if (selectedOrigin.value && value.trim() !== selectedOrigin.value.name) {
-        alertForm.origin_solarsystem_id = 0;
-    }
-});
-
 function openCreateAlert() {
     alertForm.clearErrors();
     Object.assign(alertForm, emptyAlertForm());
-    search.value = '';
-    originSearch.value = '';
     alertDialogTab.value = 'trigger';
     alertDialogOpen.value = true;
 }
@@ -320,20 +266,8 @@ function openEditAlert(alert: TMapAlert) {
         filters: alert.filters.map((filter) => ({ ...filter, ids: [...filter.ids] })),
         is_active: alert.is_active,
     });
-    search.value = findSolarsystem(alert.target_solarsystem_id)?.name ?? '';
-    originSearch.value = findSolarsystem(alert.origin_solarsystem_id)?.name ?? '';
     alertDialogTab.value = 'trigger';
     alertDialogOpen.value = true;
-}
-
-function handleTargetSelect(solarsystem: TStaticSolarsystem) {
-    alertForm.target_solarsystem_id = solarsystem.id;
-    search.value = solarsystem.name;
-}
-
-function handleOriginSelect(solarsystem: TStaticSolarsystem) {
-    alertForm.origin_solarsystem_id = solarsystem.id;
-    originSearch.value = solarsystem.name;
 }
 
 function submitAlert() {
@@ -877,16 +811,7 @@ function confirmPendingDelete() {
                         <div v-if="!isKillmail" class="grid gap-4 sm:grid-cols-2">
                             <div class="space-y-1.5">
                                 <Label for="alert-target-system">Target system</Label>
-                                <div v-if="selectedTarget" class="flex items-center gap-2 text-sm">
-                                    <SolarsystemClass :solarsystem_class="selectedTarget.class" :name="selectedTarget.name" />
-                                    <span class="font-medium">{{ selectedTarget.name }}</span>
-                                </div>
-                                <Combobox class="rounded-lg border bg-neutral-900" :ignore-filter="true">
-                                    <ComboboxAnchor>
-                                        <ComboboxInput id="alert-target-system" v-model="search" placeholder="Search for a system…" />
-                                    </ComboboxAnchor>
-                                    <VirtualizedSolarsystemList align="start" :sections="search_sections" @select="handleTargetSelect" />
-                                </Combobox>
+                                <SolarsystemPicker input-id="alert-target-system" v-model="alertForm.target_solarsystem_id" />
                                 <p v-if="isJumpRange" class="text-xs text-muted-foreground">
                                     Jump range is measured between this system and new exits on the map.
                                 </p>
@@ -900,16 +825,11 @@ function confirmPendingDelete() {
 
                         <div v-if="!isKillmail && !isJumpRange" class="space-y-1.5">
                             <Label for="alert-origin-system">Starting point (optional)</Label>
-                            <div v-if="selectedOrigin" class="flex items-center gap-2 text-sm">
-                                <SolarsystemClass :solarsystem_class="selectedOrigin.class" :name="selectedOrigin.name" />
-                                <span class="font-medium">{{ selectedOrigin.name }}</span>
-                            </div>
-                            <Combobox class="rounded-lg border bg-neutral-900" :ignore-filter="true">
-                                <ComboboxAnchor>
-                                    <ComboboxInput id="alert-origin-system" v-model="originSearch" placeholder="Anywhere on the chain" />
-                                </ComboboxAnchor>
-                                <VirtualizedSolarsystemList align="start" :sections="origin_search_sections" @select="handleOriginSelect" />
-                            </Combobox>
+                            <SolarsystemPicker
+                                input-id="alert-origin-system"
+                                v-model="alertForm.origin_solarsystem_id"
+                                placeholder="Anywhere on the chain"
+                            />
                             <p class="text-xs text-muted-foreground">
                                 Measure from this system through the chain instead of from each newly added system.
                             </p>
