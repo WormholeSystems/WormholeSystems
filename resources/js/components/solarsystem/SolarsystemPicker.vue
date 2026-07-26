@@ -91,8 +91,17 @@ function handleSelect(solarsystem: TStaticSolarsystem): void {
             <SolarsystemClass :solarsystem_class="selected.class" :name="selected.name" />
             <span class="font-medium">{{ selected.name }}</span>
         </div>
-        <!-- Without reset-search-term-on-blur, closing the list clears the query and with it the selection. -->
-        <Combobox class="rounded-lg border bg-neutral-900" :ignore-filter="true" :reset-search-term-on-blur="false">
+        <!--
+            Both resets have to be off: the combobox itself holds no value, so reka would
+            clear the query when the list closes and again when the input mounts, and this
+            component reads a cleared query as "the selection was edited away".
+        -->
+        <Combobox
+            class="rounded-lg border bg-neutral-900"
+            :ignore-filter="true"
+            :reset-search-term-on-blur="false"
+            :reset-search-term-on-select="false"
+        >
             <ComboboxAnchor>
                 <ComboboxInput :id="inputId" v-model="search" :placeholder="placeholder" />
             </ComboboxAnchor>

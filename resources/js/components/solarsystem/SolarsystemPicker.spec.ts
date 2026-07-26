@@ -1,9 +1,11 @@
 // @vitest-environment happy-dom
 import SolarsystemPicker from '@/components/solarsystem/SolarsystemPicker.vue';
 import { flushVirtualizer, stubElementMeasurements } from '@/components/ui/combobox/comboboxTestUtils';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { TStaticSolarsystem } from '@/types/static-data';
 import { mount, type VueWrapper } from '@vue/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { defineComponent, reactive } from 'vue';
 
 function solarsystem(id: number, name: string): TStaticSolarsystem {
     return {
@@ -44,6 +46,41 @@ let wrapper: VueWrapper;
 function mountPicker(modelValue = 0): VueWrapper {
     wrapper = mount(SolarsystemPicker, { props: { modelValue }, attachTo: document.body });
     return wrapper;
+}
+
+/**
+ * Mirrors the alert dialog: the picker sits in a tab panel that unmounts while
+ * another tab is open, so the selection has to live in the surrounding form.
+ */
+function mountInTabs(): VueWrapper {
+    const harness = defineComponent({
+        components: { SolarsystemPicker, Tabs, TabsContent, TabsList, TabsTrigger },
+        setup() {
+            return { form: reactive({ target_solarsystem_id: 0 }) };
+        },
+        template: `
+            <Tabs default-value="conditions">
+                <TabsList>
+                    <TabsTrigger value="conditions">Conditions</TabsTrigger>
+                    <TabsTrigger value="delivery">Delivery</TabsTrigger>
+                </TabsList>
+                <TabsContent value="conditions">
+                    <SolarsystemPicker v-model="form.target_solarsystem_id" />
+                </TabsContent>
+                <TabsContent value="delivery">Delivery settings</TabsContent>
+            </Tabs>
+        `,
+    });
+
+    wrapper = mount(harness, { attachTo: document.body });
+    return wrapper;
+}
+
+async function openTab(wrapper: VueWrapper, label: string): Promise<void> {
+    const trigger = wrapper.findAll('[role="tab"]').find((tab) => tab.text() === label);
+    expect(trigger).toBeTruthy();
+    await trigger!.trigger('mousedown');
+    await flushVirtualizer();
 }
 
 function selectedId(wrapper: VueWrapper): number | undefined {
@@ -128,6 +165,15 @@ describe('SolarsystemPicker', () => {
         expect(input(wrapper).value).toBe('Amar');
     });
 
+    it('keeps a preselected system when it mounts', async () => {
+        const wrapper = mountPicker(30000142);
+        await flushVirtualizer();
+
+        expect(wrapper.emitted('update:modelValue')).toBeUndefined();
+        expect(input(wrapper).value).toBe('Jita');
+        expect(wrapper.text()).toContain('Jita');
+    });
+
     it('shows the query for a selection made from the outside', async () => {
         const wrapper = mountPicker();
 
@@ -154,5 +200,21 @@ describe('SolarsystemPicker', () => {
         await wrapper.setProps({ modelValue: 0 });
 
         expect(input(wrapper).value).toBe('');
+    });
+
+    it('survives the tab panel unmounting while another tab is open', async () => {
+        const wrapper = mountInTabs();
+        await type(wrapper, 'jit');
+        await clickRow('Jita');
+        expect((wrapper.vm as unknown as { form: { target_solarsystem_id: number } }).form.target_solarsystem_id).toBe(30000142);
+
+        await openTab(wrapper, 'Delivery');
+        expect(wrapper.find('input').exists()).toBe(false);
+
+        await openTab(wrapper, 'Conditions');
+
+        expect((wrapper.vm as unknown as { form: { target_solarsystem_id: number } }).form.target_solarsystem_id).toBe(30000142);
+        expect(input(wrapper).value).toBe('Jita');
+        expect(wrapper.text()).toContain('Jita');
     });
 });
