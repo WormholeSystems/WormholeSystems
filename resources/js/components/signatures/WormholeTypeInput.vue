@@ -49,12 +49,14 @@ const wormholes = computed<TSignatureType[]>(() => {
         .filter(filterByCurrentClass);
 });
 
-const rows = computed<TComboboxRow<TSignatureType>[]>(() => {
+// A pinned null row lets a wormhole signature be reset to an unknown type.
+const rows = computed<TComboboxRow<TSignatureType | null>[]>(() => {
     const needle = search.value.trim().toLowerCase();
     const matches = (option: TSignatureType) =>
         needle === '' || option.name.toLowerCase().includes(needle) || (option.extra ?? '').toLowerCase().includes(needle);
 
-    return flattenComboboxSections([
+    return flattenComboboxSections<TSignatureType | null>([
+        { key: 'unknown', heading: '', items: needle === '' || 'unknown'.includes(needle) ? [null] : [] },
         { key: 'statics', heading: 'Statics', items: statics.value.filter(matches) },
         { key: 'k162', heading: 'K162', items: k162_options.value.filter(matches) },
         { key: 'wormholes', heading: 'Wormholes', items: wormholes.value.filter(matches) },
@@ -65,16 +67,16 @@ const selected_signature = computed(() => {
     return wormhole_options.find((option: TSignatureType) => option.id === model.value) || null;
 });
 
-function handleSelect(row: TComboboxRow<TSignatureType>) {
+function handleSelect(row: TComboboxRow<TSignatureType | null>) {
     if (row.kind !== 'option') {
         return;
     }
-    model.value = row.value.id;
+    model.value = row.value?.id ?? null;
     open.value = false;
 }
 
-function rowText(row: TComboboxRow<TSignatureType>): string {
-    return comboboxRowText(row, (option) => option.name);
+function rowText(row: TComboboxRow<TSignatureType | null>): string {
+    return comboboxRowText(row, (option) => option?.name ?? 'Unknown');
 }
 
 function filterByCurrentClass(option: TSignatureType) {
@@ -101,7 +103,8 @@ function filterByCurrentClass(option: TSignatureType) {
                 <div class="w-full">
                     <div v-if="option.kind === 'heading'" class="px-2 py-1.5 text-xs text-muted-foreground">{{ option.label }}</div>
                     <ComboboxItem v-else :value="option" class="text-xs" @select.prevent="() => handleSelect(option)">
-                        <WormholeOption :wormhole="option.value" />
+                        <span v-if="option.value === null" class="text-muted-foreground">Unknown</span>
+                        <WormholeOption v-else :wormhole="option.value" />
                     </ComboboxItem>
                 </div>
             </template>
