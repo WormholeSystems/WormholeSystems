@@ -27,9 +27,9 @@ final readonly class UpdateSignatureAction
         return DB::transaction(function () use ($signature, $data): Signature {
             $updateData = $data->toArray();
 
-            // Update wormhole_id if signature_type_id changed
-            if (! $data->signature_type_id instanceof Optional && $data->signature_type_id) {
-                $signatureType = SignatureType::query()->find($data->signature_type_id);
+            // Update wormhole_id if signature_type_id changed, resetting it when cleared
+            if (! $data->signature_type_id instanceof Optional) {
+                $signatureType = $data->signature_type_id ? SignatureType::query()->find($data->signature_type_id) : null;
                 $updateData['wormhole_id'] = $signatureType?->wormhole?->id;
             }
 

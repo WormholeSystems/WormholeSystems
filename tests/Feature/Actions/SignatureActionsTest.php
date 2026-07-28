@@ -10,8 +10,11 @@ use App\Actions\Signatures\UpdateSignatureAction;
 use App\Data\NewSignatureData;
 use App\Data\SignatureData;
 use App\Data\SignaturesData;
+use App\Enums\WormholeSignature;
 use App\Models\Map;
 use App\Models\Signature;
+use App\Models\SignatureType;
+use App\Models\Wormhole;
 
 it('stores a signature on a system', function () {
     $map = Map::factory()->create();
@@ -31,6 +34,30 @@ it('updates a signature', function () {
     app(UpdateSignatureAction::class)->handle($signature, SignatureData::from(['signature_id' => 'XYZ-999']));
 
     expect($signature->fresh()->signature_id)->toBe('XYZ-999');
+});
+
+it('resets the wormhole_id when the signature type is cleared to unknown', function () {
+    $map = Map::factory()->create();
+    $system = placeMapSolarsystem($map, 30011016);
+    $wormhole = Wormhole::create([
+        'name' => WormholeSignature::X877->value,
+        'total_mass' => 3_300_000_000,
+        'maximum_jump_mass' => 375_000_000,
+        'maximum_lifetime' => 86_400,
+        'leads_to' => 'c4',
+    ]);
+    $signature_type = SignatureType::query()->where('signature', WormholeSignature::X877)->firstOrFail();
+    $signature = $system->signatures()->create([
+        'signature_id' => 'ABC-123',
+        'signature_type_id' => $signature_type->id,
+        'wormhole_id' => $wormhole->id,
+    ]);
+
+    app(UpdateSignatureAction::class)->handle($signature, SignatureData::from(['signature_type_id' => null]));
+
+    expect($signature->fresh())
+        ->signature_type_id->toBeNull()
+        ->wormhole_id->toBeNull();
 });
 
 it('deletes a signature', function () {

@@ -60,6 +60,8 @@ function filterByCurrentClass(option: TSignatureType) {
         </SelectTrigger>
         <SelectContent class="max-h-72">
             <template v-if="open">
+                <SelectItem :value="null" class="text-xs text-muted-foreground">Unknown</SelectItem>
+                <SelectSeparator />
                 <template v-if="statics.length">
                     <SelectGroup>
                         <SelectLabel class="text-xs text-muted-foreground">Statics</SelectLabel>
