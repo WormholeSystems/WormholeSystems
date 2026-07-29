@@ -96,10 +96,7 @@ it('draws a connection between two systems from the connection handle', function
 
         $this->connectSystems($page, JITA, AMARR);
 
-        $deadline = microtime(true) + 10;
-        while ($connectionCount() === 0 && microtime(true) < $deadline) {
-            usleep(100_000);
-        }
+        $this->waitForDatabase($page, fn (): bool => $connectionCount() > 0, 10);
 
         if ($connectionCount() > 0) {
             break;
@@ -145,10 +142,7 @@ it('round-trips alias and occupier through the alias editor', function () {
         ->click('Save');
 
     // The update is persisted via an async PUT; wait briefly for it to land.
-    $deadline = microtime(true) + 5;
-    while ($system->fresh()->alias === null && microtime(true) < $deadline) {
-        usleep(100_000);
-    }
+    $this->waitForDatabase($page, fn (): bool => $system->fresh()->alias !== null);
 
     $system = $system->fresh()->loadMissing('details');
     expect($system->alias)->toBe('HOME')
