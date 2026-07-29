@@ -75,13 +75,10 @@ it('draws a connection between two systems from the connection handle', function
 
     expect(MapConnection::where('map_id', $map->id)->count())->toBe(0);
 
-    $this->connectSystems(visit(route('maps.show', $map)), JITA, AMARR);
+    $page = $this->connectSystems(visit(route('maps.show', $map)), JITA, AMARR);
 
     // The connection is persisted via an async POST; wait briefly for it to land.
-    $deadline = microtime(true) + 5;
-    while (MapConnection::where('map_id', $map->id)->count() === 0 && microtime(true) < $deadline) {
-        usleep(100_000);
-    }
+    $this->waitForDatabase($page, fn (): bool => MapConnection::where('map_id', $map->id)->count() > 0);
 
     expect(MapConnection::where('map_id', $map->id)->count())->toBe(1);
 });
@@ -122,10 +119,7 @@ it('round-trips alias and occupier through the alias editor', function () {
         ->click('Save');
 
     // The update is persisted via an async PUT; wait briefly for it to land.
-    $deadline = microtime(true) + 5;
-    while ($system->fresh()->alias === null && microtime(true) < $deadline) {
-        usleep(100_000);
-    }
+    $this->waitForDatabase($page, fn (): bool => $system->fresh()->alias !== null);
 
     $system = $system->fresh()->loadMissing('details');
     expect($system->alias)->toBe('HOME')
