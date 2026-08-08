@@ -57,9 +57,11 @@ trait InteractsWithMap
      * Perform a custom pointer drag from $source to $target.
      *
      * The map uses custom pointer events (not native HTML drag-and-drop). The browser driver's
-     * drag performs the real press + move (rendering any live preview) but swallows the release
-     * the interaction listens for, so the matching pointerup over the target is delivered to
-     * finalise it. Pass $reveal to hover a parent first when the source only appears on hover.
+     * drag performs the real press + move (rendering any live preview) but can swallow the
+     * release the interaction listens for, so the matching pointerup over the target is
+     * delivered to finalise it. The gesture arbiter ignores a release whose pointerId differs
+     * from the press it recorded, so the fallback replays the pointerId of the real press.
+     * Pass $reveal to hover a parent first when the source only appears on hover.
      *
      * @param  string|null  $reveal  CSS selector to hover before dragging (e.g. to reveal a hover-only handle)
      */
@@ -69,22 +71,47 @@ trait InteractsWithMap
             $page->hover($reveal);
         }
 
-        return $page
-            ->drag($source, $target)
-            ->script(sprintf(
-                <<<'JS'
-                const target = document.querySelector(%s);
-                if (target) {
-                    const rect = target.getBoundingClientRect();
-                    target.dispatchEvent(new PointerEvent('pointerup', {
-                        bubbles: true,
-                        clientX: rect.left + rect.width / 2,
-                        clientY: rect.top + rect.height / 2,
-                    }));
-                }
-                JS,
-                json_encode($target),
-            ));
+        $page->script(<<<'JS'
+            window.__lastPointerId = null;
+            window.addEventListener('pointerdown', (event) => { window.__lastPointerId = event.pointerId; }, true);
+        JS);
+
+        $page->drag($source, $target);
+
+        $page->script(sprintf(
+            <<<'JS'
+            const target = document.querySelector(%s);
+            if (target) {
+                const rect = target.getBoundingClientRect();
+                target.dispatchEvent(new PointerEvent('pointerup', {
+                    bubbles: true,
+                    pointerId: window.__lastPointerId ?? 1,
+                    pointerType: 'mouse',
+                    clientX: rect.left + rect.width / 2,
+                    clientY: rect.top + rect.height / 2,
+                }));
+            }
+            JS,
+            json_encode($target),
+        ));
+
+        return $page;
+    }
+
+    /**
+     * Wait for an asynchronous request to land in the database.
+     *
+     * The application is served in-process, on the same event loop that drives the browser
+     * client, so a blocking sleep here starves the server and the pending request is never
+     * handled at all. Yielding through the page's own wait() keeps the loop turning.
+     */
+    protected function waitForDatabase(mixed $page, callable $condition, float $seconds = 5): void
+    {
+        $deadline = microtime(true) + $seconds;
+
+        while (! $condition() && microtime(true) < $deadline) {
+            $page->wait(0.1);
+        }
     }
 
     /**

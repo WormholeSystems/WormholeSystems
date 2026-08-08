@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import ConnectionOption from '@/components/signatures/ConnectionOption.vue';
+import UnknownTypeOption from '@/components/signatures/UnknownTypeOption.vue';
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useMapUserSettings } from '@/composables/useMapUserSettings';
@@ -63,7 +64,9 @@ function isNotFilterable(type: TSignatureType | null | undefined): type is null 
         </SelectTrigger>
         <SelectContent class="max-h-72">
             <template v-if="open">
-                <SelectItem :value="null" text-value="Unknown" class="text-xs"> Unknown </SelectItem>
+                <SelectItem :value="null" text-value="Unknown" class="text-xs">
+                    <UnknownTypeOption />
+                </SelectItem>
                 <SelectGroup v-if="filtered_unconnected_connections.length > 0">
                     <SelectSeparator />
                     <SelectLabel class="text-xs text-muted-foreground">Connections</SelectLabel>
