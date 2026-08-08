@@ -54,7 +54,20 @@ class SignatureParser {
     }
 
     getCategory(categoryName: string): TSignatureCategory | null {
-        return signatureCategories.find((cat) => cat.name === categoryName) || null;
+        const name = categoryName?.trim();
+        const exact = signatureCategories.find((cat) => cat.name === name);
+        if (exact) {
+            return exact;
+        }
+
+        // Faction Warfare sites paste as e.g. "Factional Warfare Site - Combat Site",
+        // so fall back to matching a known category in any " - " separated segment.
+        return (
+            name
+                ?.split(' - ')
+                .map((segment) => signatureCategories.find((cat) => cat.name === segment.trim()))
+                .find(Boolean) || null
+        );
     }
 
     getType(category: TSignatureCategory | null, typeName: string): TSignatureType | null {

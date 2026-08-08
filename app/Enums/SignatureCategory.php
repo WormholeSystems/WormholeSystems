@@ -13,6 +13,7 @@ enum SignatureCategory: string
     case Gas = 'gas';
     case Ore = 'ore';
     case Homefront = 'homefront';
+    case FactionWarfare = 'faction-warfare';
 
     public function name(): string
     {
@@ -24,6 +25,7 @@ enum SignatureCategory: string
             self::Gas => 'Gas Site',
             self::Ore => 'Ore Site',
             self::Homefront => 'Homefront Operations',
+            self::FactionWarfare => 'Factional Warfare Site',
         };
     }
 }

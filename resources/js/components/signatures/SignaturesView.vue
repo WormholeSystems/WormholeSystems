@@ -4,7 +4,7 @@ import WormholeOption from '@/components/signatures/WormholeOption.vue';
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import type { TProcessedConnection } from '@/map/api';
 import { TSignature } from '@/types/models';
-import { Cloud, Database, Fan, Gem, Landmark, Shield, Swords } from 'lucide-vue-next';
+import { Cloud, Database, Fan, Flag, Gem, Landmark, Shield, Swords } from 'lucide-vue-next';
 import { type Component, computed } from 'vue';
 
 const { signatures, connections = [] } = defineProps<{
@@ -20,6 +20,7 @@ const categoryAbbrev: Record<string, string> = {
     'Gas Site': 'Gas',
     'Combat Site': 'Combat',
     'Homefront Operations': 'HF',
+    'Factional Warfare Site': 'FW',
 };
 
 const categoryIcon: Record<string, Component> = {
@@ -30,6 +31,7 @@ const categoryIcon: Record<string, Component> = {
     'Gas Site': Cloud,
     'Combat Site': Swords,
     'Homefront Operations': Shield,
+    'Factional Warfare Site': Flag,
 };
 
 const categoryColor: Record<string, string> = {
@@ -40,6 +42,7 @@ const categoryColor: Record<string, string> = {
     'Gas Site': 'text-orange-400',
     'Ore Site': 'text-yellow-400',
     'Homefront Operations': 'text-rose-400',
+    'Factional Warfare Site': 'text-fuchsia-400',
 };
 
 function categoryName(signature: TSignature): string {

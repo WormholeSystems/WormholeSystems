@@ -27,7 +27,7 @@ import { TSignature } from '@/types/models';
 import { UTCDate } from '@date-fns/utc';
 import type { FormDataConvertible } from '@inertiajs/core';
 import { syncRefs } from '@vueuse/core';
-import { Check, Cloud, Database, Fan, Gem, Heart, Landmark, MoreVertical, Shield, Swords } from 'lucide-vue-next';
+import { Check, Cloud, Database, Fan, Flag, Gem, Heart, Landmark, MoreVertical, Shield, Swords } from 'lucide-vue-next';
 import { AcceptableValue } from 'reka-ui';
 import { type Component, computed, nextTick, ref, toRef } from 'vue';
 
@@ -100,6 +100,7 @@ const categoryAbbrev: Record<string, string> = {
     'Gas Site': 'Gas',
     'Combat Site': 'Combat',
     'Homefront Operations': 'HF',
+    'Factional Warfare Site': 'FW',
 };
 
 const categoryIcon: Record<string, Component> = {
@@ -110,6 +111,7 @@ const categoryIcon: Record<string, Component> = {
     'Gas Site': Cloud,
     'Combat Site': Swords,
     'Homefront Operations': Shield,
+    'Factional Warfare Site': Flag,
 };
 
 const categoryColor: Record<string, string> = {
@@ -120,6 +122,7 @@ const categoryColor: Record<string, string> = {
     'Gas Site': 'text-orange-400',
     'Ore Site': 'text-yellow-400',
     'Homefront Operations': 'text-rose-400',
+    'Factional Warfare Site': 'text-fuchsia-400',
 };
 
 function getCategoryAbbrev(name?: string | null): string {
