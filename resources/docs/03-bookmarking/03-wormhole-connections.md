@@ -39,3 +39,5 @@ This makes it instantly clear which hole you're currently sitting next to, even 
 This is the bookmark list _inside the `1`_: `*1` is the return hole back the way you came, and `11`–`14` are the holes leading deeper, each extending the `1`. Notice the last line — a connection out to **known space** keeps its path number and then follows the [K-Space format](/documentation/bookmarking/k-space-connections) — number, class, signature, system, region.
 
 > You rarely type these by hand — the mapper builds them for you. See [Let the mapper name it](/documentation/bookmarking/let-the-mapper-name-it).
+
+Prefer letters to numbers? A manager can switch the whole map to an [alternative alias convention](/documentation/bookmarking/alternative-alias-convention).

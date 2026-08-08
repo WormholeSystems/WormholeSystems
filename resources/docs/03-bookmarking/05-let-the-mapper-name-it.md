@@ -23,3 +23,5 @@ If you'd rather have it happen automatically as you fly, turn on **Copy Bookmark
 For the smoothest workflow, also enable **Prompt for Signature** in **Map settings → Mapping**. When it's on, the mapper asks which signature you jumped through each time you change system — turning logging the chain into a single click. Make sure your **active character** is the one doing the scanning so the prompt follows you.
 
 With both settings on, mapping and bookmarking become almost a single motion: jump, pick the signature, paste the bookmark.
+
+Suggested aliases fill gaps first: if home's holes are `1`, `3` and `4` because the `2` was rolled and deleted, the next hole is suggested as `2` rather than `5`.

@@ -34,6 +34,7 @@ const source_name = computed(() =>
             wormholeCode: target_signature.value?.wormhole?.name,
         },
         store.meta.value,
+        map_connection.target.alias,
     ),
 );
 
@@ -48,6 +49,7 @@ const target_name = computed(() =>
             wormholeCode: source_signature.value?.wormhole?.name,
         },
         store.meta.value,
+        map_connection.source.alias,
     ),
 );
 

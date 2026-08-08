@@ -16,6 +16,7 @@ Open **Map settings → Mapping** and find the **Bookmark Format** card. There a
 
 - **Wormhole systems** — used when the bookmarked system is a wormhole (`C1`–`C6`).
 - **K-space systems** — used for high-, low-, and null-sec.
+- **Return connections** — used when the bookmark leads back up the chain (`*` tag).
 
 The mapper picks the right template automatically based on the system you're bookmarking.
 

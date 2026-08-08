@@ -4,9 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { TAliasScheme } from '@/lib/alias';
 import {
     BOOKMARK_TOKENS,
     DEFAULT_BOOKMARK_FORMAT_KSPACE,
+    DEFAULT_BOOKMARK_FORMAT_RETURN,
     DEFAULT_BOOKMARK_FORMAT_WORMHOLE,
     renderBookmarkTemplate,
     TBookmarkToken,
@@ -20,12 +22,24 @@ const { map, canEdit } = defineProps<{
     canEdit: boolean;
 }>();
 
-type FieldKey = 'wormhole' | 'kspace';
+const aliasSchemeOptions: { value: TAliasScheme; label: string; example: string }[] = [
+    { value: 'numeric', label: 'Numeric', example: '11, 12, 13' },
+    { value: 'alphabetical', label: 'Alphabetical', example: 'AA, AB, AH1' },
+];
+
+const aliasScheme = ref<TAliasScheme>(map.bookmark_alias_scheme);
+const aliasSchemeError = ref<string | null>(null);
+
+const ignoredAlias = ref<string>(map.bookmark_ignored_alias);
+const ignoredAliasError = ref<string | null>(null);
+
+type FieldKey = 'wormhole' | 'kspace' | 'return';
 
 type Field = {
     key: FieldKey;
-    column: 'bookmark_format_wormhole' | 'bookmark_format_kspace';
+    column: 'bookmark_format_wormhole' | 'bookmark_format_kspace' | 'bookmark_format_return';
     label: string;
+    description?: string;
     fallback: string;
     sample: Record<TBookmarkToken, string>;
 };
@@ -67,18 +81,45 @@ const fields: Field[] = [
             life: 'EOL',
         },
     },
+    {
+        key: 'return',
+        column: 'bookmark_format_return',
+        label: 'Return connections',
+        description: 'Used instead of the templates above for a bookmark that leads back up-chain, or to the home system.',
+        fallback: DEFAULT_BOOKMARK_FORMAT_RETURN,
+        sample: {
+            alias: 'HOME',
+            sig: 'ABC',
+            class: 'C3',
+            name: 'J123456',
+            region: 'B-R00004',
+            occupier: 'HK',
+            size: 'XM',
+            wh: 'K162',
+            mass: 'reduced',
+            life: 'EOL',
+        },
+    },
 ];
 
 const drafts = reactive<Record<FieldKey, string>>({
     wormhole: map.bookmark_format_wormhole,
     kspace: map.bookmark_format_kspace,
+    return: map.bookmark_format_return,
 });
 
-const errors = reactive<Record<FieldKey, string | null>>({ wormhole: null, kspace: null });
+const errors = reactive<Record<FieldKey, string | null>>({ wormhole: null, kspace: null, return: null });
 
 const saving = ref(false);
 
-const dirty = computed(() => drafts.wormhole !== map.bookmark_format_wormhole || drafts.kspace !== map.bookmark_format_kspace);
+const dirty = computed(
+    () =>
+        drafts.wormhole !== map.bookmark_format_wormhole ||
+        drafts.kspace !== map.bookmark_format_kspace ||
+        drafts.return !== map.bookmark_format_return ||
+        aliasScheme.value !== map.bookmark_alias_scheme ||
+        ignoredAlias.value !== map.bookmark_ignored_alias,
+);
 
 function preview(field: Field): string {
     const rendered = renderBookmarkTemplate(drafts[field.key], field.sample);
@@ -94,7 +135,13 @@ function save(): void {
 
     router.put(
         MapBookmarkFormatController.update(map.slug).url,
-        { bookmark_format_wormhole: drafts.wormhole, bookmark_format_kspace: drafts.kspace },
+        {
+            bookmark_format_wormhole: drafts.wormhole,
+            bookmark_format_kspace: drafts.kspace,
+            bookmark_format_return: drafts.return,
+            bookmark_alias_scheme: aliasScheme.value,
+            bookmark_ignored_alias: ignoredAlias.value,
+        },
         {
             preserveState: true,
             preserveScroll: true,
@@ -102,16 +149,30 @@ function save(): void {
             onSuccess: () => {
                 errors.wormhole = null;
                 errors.kspace = null;
+                errors.return = null;
+                aliasSchemeError.value = null;
+                ignoredAliasError.value = null;
             },
             onError: (bag) => {
                 errors.wormhole = bag.bookmark_format_wormhole ?? null;
                 errors.kspace = bag.bookmark_format_kspace ?? null;
+                errors.return = bag.bookmark_format_return ?? null;
+                aliasSchemeError.value = bag.bookmark_alias_scheme ?? null;
+                ignoredAliasError.value = bag.bookmark_ignored_alias ?? null;
             },
             onFinish: () => {
                 saving.value = false;
             },
         },
     );
+}
+
+function setAliasScheme(scheme: TAliasScheme): void {
+    if (!canEdit) {
+        return;
+    }
+
+    aliasScheme.value = scheme;
 }
 
 function insertToken(field: Field, token: TBookmarkToken): void {
@@ -151,8 +212,50 @@ function resetToDefault(field: Field): void {
             </CardDescription>
         </CardHeader>
         <CardContent class="space-y-8">
+            <div class="space-y-2">
+                <Label class="text-sm font-medium">Alias scheme</Label>
+
+                <div class="grid gap-2 sm:grid-cols-2">
+                    <button
+                        v-for="option in aliasSchemeOptions"
+                        :key="option.value"
+                        type="button"
+                        class="flex items-center justify-between gap-3 rounded-lg border p-3 text-left transition-colors"
+                        :class="aliasScheme === option.value ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/40'"
+                        :disabled="!canEdit"
+                        @click="setAliasScheme(option.value)"
+                    >
+                        <span class="text-sm font-medium">{{ option.label }}</span>
+                        <span class="font-mono text-xs text-muted-foreground">{{ option.example }}</span>
+                    </button>
+                </div>
+
+                <p v-if="aliasSchemeError" class="text-sm text-destructive">{{ aliasSchemeError }}</p>
+                <p class="text-xs text-muted-foreground">How the mapper suggests the next chain alias when you jump to a new system.</p>
+            </div>
+
+            <div class="space-y-2">
+                <Label class="text-sm font-medium" for="bookmark-ignored-alias">Ignored alias</Label>
+
+                <Input
+                    id="bookmark-ignored-alias"
+                    :model-value="ignoredAlias"
+                    :disabled="!canEdit"
+                    spellcheck="false"
+                    autocomplete="off"
+                    @update:model-value="(value) => (ignoredAlias = String(value))"
+                    @keydown.enter.prevent="save"
+                />
+
+                <p v-if="ignoredAliasError" class="text-sm text-destructive">{{ ignoredAliasError }}</p>
+                <p class="text-xs text-muted-foreground">
+                    Excluded as a prefix when suggesting child aliases, e.g. HOME → A, AB. Leave empty to disable.
+                </p>
+            </div>
+
             <div v-for="field in fields" :key="field.key" class="space-y-2">
                 <Label class="text-sm font-medium">{{ field.label }}</Label>
+                <p v-if="field.description" class="text-xs text-muted-foreground">{{ field.description }}</p>
 
                 <Input
                     :model-value="drafts[field.key]"

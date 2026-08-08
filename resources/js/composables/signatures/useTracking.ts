@@ -4,8 +4,8 @@ import { useMapUserSettings } from '@/composables/useMapUserSettings';
 import { useShowMap } from '@/composables/useShowMap';
 import { useStaticData } from '@/composables/useStaticData';
 import { useTrackingSystems } from '@/composables/useTrackingSystems';
-import { suggestAlias } from '@/lib/alias';
-import { formatBookmarkName } from '@/lib/bookmark';
+import { aliasTargetKind, suggestAlias } from '@/lib/alias';
+import { buildSignatureBookmark } from '@/lib/bookmark';
 import { groupSignatureOptions } from '@/lib/signatureCompatibility';
 import { isWormholeSystem } from '@/lib/solarsystem';
 import { createTracking, updateMapUserSettings, useMapSolarsystems } from '@/map/api';
@@ -44,6 +44,8 @@ export function useTracking() {
         );
     });
 
+    const known_aliases = computed(() => map_solarsystems.value.map((s) => s.alias).filter((alias): alias is string => Boolean(alias)));
+
     // Pre-fill the signature dialog's alias field. An alias the target already
     // carries on the map wins; otherwise we guess the next chain alias.
     const suggested_alias = computed(() => {
@@ -57,11 +59,16 @@ export function useTracking() {
         const target = target_solarsystem.value;
         if (!origin || !target) return null;
 
+        const targetIsWormhole = isWormholeSystem(target);
+
         return suggestAlias({
             parentAlias: origin.alias,
-            targetIsWormhole: isWormholeSystem(target),
+            targetIsWormhole,
             originIsWormhole: isWormholeSystem(origin.solarsystem),
-            aliases: map_solarsystems.value.map((s) => s.alias).filter((alias): alias is string => Boolean(alias)),
+            aliases: known_aliases.value,
+            scheme: page.props.map.bookmark_alias_scheme,
+            targetKind: aliasTargetKind(targetIsWormhole, target.class),
+            ignoredAlias: page.props.map.bookmark_ignored_alias,
         });
     });
 
@@ -137,24 +144,29 @@ export function useTracking() {
 
     // Copy the connection bookmark for the system we just jumped into, using the
     // same scheme as the connection context menu: the current system labelled
-    // with the signature we used in the origin.
+    // with the signature we used in the origin. Delegates to the shared
+    // signature-bookmark builder, so an empty chosen alias now falls back to
+    // the guessed one instead of leaving the alias token blank.
     function copyConnectionBookmark(signatureId: number | null, alias: string | null) {
         if (!map_user_settings.value.copy_bookmark_enabled) return;
         const target = target_solarsystem.value;
         if (!target) return;
 
         const signature = signatures.value?.find((s) => s.id === signatureId) ?? null;
-        const name = formatBookmarkName(
-            { alias, occupier_alias: existing_map_solarsystem.value?.occupier_alias, solarsystem: target },
-            {
-                signatureId: signature?.signature_id,
-                shipSize: signature?.ship_size,
-                massStatus: signature?.mass_status,
-                lifetime: signature?.lifetime,
-                wormholeCode: signature?.wormhole?.name,
+        const name = buildSignatureBookmark({
+            signature: {
+                signature_id: signature?.signature_id ?? null,
+                ship_size: signature?.ship_size ?? null,
+                mass_status: signature?.mass_status ?? null,
+                lifetime: signature?.lifetime ?? 'healthy',
+                wormhole: signature?.wormhole,
+                signature_type: signature?.signature_type,
             },
-            page.props.map,
-        );
+            currentSystem: { alias: origin_map_solarsystem.value?.alias },
+            connectionTarget: { alias, occupier_alias: existing_map_solarsystem.value?.occupier_alias, solarsystem: target },
+            aliases: known_aliases.value,
+            formats: page.props.map,
+        });
 
         navigator.clipboard.writeText(name);
         toast.success('Copied bookmark to clipboard', { description: name });
