@@ -15,17 +15,17 @@ describe('guessNextAlias (numeric, default)', () => {
     });
 
     it('excludes grandchildren when counting direct children', () => {
-        // "121" and "122" are children of "12", not of "1" — only "12" itself
-        // (index 2) counts as a direct child of "1", so the next is "13", not
-        // something inflated by the grandchildren.
-        expect(guessNextAlias('1', ['1', '12', '121', '122'])).toBe('13');
+        // "121" and "122" are children of "12", not of "1" — only "11" and "12"
+        // count as direct children of "1", so the next is "13", not something
+        // inflated by the grandchildren.
+        expect(guessNextAlias('1', ['1', '11', '12', '121', '122'])).toBe('13');
     });
 });
 
 describe('guessNextAlias (alphabetical)', () => {
     const scheme = 'alphabetical' as const;
 
-    it('letters an unaliased home\'s direct holes, mirroring numeric\'s 1, 2, 3', () => {
+    it("letters an unaliased home's direct holes, mirroring numeric's 1, 2, 3", () => {
         expect(guessNextAlias(null, [], { scheme })).toBe('A');
         expect(guessNextAlias(null, ['A'], { scheme })).toBe('B');
         expect(guessNextAlias(null, ['A', 'B'], { scheme })).toBe('C');
@@ -58,13 +58,33 @@ describe('guessNextAlias (alphabetical)', () => {
     it('keeps the wormhole letter sequence and each k-space counter independent for mixed children', () => {
         const aliases = ['AB', 'AH1', 'AL1'];
 
-        expect(guessNextAlias('A', aliases, { scheme })).toBe('AC');
+        expect(guessNextAlias('A', aliases, { scheme })).toBe('AA');
         expect(guessNextAlias('A', aliases, { scheme, targetKind: 'h' })).toBe('AH2');
         expect(guessNextAlias('A', aliases, { scheme, targetKind: 'l' })).toBe('AL2');
     });
 
     it('lets a wormhole branch off a k-space node', () => {
         expect(guessNextAlias('AH1', [], { scheme })).toBe('AH1A');
+    });
+});
+
+describe('guessNextAlias (gap filling)', () => {
+    it('fills a freed numeric index before extending the sequence', () => {
+        expect(guessNextAlias(null, ['1', '3', '4'])).toBe('2');
+        expect(guessNextAlias('1', ['11', '13'])).toBe('12');
+    });
+
+    it('fills a freed letter before extending the sequence', () => {
+        const scheme = 'alphabetical' as const;
+
+        expect(guessNextAlias(null, ['A', 'C', 'D'], { scheme })).toBe('B');
+        expect(guessNextAlias('A', ['AA', 'AC'], { scheme })).toBe('AB');
+    });
+
+    it('fills a freed k-space index before extending the counter', () => {
+        const scheme = 'alphabetical' as const;
+
+        expect(guessNextAlias('A', ['AH1', 'AH3'], { scheme, targetKind: 'h' })).toBe('AH2');
     });
 });
 

@@ -51,42 +51,62 @@ function letterAtIndex(index: number): string {
     return WORMHOLE_LETTERS[Math.min(index, WORMHOLE_LETTERS.length - 1)];
 }
 
-/**
- * The next unused letter extending `prefix`, skipping reserved k-space
- * letters. Only aliases that are exactly one letter longer than `prefix`
- * count as direct children, so k-space exits (`AH1`) and deeper descendants
- * (`ABA`) are naturally excluded.
- * Expects `prefix` and `aliases` already upper-cased by `guessNextAlias`.
- */
-function nextWormholeLetter(prefix: string, aliases: string[]): string {
-    const highest = aliases.reduce((max, alias) => {
-        if (alias.length !== prefix.length + 1 || !alias.startsWith(prefix)) return max;
-
-        const index = WORMHOLE_LETTERS.indexOf(alias.slice(prefix.length));
-        return index === -1 ? max : Math.max(max, index);
-    }, -1);
-
-    return letterAtIndex(highest + 1);
+/** The smallest positive integer not present in `used`. */
+function lowestFreeIndex(used: Set<number>): number {
+    let index = 1;
+    while (used.has(index)) {
+        index++;
+    }
+    return index;
 }
 
 /**
- * The next unused per-type index for a k-space exit, e.g. `AH1`, `AH2` for
- * high-sec children of `A`. Each reserved letter keeps its own counter, and
- * the anchored digit match excludes anything branching further off a k-space
- * node (`AH1A` is not counted as an `AH` index).
+ * The lowest unused letter extending `prefix`, skipping reserved k-space
+ * letters, so a letter freed by a deleted system is reused before the
+ * sequence grows. Only aliases that are exactly one letter longer than
+ * `prefix` count as direct children, so k-space exits (`AH1`) and deeper
+ * descendants (`ABA`) are naturally excluded.
+ * Expects `prefix` and `aliases` already upper-cased by `guessNextAlias`.
+ */
+function nextWormholeLetter(prefix: string, aliases: string[]): string {
+    const used = new Set<number>();
+    for (const alias of aliases) {
+        if (alias.length !== prefix.length + 1 || !alias.startsWith(prefix)) continue;
+
+        const index = WORMHOLE_LETTERS.indexOf(alias.slice(prefix.length));
+        if (index !== -1) {
+            used.add(index);
+        }
+    }
+
+    let index = 0;
+    while (used.has(index)) {
+        index++;
+    }
+    return letterAtIndex(index);
+}
+
+/**
+ * The lowest unused per-type index for a k-space exit, e.g. `AH1`, `AH2` for
+ * high-sec children of `A`. Each reserved letter keeps its own counter, gaps
+ * are filled first, and the anchored digit match excludes anything branching
+ * further off a k-space node (`AH1A` is not counted as an `AH` index).
  * Expects `prefix` and `aliases` already upper-cased by `guessNextAlias`.
  */
 function nextKspaceIndex(prefix: string, letter: string, aliases: string[]): number {
     const marker = `${prefix}${letter}`;
 
-    const highest = aliases.reduce((max, alias) => {
-        if (!alias.startsWith(marker)) return max;
+    const used = new Set<number>();
+    for (const alias of aliases) {
+        if (!alias.startsWith(marker)) continue;
 
         const tail = alias.slice(marker.length);
-        return /^\d+$/.test(tail) ? Math.max(max, Number.parseInt(tail, 10)) : max;
-    }, 0);
+        if (/^\d+$/.test(tail)) {
+            used.add(Number.parseInt(tail, 10));
+        }
+    }
 
-    return highest + 1;
+    return lowestFreeIndex(used);
 }
 
 /**
@@ -109,10 +129,11 @@ function guessNextAlphabeticalAlias(prefix: string, aliases: string[], targetKin
  *
  * Numeric (default): top-level systems (no parent alias) are numbered 1, 2,
  * 3…; children of "1" become 11, 12, 13…; children of "12" become 121, 122…
- * The next index is the highest existing direct-child index + 1. Direct
- * children are aliases that extend the parent's prefix with digits and are
- * not themselves nested under a longer prefix, so "121" is never mistaken for
- * a direct child of "1".
+ * The next index is the lowest unused direct-child index, so an alias freed
+ * by a deleted system is filled before the sequence grows (1, 3, 4 suggests
+ * 2). Direct children are aliases that extend the parent's prefix with digits
+ * and are not themselves nested under a longer prefix, so "121" is never
+ * mistaken for a direct child of "1".
  *
  * Alphabetical (`opts.scheme`): children use letters instead of digits (see
  * `guessNextAlphabeticalAlias`).
@@ -144,12 +165,15 @@ export function guessNextAlias(parentAlias: string | null | undefined, aliases: 
         (alias) => !numericChildren.some((other) => other !== alias && other.length < alias.length && alias.startsWith(other)),
     );
 
-    const highest = directChildren.reduce((max, alias) => {
+    const used = new Set<number>();
+    for (const alias of directChildren) {
         const index = Number.parseInt(alias.slice(prefix.length), 10);
-        return Number.isNaN(index) ? max : Math.max(max, index);
-    }, 0);
+        if (!Number.isNaN(index)) {
+            used.add(index);
+        }
+    }
 
-    return `${prefix}${highest + 1}`;
+    return `${prefix}${lowestFreeIndex(used)}`;
 }
 
 /**

@@ -23,6 +23,7 @@ This only changes what the mapper **suggests** going forward — switching schem
 
 - **An unaliased home's direct holes** get the empty-prefix case — `A, B, C…` — mirroring the numeric scheme's `1, 2, 3…`. A manually-named root (e.g. naming your home `A`) works too, since a suggestion just extends whatever prefix already exists.
 - **K-space exits can branch further**: a wormhole found off `AH1` suggests `AH1A`, exactly like any other wormhole child.
+- **Freed letters are reused**: with `A`, `C` and `D` on the map because the `B` was rolled and deleted, the next hole is suggested as `B` — same as the numeric scheme filling `2` between `1` and `3`.
 
 ## Example
 
