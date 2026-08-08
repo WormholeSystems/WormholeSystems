@@ -453,6 +453,7 @@ const SIGNATURE_CATEGORIES: Record<string, { id: number; code: string }> = {
     'Gas Site': { id: 5, code: 'gas' },
     'Ore Site': { id: 6, code: 'ore' },
     'Homefront Operations': { id: 7, code: 'homefront' },
+    'Factional Warfare Site': { id: 8, code: 'faction-warfare' },
 };
 
 interface SignatureInput {

@@ -35,6 +35,11 @@
             "id": 7,
             "name": "Homefront Operations",
             "code": "homefront"
+        },
+        {
+            "id": 8,
+            "name": "Factional Warfare Site",
+            "code": "faction-warfare"
         }
     ],
     "types": [

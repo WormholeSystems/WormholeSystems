@@ -21,7 +21,7 @@ import usePermission from '@/composables/usePermission';
 import { createSignature, updateMapUserSettings } from '@/map/api';
 import type { TResolvedSelectedMapSolarsystem } from '@/pages/maps';
 import { useLocalStorage } from '@vueuse/core';
-import { ArrowDown, ArrowUp, CircleHelp, Cloud, Database, Fan, Gem, Landmark, Rows2, Rows3, Shield, Swords } from 'lucide-vue-next';
+import { ArrowDown, ArrowUp, CircleHelp, Cloud, Database, Fan, Flag, Gem, Landmark, Rows2, Rows3, Shield, Swords } from 'lucide-vue-next';
 import { type Component, computed } from 'vue';
 
 const props = defineProps<{
@@ -65,18 +65,25 @@ const categoryFilterOptions: Array<{ value: string; icon: Component; color: stri
     { value: 'Gas Site', icon: Cloud, color: 'text-orange-400', label: 'Gas Site' },
     { value: 'Combat Site', icon: Swords, color: 'text-green-400', label: 'Combat Site' },
     { value: 'Homefront Operations', icon: Shield, color: 'text-rose-400', label: 'Homefront Operations' },
+    { value: 'Factional Warfare Site', icon: Flag, color: 'text-fuchsia-400', label: 'Factional Warfare Site' },
     { value: UNCATEGORIZED_FILTER, icon: CircleHelp, color: 'text-muted-foreground', label: 'Uncategorized' },
 ];
 
-const activeCategoryFilters = useLocalStorage<string[]>(
-    'signatures-category-filters',
-    categoryFilterOptions.map((option) => option.value),
-);
+// Persist the hidden categories instead of the visible ones so categories added
+// in later releases default to visible for users with saved filters.
+const hiddenCategoryFilters = useLocalStorage<string[]>('signatures-category-hidden-filters', []);
+
+const activeCategoryFilters = computed<string[]>({
+    get: () => categoryFilterOptions.map((option) => option.value).filter((value) => !hiddenCategoryFilters.value.includes(value)),
+    set: (values) => {
+        hiddenCategoryFilters.value = categoryFilterOptions.map((option) => option.value).filter((value) => !values.includes(value));
+    },
+});
 
 const filteredSignatures = computed(() =>
     signatures.value.filter((signature) => {
         const key = signature.signature_category?.name ?? UNCATEGORIZED_FILTER;
-        return activeCategoryFilters.value.includes(key);
+        return !hiddenCategoryFilters.value.includes(key);
     }),
 );
 
