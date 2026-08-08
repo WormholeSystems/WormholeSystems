@@ -76,7 +76,8 @@ describe('WormholeTypeInput', () => {
         const wrapper = mountInput();
         await openPopup(wrapper);
 
-        const option = document.body.querySelector('[role="option"]') as HTMLElement;
+        // The first option is the pinned "Unknown" reset row, so pick the next one.
+        const option = document.body.querySelectorAll('[role="option"]')[1] as HTMLElement;
         option.dispatchEvent(new MouseEvent('pointerup', { bubbles: true }));
         option.dispatchEvent(new MouseEvent('click', { bubbles: true }));
         await flushVirtualizer();
@@ -84,6 +85,22 @@ describe('WormholeTypeInput', () => {
         const emitted = wrapper.emitted('update:modelValue');
         expect(emitted).toBeTruthy();
         expect(types.map((type) => type.id)).toContain(emitted![0][0]);
+    });
+
+    it('resets the model through the pinned unknown row', async () => {
+        const wrapper = mountInput({ modelValue: 3 });
+        await openPopup(wrapper);
+
+        const option = document.body.querySelector('[role="option"]') as HTMLElement;
+        expect(option.textContent).toContain('Unknown');
+
+        option.dispatchEvent(new MouseEvent('pointerup', { bubbles: true }));
+        option.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        await flushVirtualizer();
+
+        const emitted = wrapper.emitted('update:modelValue');
+        expect(emitted).toBeTruthy();
+        expect(emitted![0][0]).toBeNull();
     });
 
     it('shows the selected type on the trigger', async () => {

@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import UnknownTypeOption from '@/components/signatures/UnknownTypeOption.vue';
 import { Combobox, ComboboxAnchor, ComboboxInput, ComboboxItem, ComboboxTrigger, ComboboxVirtualList } from '@/components/ui/combobox';
 import { useMapUserSettings } from '@/composables/useMapUserSettings';
 import { getTypeById } from '@/const/signatures';
+import { comboboxRowText, flattenComboboxSections, type TComboboxRow } from '@/lib/comboboxSections';
 import { TSignatureType } from '@/types/models';
 import { computed, ref, watch } from 'vue';
 
@@ -29,12 +31,15 @@ watch(open, (isOpen) => {
     }
 });
 
-const filtered_options = computed<TSignatureType[]>(() => {
+// A pinned null row lets a signature be reset to an unknown type.
+const rows = computed<TComboboxRow<TSignatureType | null>[]>(() => {
     const needle = search.value.trim().toLowerCase();
-    if (needle === '') {
-        return options;
-    }
-    return options.filter((option) => option.name.toLowerCase().includes(needle));
+    const matched = needle === '' ? options : options.filter((option) => option.name.toLowerCase().includes(needle));
+
+    return flattenComboboxSections<TSignatureType | null>([
+        { key: 'unknown', heading: '', items: needle === '' || 'unknown'.includes(needle) ? [null] : [] },
+        { key: 'types', heading: '', items: matched },
+    ]);
 });
 
 const selected_option = computed(() => {
@@ -42,13 +47,16 @@ const selected_option = computed(() => {
     return options.find((option) => option.id === model.value) ?? getTypeById(model.value) ?? null;
 });
 
-function handleSelect(option: TSignatureType) {
-    model.value = option.id;
+function handleSelect(row: TComboboxRow<TSignatureType | null>) {
+    if (row.kind !== 'option') {
+        return;
+    }
+    model.value = row.value?.id ?? null;
     open.value = false;
 }
 
-function optionName(option: TSignatureType): string {
-    return option.name;
+function rowText(row: TComboboxRow<TSignatureType | null>): string {
+    return comboboxRowText(row, (option) => option?.name ?? 'Unknown');
 }
 </script>
 
@@ -61,13 +69,14 @@ function optionName(option: TSignatureType): string {
                 <span v-else class="truncate text-muted-foreground">Type</span>
             </ComboboxTrigger>
         </ComboboxAnchor>
-        <ComboboxVirtualList :options="filtered_options" :text-content="optionName" empty-text="Unknown" class="min-w-44">
+        <ComboboxVirtualList :options="rows" :text-content="rowText" empty-text="No types found" class="min-w-44">
             <template #header>
                 <ComboboxInput v-model="search" placeholder="Search types" class="h-8 border-b text-xs" auto-focus />
             </template>
             <template #default="{ option }">
-                <ComboboxItem :value="option" class="text-xs" @select.prevent="() => handleSelect(option)">
-                    <span class="truncate">{{ option.name }}</span>
+                <ComboboxItem v-if="option.kind === 'option'" :value="option" class="text-xs" @select.prevent="() => handleSelect(option)">
+                    <UnknownTypeOption v-if="option.value === null" />
+                    <span v-else class="truncate">{{ option.value.name }}</span>
                 </ComboboxItem>
             </template>
         </ComboboxVirtualList>

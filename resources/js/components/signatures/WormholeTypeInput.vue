@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import UnknownTypeOption from '@/components/signatures/UnknownTypeOption.vue';
 import WormholeOption from '@/components/signatures/WormholeOption.vue';
 import { Combobox, ComboboxAnchor, ComboboxInput, ComboboxItem, ComboboxTrigger, ComboboxVirtualList } from '@/components/ui/combobox';
 import { useMapUserSettings } from '@/composables/useMapUserSettings';
@@ -103,7 +104,7 @@ function filterByCurrentClass(option: TSignatureType) {
                 <div class="w-full">
                     <div v-if="option.kind === 'heading'" class="px-2 py-1.5 text-xs text-muted-foreground">{{ option.label }}</div>
                     <ComboboxItem v-else :value="option" class="text-xs" @select.prevent="() => handleSelect(option)">
-                        <span v-if="option.value === null" class="text-muted-foreground">Unknown</span>
+                        <UnknownTypeOption v-if="option.value === null" />
                         <WormholeOption v-else :wormhole="option.value" />
                     </ComboboxItem>
                 </div>
