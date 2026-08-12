@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { CharacterImage } from '@/components/images';
+import SolarsystemStatusIcon from '@/components/map/SolarsystemStatusIcon.vue';
 import SolarsystemExternalLinks from '@/components/solarsystem/SolarsystemExternalLinks.vue';
 import {
     ContextMenuContent,
@@ -90,10 +91,7 @@ const options: TMapSolarsystemStatus[] = ['unknown', 'friendly', 'hostile', 'act
                 <ContextMenuRadioGroup :model-value="map_solarsystem.status ?? undefined" @update:model-value="handleStatusChange">
                     <ContextMenuRadioItem v-for="option in options" :key="option" :value="option">
                         {{ option.charAt(0).toUpperCase() + option.slice(1) }}
-                        <span
-                            :data-status="option"
-                            class="ml-auto inline-block size-2 rounded-full data-[status=active]:bg-active data-[status=empty]:bg-empty data-[status=friendly]:bg-friendly data-[status=hostile]:bg-hostile data-[status=unknown]:bg-unknown data-[status=unscanned]:bg-unscanned"
-                        />
+                        <SolarsystemStatusIcon :status="option" class="ml-auto" />
                     </ContextMenuRadioItem>
                 </ContextMenuRadioGroup>
             </ContextMenuSubContent>
