@@ -4,6 +4,7 @@ import SatelliteDish from '@/components/icons/SatelliteDish.vue';
 import HasExtraConnections from '@/components/map/HasExtraConnections.vue';
 import SolarsystemEffect from '@/components/map/SolarsystemEffect.vue';
 import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue';
+import SolarsystemStatusIcon from '@/components/map/SolarsystemStatusIcon.vue';
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -142,6 +143,12 @@ function handleSubmit() {
                 </PopoverContent>
             </Popover>
             <div class="col-start-3 row-start-1 flex items-center gap-1">
+                <Tooltip v-if="system.status && system.status !== 'unknown'" :delay-duration="500">
+                    <TooltipTrigger>
+                        <SolarsystemStatusIcon :status="system.status" />
+                    </TooltipTrigger>
+                    <TooltipContent>{{ system.status.charAt(0).toUpperCase() + system.status.slice(1) }}</TooltipContent>
+                </Tooltip>
                 <Tooltip v-if="isHome" :delay-duration="500">
                     <TooltipTrigger>
                         <HomeIcon class="size-[14px] text-amber-400" />
