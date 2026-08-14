@@ -145,8 +145,10 @@ export function useTracking() {
     // Copy the connection bookmark for the system we just jumped into, using the
     // same scheme as the connection context menu: the current system labelled
     // with the signature we used in the origin. Delegates to the shared
-    // signature-bookmark builder, so an empty chosen alias now falls back to
-    // the guessed one instead of leaving the alias token blank.
+    // signature-bookmark builder: an empty chosen alias falls back to the
+    // guessed one only when the jump is eligible for a suggestion (wormhole
+    // target, or an origin that is part of the chain), otherwise the alias
+    // token stays blank.
     function copyConnectionBookmark(signatureId: number | null, alias: string | null) {
         if (!map_user_settings.value.copy_bookmark_enabled) return;
         const target = target_solarsystem.value;
@@ -162,7 +164,7 @@ export function useTracking() {
                 wormhole: signature?.wormhole,
                 signature_type: signature?.signature_type,
             },
-            currentSystem: { alias: origin_map_solarsystem.value?.alias },
+            currentSystem: { alias: origin_map_solarsystem.value?.alias, class: origin_map_solarsystem.value?.solarsystem?.class },
             connectionTarget: { alias, occupier_alias: existing_map_solarsystem.value?.occupier_alias, solarsystem: target },
             aliases: known_aliases.value,
             formats: page.props.map,

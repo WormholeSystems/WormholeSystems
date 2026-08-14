@@ -1,5 +1,5 @@
 import { isWormholeClass } from '@/const/solarsystemClasses';
-import { aliasTargetKind, guessNextAlias, isIgnoredAlias, TAliasScheme } from '@/lib/alias';
+import { aliasTargetKind, isIgnoredAlias, suggestAlias, TAliasScheme } from '@/lib/alias';
 import { TResolvedSolarsystem } from '@/pages/maps';
 import { TSignature, TStringedSolarsystemClass } from '@/types/models';
 
@@ -185,6 +185,12 @@ function knownTargetClass(targetClass: string | null | undefined): TStringedSola
  * target bookmark — falling back to the guessed alias only when the target
  * itself doesn't carry one yet.
  *
+ * The guess follows the same eligibility rule as the tracking suggestion
+ * (`suggestAlias`): the destination is only aliased when it is a wormhole, or
+ * when the current system is part of the chain (a wormhole or already
+ * aliased). A k-space destination reached from an unaliased k-space system
+ * leaves the alias token blank instead of inventing a top-level alias.
+ *
  * With no connection, the destination is unknown, so only the guessed alias
  * and the signature-level tokens (sig/size/mass/life/wh) are known; the
  * name/region/occupier tokens and an unidentified class stay blank rather than
@@ -206,7 +212,7 @@ export function buildSignatureBookmark(params: {
         wormhole?: { name?: string | null } | null;
         signature_type?: { target_class?: string | null } | null;
     };
-    currentSystem: { alias?: string | null };
+    currentSystem: { alias?: string | null; class?: TStringedSolarsystemClass | null };
     connectionTarget?: BookmarkSystem | null;
     aliases: string[];
     formats: TBookmarkFormats & { bookmark_alias_scheme?: TAliasScheme };
@@ -223,13 +229,18 @@ export function buildSignatureBookmark(params: {
     };
 
     if (connectionTarget) {
+        const targetIsWormhole = isWormholeClass(connectionTarget.solarsystem.class);
         const system: BookmarkSystem = connectionTarget.alias
             ? connectionTarget
             : {
                   ...connectionTarget,
-                  alias: guessNextAlias(currentSystem.alias, aliases, {
+                  alias: suggestAlias({
+                      parentAlias: currentSystem.alias,
+                      targetIsWormhole,
+                      originIsWormhole: isWormholeClass(currentSystem.class),
+                      aliases,
                       scheme: formats.bookmark_alias_scheme,
-                      targetKind: aliasTargetKind(isWormholeClass(connectionTarget.solarsystem.class), connectionTarget.solarsystem.class),
+                      targetKind: aliasTargetKind(targetIsWormhole, connectionTarget.solarsystem.class),
                       ignoredAlias: formats.bookmark_ignored_alias,
                   }),
               };
@@ -241,11 +252,16 @@ export function buildSignatureBookmark(params: {
     const isTargetWormhole = !knownClass || isWormholeClass(knownClass);
 
     const values: Record<TBookmarkToken, string> = {
-        alias: guessNextAlias(currentSystem.alias, aliases, {
-            scheme: formats.bookmark_alias_scheme,
-            targetKind: aliasTargetKind(isTargetWormhole, knownClass),
-            ignoredAlias: formats.bookmark_ignored_alias,
-        }),
+        alias:
+            suggestAlias({
+                parentAlias: currentSystem.alias,
+                targetIsWormhole: isTargetWormhole,
+                originIsWormhole: isWormholeClass(currentSystem.class),
+                aliases,
+                scheme: formats.bookmark_alias_scheme,
+                targetKind: aliasTargetKind(isTargetWormhole, knownClass),
+                ignoredAlias: formats.bookmark_ignored_alias,
+            }) ?? '',
         sig: getSignatureIdShort(context.signatureId),
         class: knownClass ? getBookmarkClassString({ class: knownClass, name: '' }) : '',
         name: '',

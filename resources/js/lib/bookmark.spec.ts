@@ -202,13 +202,91 @@ describe('buildSignatureBookmark (class token)', () => {
     ])('renders k-space class "%s" as "%s"', (targetClass, label) => {
         const name = buildSignatureBookmark({
             signature: baseSignature({ signature_type: { target_class: targetClass } }),
-            currentSystem: { alias: null },
+            currentSystem: { alias: null, class: '5' },
             connectionTarget: null,
             aliases: [],
             formats: { ...NUMERIC_FORMATS, bookmark_format_kspace: '{alias} {sig} {class}' },
         });
 
         expect(name).toBe(`1 ABC ${label}`);
+    });
+});
+
+describe('buildSignatureBookmark (alias eligibility)', () => {
+    it('leaves the alias blank for a connected k-space target reached from an unaliased k-space system', () => {
+        const name = buildSignatureBookmark({
+            signature: baseSignature(),
+            currentSystem: { alias: null, class: 'l' },
+            connectionTarget: {
+                alias: null,
+                occupier_alias: null,
+                solarsystem: { class: 'h', name: 'Jita', region: { name: 'The Forge' } },
+            },
+            aliases: [],
+            formats: { ...NUMERIC_FORMATS, bookmark_format_kspace: '{alias} {sig} {name}' },
+        });
+
+        expect(name).toBe('ABC Jita');
+    });
+
+    it('still guesses for a k-space target reached from an unaliased wormhole system', () => {
+        const name = buildSignatureBookmark({
+            signature: baseSignature(),
+            currentSystem: { alias: null, class: '3' },
+            connectionTarget: {
+                alias: null,
+                occupier_alias: null,
+                solarsystem: { class: 'h', name: 'Jita', region: { name: 'The Forge' } },
+            },
+            aliases: [],
+            formats: { ...NUMERIC_FORMATS, bookmark_format_kspace: '{alias} {sig} {name}' },
+        });
+
+        expect(name).toBe('1 ABC Jita');
+    });
+
+    it('still guesses for a k-space target reached from an aliased k-space system', () => {
+        const name = buildSignatureBookmark({
+            signature: baseSignature(),
+            currentSystem: { alias: '2', class: 'l' },
+            connectionTarget: {
+                alias: null,
+                occupier_alias: null,
+                solarsystem: { class: 'h', name: 'Jita', region: { name: 'The Forge' } },
+            },
+            aliases: ['2'],
+            formats: { ...NUMERIC_FORMATS, bookmark_format_kspace: '{alias} {sig} {name}' },
+        });
+
+        expect(name).toBe('21 ABC Jita');
+    });
+
+    it('still guesses for a wormhole target reached from an unaliased k-space system', () => {
+        const name = buildSignatureBookmark({
+            signature: baseSignature(),
+            currentSystem: { alias: null, class: 'l' },
+            connectionTarget: {
+                alias: null,
+                occupier_alias: null,
+                solarsystem: { class: '3', name: 'J123456' },
+            },
+            aliases: [],
+            formats: NUMERIC_FORMATS,
+        });
+
+        expect(name).toBe('1 ABC C3');
+    });
+
+    it('leaves the alias blank for an unconnected k-space signature in an unaliased k-space system', () => {
+        const name = buildSignatureBookmark({
+            signature: baseSignature({ signature_type: { target_class: 'h' } }),
+            currentSystem: { alias: null, class: 'l' },
+            connectionTarget: null,
+            aliases: [],
+            formats: { ...NUMERIC_FORMATS, bookmark_format_kspace: '{alias} {sig} {class}' },
+        });
+
+        expect(name).toBe('ABC HS');
     });
 });
 
