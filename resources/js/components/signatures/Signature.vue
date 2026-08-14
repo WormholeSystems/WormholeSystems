@@ -213,7 +213,7 @@ const { map_solarsystems } = useMapSolarsystems();
 const bookmark_name = computed(() =>
     buildSignatureBookmark({
         signature,
-        currentSystem: { alias: selected_map_solarsystem.alias },
+        currentSystem: { alias: selected_map_solarsystem.alias, class: selected_map_solarsystem.solarsystem.class },
         connectionTarget: selected_connection.value?.target ?? null,
         aliases: map_solarsystems.value.map((s) => s.alias).filter((alias): alias is string => Boolean(alias)),
         formats: page.props.map,
