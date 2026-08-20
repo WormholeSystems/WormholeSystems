@@ -37,7 +37,7 @@ it('renders the landing page for guests', function () {
 });
 
 it('serves the latest wormhole killmails', function () {
-    $wormholeSystem = makeSolarsystem(31000001, -1.0, 'wormhole');
+    $wormholeSystem = makeSolarsystem(31000001, -1.0, 'wh');
     $knownSpaceSystem = makeSolarsystem(30000142, 0.9, 'eve');
 
     $wormholeKillmail = makeLandingKillmail(1001, $wormholeSystem);

@@ -51,7 +51,7 @@ final readonly class MapKillmailsFeature implements ProvidesInertiaProperties
             ])
             ->whereIn('solarsystem_id', $this->map->mapSolarsystems->pluck('solarsystem_id'))
             ->when($this->filter === KillmailFilter::KSpace, fn (Builder $query) => $query->whereRelation('solarsystem', 'type', 'eve'))
-            ->when($this->filter === KillmailFilter::JSpace, fn (Builder $query) => $query->whereRelation('solarsystem', 'type', 'wormhole'))
+            ->when($this->filter === KillmailFilter::JSpace, fn (Builder $query) => $query->whereRelation('solarsystem', 'type', 'wh'))
             ->orderByDesc('id')
             ->limit(50)
             ->get()
