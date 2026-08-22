@@ -30,7 +30,7 @@ final class LandingController extends Controller
                 'victimCorporation:id,name,ticker',
                 'victimAlliance:id,name,ticker',
             ])
-            ->whereRelation('solarsystem', 'type', 'wormhole')
+            ->whereRelation('solarsystem', 'type', 'wh')
             ->orderByDesc('id')
             ->limit(12)
             ->get()
