@@ -12,8 +12,9 @@ import { TMapSummary } from '@/pages/maps/index';
 import { Archive, ChevronDown, SearchIcon } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 
-const { maps } = defineProps<{
+const { maps, can_create_map } = defineProps<{
     maps: TMapSummary[];
+    can_create_map: boolean;
 }>();
 
 const search = useSearch('search', ['maps']);
@@ -49,7 +50,7 @@ const stats = computed(() => [
                     <h1 class="font-display text-3xl font-bold tracking-tight text-foreground">Maps</h1>
                     <p class="mt-2 text-muted-foreground">Manage and explore your wormhole mapping networks</p>
                 </div>
-                <CreateMapDialog>
+                <CreateMapDialog v-if="can_create_map">
                     <Button class="flex items-center gap-2">
                         <PlusIcon class="h-4 w-4" />
                         Create New Map
@@ -126,7 +127,7 @@ const stats = computed(() => [
                 </p>
                 <div class="flex gap-2">
                     <Button v-if="search" variant="outline" @click="search = ''">Clear Search</Button>
-                    <CreateMapDialog>
+                    <CreateMapDialog v-if="can_create_map">
                         <Button class="flex items-center gap-2">
                             <PlusIcon class="h-4 w-4" />
                             {{ search ? 'Create New Map' : 'Create Your First Map' }}

@@ -123,6 +123,10 @@ final class MapController extends Controller
                 ->get()
                 ->toResourceCollection(MapCardResource::class),
             'search' => $search->toString(),
+            // Drives the "Create New Map" button: the instance can restrict
+            // creation to named affiliations, and a button that only produces a
+            // 403 is worse than no button.
+            'can_create_map' => Gate::allows('create', Map::class),
         ]);
     }
 

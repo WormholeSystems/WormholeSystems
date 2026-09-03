@@ -7,9 +7,19 @@ namespace App\Policies;
 use App\Enums\Permission;
 use App\Models\Map;
 use App\Models\User;
+use App\Services\AffiliationWhitelist;
+use Illuminate\Container\Attributes\Config;
 
 final class MapPolicy
 {
+    /**
+     * @param  list<int>  $mapCreatorAffiliationIds
+     */
+    public function __construct(
+        #[Config('access.map_creator_affiliation_ids')]
+        private array $mapCreatorAffiliationIds = [],
+    ) {}
+
     public function viewAny(): bool
     {
         return true;
@@ -48,9 +58,38 @@ final class MapPolicy
         return $permission instanceof Permission && $permission->isAtLeast(Permission::Member);
     }
 
-    public function create(): bool
+    /**
+     * Creating a map is open to every authenticated user unless the instance
+     * names the affiliations allowed to do so. Same shape as the login
+     * whitelist, and independent of it: an instance can be open to an alliance
+     * while only its leadership creates maps.
+     *
+     * The check is against the *active* character rather than every character
+     * on the account: an account holding a director and an alt in an NPC
+     * corporation should not let the alt create maps, and the active character
+     * is the one the map is created as.
+     */
+    public function create(?User $user): bool
     {
-        return true;
+        if (! $user instanceof User) {
+            return false;
+        }
+
+        $whitelist = new AffiliationWhitelist($this->mapCreatorAffiliationIds);
+
+        // Nothing configured means nothing changes: return before resolving the
+        // active character, which is work an unconfigured instance should not do.
+        if (! $whitelist->isEnforced()) {
+            return true;
+        }
+
+        $character = $user->active_character;
+
+        return $whitelist->allows([
+            $character?->id,
+            $character?->corporation_id,
+            $character?->alliance_id,
+        ]);
     }
 
     public function update(?User $user, Map $map): bool
