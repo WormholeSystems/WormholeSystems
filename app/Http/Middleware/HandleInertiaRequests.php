@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\DTO\Announcement;
 use App\DTO\SortPreference;
 use App\DTO\SortPreferences;
 use App\Enums\SortDirection;
@@ -67,6 +68,7 @@ final class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'announcement' => fn (): ?array => $this->getAnnouncement($request),
             'auth' => [
                 'user' => $this->user?->toResource(UserResource::class),
             ],
@@ -99,6 +101,29 @@ final class HandleInertiaRequests extends Middleware
             ->get();
 
         return $characters_with_missing_scopes->toResourceCollection(CharacterResource::class);
+    }
+
+    /**
+     * The site-wide announcement, unless this exact one was already dismissed.
+     *
+     * The dismissal lives in a cookie rather than in the browser so server-side
+     * rendered pages never show a banner that hydration immediately removes.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function getAnnouncement(Request $request): ?array
+    {
+        $announcement = Announcement::fromConfig();
+
+        if (! $announcement instanceof Announcement) {
+            return null;
+        }
+
+        if ($announcement->dismissible && $request->cookie('announcement_dismissed') === $announcement->id()) {
+            return null;
+        }
+
+        return $announcement->toArray();
     }
 
     /**

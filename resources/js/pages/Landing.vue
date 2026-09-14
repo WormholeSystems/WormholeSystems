@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AnnouncementBanner from '@/components/announcement/AnnouncementBanner.vue';
 import CharactersView from '@/components/characters/CharactersView.vue';
 import DiscordIcon from '@/components/icons/DiscordIcon.vue';
 import Logo from '@/components/icons/Logo.vue';
@@ -237,6 +238,7 @@ const vReveal = {
             </nav>
 
             <main class="relative pt-14">
+                <AnnouncementBanner />
                 <!-- Hero: its own solid band, closed off with a hairline. -->
                 <section class="relative overflow-hidden border-b border-border bg-muted/20">
                     <div class="hero-backdrop" aria-hidden="true" />
