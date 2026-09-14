@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-    <title>WormholeSystems API Documentation</title>
+    <title>{{ config("app.name") }} API Documentation</title>
 
     <link href="https://fonts.googleapis.com/css?family=Open+Sans&display=swap" rel="stylesheet">
 
@@ -26,13 +26,13 @@
             </style>
 
     <script>
-        var tryItOutBaseUrl = "https://wormhole.systems";
+        var tryItOutBaseUrl = "{{ config("app.url") }}";
         var useCsrf = Boolean();
         var csrfUrl = "/sanctum/csrf-cookie";
     </script>
-    <script src="{{ asset("/vendor/scribe/js/tryitout-5.3.0.js") }}"></script>
+    <script src="{{ asset("/vendor/scribe/js/tryitout-5.11.0.js") }}"></script>
 
-    <script src="{{ asset("/vendor/scribe/js/theme-default-5.3.0.js") }}"></script>
+    <script src="{{ asset("/vendor/scribe/js/theme-default-5.11.0.js") }}"></script>
 
 </head>
 
@@ -79,7 +79,10 @@
                     <a href="#endpoints">Endpoints</a>
                 </li>
                                     <ul id="tocify-subheader-endpoints" class="tocify-subheader">
-                                                    <li class="tocify-item level-2" data-unique="endpoints-GETapi-maps">
+                                                    <li class="tocify-item level-2" data-unique="endpoints-GETapi-sovereignties">
+                                <a href="#endpoints-GETapi-sovereignties">Sovereignty for every claimed solar system, keyed by solar system id.</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="endpoints-GETapi-maps">
                                 <a href="#endpoints-GETapi-maps">GET api/maps</a>
                             </li>
                                                                                 <li class="tocify-item level-2" data-unique="endpoints-GETapi-maps--slug-">
@@ -111,7 +114,7 @@
     </ul>
 
     <ul class="toc-footer" id="last-updated">
-        <li>Last updated: August 17, 2025</li>
+        <li>Last updated: September 14, 2026</li>
     </ul>
 </div>
 
@@ -121,7 +124,7 @@
         <h1 id="introduction">Introduction</h1>
 <p>RESTful API for managing wormhole maps and solar system data in EVE Online. Access and manipulate collaborative mapping data for navigating wormhole space.</p>
 <aside>
-    <strong>Base URL</strong>: <code>https://wormhole.systems</code>
+    <strong>Base URL</strong>: <code>{{ config("app.url") }}</code>
 </aside>
 <p>Welcome to the WormholeSystems API! This API provides programmatic access to wormhole mapping functionality for EVE Online players and corporations.</p>
 <h2 id="what-you-can-do">What You Can Do</h2>
@@ -136,8 +139,8 @@
 <ol>
 <li>Logging into the application</li>
 <li>Navigate to your account settings</li>
-<li>Go to the &quot;API Tokens&quot; section</li>
-<li>Click &quot;Create New Token&quot; and give it a descriptive name</li>
+<li>Go to the "API Tokens" section</li>
+<li>Click "Create New Token" and give it a descriptive name</li>
 <li>Copy the generated token (you won't be able to see it again!)</li>
 </ol>
 <p>Include your token in requests using the <code>Authorization: Bearer {your-token}</code> header.</p>
@@ -151,7 +154,164 @@
 
     
 
-                                <h2 id="endpoints-GETapi-maps">GET api/maps</h2>
+                                <h2 id="endpoints-GETapi-sovereignties">Sovereignty for every claimed solar system, keyed by solar system id.</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>The full response covers thousands of systems; the example below is trimmed.</p>
+
+<span id="example-requests-GETapi-sovereignties">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "{{ config("app.url") }}/api/sovereignties" \
+    --header "Authorization: Bearer {YOUR_API_TOKEN}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "{{ config("app.url") }}/api/sovereignties"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_API_TOKEN}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-sovereignties">
+            <blockquote>
+            <p>Example response (200):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;30000142&quot;: {
+        &quot;id&quot;: 30000142,
+        &quot;alliance&quot;: null,
+        &quot;corporation&quot;: null,
+        &quot;faction&quot;: {
+            &quot;id&quot;: 500001,
+            &quot;name&quot;: &quot;Caldari State&quot;
+        }
+    },
+    &quot;30004759&quot;: {
+        &quot;id&quot;: 30004759,
+        &quot;alliance&quot;: {
+            &quot;id&quot;: 99000001,
+            &quot;name&quot;: &quot;Example Alliance&quot;,
+            &quot;ticker&quot;: &quot;EXMPL&quot;
+        },
+        &quot;corporation&quot;: {
+            &quot;id&quot;: 98000001,
+            &quot;name&quot;: &quot;Example Corporation&quot;,
+            &quot;ticker&quot;: &quot;EXCRP&quot;
+        },
+        &quot;faction&quot;: null
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-sovereignties" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-sovereignties"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-sovereignties"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-sovereignties" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-sovereignties">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-sovereignties" data-method="GET"
+      data-path="api/sovereignties"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-sovereignties', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-GETapi-sovereignties"
+                    onclick="tryItOut('GETapi-sovereignties');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-GETapi-sovereignties"
+                    onclick="cancelTryOut('GETapi-sovereignties');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-GETapi-sovereignties"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/sovereignties</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-sovereignties"
+               value="Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-sovereignties"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-sovereignties"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        </form>
+
+                    <h2 id="endpoints-GETapi-maps">GET api/maps</h2>
 
 <p>
 <small class="badge badge-darkred">requires authentication</small>
@@ -165,7 +325,7 @@
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "https://wormhole.systems/api/maps" \
+    --get "{{ config("app.url") }}/api/maps" \
     --header "Authorization: Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
@@ -173,7 +333,7 @@
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "https://wormhole.systems/api/maps"
+    "{{ config("app.url") }}/api/maps"
 );
 
 const headers = {
@@ -181,6 +341,7 @@ const headers = {
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
+
 
 fetch(url, {
     method: "GET",
@@ -259,6 +420,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                 <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
 &nbsp;
  &nbsp;
+ &nbsp;
                 <input type="text" style="display: none"
                               name="Authorization" class="auth-value"               data-endpoint="GETapi-maps"
                value="Bearer {YOUR_API_TOKEN}"
@@ -270,6 +432,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
  &nbsp;
+ &nbsp;
                 <input type="text" style="display: none"
                               name="Content-Type"                data-endpoint="GETapi-maps"
                value="application/json"
@@ -280,6 +443,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
 &nbsp;
+ &nbsp;
  &nbsp;
                 <input type="text" style="display: none"
                               name="Accept"                data-endpoint="GETapi-maps"
@@ -304,7 +468,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "https://wormhole.systems/api/maps/test-map-1" \
+    --get "{{ config("app.url") }}/api/maps/strix-ridens-1" \
     --header "Authorization: Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
@@ -312,7 +476,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "https://wormhole.systems/api/maps/test-map-1"
+    "{{ config("app.url") }}/api/maps/strix-ridens-1"
 );
 
 const headers = {
@@ -320,6 +484,7 @@ const headers = {
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
+
 
 fetch(url, {
     method: "GET",
@@ -398,6 +563,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                 <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
 &nbsp;
  &nbsp;
+ &nbsp;
                 <input type="text" style="display: none"
                               name="Authorization" class="auth-value"               data-endpoint="GETapi-maps--slug-"
                value="Bearer {YOUR_API_TOKEN}"
@@ -409,6 +575,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
  &nbsp;
+ &nbsp;
                 <input type="text" style="display: none"
                               name="Content-Type"                data-endpoint="GETapi-maps--slug-"
                value="application/json"
@@ -419,6 +586,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
 &nbsp;
+ &nbsp;
  &nbsp;
                 <input type="text" style="display: none"
                               name="Accept"                data-endpoint="GETapi-maps--slug-"
@@ -432,12 +600,13 @@ You can check the Dev Tools console for debugging information.</code></pre>
                 <b style="line-height: 2;"><code>slug</code></b>&nbsp;&nbsp;
 <small>string</small>&nbsp;
  &nbsp;
+ &nbsp;
                 <input type="text" style="display: none"
                               name="slug"                data-endpoint="GETapi-maps--slug-"
-               value="test-map-1"
+               value="strix-ridens-1"
                data-component="url">
     <br>
-<p>The slug of the map. Example: <code>test-map-1</code></p>
+<p>The slug of the map. Example: <code>strix-ridens-1</code></p>
             </div>
                     </form>
 
@@ -455,7 +624,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request PUT \
-    "https://wormhole.systems/api/maps/test-map-1" \
+    "{{ config("app.url") }}/api/maps/strix-ridens-1" \
     --header "Authorization: Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
@@ -467,7 +636,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "https://wormhole.systems/api/maps/test-map-1"
+    "{{ config("app.url") }}/api/maps/strix-ridens-1"
 );
 
 const headers = {
@@ -545,6 +714,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                 <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
 &nbsp;
  &nbsp;
+ &nbsp;
                 <input type="text" style="display: none"
                               name="Authorization" class="auth-value"               data-endpoint="PUTapi-maps--slug-"
                value="Bearer {YOUR_API_TOKEN}"
@@ -556,6 +726,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
  &nbsp;
+ &nbsp;
                 <input type="text" style="display: none"
                               name="Content-Type"                data-endpoint="PUTapi-maps--slug-"
                value="application/json"
@@ -566,6 +737,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
 &nbsp;
+ &nbsp;
  &nbsp;
                 <input type="text" style="display: none"
                               name="Accept"                data-endpoint="PUTapi-maps--slug-"
@@ -579,17 +751,19 @@ You can check the Dev Tools console for debugging information.</code></pre>
                 <b style="line-height: 2;"><code>slug</code></b>&nbsp;&nbsp;
 <small>string</small>&nbsp;
  &nbsp;
+ &nbsp;
                 <input type="text" style="display: none"
                               name="slug"                data-endpoint="PUTapi-maps--slug-"
-               value="test-map-1"
+               value="strix-ridens-1"
                data-component="url">
     <br>
-<p>The slug of the map. Example: <code>test-map-1</code></p>
+<p>The slug of the map. Example: <code>strix-ridens-1</code></p>
             </div>
                             <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
         <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>name</code></b>&nbsp;&nbsp;
 <small>string</small>&nbsp;
+ &nbsp;
  &nbsp;
                 <input type="text" style="display: none"
                               name="name"                data-endpoint="PUTapi-maps--slug-"
@@ -614,7 +788,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "https://wormhole.systems/api/map-solarsystems" \
+    "{{ config("app.url") }}/api/map-solarsystems" \
     --header "Authorization: Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
@@ -625,15 +799,16 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"occupier_alias\": \"g\",
     \"position_x\": 16,
     \"position_y\": 17,
-    \"status\": \"friendly\",
-    \"pinned\": false
+    \"status\": \"hostile\",
+    \"pinned\": false,
+    \"connect_to_map_solarsystem_id\": 16
 }"
 </code></pre></div>
 
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "https://wormhole.systems/api/map-solarsystems"
+    "{{ config("app.url") }}/api/map-solarsystems"
 );
 
 const headers = {
@@ -649,8 +824,9 @@ let body = {
     "occupier_alias": "g",
     "position_x": 16,
     "position_y": 17,
-    "status": "friendly",
-    "pinned": false
+    "status": "hostile",
+    "pinned": false,
+    "connect_to_map_solarsystem_id": 16
 };
 
 fetch(url, {
@@ -714,6 +890,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                 <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
 &nbsp;
  &nbsp;
+ &nbsp;
                 <input type="text" style="display: none"
                               name="Authorization" class="auth-value"               data-endpoint="POSTapi-map-solarsystems"
                value="Bearer {YOUR_API_TOKEN}"
@@ -725,6 +902,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
  &nbsp;
+ &nbsp;
                 <input type="text" style="display: none"
                               name="Content-Type"                data-endpoint="POSTapi-map-solarsystems"
                value="application/json"
@@ -735,6 +913,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
 &nbsp;
+ &nbsp;
  &nbsp;
                 <input type="text" style="display: none"
                               name="Accept"                data-endpoint="POSTapi-map-solarsystems"
@@ -748,28 +927,31 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b style="line-height: 2;"><code>map_id</code></b>&nbsp;&nbsp;
 <small>string</small>&nbsp;
  &nbsp;
+ &nbsp;
                 <input type="text" style="display: none"
                               name="map_id"                data-endpoint="POSTapi-map-solarsystems"
                value="architecto"
                data-component="body">
     <br>
-<p>The <code>id</code> of an existing record in the maps table. Example: <code>architecto</code></p>
+<p>Must match an existing stored value. Example: <code>architecto</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>solarsystem_id</code></b>&nbsp;&nbsp;
 <small>string</small>&nbsp;
+ &nbsp;
  &nbsp;
                 <input type="text" style="display: none"
                               name="solarsystem_id"                data-endpoint="POSTapi-map-solarsystems"
                value="architecto"
                data-component="body">
     <br>
-<p>The <code>id</code> of an existing record in the solarsystems table. Example: <code>architecto</code></p>
+<p>Must match an existing stored value. Example: <code>architecto</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>alias</code></b>&nbsp;&nbsp;
 <small>string</small>&nbsp;
 <i>optional</i> &nbsp;
+ &nbsp;
                 <input type="text" style="display: none"
                               name="alias"                data-endpoint="POSTapi-map-solarsystems"
                value="n"
@@ -781,6 +963,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b style="line-height: 2;"><code>occupier_alias</code></b>&nbsp;&nbsp;
 <small>string</small>&nbsp;
 <i>optional</i> &nbsp;
+ &nbsp;
                 <input type="text" style="display: none"
                               name="occupier_alias"                data-endpoint="POSTapi-map-solarsystems"
                value="g"
@@ -791,7 +974,8 @@ You can check the Dev Tools console for debugging information.</code></pre>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>position_x</code></b>&nbsp;&nbsp;
 <small>number</small>&nbsp;
-<i>optional</i> &nbsp;
+ &nbsp;
+ &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="position_x"                data-endpoint="POSTapi-map-solarsystems"
                value="16"
@@ -802,7 +986,8 @@ You can check the Dev Tools console for debugging information.</code></pre>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>position_y</code></b>&nbsp;&nbsp;
 <small>number</small>&nbsp;
-<i>optional</i> &nbsp;
+ &nbsp;
+ &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="position_y"                data-endpoint="POSTapi-map-solarsystems"
                value="17"
@@ -814,12 +999,13 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b style="line-height: 2;"><code>status</code></b>&nbsp;&nbsp;
 <small>string</small>&nbsp;
 <i>optional</i> &nbsp;
+ &nbsp;
                 <input type="text" style="display: none"
                               name="status"                data-endpoint="POSTapi-map-solarsystems"
-               value="friendly"
+               value="hostile"
                data-component="body">
     <br>
-<p>Example: <code>friendly</code></p>
+<p>Example: <code>hostile</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>active</code></li> <li><code>unknown</code></li> <li><code>unscanned</code></li> <li><code>hostile</code></li> <li><code>friendly</code></li> <li><code>empty</code></li></ul>
         </div>
@@ -827,6 +1013,7 @@ Must be one of:
             <b style="line-height: 2;"><code>pinned</code></b>&nbsp;&nbsp;
 <small>boolean</small>&nbsp;
 <i>optional</i> &nbsp;
+ &nbsp;
                 <label data-endpoint="POSTapi-map-solarsystems" style="display: none">
             <input type="radio" name="pinned"
                    value="true"
@@ -844,6 +1031,18 @@ Must be one of:
     <br>
 <p>Example: <code>false</code></p>
         </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>connect_to_map_solarsystem_id</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="connect_to_map_solarsystem_id"                data-endpoint="POSTapi-map-solarsystems"
+               value="16"
+               data-component="body">
+    <br>
+<p>Must match an existing stored value. Example: <code>16</code></p>
+        </div>
         </form>
 
                     <h2 id="endpoints-GETapi-map-solarsystems--id-">GET api/map-solarsystems/{id}</h2>
@@ -860,7 +1059,7 @@ Must be one of:
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "https://wormhole.systems/api/map-solarsystems/1" \
+    --get "{{ config("app.url") }}/api/map-solarsystems/8" \
     --header "Authorization: Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
@@ -868,7 +1067,7 @@ Must be one of:
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "https://wormhole.systems/api/map-solarsystems/1"
+    "{{ config("app.url") }}/api/map-solarsystems/8"
 );
 
 const headers = {
@@ -876,6 +1075,7 @@ const headers = {
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
+
 
 fetch(url, {
     method: "GET",
@@ -954,6 +1154,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                 <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
 &nbsp;
  &nbsp;
+ &nbsp;
                 <input type="text" style="display: none"
                               name="Authorization" class="auth-value"               data-endpoint="GETapi-map-solarsystems--id-"
                value="Bearer {YOUR_API_TOKEN}"
@@ -965,6 +1166,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
  &nbsp;
+ &nbsp;
                 <input type="text" style="display: none"
                               name="Content-Type"                data-endpoint="GETapi-map-solarsystems--id-"
                value="application/json"
@@ -975,6 +1177,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
 &nbsp;
+ &nbsp;
  &nbsp;
                 <input type="text" style="display: none"
                               name="Accept"                data-endpoint="GETapi-map-solarsystems--id-"
@@ -988,12 +1191,13 @@ You can check the Dev Tools console for debugging information.</code></pre>
                 <b style="line-height: 2;"><code>id</code></b>&nbsp;&nbsp;
 <small>integer</small>&nbsp;
  &nbsp;
+ &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="id"                data-endpoint="GETapi-map-solarsystems--id-"
-               value="1"
+               value="8"
                data-component="url">
     <br>
-<p>The ID of the map solarsystem. Example: <code>1</code></p>
+<p>The ID of the map solarsystem. Example: <code>8</code></p>
             </div>
                     </form>
 
@@ -1011,7 +1215,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request PUT \
-    "https://wormhole.systems/api/map-solarsystems/1" \
+    "{{ config("app.url") }}/api/map-solarsystems/8" \
     --header "Authorization: Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
@@ -1020,8 +1224,8 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"occupier_alias\": \"n\",
     \"position_x\": 7,
     \"position_y\": 16,
-    \"status\": \"unknown\",
-    \"pinned\": true,
+    \"status\": \"hostile\",
+    \"pinned\": false,
     \"notes\": \"m\"
 }"
 </code></pre></div>
@@ -1029,7 +1233,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "https://wormhole.systems/api/map-solarsystems/1"
+    "{{ config("app.url") }}/api/map-solarsystems/8"
 );
 
 const headers = {
@@ -1043,8 +1247,8 @@ let body = {
     "occupier_alias": "n",
     "position_x": 7,
     "position_y": 16,
-    "status": "unknown",
-    "pinned": true,
+    "status": "hostile",
+    "pinned": false,
     "notes": "m"
 };
 
@@ -1113,6 +1317,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                 <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
 &nbsp;
  &nbsp;
+ &nbsp;
                 <input type="text" style="display: none"
                               name="Authorization" class="auth-value"               data-endpoint="PUTapi-map-solarsystems--id-"
                value="Bearer {YOUR_API_TOKEN}"
@@ -1124,6 +1329,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
  &nbsp;
+ &nbsp;
                 <input type="text" style="display: none"
                               name="Content-Type"                data-endpoint="PUTapi-map-solarsystems--id-"
                value="application/json"
@@ -1134,6 +1340,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
 &nbsp;
+ &nbsp;
  &nbsp;
                 <input type="text" style="display: none"
                               name="Accept"                data-endpoint="PUTapi-map-solarsystems--id-"
@@ -1147,18 +1354,20 @@ You can check the Dev Tools console for debugging information.</code></pre>
                 <b style="line-height: 2;"><code>id</code></b>&nbsp;&nbsp;
 <small>integer</small>&nbsp;
  &nbsp;
+ &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="id"                data-endpoint="PUTapi-map-solarsystems--id-"
-               value="1"
+               value="8"
                data-component="url">
     <br>
-<p>The ID of the map solarsystem. Example: <code>1</code></p>
+<p>The ID of the map solarsystem. Example: <code>8</code></p>
             </div>
                             <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
         <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>alias</code></b>&nbsp;&nbsp;
 <small>string</small>&nbsp;
 <i>optional</i> &nbsp;
+ &nbsp;
                 <input type="text" style="display: none"
                               name="alias"                data-endpoint="PUTapi-map-solarsystems--id-"
                value="b"
@@ -1170,6 +1379,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b style="line-height: 2;"><code>occupier_alias</code></b>&nbsp;&nbsp;
 <small>string</small>&nbsp;
 <i>optional</i> &nbsp;
+ &nbsp;
                 <input type="text" style="display: none"
                               name="occupier_alias"                data-endpoint="PUTapi-map-solarsystems--id-"
                value="n"
@@ -1181,6 +1391,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b style="line-height: 2;"><code>position_x</code></b>&nbsp;&nbsp;
 <small>number</small>&nbsp;
 <i>optional</i> &nbsp;
+ &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="position_x"                data-endpoint="PUTapi-map-solarsystems--id-"
                value="7"
@@ -1192,6 +1403,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b style="line-height: 2;"><code>position_y</code></b>&nbsp;&nbsp;
 <small>number</small>&nbsp;
 <i>optional</i> &nbsp;
+ &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="position_y"                data-endpoint="PUTapi-map-solarsystems--id-"
                value="16"
@@ -1203,12 +1415,13 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b style="line-height: 2;"><code>status</code></b>&nbsp;&nbsp;
 <small>string</small>&nbsp;
 <i>optional</i> &nbsp;
+ &nbsp;
                 <input type="text" style="display: none"
                               name="status"                data-endpoint="PUTapi-map-solarsystems--id-"
-               value="unknown"
+               value="hostile"
                data-component="body">
     <br>
-<p>Example: <code>unknown</code></p>
+<p>Example: <code>hostile</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>active</code></li> <li><code>unknown</code></li> <li><code>unscanned</code></li> <li><code>hostile</code></li> <li><code>friendly</code></li> <li><code>empty</code></li></ul>
         </div>
@@ -1216,6 +1429,7 @@ Must be one of:
             <b style="line-height: 2;"><code>pinned</code></b>&nbsp;&nbsp;
 <small>boolean</small>&nbsp;
 <i>optional</i> &nbsp;
+ &nbsp;
                 <label data-endpoint="PUTapi-map-solarsystems--id-" style="display: none">
             <input type="radio" name="pinned"
                    value="true"
@@ -1231,12 +1445,13 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>Example: <code>true</code></p>
+<p>Example: <code>false</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>notes</code></b>&nbsp;&nbsp;
 <small>string</small>&nbsp;
 <i>optional</i> &nbsp;
+ &nbsp;
                 <input type="text" style="display: none"
                               name="notes"                data-endpoint="PUTapi-map-solarsystems--id-"
                value="m"
@@ -1260,7 +1475,7 @@ Must be one of:
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request DELETE \
-    "https://wormhole.systems/api/map-solarsystems/1" \
+    "{{ config("app.url") }}/api/map-solarsystems/8" \
     --header "Authorization: Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
@@ -1268,7 +1483,7 @@ Must be one of:
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "https://wormhole.systems/api/map-solarsystems/1"
+    "{{ config("app.url") }}/api/map-solarsystems/8"
 );
 
 const headers = {
@@ -1276,6 +1491,7 @@ const headers = {
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
+
 
 fetch(url, {
     method: "DELETE",
@@ -1337,6 +1553,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                 <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
 &nbsp;
  &nbsp;
+ &nbsp;
                 <input type="text" style="display: none"
                               name="Authorization" class="auth-value"               data-endpoint="DELETEapi-map-solarsystems--id-"
                value="Bearer {YOUR_API_TOKEN}"
@@ -1348,6 +1565,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
  &nbsp;
+ &nbsp;
                 <input type="text" style="display: none"
                               name="Content-Type"                data-endpoint="DELETEapi-map-solarsystems--id-"
                value="application/json"
@@ -1358,6 +1576,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
 &nbsp;
+ &nbsp;
  &nbsp;
                 <input type="text" style="display: none"
                               name="Accept"                data-endpoint="DELETEapi-map-solarsystems--id-"
@@ -1371,12 +1590,13 @@ You can check the Dev Tools console for debugging information.</code></pre>
                 <b style="line-height: 2;"><code>id</code></b>&nbsp;&nbsp;
 <small>integer</small>&nbsp;
  &nbsp;
+ &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="id"                data-endpoint="DELETEapi-map-solarsystems--id-"
-               value="1"
+               value="8"
                data-component="url">
     <br>
-<p>The ID of the map solarsystem. Example: <code>1</code></p>
+<p>The ID of the map solarsystem. Example: <code>8</code></p>
             </div>
                     </form>
 
