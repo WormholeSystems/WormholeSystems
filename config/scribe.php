@@ -43,7 +43,7 @@ return [
 
     // The base URL displayed in the docs.
     // If you're using `laravel` type, you can set this to a dynamic string, like '{{ config("app.tenant_url") }}' to get a dynamic base URL.
-    'base_url' => 'https://wormhole.systems',
+    'base_url' => '{{ config("app.url") }}',
 
     // Routes to include in the docs
     'routes' => [

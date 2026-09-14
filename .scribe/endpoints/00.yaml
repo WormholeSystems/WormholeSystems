@@ -2,19 +2,20 @@ name: Endpoints
 description: ''
 endpoints:
   -
+    custom: []
     httpMethods:
       - GET
-    uri: api/maps
+    uri: api/sovereignties
     metadata:
+      custom: []
       groupName: Endpoints
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: ''
-      description: ''
+      title: 'Sovereignty for every claimed solar system, keyed by solar system id.'
+      description: 'The full response covers thousands of systems; the example below is trimmed.'
       authenticated: true
       deprecated: false
-      custom: []
     headers:
       Authorization: 'Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
@@ -28,14 +29,15 @@ endpoints:
     fileParameters: []
     responses:
       -
-        status: 401
-        content: '{"message":"An error occurred","status":401}'
-        headers:
-          cache-control: 'no-cache, private'
-          content-type: application/json
-          access-control-allow-origin: '*'
-        description: null
         custom: []
+        status: 200
+        content: |-
+          {
+            "30000142": {"id": 30000142, "alliance": null, "corporation": null, "faction": {"id": 500001, "name": "Caldari State"}},
+            "30004759": {"id": 30004759, "alliance": {"id": 99000001, "name": "Example Alliance", "ticker": "EXMPL"}, "corporation": {"id": 98000001, "name": "Example Corporation", "ticker": "EXCRP"}, "faction": null}
+          }
+        headers: []
+        description: ''
     responseFields: []
     auth:
       - headers
@@ -44,12 +46,13 @@ endpoints:
     controller: null
     method: null
     route: null
-    custom: []
   -
+    custom: []
     httpMethods:
       - GET
-    uri: 'api/maps/{slug}'
+    uri: api/maps
     metadata:
+      custom: []
       groupName: Endpoints
       groupDescription: ''
       subgroup: ''
@@ -58,24 +61,12 @@ endpoints:
       description: ''
       authenticated: true
       deprecated: false
-      custom: []
     headers:
       Authorization: 'Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
-    urlParameters:
-      slug:
-        name: slug
-        description: 'The slug of the map.'
-        required: true
-        example: test-map-1
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        custom: []
-    cleanUrlParameters:
-      slug: test-map-1
+    urlParameters: []
+    cleanUrlParameters: []
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -83,6 +74,7 @@ endpoints:
     fileParameters: []
     responses:
       -
+        custom: []
         status: 401
         content: '{"message":"An error occurred","status":401}'
         headers:
@@ -90,7 +82,6 @@ endpoints:
           content-type: application/json
           access-control-allow-origin: '*'
         description: null
-        custom: []
     responseFields: []
     auth:
       - headers
@@ -99,13 +90,13 @@ endpoints:
     controller: null
     method: null
     route: null
-    custom: []
   -
+    custom: []
     httpMethods:
-      - PUT
-      - PATCH
+      - GET
     uri: 'api/maps/{slug}'
     metadata:
+      custom: []
       groupName: Endpoints
       groupDescription: ''
       subgroup: ''
@@ -114,28 +105,86 @@ endpoints:
       description: ''
       authenticated: true
       deprecated: false
-      custom: []
     headers:
       Authorization: 'Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
     urlParameters:
       slug:
+        custom: []
         name: slug
         description: 'The slug of the map.'
         required: true
-        example: test-map-1
+        example: strix-ridens-1
         type: string
         enumValues: []
         exampleWasSpecified: false
         nullable: false
-        custom: []
+        deprecated: false
     cleanUrlParameters:
-      slug: test-map-1
+      slug: strix-ridens-1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 401
+        content: '{"message":"An error occurred","status":401}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+      - PATCH
+    uri: 'api/maps/{slug}'
+    metadata:
+      custom: []
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      slug:
+        custom: []
+        name: slug
+        description: 'The slug of the map.'
+        required: true
+        example: strix-ridens-1
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      slug: strix-ridens-1
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters:
       name:
+        custom: []
         name: name
         description: 'Must not be greater than 255 characters.'
         required: true
@@ -144,7 +193,7 @@ endpoints:
         enumValues: []
         exampleWasSpecified: false
         nullable: false
-        custom: []
+        deprecated: false
     cleanBodyParameters:
       name: b
     fileParameters: []
@@ -157,12 +206,13 @@ endpoints:
     controller: null
     method: null
     route: null
-    custom: []
   -
+    custom: []
     httpMethods:
       - POST
     uri: api/map-solarsystems
     metadata:
+      custom: []
       groupName: Endpoints
       groupDescription: ''
       subgroup: ''
@@ -171,7 +221,6 @@ endpoints:
       description: ''
       authenticated: true
       deprecated: false
-      custom: []
     headers:
       Authorization: 'Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
@@ -182,26 +231,29 @@ endpoints:
     cleanQueryParameters: []
     bodyParameters:
       map_id:
+        custom: []
         name: map_id
-        description: 'The <code>id</code> of an existing record in the maps table.'
+        description: 'Must match an existing stored value.'
         required: true
         example: architecto
         type: string
         enumValues: []
         exampleWasSpecified: false
         nullable: false
-        custom: []
+        deprecated: false
       solarsystem_id:
+        custom: []
         name: solarsystem_id
-        description: 'The <code>id</code> of an existing record in the solarsystems table.'
+        description: 'Must match an existing stored value.'
         required: true
         example: architecto
         type: string
         enumValues: []
         exampleWasSpecified: false
         nullable: false
-        custom: []
+        deprecated: false
       alias:
+        custom: []
         name: alias
         description: 'Must not be greater than 255 characters.'
         required: false
@@ -210,8 +262,9 @@ endpoints:
         enumValues: []
         exampleWasSpecified: false
         nullable: true
-        custom: []
+        deprecated: false
       occupier_alias:
+        custom: []
         name: occupier_alias
         description: 'Must not be greater than 255 characters.'
         required: false
@@ -220,32 +273,35 @@ endpoints:
         enumValues: []
         exampleWasSpecified: false
         nullable: true
-        custom: []
+        deprecated: false
       position_x:
+        custom: []
         name: position_x
         description: 'Must be at least 20. Must not be greater than 3980.'
-        required: false
+        required: true
         example: 16
         type: number
         enumValues: []
         exampleWasSpecified: false
-        nullable: true
-        custom: []
+        nullable: false
+        deprecated: false
       position_y:
+        custom: []
         name: position_y
         description: 'Must be at least 20. Must not be greater than 1980.'
-        required: false
+        required: true
         example: 17
         type: number
         enumValues: []
         exampleWasSpecified: false
-        nullable: true
-        custom: []
+        nullable: false
+        deprecated: false
       status:
+        custom: []
         name: status
         description: ''
         required: false
-        example: friendly
+        example: hostile
         type: string
         enumValues:
           - active
@@ -256,8 +312,9 @@ endpoints:
           - empty
         exampleWasSpecified: false
         nullable: true
-        custom: []
+        deprecated: false
       pinned:
+        custom: []
         name: pinned
         description: ''
         required: false
@@ -266,7 +323,18 @@ endpoints:
         enumValues: []
         exampleWasSpecified: false
         nullable: false
+        deprecated: false
+      connect_to_map_solarsystem_id:
         custom: []
+        name: connect_to_map_solarsystem_id
+        description: 'Must match an existing stored value.'
+        required: false
+        example: 16
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
     cleanBodyParameters:
       map_id: architecto
       solarsystem_id: architecto
@@ -274,8 +342,9 @@ endpoints:
       occupier_alias: g
       position_x: 16
       position_y: 17
-      status: friendly
+      status: hostile
       pinned: false
+      connect_to_map_solarsystem_id: 16
     fileParameters: []
     responses: []
     responseFields: []
@@ -286,12 +355,13 @@ endpoints:
     controller: null
     method: null
     route: null
-    custom: []
   -
+    custom: []
     httpMethods:
       - GET
     uri: 'api/map-solarsystems/{id}'
     metadata:
+      custom: []
       groupName: Endpoints
       groupDescription: ''
       subgroup: ''
@@ -300,24 +370,24 @@ endpoints:
       description: ''
       authenticated: true
       deprecated: false
-      custom: []
     headers:
       Authorization: 'Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
     urlParameters:
       id:
+        custom: []
         name: id
         description: 'The ID of the map solarsystem.'
         required: true
-        example: 1
+        example: 8
         type: integer
         enumValues: []
         exampleWasSpecified: false
         nullable: false
-        custom: []
+        deprecated: false
     cleanUrlParameters:
-      id: 1
+      id: 8
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -325,6 +395,7 @@ endpoints:
     fileParameters: []
     responses:
       -
+        custom: []
         status: 401
         content: '{"message":"An error occurred","status":401}'
         headers:
@@ -332,7 +403,6 @@ endpoints:
           content-type: application/json
           access-control-allow-origin: '*'
         description: null
-        custom: []
     responseFields: []
     auth:
       - headers
@@ -341,13 +411,14 @@ endpoints:
     controller: null
     method: null
     route: null
-    custom: []
   -
+    custom: []
     httpMethods:
       - PUT
       - PATCH
     uri: 'api/map-solarsystems/{id}'
     metadata:
+      custom: []
       groupName: Endpoints
       groupDescription: ''
       subgroup: ''
@@ -356,28 +427,29 @@ endpoints:
       description: ''
       authenticated: true
       deprecated: false
-      custom: []
     headers:
       Authorization: 'Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
     urlParameters:
       id:
+        custom: []
         name: id
         description: 'The ID of the map solarsystem.'
         required: true
-        example: 1
+        example: 8
         type: integer
         enumValues: []
         exampleWasSpecified: false
         nullable: false
-        custom: []
+        deprecated: false
     cleanUrlParameters:
-      id: 1
+      id: 8
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters:
       alias:
+        custom: []
         name: alias
         description: 'Must not be greater than 255 characters.'
         required: false
@@ -386,8 +458,9 @@ endpoints:
         enumValues: []
         exampleWasSpecified: false
         nullable: true
-        custom: []
+        deprecated: false
       occupier_alias:
+        custom: []
         name: occupier_alias
         description: 'Must not be greater than 255 characters.'
         required: false
@@ -396,8 +469,9 @@ endpoints:
         enumValues: []
         exampleWasSpecified: false
         nullable: true
-        custom: []
+        deprecated: false
       position_x:
+        custom: []
         name: position_x
         description: 'Must be at least 20. Must not be greater than 3980.'
         required: false
@@ -406,8 +480,9 @@ endpoints:
         enumValues: []
         exampleWasSpecified: false
         nullable: true
-        custom: []
+        deprecated: false
       position_y:
+        custom: []
         name: position_y
         description: 'Must be at least 20. Must not be greater than 1980.'
         required: false
@@ -416,12 +491,13 @@ endpoints:
         enumValues: []
         exampleWasSpecified: false
         nullable: true
-        custom: []
+        deprecated: false
       status:
+        custom: []
         name: status
         description: ''
         required: false
-        example: unknown
+        example: hostile
         type: string
         enumValues:
           - active
@@ -432,18 +508,20 @@ endpoints:
           - empty
         exampleWasSpecified: false
         nullable: true
-        custom: []
+        deprecated: false
       pinned:
+        custom: []
         name: pinned
         description: ''
         required: false
-        example: true
+        example: false
         type: boolean
         enumValues: []
         exampleWasSpecified: false
         nullable: false
-        custom: []
+        deprecated: false
       notes:
+        custom: []
         name: notes
         description: 'Must not be greater than 65535 characters.'
         required: false
@@ -452,14 +530,14 @@ endpoints:
         enumValues: []
         exampleWasSpecified: false
         nullable: true
-        custom: []
+        deprecated: false
     cleanBodyParameters:
       alias: b
       occupier_alias: 'n'
       position_x: 7
       position_y: 16
-      status: unknown
-      pinned: true
+      status: hostile
+      pinned: false
       notes: m
     fileParameters: []
     responses: []
@@ -471,12 +549,13 @@ endpoints:
     controller: null
     method: null
     route: null
-    custom: []
   -
+    custom: []
     httpMethods:
       - DELETE
     uri: 'api/map-solarsystems/{id}'
     metadata:
+      custom: []
       groupName: Endpoints
       groupDescription: ''
       subgroup: ''
@@ -485,24 +564,24 @@ endpoints:
       description: ''
       authenticated: true
       deprecated: false
-      custom: []
     headers:
       Authorization: 'Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
     urlParameters:
       id:
+        custom: []
         name: id
         description: 'The ID of the map solarsystem.'
         required: true
-        example: 1
+        example: 8
         type: integer
         enumValues: []
         exampleWasSpecified: false
         nullable: false
-        custom: []
+        deprecated: false
     cleanUrlParameters:
-      id: 1
+      id: 8
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -517,4 +596,3 @@ endpoints:
     controller: null
     method: null
     route: null
-    custom: []

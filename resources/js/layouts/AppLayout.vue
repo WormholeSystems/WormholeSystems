@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AnnouncementBanner from '@/components/announcement/AnnouncementBanner.vue';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import Notifications from '@/components/user/Notifications.vue';
 import AppContent from '@/layouts/AppContent.vue';
@@ -17,6 +18,7 @@ withDefaults(defineProps<Props>(), {
 <template>
     <TooltipProvider>
         <div class="flex flex-col">
+            <AnnouncementBanner />
             <AppHeader />
             <AppContent>
                 <slot />

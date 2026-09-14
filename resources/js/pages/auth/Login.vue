@@ -7,12 +7,23 @@ import Notifications from '@/components/user/Notifications.vue';
 import SeoHead from '@/layouts/SeoHead.vue';
 import Eve from '@/routes/eve';
 import { UTCDate } from '@date-fns/utc';
+import type { AppPageProps } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 import { format } from 'date-fns';
 import { computed } from 'vue';
 
-const page = usePage();
+const page = usePage<AppPageProps>();
 const error = computed(() => page.props.errors?.eve);
+
+const app_url = computed(() => page.props.app_url ?? '');
+
+const app_host = computed(() => {
+    try {
+        return new URL(app_url.value).host;
+    } catch {
+        return app_url.value;
+    }
+});
 
 const currentYear = format(new UTCDate(), 'yyyy');
 </script>
@@ -22,7 +33,7 @@ const currentYear = format(new UTCDate(), 'yyyy');
         <SeoHead
             title="Login"
             description="Sign in to WormholeSystems with your EVE Online character to access advanced wormhole mapping tools."
-            url="https://wormhole.systems/login"
+            :url="`${app_url}/login`"
         />
         <div class="login-backdrop" aria-hidden="true" />
 
@@ -41,7 +52,7 @@ const currentYear = format(new UTCDate(), 'yyyy');
             <!-- Login card, styled like a panel on the map -->
             <div class="auth-card">
                 <MapPanelHeader>
-                    wormhole.systems · sign in
+                    {{ app_host }} · sign in
                     <template #actions>
                         <span class="flex items-center gap-1.5">
                             <span class="size-2 rounded-full bg-hostile/70" />

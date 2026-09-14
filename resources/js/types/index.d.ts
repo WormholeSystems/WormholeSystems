@@ -23,6 +23,8 @@ export interface NavItem {
 
 export type AppPageProps<T extends Record<string, unknown> = Record<string, unknown>> = T & {
     name: string;
+    app_url: string;
+    announcement: TAnnouncement | null;
     quote: { message: string; author: string };
     auth: Auth;
     ziggy: Config & { location: string };
@@ -37,6 +39,17 @@ export type AppPageProps<T extends Record<string, unknown> = Record<string, unkn
     };
     missing_scopes: TCharacter[];
     pinned_maps: TPinnedMap[];
+};
+
+export type TAnnouncementLevel = 'info' | 'warning' | 'critical';
+
+export type TAnnouncement = {
+    id: string;
+    level: TAnnouncementLevel;
+    title: string | null;
+    message: string;
+    link: { url: string; label: string } | null;
+    dismissible: boolean;
 };
 
 export type TPinnedMap = {

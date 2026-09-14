@@ -33,14 +33,14 @@
     <title data-inertia>{{ config('app.name', 'Laravel') }}</title>
 
     <!-- PWA Meta Tags -->
-    <meta name="application-name" content="wormhole.systems">
+    <meta name="application-name" content="{{ config('app.name') }}">
     <meta name="description"
           content="Advanced wormhole mapping and tracking system for EVE Online. Navigate dangerous wormhole space with real-time intel, signature tracking, and collaborative mapping tools.">
     <meta name="keywords"
           content="EVE Online, wormhole, mapping, tracking, signatures, intel, navigation, space, gaming">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="wormhole.systems">
+    <meta name="apple-mobile-web-app-title" content="{{ config('app.name') }}">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="msapplication-TileColor" content="#000000">
     <meta name="msapplication-tap-highlight" content="no">
