@@ -9,18 +9,18 @@ function at(offsetMinutes: number): Date {
 
 describe('lifetimeCountdown', () => {
     it('counts four hours down from the moment a hole was marked end of life', () => {
-        expect(lifetimeCountdown('eol', MARKED, at(0))?.label).toBe('4h 0m 0s');
-        expect(lifetimeCountdown('eol', MARKED, at(61))?.label).toBe('2h 59m 0s');
+        expect(lifetimeCountdown('eol', MARKED, at(0))?.label).toBe('4h 0m');
+        expect(lifetimeCountdown('eol', MARKED, at(61))?.label).toBe('2h 59m');
     });
 
     it('counts one hour down for a critical hole', () => {
-        expect(lifetimeCountdown('critical', MARKED, at(0))?.label).toBe('1h 0m 0s');
-        expect(lifetimeCountdown('critical', MARKED, at(45))?.label).toBe('15m 0s');
+        expect(lifetimeCountdown('critical', MARKED, at(0))?.label).toBe('1h 0m');
+        expect(lifetimeCountdown('critical', MARKED, at(45))?.label).toBe('15m');
     });
 
-    it('drops the hours once under an hour, and the minutes once under a minute', () => {
-        expect(lifetimeCountdown('eol', MARKED, at(180.5))?.label).toBe('59m 30s');
-        expect(lifetimeCountdown('eol', MARKED, at(239.75))?.label).toBe('15s');
+    it('drops the hours once under an hour, and stops counting below a minute', () => {
+        expect(lifetimeCountdown('eol', MARKED, at(180.5))?.label).toBe('59m');
+        expect(lifetimeCountdown('eol', MARKED, at(239.75))?.label).toBe('under a minute');
     });
 
     it('reports a hole that outlived its budget instead of counting backwards', () => {

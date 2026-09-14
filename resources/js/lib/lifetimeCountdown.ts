@@ -51,19 +51,19 @@ export function lifetimeCountdown(
     return { remainingMs, expired: false, label: formatRemaining(remainingMs) };
 }
 
-function formatRemaining(remainingMs: number): string {
-    const totalSeconds = Math.floor(remainingMs / 1000);
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
+/** A duration down to the minute; seconds would only make the row flicker. */
+export function formatRemaining(remainingMs: number): string {
+    const totalMinutes = Math.floor(remainingMs / 60_000);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
 
     if (hours > 0) {
-        return `${hours}h ${minutes}m ${seconds}s`;
+        return `${hours}h ${minutes}m`;
     }
 
     if (minutes > 0) {
-        return `${minutes}m ${seconds}s`;
+        return `${minutes}m`;
     }
 
-    return `${seconds}s`;
+    return 'under a minute';
 }

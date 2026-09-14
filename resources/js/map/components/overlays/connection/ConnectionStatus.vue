@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useNowUTC } from '@/composables/useNowUTC';
-import { lifetimeCountdown } from '@/lib/lifetimeCountdown';
-import { TMapConnection } from '@/pages/maps';
+import { connectionTimeRemaining } from '@/lib/connectionLifetime';
+import { TMapConnection, TMapSolarsystem } from '@/pages/maps';
 import { UTCDate } from '@date-fns/utc';
 import { differenceInDays, differenceInHours, differenceInMinutes, format, formatDistanceStrict, max, min } from 'date-fns';
 import { Heart } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 const props = defineProps<{
-    connection: TMapConnection;
+    connection: TMapConnection & { source?: TMapSolarsystem; target?: TMapSolarsystem };
 }>();
 
 const now = useNowUTC();
@@ -108,7 +108,21 @@ const lifetimeAgo = computed(() => {
 });
 
 /** Ticks every frame off the shared clock, so the popover counts down while it is open. */
-const countdown = computed(() => lifetimeCountdown(props.connection.lifetime_status, props.connection.lifetime_status_updated_at, now.value));
+const countdown = computed(() => {
+    if (props.connection.type === 'stargate') {
+        return null;
+    }
+
+    return connectionTimeRemaining(
+        {
+            startedAt: props.connection.created_at,
+            lifetimeStatus: props.connection.lifetime_status,
+            lifetimeStatusUpdatedAt: props.connection.lifetime_status_updated_at,
+        },
+        { from: props.connection.source?.solarsystem?.class, to: props.connection.target?.solarsystem?.class },
+        now.value,
+    );
+});
 
 const lifetimeMeta = computed(() => {
     switch (props.connection.lifetime_status) {
@@ -151,10 +165,18 @@ const lifetimeMeta = computed(() => {
                 </span>
             </div>
             <div v-if="countdown" class="col-span-full grid grid-cols-subgrid">
-                <span>Collapses in</span>
-                <span class="text-right font-mono tabular-nums" :class="countdown.expired ? 'text-red-500' : lifetimeMeta.text">
-                    {{ countdown.label }}
-                </span>
+                <span>Time remaining</span>
+                <Tooltip>
+                    <TooltipTrigger as-child>
+                        <span class="cursor-help text-right font-mono tabular-nums" :class="countdown.expired ? 'text-red-500' : lifetimeMeta.text">
+                            {{ countdown.label }}
+                        </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <template v-if="countdown.fromMarking">Counted from when the hole was marked.</template>
+                        <template v-else>Estimated from the hole's age, which starts when it reached the map.</template>
+                    </TooltipContent>
+                </Tooltip>
             </div>
             <div class="col-span-full grid grid-cols-subgrid">
                 <span>Mass Status</span>
