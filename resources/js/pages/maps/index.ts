@@ -214,7 +214,7 @@ export type TMapConnection = {
     lifetime_status: TLifetimeStatus;
     lifetime_status_updated_at: string | null;
     signatures: TTailoredSignature[] | null;
-    ship_size: TShipSize;
+    ship_size: TShipSize | null;
     jumps_mass_sum: number;
     jumps_count: number;
     jumps?: TConnectionJump[];

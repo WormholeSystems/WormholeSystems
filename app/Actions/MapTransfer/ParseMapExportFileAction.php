@@ -62,7 +62,7 @@ final readonly class ParseMapExportFileAction
         'wormhole' => '?string:255',
         'type' => 'enum:'.ConnectionType::class,
         'mass_status' => 'enum:'.MassStatus::class,
-        'ship_size' => 'enum:'.ShipSize::class,
+        'ship_size' => '?enum:'.ShipSize::class,
         'lifetime' => 'enum:'.LifetimeStatus::class,
         'lifetime_updated_at' => '?date',
         'connected_at' => '?date',

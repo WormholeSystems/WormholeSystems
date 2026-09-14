@@ -63,8 +63,13 @@ function handleStatusChange(mass_status: AcceptableValue) {
     updateMapConnection(map_connection, { mass_status: mass_status as TMassStatus });
 }
 
+/** The radio group needs a value for "nobody has said yet", which the column stores as null. */
+const UNKNOWN_SHIP_SIZE = 'unknown';
+
 function handleShipSizeChange(ship_size: AcceptableValue) {
-    updateMapConnection(map_connection, { ship_size: ship_size as TShipSize });
+    updateMapConnection(map_connection, {
+        ship_size: ship_size === UNKNOWN_SHIP_SIZE ? null : (ship_size as TShipSize),
+    });
 }
 
 function handleLifetimeChange(lifetime: AcceptableValue) {
@@ -144,7 +149,11 @@ function handleLifetimeChange(lifetime: AcceptableValue) {
                 Ship Size
             </ContextMenuSubTrigger>
             <ContextMenuSubContent>
-                <ContextMenuRadioGroup :model-value="map_connection.ship_size" @update:model-value="handleShipSizeChange">
+                <ContextMenuRadioGroup :model-value="map_connection.ship_size ?? UNKNOWN_SHIP_SIZE" @update:model-value="handleShipSizeChange">
+                    <ContextMenuRadioItem :value="UNKNOWN_SHIP_SIZE" class="flex items-center gap-2" :disabled="locked_ship_size !== null">
+                        <span class="inline-flex w-6 justify-center font-mono text-[10px] leading-4 text-muted-foreground">?</span>
+                        Unknown
+                    </ContextMenuRadioItem>
                     <ContextMenuRadioItem
                         v-for="option in SHIP_SIZE_OPTIONS"
                         :key="option.value"

@@ -147,7 +147,7 @@ final readonly class ExportMapAction
                 'wormhole' => $connection->wormhole?->name,
                 'type' => $connection->type->value,
                 'mass_status' => $connection->mass_status->value,
-                'ship_size' => $connection->ship_size->value,
+                'ship_size' => $connection->ship_size?->value,
                 'lifetime' => $connection->lifetime->value,
                 'lifetime_updated_at' => CarbonImmutable::make($connection->lifetime_updated_at)?->toIso8601String(),
                 'connected_at' => CarbonImmutable::make($connection->connected_at)?->toIso8601String(),

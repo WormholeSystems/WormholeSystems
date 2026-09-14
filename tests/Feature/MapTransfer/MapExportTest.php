@@ -205,3 +205,19 @@ it('exports routes and ignored systems', function () {
     expect($payload['sections']['routes']['route_solarsystems'])->toBe([['solarsystem_id' => 30000142, 'is_pinned' => true]])
         ->and($payload['sections']['routes']['ignored_solarsystems'])->toBe([['solarsystem_id' => 30002187]]);
 });
+
+it('exports a connection whose ship size nobody has set', function () {
+    $map = Map::factory()->create();
+    $from = placeMapSolarsystem($map, 31000420);
+    $to = placeMapSolarsystem($map, 31000421);
+    MapConnection::factory()->create([
+        'map_id' => $map->id,
+        'from_map_solarsystem_id' => $from->id,
+        'to_map_solarsystem_id' => $to->id,
+        'ship_size' => null,
+    ]);
+
+    $payload = transferExportPayload($map, ['connections']);
+
+    expect($payload['sections']['connections'][0]['ship_size'])->toBeNull();
+});

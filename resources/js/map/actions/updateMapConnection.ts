@@ -9,7 +9,7 @@ export function updateMapConnection(
         type?: TConnectionType | string;
         preserve_mass?: boolean;
         mass_status?: TMassStatus | string;
-        ship_size?: TShipSize | string;
+        ship_size?: TShipSize | string | null;
         lifetime?: TLifetimeStatus | string;
         lifetime_updated_at?: string | null | Date;
     },

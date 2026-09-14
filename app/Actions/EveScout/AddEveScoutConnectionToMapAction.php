@@ -11,7 +11,6 @@ use App\Data\EveScoutConnectionData;
 use App\Data\NewSignatureData;
 use App\Enums\LifetimeStatus;
 use App\Enums\MassStatus;
-use App\Enums\ShipSize;
 use App\Enums\SignatureCategory;
 use App\Models\Map;
 use App\Models\MapConnection;
@@ -366,7 +365,6 @@ final readonly class AddEveScoutConnectionToMapAction
             'to_map_solarsystem_id' => $destinationMapSystem->id,
             'wormhole_id' => $wormholeId,
             'mass_status' => MassStatus::Fresh,
-            'ship_size' => ShipSize::Large,
             'lifetime' => LifetimeStatus::Healthy,
         ]);
     }
