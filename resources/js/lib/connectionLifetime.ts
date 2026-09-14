@@ -52,17 +52,15 @@ type TimeRemainingInput = {
  * status along: a hole already marked end of life or critical is timed from that
  * marking, because someone read it off the hole itself, and anything else is
  * timed from its age against the lifetime its shape implies.
+ *
+ * A shape we cannot read falls back to the ordinary 24 hours rather than showing
+ * nothing, which covers a k-space to k-space hole and a system missing from the
+ * client's static data, whose class resolves to unknown.
  */
 export function connectionTimeRemaining(input: TimeRemainingInput, endpoints: Endpoints, now: Date): TimeRemaining | null {
     const marked = lifetimeCountdown(input.lifetimeStatus, input.lifetimeStatusUpdatedAt, now);
     if (marked) {
         return { ...marked, fromMarking: true };
-    }
-
-    // The command only ages connections that touch wormhole space; a k-space to
-    // k-space hole has no shape to infer a lifetime from.
-    if (!isWormholeClass(endpoints.from) && !isWormholeClass(endpoints.to)) {
-        return null;
     }
 
     if (!input.startedAt) {
