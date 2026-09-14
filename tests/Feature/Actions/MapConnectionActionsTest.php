@@ -120,3 +120,32 @@ it('allows manual ship size changes when no wormhole type is identified', functi
 
     expect($connection->fresh()->ship_size)->toBe(ShipSize::Frigate);
 });
+
+it('leaves the ship size unknown on a connection nobody has sized', function () {
+    $map = Map::factory()->create();
+    $from = placeMapSolarsystem($map, 30004030);
+    $to = placeMapSolarsystem($map, 30004031);
+
+    $connection = app(CreateMapConnectionAction::class)->handle([
+        'from_map_solarsystem_id' => $from->id,
+        'to_map_solarsystem_id' => $to->id,
+    ]);
+
+    expect($connection->ship_size)->toBeNull();
+});
+
+it('clears a manually set ship size back to unknown', function () {
+    $map = Map::factory()->create();
+    $from = placeMapSolarsystem($map, 30004032);
+    $to = placeMapSolarsystem($map, 30004033);
+    $connection = MapConnection::factory()->create([
+        'map_id' => $map->id,
+        'from_map_solarsystem_id' => $from->id,
+        'to_map_solarsystem_id' => $to->id,
+        'ship_size' => ShipSize::Medium,
+    ]);
+
+    app(UpdateMapConnectionAction::class)->handle($connection, MapConnectionData::from(['ship_size' => null]));
+
+    expect($connection->fresh()->ship_size)->toBeNull();
+});

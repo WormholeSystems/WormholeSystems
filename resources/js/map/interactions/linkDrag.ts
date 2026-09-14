@@ -94,7 +94,7 @@ function resolveDropNodeId(event: PointerEvent): number | null {
 /**
  * The default ship-size restriction for a new connection, ported verbatim from
  * the old useNewConnection: C1s and Turnur/Thera edge cases cap at medium,
- * C13s are frigate holes, everything else stays unset (large).
+ * C13s are frigate holes, everything else is left unknown for a scout to fill in.
  */
 export function getMaximumShipSizeForConnection(from: TMapSolarsystem, to: TMapSolarsystem): string | undefined {
     const classes = [from.solarsystem.class, to.solarsystem.class].filter(isWormholeClass);
