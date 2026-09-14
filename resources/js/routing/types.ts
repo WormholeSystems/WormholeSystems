@@ -9,6 +9,7 @@ export type RoutingSettings = {
     lifetimeStatus: TLifetimeStatus;
     massStatus: TMassStatus;
     useEveScout: boolean;
+    useWormholes: boolean;
 };
 
 export type RoutingConnection = {

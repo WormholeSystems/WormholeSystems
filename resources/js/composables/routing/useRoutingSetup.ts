@@ -29,6 +29,7 @@ export function useRoutingSetup(params: UseRoutingSetupParams) {
         lifetimeStatus: mapUserSettings.value.route_allow_lifetime_status,
         massStatus: mapUserSettings.value.route_allow_mass_status,
         useEveScout: useEveScout.value,
+        useWormholes: mapUserSettings.value.route_use_wormholes,
     }));
 
     const convertedConnections = computed(() => convertMapConnectionsToWorkerEdges(toValue(params.mapConnections), toValue(params.mapSolarsystems)));

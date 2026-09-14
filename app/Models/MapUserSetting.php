@@ -24,6 +24,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property bool $is_tracking
  * @property string|LifetimeStatus $route_allow_lifetime_status
  * @property bool $route_use_evescout
+ * @property bool $route_use_wormholes
  * @property string|MassStatus $route_allow_mass_status
  * @property string|RoutePreference $route_preference
  * @property int $security_penalty
@@ -81,6 +82,7 @@ final class MapUserSetting extends Model
             'security_penalty' => 'integer',
             'killmail_filter' => KillmailFilter::class,
             'route_use_evescout' => 'boolean',
+            'route_use_wormholes' => 'boolean',
             'introduction_confirmed_at' => 'immutable_datetime',
             'prompt_for_signature_enabled' => 'boolean',
             'preselect_signature_enabled' => 'boolean',

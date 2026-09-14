@@ -44,6 +44,12 @@ function handleToggleEveScout(value: boolean | 'indeterminate') {
     });
 }
 
+function handleToggleWormholes(value: boolean | 'indeterminate') {
+    updateMapUserSettings(page.props.map.slug, {
+        route_use_wormholes: value === true,
+    });
+}
+
 function handleRoutePreferenceChange(value: AcceptableValue) {
     if (value === 'shorter' || value === 'safer' || value === 'less_secure') {
         updateMapUserSettings(page.props.map.slug, {
@@ -118,8 +124,16 @@ function handleSecurityPenaltyCommit(value: number[]) {
                 </RadioGroup>
                 <h4 class="col-span-3 mt-2 text-xs text-muted-foreground">Information Sources</h4>
                 <div class="col-span-3 grid grid-cols-subgrid">
+                    <Checkbox
+                        :model-value="map_user_settings.route_use_wormholes"
+                        @update:model-value="handleToggleWormholes"
+                        id="wormholes-checkbox"
+                    />
+                    <label for="wormholes-checkbox" class="col-span-2 cursor-pointer text-xs font-medium"> Use chain connections </label>
+                </div>
+                <div class="col-span-3 grid grid-cols-subgrid">
                     <Checkbox :model-value="map_user_settings.route_use_evescout" @update:model-value="handleToggleEveScout" id="evescout-checkbox" />
-                    <label for="evescout-checkbox" class="cursor-pointer text-xs font-medium"> Use EVE Scout </label>
+                    <label for="evescout-checkbox" class="col-span-2 cursor-pointer text-xs font-medium"> Use EVE Scout </label>
                 </div>
 
                 <h4 class="col-span-3 mt-2 text-xs text-muted-foreground">Route Preference</h4>

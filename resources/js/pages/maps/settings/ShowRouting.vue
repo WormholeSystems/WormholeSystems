@@ -50,6 +50,12 @@ function handleToggleEveScout(value: boolean | 'indeterminate') {
     });
 }
 
+function handleToggleWormholes(value: boolean | 'indeterminate') {
+    updateMapUserSettings({
+        route_use_wormholes: value === true,
+    });
+}
+
 function handleMassStatusChange(value: AcceptableValue) {
     if (typeof value === 'string' && (value === 'critical' || value === 'reduced' || value === 'fresh')) {
         updateMapUserSettings({
@@ -103,6 +109,17 @@ function handleSecurityPenaltyCommit(value: number[]) {
                             </SelectContent>
                         </Select>
                         <div class="text-sm text-muted-foreground">Set the minimum lifetime for connections to include in route calculations</div>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div class="space-y-0.5">
+                            <Label class="text-sm font-medium">Use Chain Connections</Label>
+                            <div class="text-sm text-muted-foreground">
+                                Include this map's wormhole connections in route calculations. Turn it off to count only stargate jumps, so a route
+                                never doubles back through the chain.
+                            </div>
+                        </div>
+                        <Checkbox :model-value="map_user_settings.route_use_wormholes" @update:model-value="handleToggleWormholes" />
                     </div>
 
                     <div class="flex items-center justify-between">
