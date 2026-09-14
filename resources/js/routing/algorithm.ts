@@ -37,7 +37,7 @@ export function findRoute(
         return { route: [], jumps: 0, cost: 0 };
     }
 
-    const dynamicAdj = buildAdjacency(dynamicConnections, 'wormhole');
+    const dynamicAdj = settings.useWormholes ? buildAdjacency(dynamicConnections, 'wormhole') : new Map<number, RoutingConnection[]>();
     const eveScoutAdj = settings.useEveScout ? buildAdjacency(eveScoutConnections, 'evescout') : new Map<number, RoutingConnection[]>();
     const ignored = buildIgnoredSet(ignoredSystems);
 
@@ -124,7 +124,7 @@ export function findClosestSystems(
         return [];
     }
 
-    const dynamicAdj = buildAdjacency(dynamicConnections, 'wormhole');
+    const dynamicAdj = settings.useWormholes ? buildAdjacency(dynamicConnections, 'wormhole') : new Map<number, RoutingConnection[]>();
     const eveScoutAdj = settings.useEveScout ? buildAdjacency(eveScoutConnections, 'evescout') : new Map<number, RoutingConnection[]>();
     const ignored = buildIgnoredSet(ignoredSystems);
 
@@ -281,6 +281,14 @@ function getNeighbors(
 function isEdgeAllowed(edge: RoutingConnection, settings: RoutingSettings): boolean {
     if (edge.type === 'stargate') {
         return true;
+    }
+
+    /* EVE Scout keeps its own switch: this one only governs the map's own chain,
+     * so a route can still be told to come out of Thera but not out of the hole
+     * the scout is currently sitting in.
+     */
+    if (edge.type === 'wormhole' && !settings.useWormholes) {
+        return false;
     }
 
     if (edge.lifetimeStatus && !lifetimeStatusAllowList[settings.lifetimeStatus].has(edge.lifetimeStatus)) {
