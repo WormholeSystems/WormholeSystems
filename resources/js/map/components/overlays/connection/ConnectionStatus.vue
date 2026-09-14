@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useNowUTC } from '@/composables/useNowUTC';
+import { lifetimeCountdown } from '@/lib/lifetimeCountdown';
 import { TMapConnection } from '@/pages/maps';
 import { UTCDate } from '@date-fns/utc';
 import { differenceInDays, differenceInHours, differenceInMinutes, format, formatDistanceStrict, max, min } from 'date-fns';
@@ -106,6 +107,9 @@ const lifetimeAgo = computed(() => {
     });
 });
 
+/** Ticks every frame off the shared clock, so the popover counts down while it is open. */
+const countdown = computed(() => lifetimeCountdown(props.connection.lifetime_status, props.connection.lifetime_status_updated_at, now.value));
+
 const lifetimeMeta = computed(() => {
     switch (props.connection.lifetime_status) {
         case 'healthy':
@@ -144,6 +148,12 @@ const lifetimeMeta = computed(() => {
                         </Tooltip>
                     </template>
                     <span v-else>{{ lifetimeMeta.label }}</span>
+                </span>
+            </div>
+            <div v-if="countdown" class="col-span-full grid grid-cols-subgrid">
+                <span>Collapses in</span>
+                <span class="text-right font-mono tabular-nums" :class="countdown.expired ? 'text-red-500' : lifetimeMeta.text">
+                    {{ countdown.label }}
                 </span>
             </div>
             <div class="col-span-full grid grid-cols-subgrid">
