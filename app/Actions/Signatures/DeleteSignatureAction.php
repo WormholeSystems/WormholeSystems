@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Actions\Signatures;
 
 use App\Actions\MapConnections\DeleteMapConnectionAction;
+use App\Enums\SignatureActivityAction;
 use App\Events\Signatures\SignatureDeletedEvent;
+use App\Models\Character;
 use App\Models\Signature;
 use App\Support\Broadcasting\MapBroadcaster;
 use Illuminate\Support\Facades\DB;
@@ -19,6 +21,7 @@ final readonly class DeleteSignatureAction
     public function __construct(
         private DeleteMapConnectionAction $deleteMapConnectionAction,
         private MapBroadcaster $mapBroadcaster,
+        private RecordSignatureActivityAction $recordSignatureActivityAction,
     ) {
         //
     }
@@ -26,10 +29,14 @@ final readonly class DeleteSignatureAction
     /**
      * @throws Throwable
      */
-    public function handle(Signature $signature, bool $without_events = false, bool $remove_map_solarsystem = false): bool
+    public function handle(Signature $signature, bool $without_events = false, bool $remove_map_solarsystem = false, ?Character $actor = null): bool
     {
-        return DB::transaction(function () use ($signature, $without_events, $remove_map_solarsystem): true {
+        return DB::transaction(function () use ($signature, $without_events, $remove_map_solarsystem, $actor): true {
             $map_solarsystem = $signature->mapSolarsystem;
+
+            // Must run before deleteMapConnection(): with $remove_map_solarsystem = true that
+            // call can remove rows this recording still needs to read.
+            $this->recordSignatureActivityAction->handle($signature, $actor, SignatureActivityAction::Deleted);
 
             broadcast_unless($without_events, new SignatureDeletedEvent($map_solarsystem->map_id))->toOthers();
             $this->deleteMapConnection($signature, $remove_map_solarsystem);

@@ -6,12 +6,19 @@ namespace App\Http\Controllers;
 
 use App\Actions\Signatures\PasteSignaturesAction;
 use App\Data\SignaturesData;
+use App\Models\User;
+use App\Support\ActingCharacter;
+use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Throwable;
 
 final class PasteSignatureController extends Controller
 {
+    public function __construct(
+        #[CurrentUser] private readonly User $user
+    ) {}
+
     /**
      * @throws Throwable
      */
@@ -19,7 +26,7 @@ final class PasteSignatureController extends Controller
     {
         Gate::authorize('update', $data->mapSolarsystem);
 
-        $action->handle($data);
+        $action->handle($data, actor: ActingCharacter::resolve($this->user));
 
         return back()->notify('Signature pasted successfully!', message: 'You successfully pasted a signature from clipboard.');
     }

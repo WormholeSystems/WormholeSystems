@@ -303,7 +303,31 @@ export type TMapUserSetting = {
     layout_override: 'manual' | 'tree' | null;
 };
 
-export type TMapAlertType = 'proximity' | 'killmail' | 'jump_range';
+export type TMapAlertType = 'proximity' | 'killmail' | 'jump_range' | 'maintainer_podium';
+
+export type TMaintainerCharacterStat = {
+    character_id: number;
+    character_name: string;
+    user_id: number | null;
+    nb_added: number;
+    nb_edited: number;
+    nb_deleted: number;
+    points: number;
+};
+
+export type TMaintainerEntry = {
+    position: number;
+    points: number;
+    user_id: number | null;
+    display_name: string;
+    characters: TMaintainerCharacterStat[];
+};
+
+export type TMaintainerPeriodOption = {
+    value: string;
+    label: string;
+    is_current: boolean;
+};
 
 export type TJumpShipType = 'dreadnought' | 'carrier' | 'force_auxiliary' | 'supercarrier' | 'titan' | 'jump_freighter' | 'rorqual' | 'black_ops';
 

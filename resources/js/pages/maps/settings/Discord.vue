@@ -41,7 +41,7 @@ import {
 } from '@/types/models';
 import { TStaticSolarsystem } from '@/types/static-data';
 import { router, useForm } from '@inertiajs/vue3';
-import { AtSign, Bell, Bot, ExternalLink, Pencil, Rocket, Route, ShieldCheck, Swords, Trash2, Webhook } from 'lucide-vue-next';
+import { AtSign, Bell, Bot, ExternalLink, Pencil, Rocket, Route, ShieldCheck, Swords, Trash2, Trophy, Webhook } from 'lucide-vue-next';
 import { computed, ref, type Component } from 'vue';
 
 const { map, tab, botAlerts, alertEvents, discordInviteUrl } = defineProps<{
@@ -219,6 +219,12 @@ const triggerTypes: TTriggerTypeMeta[] = [
         description: 'A kill matching your filters happens close to your chain.',
         icon: Swords,
     },
+    {
+        value: 'maintainer_podium',
+        label: 'Monthly maintainer podium',
+        description: 'Posts the top maintainers to Discord on the 1st of each month.',
+        icon: Trophy,
+    },
 ];
 
 const triggerMeta = (type: TMapAlertType): TTriggerTypeMeta => triggerTypes.find((trigger) => trigger.value === type) ?? triggerTypes[0];
@@ -232,12 +238,13 @@ const editingAlert = computed(() => alertForm.id !== null);
 const alertErrors = computed(() => Object.values(alertForm.errors));
 const isKillmail = computed(() => alertForm.type === 'killmail');
 const isJumpRange = computed(() => alertForm.type === 'jump_range');
+const isMaintainerPodium = computed(() => alertForm.type === 'maintainer_podium');
 const formJumpRangeLy = computed(() => maxRangeLy(alertForm.ship_type, alertForm.jdc_level));
 
 const canSubmitAlert = computed(
     () =>
         alertForm.map_webhook_id !== null &&
-        (isKillmail.value || alertForm.target_solarsystem_id > 0) &&
+        (isKillmail.value || isMaintainerPodium.value || alertForm.target_solarsystem_id > 0) &&
         (isJumpRange.value || (alertForm.max_jumps >= 1 && alertForm.max_jumps <= 20)) &&
         (!isKillmail.value || alertForm.filters.every((filter) => filter.ids.length > 0)),
 );
@@ -278,12 +285,12 @@ function submitAlert() {
         map_webhook_role_id: alertForm.mention_mode === 'everyone' ? null : alertForm.map_webhook_role_id,
         mention_mode: alertForm.mention_mode,
         type: alertForm.type,
-        target_solarsystem_id: isKillmail.value ? null : alertForm.target_solarsystem_id,
+        target_solarsystem_id: isKillmail.value || isMaintainerPodium.value ? null : alertForm.target_solarsystem_id,
         origin_solarsystem_id: alertForm.type === 'proximity' && alertForm.origin_solarsystem_id > 0 ? alertForm.origin_solarsystem_id : null,
         ship_type: isJumpRange.value ? alertForm.ship_type : null,
         jdc_level: isJumpRange.value ? alertForm.jdc_level : null,
         include_highsec: isJumpRange.value ? alertForm.include_highsec : false,
-        max_jumps: isJumpRange.value ? null : alertForm.max_jumps,
+        max_jumps: isJumpRange.value || isMaintainerPodium.value ? null : alertForm.max_jumps,
         filter_match: alertForm.filter_match,
         filters: isKillmail.value ? alertForm.filters : [],
         is_active: alertForm.is_active,
@@ -774,7 +781,7 @@ function confirmPendingDelete() {
                     <div class="shrink-0 px-6 pt-4">
                         <TabsList class="grid w-full grid-cols-3">
                             <TabsTrigger value="trigger">Trigger</TabsTrigger>
-                            <TabsTrigger value="conditions">{{ isKillmail ? 'Matching' : 'Range' }}</TabsTrigger>
+                            <TabsTrigger value="conditions">{{ isKillmail ? 'Matching' : isMaintainerPodium ? 'Schedule' : 'Range' }}</TabsTrigger>
                             <TabsTrigger value="delivery">Delivery</TabsTrigger>
                         </TabsList>
                     </div>
@@ -808,7 +815,12 @@ function confirmPendingDelete() {
                     </TabsContent>
 
                     <TabsContent value="conditions" class="mt-0 min-h-0 flex-1 space-y-3 overflow-y-auto px-6 py-4">
-                        <div v-if="!isKillmail" class="grid gap-4 sm:grid-cols-2">
+                        <p v-if="isMaintainerPodium" class="text-sm text-muted-foreground">
+                            Posts automatically on the 1st of each month, once the previous month's leaderboard is finalized. Nothing to configure
+                            here.
+                        </p>
+
+                        <div v-if="!isKillmail && !isMaintainerPodium" class="grid gap-4 sm:grid-cols-2">
                             <div class="space-y-1.5">
                                 <Label for="alert-target-system">Target system</Label>
                                 <SolarsystemPicker input-id="alert-target-system" v-model="alertForm.target_solarsystem_id" />
@@ -823,7 +835,7 @@ function confirmPendingDelete() {
                             </div>
                         </div>
 
-                        <div v-if="!isKillmail && !isJumpRange" class="space-y-1.5">
+                        <div v-if="!isKillmail && !isJumpRange && !isMaintainerPodium" class="space-y-1.5">
                             <Label for="alert-origin-system">Starting point (optional)</Label>
                             <SolarsystemPicker
                                 input-id="alert-origin-system"

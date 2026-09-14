@@ -11,18 +11,25 @@ use App\Data\NewSignatureData;
 use App\Data\SignatureData;
 use App\Models\MapSolarsystem;
 use App\Models\Signature;
+use App\Models\User;
+use App\Support\ActingCharacter;
+use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Throwable;
 
 final class SignatureController extends Controller
 {
+    public function __construct(
+        #[CurrentUser] private readonly User $user
+    ) {}
+
     /**
      * @throws Throwable
      */
     public function store(NewSignatureData $data, MapSolarsystem $mapSolarsystem, StoreSignatureAction $storeSignatureAction): RedirectResponse
     {
-        $storeSignatureAction->handle($mapSolarsystem, $data);
+        $storeSignatureAction->handle($mapSolarsystem, $data, actor: ActingCharacter::resolve($this->user));
 
         return back()->notify('Signature created successfully.', message: 'You have successfully created a new signature.');
     }
@@ -32,7 +39,7 @@ final class SignatureController extends Controller
      */
     public function update(Signature $signature, SignatureData $signatureData, UpdateSignatureAction $updateSignatureAction): RedirectResponse
     {
-        $updateSignatureAction->handle($signature, $signatureData);
+        $updateSignatureAction->handle($signature, $signatureData, actor: ActingCharacter::resolve($this->user));
 
         return back()->notify('Signature updated successfully.', message: 'You have successfully updated the signature.');
     }
@@ -44,7 +51,7 @@ final class SignatureController extends Controller
     {
         Gate::authorize('delete', $signature);
 
-        $deleteSignatureAction->handle($signature);
+        $deleteSignatureAction->handle($signature, actor: ActingCharacter::resolve($this->user));
 
         return back()->notify('Signature deleted successfully.', message: 'You have successfully deleted the signature.');
     }

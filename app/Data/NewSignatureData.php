@@ -31,6 +31,7 @@ final class NewSignatureData extends Data
         #[WithCast(DateTimeInterfaceCast::class)]
         public DateTimeImmutable|Optional|null $lifetime_updated_at,
         public string|Optional|null $raw_type_name,
+        public bool $is_anomaly = false,
     ) {}
 
     public static function rules(): array

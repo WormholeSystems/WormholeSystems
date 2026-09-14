@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import MapLayoutController from '@/actions/App/Http/Controllers/MapLayoutController';
+import MapMaintainerSettingsController from '@/actions/App/Http/Controllers/MapMaintainerSettingsController';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -11,7 +12,7 @@ import SettingsLayout from '@/layouts/SettingsLayout.vue';
 import { TMapSummary } from '@/pages/maps';
 import { destroy, update } from '@/routes/maps';
 import { router, useForm } from '@inertiajs/vue3';
-import { Check, Copy, Globe, Link2, Link2Off, Waypoints, Workflow, type LucideIcon } from 'lucide-vue-next';
+import { Check, Copy, Globe, Link2, Link2Off, Trophy, Waypoints, Workflow, type LucideIcon } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 
 const { map, is_public, share_token } = defineProps<{
@@ -25,6 +26,19 @@ const user_is_owner = useIsMapOwner();
 const form = useForm({
     name: map.name,
 });
+
+const maintainerForm = useForm({
+    maintainer_points_created: map.maintainer_points_created,
+    maintainer_points_updated: map.maintainer_points_updated,
+    maintainer_points_deleted: map.maintainer_points_deleted,
+    maintainer_minimum_points: map.maintainer_minimum_points,
+});
+
+function submitMaintainerSettings() {
+    maintainerForm.put(MapMaintainerSettingsController.update(map.slug).url, {
+        preserveScroll: true,
+    });
+}
 
 const delete_confirmation = ref('');
 const is_deleting = ref(false);
@@ -221,6 +235,80 @@ function copyShareLink() {
                             <Switch :model-value="is_public" @update:modelValue="togglePublic" />
                         </div>
                     </div>
+                </CardContent>
+            </Card>
+
+            <!-- Maintainer Leaderboard Section -->
+            <Card>
+                <CardHeader>
+                    <CardTitle class="flex items-center gap-2 text-xl font-semibold">
+                        <Trophy class="size-5" />
+                        Maintainer Leaderboard
+                    </CardTitle>
+                    <CardDescription>Points awarded per signature action, and the monthly minimum to appear on the leaderboard</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <form class="grid gap-4 sm:grid-cols-2" @submit.prevent="submitMaintainerSettings">
+                        <div>
+                            <Label for="maintainer-points-created" class="text-sm font-medium">Points per signature added</Label>
+                            <Input
+                                id="maintainer-points-created"
+                                type="number"
+                                min="0"
+                                max="100"
+                                v-model.number="maintainerForm.maintainer_points_created"
+                            />
+                            <small v-if="maintainerForm.errors.maintainer_points_created" class="text-red-500">{{
+                                maintainerForm.errors.maintainer_points_created
+                            }}</small>
+                        </div>
+
+                        <div>
+                            <Label for="maintainer-points-updated" class="text-sm font-medium">Points per signature updated</Label>
+                            <Input
+                                id="maintainer-points-updated"
+                                type="number"
+                                min="0"
+                                max="100"
+                                v-model.number="maintainerForm.maintainer_points_updated"
+                            />
+                            <small v-if="maintainerForm.errors.maintainer_points_updated" class="text-red-500">{{
+                                maintainerForm.errors.maintainer_points_updated
+                            }}</small>
+                        </div>
+
+                        <div>
+                            <Label for="maintainer-points-deleted" class="text-sm font-medium">Points per signature deleted</Label>
+                            <Input
+                                id="maintainer-points-deleted"
+                                type="number"
+                                min="0"
+                                max="100"
+                                v-model.number="maintainerForm.maintainer_points_deleted"
+                            />
+                            <small v-if="maintainerForm.errors.maintainer_points_deleted" class="text-red-500">{{
+                                maintainerForm.errors.maintainer_points_deleted
+                            }}</small>
+                        </div>
+
+                        <div>
+                            <Label for="maintainer-minimum-points" class="text-sm font-medium">Minimum points to appear in the Discord recap</Label>
+                            <Input
+                                id="maintainer-minimum-points"
+                                type="number"
+                                min="0"
+                                max="10000"
+                                v-model.number="maintainerForm.maintainer_minimum_points"
+                            />
+                            <small v-if="maintainerForm.errors.maintainer_minimum_points" class="text-red-500">{{
+                                maintainerForm.errors.maintainer_minimum_points
+                            }}</small>
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <Button type="submit" :disabled="!maintainerForm.isDirty || maintainerForm.processing"> Save </Button>
+                        </div>
+                    </form>
                 </CardContent>
             </Card>
 

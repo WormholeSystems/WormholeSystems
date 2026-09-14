@@ -36,6 +36,10 @@ final readonly class CreateDiscordAlertAction
         ?string $roleId,
         ?int $originSolarsystemId = null,
     ): string {
+        if ($type === MapAlertType::MaintainerPodium) {
+            return 'Maintainer podium alerts can only be set up in the map settings.';
+        }
+
         $map = Map::query()->find($mapId);
         if ($map === null || ! in_array($delivery, [MapAlertDeliveryType::DiscordDm, MapAlertDeliveryType::DiscordChannel], true) || ! $mentionMode instanceof MapAlertMentionMode) {
             return 'Invalid map or destination.';

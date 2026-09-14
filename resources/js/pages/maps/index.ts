@@ -324,6 +324,10 @@ export type TMapSummary = {
     bookmark_format_return: string;
     bookmark_alias_scheme: TAliasScheme;
     bookmark_ignored_alias: string;
+    maintainer_points_created: number;
+    maintainer_points_updated: number;
+    maintainer_points_deleted: number;
+    maintainer_minimum_points: number;
     is_public: boolean;
     role: 'viewer' | 'member' | 'manager' | 'owner' | null;
     map_solarsystems_count: number;

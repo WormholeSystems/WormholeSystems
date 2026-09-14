@@ -48,6 +48,20 @@ final class MapPolicy
         return $permission instanceof Permission && $permission->isAtLeast(Permission::Member);
     }
 
+    /**
+     * Authenticated users with any accessor row on the map (viewer+). Unlike viewCharacters,
+     * this does not require edit rights, and unlike view, it excludes anonymous public/share
+     * -token visitors -- the leaderboard exposes character-name attribution.
+     */
+    public function viewLeaderboard(?User $user, Map $map): bool
+    {
+        if (! $user instanceof User) {
+            return false;
+        }
+
+        return $map->getUserPermission($user) instanceof Permission;
+    }
+
     public function create(): bool
     {
         return true;

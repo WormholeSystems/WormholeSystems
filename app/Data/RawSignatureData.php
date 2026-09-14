@@ -20,6 +20,7 @@ final class RawSignatureData extends Data
         #[Exists(table: 'signature_categories', column: 'id')]
         public ?int $signature_category_id = null,
         public null|Optional|string $raw_type_name = null,
+        public bool|Optional $is_anomaly = new Optional,
     ) {}
 
 }

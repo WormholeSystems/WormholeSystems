@@ -31,6 +31,7 @@ final readonly class DiscordAlertFormatter
             MapAlertType::Proximity => $alert->originSolarsystem instanceof Solarsystem
                 ? sprintf('%s within %d jumps of %s', $alert->targetSolarsystem->name, $alert->max_jumps ?? 0, $alert->originSolarsystem->name)
                 : sprintf('%s within %d jumps', $alert->targetSolarsystem->name, $alert->max_jumps ?? 0),
+            MapAlertType::MaintainerPodium => 'monthly maintainer podium',
         };
     }
 }

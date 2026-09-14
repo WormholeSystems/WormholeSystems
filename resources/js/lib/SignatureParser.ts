@@ -8,6 +8,7 @@ export type TRawSignature = {
     signature_category_id: number | null;
     signature_type_id: number | null;
     raw_type_name: string | null;
+    is_anomaly: boolean;
     created_at?: string;
 };
 
@@ -30,7 +31,7 @@ class SignatureParser {
             return null;
         }
 
-        const [signature_id, _, category_name, type_name] = signature;
+        const [signature_id, group_name, category_name, type_name] = signature;
 
         if (!signature_id) {
             toast.error('Invalid signature format. Signature ID is required.');
@@ -49,6 +50,7 @@ class SignatureParser {
             signature_category_id: signature_category?.id || null,
             signature_type_id: signature_type?.id || null,
             raw_type_name,
+            is_anomaly: group_name?.trim() === 'Cosmic Anomaly',
             created_at: new UTCDate().toISOString(),
         };
     }

@@ -7,6 +7,7 @@ vi.mock('vue-sonner', () => ({ toast: { error: vi.fn() } }));
 const factionWarfare = signatureCategories.find((cat) => cat.name === 'Factional Warfare Site')!;
 const gas = signatureCategories.find((cat) => cat.name === 'Gas Site')!;
 const ore = signatureCategories.find((cat) => cat.name === 'Ore Site')!;
+const combat = signatureCategories.find((cat) => cat.name === 'Combat Site')!;
 
 describe('parseSignatures', () => {
     it('parses a signature with a known category and type', () => {
@@ -51,22 +52,48 @@ describe('parseSignatures', () => {
             signature_id: 'BBL-893',
             signature_category_id: factionWarfare.id,
             raw_type_name: 'Amarr Scout BSC-1',
+            is_anomaly: true,
         });
         expect(parsed[1]).toMatchObject({
             signature_id: 'CBA-620',
             signature_category_id: ore.id,
             raw_type_name: 'Glacial Mass Belt',
+            is_anomaly: true,
         });
         expect(parsed[2]).toMatchObject({
             signature_id: 'DXA-556',
             signature_category_id: null,
             signature_type_id: null,
             raw_type_name: null,
+            is_anomaly: false,
         });
         expect(parsed[3]).toMatchObject({
             signature_id: 'MSA-264',
             signature_category_id: factionWarfare.id,
             raw_type_name: 'Amarr Moderate NVY-3',
+            is_anomaly: true,
+        });
+    });
+
+    it('flags a combat anomaly as an anomaly, and a probed combat signature as a signature', () => {
+        const type = signatureTypes.find((t) => t.signature_category_id === combat.id)!;
+        const paste = [
+            `AAA-111\tCosmic Anomaly\tCombat Site\t${type.name}\t100,0%\t5,00 AU`,
+            `BBB-222\tCosmic Signature\tCombat Site\t${type.name}\t100,0%\t5,00 AU`,
+        ].join('\n');
+
+        const parsed = signatureParser.parseSignatures(paste);
+
+        expect(parsed).toHaveLength(2);
+        expect(parsed[0]).toMatchObject({
+            signature_id: 'AAA-111',
+            signature_category_id: combat.id,
+            is_anomaly: true,
+        });
+        expect(parsed[1]).toMatchObject({
+            signature_id: 'BBB-222',
+            signature_category_id: combat.id,
+            is_anomaly: false,
         });
     });
 

@@ -38,6 +38,10 @@ final class MapInfoResource extends JsonResource
             'bookmark_format_return' => $this->bookmark_format_return,
             'bookmark_alias_scheme' => $this->bookmark_alias_scheme,
             'bookmark_ignored_alias' => $this->bookmark_ignored_alias,
+            'maintainer_points_created' => $this->maintainer_points_created,
+            'maintainer_points_updated' => $this->maintainer_points_updated,
+            'maintainer_points_deleted' => $this->maintainer_points_deleted,
+            'maintainer_minimum_points' => $this->maintainer_minimum_points,
             'map_user_setting' => $this->handleUserSetting(),
             'owner' => $this->mapOwner->accessible->toResource(CharacterResource::class),
         ];

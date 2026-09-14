@@ -2,6 +2,7 @@
 import MapAccessController from '@/actions/App/Http/Controllers/MapAccessController';
 import MapPreferencesController from '@/actions/App/Http/Controllers/MapPreferencesController';
 import MapSettingsController from '@/actions/App/Http/Controllers/MapSettingsController';
+import MapStatisticsPageController from '@/actions/App/Http/Controllers/MapStatisticsPageController';
 import TrackingIcon from '@/components/icons/TrackingIcon.vue';
 import StaleConnectionsBadge from '@/components/map/StaleConnectionsBadge.vue';
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
@@ -331,6 +332,17 @@ const settingsUrl = computed(() => {
                 <p class="text-xs">{{ layout.isEditMode.value ? 'Exit Layout Edit Mode' : 'Edit Layout' }}</p>
             </TooltipContent>
         </Tooltip>
+
+        <!-- Leaderboard (authenticated users only) -->
+        <Link
+            v-if="$page.props.auth.user"
+            :href="MapStatisticsPageController.show(map.slug)"
+            class="flex items-center gap-1.5 rounded bg-muted px-1.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground sm:px-2"
+            prefetch
+        >
+            <Trophy class="size-3.5" />
+            <span class="hidden md:inline">Leaderboard</span>
+        </Link>
 
         <!-- Settings (authenticated users only) -->
         <Link

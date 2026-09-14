@@ -14,6 +14,9 @@ export function alertTriggerLabel(alert: TAlertTriggerFields, resolveSystemName?
     const systemName = alert.target_solarsystem?.name ?? resolveSystemName?.(alert.target_solarsystem_id) ?? 'Unknown system';
     const jumpsPlural = alert.max_jumps === 1 ? '' : 's';
 
+    if (alert.type === 'maintainer_podium') {
+        return 'Monthly maintainer podium, posted on the 1st';
+    }
     if (alert.type === 'killmail') {
         return `Kills within ${alert.max_jumps} jump${jumpsPlural} of the chain`;
     }

@@ -26,6 +26,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int|null $signature_type_id
  * @property int|null $signature_category_id
  * @property string|null $raw_type_name
+ * @property bool $is_anomaly
  * @property MassStatus|null $mass_status
  * @property LifetimeStatus $lifetime
  * @property DateTimeImmutable|string|null $lifetime_updated_at
@@ -51,6 +52,7 @@ final class Signature extends Model
         'ship_size' => ShipSize::class,
         'lifetime' => LifetimeStatus::class,
         'lifetime_updated_at' => 'immutable_datetime',
+        'is_anomaly' => 'boolean',
     ];
 
     /**

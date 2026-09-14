@@ -126,6 +126,15 @@ final class MapAlertFactory extends Factory
         ]);
     }
 
+    public function maintainerPodium(): self
+    {
+        return $this->state(fn (): array => [
+            'type' => MapAlertType::MaintainerPodium,
+            'target_solarsystem_id' => null,
+            'max_jumps' => null,
+        ]);
+    }
+
     /**
      * @param  array<int, array{subject: string, side: string, mode: string, ids: int[]}>  $filters
      */

@@ -16,6 +16,7 @@ use App\Console\Commands\Organisations\ResolveUnnamedOrganisationsCommand;
 use App\Console\Commands\Signatures\DeleteOldSignaturesCommand;
 use App\Console\Commands\Skyhooks\GetRaidableSkyhooksCommand;
 use App\Console\Commands\Sovereignty\GetSovereigntiesCommand;
+use App\Console\Commands\Statistics\PostMaintainerPodiumCommand;
 use Illuminate\Queue\Console\PruneBatchesCommand;
 use Illuminate\Support\Facades\Schedule;
 
@@ -34,3 +35,4 @@ Schedule::command(PurgeExpiredMapAccessCommand::class)->runInBackground()->every
 Schedule::command(PruneBatchesCommand::class)->daily();
 Schedule::command(AnalyzeWormholeSystems::class)->runInBackground()->daily()->withoutOverlapping();
 Schedule::command(ResolveUnnamedOrganisationsCommand::class)->runInBackground()->hourly()->withoutOverlapping()->notDuringDowntime();
+Schedule::command(PostMaintainerPodiumCommand::class)->runInBackground()->monthlyOn(1, '00:00')->withoutOverlapping();

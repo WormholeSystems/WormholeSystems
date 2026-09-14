@@ -8,10 +8,13 @@ use App\Actions\MapConnections\SyncConnectionShipSizeAction;
 use App\Data\SignatureData;
 use App\Enums\LifetimeStatus;
 use App\Enums\MassStatus;
+use App\Enums\SignatureActivityAction;
 use App\Events\Signatures\SignatureUpdatedEvent;
+use App\Models\Character;
 use App\Models\Signature;
 use App\Models\SignatureType;
 use App\Support\Broadcasting\MapBroadcaster;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Spatie\LaravelData\Optional;
 use Throwable;
@@ -21,14 +24,15 @@ final readonly class UpdateSignatureAction
     public function __construct(
         private MapBroadcaster $mapBroadcaster,
         private SyncConnectionShipSizeAction $syncConnectionShipSizeAction,
+        private RecordSignatureActivityAction $recordSignatureActivityAction,
     ) {}
 
     /**
      * @throws Throwable
      */
-    public function handle(Signature $signature, SignatureData $data): Signature
+    public function handle(Signature $signature, SignatureData $data, ?Character $actor = null): Signature
     {
-        return DB::transaction(function () use ($signature, $data): Signature {
+        return DB::transaction(function () use ($signature, $data, $actor): Signature {
             $updateData = $data->toArray();
 
             // Update wormhole_id if signature_type_id changed, resetting it when cleared
@@ -39,8 +43,17 @@ final readonly class UpdateSignatureAction
 
             $signature->update($updateData);
 
+            // Snapshot before syncMassAndLifetime()/syncConnectionShipSizeAction, which both
+            // write to the signature themselves -- capturing after them would score a point
+            // for edits the user never made.
+            $changed = Arr::except($signature->getChanges(), ['updated_at']);
+
             $this->syncMassAndLifetime($signature, $data);
             $this->syncConnectionShipSizeAction->handle($signature);
+
+            if ($changed !== []) {
+                $this->recordSignatureActivityAction->handle($signature, $actor, SignatureActivityAction::Updated);
+            }
 
             broadcast(new SignatureUpdatedEvent($signature->mapSolarsystem->map_id))->toOthers();
 

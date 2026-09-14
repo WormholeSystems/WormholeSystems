@@ -36,6 +36,10 @@ use function sprintf;
  * @property string $bookmark_format_return
  * @property AliasScheme $bookmark_alias_scheme
  * @property string $bookmark_ignored_alias
+ * @property int $maintainer_points_created
+ * @property int $maintainer_points_updated
+ * @property int $maintainer_points_deleted
+ * @property int $maintainer_minimum_points
  * @property-read string|CarbonImmutable $created_at
  * @property-read string|CarbonImmutable $updated_at
  * @property-read Collection<int,MapSolarsystem> $mapSolarsystems

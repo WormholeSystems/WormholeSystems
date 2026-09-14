@@ -6,7 +6,9 @@ namespace App\Actions\Signatures;
 
 use App\Actions\MapConnections\SyncConnectionShipSizeAction;
 use App\Data\NewSignatureData;
+use App\Enums\SignatureActivityAction;
 use App\Events\Signatures\SignatureCreatedEvent;
+use App\Models\Character;
 use App\Models\MapSolarsystem;
 use App\Models\Signature;
 use App\Models\SignatureType;
@@ -20,6 +22,7 @@ final readonly class StoreSignatureAction
     public function __construct(
         private MapBroadcaster $mapBroadcaster,
         private SyncConnectionShipSizeAction $syncConnectionShipSizeAction,
+        private RecordSignatureActivityAction $recordSignatureActivityAction,
     ) {}
 
     /**
@@ -28,9 +31,9 @@ final readonly class StoreSignatureAction
      *
      * @throws Throwable
      */
-    public function handle(MapSolarsystem $mapSolarsystem, NewSignatureData $data, bool $without_signatures_changed_event = false): Signature
+    public function handle(MapSolarsystem $mapSolarsystem, NewSignatureData $data, bool $without_signatures_changed_event = false, ?Character $actor = null): Signature
     {
-        return DB::transaction(function () use ($mapSolarsystem, $data, $without_signatures_changed_event) {
+        return DB::transaction(function () use ($mapSolarsystem, $data, $without_signatures_changed_event, $actor) {
 
             $signature_id = $data->signature_id instanceof Optional ? null : $data->signature_id;
             $signature_category_id = $data->signature_category_id instanceof Optional ? null : $data->signature_category_id;
@@ -46,9 +49,11 @@ final readonly class StoreSignatureAction
                 'signature_type_id' => $signature_type_id,
                 'wormhole_id' => $wormhole_id,
                 'raw_type_name' => $raw_type_name,
+                'is_anomaly' => $data->is_anomaly,
             ]);
 
             $this->syncConnectionShipSizeAction->handle($signature);
+            $this->recordSignatureActivityAction->handle($signature, $actor, SignatureActivityAction::Created);
 
             broadcast(new SignatureCreatedEvent($mapSolarsystem->map_id))->toOthers();
 

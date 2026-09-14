@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import MapController from '@/actions/App/Http/Controllers/MapController';
+import MapStatisticsPageController from '@/actions/App/Http/Controllers/MapStatisticsPageController';
 import MapUserSettingController from '@/actions/App/Http/Controllers/MapUserSettingController';
 import SatelliteDish from '@/components/icons/SatelliteDish.vue';
 import { Button } from '@/components/ui/button';
@@ -16,7 +17,22 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { TMapSummary } from '@/pages/maps';
 import { Link, router } from '@inertiajs/vue3';
-import { Archive, ArchiveRestore, ArrowRight, Crown, Eye, Globe, Lock, MoreVertical, Pencil, Pin, PinOff, Settings, Spline } from 'lucide-vue-next';
+import {
+    Archive,
+    ArchiveRestore,
+    ArrowRight,
+    Crown,
+    Eye,
+    Globe,
+    Lock,
+    MoreVertical,
+    Pencil,
+    Pin,
+    PinOff,
+    Settings,
+    Spline,
+    Trophy,
+} from 'lucide-vue-next';
 import { computed, ref, type Component } from 'vue';
 
 const { map } = defineProps<{
@@ -28,6 +44,7 @@ const open = ref(false);
 const isArchived = computed(() => Boolean(map.map_user_setting?.is_archived));
 const isPinned = computed(() => Boolean(map.map_user_setting?.is_pinned));
 const trackingAllowed = computed(() => Boolean(map.map_user_setting?.tracking_allowed));
+const canViewLeaderboard = computed(() => map.role !== null);
 
 const roleMeta: Record<NonNullable<TMapSummary['role']>, { label: string; icon: Component; class: string }> = {
     owner: { label: 'Owner', icon: Crown, class: 'border-amber-500/30 bg-amber-500/10 text-amber-500' },
@@ -71,6 +88,12 @@ function setPinned(value: boolean): void {
                         <Link :href="MapController.show(map.slug)" prefetch class="flex w-full items-center gap-2">
                             <ArrowRight class="size-4" />
                             Open map
+                        </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem v-if="canViewLeaderboard" as-child>
+                        <Link :href="MapStatisticsPageController.show(map.slug)" prefetch class="flex w-full items-center gap-2">
+                            <Trophy class="size-4" />
+                            Leaderboard
                         </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
