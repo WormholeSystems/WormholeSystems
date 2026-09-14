@@ -1,12 +1,16 @@
 // @vitest-environment happy-dom
 import ConnectionStatus from '@/map/components/overlays/connection/ConnectionStatus.vue';
-import type { TMapConnection } from '@/pages/maps';
+import type { TMapConnection, TMapSolarsystem } from '@/pages/maps';
 import { mount } from '@vue/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const MARKED = '2026-09-14T12:00:00Z';
 
-function connection(overrides: Partial<TMapConnection> = {}): TMapConnection {
+function system(solarsystem_class: string): TMapSolarsystem {
+    return { id: 1, solarsystem: { class: solarsystem_class } } as unknown as TMapSolarsystem;
+}
+
+function connection(overrides: Partial<TMapConnection> = {}): TMapConnection & { source: TMapSolarsystem; target: TMapSolarsystem } {
     return {
         id: 1,
         from_map_solarsystem_id: 1,
@@ -20,8 +24,10 @@ function connection(overrides: Partial<TMapConnection> = {}): TMapConnection {
         ship_size: 'large',
         created_at: MARKED,
         updated_at: MARKED,
+        source: system('5'),
+        target: system('3'),
         ...overrides,
-    } as TMapConnection;
+    } as unknown as TMapConnection & { source: TMapSolarsystem; target: TMapSolarsystem };
 }
 
 function render(overrides: Partial<TMapConnection> = {}): string {
@@ -51,11 +57,18 @@ describe('ConnectionStatus lifetime countdown', () => {
     it('counts down what is left of the four hours after an end of life marking', () => {
         const text = render({ lifetime_status: 'eol', lifetime_status_updated_at: MARKED });
 
-        expect(text).toContain('Collapses in');
-        expect(text).toContain('2h 30m 0s');
+        expect(text).toContain('Time remaining');
+        expect(text).toContain('2h 30m');
     });
 
-    it('shows no countdown for a healthy connection', () => {
-        expect(render()).not.toContain('Collapses in');
+    it('counts a healthy connection down from the lifetime its shape implies', () => {
+        const text = render();
+
+        expect(text).toContain('Time remaining');
+        expect(text).toContain('22h 30m');
+    });
+
+    it('shows no countdown for a stargate, which is permanent', () => {
+        expect(render({ type: 'stargate' })).not.toContain('Time remaining');
     });
 });

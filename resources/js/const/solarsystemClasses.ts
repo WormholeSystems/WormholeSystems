@@ -31,6 +31,11 @@ export function isWormholeClass(value: TStringedSolarsystemClass | null | undefi
     return classMeta(value).is_wormhole_space;
 }
 
+/** Whether the class is a drifter wormhole (C14-C18). */
+export function isDrifterClass(value: TStringedSolarsystemClass | null | undefined): boolean {
+    return classMeta(value).is_drifter;
+}
+
 /** Stable ordering weight: known space first, then wormholes by class number. */
 export function classSortWeight(value: TStringedSolarsystemClass | null | undefined): number {
     return classMeta(value).sort_weight;
