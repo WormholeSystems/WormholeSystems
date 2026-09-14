@@ -36,20 +36,17 @@ const showMassTracking = computed(() => {
 <template>
     <!--
         The jump list grows without bound, so the popup is capped to the space the
-        popover actually has and scrolls past it. Mass tracking moves into a second
-        column where the viewport is wide enough to carry one.
+        popover actually has and scrolls past it.
     -->
-    <PopoverContent :class="['max-h-(--reka-popover-content-available-height) w-60 overflow-y-auto', showMassTracking ? 'sm:w-[30rem]' : '']">
-        <div class="grid items-start gap-3" :class="showMassTracking ? 'sm:grid-cols-2' : ''">
-            <div class="space-y-3">
-                <SignatureSection v-if="outSignature" :signature="outSignature" title="Out Sig" />
-                <SignatureSection v-if="inSignature" :signature="inSignature" title="In Sig" />
-                <div v-if="!outSignature && !inSignature" class="space-y-1">
-                    <div class="py-2 text-center text-xs text-muted-foreground">No signatures assigned</div>
-                </div>
-                <ConnectionStatus :connection="connection" />
-                <WormholeProperties v-if="wormhole" :wormhole="wormhole" />
+    <PopoverContent class="max-h-(--reka-popover-content-available-height) w-60 overflow-y-auto">
+        <div class="space-y-3">
+            <SignatureSection v-if="outSignature" :signature="outSignature" title="Out Sig" />
+            <SignatureSection v-if="inSignature" :signature="inSignature" title="In Sig" />
+            <div v-if="!outSignature && !inSignature" class="space-y-1">
+                <div class="py-2 text-center text-xs text-muted-foreground">No signatures assigned</div>
             </div>
+            <ConnectionStatus :connection="connection" />
+            <WormholeProperties v-if="wormhole" :wormhole="wormhole" />
             <MassTracking v-if="showMassTracking" :connection="connection" :wormhole="wormhole" />
         </div>
     </PopoverContent>
