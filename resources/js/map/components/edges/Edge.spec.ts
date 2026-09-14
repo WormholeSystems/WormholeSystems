@@ -51,7 +51,11 @@ describe('Edge ship size badge', () => {
         expect(badgeText({ type: 'stargate', ship_size: 'large' })).toBe('');
     });
 
-    it('omits the badge when no size is known', () => {
-        expect(badgeText({ ship_size: null })).toBe('');
+    it('omits the badge on the ghost edge drawn while dragging a new connection', () => {
+        expect(
+            mount(Edge, { props: { geometry, connection: null, scale: 1 } })
+                .text()
+                .trim(),
+        ).toBe('');
     });
 });
