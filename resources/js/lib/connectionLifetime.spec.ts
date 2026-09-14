@@ -83,8 +83,12 @@ describe('connectionTimeRemaining', () => {
         expect(remaining(30, { from: '5', to: '3' })).toMatchObject({ remainingMs: 0, expired: true, label: 'any moment now' });
     });
 
-    it('says nothing for a hole between two known space systems, which has no shape to age', () => {
-        expect(remaining(1, { from: 'h', to: 'l' })).toBeNull();
+    it.each<[string, TStringedSolarsystemClass, TStringedSolarsystemClass]>([
+        ['between two known space systems', 'h', 'l'],
+        ['whose systems are missing from the static data', 'unknown', 'unknown'],
+        ['with only one end resolved', 'unknown', '5'],
+    ])('still counts a hole %s down from the ordinary day', (_label, from, to) => {
+        expect(remaining(6, { from, to })?.label).toBe('18h 0m');
     });
 
     it('says nothing when the start date is unusable and nothing is marked', () => {
