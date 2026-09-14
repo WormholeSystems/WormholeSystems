@@ -42,8 +42,12 @@ const path = computed(() => edgePathAndCenter(geometry, scale));
 const scaledFrom = computed(() => scalePoint(geometry.from, scale));
 const scaledTo = computed(() => scalePoint(geometry.to, scale));
 
+/**
+ * Stargates carry the column default of 'large' without it meaning anything,
+ * so only wormholes get a size letter.
+ */
 function getShipSizeLabel(size?: TShipSize | null): string | null {
-    if (!size || size === 'large') return null;
+    if (!size || isStargate.value) return null;
 
     return SHIP_SIZE_LETTERS[size];
 }
