@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Knuckles\Scribe\Scribe;
 use Laravel\Sanctum\PersonalAccessToken;
 use SocialiteProviders\Discord\Provider as DiscordProvider;
 use SocialiteProviders\Eveonline\Provider;
@@ -70,6 +71,29 @@ final class AppServiceProvider extends ServiceProvider
         $this->reloads('discord:restart', 'discord');
 
         $this->registerScheduleMacros();
+        $this->keepApiDocsDomainAgnostic();
+    }
+
+    /**
+     * Scribe bakes the generating machine's URL and app name into the docs, so
+     * swap them back out for the Blade placeholders they are rendered through.
+     */
+    private function keepApiDocsDomainAgnostic(): void
+    {
+        Scribe::afterGenerating(function (array $paths): void {
+            $blade = $paths['blade'] ?? null;
+            $url = mb_rtrim((string) config('app.url'), '/');
+
+            if ($url === '' || ! is_string($blade) || ! file_exists($blade)) {
+                return;
+            }
+
+            file_put_contents($blade, str_replace(
+                [$url, config('app.name').' API Documentation'],
+                ['{{ config("app.url") }}', '{{ config("app.name") }} API Documentation'],
+                (string) file_get_contents($blade),
+            ));
+        });
     }
 
     private function registerNotificationMacro(): void

@@ -23,6 +23,7 @@ export interface NavItem {
 
 export type AppPageProps<T extends Record<string, unknown> = Record<string, unknown>> = T & {
     name: string;
+    app_url: string;
     announcement: TAnnouncement | null;
     quote: { message: string; author: string };
     auth: Auth;

@@ -68,6 +68,7 @@ final class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'app_url' => config('app.url'),
             'announcement' => fn (): ?array => $this->getAnnouncement($request),
             'auth' => [
                 'user' => $this->user?->toResource(UserResource::class),

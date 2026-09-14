@@ -5,8 +5,13 @@ import vue from '@vitejs/plugin-vue';
 import laravel from 'laravel-vite-plugin';
 import { execSync } from 'node:child_process';
 import path from 'path';
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+
+const env = loadEnv(process.env.NODE_ENV ?? 'production', process.cwd(), '');
+
+/** The host this instance is served from, e.g. "wormhole.systems". */
+const appHost = env.APP_URL ? new URL(env.APP_URL).host : 'wormhole.systems';
 
 function generateStaticDataPlugin() {
     const runGenerateStaticData = () => {
@@ -21,7 +26,7 @@ function generateStaticDataPlugin() {
             });
         } catch {
             // eslint-disable-next-line no-console
-            console.error('Failed to generate static data! Make sure you downloaded the data using "php artisan sde:download"')
+            console.error('Failed to generate static data! Make sure you downloaded the data using "php artisan sde:download"');
         }
     };
 
@@ -88,8 +93,8 @@ export default defineConfig({
                 maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
             },
             manifest: {
-                name: 'wormhole.systems',
-                short_name: 'wormhole.systems',
+                name: appHost,
+                short_name: appHost,
                 description:
                     'Advanced wormhole mapping and tracking system for EVE Online. Navigate dangerous wormhole space with real-time intel, signature tracking, and collaborative mapping tools.',
                 start_url: '/maps',
@@ -100,7 +105,7 @@ export default defineConfig({
                 scope: '/',
                 lang: 'en',
                 categories: ['games', 'utilities', 'productivity'],
-                id: 'com.wormhole.systems',
+                id: `com.${appHost}`,
                 launch_handler: {
                     client_mode: 'navigate-existing',
                 },

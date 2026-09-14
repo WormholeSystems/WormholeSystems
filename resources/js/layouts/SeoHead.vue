@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import type { AppPageProps } from '@/types';
+import { Head, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 
 interface SeoHeadProps {
     title?: string;
@@ -24,13 +26,27 @@ const props = withDefaults(defineProps<SeoHeadProps>(), {
     description:
         'Advanced wormhole mapping and tracking system for EVE Online. Navigate dangerous wormhole space with real-time intel, signature tracking, and collaborative mapping tools.',
     keywords: 'EVE Online, wormhole, mapping, tracking, signatures, intel, navigation, space, gaming',
-    url: 'https://wormhole.systems',
-    siteName: 'wormhole.systems',
-    twitterSite: 'wormhole.systems',
     locale: 'en_US',
     type: 'website',
     themeColor: '#ffffff',
 });
+
+const page = usePage<AppPageProps>();
+
+const app_url = computed(() => page.props.app_url ?? '');
+
+/** The bare host of this instance, e.g. "wormhole.systems". */
+const app_host = computed(() => {
+    try {
+        return new URL(app_url.value).host;
+    } catch {
+        return app_url.value;
+    }
+});
+
+const canonical_url = computed(() => props.url ?? app_url.value);
+const site_name = computed(() => props.siteName ?? app_host.value);
+const twitter_site = computed(() => props.twitterSite ?? app_host.value);
 
 // Default image
 const defaultImage = {
@@ -54,9 +70,9 @@ const image = props.image || defaultImage;
         <!-- Open Graph Meta Tags -->
         <meta :content="title" property="og:title" />
         <meta :content="description" property="og:description" />
-        <meta :content="url" property="og:url" />
+        <meta :content="canonical_url" property="og:url" />
         <meta :content="type" property="og:type" />
-        <meta :content="siteName" property="og:site_name" />
+        <meta :content="site_name" property="og:site_name" />
         <meta :content="locale" property="og:locale" />
         <meta :content="image.url" property="og:image" />
         <meta v-if="image.type" :content="image.type" property="og:image:type" />
@@ -67,8 +83,8 @@ const image = props.image || defaultImage;
         <meta content="summary_large_image" name="twitter:card" />
         <meta :content="title" property="twitter:title" />
         <meta :content="description" property="twitter:description" />
-        <meta :content="url" property="twitter:url" />
+        <meta :content="canonical_url" property="twitter:url" />
         <meta :content="image.url" property="twitter:image" />
-        <meta :content="twitterSite" name="twitter:site" />
+        <meta :content="twitter_site" name="twitter:site" />
     </Head>
 </template>

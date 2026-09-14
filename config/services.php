@@ -60,7 +60,7 @@ return [
     'eveonline' => [
         'client_id' => env('EVE_CLIENT_ID'),
         'client_secret' => env('EVE_CLIENT_SECRET'),
-        'redirect' => env('EVE_CALLBACK', 'https://wormholesystems.test/eve/callback'),
+        'redirect' => env('EVE_CALLBACK', env('APP_URL').'/eve/callback'),
     ],
     'discord' => [
         'invite' => env('DISCORD_INVITE', ''),
@@ -68,7 +68,7 @@ return [
         'client_id' => env('DISCORD_CLIENT_ID'),
         'client_secret' => env('DISCORD_CLIENT_SECRET'),
         'bot_token' => env('DISCORD_BOT_TOKEN'),
-        'redirect' => env('DISCORD_CALLBACK', 'https://wormholesystems.test/discord/callback'),
+        'redirect' => env('DISCORD_CALLBACK', env('APP_URL').'/discord/callback'),
         'test_guild_id' => env('DISCORD_TEST_GUILD_ID'),
     ],
 ];

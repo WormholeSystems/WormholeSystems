@@ -24,7 +24,7 @@ const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 createInertiaApp({
     title: (title) => {
         if (isPWA()) {
-            return 'wormhole.systems';
+            return appName;
         }
         return title ? `${title} | ${appName}` : appName;
     },
