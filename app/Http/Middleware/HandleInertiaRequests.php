@@ -74,7 +74,7 @@ final class HandleInertiaRequests extends Middleware
                 'user' => $this->user?->toResource(UserResource::class),
             ],
             'notification' => Inertia::always(
-                $request->session()->get('notification')
+                $request->hasSession() ? $request->session()->get('notification') : null
             ),
             'missing_scopes' => $this->getMissingScopes(),
             'pinned_maps' => fn (): array => $this->getPinnedMaps($request->user()),
