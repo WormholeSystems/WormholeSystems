@@ -68,19 +68,18 @@ describe('MapConnectionDetails', () => {
         expect(panel.className).toContain('overflow-y-auto');
     });
 
-    it('widens into a second column for the mass tracking list', async () => {
+    it('keeps every section in one narrow column', async () => {
         const panel = await renderPanel(connection());
 
-        expect(panel.className).toContain('sm:w-[30rem]');
-        expect(panel.querySelector('.grid')?.className).toContain('sm:grid-cols-2');
+        expect(panel.className).toContain('w-60');
+        expect(panel.className).not.toContain('sm:w-[30rem]');
+        expect(panel.querySelector('.grid')).toBeNull();
         expect(panel.querySelector('mass-tracking-stub')).not.toBeNull();
     });
 
-    it('stays one narrow column for stargates, which track no mass', async () => {
+    it('leaves out mass tracking for stargates, which track no mass', async () => {
         const panel = await renderPanel(connection({ type: 'stargate' }));
 
-        expect(panel.className).not.toContain('sm:w-[30rem]');
-        expect(panel.querySelector('.grid')?.className).not.toContain('sm:grid-cols-2');
         expect(panel.querySelector('mass-tracking-stub')).toBeNull();
     });
 });
