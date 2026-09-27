@@ -21,7 +21,7 @@ import type { TMapUserSetting } from '@/types/models';
 import { Link } from '@inertiajs/vue3';
 import { useConnectionStatus } from '@laravel/echo-vue';
 import { ConnectionStatus } from 'laravel-echo';
-import { AlertTriangle, Eye, EyeOff, LayoutGrid, LocateFixed, Map as MapIcon, Settings, ShieldAlert, Wifi, WifiOff } from 'lucide-vue-next';
+import { AlertTriangle, Eye, EyeOff, LayoutGrid, LocateFixed, Map as MapIcon, Settings, ShieldAlert, Trophy, Wifi, WifiOff } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import CommandPaletteButton from './CommandPaletteButton.vue';
 import TrackingSignatureDialog from './TrackingSignatureDialog.vue';
