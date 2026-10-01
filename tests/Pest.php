@@ -74,6 +74,42 @@ function makeSolarsystem(int $id, float $security = 0.5, string $type = 'normal'
 }
 
 /**
+ * Link two seeded solar systems with a one-way stargate pair (from -> to).
+ */
+function linkSolarsystemsByStargate(int $from_solarsystem_id, int $to_solarsystem_id): void
+{
+    App\Models\Category::query()->firstOrCreate(['id' => 6], ['name' => 'Ship']);
+    App\Models\Group::query()->firstOrCreate(['id' => 10], ['name' => 'Stargate', 'category_id' => 6]);
+    App\Models\Type::query()->firstOrCreate(['id' => 16], ['name' => 'Stargate', 'group_id' => 10]);
+
+    $stargates = [
+        ['id' => $from_solarsystem_id * 100, 'solarsystem_id' => $from_solarsystem_id],
+        ['id' => $to_solarsystem_id * 100, 'solarsystem_id' => $to_solarsystem_id],
+    ];
+
+    foreach ($stargates as $stargate) {
+        Illuminate\Support\Facades\DB::table('stargates')->insertOrIgnore([
+            'id' => $stargate['id'],
+            'solarsystem_id' => $stargate['solarsystem_id'],
+            'constellation_id' => 20009000,
+            'region_id' => 10009000,
+            'type_id' => 16,
+        ]);
+    }
+
+    Illuminate\Support\Facades\DB::table('solarsystem_connections')->insertOrIgnore([
+        'from_stargate_id' => $from_solarsystem_id * 100,
+        'from_solarsystem_id' => $from_solarsystem_id,
+        'from_constellation_id' => 20009000,
+        'from_region_id' => 10009000,
+        'to_stargate_id' => $to_solarsystem_id * 100,
+        'to_solarsystem_id' => $to_solarsystem_id,
+        'to_constellation_id' => 20009000,
+        'to_region_id' => 10009000,
+    ]);
+}
+
+/**
  * Place a solarsystem on a map (seeding the underlying solarsystem so the FK resolves),
  * returning the placement.
  */

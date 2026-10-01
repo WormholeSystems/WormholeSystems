@@ -16,7 +16,6 @@ use App\Models\MapConnection;
 use App\Models\MapConnectionJump;
 use App\Models\MapUserSetting;
 use App\Models\Type;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 
 const JUMP_SHIP_TYPE_ID = 73790;
@@ -69,38 +68,6 @@ function createTrackedMapWithConnection(Character $character, int $from_solarsys
     ]);
 
     return ['map' => $map, 'connection' => $connection, 'from' => $from_solarsystem_id, 'to' => $to_solarsystem_id];
-}
-
-function linkSolarsystemsByStargate(int $from_solarsystem_id, int $to_solarsystem_id): void
-{
-    Group::query()->firstOrCreate(['id' => 10], ['name' => 'Stargate', 'category_id' => 6]);
-    Type::query()->firstOrCreate(['id' => 16], ['name' => 'Stargate', 'group_id' => 10]);
-
-    $stargates = [
-        ['id' => $from_solarsystem_id * 100, 'solarsystem_id' => $from_solarsystem_id],
-        ['id' => $to_solarsystem_id * 100, 'solarsystem_id' => $to_solarsystem_id],
-    ];
-
-    foreach ($stargates as $stargate) {
-        DB::table('stargates')->insertOrIgnore([
-            'id' => $stargate['id'],
-            'solarsystem_id' => $stargate['solarsystem_id'],
-            'constellation_id' => 20009000,
-            'region_id' => 10009000,
-            'type_id' => 16,
-        ]);
-    }
-
-    DB::table('solarsystem_connections')->insertOrIgnore([
-        'from_stargate_id' => $from_solarsystem_id * 100,
-        'from_solarsystem_id' => $from_solarsystem_id,
-        'from_constellation_id' => 20009000,
-        'from_region_id' => 10009000,
-        'to_stargate_id' => $to_solarsystem_id * 100,
-        'to_solarsystem_id' => $to_solarsystem_id,
-        'to_constellation_id' => 20009000,
-        'to_region_id' => 10009000,
-    ]);
 }
 
 function recordJump(Character $character, int $from_solarsystem_id, int $to_solarsystem_id): void
