@@ -18,6 +18,8 @@ The app reads the tab-separated rows EVE copies (signature ID, group, category, 
 - **Updated** signatures whose category or type the paste has resolved.
 - **Missing** signatures — ones already on the map that weren't in your paste.
 
+Pastes from any EVE client language work: English, German, French, Spanish, Russian, Japanese, Korean, and Chinese. Group and site names are matched in all of them, so a clipboard that mixes rows from different clients is fine too.
+
 You stay in control of the missing ones: confirm to delete the stale signatures, or keep them. Because the paste reconciles rather than blindly replacing, you can re-paste a fresh scan any time and the list stays current.
 
 > Signatures only need their ID to be recorded — the six-character code is enough. You can resolve the type later, by hand or by pasting a more complete scan once you've probed it down. Temporary event sites that aren't in the database can be stored under a free-text name.
