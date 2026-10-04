@@ -18,9 +18,12 @@ final readonly class DeleteMapConnectionAction
     ) {}
 
     /**
+     * Systems left without connections are removed when requested, except the one given
+     * as $kept_map_solarsystem_id, which the caller is still operating on.
+     *
      * @throws Throwable
      */
-    public function handle(MapConnection $mapConnection, bool $remove_map_solarsystem = false): void
+    public function handle(MapConnection $mapConnection, bool $remove_map_solarsystem = false, ?int $kept_map_solarsystem_id = null): void
     {
         $map = $mapConnection->map;
 
@@ -30,8 +33,9 @@ final readonly class DeleteMapConnectionAction
         $mapConnection->delete();
 
         if ($remove_map_solarsystem) {
-            $this->checkAndRemoveMapSolarsystem($from_map_solarsystem);
-            $this->checkAndRemoveMapSolarsystem($to_map_solarsystem);
+            collect([$from_map_solarsystem, $to_map_solarsystem])
+                ->reject(fn (MapSolarsystem $map_solarsystem): bool => $map_solarsystem->id === $kept_map_solarsystem_id)
+                ->each(fn (MapSolarsystem $map_solarsystem) => $this->checkAndRemoveMapSolarsystem($map_solarsystem));
         }
 
         // Deleting the placement flips $exists on the very instances passed above, which

@@ -52,7 +52,11 @@ final readonly class DeleteSignatureAction
             if ($signature->mapConnection->signatures()->where('map_solarsystem_id', $signature->map_solarsystem_id)->count() > 1) {
                 return;
             }
-            $this->deleteMapConnectionAction->handle($signature->mapConnection, $remove_map_solarsystem);
+            $this->deleteMapConnectionAction->handle(
+                $signature->mapConnection,
+                $remove_map_solarsystem,
+                kept_map_solarsystem_id: $signature->map_solarsystem_id,
+            );
         }
     }
 }
