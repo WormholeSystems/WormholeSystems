@@ -11,7 +11,7 @@ use App\Models\WormholeSystem;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-function agingConnection(Map $map, MapSolarsystem $from, MapSolarsystem $to, int $hoursAlive): MapConnection
+function ageCheckConnection(Map $map, MapSolarsystem $from, MapSolarsystem $to, int $hoursAlive): MapConnection
 {
     return MapConnection::factory()->create([
         'map_id' => $map->id,
@@ -22,7 +22,7 @@ function agingConnection(Map $map, MapSolarsystem $from, MapSolarsystem $to, int
     ]);
 }
 
-function wormholeMapSolarsystem(Map $map, int $solarsystemId, SolarsystemClass $class): MapSolarsystem
+function ageCheckWormholeSystem(Map $map, int $solarsystemId, SolarsystemClass $class): MapSolarsystem
 {
     $mapSolarsystem = placeMapSolarsystem($map, $solarsystemId);
     WormholeSystem::query()->forceCreate(['id' => $solarsystemId, 'class' => $class]);
@@ -32,10 +32,10 @@ function wormholeMapSolarsystem(Map $map, int $solarsystemId, SolarsystemClass $
 
 it('marks an aging wormhole connection as end of life', function () {
     $map = Map::factory()->create();
-    $connection = agingConnection(
+    $connection = ageCheckConnection(
         $map,
-        wormholeMapSolarsystem($map, 31000001, SolarsystemClass::C3),
-        wormholeMapSolarsystem($map, 31000002, SolarsystemClass::C5),
+        ageCheckWormholeSystem($map, 31000001, SolarsystemClass::C3),
+        ageCheckWormholeSystem($map, 31000002, SolarsystemClass::C5),
         hoursAlive: 21,
     );
 
@@ -46,9 +46,9 @@ it('marks an aging wormhole connection as end of life', function () {
 
 it('gives a c6 to k-space connection its longer lifetime', function () {
     $map = Map::factory()->create();
-    $connection = agingConnection(
+    $connection = ageCheckConnection(
         $map,
-        wormholeMapSolarsystem($map, 31000003, SolarsystemClass::C6),
+        ageCheckWormholeSystem($map, 31000003, SolarsystemClass::C6),
         placeMapSolarsystem($map, 30000001),
         hoursAlive: 21,
     );
@@ -60,10 +60,10 @@ it('gives a c6 to k-space connection its longer lifetime', function () {
 
 it('skips a connection whose map solarsystem no longer exists', function () {
     $map = Map::factory()->create();
-    $wormhole = wormholeMapSolarsystem($map, 31000004, SolarsystemClass::C6);
+    $wormhole = ageCheckWormholeSystem($map, 31000004, SolarsystemClass::C6);
     $kSpace = placeMapSolarsystem($map, 30000002);
-    $orphaned = agingConnection($map, $wormhole, $kSpace, hoursAlive: 47);
-    $intact = agingConnection($map, $wormhole, wormholeMapSolarsystem($map, 31000005, SolarsystemClass::C3), hoursAlive: 21);
+    $orphaned = ageCheckConnection($map, $wormhole, $kSpace, hoursAlive: 47);
+    $intact = ageCheckConnection($map, $wormhole, ageCheckWormholeSystem($map, 31000005, SolarsystemClass::C3), hoursAlive: 21);
 
     Schema::withoutForeignKeyConstraints(fn () => DB::table('map_solarsystems')->where('id', $kSpace->id)->delete());
 
