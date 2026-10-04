@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Builders\MapSolarsystemBuilder;
 use App\Collections\MapSolarsystemCollection;
 use App\Relations\HasManyMapConnections;
+use Carbon\CarbonImmutable;
 use Database\Factories\MapSolarsystemFactory;
 use Illuminate\Database\Eloquent\Attributes\CollectedBy;
 use Illuminate\Database\Eloquent\Attributes\UseEloquentBuilder;
@@ -32,6 +33,7 @@ use Staudenmeir\EloquentHasManyDeep\HasRelationships;
  * @property int $position_x
  * @property int $position_y
  * @property bool $pinned
+ * @property CarbonImmutable|null $signatures_pasted_at
  * @property-read int|null $signatures_count
  * @property-read int|null $uncategorized_signatures_count
  * @property-read int|null $wormhole_signatures_count
@@ -144,6 +146,7 @@ final class MapSolarsystem extends Model
         return [
             'created_at' => 'immutable_datetime',
             'updated_at' => 'immutable_datetime',
+            'signatures_pasted_at' => 'immutable_datetime',
         ];
     }
 }

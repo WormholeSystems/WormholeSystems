@@ -267,6 +267,7 @@ export type TTailoredSignature = {
 export type TSelectedMapSolarsystemBase = Omit<TMapSolarsystemBase, 'signatures'> & {
     notes: string | null;
     signatures: TSignature[];
+    signatures_pasted_at: string | null;
     audits: TAudit[];
     map_connections: TMapConnection[];
 };

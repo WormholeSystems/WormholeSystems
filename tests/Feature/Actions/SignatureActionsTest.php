@@ -202,3 +202,39 @@ it('keeps the origin system when bulk deleting the signature of its only connect
         ->and(MapConnection::find($connection->id))->toBeNull()
         ->and($origin->signatures()->pluck('id')->all())->toBe([$remaining->id]);
 });
+
+it('records when signatures were last pasted into a system', function () {
+    $map = Map::factory()->create();
+    $system = placeMapSolarsystem($map, 30011020);
+
+    expect($system->signatures_pasted_at)->toBeNull();
+
+    $this->freezeSecond();
+
+    app(PasteSignaturesAction::class)->handle(SignaturesData::from([
+        'map_solarsystem_id' => $system->id,
+        'signatures' => [
+            ['signature_id' => 'AAA-111'],
+        ],
+    ]));
+
+    expect($system->fresh()->signatures_pasted_at?->toDateTimeString())->toBe(now()->toDateTimeString());
+});
+
+it('refreshes the paste time even when the pasted signatures are unchanged', function () {
+    $map = Map::factory()->create();
+    $system = placeMapSolarsystem($map, 30011021);
+    $system->signatures()->create(['signature_id' => 'AAA-111']);
+    $system->update(['signatures_pasted_at' => now()->subHour()]);
+
+    $this->freezeSecond();
+
+    app(PasteSignaturesAction::class)->handle(SignaturesData::from([
+        'map_solarsystem_id' => $system->id,
+        'signatures' => [
+            ['signature_id' => 'AAA-111'],
+        ],
+    ]));
+
+    expect($system->fresh()->signatures_pasted_at?->toDateTimeString())->toBe(now()->toDateTimeString());
+});

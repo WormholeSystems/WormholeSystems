@@ -5,6 +5,7 @@ import TrashIcon from '@/components/icons/TrashIcon.vue';
 import PasteSignatureWarningDialog from '@/components/signatures/PasteSignatureWarningDialog.vue';
 import Signature from '@/components/signatures/Signature.vue';
 import SignaturesEmptyState from '@/components/signatures/SignaturesEmptyState.vue';
+import SignaturesPastedAt from '@/components/signatures/SignaturesPastedAt.vue';
 import MapPanel from '@/components/ui/map-panel/MapPanel.vue';
 import MapPanelContent from '@/components/ui/map-panel/MapPanelContent.vue';
 import MapPanelHeader from '@/components/ui/map-panel/MapPanelHeader.vue';
@@ -135,6 +136,7 @@ function createNewSignature() {
             Signatures
             <span v-if="filteredSignatures.length" class="ml-1 text-amber-400">{{ filteredSignatures.length }}</span>
             <span v-if="hiddenSignaturesCount > 0" class="ml-1 text-muted-foreground/70">{{ hiddenSignaturesCount }} hidden</span>
+            <SignaturesPastedAt :pasted_at="map_solarsystem.signatures_pasted_at" />
             <template #actions>
                 <Tooltip>
                     <TooltipTrigger as-child>
