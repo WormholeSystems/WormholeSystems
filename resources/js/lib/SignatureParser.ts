@@ -1,4 +1,5 @@
 import { signatureCategories, signatureTypes } from '@/const/signatures';
+import signatureTranslations from '@/data/signature_translations.json';
 import { TSignatureCategory, TSignatureType } from '@/types/models';
 import { UTCDate } from '@date-fns/utc';
 import { toast } from 'vue-sonner';
@@ -10,6 +11,25 @@ export type TRawSignature = {
     raw_type_name: string | null;
     created_at?: string;
 };
+
+const localizedCategoryNames: Record<string, string> = signatureTranslations.categories;
+const localizedTypeNames: Record<string, Record<string, string>> = signatureTranslations.types;
+
+/**
+ * Non-English clients paste localized names, and some languages separate words
+ * with non-breaking spaces, so names are compared on collapsed whitespace.
+ */
+function normalizeName(name: string | undefined): string {
+    return (name ?? '').replace(/\s+/g, ' ').trim();
+}
+
+function toEnglishCategoryName(name: string): string {
+    return localizedCategoryNames[name] ?? name;
+}
+
+function toEnglishTypeName(categoryName: string, name: string): string {
+    return localizedTypeNames[categoryName]?.[name] ?? name;
+}
 
 class SignatureParser {
     parseSignatures(text: string): TRawSignature[] {
@@ -54,8 +74,8 @@ class SignatureParser {
     }
 
     getCategory(categoryName: string): TSignatureCategory | null {
-        const name = categoryName?.trim();
-        const exact = signatureCategories.find((cat) => cat.name === name);
+        const name = normalizeName(categoryName);
+        const exact = this.findCategory(name);
         if (exact) {
             return exact;
         }
@@ -64,10 +84,16 @@ class SignatureParser {
         // so fall back to matching a known category in any " - " separated segment.
         return (
             name
-                ?.split(' - ')
-                .map((segment) => signatureCategories.find((cat) => cat.name === segment.trim()))
+                .split(' - ')
+                .map((segment) => this.findCategory(segment.trim()))
                 .find(Boolean) || null
         );
+    }
+
+    findCategory(name: string): TSignatureCategory | undefined {
+        const englishName = toEnglishCategoryName(name);
+
+        return signatureCategories.find((cat) => cat.name === englishName);
     }
 
     getType(category: TSignatureCategory | null, typeName: string): TSignatureType | null {
@@ -78,7 +104,9 @@ class SignatureParser {
             return null;
         }
 
-        return signatureTypes.find((type) => type.name === typeName.trim() && type.signature_category_id === category.id) || null;
+        const englishName = toEnglishTypeName(category.name, normalizeName(typeName));
+
+        return signatureTypes.find((type) => type.name === englishName && type.signature_category_id === category.id) || null;
     }
 }
 
