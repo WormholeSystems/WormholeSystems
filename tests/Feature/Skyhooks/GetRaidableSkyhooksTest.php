@@ -143,3 +143,38 @@ it('does nothing when ESI request fails', function () {
 
     expect(RaidableSkyhook::query()->count())->toBe(1);
 });
+
+it('skips skyhooks in unknown solarsystems and stores the rest', function () {
+    createSkyhookSolarsystem(30000207);
+
+    $esi = $this->mock(Esi::class);
+    $esi->shouldReceive('getRaidableSkyhooks')
+        ->once()
+        ->andReturn(new EsiResult(data: [
+            makeRaidableSkyhookDto(40000007, 30000207, '2026-05-19T12:00:00Z', '2026-05-19T14:00:00Z'),
+            makeRaidableSkyhookDto(40000008, 39999999, '2026-05-19T12:00:00Z', '2026-05-19T14:00:00Z'),
+        ]));
+
+    GetRaidableSkyhooks::dispatchSync();
+
+    expect(RaidableSkyhook::query()->pluck('planet_id')->all())->toBe([40000007]);
+});
+
+it('stores skyhooks with a constant number of queries', function () {
+    $skyhooks = collect(range(1, 25))->map(function (int $index): RaidableSkyhookDto {
+        createSkyhookSolarsystem(30000300 + $index);
+
+        return makeRaidableSkyhookDto(40000100 + $index, 30000300 + $index, '2026-05-19T12:00:00Z', '2026-05-19T14:00:00Z');
+    });
+
+    $esi = $this->mock(Esi::class);
+    $esi->shouldReceive('getRaidableSkyhooks')
+        ->once()
+        ->andReturn(new EsiResult(data: $skyhooks->all()));
+
+    DB::enableQueryLog();
+    GetRaidableSkyhooks::dispatchSync();
+
+    expect(DB::getQueryLog())->toHaveCount(3)
+        ->and(RaidableSkyhook::query()->count())->toBe(25);
+});

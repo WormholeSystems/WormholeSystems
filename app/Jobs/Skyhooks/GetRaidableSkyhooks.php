@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Jobs\Skyhooks;
 
 use App\Models\RaidableSkyhook;
-use Exception;
+use App\Models\Solarsystem;
+use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
+use NicolasKion\Esi\DTO\RaidableSkyhook as RaidableSkyhookData;
 use NicolasKion\Esi\Esi;
 
 final class GetRaidableSkyhooks implements ShouldQueue
@@ -35,20 +37,31 @@ final class GetRaidableSkyhooks implements ShouldQueue
 
         $skyhooks = collect($result->data);
 
-        foreach ($skyhooks as $skyhook) {
-            try {
-                RaidableSkyhook::query()->updateOrCreate(
-                    ['planet_id' => $skyhook->planet_id],
-                    [
-                        'solarsystem_id' => $skyhook->solar_system_id,
-                        'theft_vulnerability_start' => $skyhook->theft_vulnerability->start,
-                        'theft_vulnerability_end' => $skyhook->theft_vulnerability->end,
-                    ]
-                );
-            } catch (Exception $e) {
-                Log::info(sprintf('Failed to update raidable skyhook for planet %d: %s', $skyhook->planet_id, $e->getMessage()));
-            }
-        }
+        $known_solarsystem_ids = Solarsystem::query()
+            ->whereIn('id', $skyhooks->pluck('solar_system_id')->unique())
+            ->pluck('id')
+            ->flip();
+
+        [$rows, $unknown] = $skyhooks->partition(
+            fn (RaidableSkyhookData $skyhook): bool => $known_solarsystem_ids->has($skyhook->solar_system_id)
+        );
+
+        $unknown->each(fn (RaidableSkyhookData $skyhook) => Log::info(sprintf(
+            'Skipping raidable skyhook for planet %d in unknown solarsystem %d',
+            $skyhook->planet_id,
+            $skyhook->solar_system_id,
+        )));
+
+        RaidableSkyhook::query()->upsert(
+            $rows->map(fn (RaidableSkyhookData $skyhook): array => [
+                'planet_id' => $skyhook->planet_id,
+                'solarsystem_id' => $skyhook->solar_system_id,
+                'theft_vulnerability_start' => CarbonImmutable::parse($skyhook->theft_vulnerability->start)->toDateTimeString(),
+                'theft_vulnerability_end' => CarbonImmutable::parse($skyhook->theft_vulnerability->end)->toDateTimeString(),
+            ])->values()->all(),
+            ['planet_id'],
+            ['solarsystem_id', 'theft_vulnerability_start', 'theft_vulnerability_end', 'updated_at'],
+        );
 
         RaidableSkyhook::query()
             ->whereNotIn('planet_id', $skyhooks->pluck('planet_id'))
