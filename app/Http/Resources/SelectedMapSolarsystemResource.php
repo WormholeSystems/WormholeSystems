@@ -35,6 +35,7 @@ final class SelectedMapSolarsystemResource extends JsonResource
             'is_pinned' => $this->pinned,
             'map_connections' => $this->mapConnections->toResourceCollection(MapConnectionResource::class),
             'signatures' => $this->signatures->toResourceCollection(SignatureResource::class),
+            'signatures_pasted_at' => $this->signatures_pasted_at,
             'audits' => $this->details->audits->toResourceCollection(AuditResource::class),
         ];
     }

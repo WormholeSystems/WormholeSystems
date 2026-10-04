@@ -100,3 +100,38 @@ it('returns a map with signatures count on show', function () {
             ],
         ]);
 });
+
+it('returns when signatures were last pasted on map solarsystem show', function () {
+    $solarsystemId = createSolarsystem();
+
+    $map = Map::factory()->create();
+    $user = User::factory()->ownsMap($map)->create();
+
+    $mapSolarsystem = MapSolarsystem::factory()->for($map)->create([
+        'solarsystem_id' => $solarsystemId,
+        'signatures_pasted_at' => '2026-10-04 12:00:00',
+    ]);
+
+    actingAs($user);
+
+    $this->getJson(route('api.map-solarsystems.show', $mapSolarsystem))
+        ->assertSuccessful()
+        ->assertJsonPath('data.signatures_pasted_at', '2026-10-04T12:00:00.000000Z');
+});
+
+it('returns no paste time when signatures were never pasted', function () {
+    $solarsystemId = createSolarsystem();
+
+    $map = Map::factory()->create();
+    $user = User::factory()->ownsMap($map)->create();
+
+    $mapSolarsystem = MapSolarsystem::factory()->for($map)->create([
+        'solarsystem_id' => $solarsystemId,
+    ]);
+
+    actingAs($user);
+
+    $this->getJson(route('api.map-solarsystems.show', $mapSolarsystem))
+        ->assertSuccessful()
+        ->assertJsonPath('data.signatures_pasted_at', null);
+});
