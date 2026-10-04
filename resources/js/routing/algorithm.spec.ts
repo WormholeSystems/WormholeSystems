@@ -82,6 +82,25 @@ describe('findRoute with wormholes excluded', () => {
     });
 });
 
+describe('findRoute with an expired wormhole', () => {
+    const expiring: RoutingConnection[] = [
+        { from: HOME, to: EXIT, type: 'wormhole', massStatus: 'fresh', lifetimeStatus: 'healthy' },
+        { from: HOME, to: HUB, type: 'wormhole', massStatus: 'fresh', lifetimeStatus: 'expired' },
+    ];
+
+    it('avoids it while the filter stops at critical', () => {
+        const route = findRoute(settings({ lifetimeStatus: 'critical' }), EXIT, HUB, expiring, [], []);
+
+        expect(route.route.map((step) => step.id)).toEqual([EXIT, NEIGHBOUR, MIDPOINT, HUB]);
+    });
+
+    it('uses it once the filter allows expired holes', () => {
+        const route = findRoute(settings({ lifetimeStatus: 'expired' }), EXIT, HUB, expiring, [], []);
+
+        expect(route.route.map((step) => step.id)).toEqual([EXIT, HOME, HUB]);
+    });
+});
+
 describe('findClosestSystems with wormholes excluded', () => {
     it('does not reach systems that only the chain connects', () => {
         const found = findClosestSystems(settings({ useWormholes: false }), EXIT, 'npc_stations', 10, wormholes, [], []);

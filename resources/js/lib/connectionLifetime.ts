@@ -49,7 +49,7 @@ type TimeRemainingInput = {
  * once someone flags it.
  *
  * This follows the same rule the background command uses to move a connection's
- * status along: a hole already marked end of life or critical is timed from that
+ * status along: a hole already marked end of life, critical or expired is timed from that
  * marking, because someone read it off the hole itself, and anything else is
  * timed from its age against the lifetime its shape implies.
  *

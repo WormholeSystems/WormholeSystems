@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\LifetimeStatus;
 use App\Enums\Permission;
 use App\Features\MapSettingsFeature;
 use App\Models\Character;
@@ -289,6 +290,23 @@ it('routes through wormhole connections by default', function () {
                 ->etc()
             )
         );
+});
+
+it('persists allowing expired connections in routing', function () {
+    $map = Map::factory()->create();
+    $user = User::factory()->ownsMap($map)->create();
+
+    actingAs($user);
+
+    $this->put(route('maps.user-settings.update', $map), [
+        'route_allow_lifetime_status' => 'expired',
+    ])->assertRedirect();
+
+    expect(MapUserSetting::query()
+        ->where('user_id', $user->id)
+        ->where('map_id', $map->id)
+        ->value('route_allow_lifetime_status')
+    )->toBe(LifetimeStatus::Expired);
 });
 
 it('persists excluding wormhole connections from routing', function () {

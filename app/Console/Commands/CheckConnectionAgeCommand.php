@@ -78,19 +78,7 @@ final class CheckConnectionAgeCommand extends AppCommand
 
     private function shouldUpdateLifetime(MapConnection $connection, LifetimeStatus $calculatedStatus): bool
     {
-        $currentSeverity = $this->getLifetimeSeverity($connection->lifetime);
-        $calculatedSeverity = $this->getLifetimeSeverity($calculatedStatus);
-
-        return $calculatedSeverity > $currentSeverity;
-    }
-
-    private function getLifetimeSeverity(LifetimeStatus $status): int
-    {
-        return match ($status) {
-            LifetimeStatus::Healthy => 1,
-            LifetimeStatus::EndOfLife => 2,
-            LifetimeStatus::Critical => 3,
-        };
+        return $calculatedStatus->severity() > $connection->lifetime->severity();
     }
 
     private function calculateLifetimeStatus(MapConnection $connection): LifetimeStatus

@@ -29,6 +29,10 @@ describe('lifetimeCountdown', () => {
         expect(countdown).toEqual({ remainingMs: 0, expired: true, label: 'any moment now' });
     });
 
+    it('treats an expired hole as closing any moment from the second it was marked', () => {
+        expect(lifetimeCountdown('expired', MARKED, at(0))).toEqual({ remainingMs: 0, expired: true, label: 'any moment now' });
+    });
+
     it('gives a healthy hole no countdown, since nothing promises when it collapses', () => {
         expect(lifetimeCountdown('healthy', MARKED, at(0))).toBeNull();
     });

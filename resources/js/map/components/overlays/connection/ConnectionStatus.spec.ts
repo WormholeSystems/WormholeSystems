@@ -68,6 +68,13 @@ describe('ConnectionStatus lifetime countdown', () => {
         expect(text).toContain('22h 30m');
     });
 
+    it('labels an expired connection as closing any moment', () => {
+        const text = render({ lifetime_status: 'expired', lifetime_status_updated_at: MARKED });
+
+        expect(text).toContain('Expired (imminent)');
+        expect(text).toContain('any moment now');
+    });
+
     it('shows no countdown for a stargate, which is permanent', () => {
         expect(render({ type: 'stargate' })).not.toContain('Time remaining');
     });

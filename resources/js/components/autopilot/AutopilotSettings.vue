@@ -95,6 +95,9 @@ function handleSecurityPenaltyCommit(value: number[]) {
                     @update:model-value="handleLifetimeStatusChange"
                     class="col-span-3 grid grid-cols-subgrid gap-1"
                 >
+                    <RadioGroupItem value="expired" id="lifetime-expired" />
+                    <Label for="lifetime-expired" class="cursor-pointer text-xs font-medium">Expired</Label>
+                    <span class="text-xs text-muted-foreground">imminent</span>
                     <RadioGroupItem value="critical" id="lifetime-critical" />
                     <Label for="lifetime-critical" class="cursor-pointer text-xs font-medium">Critical</Label>
                     <span class="text-xs text-muted-foreground">&lt; 1 hour</span>

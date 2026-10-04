@@ -132,6 +132,8 @@ const lifetimeMeta = computed(() => {
             return { label: 'End of Life (<4h)', text: 'text-purple-500', dot: 'bg-purple-500' };
         case 'critical':
             return { label: 'Critical (<1h)', text: 'text-red-500', dot: 'bg-red-500' };
+        case 'expired':
+            return { label: 'Expired (imminent)', text: 'text-red-500', dot: 'bg-red-500 motion-safe:animate-pulse' };
         default:
             return { label: 'Unknown', text: 'text-muted-foreground', dot: 'bg-neutral-500' };
     }

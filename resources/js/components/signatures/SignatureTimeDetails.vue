@@ -80,6 +80,8 @@ const lifetime_display = computed(() => {
             return 'End of Life (<4h)';
         case 'critical':
             return 'Critical (<1h)';
+        case 'expired':
+            return 'Expired (imminent)';
         default:
             return null;
     }
@@ -180,6 +182,23 @@ const current_lifetime = computed(() => {
 /* Pure lifetime states */
 .time[data-lifetime='critical'] {
     color: var(--color-red-500);
+}
+
+.time[data-lifetime='expired'] {
+    color: var(--color-red-500);
+    animation: lifetime-expired 1.2s ease-in-out infinite;
+}
+
+@keyframes lifetime-expired {
+    50% {
+        opacity: 0.4;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .time[data-lifetime='expired'] {
+        animation: none;
+    }
 }
 
 .time[data-lifetime='eol'] {

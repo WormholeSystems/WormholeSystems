@@ -1,13 +1,15 @@
 import type { TLifetimeStatus } from '@/types/models';
 
 /**
- * What the two marked lifetime states promise: EOL is the in-game "reaching the
- * end of its natural lifetime" message, critical the last hour before collapse.
+ * What the marked lifetime states promise: EOL is the in-game "less than 4 hours"
+ * reliable lifetime, critical the last hour before collapse, and expired the
+ * "Expired, closure imminent" state, which promises nothing at all.
  * A healthy hole has no known collapse time, so it gets no countdown.
  */
 const LIFETIME_BUDGET_MS: Partial<Record<TLifetimeStatus, number>> = {
     eol: 4 * 60 * 60 * 1000,
     critical: 60 * 60 * 1000,
+    expired: 0,
 };
 
 export type LifetimeCountdown = {
@@ -19,7 +21,7 @@ export type LifetimeCountdown = {
 };
 
 /**
- * The time left before a hole marked end of life or critical is due to collapse,
+ * The time left before a hole marked end of life, critical or expired is due to collapse,
  * counted from the moment it was marked. Null when nothing can be counted: a
  * healthy hole, or one whose marking carries no timestamp.
  */

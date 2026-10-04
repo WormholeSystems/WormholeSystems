@@ -35,6 +35,8 @@ const isOrthogonal = computed(() => geometry.kind === 'elbow');
 
 const massStatus = computed(() => connection?.mass_status);
 const lifetime = computed(() => connection?.lifetime_status);
+const isAging = computed(() => !!lifetime.value && lifetime.value !== 'healthy');
+const isClosing = computed(() => lifetime.value === 'critical' || lifetime.value === 'expired');
 
 /** The SVG path and badge-cluster centre in screen pixels; the one place scale is applied. */
 const path = computed(() => edgePathAndCenter(geometry, scale));
@@ -89,11 +91,11 @@ const indicators = computed<EdgeIndicator[]>(() => {
         });
     }
 
-    if (lifetime.value && lifetime.value !== 'healthy') {
+    if (isAging.value) {
         items.push({
             type: 'clock',
-            fill: lifetime.value === 'critical' ? 'var(--color-red-500)' : 'var(--color-purple-500)',
-            stroke: lifetime.value === 'critical' ? 'var(--color-red-600)' : 'var(--color-purple-600)',
+            fill: isClosing.value ? 'var(--color-red-500)' : 'var(--color-purple-500)',
+            stroke: isClosing.value ? 'var(--color-red-600)' : 'var(--color-purple-600)',
         });
     }
 
@@ -102,7 +104,7 @@ const indicators = computed<EdgeIndicator[]>(() => {
 
 function getDashArray(): string | undefined {
     if (!massStatus.value) return '0';
-    if (lifetime.value === 'eol' || lifetime.value === 'critical') return '2,6';
+    if (isAging.value) return '2,6';
     return undefined;
 }
 </script>
@@ -122,7 +124,7 @@ function getDashArray(): string | undefined {
             class="cursor-pointer text-sky-500 transition-colors duration-200 ease-in-out group-hover:text-sky-400"
         />
         <path
-            v-if="!isStargate && (massStatus === 'fresh' || lifetime === 'eol' || lifetime === 'critical')"
+            v-if="!isStargate && (massStatus === 'fresh' || isAging)"
             :d="path.d"
             stroke="currentColor"
             fill="none"
@@ -190,12 +192,30 @@ function getDashArray(): string | undefined {
 </template>
 
 <style scoped>
-[data-lifetime='critical'] {
+[data-lifetime='critical'],
+[data-lifetime='expired'] {
     color: var(--color-red-500);
 }
 
-.group:hover [data-lifetime='critical'] {
+.group:hover [data-lifetime='critical'],
+.group:hover [data-lifetime='expired'] {
     color: var(--color-red-400);
+}
+
+[data-lifetime='expired'] {
+    animation: lifetime-expired-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes lifetime-expired-pulse {
+    50% {
+        opacity: 0.35;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-lifetime='expired'] {
+        animation: none;
+    }
 }
 
 [data-connection-status='critical'] {

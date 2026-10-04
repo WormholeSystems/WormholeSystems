@@ -16,7 +16,7 @@ const SHIP_SIZE_LABELS: Record<string, string> = { frigate: 'SM', medium: 'MD', 
 const MASS_STATUS_LABELS: Record<string, string> = { reduced: 'reduced', critical: 'crit' };
 
 /** Lifetime labels. Healthy intentionally resolves to nothing so the token drops out. Kept in the "EOL" vocabulary so it never collides with mass "crit". */
-const LIFETIME_LABELS: Record<string, string> = { eol: 'EOL', critical: 'EOL!' };
+const LIFETIME_LABELS: Record<string, string> = { eol: 'EOL', critical: 'EOL!', expired: 'EOL!!' };
 
 export type BookmarkSystem = {
     alias?: string | null;

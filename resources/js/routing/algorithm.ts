@@ -15,6 +15,7 @@ const lifetimeStatusAllowList: Record<TLifetimeStatus, Set<TLifetimeStatus>> = {
     healthy: new Set(['healthy']),
     eol: new Set(['healthy', 'eol']),
     critical: new Set(['healthy', 'eol', 'critical']),
+    expired: new Set(['healthy', 'eol', 'critical', 'expired']),
 };
 
 // Zarzakh uses Jovian stargates that require special access - don't route THROUGH it

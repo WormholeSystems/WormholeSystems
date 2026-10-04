@@ -35,7 +35,7 @@ A template is plain text with `{tokens}` in it. Each token is replaced with a va
 | `{size}`     | [Ship-size](/documentation/connections/ship-size) limit, when restrictive        | `SM`, `MD`, `XM`       |
 | `{wh}`       | The [wormhole type](/documentation/bookmarking/talking-about-holes) code         | `K162`, `N110`         |
 | `{mass}`     | [Mass](/documentation/connections/mass) state, when degraded                     | `reduced`, `crit`      |
-| `{life}`     | [Lifetime](/documentation/connections/lifetime) state, when degraded             | `EOL`, `EOL!`          |
+| `{life}`     | [Lifetime](/documentation/connections/lifetime) state, when degraded             | `EOL`, `EOL!`, `EOL!!` |
 
 The defaults reproduce the standard convention:
 
@@ -50,10 +50,10 @@ A token with no value simply disappears, and the extra spacing around it collaps
 
 - **`{size}`** only shows for **restrictive** holes — `SM` (frigate), `MD` (medium) and `XM` (very large only). A regular large-ship hole is the common case, so it shows nothing.
 - **`{mass}`** stays empty while the hole is fresh and only appears once it's `reduced` or `crit` (critical).
-- **`{life}`** stays empty while the hole is healthy and only appears at `EOL` (under ~4h) or `EOL!` (under ~1h).
+- **`{life}`** stays empty while the hole is healthy and only appears at `EOL` (under ~4h), `EOL!` (under ~1h) or `EOL!!` (expired, closure imminent).
 - **`{wh}`, `{sig}`, `{size}`** are naturally blank on an unidentified hole or a plain stargate connection, so the same template works everywhere.
 
-That's why `{mass}` uses `crit` while `{life}` uses `EOL`/`EOL!` — the two never render the same word, so a glance at the bookmark is never ambiguous.
+That's why `{mass}` uses `crit` while `{life}` uses `EOL`/`EOL!`/`EOL!!` — the two never render the same word, so a glance at the bookmark is never ambiguous.
 
 ## Examples
 

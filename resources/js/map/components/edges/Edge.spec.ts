@@ -63,3 +63,23 @@ describe('Edge ship size badge', () => {
         ).toBe('');
     });
 });
+
+describe('Edge lifetime styling', () => {
+    function lifetimePath(overrides: Partial<TMapConnection>) {
+        return mount(Edge, { props: { geometry, connection: connection(overrides), scale: 1 } }).find('path[data-lifetime]');
+    }
+
+    it('draws an expired hole dashed, like every aging hole', () => {
+        const path = lifetimePath({ lifetime_status: 'expired', mass_status: 'reduced' });
+
+        expect(path.exists()).toBe(true);
+        expect(path.attributes('data-lifetime')).toBe('expired');
+        expect(path.attributes('stroke-dasharray')).toBe('2,6');
+    });
+
+    it('colours the clock badge of an expired hole red', () => {
+        const wrapper = mount(Edge, { props: { geometry, connection: connection({ lifetime_status: 'expired' }), scale: 1 } });
+
+        expect(wrapper.html()).toContain('color: var(--color-red-500)');
+    });
+});

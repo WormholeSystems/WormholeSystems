@@ -22,7 +22,7 @@ export type TMassStatus = 'fresh' | 'reduced' | 'critical';
 
 export type TRoutePreference = 'shorter' | 'safer' | 'less_secure';
 
-export type TLifetimeStatus = 'healthy' | 'eol' | 'critical';
+export type TLifetimeStatus = 'healthy' | 'eol' | 'critical' | 'expired';
 
 export type TShipSize = 'frigate' | 'medium' | 'large' | 'xlarge';
 

@@ -34,7 +34,8 @@ export function useStaleConnections() {
 
         return (map.value.map_connections ?? [])
             .filter((connection) => {
-                if (connection.lifetime_status !== 'critical' || !connection.lifetime_status_updated_at) {
+                const isClosing = connection.lifetime_status === 'critical' || connection.lifetime_status === 'expired';
+                if (!isClosing || !connection.lifetime_status_updated_at) {
                     return false;
                 }
                 return now - Date.parse(connection.lifetime_status_updated_at) > STALE_THRESHOLD_MS;
