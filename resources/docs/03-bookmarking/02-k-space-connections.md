@@ -14,11 +14,11 @@ Bookmarks for connections into **known space** (high-, low-, and null-sec) use t
 
 - **Number** — the system's sequential number, the same [path number](/documentation/bookmarking/why-this-system) used for wormholes. It comes first because it _is_ the route to the hole.
 - **Class** — the security band of the destination:
-  | Prefix | Meaning |
-  | --- | --- |
-  | `HS` | High Sec |
-  | `LS` | Low Sec |
-  | `NS` | Null Sec |
+    | Prefix | Meaning  |
+    | ------ | -------- |
+    | `HS`   | High Sec |
+    | `LS`   | Low Sec  |
+    | `NS`   | Null Sec |
 - **Signature** — the signature **letters only**, no numbers (e.g. `ABC`, not `ABC-123`).
 - **System** — the destination system name.
 - **Region** — the destination region.
