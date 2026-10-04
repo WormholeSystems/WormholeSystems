@@ -7,13 +7,13 @@ import { TShowMapProps } from '@/pages/maps';
 import { AppPageProps } from '@/types';
 import { UTCDate } from '@date-fns/utc';
 import { usePage } from '@inertiajs/vue3';
-import { useNow } from '@vueuse/core';
+import { useIntervalFn, useNow } from '@vueuse/core';
 import { differenceInDays, differenceInHours, differenceInMinutes, format } from 'date-fns';
 import { computed } from 'vue';
 
 const page = usePage<AppPageProps<TShowMapProps>>();
 
-const now = useNow({ interval: 60_000 });
+const now = useNow({ scheduler: (callback) => useIntervalFn(callback, 60_000) });
 
 function formatTimeAgo(date: string) {
     const d = new UTCDate(date);

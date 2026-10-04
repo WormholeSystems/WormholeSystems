@@ -18,7 +18,7 @@ import EveScoutConnections from '@/routes/eve-scout-connections';
 import type { TEveScoutConnection } from '@/types/eve-scout';
 import type { TStaticSolarsystem } from '@/types/static-data';
 import { router, usePoll } from '@inertiajs/vue3';
-import { useLocalStorage, useNow } from '@vueuse/core';
+import { useIntervalFn, useLocalStorage, useNow } from '@vueuse/core';
 import { ArrowDown, ArrowUp, ExternalLink, Plus } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 
@@ -35,7 +35,7 @@ const five_minutes_in_ms = 5 * 60 * 1000;
 // Refresh EVE Scout data every 5 minutes
 usePoll(five_minutes_in_ms, { only: ['eve_scout_connections'] });
 
-const now = useNow({ interval: 60_000 });
+const now = useNow({ scheduler: (callback) => useIntervalFn(callback, 60_000) });
 
 function formatTimestamp(connections: TEveScoutConnection[], currentTime: Date): string | null {
     if (!connections?.length) return null;
