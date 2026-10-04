@@ -22,7 +22,7 @@ function updateMapUserSettings(settings: Partial<TMapUserSetting>) {
 }
 
 function handleKillmailFilterChange(value: AcceptableValue) {
-    if (typeof value === 'string' && (value === 'all' || value === 'jspace' || value === 'kspace')) {
+    if (typeof value === 'string' && (value === 'all' || value === 'jspace' || value === 'kspace' || value === 'selected_system')) {
         updateMapUserSettings({ killmail_filter: value });
     }
 }
@@ -65,9 +65,12 @@ function handleToggleCompactSignatureList(value: boolean | 'indeterminate') {
                                 <SelectItem value="all">All Systems</SelectItem>
                                 <SelectItem value="kspace">K-Space Only</SelectItem>
                                 <SelectItem value="jspace">J-Space Only</SelectItem>
+                                <SelectItem value="selected_system">Selected System Only</SelectItem>
                             </SelectContent>
                         </Select>
-                        <div class="text-sm text-muted-foreground">Filter which killmails are displayed based on system type</div>
+                        <div class="text-sm text-muted-foreground">
+                            Filter which killmails are displayed based on system type or the selected system
+                        </div>
                     </div>
 
                     <div class="flex items-center justify-between">

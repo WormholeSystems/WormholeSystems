@@ -9,5 +9,5 @@ enum KillmailFilter: string
     case All = 'all';
     case JSpace = 'jspace';
     case KSpace = 'kspace';
-
+    case SelectedSystem = 'selected_system';
 }
