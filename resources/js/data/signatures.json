@@ -2344,6 +2344,16 @@
             "spawn_areas": ["5"]
         },
         {
+            "id": 272,
+            "name": "Rampant Drone Fabricator",
+            "signature": null,
+            "signature_category_id": 4,
+            "category_name": "Combat Site",
+            "target_class": null,
+            "extra": null,
+            "spawn_areas": ["1", "2", "3", "4", "5", "6"]
+        },
+        {
             "id": 44,
             "name": "Rock Formation and Wormhole",
             "signature": null,
