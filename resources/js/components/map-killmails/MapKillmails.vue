@@ -14,13 +14,17 @@ import { TKillmail, TMapUserSetting } from '@/types/models';
 import { Deferred, router } from '@inertiajs/vue3';
 import { useEcho } from '@laravel/echo-vue';
 import type { AcceptableValue } from 'reka-ui';
+import { computed, watch } from 'vue';
 
-const { map_killmails, map_id, map_slug, map_user_settings } = defineProps<{
+const { map_killmails, map_id, map_slug, map_user_settings, selected_solarsystem_id } = defineProps<{
     map_killmails?: TKillmail[];
     map_id: number;
     map_slug: string;
     map_user_settings: TMapUserSetting;
+    selected_solarsystem_id?: number | null;
 }>();
+
+const isSelectedSystemFilter = computed(() => map_user_settings.killmail_filter === 'selected_system');
 
 type KillmailReceivedEvent = {
     killmail: TKillmail;
@@ -39,6 +43,15 @@ function handleFilterChange(value: AcceptableValue) {
         },
     );
 }
+
+watch(
+    () => selected_solarsystem_id,
+    () => {
+        if (isSelectedSystemFilter.value) {
+            router.reload({ only: ['map_killmails'] });
+        }
+    },
+);
 
 useOnClient(() =>
     useEcho<KillmailReceivedEvent>(getMapChannelName(map_id), KillmailReceivedEvent, () => {
@@ -66,6 +79,7 @@ useOnClient(() =>
                             <DropdownMenuRadioItem value="all"> All killmails</DropdownMenuRadioItem>
                             <DropdownMenuRadioItem value="jspace"> J-Space killmails</DropdownMenuRadioItem>
                             <DropdownMenuRadioItem value="kspace"> K-Space killmails</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="selected_system"> Selected system killmails</DropdownMenuRadioItem>
                         </DropdownMenuRadioGroup>
                     </DropdownMenuContent>
                 </DropdownMenu>
@@ -82,7 +96,9 @@ useOnClient(() =>
                         </div>
                     </template>
                     <div v-else class="flex h-full flex-col items-center justify-center gap-2 p-4">
-                        <p class="font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">No killmails</p>
+                        <p class="font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">
+                            {{ isSelectedSystemFilter && !selected_solarsystem_id ? 'Select a system to see its killmails' : 'No killmails' }}
+                        </p>
                     </div>
                 </div>
                 <template #fallback>

@@ -53,13 +53,14 @@ beforeEach(function () {
 });
 
 /**
+ * @param  array<string, int>  $query
  * @return list<int>
  */
-function loadMapKillmailIds(Map $map): array
+function loadMapKillmailIds(Map $map, array $query = []): array
 {
     $ids = [];
 
-    test()->get(route('maps.show', $map))
+    test()->get(route('maps.show', ['map' => $map, ...$query]))
         ->assertSuccessful()
         ->assertInertia(function ($page) use (&$ids): void {
             $page->loadDeferredProps(function ($reload) use (&$ids): void {
@@ -119,3 +120,43 @@ it('runs one bounded lookup per system instead of scanning every killmail', func
     expect($unionQuery)->not->toBeNull()
         ->and(mb_substr_count($unionQuery, 'where `solarsystem_id` = ?'))->toBe(2);
 });
+
+it('accepts the selected system killmail filter', function () {
+    $this->putJson(route('maps.user-settings.update', $this->map), [
+        'killmail_filter' => 'selected_system',
+    ])->assertRedirect();
+
+    $settings = MapUserSetting::query()->where('user_id', $this->user->id)->where('map_id', $this->map->id)->sole();
+
+    expect($settings->killmail_filter)->toBe(KillmailFilter::SelectedSystem);
+});
+
+it('only returns killmails from the selected system with the selected system filter', function () {
+    MapUserSetting::query()->updateOrCreate(
+        ['user_id' => $this->user->id, 'map_id' => $this->map->id],
+        ['killmail_filter' => KillmailFilter::SelectedSystem],
+    );
+
+    makeMapKillmails([1, 2, 3], $this->knownSpaceSystem);
+    makeMapKillmails([4, 5], $this->wormholeSystem);
+
+    expect(loadMapKillmailIds($this->map, ['solarsystem_id' => $this->knownSpaceSystem]))->toBe([3, 2, 1])
+        ->and(loadMapKillmailIds($this->map, ['solarsystem_id' => $this->wormholeSystem]))->toBe([5, 4]);
+});
+
+it('returns no killmails with the selected system filter when the selection is missing or off the map', function (?string $selection) {
+    MapUserSetting::query()->updateOrCreate(
+        ['user_id' => $this->user->id, 'map_id' => $this->map->id],
+        ['killmail_filter' => KillmailFilter::SelectedSystem],
+    );
+
+    makeMapKillmails([1, 2], $this->knownSpaceSystem);
+    makeMapKillmails([3], $this->offMapSystem);
+
+    $query = $selection === null ? [] : ['solarsystem_id' => $this->{$selection}];
+
+    expect(loadMapKillmailIds($this->map, $query))->toBe([]);
+})->with([
+    'nothing selected' => [null],
+    'selected system off the map' => ['offMapSystem'],
+]);

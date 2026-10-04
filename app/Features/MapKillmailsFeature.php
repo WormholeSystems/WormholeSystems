@@ -28,6 +28,7 @@ final readonly class MapKillmailsFeature implements ProvidesInertiaProperties
     public function __construct(
         private Map $map,
         private KillmailFilter $filter,
+        private ?int $selectedSolarsystemId = null,
         private array $hiddenCards = [],
     ) {}
 
@@ -47,6 +48,10 @@ final readonly class MapKillmailsFeature implements ProvidesInertiaProperties
      */
     private function getMapKills(): ResourceCollection
     {
+        if ($this->filter === KillmailFilter::SelectedSystem && $this->selectedSolarsystemId === null) {
+            return collect()->toResourceCollection(KillmailResource::class);
+        }
+
         return Killmail::query()
             ->with([
                 'shipType',
@@ -91,6 +96,10 @@ final readonly class MapKillmailsFeature implements ProvidesInertiaProperties
      */
     private function filteredSolarsystemIds(): Collection
     {
+        if ($this->filter === KillmailFilter::SelectedSystem) {
+            return $this->selectedSolarsystemId === null ? collect() : collect([$this->selectedSolarsystemId]);
+        }
+
         $solarsystem_ids = $this->map->mapSolarsystems->pluck('solarsystem_id')->unique()->values();
 
         $type = match ($this->filter) {

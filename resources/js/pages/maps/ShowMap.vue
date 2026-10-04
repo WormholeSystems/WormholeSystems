@@ -273,7 +273,13 @@ const handleResizeEnd = () => {
                 @resized="handleResizeEnd"
                 v-bind="getLayoutItem('killmails').value"
             >
-                <MapKillmails :map_killmails="map_killmails" :map_id="map.id" :map_slug="map.slug" :map_user_settings="map_user_settings" />
+                <MapKillmails
+                    :map_killmails="map_killmails"
+                    :map_id="map.id"
+                    :map_slug="map.slug"
+                    :map_user_settings="map_user_settings"
+                    :selected_solarsystem_id="selected_map_solarsystem?.solarsystem_id"
+                />
             </GridItem>
 
             <!-- Navigation Section -->

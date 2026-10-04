@@ -83,7 +83,7 @@ final class MapController extends Controller
             ->with(new MapTrackingFeature($map, $request->integer('origin_solarsystem_id') ?: null, $request->integer('target_solarsystem_id') ?: null))
             ->with(new MapCharactersFeature($map, $canViewCharacters))
             ->with(new EveScoutConnectionsFeature($this->eve_scout_service))
-            ->with(new MapKillmailsFeature($map, $settings->killmail_filter ?? KillmailFilter::All, $hiddenCards))
+            ->with(new MapKillmailsFeature($map, $settings->killmail_filter ?? KillmailFilter::All, $selected_map_solarsystem?->solarsystem_id, $hiddenCards))
             ->with(new ShipHistoryFeature($user, $canViewCharacters, $hiddenCards))
             ->with(new MapNavigationFeature($map, $hiddenCards))
             ->with(new ThreatAnalysisFeature($selected_map_solarsystem, $hiddenCards))
