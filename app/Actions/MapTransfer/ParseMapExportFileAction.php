@@ -35,6 +35,7 @@ final readonly class ParseMapExportFileAction
         'bookmark_ignored_alias' => '?string:255',
         'home_solarsystem_id' => '?int',
         'rally_solarsystem_id' => '?int',
+        'rally_solarsystem_ids' => '?list:int',
     ];
 
     private const array ACCESS_SPEC = [
@@ -228,6 +229,7 @@ final readonly class ParseMapExportFileAction
             'size' => is_string($value) && mb_strlen($value) === (int) $param,
             'in' => is_string($value) && in_array($value, explode(',', (string) $param), true),
             'enum' => is_string($value) && $param::tryFrom($value) !== null,
+            'list' => is_array($value) && array_is_list($value) && array_all($value, fn (mixed $item): bool => $this->matchesType($item, (string) $param)),
             default => false,
         };
     }

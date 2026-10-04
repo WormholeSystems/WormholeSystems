@@ -30,7 +30,7 @@ use function sprintf;
  * @property bool $constant_width_enabled
  * @property string|null $share_token
  * @property int|null $home_solarsystem_id
- * @property int|null $rally_solarsystem_id
+ * @property list<int> $rally_solarsystem_ids
  * @property string $bookmark_format_wormhole
  * @property string $bookmark_format_kspace
  * @property string $bookmark_format_return
@@ -54,6 +54,13 @@ final class Map extends Model
 {
     /** @use HasFactory<MapFactory> */
     use HasFactory, HasSlug;
+
+    /**
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'rally_solarsystem_ids' => '[]',
+    ];
 
     public function isPubliclyAccessible(): bool
     {
@@ -210,6 +217,7 @@ final class Map extends Model
             'allow_layout_override' => 'boolean',
             'constant_width_enabled' => 'boolean',
             'bookmark_alias_scheme' => AliasScheme::class,
+            'rally_solarsystem_ids' => 'array',
         ];
     }
 }

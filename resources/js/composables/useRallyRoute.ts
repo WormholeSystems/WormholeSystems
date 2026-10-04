@@ -2,9 +2,10 @@ import { useRoutingSetup } from '@/composables/routing/useRoutingSetup';
 import { useMap } from '@/composables/useMap';
 import { findRoute, initializeRouting } from '@/composables/useRoutingWorker';
 import type { RouteStep } from '@/routing/types';
-import { computed, readonly, ref, watch } from 'vue';
+import { readonly, ref, watch } from 'vue';
 
-const rallyRoute = ref<RouteStep[]>([]);
+/** The route from home to each rally point, keyed by the rally point's solarsystem id. */
+const rallyRoutes = ref<Record<number, RouteStep[]>>({});
 let initialized = false;
 
 export function useRallyRoute() {
@@ -13,28 +14,26 @@ export function useRallyRoute() {
 
         const map = useMap();
 
-        const homeSolarsystemId = computed(() => map.value.home_solarsystem_id ?? null);
-
         const { routingSettings, convertedEveScoutConnections, getConnections } = useRoutingSetup({
-            mapConnections: computed(() => map.value.map_connections ?? []),
-            mapSolarsystems: computed(() => map.value.map_solarsystems ?? []),
+            mapConnections: () => map.value.map_connections ?? [],
+            mapSolarsystems: () => map.value.map_solarsystems ?? [],
         });
 
         watch(
             [
-                homeSolarsystemId,
-                () => map.value.rally_solarsystem_id,
+                () => map.value.home_solarsystem_id,
+                () => map.value.rally_solarsystem_ids,
                 () => map.value.map_connections,
                 () => map.value.map_solarsystems,
                 routingSettings,
                 convertedEveScoutConnections,
             ],
             async () => {
-                const homeId = homeSolarsystemId.value;
-                const rallyId = map.value.rally_solarsystem_id;
+                const homeId = map.value.home_solarsystem_id;
+                const rallyIds = map.value.rally_solarsystem_ids;
 
-                if (!homeId || !rallyId) {
-                    rallyRoute.value = [];
+                if (!homeId || rallyIds.length === 0) {
+                    rallyRoutes.value = {};
                     return;
                 }
 
@@ -42,26 +41,25 @@ export function useRallyRoute() {
 
                 const { dynamicConnections, eveScoutConnections } = getConnections();
 
-                const result = await findRoute(routingSettings.value, homeId, rallyId, dynamicConnections, eveScoutConnections, []);
+                const results = await Promise.all(
+                    rallyIds.map((rallyId) => findRoute(routingSettings.value, homeId, rallyId, dynamicConnections, eveScoutConnections, [])),
+                );
 
-                rallyRoute.value = result.route;
+                rallyRoutes.value = Object.fromEntries(rallyIds.map((rallyId, index) => [rallyId, results[index].route]));
             },
             { immediate: true },
         );
     }
 
-    const rallyRouteSystemIds = computed(() => new Set(rallyRoute.value.map((step) => step.id)));
-
     function getRallyRouteInfo(fromSolarsystemId: number, toSolarsystemId: number): { onRoute: boolean; reversed: boolean } {
-        const route = rallyRoute.value;
-        if (route.length < 2) return { onRoute: false, reversed: false };
-
-        for (let i = 0; i < route.length - 1; i++) {
-            if (route[i].id === fromSolarsystemId && route[i + 1].id === toSolarsystemId) {
-                return { onRoute: true, reversed: false };
-            }
-            if (route[i].id === toSolarsystemId && route[i + 1].id === fromSolarsystemId) {
-                return { onRoute: true, reversed: true };
+        for (const route of Object.values(rallyRoutes.value)) {
+            for (let i = 0; i < route.length - 1; i++) {
+                if (route[i].id === fromSolarsystemId && route[i + 1].id === toSolarsystemId) {
+                    return { onRoute: true, reversed: false };
+                }
+                if (route[i].id === toSolarsystemId && route[i + 1].id === fromSolarsystemId) {
+                    return { onRoute: true, reversed: true };
+                }
             }
         }
 
@@ -69,8 +67,7 @@ export function useRallyRoute() {
     }
 
     return {
-        rallyRoute: readonly(rallyRoute),
-        rallyRouteSystemIds,
+        rallyRoutes: readonly(rallyRoutes),
         getRallyRouteInfo,
     };
 }

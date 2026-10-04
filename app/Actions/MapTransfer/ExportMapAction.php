@@ -82,7 +82,7 @@ final readonly class ExportMapAction
             'bookmark_alias_scheme' => $map->bookmark_alias_scheme->value,
             'bookmark_ignored_alias' => $map->bookmark_ignored_alias,
             'home_solarsystem_id' => $map->home_solarsystem_id,
-            'rally_solarsystem_id' => $map->rally_solarsystem_id,
+            'rally_solarsystem_ids' => $map->rally_solarsystem_ids,
         ];
     }
 

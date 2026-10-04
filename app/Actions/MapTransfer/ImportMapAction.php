@@ -90,10 +90,8 @@ final readonly class ImportMapAction
      */
     private function knownSolarsystemIds(array $sections): array
     {
-        $ids = collect([
-            $sections['settings']['home_solarsystem_id'] ?? null,
-            $sections['settings']['rally_solarsystem_id'] ?? null,
-        ])
+        $ids = collect([$sections['settings']['home_solarsystem_id'] ?? null])
+            ->merge($this->rallySolarsystemIds($sections['settings'] ?? []))
             ->merge(collect($sections['solarsystems'] ?? [])->pluck('solarsystem_id'))
             ->merge(collect($sections['routes']['route_solarsystems'] ?? [])->pluck('solarsystem_id'))
             ->merge(collect($sections['routes']['ignored_solarsystems'] ?? [])->pluck('solarsystem_id'))
@@ -124,7 +122,12 @@ final readonly class ImportMapAction
             'bookmark_alias_scheme' => $settings['bookmark_alias_scheme'],
             'bookmark_ignored_alias' => $settings['bookmark_ignored_alias'] ?? '',
             'home_solarsystem_id' => $this->knownOrNull($settings['home_solarsystem_id'], $known_solarsystem_ids),
-            'rally_solarsystem_id' => $this->knownOrNull($settings['rally_solarsystem_id'], $known_solarsystem_ids),
+            'rally_solarsystem_ids' => collect($this->rallySolarsystemIds($settings))
+                ->filter(fn (int $solarsystem_id): bool => isset($known_solarsystem_ids[$solarsystem_id]))
+                ->unique()
+                ->take(-config()->integer('map.max_rally_points'))
+                ->values()
+                ->all(),
         ]);
 
         $summary->updated('settings');
@@ -438,6 +441,21 @@ final readonly class ImportMapAction
     /**
      * @param  array<int, bool>  $known_solarsystem_ids
      */
+    /**
+     * Older exports carry a single rally point under `rally_solarsystem_id`.
+     *
+     * @param  array<string, mixed>  $settings
+     * @return list<int>
+     */
+    private function rallySolarsystemIds(array $settings): array
+    {
+        if (isset($settings['rally_solarsystem_ids'])) {
+            return $settings['rally_solarsystem_ids'];
+        }
+
+        return isset($settings['rally_solarsystem_id']) ? [$settings['rally_solarsystem_id']] : [];
+    }
+
     private function knownOrNull(?int $solarsystem_id, array $known_solarsystem_ids): ?int
     {
         return $solarsystem_id !== null && isset($known_solarsystem_ids[$solarsystem_id])
