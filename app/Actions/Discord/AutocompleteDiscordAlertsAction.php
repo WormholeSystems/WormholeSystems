@@ -7,7 +7,6 @@ namespace App\Actions\Discord;
 use App\Builders\MapAccessBuilder;
 use App\Models\DiscordAccount;
 use App\Models\MapAlert;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 
@@ -20,8 +19,7 @@ final readonly class AutocompleteDiscordAlertsAction
             ->bot()
             ->where(fn ($query) => $query
                 ->where('created_by_user_id', $account->user_id)
-                ->orWhereHas('map.mapAccessors', function (Builder $query) use ($account): void {
-                    assert($query instanceof MapAccessBuilder);
+                ->orWhereHas('map.mapAccessors', function (MapAccessBuilder $query) use ($account): void {
                     $query->notExpired()->whereIn('accessible_id', $account->user->getAccessibleIds());
                 }))
             ->with(['map', 'targetSolarsystem:id,name'])

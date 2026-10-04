@@ -9,7 +9,6 @@ use App\Builders\EsiTokenBuilder;
 use App\Models\User;
 use App\Scopes\CharacterIsOnline;
 use Illuminate\Container\Attributes\CurrentUser;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -28,8 +27,7 @@ final class BulkWaypointController extends Controller
         ]);
 
         $characters = $user->characters()
-            ->whereHas('esiTokens', function (Builder $query): void {
-                assert($query instanceof EsiTokenBuilder);
+            ->whereHas('esiTokens', function (EsiTokenBuilder $query): void {
                 $query->hasWaypointScopes();
             })
             ->tap(new CharacterIsOnline)
