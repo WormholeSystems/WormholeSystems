@@ -9,7 +9,7 @@ export default defineConfig({
         sourcemap: true,
         target: 'es2022',
         lib: {
-            entry: path.resolve(__dirname, 'resources/js/routing/routing.worker.ts'),
+            entry: path.resolve(import.meta.dirname, 'resources/js/routing/routing.worker.ts'),
             formats: ['es'],
             fileName: () => 'routing.worker.js',
         },
@@ -21,7 +21,7 @@ export default defineConfig({
     },
     resolve: {
         alias: {
-            '@': path.resolve(__dirname, './resources/js'),
+            '@': path.resolve(import.meta.dirname, './resources/js'),
         },
     },
 });
