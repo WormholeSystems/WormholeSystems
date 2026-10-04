@@ -109,6 +109,13 @@ function handleLifetimeChange(lifetime: AcceptableValue) {
                         </span>
                         <span class="text-muted-foreground">&lt; 1h</span>
                     </ContextMenuRadioItem>
+                    <ContextMenuRadioItem value="expired" class="flex items-center justify-between gap-2">
+                        <span class="flex items-center gap-2">
+                            <span class="inline-block size-2 rounded-full bg-red-500 motion-safe:animate-pulse" />
+                            Expired
+                        </span>
+                        <span class="text-muted-foreground">imminent</span>
+                    </ContextMenuRadioItem>
                 </ContextMenuRadioGroup>
             </ContextMenuSubContent>
         </ContextMenuSub>

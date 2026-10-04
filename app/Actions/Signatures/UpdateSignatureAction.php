@@ -102,23 +102,14 @@ final readonly class UpdateSignatureAction
         };
     }
 
-    private function getLifetimeSeverity(LifetimeStatus $status): int
-    {
-        return match ($status) {
-            LifetimeStatus::Healthy => 1,
-            LifetimeStatus::EndOfLife => 2,
-            LifetimeStatus::Critical => 3,
-        };
-    }
-
     private function getNewLifetimeValue(Signature $signature, SignatureData $data): LifetimeStatus
     {
         if (! $data->lifetime instanceof Optional) {
             return $data->lifetime;
         }
 
-        $connection_lifetime_severity = $this->getLifetimeSeverity($signature->mapConnection->lifetime);
-        $signature_lifetime_severity = $this->getLifetimeSeverity($signature->lifetime);
+        $connection_lifetime_severity = $signature->mapConnection->lifetime->severity();
+        $signature_lifetime_severity = $signature->lifetime->severity();
 
         return match (true) {
             $signature_lifetime_severity >= $connection_lifetime_severity => $signature->lifetime,

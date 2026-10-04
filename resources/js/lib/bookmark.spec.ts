@@ -343,6 +343,22 @@ describe('formatBookmarkName (oppositeAlias / return format)', () => {
     });
 });
 
+describe('formatBookmarkName ({life} token)', () => {
+    const system = { alias: 'A', solarsystem: { class: '3' as const, name: 'J123456' } };
+    const formats: TBookmarkFormats = { bookmark_format_wormhole: '{alias} {sig} {life}' };
+
+    it.each([
+        ['healthy', 'A ABC'],
+        ['eol', 'A ABC EOL'],
+        ['critical', 'A ABC EOL!'],
+        ['expired', 'A ABC EOL!!'],
+    ])('renders a %s hole as "%s"', (lifetime, expected) => {
+        const context = { signatureId: 'ABC-123', shipSize: null, massStatus: null, lifetime, wormholeCode: null };
+
+        expect(formatBookmarkName(system, context, formats)).toBe(expected);
+    });
+});
+
 describe('buildSignatureBookmark (detectReturn)', () => {
     it('renders the return template for an up-chain connected target when detectReturn is true', () => {
         const name = buildSignatureBookmark({

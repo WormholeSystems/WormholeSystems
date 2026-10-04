@@ -29,12 +29,12 @@ final class MapConnectionBuilder extends Builder
 
     public function isNotTimeCritical(): self
     {
-        return $this->where('lifetime', '!=', LifetimeStatus::Critical);
+        return $this->whereNotIn('lifetime', [LifetimeStatus::Critical, LifetimeStatus::Expired]);
     }
 
     public function isStale(): self
     {
-        return $this->where('lifetime', LifetimeStatus::Critical)
+        return $this->whereIn('lifetime', [LifetimeStatus::Critical, LifetimeStatus::Expired])
             ->whereNotNull('lifetime_updated_at')
             ->where('lifetime_updated_at', '<=', now()->subHour());
     }

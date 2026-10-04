@@ -15,6 +15,7 @@ There are two independent filters, and each one names the **riskiest** state you
 | **Healthy Only** | &gt; 4 hours | healthy only             |
 | **End of Life**  | &lt; 4 hours | healthy + EOL            |
 | **Critical**     | &lt; 1 hour  | healthy + EOL + critical |
+| **Expired**      | imminent     | every wormhole           |
 
 ## Mass filter
 

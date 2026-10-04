@@ -117,6 +117,37 @@ it('never deletes the home system even when it is unreachable from a pinned anch
     expect(MapSolarsystem::find($home->id))->not->toBeNull();
 });
 
+it('removes an expired connection marked over an hour ago', function () {
+    $map = Map::factory()->create();
+    $anchor = pinnedSystem($map, 30004001);
+    $leaf = placeMapSolarsystem($map, 30004002);
+    $connection = staleConnection($map, $anchor, $leaf);
+    $connection->update(['lifetime' => LifetimeStatus::Expired]);
+
+    $count = app(CleanStaleMapConnectionsAction::class)->handle($map);
+
+    expect($count)->toBe(1)
+        ->and(MapConnection::find($connection->id))->toBeNull();
+});
+
+it('keeps an expired connection that was only just marked', function () {
+    $map = Map::factory()->create();
+    $anchor = pinnedSystem($map, 30004001);
+    $leaf = placeMapSolarsystem($map, 30004002);
+    $connection = MapConnection::factory()->create([
+        'map_id' => $map->id,
+        'from_map_solarsystem_id' => $anchor->id,
+        'to_map_solarsystem_id' => $leaf->id,
+        'lifetime' => LifetimeStatus::Expired,
+        'lifetime_updated_at' => now()->subMinutes(5),
+    ]);
+
+    $count = app(CleanStaleMapConnectionsAction::class)->handle($map);
+
+    expect($count)->toBe(0)
+        ->and(MapConnection::find($connection->id))->not->toBeNull();
+});
+
 it('leaves connections that are not yet stale untouched', function () {
     $map = Map::factory()->create();
     $anchor = pinnedSystem($map, 30004001);

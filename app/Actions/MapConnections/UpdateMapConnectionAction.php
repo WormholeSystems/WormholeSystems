@@ -151,15 +151,6 @@ final readonly class UpdateMapConnectionAction
         return $worst_mass_status;
     }
 
-    private function getLifetimeSeverity(LifetimeStatus $status): int
-    {
-        return match ($status) {
-            LifetimeStatus::Healthy => 1,
-            LifetimeStatus::EndOfLife => 2,
-            LifetimeStatus::Critical => 3,
-        };
-    }
-
     private function getNewLifetimeValue(MapConnection $mapConnection, MapConnectionData $data): LifetimeStatus
     {
         if (! $data->lifetime instanceof Optional) {
@@ -171,12 +162,12 @@ final readonly class UpdateMapConnectionAction
             return $mapConnection->lifetime;
         }
 
-        $connection_lifetime_severity = $this->getLifetimeSeverity($mapConnection->lifetime);
+        $connection_lifetime_severity = $mapConnection->lifetime->severity();
         $max_severity = $connection_lifetime_severity;
         $worst_lifetime = $mapConnection->lifetime;
 
         foreach ($signatures as $signature) {
-            $signature_severity = $this->getLifetimeSeverity($signature->lifetime);
+            $signature_severity = $signature->lifetime->severity();
             if ($signature_severity > $max_severity) {
                 $max_severity = $signature_severity;
                 $worst_lifetime = $signature->lifetime;

@@ -80,6 +80,10 @@ function normalizeLifetimeStatus(raw?: string | null): TLifetimeStatus {
 
     const normalized = raw.toLowerCase();
 
+    if (normalized.includes('expired')) {
+        return 'expired';
+    }
+
     if (normalized.includes('eol')) {
         return 'eol';
     }

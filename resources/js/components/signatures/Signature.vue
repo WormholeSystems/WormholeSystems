@@ -389,6 +389,12 @@ function copyBookmark() {
                                     Critical
                                 </span>
                             </DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="expired" class="text-xs">
+                                <span class="flex items-center gap-2">
+                                    <span class="inline-block size-2 rounded-full bg-red-500 motion-safe:animate-pulse" />
+                                    Expired
+                                </span>
+                            </DropdownMenuRadioItem>
                         </DropdownMenuRadioGroup>
 
                         <DropdownMenuSeparator />
