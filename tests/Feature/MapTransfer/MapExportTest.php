@@ -221,3 +221,14 @@ it('exports a connection whose ship size nobody has set', function () {
 
     expect($payload['sections']['connections'][0]['ship_size'])->toBeNull();
 });
+
+it('exports every rally point', function () {
+    makeSolarsystem(31000001);
+    makeSolarsystem(31000002);
+    $map = Map::factory()->create(['rally_solarsystem_ids' => [31000001, 31000002]]);
+
+    $payload = transferExportPayload($map, ['settings']);
+
+    expect($payload['sections']['settings']['rally_solarsystem_ids'])->toBe([31000001, 31000002])
+        ->and($payload['sections']['settings'])->not->toHaveKey('rally_solarsystem_id');
+});

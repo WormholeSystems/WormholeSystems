@@ -55,7 +55,7 @@ function mapPayload(systems: TMapSolarsystem[], connections: TMapConnection[], o
         name: 'Test',
         slug: 'test',
         home_solarsystem_id: null,
-        rally_solarsystem_id: null,
+        rally_solarsystem_ids: [],
         layout: 'manual',
         allow_layout_override: false,
         constant_width_enabled: false,

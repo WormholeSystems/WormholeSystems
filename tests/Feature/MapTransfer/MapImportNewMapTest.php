@@ -181,3 +181,51 @@ it('round-trips a full export into an equivalent new map', function () {
         ->and($copy->mapOwner->accessible_id)->toBe($user->active_character->id)
         ->and($copy->share_token)->toBeNull();
 });
+
+function rallyImportSettings(array $rally): array
+{
+    return [
+        'name' => 'Rally Chain',
+        'layout' => 'manual',
+        'allow_layout_override' => true,
+        'constant_width_enabled' => false,
+        'bookmark_format_wormhole' => '{alias}',
+        'bookmark_format_kspace' => '{name}',
+        'bookmark_format_return' => 'return',
+        'bookmark_alias_scheme' => 'numeric',
+        'bookmark_ignored_alias' => null,
+        'home_solarsystem_id' => null,
+        ...$rally,
+    ];
+}
+
+it('imports rally points', function (array $rally, array $expected) {
+    makeSolarsystem(31000601);
+    makeSolarsystem(31000602);
+    makeSolarsystem(31000603);
+
+    actingAs(transferImporter())
+        ->post(route('maps.import.store'), [
+            'file' => transferNewMapFile(['settings' => rallyImportSettings($rally)]),
+            'sections' => ['settings'],
+        ])
+        ->assertRedirect()
+        ->assertSessionDoesntHaveErrors();
+
+    expect(Map::query()->where('name', 'Rally Chain')->firstOrFail()->rally_solarsystem_ids)->toBe($expected);
+})->with([
+    'list' => [['rally_solarsystem_ids' => [31000601, 31000602]], [31000601, 31000602]],
+    'legacy single id' => [['rally_solarsystem_id' => 31000601], [31000601]],
+    'unknown ids dropped' => [['rally_solarsystem_ids' => [99999999, 31000602]], [31000602]],
+    'capped to the newest' => [['rally_solarsystem_ids' => [31000601, 31000602, 31000603]], [31000602, 31000603]],
+    'none' => [[], []],
+]);
+
+it('rejects malformed rally points', function () {
+    actingAs(transferImporter())
+        ->post(route('maps.import.store'), [
+            'file' => transferNewMapFile(['settings' => rallyImportSettings(['rally_solarsystem_ids' => ['abc']])]),
+            'sections' => ['settings'],
+        ])
+        ->assertSessionHasErrors('file');
+});

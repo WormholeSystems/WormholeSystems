@@ -6,15 +6,16 @@ import { computed, type MaybeRefOrGetter, toValue } from 'vue';
 export function useRallyPoint(solarsystemId: MaybeRefOrGetter<number>) {
     const map = useMap();
 
-    const isRally = computed(() => map.value.rally_solarsystem_id === toValue(solarsystemId));
+    const isRally = computed(() => map.value.rally_solarsystem_ids.includes(toValue(solarsystemId)));
 
     function toggleRallyPoint() {
-        const id = toValue(solarsystemId);
-        router.post(
-            RallyPointController.store(map.value.slug).url,
-            { solarsystem_id: isRally.value ? null : id },
-            { preserveScroll: true, preserveState: true },
-        );
+        const action = isRally.value ? RallyPointController.destroy(map.value.slug) : RallyPointController.store(map.value.slug);
+        router.visit(action.url, {
+            method: action.method,
+            data: { solarsystem_id: toValue(solarsystemId) },
+            preserveScroll: true,
+            preserveState: true,
+        });
     }
 
     return {

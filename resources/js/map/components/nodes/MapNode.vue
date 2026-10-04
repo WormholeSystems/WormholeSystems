@@ -73,7 +73,7 @@ const isHome = computed(() => {
 });
 
 const isRally = computed(() => {
-    return system.value !== null && store.meta.value?.rally_solarsystem_id === system.value.solarsystem_id;
+    return system.value !== null && (store.meta.value?.rally_solarsystem_ids.includes(system.value.solarsystem_id) ?? false);
 });
 
 const threatLevel = computed(() => {

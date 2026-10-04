@@ -28,7 +28,7 @@ final class MapMetadataResource extends JsonResource
             'name' => $this->name,
             'slug' => $this->slug,
             'home_solarsystem_id' => $this->home_solarsystem_id,
-            'rally_solarsystem_id' => $this->rally_solarsystem_id,
+            'rally_solarsystem_ids' => $this->rally_solarsystem_ids,
             'layout' => $this->layout,
             'allow_layout_override' => $this->allow_layout_override,
             'constant_width_enabled' => $this->constant_width_enabled,

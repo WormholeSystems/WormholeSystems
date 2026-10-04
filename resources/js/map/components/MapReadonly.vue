@@ -25,7 +25,7 @@ const {
     scale = 1,
     grid_size = 20,
     home_solarsystem_id = null,
-    rally_solarsystem_id = null,
+    rally_solarsystem_ids = [],
     pilots = {},
 } = defineProps<{
     solarsystems: TMapSolarsystem[];
@@ -34,7 +34,7 @@ const {
     /** Grid cell size in base units; matches the live map default (20). */
     grid_size?: number;
     home_solarsystem_id?: number | null;
-    rally_solarsystem_id?: number | null;
+    rally_solarsystem_ids?: number[];
     pilots?: Record<number, TCharacter[]>;
 }>();
 
@@ -91,7 +91,7 @@ function nodeTransform(system: TMapSolarsystem): string {
                     :is-hovered="false"
                     :is-active="false"
                     :is-home="home_solarsystem_id === solarsystem.id"
-                    :is-rally="rally_solarsystem_id === solarsystem.solarsystem_id"
+                    :is-rally="rally_solarsystem_ids.includes(solarsystem.solarsystem_id)"
                     :fixed-width="true"
                 />
             </div>
