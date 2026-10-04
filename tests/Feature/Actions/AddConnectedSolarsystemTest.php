@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Actions\MapSolarsystem\StoreMapSolarsystemAction;
+use App\Enums\ConnectionType;
 use App\Enums\Permission;
 use App\Models\Character;
 use App\Models\Map;
@@ -123,4 +124,37 @@ it('adds a connected system through the HTTP endpoint', function () {
             ->where('from_map_solarsystem_id', $origin->id)
             ->where('to_map_solarsystem_id', $target->id)
             ->exists())->toBeTrue();
+});
+
+it('links gate neighbors with a stargate connection', function () {
+    $map = Map::factory()->create();
+    makeSolarsystem(30013020, type: 'eve');
+    $targetId = makeSolarsystem(30013021, type: 'eve');
+    linkSolarsystemsByStargate(30013020, $targetId);
+    $origin = placeMapSolarsystem($map, 30013020);
+
+    app(StoreMapSolarsystemAction::class)->handle($map, [
+        'solarsystem_id' => $targetId,
+        'position_x' => 100,
+        'position_y' => 100,
+        'connect_to_map_solarsystem_id' => $origin->id,
+    ]);
+
+    expect(MapConnection::query()->where('map_id', $map->id)->sole()->type)->toBe(ConnectionType::Stargate);
+});
+
+it('links systems without a gate between them with a wormhole connection', function () {
+    $map = Map::factory()->create();
+    makeSolarsystem(30013022, type: 'eve');
+    $targetId = makeSolarsystem(30013023, type: 'eve');
+    $origin = placeMapSolarsystem($map, 30013022);
+
+    app(StoreMapSolarsystemAction::class)->handle($map, [
+        'solarsystem_id' => $targetId,
+        'position_x' => 100,
+        'position_y' => 100,
+        'connect_to_map_solarsystem_id' => $origin->id,
+    ]);
+
+    expect(MapConnection::query()->where('map_id', $map->id)->sole()->type)->toBe(ConnectionType::Wormhole);
 });

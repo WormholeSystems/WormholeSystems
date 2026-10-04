@@ -87,3 +87,54 @@ it('forbids a viewer from updating a connection', function () {
 
     expect($connection->fresh()->type)->toBe(ConnectionType::Wormhole);
 });
+
+/**
+ * Manually draw a connection between two placed systems and return its stored type.
+ */
+function storeManualConnection(int $from_solarsystem_id, int $to_solarsystem_id, array $attributes = []): ConnectionType
+{
+    $map = Map::factory()->create();
+    $from = placeMapSolarsystem($map, $from_solarsystem_id);
+    $to = placeMapSolarsystem($map, $to_solarsystem_id, 300, 300);
+
+    actingAs(connectionUser($map, Permission::Member))
+        ->post('/map-connections', [
+            'from_map_solarsystem_id' => $from->id,
+            'to_map_solarsystem_id' => $to->id,
+            ...$attributes,
+        ])
+        ->assertRedirect();
+
+    return MapConnection::query()->where('map_id', $map->id)->sole()->type;
+}
+
+it('creates a manual connection between gate neighbors as a stargate', function () {
+    makeSolarsystem(30009611, type: 'eve');
+    makeSolarsystem(30009612, type: 'eve');
+    linkSolarsystemsByStargate(30009611, 30009612);
+
+    expect(storeManualConnection(30009611, 30009612))->toBe(ConnectionType::Stargate);
+});
+
+it('creates a manual connection between k-space systems without a gate as a wormhole', function () {
+    makeSolarsystem(30009613, type: 'eve');
+    makeSolarsystem(30009614, type: 'eve');
+
+    expect(storeManualConnection(30009613, 30009614))->toBe(ConnectionType::Wormhole);
+});
+
+it('creates a manual connection involving wormhole space as a wormhole', function () {
+    makeSolarsystem(31009615, type: 'wormhole');
+    makeSolarsystem(31009616, type: 'wormhole');
+    linkSolarsystemsByStargate(31009615, 31009616);
+
+    expect(storeManualConnection(31009615, 31009616))->toBe(ConnectionType::Wormhole);
+});
+
+it('keeps a manual connection with an identified wormhole type as a wormhole', function () {
+    makeSolarsystem(30009617, type: 'eve');
+    makeSolarsystem(30009618, type: 'eve');
+    linkSolarsystemsByStargate(30009617, 30009618);
+
+    expect(storeManualConnection(30009617, 30009618, ['wormhole_id' => makeWormhole()->id]))->toBe(ConnectionType::Wormhole);
+});

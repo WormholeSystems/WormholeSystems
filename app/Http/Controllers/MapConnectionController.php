@@ -11,14 +11,24 @@ use App\Data\MapConnectionData;
 use App\Http\Requests\StoreMapConnectionRequest;
 use App\Http\Requests\UpdateMapConnectionRequest;
 use App\Models\MapConnection;
+use App\Utilities\StargatePairDetector;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 
 final class MapConnectionController extends Controller
 {
-    public function store(StoreMapConnectionRequest $request, CreateMapConnectionAction $action): RedirectResponse
+    public function store(StoreMapConnectionRequest $request, CreateMapConnectionAction $action, StargatePairDetector $stargatePairDetector): RedirectResponse
     {
-        $action->handle($request->validated());
+        $data = $request->validated();
+
+        /* An identified wormhole type is never a gate; otherwise gate neighbors
+         * default to a stargate so they don't pose as wormholes.
+         */
+        if (! isset($data['wormhole_id'])) {
+            $data['type'] = $stargatePairDetector->connectionTypeBetween((int) $data['from_map_solarsystem_id'], (int) $data['to_map_solarsystem_id']);
+        }
+
+        $action->handle($data);
 
         return back()->notify(
             'Connection created!',

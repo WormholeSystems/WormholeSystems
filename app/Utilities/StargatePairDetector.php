@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Utilities;
 
+use App\Enums\ConnectionType;
+use App\Models\MapSolarsystem;
 use App\Models\Solarsystem;
 use NicolasKion\SDE\Models\SolarsystemConnection;
 
@@ -17,6 +19,27 @@ final class StargatePairDetector
     {
         return $this->isKSpaceToKSpaceConnection($from, $to)
             && $this->systemsAreConnectedPerStargates($from, $to);
+    }
+
+    /**
+     * The default type for a connection drawn between two map systems:
+     * a stargate when they are gate neighbors, a wormhole otherwise.
+     */
+    public function connectionTypeBetween(int $from_map_solarsystem_id, int $to_map_solarsystem_id): ConnectionType
+    {
+        $map_solarsystems = MapSolarsystem::query()
+            ->with('solarsystem')
+            ->findMany([$from_map_solarsystem_id, $to_map_solarsystem_id])
+            ->keyBy('id');
+
+        $from = $map_solarsystems->get($from_map_solarsystem_id)?->solarsystem;
+        $to = $map_solarsystems->get($to_map_solarsystem_id)?->solarsystem;
+
+        if ($from instanceof Solarsystem && $to instanceof Solarsystem && $this->isStargatePair($from, $to)) {
+            return ConnectionType::Stargate;
+        }
+
+        return ConnectionType::Wormhole;
     }
 
     private function isKSpaceToKSpaceConnection(Solarsystem $from, Solarsystem $to): bool

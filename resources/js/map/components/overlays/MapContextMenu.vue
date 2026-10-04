@@ -13,6 +13,8 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { NumberField, NumberFieldContent, NumberFieldDecrement, NumberFieldIncrement, NumberFieldInput } from '@/components/ui/number-field';
+import { useActiveMapCharacter } from '@/composables/useActiveMapCharacter';
+import { useStaticSolarsystem } from '@/composables/useStaticSolarsystems';
 import { type TComboboxSection } from '@/lib/comboboxSections';
 import { cleanMapSolarsystems } from '@/map/actions/cleanMapSolarsystems';
 import { getClearableMapSolarsystems } from '@/map/actions/clearableMapSolarsystems';
@@ -27,7 +29,7 @@ import { useSolarsystemSearch } from '@/map/interactions/useSolarsystemSearch';
 import { useMapStore } from '@/map/store/mapStore';
 import { TStaticSolarsystem } from '@/types/static-data';
 import { Eraser, LayoutGrid, Plus, Trash2 } from 'lucide-vue-next';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 /**
  * The map-background context menu. Unlike the old version this receives the
@@ -59,10 +61,35 @@ const adding = ref(false);
 
 const spacing = ref(0);
 
-const search_sections = computed<TComboboxSection<TStaticSolarsystem>[]>(() => [
-    { key: 'new', heading: 'Search Results', items: new_solarsystems.value },
-    { key: 'existing', heading: 'Already in Map', items: existing_solarsystems.value, selectable: false },
-]);
+const character = useActiveMapCharacter();
+const currentSolarsystem = useStaticSolarsystem(() => character.value?.status?.solarsystem_id ?? null);
+
+// An empty query offers the pilot's current location, the most likely system to add.
+const search_sections = computed<TComboboxSection<TStaticSolarsystem>[]>(() => {
+    const current = currentSolarsystem.value;
+    if (!search.value.trim() && current) {
+        const isOnMap = mapSolarsystems.value.some((map_solarsystem) => map_solarsystem.solarsystem_id === current.id);
+
+        return [
+            { key: 'current', heading: isOnMap ? 'Current Location (already in Map)' : 'Current Location', items: [current], selectable: !isOnMap },
+        ];
+    }
+
+    return [
+        { key: 'new', heading: 'Search Results', items: new_solarsystems.value },
+        { key: 'existing', heading: 'Already in Map', items: existing_solarsystems.value, selectable: false },
+    ];
+});
+
+// The combobox popup only opens on typing, so force it open while there is something to list (ex: the current system).
+const is_search_list_open = computed(() => search.value.trim() !== '' || currentSolarsystem.value !== null);
+
+// Start each open with a clean query so the current location shows up.
+watch(adding, (value) => {
+    if (value) {
+        search.value = '';
+    }
+});
 
 function handleSolarsystemSelect(solarsystem: TStaticSolarsystem) {
     createMapSolarsystem(solarsystem.id, position);
@@ -160,7 +187,7 @@ function handleConfirmClean() {
                 <DialogTitle> Add Solarsystem</DialogTitle>
                 <DialogDescription> Add a solarsystem to the map;</DialogDescription>
             </DialogHeader>
-            <Combobox class="rounded-lg border bg-neutral-900" :ignore-filter="true">
+            <Combobox class="rounded-lg border bg-neutral-900" :ignore-filter="true" :open="is_search_list_open">
                 <ComboboxAnchor>
                     <ComboboxInput v-model="search" auto-focus />
                 </ComboboxAnchor>
