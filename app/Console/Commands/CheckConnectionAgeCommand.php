@@ -46,7 +46,11 @@ final class CheckConnectionAgeCommand extends AppCommand
         $connections = MapConnection::query()
             ->connectsToWormhole()
             ->isNotTimeCritical()
-            ->cursor()->map($this->calculateLifetimeStatusForConnection(...))->filter();
+            ->has('fromMapSolarsystem')
+            ->has('toMapSolarsystem')
+            ->with(['fromMapSolarsystem.wormholeSystem', 'toMapSolarsystem.wormholeSystem'])
+            ->lazyById()
+            ->map($this->calculateLifetimeStatusForConnection(...))->filter();
 
         $this->info("Updated lifetime status for {$connections->count()} connections.");
 
