@@ -136,7 +136,7 @@ it('syncs the connection ship size when pasting over a typed connected signature
         'mass_status' => 'fresh',
     ]);
     $wormhole = makeWormhole('X877', 375_000_000, 'c4');
-    $signature_type = App\Models\SignatureType::query()->where('signature', 'X877')->firstOrFail();
+    $signature_type = SignatureType::query()->where('signature', 'X877')->firstOrFail();
     $origin->signatures()->create([
         'signature_id' => 'AAA-111',
         'map_connection_id' => $connection->id,
@@ -169,7 +169,7 @@ it('syncs the connection ship size when storing an already-connected typed signa
         'mass_status' => 'fresh',
     ]);
     makeWormhole('X877', 375_000_000, 'c4');
-    $signature_type = App\Models\SignatureType::query()->where('signature', 'X877')->firstOrFail();
+    $signature_type = SignatureType::query()->where('signature', 'X877')->firstOrFail();
 
     app(StoreSignatureAction::class)->handle($origin, NewSignatureData::from([
         'signature_id' => 'NEW-001',
@@ -178,4 +178,27 @@ it('syncs the connection ship size when storing an already-connected typed signa
     ]));
 
     expect($connection->fresh()->ship_size)->toBe(ShipSize::Large);
+});
+
+it('keeps the origin system when bulk deleting the signature of its only connection with system removal', function () {
+    $map = Map::factory()->create();
+    $origin = placeMapSolarsystem($map, 30011017);
+    $target = placeMapSolarsystem($map, 30011018, 300, 300);
+    $connection = MapConnection::create([
+        'map_id' => $map->id,
+        'from_map_solarsystem_id' => $origin->id,
+        'to_map_solarsystem_id' => $target->id,
+        'ship_size' => 'large',
+        'lifetime' => 'healthy',
+        'mass_status' => 'fresh',
+    ]);
+    $connected = $origin->signatures()->create(['signature_id' => 'AAA-111', 'map_connection_id' => $connection->id]);
+    $remaining = $origin->signatures()->create(['signature_id' => 'BBB-222']);
+
+    app(DeleteSignaturesAction::class)->handle($origin, [$connected->id], remove_map_solarsystems: true);
+
+    expect($origin->fresh())->not->toBeNull()
+        ->and($target->fresh())->toBeNull()
+        ->and(MapConnection::find($connection->id))->toBeNull()
+        ->and($origin->signatures()->pluck('id')->all())->toBe([$remaining->id]);
 });
