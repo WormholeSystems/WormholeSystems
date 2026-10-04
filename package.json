@@ -2,7 +2,7 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "vue-tsc && npm run build:worker && vite build",
+        "build": "php artisan wayfinder:generate && vue-tsc && npm run build:worker && vite build",
         "build:ssr": "vite build --ssr",
         "build:worker": "vite build -c vite.config.worker.ts",
         "dev": "concurrently -k -n vite,worker -c green,magenta \"vite\" \"vite build -c vite.config.worker.ts --watch\"",
