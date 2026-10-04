@@ -38,7 +38,7 @@
         "@inertiajs/vite": "^3.8",
         "@inertiajs/vue3": "^3.8",
         "@tailwindcss/vite": "^4.3.3",
-        "@tanstack/vue-table": "^8.21.3",
+        "@tanstack/vue-table": "^9.2.5",
         "@types/markdown-it": "^14.2.0",
         "@types/markdown-it-link-attributes": "^3.0.5",
         "@vitejs/plugin-vue": "^6.0.9",
