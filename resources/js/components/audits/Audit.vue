@@ -5,7 +5,7 @@ import { useStaticSolarsystems } from '@/composables/useStaticSolarsystems';
 import { TMapSolarsystem } from '@/pages/maps';
 import { TAudit } from '@/types/models';
 import { UTCDate } from '@date-fns/utc';
-import { useNow } from '@vueuse/core';
+import { useIntervalFn, useNow } from '@vueuse/core';
 import { differenceInDays, differenceInHours, differenceInMinutes, format } from 'date-fns';
 import { computed } from 'vue';
 
@@ -109,7 +109,7 @@ const updated_values = computed(() => {
     }
 });
 
-const now = useNow({ interval: 60_000 });
+const now = useNow({ scheduler: (callback) => useIntervalFn(callback, 60_000) });
 
 const date = computed(() => new UTCDate(audit.created_at));
 

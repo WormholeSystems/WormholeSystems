@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { UTCDate } from '@date-fns/utc';
-import { useNow } from '@vueuse/core';
+import { useIntervalFn, useNow } from '@vueuse/core';
 import { differenceInDays, differenceInHours, differenceInMinutes, format } from 'date-fns';
 import { Clock } from 'lucide-vue-next';
 import { computed } from 'vue';
@@ -10,7 +10,7 @@ const { pasted_at } = defineProps<{
     pasted_at: string | null;
 }>();
 
-const now = useNow({ interval: 30_000 });
+const now = useNow({ scheduler: (callback) => useIntervalFn(callback, 30_000) });
 
 const pasted_date = computed(() => (pasted_at ? new UTCDate(pasted_at) : null));
 

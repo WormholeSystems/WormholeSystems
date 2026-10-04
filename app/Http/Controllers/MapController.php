@@ -107,8 +107,7 @@ final class MapController extends Controller
 
         return Inertia::render('maps/ShowAllMaps', [
             'maps' => Map::query()
-                ->whereHas('mapAccessors', function (Builder $builder) use ($accessibleIds): void {
-                    assert($builder instanceof MapAccessBuilder);
+                ->whereHas('mapAccessors', function (MapAccessBuilder $builder) use ($accessibleIds): void {
                     $builder->notExpired()->whereIn('accessible_id', $accessibleIds);
                 })
                 ->when($search->isNotEmpty(), fn (Builder $query) => $query->whereLike('name', sprintf('%%%s%%', $search)))

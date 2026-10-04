@@ -9,7 +9,7 @@ import { useMapSolarsystems } from '@/map/api';
 import type { TRaidableSkyhook, TResolvedSolarsystem } from '@/pages/maps';
 import { UTCDate } from '@date-fns/utc';
 import { vElementHover } from '@vueuse/components';
-import { useNow } from '@vueuse/core';
+import { useIntervalFn, useNow } from '@vueuse/core';
 import { differenceInMinutes, format } from 'date-fns';
 import { computed } from 'vue';
 
@@ -34,7 +34,7 @@ function onHover(hovered: boolean) {
     setPath(hovered ? route : null);
 }
 
-const now = useNow({ interval: 30_000 });
+const now = useNow({ scheduler: (callback) => useIntervalFn(callback, 30_000) });
 
 const start = computed(() => new UTCDate(skyhook.theft_vulnerability_start));
 const end = computed(() => new UTCDate(skyhook.theft_vulnerability_end));

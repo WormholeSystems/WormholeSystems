@@ -36,8 +36,7 @@ final class MapController extends Controller
         $search = $request->string('search', '');
 
         $maps = Map::query()
-            ->whereHas('mapAccessors', function (Builder $builder): void {
-                assert($builder instanceof MapAccessBuilder);
+            ->whereHas('mapAccessors', function (MapAccessBuilder $builder): void {
                 $builder->notExpired()->whereIn('accessible_id', $this->user->getAccessibleIds());
             })
             ->when($search->isNotEmpty(), fn (Builder $query) => $query->whereLike('name', sprintf('%%%s%%', $search)))

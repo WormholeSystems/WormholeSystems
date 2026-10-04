@@ -8,7 +8,6 @@ use App\Builders\MapAccessBuilder;
 use App\Models\DiscordAccount;
 use App\Models\Map;
 use App\Models\Solarsystem;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 
 final class DiscordAutocomplete
@@ -17,8 +16,7 @@ final class DiscordAutocomplete
     public function maps(DiscordAccount $account, string $search): array
     {
         return Map::query()
-            ->whereHas('mapAccessors', function (Builder $query) use ($account): void {
-                assert($query instanceof MapAccessBuilder);
+            ->whereHas('mapAccessors', function (MapAccessBuilder $query) use ($account): void {
                 $query->notExpired()->whereIn('accessible_id', $account->user->getAccessibleIds());
             })
             ->when($search !== '', fn ($query) => $query->where('name', 'like', '%'.$search.'%'))

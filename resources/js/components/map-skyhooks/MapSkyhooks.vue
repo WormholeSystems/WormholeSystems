@@ -13,7 +13,7 @@ import { useShowMap } from '@/composables/useShowMap';
 import { useStaticSolarsystems } from '@/composables/useStaticSolarsystems';
 import type { TRaidableSkyhook, TResolvedSolarsystem } from '@/pages/maps';
 import { Deferred, usePoll } from '@inertiajs/vue3';
-import { useLocalStorage, useNow } from '@vueuse/core';
+import { useIntervalFn, useLocalStorage, useNow } from '@vueuse/core';
 import { ArrowDown, ArrowUp } from 'lucide-vue-next';
 import { computed } from 'vue';
 
@@ -77,7 +77,7 @@ const activeStatuses = useLocalStorage<SkyhookStatusFilter[]>('skyhooks-status-f
 
 const fifteen_minutes_in_ms = 15 * 60 * 1000;
 
-const now = useNow({ interval: 30_000 });
+const now = useNow({ scheduler: (callback) => useIntervalFn(callback, 30_000) });
 
 type DecoratedSkyhook = TRaidableSkyhook & {
     jumps: number | null;

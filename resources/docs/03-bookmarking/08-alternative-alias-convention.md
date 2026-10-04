@@ -14,12 +14,12 @@ This only changes what the mapper **suggests** going forward — switching schem
 - **`H`, `L`, `N` and `P` are reserved** and never used as a wormhole branch letter — the sequence skips them: `…G, I, J, K, M, O, Q…`.
 - **K-space exits use the reserved letter for their security class, plus a per-type index** off the parent:
 
-  | Class        | Pattern            | Example      |
-  | ------------ | ------------------ | ------------ |
-  | High-sec     | `<parent>H<idx>`   | `AH1`, `AH2` |
-  | Low-sec      | `<parent>L<idx>`   | `ACL1`       |
-  | Null-sec     | `<parent>N<idx>`   | `BN2`        |
-  | Pochven      | `<parent>P<idx>`   | `AP1`        |
+    | Class    | Pattern          | Example      |
+    | -------- | ---------------- | ------------ |
+    | High-sec | `<parent>H<idx>` | `AH1`, `AH2` |
+    | Low-sec  | `<parent>L<idx>` | `ACL1`       |
+    | Null-sec | `<parent>N<idx>` | `BN2`        |
+    | Pochven  | `<parent>P<idx>` | `AP1`        |
 
 - **An unaliased home's direct holes** get the empty-prefix case — `A, B, C…` — mirroring the numeric scheme's `1, 2, 3…`. A manually-named root (e.g. naming your home `A`) works too, since a suggestion just extends whatever prefix already exists.
 - **K-space exits can branch further**: a wormhole found off `AH1` suggests `AH1A`, exactly like any other wormhole child.
