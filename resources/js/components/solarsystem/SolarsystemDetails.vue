@@ -32,6 +32,8 @@ const md = markdownit({
     breaks: true,
 });
 
+md.linkify.set({ fuzzyLink: true });
+
 md.use(attr, {
     attrs: {
         target: '_blank',
