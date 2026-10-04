@@ -27,7 +27,7 @@
         "laravel/socialite": "^5.26",
         "laravel/tinker": "^3.0",
         "laravel/wayfinder": "^0.1",
-        "nicolaskion/eve": "^0.10",
+        "nicolaskion/eve": "^0.11",
         "nicolaskion/sde": "^0.6",
         "owen-it/laravel-auditing": "^14.0",
         "sentry/sentry-laravel": "^4.24",
