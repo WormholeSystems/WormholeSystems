@@ -1,7 +1,7 @@
 import { useOnClient } from '@/composables/useOnClient';
 import useUser from '@/composables/useUser';
 import { getUserChannelName } from '@/const/channels';
-import { UserCharacterStatusUpdatedEvent } from '@/const/events';
+import { MapUserRouteSolarsystemsUpdatedEvent, UserCharacterStatusUpdatedEvent } from '@/const/events';
 import { router } from '@inertiajs/vue3';
 import { useEcho } from '@laravel/echo-vue';
 
@@ -12,6 +12,25 @@ import { useEcho } from '@laravel/echo-vue';
  * characters that are not on the map being viewed.
  */
 export function useUserEvents() {
+    useUserChannel(UserCharacterStatusUpdatedEvent, () => {
+        router.reload({ only: ['auth'] });
+    });
+}
+
+/** A user's personal watchlist changed on a map, from another of their tabs. */
+export type TMapUserRouteSolarsystemsUpdatedEvent = {
+    user_id: number;
+    map_id: number;
+};
+
+/**
+ * Run the callback whenever the user's personal watchlist changes, on any map.
+ */
+export function useMapUserRouteSolarsystemsEvents(callback: (event: TMapUserRouteSolarsystemsUpdatedEvent) => void) {
+    useUserChannel(MapUserRouteSolarsystemsUpdatedEvent, callback);
+}
+
+function useUserChannel<T>(event: string, callback: (payload: T) => void) {
     const user = useUser();
 
     useOnClient(() => {
@@ -20,8 +39,6 @@ export function useUserEvents() {
             return;
         }
 
-        useEcho(getUserChannelName(userId), UserCharacterStatusUpdatedEvent, () => {
-            router.reload({ only: ['auth'] });
-        });
+        useEcho<T>(getUserChannelName(userId), event, callback);
     });
 }

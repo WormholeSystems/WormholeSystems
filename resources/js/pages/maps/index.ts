@@ -47,6 +47,8 @@ export type TClosestSystems = {
 
 export type TMapNavigation = {
     destinations: TMapRouteSolarsystem[];
+    can_add_personal: boolean;
+    can_add_shared: boolean;
 };
 
 export type TShowMapProps = {
@@ -284,7 +286,7 @@ export type TResolvedMapRouteSolarsystem = Omit<TMapRouteSolarsystem, 'solarsyst
     solarsystem: TResolvedSolarsystem;
 };
 
-export type TResolvedMapNavigation = {
+export type TResolvedMapNavigation = Omit<TMapNavigation, 'destinations'> & {
     destinations: TResolvedMapRouteSolarsystem[];
 };
 

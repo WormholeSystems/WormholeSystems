@@ -1,5 +1,6 @@
 import { useOnClient } from '@/composables/useOnClient';
 import { useStaticSolarsystems } from '@/composables/useStaticSolarsystems';
+import { useMapUserRouteSolarsystemsEvents } from '@/composables/useUserEvents';
 import { getMapChannelName } from '@/const/channels';
 import type { MapStore } from '@/map/store/mapStore';
 import { TShowMapProps } from '@/pages/maps';
@@ -7,7 +8,7 @@ import type { AppPageProps } from '@/types';
 import { usePage } from '@inertiajs/vue3';
 import { echo, useEcho } from '@laravel/echo-vue';
 import { computed, MaybeRefOrGetter, onMounted, onUnmounted, toValue } from 'vue';
-import { ALL_MAP_PROPS, mapEventHandlers, type SyncEffect } from './handlers';
+import { ALL_MAP_PROPS, handleUserRouteSolarsystemsUpdated, mapEventHandlers, type SyncEffect } from './handlers';
 import { type ConnectionStateChange, createReconnectListener } from './reconnect';
 import { createReloadCoalescer } from './reloadCoalescer';
 
@@ -50,6 +51,8 @@ export function useMapSync(store: MapStore, mapId: MaybeRefOrGetter<number>): vo
             }),
         );
     }
+
+    useMapUserRouteSolarsystemsEvents((event) => applyEffect(handleUserRouteSolarsystemsUpdated(event, toValue(mapId))));
 
     const handleConnectionStateChange = createReconnectListener(() => coalescer.schedule(ALL_MAP_PROPS));
 

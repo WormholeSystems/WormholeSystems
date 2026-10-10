@@ -6,9 +6,10 @@ import {
     MapRouteSolarsystemsUpdatedEvent,
     MapSolarsystemsRemovedEvent,
     MapSolarsystemsUpsertedEvent,
+    MapUserRouteSolarsystemsUpdatedEvent,
     SignaturesChangedEvent,
 } from '@/const/events';
-import { mapEventHandlers, type ResolveSolarsystem, type SyncStore } from '@/map/sync/handlers';
+import { handleUserRouteSolarsystemsUpdated, mapEventHandlers, type ResolveSolarsystem, type SyncStore } from '@/map/sync/handlers';
 import { createReloadCoalescer } from '@/map/sync/reloadCoalescer';
 import { TResolvedSolarsystem } from '@/pages/maps';
 import { describe, expect, it, vi } from 'vitest';
@@ -97,6 +98,18 @@ describe('mapEventHandlers', () => {
         expect(mapEventHandlers[MapResyncEvent](store, {}, resolve)).toEqual({ reload: ['map'] });
         expect(mapEventHandlers[MapRouteSolarsystemsUpdatedEvent](store, {}, resolve)).toEqual({ reload: ['map_navigation'] });
         expect(store.upserted).toHaveLength(0);
+    });
+
+    it('names the watchlist events after their PHP classes', () => {
+        expect(MapRouteSolarsystemsUpdatedEvent).toBe('MapRouteSolarsystemsUpdatedEvent');
+        expect(MapUserRouteSolarsystemsUpdatedEvent).toBe('MapUserRouteSolarsystemsUpdatedEvent');
+    });
+});
+
+describe('handleUserRouteSolarsystemsUpdated', () => {
+    it('reloads the navigation for the viewed map only', () => {
+        expect(handleUserRouteSolarsystemsUpdated({ map_id: 7 }, 7)).toEqual({ reload: ['map_navigation'] });
+        expect(handleUserRouteSolarsystemsUpdated({ map_id: 8 }, 7)).toEqual({});
     });
 });
 

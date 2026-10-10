@@ -132,13 +132,14 @@ final class Map extends Model
     }
 
     /**
-     * The route solar systems for this map.
+     * The shared route solar systems (watchlist) of this map. Personal rows are excluded so
+     * that no reader leaks a user's personal watchlist to others.
      *
      * @return HasMany<MapRouteSolarsystem, $this>
      */
     public function mapRouteSolarsystems(): HasMany
     {
-        return $this->hasMany(MapRouteSolarsystem::class, 'map_id');
+        return $this->hasMany(MapRouteSolarsystem::class, 'map_id')->shared();
     }
 
     /**

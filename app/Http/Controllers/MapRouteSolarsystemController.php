@@ -21,7 +21,12 @@ final class MapRouteSolarsystemController extends Controller
      */
     public function store(StoreMapRouteSolarsystemRequest $request, CreateMapRouteSolarsystemAction $action): RedirectResponse
     {
-        $action->handle($request->validated());
+        $action->handle([
+            'map_id' => $request->integer('map_id'),
+            'solarsystem_id' => $request->integer('solarsystem_id'),
+            'is_pinned' => $request->validated('is_pinned') === null ? null : $request->boolean('is_pinned'),
+            'user_id' => $request->boolean('is_shared') ? null : $request->user()->id,
+        ]);
 
         return back()->notify('Route solarsystem created!', message: 'Your route solarsystem has been created successfully.');
     }

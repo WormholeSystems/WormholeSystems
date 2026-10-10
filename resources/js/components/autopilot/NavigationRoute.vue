@@ -13,6 +13,7 @@ import { usePath } from '@/composables/usePath';
 import { useRouteCalculator } from '@/composables/useRouteCalculator';
 import { useSolarsystemAliases } from '@/composables/useSolarsystemAliases';
 import { useStaticSolarsystem, useStaticSolarsystems } from '@/composables/useStaticSolarsystems';
+import { uniquePinnedDestinations } from '@/lib/destinations';
 import { MAX_SEARCH_RESULTS, takeRanked } from '@/lib/searchRank';
 import type { TMap, TResolvedMapRouteSolarsystem, TResolvedSelectedMapSolarsystem, TResolvedSolarsystem } from '@/pages/maps';
 import type { ConnectionType } from '@/routing/types';
@@ -80,7 +81,7 @@ const routeSolarsystems = computed(() => enrichedRoute.value.map((entry) => entr
 const hasRoute = computed(() => enrichedRoute.value.length > 0);
 const activeCharacterSystem = useStaticSolarsystem(() => (active_character ? (character_status?.solarsystem_id ?? null) : null));
 
-const pinnedDestinations = computed(() => destinations.filter((dest) => dest.is_pinned).slice(0, 3));
+const pinnedDestinations = computed(() => uniquePinnedDestinations(destinations, 3));
 
 const hasQuickPicks = computed(() => selected_map_solarsystem?.solarsystem || activeCharacterSystem.value || pinnedDestinations.value.length > 0);
 

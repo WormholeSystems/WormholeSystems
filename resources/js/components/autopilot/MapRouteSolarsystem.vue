@@ -7,13 +7,14 @@ import SolarsystemSovereignty from '@/components/map/SolarsystemSovereignty.vue'
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import SolarsystemEffect from '@/components/solarsystem/SolarsystemEffect.vue';
 import { usePath } from '@/composables/usePath';
-import usePermission from '@/composables/usePermission';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useSolarsystemAliases } from '@/composables/useSolarsystemAliases';
 import { useMapSolarsystems } from '@/map/api';
 import type { TResolvedMapRouteSolarsystem } from '@/pages/maps';
 import MapRouteSolarsystems from '@/routes/map-route-solarsystems';
 import { router } from '@inertiajs/vue3';
 import { vElementHover } from '@vueuse/components';
+import { Users } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 const { map_route } = defineProps<{
@@ -25,8 +26,6 @@ const { getAlias } = useSolarsystemAliases(map_solarsystems);
 const alias = computed(() => getAlias(map_route.solarsystem.id));
 
 const { setPath } = usePath();
-
-const { canEdit: can_write } = usePermission();
 
 function onHover(hovered: boolean) {
     if (hovered) {
@@ -100,15 +99,22 @@ function removeRoute() {
                 <span v-else class="font-mono text-[10px] text-muted-foreground/60">--</span>
             </RoutePopover>
 
-            <div v-if="can_write" class="flex justify-end gap-1">
+            <div class="flex items-center justify-end gap-1">
+                <Tooltip v-if="!map_route.is_personal">
+                    <TooltipTrigger as-child>
+                        <Users class="size-3 text-muted-foreground/60" />
+                    </TooltipTrigger>
+                    <TooltipContent>Shared with all map users</TooltipContent>
+                </Tooltip>
                 <button
+                    v-if="map_route.can_edit"
                     :data-pinned="map_route.is_pinned"
                     class="text-muted-foreground/60 hover:text-foreground data-[pinned=true]:text-amber-400"
                     @click.stop="togglePinned"
                 >
                     <PinIcon class="size-3" />
                 </button>
-                <button class="text-muted-foreground/60 hover:text-destructive" @click.stop="removeRoute">
+                <button v-if="map_route.can_edit" class="text-muted-foreground/60 hover:text-destructive" @click.stop="removeRoute">
                     <TrashIcon class="size-3" />
                 </button>
             </div>

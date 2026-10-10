@@ -413,7 +413,7 @@ final readonly class ImportMapAction
             }
 
             $route = MapRouteSolarsystem::query()->updateOrCreate(
-                ['map_id' => $map->id, 'solarsystem_id' => $entry['solarsystem_id']],
+                ['map_id' => $map->id, 'user_id' => null, 'solarsystem_id' => $entry['solarsystem_id']],
                 ['is_pinned' => $entry['is_pinned']],
             );
 
