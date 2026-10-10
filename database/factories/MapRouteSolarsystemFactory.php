@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -19,7 +20,24 @@ final class MapRouteSolarsystemFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'is_pinned' => false,
         ];
+    }
+
+    /**
+     * A personal row, owned by the given user (or a new one).
+     */
+    public function personal(?User $user = null): self
+    {
+        return $this->state(fn (): array => [
+            'user_id' => $user instanceof User ? $user->id : User::factory(),
+        ]);
+    }
+
+    public function pinned(): self
+    {
+        return $this->state(fn (): array => [
+            'is_pinned' => true,
+        ]);
     }
 }

@@ -105,6 +105,14 @@ export const mapEventHandlers: Record<string, SyncHandler> = {
     [CharacterStatusUpdatedEvent]: () => ({ reload: ['map_characters', 'ship_history'] }),
 };
 
+/**
+ * The user's personal watchlist changed (on the private user channel, so for any map):
+ * only reload the navigation when the change concerns the map being viewed.
+ */
+export function handleUserRouteSolarsystemsUpdated(payload: { map_id: number }, mapId: number): SyncEffect {
+    return payload.map_id === mapId ? { reload: ['map_navigation'] } : {};
+}
+
 /** Every prop the map page hydrates from — used as the post-reconnect resync set. */
 export const ALL_MAP_PROPS = [
     'map',

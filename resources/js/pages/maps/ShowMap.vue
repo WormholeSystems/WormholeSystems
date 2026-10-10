@@ -98,6 +98,7 @@ const resolvedMapNavigation = computed<TResolvedMapNavigation | null>(() => {
     });
 
     return {
+        ...map_navigation,
         destinations,
     };
 });

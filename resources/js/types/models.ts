@@ -269,6 +269,10 @@ export type TMapRouteSolarsystem = {
     solarsystem_id: number;
     solarsystem?: TResolvedSolarsystem | null;
     is_pinned: boolean;
+    /** Personal to the current user; shared with every map user otherwise. */
+    is_personal: boolean;
+    /** Whether the current user may pin, unpin or delete this entry. */
+    can_edit: boolean;
     route?: TResolvedSolarsystem[];
 };
 

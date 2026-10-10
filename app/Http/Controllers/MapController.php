@@ -58,7 +58,6 @@ final class MapController extends Controller
         $map = Map::query()
             ->with([
                 'mapSolarsystems' => fn (Relation $query): Relation => $query->withCount('signatures', 'wormholeSignatures', 'mapConnections', 'uncategorizedSignatures'),
-                'mapRouteSolarsystems',
             ])
             ->tap(new WithVisibleSolarsystems)
             ->findOrFail($map->id);
@@ -85,7 +84,7 @@ final class MapController extends Controller
             ->with(new EveScoutConnectionsFeature($this->eve_scout_service))
             ->with(new MapKillmailsFeature($map, $settings->killmail_filter ?? KillmailFilter::All, $selected_map_solarsystem?->solarsystem_id, $hiddenCards))
             ->with(new ShipHistoryFeature($user, $canViewCharacters, $hiddenCards))
-            ->with(new MapNavigationFeature($map, $hiddenCards))
+            ->with(new MapNavigationFeature($map, $user, $hiddenCards))
             ->with(new ThreatAnalysisFeature($selected_map_solarsystem, $hiddenCards))
             ->with(new MapSkyhooksFeature($hiddenCards));
     }

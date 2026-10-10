@@ -206,6 +206,24 @@ it('exports routes and ignored systems', function () {
         ->and($payload['sections']['routes']['ignored_solarsystems'])->toBe([['solarsystem_id' => 30002187]]);
 });
 
+it('exports and counts shared routes only, never personal ones', function () {
+    $map = Map::factory()->create();
+    User::factory()->ownsMap($map)->create();
+    makeSolarsystem(30000142);
+    makeSolarsystem(30002187);
+    MapRouteSolarsystem::factory()->create(['map_id' => $map->id, 'solarsystem_id' => 30000142]);
+    MapRouteSolarsystem::factory()->personal()->create(['map_id' => $map->id, 'solarsystem_id' => 30002187, 'is_pinned' => true]);
+
+    $payload = transferExportPayload($map, ['routes']);
+
+    expect($payload['sections']['routes']['route_solarsystems'])->toBe([['solarsystem_id' => 30000142, 'is_pinned' => false]]);
+
+    actingAs(transferExportUser($map, Permission::Manager))
+        ->get(route('maps.settings.transfer.show', $map))
+        ->assertSuccessful()
+        ->assertInertia(fn ($page) => $page->where('counts.routes', 1));
+});
+
 it('exports a connection whose ship size nobody has set', function () {
     $map = Map::factory()->create();
     $from = placeMapSolarsystem($map, 31000420);

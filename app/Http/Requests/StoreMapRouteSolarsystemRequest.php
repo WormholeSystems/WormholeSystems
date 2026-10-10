@@ -24,7 +24,7 @@ final class StoreMapRouteSolarsystemRequest extends FormRequest
      */
     public function authorize(#[CurrentUser] User $user): bool
     {
-        return $user->can('create', [MapRouteSolarsystem::class, $this->map]);
+        return $user->can('create', [MapRouteSolarsystem::class, $this->map, $this->boolean('is_shared')]);
     }
 
     /**
@@ -38,6 +38,7 @@ final class StoreMapRouteSolarsystemRequest extends FormRequest
             'map_id' => ['required', 'integer', 'exists:maps,id'],
             'solarsystem_id' => ['required', 'integer', 'exists:solarsystems,id'],
             'is_pinned' => ['nullable', 'boolean'],
+            'is_shared' => ['sometimes', 'boolean'],
         ];
     }
 }

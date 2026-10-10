@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace App\Actions\MapRouteSolarsystems;
 
-use App\Events\MapRouteSolarsystemsUpdatedEvent;
+use App\Actions\MapRouteSolarsystems\Concerns\BroadcastsRouteSolarsystemChanges;
 use App\Models\MapRouteSolarsystem;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
 final readonly class UpdateMapRouteSolarsystemAction
 {
+    use BroadcastsRouteSolarsystemChanges;
+
     /**
      * @throws Throwable
      */
@@ -19,7 +21,7 @@ final readonly class UpdateMapRouteSolarsystemAction
         return DB::transaction(function () use ($mapRouteSolarsystem, $data): MapRouteSolarsystem {
             $mapRouteSolarsystem->update($data);
 
-            broadcast(new MapRouteSolarsystemsUpdatedEvent($mapRouteSolarsystem->map_id))->toOthers();
+            $this->broadcastRouteSolarsystemChange($mapRouteSolarsystem->map_id, $mapRouteSolarsystem->user_id);
 
             return $mapRouteSolarsystem;
         });

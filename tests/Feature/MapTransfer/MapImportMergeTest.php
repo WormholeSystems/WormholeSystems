@@ -10,6 +10,7 @@ use App\Models\Corporation;
 use App\Models\Map;
 use App\Models\MapAccess;
 use App\Models\MapConnection;
+use App\Models\MapRouteSolarsystem;
 use App\Models\MapSolarsystem;
 use App\Models\MapSolarsystemDetails;
 use App\Models\Signature;
@@ -146,6 +147,38 @@ it('merges systems, connections, signatures, routes, and access into the map', f
         ->and(MapAccess::query()->where('map_id', $map->id)->where('accessible_id', 98000001)->first()->permission)->toBe(Permission::Member);
 
     Event::assertDispatched(MapResyncEvent::class);
+});
+
+it('merges routes into the shared watchlist without touching personal rows', function () {
+    Event::fake([MapResyncEvent::class]);
+
+    $map = Map::factory()->create();
+    makeSolarsystem(30000142);
+    $personal = MapRouteSolarsystem::factory()->personal()->create([
+        'map_id' => $map->id,
+        'solarsystem_id' => 30000142,
+        'is_pinned' => false,
+    ]);
+
+    actingAs(transferMergeUser($map, Permission::Manager))
+        ->post(route('maps.settings.transfer.import', $map), [
+            'file' => transferFile([
+                'routes' => [
+                    'route_solarsystems' => [['solarsystem_id' => 30000142, 'is_pinned' => true]],
+                    'ignored_solarsystems' => [],
+                ],
+            ]),
+            'sections' => ['routes'],
+        ])
+        ->assertRedirect()
+        ->assertSessionDoesntHaveErrors();
+
+    $shared = $map->mapRouteSolarsystems()->sole();
+
+    expect($shared->id)->not->toBe($personal->id)
+        ->and($shared->is_pinned)->toBeTrue()
+        ->and($personal->fresh()->is_pinned)->toBeFalse()
+        ->and($personal->fresh()->user_id)->toBe($personal->user_id);
 });
 
 it('denies members', function () {

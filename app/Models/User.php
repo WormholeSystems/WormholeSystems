@@ -28,6 +28,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @property-read DiscordAccount|null $discordAccount
  * @property-read Collection<int,MapAlert> $createdMapAlerts
  * @property-read Collection<int,MapUserSetting> $mapUserSettings
+ * @property-read Collection<int,MapRouteSolarsystem> $mapRouteSolarsystems
  * @property-read string|CarbonImmutable $created_at
  * @property-read string|CarbonImmutable $updated_at
  */
@@ -156,6 +157,16 @@ final class User extends Authenticatable
     public function createdMapAlerts(): HasMany
     {
         return $this->hasMany(MapAlert::class, 'created_by_user_id');
+    }
+
+    /**
+     * The user's personal route solar systems (watchlist), across all maps.
+     *
+     * @return HasMany<MapRouteSolarsystem, $this>
+     */
+    public function mapRouteSolarsystems(): HasMany
+    {
+        return $this->hasMany(MapRouteSolarsystem::class, 'user_id');
     }
 
     /**

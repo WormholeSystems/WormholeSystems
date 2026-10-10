@@ -2,6 +2,7 @@
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
 import { Button } from '@/components/ui/button';
 import { useSolarsystemAliases } from '@/composables/useSolarsystemAliases';
+import { uniquePinnedDestinations } from '@/lib/destinations';
 import { useMapSolarsystems } from '@/map/api';
 import type { TResolvedMapRouteSolarsystem, TResolvedSelectedMapSolarsystem, TResolvedSolarsystem } from '@/pages/maps';
 import { MapPin, Navigation } from 'lucide-vue-next';
@@ -20,9 +21,7 @@ const emit = defineEmits<{
 const { map_solarsystems } = useMapSolarsystems();
 const { getAlias } = useSolarsystemAliases(map_solarsystems);
 
-const pinnedDestinations = computed(() => {
-    return destinations.filter((dest) => dest.is_pinned);
-});
+const pinnedDestinations = computed(() => uniquePinnedDestinations(destinations));
 
 function handleSystemClick(system: TResolvedSolarsystem) {
     emit('selectSystem', system);

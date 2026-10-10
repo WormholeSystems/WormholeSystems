@@ -2,7 +2,6 @@
 import MapRouteSolarsystem from '@/components/autopilot/MapRouteSolarsystem.vue';
 import { useDestinationRoutes } from '@/composables/useDestinationRoutes';
 import { useMap } from '@/composables/useMap';
-import usePermission from '@/composables/usePermission';
 import { useSelectedMapSolarsystem } from '@/composables/useSelectedMapSolarsystem';
 import { useStaticSolarsystems } from '@/composables/useStaticSolarsystems';
 import { compareSolarsystemsByClass } from '@/const/solarsystemClasses';
@@ -82,8 +81,6 @@ const sorted = computed(() => {
         return sortDirection.value === 'asc' ? comparison : -comparison;
     });
 });
-
-const { canEdit: can_write } = usePermission();
 </script>
 
 <template>
@@ -108,10 +105,10 @@ const { canEdit: can_write } = usePermission();
                 <ArrowUp v-if="sortColumn === 'jumps' && sortDirection === 'asc'" class="size-3" />
                 <ArrowDown v-if="sortColumn === 'jumps' && sortDirection === 'desc'" class="size-3" />
             </button>
-            <span v-if="can_write"></span>
+            <span></span>
         </div>
 
-        <MapRouteSolarsystem v-for="route in sorted" :key="route.solarsystem.id" :map_route="route" />
+        <MapRouteSolarsystem v-for="route in sorted" :key="route.id" :map_route="route" />
 
         <div v-if="!sorted?.length" class="col-span-full flex h-full flex-col items-center justify-center gap-2 p-4">
             <p class="font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">Watchlist empty</p>

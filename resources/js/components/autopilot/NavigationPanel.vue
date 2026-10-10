@@ -13,7 +13,6 @@ import MapPanelContent from '@/components/ui/map-panel/MapPanelContent.vue';
 import MapPanelHeader from '@/components/ui/map-panel/MapPanelHeader.vue';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useMapUserSettings } from '@/composables/useMapUserSettings';
-import usePermission from '@/composables/usePermission';
 import { useStaticData } from '@/composables/useStaticData';
 import useUser from '@/composables/useUser';
 import type { TMap, TResolvedMapNavigation, TResolvedSelectedMapSolarsystem } from '@/pages/maps';
@@ -34,8 +33,6 @@ const activeCharacter = computed(() => {
     return map_characters.find((character) => character.id === user.value.active_character.id);
 });
 const characterStatus = computed(() => activeCharacter.value?.status);
-
-const { canEdit: can_write } = usePermission();
 
 const mapUserSettings = useMapUserSettings();
 const routePreferenceLabel = computed(() => {
@@ -63,7 +60,13 @@ const activeTab = ref('destinations');
             <span class="ml-2 text-muted-foreground/60">{{ routePreferenceLabel }}</span>
             <template #actions>
                 <AutopilotSettings />
-                <MapRouteSolarsystemAdd :map :map_route_solarsystems="map_navigation.destinations" v-if="can_write" />
+                <MapRouteSolarsystemAdd
+                    v-if="map_navigation.can_add_personal || map_navigation.can_add_shared"
+                    :map
+                    :map_route_solarsystems="map_navigation.destinations"
+                    :can_add_personal="map_navigation.can_add_personal"
+                    :can_add_shared="map_navigation.can_add_shared"
+                />
             </template>
         </MapPanelHeader>
 
