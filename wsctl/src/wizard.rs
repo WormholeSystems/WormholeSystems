@@ -6,9 +6,10 @@ use anyhow::{Result, bail};
 use console::style;
 
 use crate::checks::{self, Verdict};
-use crate::config::{Answers, Discord, generated_password};
+use crate::config::{Answers, DEFAULT_NETWORK, Discord, Setup, Standalone, generated_password};
 use crate::envfile;
 use crate::exec::Runner;
+use crate::integrate;
 use crate::stack;
 use crate::ui;
 
@@ -60,15 +61,15 @@ pub fn setup(runner: &mut dyn Runner, dir: &Path) -> Result<()> {
     let answers = ask_everything(&existing, http, https)?;
 
     ui::heading("Checking the network");
-    let mut fatal = false;
-    let ours = stack::proxy_running(runner, dir);
-    for check in checks::ports(&[answers.http_port, answers.https_port], ours) {
-        ui::report(&check);
-        fatal |= check.verdict == Verdict::Fatal;
-    }
-    let dns = checks::dns(&answers.domain, checks::public_ip());
-    ui::report(&dns);
-    fatal |= dns.verdict == Verdict::Fatal;
+    let (fatal, leftovers) = match &answers.setup {
+        Setup::Full => (check_full(runner, dir, &answers), false),
+        Setup::Standalone(standalone) => (
+            check_standalone(runner, dir, standalone)?,
+            // Asked before .env changes: once it points at the standalone file, compose no
+            // longer counts the full stack's db and caddy as part of this project.
+            stack::service_running(runner, dir, "db") || stack::proxy_running(runner, dir),
+        ),
+    };
     if fatal {
         bail!("sort the above out and run this again");
     }
@@ -82,7 +83,51 @@ pub fn setup(runner: &mut dyn Runner, dir: &Path) -> Result<()> {
     stack::up(runner, dir)?;
 
     after_boot(&answers);
+    if leftovers {
+        println!();
+        ui::note("The full setup's Postgres and Caddy are still running, holding the old");
+        ui::note("database and ports 80 and 443. Once nothing needs the old data any more");
+        ui::note("(moving it is in docs/deployment.md), remove them with:");
+        ui::note("  docker compose up -d --remove-orphans");
+    }
     Ok(())
+}
+
+/// The ports Caddy takes and the name it gets a certificate for. True when something is
+/// fatal.
+fn check_full(runner: &mut dyn Runner, dir: &Path, answers: &Answers) -> bool {
+    let mut fatal = false;
+    let ours = stack::proxy_running(runner, dir);
+    for check in checks::ports(&[answers.http_port, answers.https_port], ours) {
+        ui::report(&check);
+        fatal |= check.verdict == Verdict::Fatal;
+    }
+    let dns = checks::dns(&answers.domain, checks::public_ip());
+    ui::report(&dns);
+    fatal || dns.verdict == Verdict::Fatal
+}
+
+/// The network the proxy finds the app on, the database, and the loopback ports when a
+/// proxy on this machine wants them. True when something is fatal.
+fn check_standalone(runner: &mut dyn Runner, dir: &Path, standalone: &Standalone) -> Result<bool> {
+    if stack::ensure_network(runner, dir, &standalone.network)? {
+        ui::done(&format!(
+            "created the Docker network {}",
+            standalone.network
+        ));
+    }
+    let mut results = vec![
+        checks::network(runner, dir, &standalone.network),
+        checks::database(runner, dir, &standalone.network, &standalone.database_url),
+    ];
+    if let Some((api, web)) = standalone.host_ports {
+        let ours = stack::service_running(runner, dir, "api");
+        results.extend(checks::ports(&[api, web], ours));
+    }
+    for check in &results {
+        ui::report(check);
+    }
+    Ok(checks::worst(&results) == Verdict::Fatal)
 }
 
 /// Bring the checkout, the containers and the static data up to date. One command,
@@ -188,10 +233,8 @@ pub fn status(runner: &mut dyn Runner, dir: &Path) -> Result<()> {
     report_sde(runner, dir);
 
     let env = read_env(dir);
-    let domain = envfile::get(&env, "WS_DOMAIN").unwrap_or_default();
-    if !domain.is_empty() {
+    if let Some(url) = public_url(&env) {
         ui::heading("Public URL");
-        let url = format!("https://{domain}");
         match runner.capture(
             dir,
             "curl",
@@ -236,7 +279,10 @@ pub fn doctor(runner: &mut dyn Runner, dir: &Path) -> Result<()> {
     let (http, https) = ports(&env, &domain);
 
     ui::heading("This machine");
-    let checks = checks::all(runner, dir, &domain, http, https)?;
+    let checks = match Standalone::from_env(&env) {
+        Some(standalone) => checks::standalone(runner, dir, &standalone),
+        None => checks::all(runner, dir, &domain, http, https)?,
+    };
     for check in &checks {
         ui::report(check);
     }
@@ -246,23 +292,53 @@ pub fn doctor(runner: &mut dyn Runner, dir: &Path) -> Result<()> {
     Ok(())
 }
 
+/// What a reverse proxy in front of this install needs, again, for whoever sets it up.
+pub fn integrate(dir: &Path) -> Result<()> {
+    require_checkout(dir)?;
+    match Standalone::from_env(&read_env(dir)) {
+        Some(standalone) => {
+            integrate::print(&standalone);
+            Ok(())
+        }
+        None => bail!(
+            "this install runs the full setup, with its own Caddy in front; there is nothing to point a proxy at.\n  `wsctl setup` switches it to standalone."
+        ),
+    }
+}
+
+/// Where the install answers from outside, when it has an address worth checking.
+fn public_url(env: &str) -> Option<String> {
+    if let Some(standalone) = Standalone::from_env(env) {
+        return Some(standalone.public_url).filter(|u| !u.is_empty());
+    }
+    let domain = envfile::get(env, "WS_DOMAIN").unwrap_or_default();
+    (!domain.is_empty()).then(|| format!("https://{domain}"))
+}
+
 fn ask_everything(existing: &str, http: u16, https: u16) -> Result<Answers> {
     ui::heading("What this deployment needs");
     let keep = |key: &str| envfile::get(existing, key).filter(|v| !v.is_empty());
 
-    ui::note("Leave the domain blank to serve plain http on this machine.");
-    let domain = normalise_domain(&ui::ask_optional("Public domain", keep("WS_DOMAIN"))?);
-    let (http_port, https_port) = if domain.is_empty() {
-        (http, https)
-    } else {
-        (80, 443)
-    };
+    let previous = Standalone::from_env(existing);
+    ui::note("Full runs all of it here: Postgres, the app, and Caddy with its own certificate.");
+    ui::note("Standalone runs only the app, for a machine that already has a Postgres and a");
+    ui::note("reverse proxy; you point those at it.");
+    let choice = ui::choose(
+        "Setup",
+        &[
+            "Full: everything on this machine",
+            "Standalone: only the app, behind your own proxy and Postgres",
+        ],
+        usize::from(previous.is_some()),
+    )?;
 
-    let mut answers = Answers {
-        domain,
-        http_port,
-        https_port,
-        ..Default::default()
+    let mut answers = if choice == 0 {
+        ask_full(existing, http, https)?
+    } else {
+        Answers {
+            setup: Setup::Standalone(ask_standalone(previous.unwrap_or_default())?),
+            ..Default::default()
+        }
     };
 
     println!();
@@ -286,6 +362,74 @@ fn ask_everything(existing: &str, http: u16, https: u16) -> Result<Answers> {
 
     answers.discord = ask_discord(existing, &answers.base_url())?;
     Ok(answers)
+}
+
+fn ask_full(existing: &str, http: u16, https: u16) -> Result<Answers> {
+    let keep = |key: &str| envfile::get(existing, key).filter(|v| !v.is_empty());
+    println!();
+    ui::note("Leave the domain blank to serve plain http on this machine.");
+    let domain = normalise_domain(&ui::ask_optional("Public domain", keep("WS_DOMAIN"))?);
+    let (http_port, https_port) = if domain.is_empty() {
+        (http, https)
+    } else {
+        (80, 443)
+    };
+    Ok(Answers {
+        setup: Setup::Full,
+        domain,
+        http_port,
+        https_port,
+        ..Default::default()
+    })
+}
+
+fn ask_standalone(previous: Standalone) -> Result<Standalone> {
+    let filled = |v: String| Some(v).filter(|v| !v.is_empty());
+
+    println!();
+    ui::note("The address people open, as your proxy serves it. The EVE and Discord callbacks");
+    ui::note("are built from it.");
+    let public_url = normalise_url(&ui::ask("Public URL", filled(previous.public_url))?);
+
+    println!();
+    ui::note("The Postgres to use, as the containers reach it (not localhost: that is the");
+    ui::note("container itself). The database has to exist; the API creates its tables.");
+    let database_url = ui::ask_secret("Database URL", filled(previous.database_url))?;
+
+    println!();
+    ui::note("A proxy in Docker finds the app on this network as wormholesystems-api and");
+    ui::note("wormholesystems-web. It is created if it does not exist.");
+    let network = ui::ask(
+        "Docker network",
+        filled(previous.network).or_else(|| Some(DEFAULT_NETWORK.into())),
+    )?;
+
+    println!();
+    let host_ports = if ui::confirm(
+        "Also publish on 127.0.0.1, for a proxy running on this machine rather than in Docker?",
+        previous.host_ports.is_some(),
+    )? {
+        let (api, web) = previous.host_ports.unwrap_or((3000, 3001));
+        Some((ask_port("API port", api)?, ask_port("Frontend port", web)?))
+    } else {
+        None
+    };
+
+    Ok(Standalone {
+        public_url,
+        database_url,
+        network,
+        host_ports,
+    })
+}
+
+fn ask_port(prompt: &str, default: u16) -> Result<u16> {
+    loop {
+        match ui::ask(prompt, Some(default.to_string()))?.parse() {
+            Ok(port) if port > 0 => return Ok(port),
+            _ => ui::note("a port number, 1 to 65535"),
+        }
+    }
 }
 
 fn ask_discord(existing: &str, base: &str) -> Result<Option<Discord>> {
@@ -323,7 +467,7 @@ fn ask_discord(existing: &str, base: &str) -> Result<Option<Discord>> {
 fn after_boot(answers: &Answers) {
     ui::heading("After the first boot");
     ui::note("The API downloads CCP's static data and seeds from it, which takes a few");
-    ui::note("minutes. Follow it with:  docker compose --profile full logs -f api");
+    ui::note("minutes. Follow it with:  docker compose logs -f api");
     if answers.discord.is_some() {
         println!();
         ui::note("Then finish Discord, which needs this running to verify itself:");
@@ -333,6 +477,11 @@ fn after_boot(answers: &Answers) {
         ));
         ui::note("     Discord signs a ping at it and refuses to save if it does not answer.");
         ui::note("  2. wsctl discord-register");
+    }
+    if let Setup::Standalone(standalone) = &answers.setup {
+        integrate::print(standalone);
+        println!();
+        ui::note("This is printed again by:  wsctl integrate");
     }
     println!(
         "\n  Then open {}",
@@ -358,9 +507,11 @@ fn template(dir: &Path) -> String {
 fn write_env(dir: &Path, existing: &str, answers: &Answers) -> Result<()> {
     let mut values = answers.env_values();
     // A database nobody chose a password for is a database with the password in the README.
-    if envfile::get(existing, "POSTGRES_PASSWORD")
-        .unwrap_or_default()
-        .is_empty()
+    // Standalone has no database of its own to set one for.
+    if answers.setup == Setup::Full
+        && envfile::get(existing, "POSTGRES_PASSWORD")
+            .unwrap_or_default()
+            .is_empty()
     {
         values.insert("POSTGRES_PASSWORD".into(), generated_password());
     }
@@ -409,9 +560,51 @@ fn normalise_domain(input: &str) -> String {
         .to_string()
 }
 
+/// A public URL with its scheme and without a trailing slash. A bare hostname gets https,
+/// since a proxy that is good enough to sit in front of this is serving https.
+fn normalise_url(input: &str) -> String {
+    let url = input.trim().trim_end_matches('/');
+    if url.starts_with("https://") || url.starts_with("http://") {
+        url.to_string()
+    } else {
+        format!("https://{url}")
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_public_url_keeps_its_scheme_and_loses_the_trailing_slash() {
+        assert_eq!(
+            normalise_url("https://map.example.com/"),
+            "https://map.example.com"
+        );
+        assert_eq!(
+            normalise_url("http://localhost:8080"),
+            "http://localhost:8080"
+        );
+        assert_eq!(
+            normalise_url(" map.example.com "),
+            "https://map.example.com"
+        );
+    }
+
+    #[test]
+    fn the_public_url_follows_the_setup() {
+        assert_eq!(
+            public_url("WS_DOMAIN=map.example.com\n").as_deref(),
+            Some("https://map.example.com")
+        );
+        assert_eq!(public_url("WS_DOMAIN=\n"), None);
+        let standalone =
+            "WS_SETUP=standalone\nWS_DOMAIN=old.example.com\nWS_PUBLIC_URL=http://localhost:8080\n";
+        assert_eq!(
+            public_url(standalone).as_deref(),
+            Some("http://localhost:8080")
+        );
+    }
 
     #[test]
     fn a_pasted_address_is_reduced_to_the_hostname() {

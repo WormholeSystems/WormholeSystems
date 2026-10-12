@@ -51,12 +51,23 @@ wsctl setup
 ```
 
 `wsctl setup` checks the machine, asks for what it needs, writes `.env`, and brings the
-stack up. `wsctl update` takes new code and newer static data; `wsctl status` says what is
+stack up. It runs everything on its own (Postgres and Caddy included), or only the app
+behind a Postgres and a reverse proxy you already have; `wsctl integrate` then prints what
+that proxy needs. `wsctl update` takes new code and newer static data; `wsctl status` says what is
 running and whether it answers. [docs/deployment.md](./docs/deployment.md) covers the rest.
 
 ## Developing
 
-Postgres first, then the API and the frontend:
+The whole stack, the same way it runs in production:
+
+```sh
+cp .env.example .env       # then fill in the EVE application and contact details
+docker compose up -d --build
+```
+
+That serves http://localhost. What differs from production is only `.env`; see the
+comments in `.env.example`. Every change needs another `--build`, so for quick iteration
+run Postgres in Docker and the API and frontend on the host instead:
 
 ```sh
 docker compose up -d db

@@ -1,0 +1,11 @@
+# Added to compose.standalone.yml when the reverse proxy runs on this machine rather than in
+# Docker (nginx, a host Caddy): the API and the frontend are published on the loopback only,
+# so nothing outside the machine reaches them except through that proxy.
+services:
+  api:
+    ports:
+      - "127.0.0.1:${WS_API_PORT:-3000}:3000"
+
+  web:
+    ports:
+      - "127.0.0.1:${WS_WEB_PORT:-3001}:3001"

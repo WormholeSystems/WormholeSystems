@@ -9,9 +9,9 @@ use anyhow::{Context, Result};
 
 use crate::exec::Runner;
 
-/// `docker compose --profile full <args>`, which is how the whole stack is addressed.
+/// `docker compose <args>`, which is how the whole stack is addressed.
 pub fn compose(args: &[&str]) -> Vec<String> {
-    let mut out = vec!["compose".to_string(), "--profile".into(), "full".into()];
+    let mut out = vec!["compose".to_string()];
     out.extend(args.iter().map(|a| a.to_string()));
     out
 }
@@ -59,9 +59,68 @@ pub fn api(runner: &mut dyn Runner, dir: &Path, args: &[&str]) -> Result<String>
 /// that is already running, and a port check that does not know this tells the operator to
 /// stop the very stack they are updating.
 pub fn proxy_running(runner: &mut dyn Runner, dir: &Path) -> bool {
+    service_running(runner, dir, "caddy")
+}
+
+/// Whether one of this stack's services has a container up.
+pub fn service_running(runner: &mut dyn Runner, dir: &Path, service: &str) -> bool {
     runner
-        .capture(dir, "docker", &as_refs(&compose(&["ps", "-q", "caddy"])))
+        .capture(dir, "docker", &as_refs(&compose(&["ps", "-q", service])))
         .is_ok_and(|out| !out.trim().is_empty())
+}
+
+pub fn network_exists(runner: &mut dyn Runner, dir: &Path, name: &str) -> bool {
+    runner
+        .capture(
+            dir,
+            "docker",
+            &["network", "inspect", "--format", "{{.Name}}", name],
+        )
+        .is_ok()
+}
+
+/// Make the network a standalone install joins, unless it is there already. Quiet: docker
+/// answers with the new network's id, which nobody needs to see.
+pub fn ensure_network(runner: &mut dyn Runner, dir: &Path, name: &str) -> Result<bool> {
+    if network_exists(runner, dir, name) {
+        return Ok(false);
+    }
+    runner
+        .capture(dir, "docker", &["network", "create", name])
+        .with_context(|| format!("could not create the Docker network {name}"))?;
+    Ok(true)
+}
+
+/// Whether something answers on `host:port` from inside a Docker network, which is where
+/// the API will be looking from. A plain TCP connect: it says the address is right, not
+/// that the password is.
+pub fn reachable_from(
+    runner: &mut dyn Runner,
+    dir: &Path,
+    network: &str,
+    host: &str,
+    port: u16,
+) -> bool {
+    let port = port.to_string();
+    runner
+        .capture(
+            dir,
+            "docker",
+            &[
+                "run",
+                "--rm",
+                "--network",
+                network,
+                "alpine",
+                "nc",
+                "-z",
+                "-w",
+                "5",
+                host,
+                &port,
+            ],
+        )
+        .is_ok()
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -98,18 +157,34 @@ mod tests {
     use crate::exec::Recording;
 
     #[test]
-    fn the_stack_is_always_addressed_through_the_full_profile() {
-        // Without the profile, `up` starts the database alone and nothing else, which looks
-        // like a broken install rather than a missing flag.
+    fn a_missing_network_is_created_and_an_existing_one_left_alone() {
+        let mut runner = Recording::default();
+        // Recording answers every command, so the network reads as existing.
+        assert!(!ensure_network(&mut runner, Path::new("."), "web").unwrap());
+        assert_eq!(
+            runner.commands,
+            vec!["docker network inspect --format {{.Name}} web"]
+        );
+    }
+
+    #[test]
+    fn the_database_is_probed_from_inside_the_network() {
+        let mut runner = Recording::default();
+        reachable_from(&mut runner, Path::new("."), "web", "postgres", 5432);
+        assert_eq!(
+            runner.commands,
+            vec!["docker run --rm --network web alpine nc -z -w 5 postgres 5432"]
+        );
+    }
+
+    #[test]
+    fn the_stack_is_addressed_as_a_whole() {
         let mut runner = Recording::default();
         up(&mut runner, Path::new(".")).unwrap();
         build(&mut runner, Path::new(".")).unwrap();
         assert_eq!(
             runner.commands,
-            vec![
-                "docker compose --profile full up -d",
-                "docker compose --profile full build",
-            ]
+            vec!["docker compose up -d", "docker compose build",]
         );
     }
 
@@ -132,9 +207,7 @@ mod tests {
         api(&mut runner, Path::new("."), &["sde-status"]).unwrap();
         assert_eq!(
             runner.commands,
-            vec![
-                "docker compose --profile full run --rm --no-deps -T api wormholesystems sde-status"
-            ]
+            vec!["docker compose run --rm --no-deps -T api wormholesystems sde-status"]
         );
     }
 

@@ -1,11 +1,16 @@
 # Deploying WormholeSystems
 
-One machine, Docker, and a domain. Everything below assumes a fresh server you can point a
-DNS record at.
+One machine, Docker, and a domain. There are two setups, and `wsctl setup` asks which:
+
+- Full: everything on this machine, Postgres and Caddy included. Caddy gets the
+  certificate. This is what a fresh server wants, and what everything below assumes unless
+  it says otherwise.
+- Standalone: only the API and the frontend, for a machine that already runs a Postgres and
+  a reverse proxy for other things. See [Standalone](#standalone).
 
 ## What runs
 
-Four containers, from `docker-compose.yml` under the `full` profile:
+Four containers, from `docker-compose.yml`:
 
 | container | what it is | reachable from |
 |---|---|---|
@@ -72,7 +77,7 @@ The first boot downloads CCP's static data export (~550MB) and seeds from it, wh
 a few minutes. It lands in a volume, so later restarts and rebuilds reuse it. Watch it with:
 
 ```sh
-docker compose --profile full logs -f api
+docker compose logs -f api
 ```
 
 ## Updating
@@ -105,6 +110,69 @@ wsctl status
 Containers, how far behind origin the checkout is, which SDE build is loaded and whether
 CCP has a newer one, and whether the public URL answers.
 
+## Standalone
+
+For a machine that already has a Postgres and a reverse proxy, where a second database and
+a second thing on ports 80 and 443 would be in the way. Two containers run, from
+`compose.standalone.yml`:
+
+| container | what it is | reachable from |
+|---|---|---|
+| `web` | the SvelteKit server | the Docker network you name, as `wormholesystems-web:3001` |
+| `api` | the Axum API and every background job | the same network, as `wormholesystems-api:3000` |
+
+`wsctl setup` asks for the public URL (whatever your proxy serves, scheme included), the
+database URL, and the Docker network to join, which it creates if it is missing. It writes
+`COMPOSE_FILE` to `.env`, so plain `docker compose` commands, `wsctl update` and
+`wsctl status` all run the standalone stack from then on. A proxy that runs on the machine
+itself rather than in Docker can also have the two published on `127.0.0.1`
+(`compose.standalone.ports.yml`, ports 3000 and 3001 unless you pick others).
+
+The database has to exist, with a role that owns it; the API creates its tables on boot.
+On a shared Postgres, for example:
+
+```sql
+CREATE ROLE wormholesystems LOGIN PASSWORD '...';
+CREATE DATABASE wormholesystems OWNER wormholesystems;
+REVOKE CONNECT ON DATABASE wormholesystems FROM PUBLIC;
+```
+
+The URL is how the containers reach it: the database's name on the shared Docker network,
+or the machine's address. Never `localhost`, which inside a container is the container.
+`setup` and `doctor` check that it answers from the network.
+
+Then point the proxy at it. `/api`, `/auth`, `/ws` and `/discord` go to the API with
+WebSocket upgrades passed through, everything else to the frontend:
+
+```sh
+wsctl integrate
+```
+
+prints that, with a Caddy site block for a Caddy on the same network and an nginx server
+block for the loopback ports. The EVE and Discord callbacks are built from the public URL
+and must match it exactly, as in the full setup.
+
+### From full to standalone
+
+The data moves with a dump, into the new database while it is still empty: the API creates
+its tables on boot, so restore before the switch, not after. From the checkout, still on
+the full setup:
+
+```sh
+docker compose stop api
+docker compose exec -T db pg_dump -U vector -Fc vector > vector.dump
+pg_restore --no-owner --role=wormholesystems -d "postgres://wormholesystems:...@host/wormholesystems" vector.dump
+wsctl setup                          # pick standalone; starts the app on the restored data
+docker compose up -d --remove-orphans
+```
+
+The map is down from the `stop` until `setup` has the new stack up. `pg_restore` is any
+client that reaches the new database, for example one in a container on the same network.
+After the switch compose no longer counts the full stack's `db` and `caddy` as part of the
+project, so they keep running until `--remove-orphans` takes them away; the `pgdata` volume
+stays until you remove it yourself. The `sde` and `uploads` volumes are shared by both
+setups and carry over as they are.
+
 ## Certificates
 
 Caddy gets them from Let's Encrypt on first start and renews them on its own. Two things
@@ -127,7 +195,13 @@ Cloudflare's own certificate and put Caddy behind it.
 | `WS_CONTACT_NAME`, `WS_CONTACT_EMAIL` | Who runs this install. Every request to ESI, zKillboard and EVE Ref carries them, which is how those services tell operators apart and reach you. The server refuses to start without them. |
 | `EVE_CLIENT_ID`, `EVE_CLIENT_SECRET` | The SSO application. |
 | `EVE_REDIRECT_URI` | Derived from the domain; must match the application exactly. |
-| `POSTGRES_PASSWORD` | Generated once. Changing it means changing it in Postgres too. |
+| `POSTGRES_PASSWORD` | Full only. Generated once. Changing it means changing it in Postgres too. |
+| `WS_SETUP` | `full` or `standalone`. Missing means full. |
+| `COMPOSE_FILE` | Standalone only: the compose files to run instead of `docker-compose.yml`. |
+| `WS_PUBLIC_URL` | Standalone only: the address your proxy serves; the callbacks derive from it. |
+| `WS_DATABASE_URL` | Standalone only: the Postgres to use, as the containers reach it. |
+| `WS_PROXY_NETWORK` | Standalone only: the Docker network the proxy finds the app on. |
+| `WS_API_PORT`, `WS_WEB_PORT` | Standalone only, when published on the loopback. |
 
 Discord and the killmail ingest are optional and off unless configured; see `.env.example`.
 `UPLOADS_DIR` (default `data/uploads`) is where uploaded background images land. In the
@@ -161,7 +235,7 @@ Two things have to wait until the stack is running, because Discord checks them:
 
 ## Backups
 
-Not automated. The database is what matters:
+Not automated. The database is what matters. In the full setup:
 
 ```sh
 docker compose exec -T db pg_dump -U vector vector | gzip > wormholesystems-$(date +%F).sql.gz

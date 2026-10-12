@@ -18,11 +18,10 @@ services:
       timeout: 5s
       retries: 10
 
-  # The full stack (Caddy + API + frontend). `docker compose up db` still works alone for
-  # local dev, where the API and frontend run on the host instead.
+  # The rest of the stack (Caddy + API + frontend). `docker compose up -d --build` runs all
+  # of it; `docker compose up -d db` still starts the database alone for host-side dev.
   api:
     build: .
-    profiles: ["full"]
     restart: unless-stopped
     env_file: .env
     environment:
@@ -41,7 +40,6 @@ services:
 
   web:
     build: frontend
-    profiles: ["full"]
     restart: unless-stopped
     environment:
       API_BASE: http://api:3000
@@ -51,7 +49,6 @@ services:
 
   caddy:
     image: caddy:2
-    profiles: ["full"]
     restart: unless-stopped
     environment:
       # Empty means no domain, which Caddy reads as plain http on :80.
