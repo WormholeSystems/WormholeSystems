@@ -56,7 +56,16 @@ running and whether it answers. [docs/deployment.md](./docs/deployment.md) cover
 
 ## Developing
 
-Postgres first, then the API and the frontend:
+The whole stack, the same way it runs in production:
+
+```sh
+cp .env.example .env       # then fill in the EVE application and contact details
+docker compose up -d --build
+```
+
+That serves http://localhost. What differs from production is only `.env`; see the
+comments in `.env.example`. Every change needs another `--build`, so for quick iteration
+run Postgres in Docker and the API and frontend on the host instead:
 
 ```sh
 docker compose up -d db

@@ -9,9 +9,9 @@ use anyhow::{Context, Result};
 
 use crate::exec::Runner;
 
-/// `docker compose --profile full <args>`, which is how the whole stack is addressed.
+/// `docker compose <args>`, which is how the whole stack is addressed.
 pub fn compose(args: &[&str]) -> Vec<String> {
-    let mut out = vec!["compose".to_string(), "--profile".into(), "full".into()];
+    let mut out = vec!["compose".to_string()];
     out.extend(args.iter().map(|a| a.to_string()));
     out
 }
@@ -98,17 +98,15 @@ mod tests {
     use crate::exec::Recording;
 
     #[test]
-    fn the_stack_is_always_addressed_through_the_full_profile() {
-        // Without the profile, `up` starts the database alone and nothing else, which looks
-        // like a broken install rather than a missing flag.
+    fn the_stack_is_addressed_as_a_whole() {
         let mut runner = Recording::default();
         up(&mut runner, Path::new(".")).unwrap();
         build(&mut runner, Path::new(".")).unwrap();
         assert_eq!(
             runner.commands,
             vec![
-                "docker compose --profile full up -d",
-                "docker compose --profile full build",
+                "docker compose up -d",
+                "docker compose build",
             ]
         );
     }
@@ -133,7 +131,7 @@ mod tests {
         assert_eq!(
             runner.commands,
             vec![
-                "docker compose --profile full run --rm --no-deps -T api wormholesystems sde-status"
+                "docker compose run --rm --no-deps -T api wormholesystems sde-status"
             ]
         );
     }

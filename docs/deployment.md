@@ -5,7 +5,7 @@ DNS record at.
 
 ## What runs
 
-Four containers, from `docker-compose.yml` under the `full` profile:
+Four containers, from `docker-compose.yml`:
 
 | container | what it is | reachable from |
 |---|---|---|
@@ -72,7 +72,7 @@ The first boot downloads CCP's static data export (~550MB) and seeds from it, wh
 a few minutes. It lands in a volume, so later restarts and rebuilds reuse it. Watch it with:
 
 ```sh
-docker compose --profile full logs -f api
+docker compose logs -f api
 ```
 
 ## Updating

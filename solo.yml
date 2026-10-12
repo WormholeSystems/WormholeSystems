@@ -30,7 +30,7 @@ processes:
   # Caddy on http://localhost:8080. Shares the `db` container with the Postgres process
   # above, and stays off :80, :3000 and :5173 so the host dev stack can keep running.
   Full stack (Docker):
-    command: docker compose --profile full up --build
+    command: docker compose up --build
     working_dir: null
     auto_start: false
     auto_restart: false

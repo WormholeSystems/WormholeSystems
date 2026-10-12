@@ -323,7 +323,7 @@ fn ask_discord(existing: &str, base: &str) -> Result<Option<Discord>> {
 fn after_boot(answers: &Answers) {
     ui::heading("After the first boot");
     ui::note("The API downloads CCP's static data and seeds from it, which takes a few");
-    ui::note("minutes. Follow it with:  docker compose --profile full logs -f api");
+    ui::note("minutes. Follow it with:  docker compose logs -f api");
     if answers.discord.is_some() {
         println!();
         ui::note("Then finish Discord, which needs this running to verify itself:");
