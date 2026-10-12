@@ -51,7 +51,9 @@ wsctl setup
 ```
 
 `wsctl setup` checks the machine, asks for what it needs, writes `.env`, and brings the
-stack up. `wsctl update` takes new code and newer static data; `wsctl status` says what is
+stack up. It runs everything on its own (Postgres and Caddy included), or only the app
+behind a Postgres and a reverse proxy you already have; `wsctl integrate` then prints what
+that proxy needs. `wsctl update` takes new code and newer static data; `wsctl status` says what is
 running and whether it answers. [docs/deployment.md](./docs/deployment.md) covers the rest.
 
 ## Developing

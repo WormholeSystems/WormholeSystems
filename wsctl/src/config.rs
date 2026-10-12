@@ -8,7 +8,8 @@ use rand::Rng;
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Answers {
-    /// Empty means no domain: plain http on this machine.
+    pub setup: Setup,
+    /// Full setup only. Empty means no domain: plain http on this machine.
     pub domain: String,
     pub http_port: u16,
     pub https_port: u16,
@@ -18,6 +19,78 @@ pub struct Answers {
     pub eve_client_secret: String,
     pub discord: Option<Discord>,
 }
+
+/// How the install meets the world.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub enum Setup {
+    /// Its own Postgres and its own Caddy, which gets the certificate. One machine, nothing
+    /// else on it needed.
+    #[default]
+    Full,
+    /// Only the API and the frontend, on a machine that already has a Postgres and a reverse
+    /// proxy.
+    Standalone(Standalone),
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct Standalone {
+    /// What the browser uses, scheme included. The proxy in front decides it, so it is
+    /// asked for rather than derived.
+    pub public_url: String,
+    pub database_url: String,
+    /// The Docker network the API and the frontend join, where a proxy container finds
+    /// them as `wormholesystems-api` and `wormholesystems-web`.
+    pub network: String,
+    /// Loopback ports (API, frontend) for a proxy running on the machine itself rather than
+    /// in Docker. None when the network is the only way in.
+    pub host_ports: Option<(u16, u16)>,
+}
+
+/// The compose files each setup runs from. The full stack is compose's default file, so
+/// it needs no COMPOSE_FILE at all, and an install from before there was a choice keeps
+/// working untouched.
+pub const STANDALONE_COMPOSE: &str = "compose.standalone.yml";
+pub const STANDALONE_PORTS_COMPOSE: &str = "compose.standalone.ports.yml";
+
+/// Everything only the standalone setup writes, struck out when an install goes back to
+/// the full one so a stale COMPOSE_FILE cannot keep it standalone.
+const STANDALONE_KEYS: [&str; 6] = [
+    "COMPOSE_FILE",
+    "WS_PUBLIC_URL",
+    "WS_DATABASE_URL",
+    "WS_PROXY_NETWORK",
+    "WS_API_PORT",
+    "WS_WEB_PORT",
+];
+
+impl Standalone {
+    pub fn compose_file(&self) -> String {
+        match self.host_ports {
+            Some(_) => format!("{STANDALONE_COMPOSE}:{STANDALONE_PORTS_COMPOSE}"),
+            None => STANDALONE_COMPOSE.to_string(),
+        }
+    }
+
+    /// Read back what an earlier `setup` wrote. None for a full install.
+    pub fn from_env(env: &str) -> Option<Self> {
+        let get = |key: &str| crate::envfile::get(env, key).unwrap_or_default();
+        if get("WS_SETUP") != "standalone" {
+            return None;
+        }
+        let port = |key: &str, fallback: u16| get(key).parse().unwrap_or(fallback);
+        let with_ports = get("COMPOSE_FILE").contains(STANDALONE_PORTS_COMPOSE);
+        Some(Self {
+            public_url: get("WS_PUBLIC_URL"),
+            database_url: get("WS_DATABASE_URL"),
+            network: Some(get("WS_PROXY_NETWORK"))
+                .filter(|n| !n.is_empty())
+                .unwrap_or_else(|| DEFAULT_NETWORK.to_string()),
+            host_ports: with_ports.then(|| (port("WS_API_PORT", 3000), port("WS_WEB_PORT", 3001))),
+        })
+    }
+}
+
+pub const DEFAULT_NETWORK: &str = "wormholesystems";
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Discord {
@@ -32,6 +105,9 @@ pub struct Discord {
 impl Answers {
     /// What the outside world calls this install. Every redirect has to match it exactly.
     pub fn base_url(&self) -> String {
+        if let Setup::Standalone(standalone) = &self.setup {
+            return standalone.public_url.trim_end_matches('/').to_string();
+        }
         if self.domain.is_empty() {
             format!("http://localhost:{}", self.http_port)
         } else {
@@ -46,9 +122,27 @@ impl Answers {
         let mut set = |k: &str, v: String| {
             values.insert(k.to_string(), v);
         };
-        set("WS_DOMAIN", self.domain.clone());
-        set("HTTP_PORT", self.http_port.to_string());
-        set("HTTPS_PORT", self.https_port.to_string());
+        match &self.setup {
+            Setup::Full => {
+                set("WS_SETUP", "full".into());
+                set("WS_DOMAIN", self.domain.clone());
+                set("HTTP_PORT", self.http_port.to_string());
+                set("HTTPS_PORT", self.https_port.to_string());
+            }
+            // WS_DOMAIN and the Caddy ports stay as they were: nothing reads them here, and
+            // going back to the full setup offers them as the defaults again.
+            Setup::Standalone(standalone) => {
+                set("WS_SETUP", "standalone".into());
+                set("COMPOSE_FILE", standalone.compose_file());
+                set("WS_PUBLIC_URL", self.base_url());
+                set("WS_DATABASE_URL", standalone.database_url.clone());
+                set("WS_PROXY_NETWORK", standalone.network.clone());
+                if let Some((api, web)) = standalone.host_ports {
+                    set("WS_API_PORT", api.to_string());
+                    set("WS_WEB_PORT", web.to_string());
+                }
+            }
+        }
         set("WS_CONTACT_NAME", self.contact_name.clone());
         set("WS_CONTACT_EMAIL", self.contact_email.clone());
         set("EVE_CLIENT_ID", self.eve_client_id.clone());
@@ -73,8 +167,21 @@ impl Answers {
         values
     }
 
-    /// The keys to strike out, for a setup that turned Discord off after having it on.
+    /// The keys to strike out: Discord's after it was turned off, and whatever belongs to
+    /// the setup this install is no longer using.
     pub fn env_removals(&self) -> Vec<&'static str> {
+        let mut out = self.discord_removals();
+        match &self.setup {
+            Setup::Full => out.extend(STANDALONE_KEYS),
+            Setup::Standalone(standalone) if standalone.host_ports.is_none() => {
+                out.extend(["WS_API_PORT", "WS_WEB_PORT"])
+            }
+            Setup::Standalone(_) => {}
+        }
+        out
+    }
+
+    fn discord_removals(&self) -> Vec<&'static str> {
         const DISCORD: [&str; 6] = [
             "DISCORD_APPLICATION_ID",
             "DISCORD_PUBLIC_KEY",
@@ -107,6 +214,7 @@ mod tests {
 
     fn answers() -> Answers {
         Answers {
+            setup: Setup::Full,
             domain: "map.example.com".into(),
             http_port: 80,
             https_port: 443,
@@ -166,7 +274,88 @@ mod tests {
         );
         // No bot token given, so the key is removed rather than written empty.
         assert!(!values.contains_key("DISCORD_BOT_TOKEN"));
-        assert_eq!(with.env_removals(), vec!["DISCORD_BOT_TOKEN"]);
+        assert_eq!(with.discord_removals(), vec!["DISCORD_BOT_TOKEN"]);
+    }
+
+    fn standalone(host_ports: Option<(u16, u16)>) -> Answers {
+        Answers {
+            setup: Setup::Standalone(Standalone {
+                public_url: "https://map.example.com/".into(),
+                database_url: "postgres://ws:secret@postgres:5432/ws".into(),
+                network: "web".into(),
+                host_ports,
+            }),
+            domain: String::new(),
+            ..answers()
+        }
+    }
+
+    // Behind somebody else's proxy the scheme is theirs to decide, so the URL is taken as
+    // given (less a trailing slash) and every callback follows it.
+    #[test]
+    fn standalone_takes_the_public_url_as_given() {
+        let values = standalone(None).env_values();
+        assert_eq!(values["WS_PUBLIC_URL"], "https://map.example.com");
+        assert_eq!(
+            values["EVE_REDIRECT_URI"],
+            "https://map.example.com/auth/callback"
+        );
+    }
+
+    #[test]
+    fn standalone_selects_its_compose_file_and_the_database() {
+        let values = standalone(None).env_values();
+        assert_eq!(values["WS_SETUP"], "standalone");
+        assert_eq!(values["COMPOSE_FILE"], "compose.standalone.yml");
+        assert_eq!(
+            values["WS_DATABASE_URL"],
+            "postgres://ws:secret@postgres:5432/ws"
+        );
+        assert_eq!(values["WS_PROXY_NETWORK"], "web");
+        // The Caddy settings are left alone rather than rewritten for nothing.
+        assert!(!values.contains_key("WS_DOMAIN"));
+        assert!(!values.contains_key("WS_API_PORT"));
+        assert!(standalone(None).env_removals().contains(&"WS_API_PORT"));
+    }
+
+    #[test]
+    fn host_ports_add_the_ports_file() {
+        let values = standalone(Some((4000, 4001))).env_values();
+        assert_eq!(
+            values["COMPOSE_FILE"],
+            "compose.standalone.yml:compose.standalone.ports.yml"
+        );
+        assert_eq!(values["WS_API_PORT"], "4000");
+        assert_eq!(values["WS_WEB_PORT"], "4001");
+    }
+
+    // A COMPOSE_FILE left behind would keep running the standalone stack after going back.
+    #[test]
+    fn going_back_to_full_strikes_out_everything_standalone() {
+        let removals = answers().env_removals();
+        for key in STANDALONE_KEYS {
+            assert!(removals.contains(&key), "{key} stays behind");
+        }
+        assert_eq!(answers().env_values()["WS_SETUP"], "full");
+    }
+
+    #[test]
+    fn what_setup_wrote_reads_back() {
+        let written = standalone(Some((4000, 4001)));
+        let env = crate::envfile::patch("", &written.env_values());
+        let Setup::Standalone(expected) = written.setup else {
+            unreachable!()
+        };
+        let read = Standalone::from_env(&env).unwrap();
+        assert_eq!(read.database_url, expected.database_url);
+        assert_eq!(read.network, expected.network);
+        assert_eq!(read.host_ports, Some((4000, 4001)));
+        assert_eq!(read.public_url, "https://map.example.com");
+    }
+
+    #[test]
+    fn an_install_without_a_choice_is_full() {
+        assert_eq!(Standalone::from_env("WS_DOMAIN=map.example.com\n"), None);
     }
 
     #[test]

@@ -1,0 +1,39 @@
+# Standalone: only the API and the frontend, for a machine that already has a Postgres and
+# a reverse proxy. No `db` and no `caddy` here; the app joins an existing Docker network
+# under fixed names, and whatever proxies the domain sends traffic to them there.
+#
+# `wsctl setup` picks this by writing COMPOSE_FILE to .env, so every plain `docker compose`
+# command reads it too. The project name and the volumes are the full stack's, so switching
+# between the two setups keeps the static data and the uploads.
+services:
+  api:
+    extends:
+      file: docker-compose.yml
+      service: api
+    # The full stack waits for its own Postgres; here the database is somebody else's.
+    depends_on: !reset {}
+    environment:
+      DATABASE_URL: ${WS_DATABASE_URL:?WS_DATABASE_URL is not set, run wsctl setup}
+    networks:
+      default:
+      proxy:
+        aliases: [wormholesystems-api]
+
+  web:
+    extends:
+      file: docker-compose.yml
+      service: web
+    networks:
+      default:
+      proxy:
+        aliases: [wormholesystems-web]
+
+networks:
+  # Made by `wsctl setup` when it does not exist yet, so a proxy container can join it.
+  proxy:
+    name: ${WS_PROXY_NETWORK:-wormholesystems}
+    external: true
+
+volumes:
+  sde:
+  uploads:

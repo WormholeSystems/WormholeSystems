@@ -5,7 +5,7 @@
 
 use anyhow::{Context, Result};
 use console::style;
-use inquire::{Confirm, Password, Text, validator::Validation};
+use inquire::{Confirm, Password, Select, Text, validator::Validation};
 
 use crate::checks::{Check, Verdict};
 
@@ -79,4 +79,13 @@ pub fn confirm(prompt: &str, default: bool) -> Result<bool> {
         .with_default(default)
         .prompt()
         .context("cancelled")
+}
+
+/// One of a few options, by index.
+pub fn choose(prompt: &str, options: &[&str], default: usize) -> Result<usize> {
+    Ok(Select::new(prompt, options.to_vec())
+        .with_starting_cursor(default)
+        .raw_prompt()
+        .context("cancelled")?
+        .index)
 }

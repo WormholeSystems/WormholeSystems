@@ -9,6 +9,7 @@ use std::process::{Command, Stdio};
 
 use anyhow::Result;
 
+use crate::config::Standalone;
 use crate::exec::Runner;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -100,7 +101,7 @@ pub fn ports(ports: &[u16], ours: bool) -> Vec<Check> {
             (false, true) => Check::ok(format!("port {port} is held by this stack")),
             (false, false) => Check::fatal(
                 format!("port {port} is already in use"),
-                "Stop whatever is on it, or set HTTP_PORT / HTTPS_PORT to something else.",
+                "Stop whatever is on it, or pick another port in `wsctl setup`.",
             ),
         })
         .collect()
@@ -158,6 +159,70 @@ pub fn repo(runner: &mut dyn Runner, dir: &Path) -> Check {
         ),
         _ => Check::ok("up to date with the remote"),
     }
+}
+
+/// Whether the database a standalone install points at answers where the API will look
+/// for it: inside the Docker network, not on this machine's loopback.
+pub fn database(runner: &mut dyn Runner, dir: &Path, network: &str, url: &str) -> Check {
+    let Some((host, port)) = database_address(url) else {
+        return Check::fatal(
+            "WS_DATABASE_URL is not a postgres:// URL",
+            "It looks like postgres://user:password@host:5432/database.",
+        );
+    };
+    if matches!(host.as_str(), "localhost" | "127.0.0.1" | "::1") {
+        return Check::fatal(
+            format!("the database is on {host}, which inside a container is the container"),
+            "Use the database's name on the Docker network, or this machine's address.",
+        );
+    }
+    if crate::stack::reachable_from(runner, dir, network, &host, port) {
+        Check::ok(format!("Postgres at {host}:{port} answers from {network}"))
+    } else {
+        Check::warn(
+            format!("nothing answers at {host}:{port} from the network {network}"),
+            "Put the database on that network or use an address it can reach; the API will not start until it can connect.",
+        )
+    }
+}
+
+pub fn network(runner: &mut dyn Runner, dir: &Path, name: &str) -> Check {
+    if crate::stack::network_exists(runner, dir, name) {
+        Check::ok(format!("the Docker network {name} exists"))
+    } else {
+        Check::fatal(
+            format!("there is no Docker network {name}"),
+            "`wsctl setup` creates it, or make it with `docker network create`.",
+        )
+    }
+}
+
+/// Host and port out of a postgres URL, the port defaulting the way libpq's does.
+pub fn database_address(url: &str) -> Option<(String, u16)> {
+    let rest = url
+        .strip_prefix("postgres://")
+        .or_else(|| url.strip_prefix("postgresql://"))?;
+    let authority = rest.split(['/', '?']).next()?;
+    let host_port = authority.rsplit_once('@').map_or(authority, |(_, hp)| hp);
+    let (host, port) = match host_port.strip_prefix('[') {
+        // [::1]:5432
+        Some(v6) => {
+            let (host, after) = v6.split_once(']')?;
+            (host, after.strip_prefix(':'))
+        }
+        None => match host_port.rsplit_once(':') {
+            Some((host, port)) => (host, Some(port)),
+            None => (host_port, None),
+        },
+    };
+    if host.is_empty() {
+        return None;
+    }
+    let port = match port {
+        Some(p) => p.parse().ok()?,
+        None => 5432,
+    };
+    Some((host.to_string(), port))
 }
 
 pub fn worst(checks: &[Check]) -> Verdict {
@@ -229,6 +294,28 @@ pub fn all(
     Ok(checks)
 }
 
+/// What `doctor` looks at for a standalone install: no ports 80 and 443 and no DNS, those
+/// belong to the proxy in front; the network, the database, and the loopback ports instead.
+pub fn standalone(runner: &mut dyn Runner, dir: &Path, standalone: &Standalone) -> Vec<Check> {
+    let mut checks = vec![docker(runner, dir), disk(dir), repo(runner, dir)];
+    let network = network(runner, dir, &standalone.network);
+    let network_ok = network.verdict == Verdict::Ok;
+    checks.push(network);
+    if network_ok {
+        checks.push(database(
+            runner,
+            dir,
+            &standalone.network,
+            &standalone.database_url,
+        ));
+    }
+    if let Some((api, web)) = standalone.host_ports {
+        let ours = crate::stack::service_running(runner, dir, "api");
+        checks.extend(ports(&[api, web], ours));
+    }
+    checks
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -265,6 +352,46 @@ mod tests {
         let held = std::net::TcpListener::bind(("0.0.0.0", 0)).unwrap();
         let port = held.local_addr().unwrap().port();
         assert_eq!(ports(&[port], true)[0].verdict, Verdict::Ok);
+    }
+
+    #[test]
+    fn the_database_address_comes_out_of_the_url() {
+        let cases = [
+            (
+                "postgres://ws:secret@postgres:5433/ws",
+                Some(("postgres", 5433)),
+            ),
+            (
+                "postgresql://ws@db.internal/ws?sslmode=disable",
+                Some(("db.internal", 5432)),
+            ),
+            ("postgres://ws:p%40ss@10.0.0.5/ws", Some(("10.0.0.5", 5432))),
+            ("postgres://ws:secret@[::1]:5432/ws", Some(("::1", 5432))),
+            ("mysql://ws@db/ws", None),
+            ("postgres:///ws", None),
+        ];
+        for (url, expected) in cases {
+            assert_eq!(
+                database_address(url),
+                expected.map(|(h, p)| (h.to_string(), p)),
+                "{url}"
+            );
+        }
+    }
+
+    // The API runs in a container, so the operator's localhost is not the API's localhost.
+    // This is the most likely wrong answer, and docker would only say "connection refused".
+    #[test]
+    fn a_database_on_localhost_is_fatal() {
+        let mut runner = crate::exec::Recording::default();
+        let check = database(
+            &mut runner,
+            Path::new("."),
+            "web",
+            "postgres://ws:secret@localhost:5432/ws",
+        );
+        assert_eq!(check.verdict, Verdict::Fatal);
+        assert!(runner.commands.is_empty());
     }
 
     #[test]

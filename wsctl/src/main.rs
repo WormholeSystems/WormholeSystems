@@ -10,6 +10,7 @@ mod checks;
 mod config;
 mod envfile;
 mod exec;
+mod integrate;
 mod stack;
 mod ui;
 mod wizard;
@@ -38,6 +39,8 @@ enum Command {
     },
     /// What is running, which static data is loaded, whether the URL answers
     Status,
+    /// What a reverse proxy in front of a standalone install needs to be told
+    Integrate,
     /// Upload the /wh slash command to your Discord application
     DiscordRegister,
     /// Check Docker, disk, ports and DNS without changing anything
@@ -64,6 +67,7 @@ fn run() -> Result<()> {
         Some(Command::Setup) => wizard::setup(runner, &dir),
         Some(Command::Update { sde }) => wizard::update(runner, &dir, sde),
         Some(Command::Status) => wizard::status(runner, &dir),
+        Some(Command::Integrate) => wizard::integrate(&dir),
         Some(Command::DiscordRegister) => wizard::discord_register(runner, &dir),
         Some(Command::Doctor) => wizard::doctor(runner, &dir),
     }
@@ -78,10 +82,14 @@ fn overview() {
     for (name, description) in [
         (
             "setup",
-            "check the machine, ask for what it needs, start it",
+            "pick full or standalone, check the machine, start it",
         ),
         ("update", "pull, rebuild, restart, take newer static data"),
         ("status", "what is running, and whether it answers"),
+        (
+            "integrate",
+            "what your own proxy needs, for a standalone install",
+        ),
         ("discord-register", "upload the /wh slash command"),
         ("doctor", "check the machine and change nothing"),
     ] {
