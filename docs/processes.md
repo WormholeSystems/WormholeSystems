@@ -89,7 +89,12 @@ station/structure (→ derived `is_docked`) and the `ship_*` fields.
 - Each poll needs the matching scope (online / location / ship); a missing scope skips
   that field, which stays `null` (see [scopes](./database/authentication.md#esi_scopes)).
 - Cadences track ESI's cache windows — honour each response's cache-expiry / `ETag`
-  rather than re-requesting inside a cached window.
+  rather than re-requesting inside a cached window (see [ESI](./esi/README.md)).
+- A poll loads the character's token once for all its fields, from an in-memory cache
+  that goes back to the database only to refresh it (or, once a minute at most, to look
+  for a scope it lacks). Refreshes of one character's token never run side by side.
+- Only changes are written. The poller holds at most half the database pool, so a busy
+  tick cannot starve requests.
 
 ## Sovereignty refresh
 

@@ -21,12 +21,12 @@ singular name reads better than the usual plural.)
 | `structure_id`    | bigint, null      | docked [`structure`](./universe.md#structures), if any |
 | `is_docked`       | bool, generated   | `station_id IS NOT NULL OR structure_id IS NOT NULL` |
 | `online`          | bool              | currently online                                     |
-| `last_online_at`  | timestamptz, null | when last seen online (persists while offline)       |
+| `last_online_at`  | timestamptz, null | when last seen online, to within a tier-1 tick (persists while offline) |
 | `ship_type_id`    | int, null         | current ship hull → [`types`](./types.md)            |
 | `ship_name`       | text, null        | player-given ship name                               |
 | `ship_item_id`    | bigint, null      | ship instance id; a change signals a ship swap       |
 | `ship_updated_at` | timestamptz, null | when the current ship was first observed             |
-| `updated_at`      | timestamptz       | last successful poll                                 |
+| `updated_at`      | timestamptz       | when a polled value last changed                     |
 
 **Invariants & expected behaviour**
 
@@ -41,6 +41,8 @@ singular name reads better than the usual plural.)
 - `last_online_at` persists while the character is offline, so the UI can show
   "last seen N ago".
 - A change in `ship_item_id` marks a ship swap and bumps `ship_updated_at`.
+- A poll that sees nothing new writes nothing: each write is conditional on a value
+  actually differing, so the row (and `updated_at`) only moves on a change.
 - **Visibility is permission-gated:** status is shown only to map users with the
   **member** role or higher (see [Access](./access.md#roles--capabilities)); viewers
   never receive it. Status is global to the character — it surfaces on any map that

@@ -9,19 +9,23 @@
 //! Each tier awaits its whole batch before the next tick, so one poll that never returns
 //! would stop that tier for the life of the process. Every poll runs under
 //! [`POLL_TIMEOUT`] for that reason, and failures are counted and logged once per tick.
+//!
+//! Tokens come from a [`TokenCache`], so a poll touches the database only to write what
+//! actually changed. Most polls see nothing new and write nothing.
 
+use std::collections::HashSet;
 use std::future::Future;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use sqlx::PgPool;
-use tokio::sync::Semaphore;
+use tokio::sync::{Semaphore, SemaphorePermit};
 use tokio::task::JoinSet;
 use tokio::time::{MissedTickBehavior, interval, timeout};
 
 use crate::db::PgTokenStore;
 use crate::esi::scopes::Scope;
-use crate::esi::{EsiClient, EsiError, Sso};
+use crate::esi::{EsiClient, Result as EsiResult, Sso, Token, TokenCache, TokenStore};
 use crate::maps::MapHub;
 use crate::server_status::ServerWatch;
 use crate::user_channel::{UserEvent, UserHub};
@@ -44,6 +48,52 @@ struct Due {
     user_id: i64,
 }
 
+/// What both tiers share.
+struct Poller {
+    pool: PgPool,
+    sso: Arc<Sso>,
+    esi: EsiClient,
+    users: UserHub,
+    maps: MapHub,
+    store: PgTokenStore,
+    tokens: TokenCache,
+    /// The poller's share of the pool. [`CONCURRENCY`] polls can be in flight and each
+    /// ends in a write, while the API, websockets and killmail ingest draw on the same
+    /// connections; without a cap of its own a busy tick could take all of them.
+    db: Semaphore,
+}
+
+impl Poller {
+    /// Wait for one of the poller's connections. Held across one statement or one short
+    /// run of them, never while waiting on ESI, and never two at once.
+    async fn db(&self) -> SemaphorePermit<'_> {
+        self.db.acquire().await.expect("semaphore open")
+    }
+
+    /// The character's token, loaded once per poll and checked for each field's scope.
+    async fn token(&self, character_id: i64, wanted: &[Scope]) -> Result<Token, String> {
+        self.tokens
+            .token(&self.sso, &Throttled(self), character_id, wanted)
+            .await
+            .map_err(|err| err.to_string())
+    }
+}
+
+/// The token store, inside the poller's share of the pool.
+struct Throttled<'a>(&'a Poller);
+
+impl TokenStore for Throttled<'_> {
+    async fn load(&self, character_id: i64) -> EsiResult<Option<Token>> {
+        let _db = self.0.db().await;
+        self.0.store.load(character_id).await
+    }
+
+    async fn save(&self, character_id: i64, token: &Token) -> EsiResult<()> {
+        let _db = self.0.db().await;
+        self.0.store.save(character_id, token).await
+    }
+}
+
 /// Spawn the polling loops. Returns immediately; the loops run for the process lifetime.
 /// `maps` receives `ConnectionChanged` events when a transit lands on a mapped hole.
 pub fn start(
@@ -54,26 +104,24 @@ pub fn start(
     maps: MapHub,
     server: ServerWatch,
 ) {
-    tokio::spawn(tier_one(
-        pool.clone(),
-        sso.clone(),
-        esi.clone(),
-        users.clone(),
-        maps.clone(),
-        server.clone(),
-    ));
-    tokio::spawn(tier_two(pool, sso, esi, users, maps, server));
+    // Half the pool, leaving the rest to requests and the other background work.
+    let db = (pool.options().get_max_connections() as usize / 2).max(1);
+    let poller = Arc::new(Poller {
+        store: PgTokenStore::new(pool.clone()),
+        pool,
+        sso,
+        esi,
+        users,
+        maps,
+        tokens: TokenCache::new(),
+        db: Semaphore::new(db),
+    });
+    tokio::spawn(tier_one(poller.clone(), server.clone()));
+    tokio::spawn(tier_two(poller, server));
 }
 
 /// Tier 1: online state, every 60s, for every character of an active user.
-async fn tier_one(
-    pool: PgPool,
-    sso: Arc<Sso>,
-    esi: EsiClient,
-    users: UserHub,
-    maps: MapHub,
-    server: ServerWatch,
-) {
+async fn tier_one(poller: Arc<Poller>, server: ServerWatch) {
     let mut ticker = interval(Duration::from_secs(60));
     ticker.set_missed_tick_behavior(MissedTickBehavior::Skip);
     loop {
@@ -83,19 +131,13 @@ async fn tier_one(
         if !server.should_poll() {
             continue;
         }
-        match active_characters(&pool, false).await {
+        match active_characters(&poller.pool, false).await {
             Ok(due) => {
-                run_polls("tier-1", &due, |d| {
-                    poll_online(
-                        pool.clone(),
-                        sso.clone(),
-                        esi.clone(),
-                        users.clone(),
-                        maps.clone(),
-                        d,
-                    )
-                })
-                .await
+                // Everyone tier 2 polls is in this set too, so this is where tokens for
+                // characters that dropped out of polling are let go.
+                let ids: HashSet<i64> = due.iter().map(|d| d.character_id).collect();
+                poller.tokens.retain(|id| ids.contains(&id));
+                run_polls("tier-1", &due, |d| poll_online(poller.clone(), d)).await
             }
             Err(err) => eprintln!("tracking tier-1 select failed: {err}"),
         }
@@ -103,14 +145,7 @@ async fn tier_one(
 }
 
 /// Tier 2: location + ship, every 5s, for currently-online characters of active users.
-async fn tier_two(
-    pool: PgPool,
-    sso: Arc<Sso>,
-    esi: EsiClient,
-    users: UserHub,
-    maps: MapHub,
-    server: ServerWatch,
-) {
+async fn tier_two(poller: Arc<Poller>, server: ServerWatch) {
     let mut ticker = interval(Duration::from_secs(5));
     ticker.set_missed_tick_behavior(MissedTickBehavior::Skip);
     loop {
@@ -118,20 +153,8 @@ async fn tier_two(
         if !server.should_poll() {
             continue;
         }
-        match active_characters(&pool, true).await {
-            Ok(due) => {
-                run_polls("tier-2", &due, |d| {
-                    poll_location_ship(
-                        pool.clone(),
-                        sso.clone(),
-                        esi.clone(),
-                        users.clone(),
-                        maps.clone(),
-                        d,
-                    )
-                })
-                .await
-            }
+        match active_characters(&poller.pool, true).await {
+            Ok(due) => run_polls("tier-2", &due, |d| poll_location_ship(poller.clone(), d)).await,
             Err(err) => eprintln!("tracking tier-2 select failed: {err}"),
         }
     }
@@ -235,66 +258,48 @@ where
     }
 }
 
-/// A token for `scope`, or `None` when the character never granted it.
-async fn token_for(
-    sso: &Sso,
-    store: &PgTokenStore,
-    character_id: i64,
-    scope: Scope,
-) -> Result<Option<String>, String> {
-    match sso.access_token(store, character_id, scope).await {
-        Ok(token) => Ok(Some(token)),
-        Err(EsiError::MissingScope(_)) => Ok(None),
-        Err(err) => Err(err.to_string()),
-    }
-}
-
 /// Poll one character's online state (tier 1). A failure skips the character; the next tick
 /// retries.
-async fn poll_online(
-    pool: PgPool,
-    sso: Arc<Sso>,
-    esi: EsiClient,
-    users: UserHub,
-    maps: MapHub,
-    due: Due,
-) -> Poll {
-    let store = PgTokenStore::new(pool.clone());
-    let Some(token) = token_for(&sso, &store, due.character_id, Scope::ReadOnline).await? else {
+async fn poll_online(poller: Arc<Poller>, due: Due) -> Poll {
+    let token = poller.token(due.character_id, &[Scope::ReadOnline]).await?;
+    if !token.has_scope(Scope::ReadOnline) {
         return Ok(());
-    };
-    let status = esi
-        .character_online(&token, due.character_id)
+    }
+    let status = poller
+        .esi
+        .character_online(&token.access_token, due.character_id)
         .await
         .map_err(|err| err.to_string())?;
-    // The write always runs (`updated_at` is the last successful poll), but the user is only
-    // pinged on an actual transition, so the CTE snapshots the prior value to compare against.
-    let row = sqlx::query!(
-        r#"with prev as (
-             select online from character_status where character_id = $1
-         )
-         insert into character_status (character_id, online, last_online_at)
-         values ($1, $2, case when $2 then now() else null end)
-         on conflict (character_id) do update set
-             online = excluded.online,
-             last_online_at = case when excluded.online then now()
-                                   else character_status.last_online_at end,
-             updated_at = now()
-         returning (select online from prev) as "prev_online?""#,
-        due.character_id,
-        status.online,
-    )
-    .fetch_one(&pool)
-    .await
-    .map_err(|err| err.to_string())?;
-    if row.prev_online != Some(status.online) {
-        users.publish(
+    // Written only on a transition, which is also when the user is pinged: a row comes
+    // back only when one was inserted or actually changed. `last_online_at` moves on both
+    // edges, so once offline it says when they were last seen online, to within a tick.
+    let changed = {
+        let _db = poller.db().await;
+        sqlx::query_scalar!(
+            "insert into character_status (character_id, online, last_online_at)
+             values ($1, $2, case when $2 then now() else null end)
+             on conflict (character_id) do update set
+                 online = excluded.online,
+                 last_online_at = now(),
+                 updated_at = now()
+             where character_status.online is distinct from excluded.online
+             returning character_id",
+            due.character_id,
+            status.online,
+        )
+        .fetch_optional(&poller.pool)
+        .await
+        .map_err(|err| err.to_string())?
+        .is_some()
+    };
+    if changed {
+        poller.users.publish(
             due.user_id,
             UserEvent::CharacterStatusChanged {
                 character_id: due.character_id,
             },
         );
-        announce_presence(&pool, &maps, due.user_id).await;
+        announce_presence(&poller, due.user_id).await;
     }
     Ok(())
 }
@@ -302,99 +307,89 @@ async fn poll_online(
 /// Poll one character's location and ship (tier 2). The two use independent scopes, so a
 /// missing one skips just that field, and one failing does not stop the other. Docking is
 /// left null until we cache those entities.
-async fn poll_location_ship(
-    pool: PgPool,
-    sso: Arc<Sso>,
-    esi: EsiClient,
-    users: UserHub,
-    maps: MapHub,
-    due: Due,
-) -> Poll {
-    let store = PgTokenStore::new(pool.clone());
-    let location = poll_location(&pool, &sso, &esi, &store, due.character_id).await;
-    let ship = poll_ship(&pool, &sso, &esi, &store, due.character_id).await;
+async fn poll_location_ship(poller: Arc<Poller>, due: Due) -> Poll {
+    let id = due.character_id;
+    let token = poller
+        .token(id, &[Scope::ReadLocation, Scope::ReadShipType])
+        .await?;
+    let location = if token.has_scope(Scope::ReadLocation) {
+        poll_location(&poller, &token.access_token, id).await
+    } else {
+        Ok(false)
+    };
+    let ship = if token.has_scope(Scope::ReadShipType) {
+        poll_ship(&poller, &token.access_token, id).await
+    } else {
+        Ok(false)
+    };
 
     if matches!(location, Ok(true)) || matches!(ship, Ok(true)) {
-        users.publish(
+        poller.users.publish(
             due.user_id,
-            UserEvent::CharacterStatusChanged {
-                character_id: due.character_id,
-            },
+            UserEvent::CharacterStatusChanged { character_id: id },
         );
-        announce_presence(&pool, &maps, due.user_id).await;
+        announce_presence(&poller, due.user_id).await;
     }
     location.and(ship).map(|_| ())
 }
 
 /// The location half of tier 2. `Ok(true)` when it moved.
-async fn poll_location(
-    pool: &PgPool,
-    sso: &Sso,
-    esi: &EsiClient,
-    store: &PgTokenStore,
-    id: i64,
-) -> Result<bool, String> {
-    let Some(token) = token_for(sso, store, id, Scope::ReadLocation).await? else {
-        return Ok(false);
-    };
-    let location = esi
-        .character_location(&token, id)
+async fn poll_location(poller: &Poller, token: &str, id: i64) -> Result<bool, String> {
+    let location = poller
+        .esi
+        .character_location(token, id)
         .await
         .map_err(|err| err.to_string())?;
-    // As in tier 1: the write always runs (poll freshness), but the result compares against
-    // the prior values so the user is only pinged when something actually changed.
-    let Some(row) = sqlx::query!(
-        r#"with prev as (
-                 select solar_system_id, station_id, structure_id
-                 from character_status where character_id = $1
-             )
-             update character_status
-             set solar_system_id = $2, station_id = null, structure_id = null, updated_at = now()
-             where character_id = $1
-             returning (select solar_system_id from prev) as "prev_solar_system_id?",
-                       (select station_id from prev) as "prev_station_id?",
-                       (select structure_id from prev) as "prev_structure_id?""#,
-        id,
-        location.solar_system_id,
-    )
-    .fetch_optional(pool)
-    .await
-    .map_err(|err| err.to_string())?
-    else {
-        // No status row yet: tier 1 creates it.
+    // As in tier 1, only a change is written, and a row comes back only for one. No row
+    // also covers a character with no status yet: tier 1 creates it.
+    let moved = {
+        let _db = poller.db().await;
+        sqlx::query!(
+            r#"with prev as (
+                     select solar_system_id from character_status where character_id = $1
+                 )
+                 update character_status
+                 set solar_system_id = $2, station_id = null, structure_id = null,
+                     updated_at = now()
+                 where character_id = $1
+                   and (solar_system_id is distinct from $2
+                        or station_id is not null or structure_id is not null)
+                 returning (select solar_system_id from prev) as "prev_solar_system_id?""#,
+            id,
+            location.solar_system_id,
+        )
+        .fetch_optional(&poller.pool)
+        .await
+        .map_err(|err| err.to_string())?
+    };
+    let Some(moved) = moved else {
         return Ok(false);
     };
 
     // A system change is a potential wormhole transit: jump capture must never
     // break polling, so failures are logged and dropped.
-    if let Some(prev) = row.prev_solar_system_id
+    if let Some(prev) = moved.prev_solar_system_id
         && prev != location.solar_system_id
-        && let Err(err) =
-            crate::maps::jumps::record_transit(pool, id, prev, location.solar_system_id).await
     {
-        eprintln!("jump capture failed for character {id}: {err}");
+        let _db = poller.db().await;
+        if let Err(err) =
+            crate::maps::jumps::record_transit(&poller.pool, id, prev, location.solar_system_id)
+                .await
+        {
+            eprintln!("jump capture failed for character {id}: {err}");
+        }
     }
-
-    Ok(row.prev_solar_system_id != Some(location.solar_system_id)
-        || row.prev_station_id.is_some()
-        || row.prev_structure_id.is_some())
+    Ok(true)
 }
 
 /// The ship half of tier 2. `Ok(true)` when the hull or its name changed.
-async fn poll_ship(
-    pool: &PgPool,
-    sso: &Sso,
-    esi: &EsiClient,
-    store: &PgTokenStore,
-    id: i64,
-) -> Result<bool, String> {
-    let Some(token) = token_for(sso, store, id, Scope::ReadShipType).await? else {
-        return Ok(false);
-    };
-    let ship = esi
-        .character_ship(&token, id)
+async fn poll_ship(poller: &Poller, token: &str, id: i64) -> Result<bool, String> {
+    let ship = poller
+        .esi
+        .character_ship(token, id)
         .await
         .map_err(|err| err.to_string())?;
+    let _db = poller.db().await;
     let Some(row) = sqlx::query!(
         // The stamp moves only when the hull does, so it answers "how long have they
         // been in this ship" rather than "when did we last poll".
@@ -409,6 +404,8 @@ async fn poll_ship(
                  end,
                  updated_at = now()
              where character_id = $1
+               and (ship_type_id, ship_name, ship_item_id)
+                   is distinct from ($2::bigint, $3::text, $4::bigint)
              returning (select ship_type_id from prev) as "prev_ship_type_id?",
                        (select ship_name from prev) as "prev_ship_name?""#,
         id,
@@ -416,7 +413,7 @@ async fn poll_ship(
         ship.ship_name,
         ship.ship_item_id,
     )
-    .fetch_optional(pool)
+    .fetch_optional(&poller.pool)
     .await
     .map_err(|err| err.to_string())?
     else {
@@ -428,17 +425,22 @@ async fn poll_ship(
 
 /// Tell every map this user shares their position with that its pilot list moved. The
 /// per-user ping above only reaches the pilot's own tabs.
-async fn announce_presence(pool: &PgPool, maps: &MapHub, user_id: i64) {
-    let Ok(map_ids) = sqlx::query_scalar!(
-        "select map_id from map_user_settings where user_id = $1 and tracking_allowed",
-        user_id,
-    )
-    .fetch_all(pool)
-    .await
-    else {
+async fn announce_presence(poller: &Poller, user_id: i64) {
+    let map_ids = {
+        let _db = poller.db().await;
+        sqlx::query_scalar!(
+            "select map_id from map_user_settings where user_id = $1 and tracking_allowed",
+            user_id,
+        )
+        .fetch_all(&poller.pool)
+        .await
+    };
+    let Ok(map_ids) = map_ids else {
         return;
     };
     for map_id in map_ids {
-        maps.publish(crate::maps::MapEvent::CharactersChanged { map_id });
+        poller
+            .maps
+            .publish(crate::maps::MapEvent::CharactersChanged { map_id });
     }
 }

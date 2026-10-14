@@ -16,6 +16,7 @@ pub mod jwt;
 pub mod scopes;
 pub mod sso;
 pub mod token;
+pub mod token_cache;
 
 pub mod character;
 pub mod entities;
@@ -35,6 +36,7 @@ pub use {
     sso::{Sso, SsoConfig},
     status::TranquilityStatus,
     token::{Token, TokenStore},
+    token_cache::TokenCache,
 };
 
 pub const BASE_URL: &str = "https://esi.evetech.net";

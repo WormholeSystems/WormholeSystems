@@ -1,0 +1,33 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "with prev as (\n                 select ship_type_id, ship_name from character_status where character_id = $1\n             )\n             update character_status\n             set ship_type_id = $2, ship_name = $3, ship_item_id = $4,\n                 ship_updated_at = case\n                     when ship_item_id is distinct from $4 then now()\n                     else ship_updated_at\n                 end,\n                 updated_at = now()\n             where character_id = $1\n               and (ship_type_id, ship_name, ship_item_id)\n                   is distinct from ($2::bigint, $3::text, $4::bigint)\n             returning (select ship_type_id from prev) as \"prev_ship_type_id?\",\n                       (select ship_name from prev) as \"prev_ship_name?\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "prev_ship_type_id?",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "prev_ship_name?",
+        "type_info": "Text",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Text",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "6abdfa923157f1e63680d2b2934f7e1ad4cb473e6f2a19c4eec271375632414f"
+}
