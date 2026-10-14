@@ -1,0 +1,25 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "with fresh as (\n               select * from unnest($1::bigint[], $2::bigint[], $3::bigint[])\n                   as f(id, corporation_id, alliance_id)\n           ),\n           old as (\n               select c.id, c.corporation_id, c.alliance_id\n               from characters c join fresh using (id)\n           ),\n           updated as (\n               update characters c set\n                   corporation_id = (select id from corporations where id = fresh.corporation_id),\n                   alliance_id = (select id from alliances where id = fresh.alliance_id),\n                   updated_at = now()\n               from fresh\n               where c.id = fresh.id\n               returning c.id, c.corporation_id, c.alliance_id\n           )\n           select count(*) as \"changed!\"\n           from updated join old using (id)\n           where updated.corporation_id is distinct from old.corporation_id\n              or updated.alliance_id is distinct from old.alliance_id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "changed!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8Array",
+        "Int8Array",
+        "Int8Array"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "2d5c424361320e41951d9e219cf832da35af66e5f974e80dcbedfd2516d74f64"
+}

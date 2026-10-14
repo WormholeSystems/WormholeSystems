@@ -16,6 +16,8 @@ When someone opens a map, the app gathers every non-expired entry that matches t
 
 Each entry can also carry an optional **expiration date**, after which it simply stops counting.
 
+Corporation and alliance membership is checked again every hour, whether or not the pilot is signed in. Someone who leaves a corporation loses the access it gave them within about two hours, since EVE itself only reports a change once an hour. An entry for the character itself keeps counting whichever corporation it joins.
+
 ## Owner
 
 The pilot who creates a map is its **owner**. The owner is the only one who can **delete** the map, and the owner's own access entry can't be edited or removed by anyone.
