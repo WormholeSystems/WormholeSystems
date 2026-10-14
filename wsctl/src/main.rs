@@ -31,7 +31,12 @@ struct Cli {
 enum Command {
     /// Check the machine, ask for what it needs, and bring the stack up
     #[command(visible_alias = "init")]
-    Setup,
+    Setup {
+        /// Ask nothing: take every answer from the environment and .env, and fail naming
+        /// whatever required one is missing (see docs/deployment.md)
+        #[arg(long)]
+        non_interactive: bool,
+    },
     /// Pull, rebuild, restart, and take a newer static data export if CCP has one
     Update {
         /// Fetch the static data even when the loaded build is already current
@@ -78,7 +83,10 @@ fn run() -> Result<()> {
             overview();
             Ok(())
         }
-        Some(Command::Setup) => wizard::setup(runner, &dir),
+        Some(Command::Setup { non_interactive }) => {
+            let vars: Vec<(String, String)> = std::env::vars().collect();
+            wizard::setup(runner, &dir, non_interactive.then_some(vars.as_slice()))
+        }
         Some(Command::Update { sde, no_backup }) => wizard::update(runner, &dir, sde, !no_backup),
         Some(Command::Backup) => wizard::backup(runner, &dir),
         Some(Command::Restore { file, yes }) => wizard::restore(runner, &dir, &file, yes),

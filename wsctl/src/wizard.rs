@@ -45,11 +45,67 @@ fn require_terminal() -> Result<()> {
     )
 }
 
-pub fn setup(runner: &mut dyn Runner, dir: &Path) -> Result<()> {
+/// The variables a scripted setup reads from its environment: everything `.env` can hold
+/// that is the app's or wsctl's. Taken by prefix or by name, and written to `.env` with the
+/// answers, so a later `docker compose` without them in its environment still sees them.
+const SCRIPTED_PREFIXES: [&str; 6] = [
+    "WS_",
+    "EVE_",
+    "DISCORD_",
+    "ANNOUNCEMENT_",
+    "ZKB_",
+    "KILLMAIL_",
+];
+const SCRIPTED_KEYS: [&str; 11] = [
+    "HTTP_PORT",
+    "HTTPS_PORT",
+    "ALLOWED_AFFILIATION_IDS",
+    "MAP_CREATOR_AFFILIATION_IDS",
+    "COMPOSE_PROFILES",
+    "POSTGRES_PASSWORD",
+    "DATABASE_MAX_CONNECTIONS",
+    "ESI_BASE_URL",
+    "SERVER_STATUS_POLL_SECS",
+    "SKYHOOK_POLL_SECS",
+    "UPLOADS_DIR",
+];
+
+/// `.env` with the scripted variables from `vars` laid over it.
+fn with_environment(env: &str, vars: &[(String, String)]) -> String {
+    let values = vars
+        .iter()
+        .filter(|(key, _)| {
+            SCRIPTED_PREFIXES.iter().any(|p| key.starts_with(p))
+                || SCRIPTED_KEYS.contains(&key.as_str())
+        })
+        .cloned()
+        .collect();
+    envfile::patch(env, &values)
+}
+
+/// `scripted` is `--non-interactive`, with the environment it reads its answers from.
+pub fn setup(
+    runner: &mut dyn Runner,
+    dir: &Path,
+    scripted: Option<&[(String, String)]>,
+) -> Result<()> {
     require_checkout(dir)?;
-    require_terminal()?;
+    let on_disk = read_env(dir);
+    let fresh = on_disk.is_empty();
+    let (existing, template) = match scripted {
+        Some(vars) => {
+            ui::script();
+            (
+                with_environment(&on_disk, vars),
+                with_environment(&template(dir), vars),
+            )
+        }
+        None => {
+            require_terminal()?;
+            (on_disk, template(dir))
+        }
+    };
     ui::heading("Checking this machine");
-    let existing = read_env(dir);
     let domain = envfile::get(&existing, "WS_DOMAIN").unwrap_or_default();
     let (http, https) = ports(&existing, &domain);
 
@@ -64,7 +120,14 @@ pub fn setup(runner: &mut dyn Runner, dir: &Path) -> Result<()> {
         ui::report(&check);
     }
 
-    let answers = ask_everything(&existing, http, https)?;
+    let answers = ask_everything(&existing, fresh, http, https)?;
+    let missing = ui::take_missing();
+    if !missing.is_empty() {
+        bail!(
+            "--non-interactive has no answer for {}; set them in the environment or in .env",
+            missing.join(", ")
+        );
+    }
     let deployment = &answers.deployment;
 
     ui::heading("Checking the network");
@@ -85,7 +148,7 @@ pub fn setup(runner: &mut dyn Runner, dir: &Path) -> Result<()> {
     // Before .env names the new project, which is what the old name is read from. A fresh
     // checkout has no .env yet, and nothing under any name to move.
     let bundled = deployment.database == Database::Bundled;
-    let (old, has_database) = if existing.is_empty() {
+    let (old, has_database) = if fresh {
         (None, false)
     } else {
         let old = rename::old_project(runner, dir)?;
@@ -93,7 +156,7 @@ pub fn setup(runner: &mut dyn Runner, dir: &Path) -> Result<()> {
         (old, has_database)
     };
 
-    write_env(dir, &template(dir), &answers, bundled && has_database)?;
+    write_env(dir, &template, &answers, bundled && has_database)?;
     ui::done("wrote .env");
 
     // Ready before anything is stopped, so a running install only goes down for the move.
@@ -111,7 +174,7 @@ pub fn setup(runner: &mut dyn Runner, dir: &Path) -> Result<()> {
     }
     report_renamed(&renamed);
     ui::heading("Starting");
-    if existing.is_empty() {
+    if fresh {
         ui::note("The first boot downloads CCP's static data (~550MB) and seeds from it before");
         ui::note("the API answers. This waits for that, which takes a few minutes; follow it");
         ui::note("from another shell with:  docker compose logs -f api");
@@ -523,7 +586,9 @@ pub fn integrate(dir: &Path) -> Result<()> {
     Ok(())
 }
 
-fn ask_everything(existing: &str, http: u16, https: u16) -> Result<Answers> {
+/// `fresh` is a checkout with no `.env` yet, which gets the defaults a new install should
+/// have rather than the ones that keep an old install as it was.
+fn ask_everything(existing: &str, fresh: bool, http: u16, https: u16) -> Result<Answers> {
     ui::heading("What this deployment needs");
     let keep = |key: &str| envfile::get(existing, key).filter(|v| !v.is_empty());
 
@@ -540,10 +605,15 @@ fn ask_everything(existing: &str, http: u16, https: u16) -> Result<Answers> {
     ui::note("can tell operators apart and reach you if this install misbehaves. CCP asks");
     ui::note("for it; anonymous clients get throttled, then blocked.");
     answers.contact_name = ui::ask(
+        "WS_CONTACT_NAME",
         "In-game character name of the admin",
         keep("WS_CONTACT_NAME"),
     )?;
-    answers.contact_email = ui::ask("Contact email", keep("WS_CONTACT_EMAIL"))?;
+    answers.contact_email = ui::ask(
+        "WS_CONTACT_EMAIL",
+        "Contact email",
+        keep("WS_CONTACT_EMAIL"),
+    )?;
 
     println!();
     ui::note("EVE application, from https://developers.eveonline.com/applications.");
@@ -551,8 +621,12 @@ fn ask_everything(existing: &str, http: u16, https: u16) -> Result<Answers> {
         "Its callback URL must be exactly: {}/auth/callback",
         answers.base_url()
     ));
-    answers.eve_client_id = ui::ask("Client ID", keep("EVE_CLIENT_ID"))?;
-    answers.eve_client_secret = ui::ask_secret("Client secret", keep("EVE_CLIENT_SECRET"))?;
+    answers.eve_client_id = ui::ask("EVE_CLIENT_ID", "Client ID", keep("EVE_CLIENT_ID"))?;
+    answers.eve_client_secret = ui::ask_secret(
+        "EVE_CLIENT_SECRET",
+        "Client secret",
+        keep("EVE_CLIENT_SECRET"),
+    )?;
 
     println!();
     ui::note("Who may log in: EVE character, corporation and alliance ids, comma separated.");
@@ -574,8 +648,8 @@ fn ask_everything(existing: &str, http: u16, https: u16) -> Result<Answers> {
     answers.discord = ask_discord(existing, &answers.base_url())?;
     answers.killmails = ask_killmails(existing)?;
     answers.announcement = ask_announcement(existing)?;
-    answers.images = ask_images(existing)?;
-    answers.backups = ask_backups(existing)?;
+    answers.images = ask_images(existing, fresh)?;
+    answers.backups = ask_backups(existing, fresh)?;
     Ok(answers)
 }
 
@@ -600,7 +674,11 @@ fn ask_database(previous: &Deployment) -> Result<Database> {
     println!();
     ui::note("The Postgres to use, as the containers reach it (not localhost: that is the");
     ui::note("container itself). The database has to exist; the API creates its tables.");
-    let url = ui::ask_secret("Database URL", Some(before.url).filter(|u| !u.is_empty()))?;
+    let url = ui::ask_secret(
+        "WS_DATABASE_URL",
+        "Database URL",
+        Some(before.url).filter(|u| !u.is_empty()),
+    )?;
 
     println!();
     ui::note("When it is a container on a Docker network, the API joins that network to");
@@ -681,7 +759,7 @@ fn ask_site(existing: &str, http: u16, https: u16) -> Result<Site> {
     ui::note("Without a domain the EVE and Discord callbacks are built from the address people");
     ui::note("open it at: localhost on this machine, this server's address from anywhere else.");
     let suggested = keep("WS_PUBLIC_URL").unwrap_or_else(|| suggested_url(http));
-    let public_url = normalise_plain_url(&ui::ask("Public URL", Some(suggested))?);
+    let public_url = normalise_plain_url(&ui::ask("WS_PUBLIC_URL", "Public URL", Some(suggested))?);
     Ok(Site {
         domain,
         http_port: http,
@@ -787,12 +865,17 @@ fn ask_public_url(previous: Option<String>) -> Result<String> {
     println!();
     ui::note("The address people open, as your proxy serves it. The EVE and Discord callbacks");
     ui::note("are built from it.");
-    Ok(normalise_url(&ui::ask("Public URL", previous)?))
+    Ok(normalise_url(&ui::ask(
+        "WS_PUBLIC_URL",
+        "Public URL",
+        previous,
+    )?))
 }
 
 fn ask_network(previous: Option<String>) -> Result<String> {
     ui::note("It is created if it does not exist.");
     ui::ask(
+        "WS_PROXY_NETWORK",
         "Docker network",
         previous.or_else(|| Some(DEFAULT_NETWORK.into())),
     )
@@ -837,6 +920,7 @@ fn ask_killmails(existing: &str) -> Result<Option<u32>> {
     let days = current.unwrap_or(config::DEFAULT_BACKFILL_DAYS);
     loop {
         match ui::ask(
+            "KILLMAIL_BACKFILL_DAYS",
             "Days of history to fill in (0 for none)",
             Some(days.to_string()),
         )?
@@ -857,7 +941,11 @@ fn ask_announcement(existing: &str) -> Result<Option<Announcement>> {
         return Ok(None);
     }
     let keep = |key: &str| envfile::get(existing, key).filter(|v| !v.is_empty());
-    let message = ui::ask("Message", keep("ANNOUNCEMENT_MESSAGE"))?;
+    let message = ui::ask(
+        "ANNOUNCEMENT_MESSAGE",
+        "Message",
+        keep("ANNOUNCEMENT_MESSAGE"),
+    )?;
     let title = ui::ask_optional("Title (optional)", keep("ANNOUNCEMENT_TITLE"))?;
     let level = current.as_ref().map_or("info", |a| a.level.as_str());
     let level = Announcement::LEVELS[ui::choose(
@@ -888,21 +976,23 @@ fn ask_announcement(existing: &str) -> Result<Option<Announcement>> {
     }))
 }
 
-fn ask_backups(existing: &str) -> Result<bool> {
+fn ask_backups(existing: &str, fresh: bool) -> Result<bool> {
     println!();
     ui::note("A dump of the database every day into backups/ in this checkout, kept for two");
     ui::note("weeks (WS_BACKUP_DIR, WS_BACKUP_EVERY_HOURS and WS_BACKUP_KEEP_DAYS change that).");
     ui::note("`wsctl update` takes one before every update either way.");
-    ui::confirm(
-        "Scheduled backups?",
-        existing.is_empty() || config::backups_on(existing),
-    )
+    // On for a new install, unless COMPOSE_PROFILES already says without them.
+    let current = match envfile::get(existing, "COMPOSE_PROFILES") {
+        Some(_) => config::backups_on(existing),
+        None => fresh,
+    };
+    ui::confirm("Scheduled backups?", current)
 }
 
 /// Pulled for a new install. One that has been building keeps the answer it had until its
 /// operator picks the other here.
-fn ask_images(existing: &str) -> Result<Images> {
-    let current = if existing.is_empty() {
+fn ask_images(existing: &str, fresh: bool) -> Result<Images> {
+    let current = if fresh && !Images::chosen(existing) {
         Images::Pull
     } else {
         Images::from_env(existing)
@@ -928,7 +1018,7 @@ fn ask_images(existing: &str) -> Result<Images> {
 
 fn ask_port(prompt: &str, default: u16) -> Result<u16> {
     loop {
-        match ui::ask(prompt, Some(default.to_string()))?.parse() {
+        match ui::ask("", prompt, Some(default.to_string()))?.parse() {
             Ok(port) if port > 0 => return Ok(port),
             _ => ui::note("a port number, 1 to 65535"),
         }
@@ -959,11 +1049,23 @@ fn ask_discord(existing: &str, base: &str) -> Result<Option<Discord>> {
 
     let keep = |key: &str| envfile::get(existing, key).filter(|v| !v.is_empty());
     Ok(Some(Discord {
-        application_id: ui::ask("Application ID", keep("DISCORD_APPLICATION_ID"))?,
-        public_key: ui::ask("Public key", keep("DISCORD_PUBLIC_KEY"))?,
-        client_id: ui::ask("Client ID", keep("DISCORD_CLIENT_ID"))?,
-        client_secret: ui::ask_secret("Client secret", keep("DISCORD_CLIENT_SECRET"))?,
-        bot_token: ui::ask_secret("Bot token (optional)", keep("DISCORD_BOT_TOKEN"))?,
+        application_id: ui::ask(
+            "DISCORD_APPLICATION_ID",
+            "Application ID",
+            keep("DISCORD_APPLICATION_ID"),
+        )?,
+        public_key: ui::ask(
+            "DISCORD_PUBLIC_KEY",
+            "Public key",
+            keep("DISCORD_PUBLIC_KEY"),
+        )?,
+        client_id: ui::ask("DISCORD_CLIENT_ID", "Client ID", keep("DISCORD_CLIENT_ID"))?,
+        client_secret: ui::ask_secret(
+            "DISCORD_CLIENT_SECRET",
+            "Client secret",
+            keep("DISCORD_CLIENT_SECRET"),
+        )?,
+        bot_token: ui::ask_secret("", "Bot token (optional)", keep("DISCORD_BOT_TOKEN"))?,
     }))
 }
 
@@ -1296,6 +1398,74 @@ mod tests {
             "docker compose run --rm -T -v {}:/restore:ro backup restore /restore/old.dump",
             parent.display()
         )));
+    }
+
+    fn vars(pairs: &[(&str, &str)]) -> Vec<(String, String)> {
+        pairs
+            .iter()
+            .map(|(k, v)| (k.to_string(), v.to_string()))
+            .collect()
+    }
+
+    // Everything from the environment, nothing from a terminal, and the result the same
+    // .env the questions would have written.
+    #[test]
+    fn a_scripted_setup_reads_its_answers_from_the_environment() {
+        let dir = checkout("");
+        std::fs::remove_file(dir.join(ENV)).unwrap();
+        let env = vars(&[
+            ("WS_DATABASE", "external"),
+            ("WS_DATABASE_URL", "postgres://ws:secret@postgres:5432/ws"),
+            ("WS_PROXY", "network"),
+            ("WS_PROXY_NETWORK", "coolify"),
+            ("WS_PUBLIC_URL", "https://map.example.com/"),
+            ("WS_CONTACT_NAME", "Nicolas Kion"),
+            ("WS_CONTACT_EMAIL", "me@example.com"),
+            ("EVE_CLIENT_ID", "abc"),
+            ("EVE_CLIENT_SECRET", "shh"),
+            ("ZKB_LISTEN", "1"),
+            ("WS_BACKUP_KEEP_DAYS", "30"),
+            ("PATH", "/usr/bin"),
+        ]);
+        let mut runner = Recording::default();
+        setup(&mut runner, &dir, Some(&env)).unwrap();
+        let written = read_env(&dir);
+        let get = |key: &str| envfile::get(&written, key);
+        assert_eq!(
+            get("COMPOSE_FILE").as_deref(),
+            Some("docker-compose.yml:deploy/external-db.yml:deploy/app-network.yml")
+        );
+        assert_eq!(
+            get("EVE_REDIRECT_URI").as_deref(),
+            Some("https://map.example.com/auth/callback")
+        );
+        assert_eq!(get("WS_IMAGES").as_deref(), Some("pull"));
+        assert_eq!(get("ZKB_LISTEN").as_deref(), Some("1"));
+        assert_eq!(get("COMPOSE_PROFILES").as_deref(), Some("backup"));
+        // Not asked about, and still kept for compose to read later.
+        assert_eq!(get("WS_BACKUP_KEEP_DAYS").as_deref(), Some("30"));
+        assert_eq!(get("PATH"), None);
+        assert!(runner.commands.contains(&"docker compose pull".to_string()));
+    }
+
+    #[test]
+    fn a_scripted_setup_names_everything_it_is_missing() {
+        let dir = checkout("");
+        std::fs::remove_file(dir.join(ENV)).unwrap();
+        let env = vars(&[("WS_PROXY", "router"), ("WS_ROUTER_PORT", "8080")]);
+        let err = setup(&mut Recording::default(), &dir, Some(&env))
+            .unwrap_err()
+            .to_string();
+        for key in [
+            "WS_PUBLIC_URL",
+            "WS_CONTACT_NAME",
+            "WS_CONTACT_EMAIL",
+            "EVE_CLIENT_ID",
+            "EVE_CLIENT_SECRET",
+        ] {
+            assert!(err.contains(key), "{key} not named in: {err}");
+        }
+        assert!(!dir.join(ENV).exists(), "nothing is written");
     }
 
     // A bundled install gets the two keys written and no COMPOSE_FILE: compose's default
