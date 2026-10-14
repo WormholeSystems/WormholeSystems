@@ -86,6 +86,11 @@ export type MenuTarget =
 export interface Menu {
 	x: number;
 	y: number;
+	/**
+	 * The same point on the map, taken when the menu opened: anything that later moves the
+	 * page (a menu taking focus, a scroll) must not move where an added system lands.
+	 */
+	world: Vec2;
 	target: MenuTarget;
 }
 
@@ -569,7 +574,8 @@ export class MapState {
 	}
 
 	openMenu(x: number, y: number, target: MenuTarget) {
-		this.menu = { x, y, target };
+		this.camera.remeasure();
+		this.menu = { x, y, world: this.camera.toWorld(x, y), target };
 	}
 
 	closeMenu() {

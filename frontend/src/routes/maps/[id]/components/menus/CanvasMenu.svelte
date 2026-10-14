@@ -22,6 +22,8 @@
 		menu.target.kind === 'connection' ? (map.connections.byId.get(menu.target.id) ?? null) : null,
 	);
 
+	let content = $state<HTMLElement | null>(null);
+
 	function onOpenChange(open: boolean) {
 		// A right-click elsewhere opens the next menu before this one hears it was clicked
 		// outside of; only the menu still showing may close.
@@ -38,6 +40,13 @@
 		preventScroll={false}
 		class="w-52"
 		data-testid="context-menu"
+		bind:ref={content}
+		onOpenAutoFocus={(ev) => {
+			// Focused without scrolling: the default focus can scroll the page to the menu
+			// before it is positioned, which drags the canvas out from under the click.
+			ev.preventDefault();
+			content?.focus({ preventScroll: true });
+		}}
 		onCloseAutoFocus={(ev) => ev.preventDefault()}
 		oncontextmenu={(ev: MouseEvent) => ev.preventDefault()}
 	>
