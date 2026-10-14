@@ -1,6 +1,10 @@
 {
   "db_name": "PostgreSQL",
+<<<<<<<< HEAD:.sqlx/query-9716cbeafdc6e7d9fe8cd2f06f6b73b4206d0c9b0cceeeb6f6f2539fcd6de610.json
   "query": "insert into map_solar_systems\n                 (id, map_id, solar_system_id, position_x, position_y, alias,\n                  is_home, is_rally, is_pinned, raised_by_signature_id, hangs_off_id,\n                  signatures_pasted_at)\n             overriding system value\n             values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)\n             on conflict (id) do nothing",
+========
+  "query": "insert into map_solar_systems\n                 (id, map_id, solar_system_id, position_x, position_y, alias,\n                  is_home, rallied_at, is_pinned, raised_by_signature_id, hangs_off_id)\n             overriding system value\n             values ($1, $2, $3, $4, $5, $6, $7,\n                     coalesce($8, case when $9 then now() end), $10, $11, $12)\n             on conflict (id) do nothing",
+>>>>>>>> bf11a4f (feat(rally): two rally points per map, a third replacing the oldest):.sqlx/query-5c7dafac0148de779bd5c38f4827caac7c412fedf99e1e9134407cbef1818dc7.json
   "describe": {
     "columns": [],
     "parameters": {
@@ -12,6 +16,7 @@
         "Float8",
         "Text",
         "Bool",
+        "Timestamptz",
         "Bool",
         "Bool",
         "Int8",
@@ -21,5 +26,9 @@
     },
     "nullable": []
   },
+<<<<<<<< HEAD:.sqlx/query-9716cbeafdc6e7d9fe8cd2f06f6b73b4206d0c9b0cceeeb6f6f2539fcd6de610.json
   "hash": "9716cbeafdc6e7d9fe8cd2f06f6b73b4206d0c9b0cceeeb6f6f2539fcd6de610"
+========
+  "hash": "5c7dafac0148de779bd5c38f4827caac7c412fedf99e1e9134407cbef1818dc7"
+>>>>>>>> bf11a4f (feat(rally): two rally points per map, a third replacing the oldest):.sqlx/query-5c7dafac0148de779bd5c38f4827caac7c412fedf99e1e9134407cbef1818dc7.json
 }

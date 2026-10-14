@@ -4,7 +4,7 @@ mod common;
 
 use common::{SYS_A, SYS_B, SYS_C, member_with_role, world};
 use sqlx::PgPool;
-use wormholesystems::maps::events_log::{MapIdBody, undo};
+use wormholesystems::maps::events_log::{MapIdBody, redo, undo};
 use wormholesystems::maps::solar_system::{
     AddSystem, MoveSystem, MoveSystems, RemoveSystem, RemoveSystems, SetAlias, SetHome, SetPinned,
     SetRally, SystemMove, add_system, move_system, move_systems, remove_system, remove_systems,
@@ -502,10 +502,10 @@ async fn placed_ids(pool: &PgPool, actor: wormholesystems::maps::Actor, map_id: 
         .collect()
 }
 
-/// Home and rally are one-per-map, and undo puts the previous holder back rather than
-/// leaving the map with none. Both flags run through the same code, so both are checked.
+/// Home is one-per-map, and undo puts the previous holder back rather than leaving the map
+/// with none.
 #[sqlx::test]
-async fn a_map_has_one_home_and_one_rally_and_undo_returns_the_last_one(pool: PgPool) {
+async fn a_map_has_one_home_and_undo_returns_the_last_one(pool: PgPool) {
     let w = world(&pool).await;
     let first = place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
     let second = place(&pool, w.owner, w.map_id, SYS_B, 200.0).await;
@@ -519,33 +519,124 @@ async fn a_map_has_one_home_and_one_rally_and_undo_returns_the_last_one(pool: Pg
         .unwrap();
     assert_eq!(home_of(&pool, w.map_id).await, Some(first));
 
-    set_rally(
-        &pool,
-        w.owner,
-        SetRally {
-            map_id: w.map_id,
-            map_solar_system_id: second,
-            value: true,
-        },
-    )
-    .await
-    .unwrap();
-    assert_eq!(rally_of(&pool, w.map_id).await, Some(second));
-    // The rally is its own flag: claiming it leaves the home system alone.
+    // A rally point is its own mark: setting one leaves the home system alone.
+    rally(&pool, w.owner, w.map_id, second, true).await.unwrap();
     assert_eq!(home_of(&pool, w.map_id).await, Some(first));
+}
 
-    set_rally(
+/// A map holds two rally points, oldest first. A third replaces the oldest, and undo
+/// brings that one back in its old place, so the next eviction still picks it.
+#[sqlx::test]
+async fn a_third_rally_point_replaces_the_oldest_and_undo_brings_it_back(pool: PgPool) {
+    let w = world(&pool).await;
+    let a = place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    let b = place(&pool, w.owner, w.map_id, SYS_B, 200.0).await;
+    let c = place(&pool, w.owner, w.map_id, SYS_C, 400.0).await;
+
+    rally(&pool, w.owner, w.map_id, a, true).await.unwrap();
+    rally(&pool, w.owner, w.map_id, b, true).await.unwrap();
+    assert_eq!(rallies_of(&pool, w.map_id).await, vec![a, b]);
+
+    rally(&pool, w.owner, w.map_id, c, true).await.unwrap();
+    assert_eq!(rallies_of(&pool, w.map_id).await, vec![b, c]);
+
+    undo(&pool, w.owner, MapIdBody { map_id: w.map_id })
+        .await
+        .unwrap();
+    assert_eq!(rallies_of(&pool, w.map_id).await, vec![a, b]);
+    redo(&pool, w.owner, MapIdBody { map_id: w.map_id })
+        .await
+        .unwrap();
+    assert_eq!(rallies_of(&pool, w.map_id).await, vec![b, c]);
+
+    // Setting one that already is a rally point makes it the newest instead of adding it
+    // twice.
+    rally(&pool, w.owner, w.map_id, b, true).await.unwrap();
+    assert_eq!(rallies_of(&pool, w.map_id).await, vec![c, b]);
+}
+
+/// Clearing a rally point clears only that one, and clearing a system that is not one
+/// changes nothing.
+#[sqlx::test]
+async fn a_rally_point_clears_on_its_own(pool: PgPool) {
+    let w = world(&pool).await;
+    let a = place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    let b = place(&pool, w.owner, w.map_id, SYS_B, 200.0).await;
+    let c = place(&pool, w.owner, w.map_id, SYS_C, 400.0).await;
+    rally(&pool, w.owner, w.map_id, a, true).await.unwrap();
+    rally(&pool, w.owner, w.map_id, b, true).await.unwrap();
+
+    rally(&pool, w.owner, w.map_id, a, false).await.unwrap();
+    assert_eq!(rallies_of(&pool, w.map_id).await, vec![b]);
+    rally(&pool, w.owner, w.map_id, c, false).await.unwrap();
+    assert_eq!(rallies_of(&pool, w.map_id).await, vec![b]);
+
+    undo(&pool, w.owner, MapIdBody { map_id: w.map_id })
+        .await
+        .unwrap();
+    undo(&pool, w.owner, MapIdBody { map_id: w.map_id })
+        .await
+        .unwrap();
+    assert_eq!(rallies_of(&pool, w.map_id).await, vec![a, b]);
+
+    let viewer = member_with_role(&pool, w.owner, w.map_id, 1002, 2002, Role::Viewer).await;
+    assert!(matches!(
+        rally(&pool, viewer, w.map_id, c, true).await,
+        Err(MapError::Forbidden),
+    ));
+    assert!(matches!(
+        rally(&pool, viewer, w.map_id, a, false).await,
+        Err(MapError::Forbidden),
+    ));
+    assert_eq!(rallies_of(&pool, w.map_id).await, vec![a, b]);
+}
+
+/// Removing a rally system and undoing it puts it back as old as it was.
+#[sqlx::test]
+async fn a_restored_rally_point_keeps_its_place(pool: PgPool) {
+    let w = world(&pool).await;
+    let a = place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    let b = place(&pool, w.owner, w.map_id, SYS_B, 200.0).await;
+    let c = place(&pool, w.owner, w.map_id, SYS_C, 400.0).await;
+    rally(&pool, w.owner, w.map_id, a, true).await.unwrap();
+    rally(&pool, w.owner, w.map_id, b, true).await.unwrap();
+
+    remove_system(
         &pool,
         w.owner,
-        SetRally {
+        RemoveSystem {
             map_id: w.map_id,
-            map_solar_system_id: second,
-            value: false,
+            map_solar_system_id: a,
         },
     )
     .await
     .unwrap();
-    assert_eq!(rally_of(&pool, w.map_id).await, None);
+    undo(&pool, w.owner, MapIdBody { map_id: w.map_id })
+        .await
+        .unwrap();
+    assert_eq!(rallies_of(&pool, w.map_id).await, vec![a, b]);
+
+    rally(&pool, w.owner, w.map_id, c, true).await.unwrap();
+    assert_eq!(rallies_of(&pool, w.map_id).await, vec![b, c]);
+}
+
+async fn rally(
+    pool: &PgPool,
+    actor: wormholesystems::maps::Actor,
+    map_id: i64,
+    id: i64,
+    value: bool,
+) -> Result<(), MapError> {
+    set_rally(
+        pool,
+        actor,
+        SetRally {
+            map_id,
+            map_solar_system_id: id,
+            value,
+        },
+    )
+    .await
 }
 
 async fn home_of(pool: &PgPool, map_id: i64) -> Option<i64> {
@@ -558,12 +649,14 @@ async fn home_of(pool: &PgPool, map_id: i64) -> Option<i64> {
     .unwrap()
 }
 
-async fn rally_of(pool: &PgPool, map_id: i64) -> Option<i64> {
+/// The map's rally points, oldest first.
+async fn rallies_of(pool: &PgPool, map_id: i64) -> Vec<i64> {
     sqlx::query_scalar!(
-        "select id from map_solar_systems where map_id = $1 and is_rally",
+        "select id from map_solar_systems where map_id = $1 and is_rally
+         order by rallied_at, id",
         map_id
     )
-    .fetch_optional(pool)
+    .fetch_all(pool)
     .await
     .unwrap()
 }

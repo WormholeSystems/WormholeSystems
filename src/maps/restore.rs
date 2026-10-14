@@ -18,7 +18,13 @@ pub struct RestoredSystem {
     pub position_y: f64,
     pub alias: Option<String>,
     pub is_home: bool,
+    /// Only read from snapshots taken before rally points carried a timestamp; restoring
+    /// one of those makes the system the newest rally point.
+    #[serde(default)]
     pub is_rally: bool,
+    /// When the system became a rally point, kept so a restored one is as old as it was.
+    #[serde(default)]
+    pub rallied_at: Option<DateTime<Utc>>,
     pub is_pinned: bool,
     /// Set on a ghost, which is not allowed back on the map without naming its scan and
     /// the system it hung off. `None` on a system somebody placed.
@@ -114,8 +120,8 @@ pub(super) async fn capture_systems(
 ) -> Result<RestoreSystems> {
     let systems: Vec<RestoredSystem> = sqlx::query_as!(
         RestoredSystem,
-        "select id, solar_system_id, position_x, position_y, alias, is_home, is_rally, is_pinned,
-                raised_by_signature_id, hangs_off_id, signatures_pasted_at
+        "select id, solar_system_id, position_x, position_y, alias, is_home, is_rally, rallied_at,
+                is_pinned, raised_by_signature_id, hangs_off_id, signatures_pasted_at
          from map_solar_systems where map_id = $1 and id = any($2)",
         map_id,
         ids,
@@ -172,10 +178,11 @@ pub(super) async fn apply_restore_systems(tx: &mut Tx<'_>, cmd: RestoreSystems) 
         sqlx::query!(
             "insert into map_solar_systems
                  (id, map_id, solar_system_id, position_x, position_y, alias,
-                  is_home, is_rally, is_pinned, raised_by_signature_id, hangs_off_id,
+                  is_home, rallied_at, is_pinned, raised_by_signature_id, hangs_off_id,
                   signatures_pasted_at)
              overriding system value
-             values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+             values ($1, $2, $3, $4, $5, $6, $7,
+                     coalesce($8, case when $9 then now() end), $10, $11, $12, $13)
              on conflict (id) do nothing",
             s.id,
             cmd.map_id,
@@ -184,6 +191,7 @@ pub(super) async fn apply_restore_systems(tx: &mut Tx<'_>, cmd: RestoreSystems) 
             s.position_y,
             s.alias.as_deref(),
             s.is_home,
+            s.rallied_at,
             s.is_rally,
             s.is_pinned,
             s.raised_by_signature_id,

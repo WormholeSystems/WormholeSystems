@@ -1,6 +1,6 @@
 <script lang="ts">
-	// One placed system. Four styling channels stack on it: status border, selected
-	// background, active ring, hover outline.
+	// One placed system. Five styling channels stack on it: status border, selected
+	// background, active ring, hover outline, and the pink glow and tint of a rally point.
 	import type { MapCharacter } from '$lib/api/types/MapCharacter';
 	import type { MapSystemView } from '$lib/api/types/MapSystemView';
 	import type { SigCounts } from '$lib/map/grouping';
@@ -104,9 +104,15 @@
 		data-status={node.status}
 		data-threat={threatRing}
 		data-ghost={ghost ? 'true' : undefined}
-		class="group/node absolute flex flex-col justify-center rounded border bg-card px-2 py-0.5 text-[11px] leading-tight shadow-sm transition-colors duration-200
+		data-rally={node.is_rally ? 'true' : undefined}
+		class="group/node absolute flex flex-col justify-center rounded border px-2 py-0.5 text-[11px] leading-tight transition-colors duration-200
 			{ghost ? 'border-dashed' : ''}
-			{selected ? 'bg-amber-100 dark:bg-amber-900' : ''}
+			{selected
+			? 'bg-amber-100 dark:bg-amber-900'
+			: node.is_rally
+				? 'bg-pink-50 dark:bg-pink-950'
+				: 'bg-card'}
+			{node.is_rally ? 'shadow-[0_0_10px_2px] shadow-pink-500/60' : 'shadow-sm'}
 			{active ? 'z-10 ring-2 ring-amber-500 ring-offset-2 ring-offset-background' : ''}
 			{highlighted ? 'z-20 outline-2 outline-yellow-500' : ''}
 			{threatRing ? 'ring-2' : ''}

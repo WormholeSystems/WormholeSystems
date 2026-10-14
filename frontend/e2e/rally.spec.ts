@@ -1,10 +1,12 @@
 import { createdId, expect, gotoApp, test } from './fixtures';
 
-// The rally badge: where the fleet is forming up, and how far that is from the staging
+// The rally badges: where the fleet is forming up, and how far that is from the staging
 // system. The count is the map's own, home to rally, so everyone reads the same number.
 
 const JITA = 30000142;
 const PERIMETER = 30000144; // one gate from Jita
+const AMARR = 30002187;
+const DODIXIE = 30002659;
 
 async function createMap(api: import('@playwright/test').APIRequestContext, name: string) {
 	const res = await api.post('/api/maps', { data: { name } });
@@ -60,6 +62,48 @@ test('the rally badge names the system and counts the jumps home', async ({ page
 	const route = page.getByTestId('route-list');
 	await expect(route).toBeVisible();
 	await expect(route).toContainText('Perimeter');
+
+	await api.delete(`/api/maps/${mapId}`);
+});
+
+test('two rally points each get a badge, and a third replaces the oldest', async ({
+	page,
+	api,
+}) => {
+	const mapId = await createMap(api, 'E2E Two Rallies');
+	const perimeter = await addSystem(api, mapId, PERIMETER, 200, 200);
+	const amarr = await addSystem(api, mapId, AMARR, 500, 200);
+	const dodixie = await addSystem(api, mapId, DODIXIE, 800, 200);
+
+	async function rally(id: number, value: boolean) {
+		const res = await api.post(`/api/maps/${mapId}/systems/set-rally`, {
+			data: { map_id: mapId, map_solar_system_id: id, value },
+		});
+		expect(res.ok()).toBe(true);
+	}
+
+	await gotoApp(page, `/maps/${mapId}`);
+	const badges = page.getByTestId('rally-badge');
+	const rallyNodes = page.locator('[data-testid="system-node"][data-rally="true"]');
+
+	await rally(perimeter, true);
+	await rally(amarr, true);
+	await expect(badges).toHaveCount(2);
+	await expect(rallyNodes).toHaveCount(2);
+	await expect(badges.filter({ hasText: 'Perimeter' })).toBeVisible();
+	await expect(badges.filter({ hasText: 'Amarr' })).toBeVisible();
+
+	// Perimeter was first, so it makes way.
+	await rally(dodixie, true);
+	await expect(badges).toHaveCount(2);
+	await expect(badges.filter({ hasText: 'Perimeter' })).toHaveCount(0);
+	await expect(badges.filter({ hasText: 'Dodixie' })).toBeVisible();
+
+	// Clearing one leaves the other standing.
+	await rally(amarr, false);
+	await expect(badges).toHaveCount(1);
+	await expect(badges).toContainText('Dodixie');
+	await expect(rallyNodes).toHaveCount(1);
 
 	await api.delete(`/api/maps/${mapId}`);
 });

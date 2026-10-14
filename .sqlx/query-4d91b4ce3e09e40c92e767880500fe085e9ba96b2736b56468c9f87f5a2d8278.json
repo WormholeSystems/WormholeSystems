@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update map_solar_systems set rallied_at = null\n         where map_id = $1 and rallied_at is not null",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "4d91b4ce3e09e40c92e767880500fe085e9ba96b2736b56468c9f87f5a2d8278"
+}

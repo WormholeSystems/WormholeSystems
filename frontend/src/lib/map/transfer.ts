@@ -15,7 +15,7 @@ export const TRANSFER_SECTIONS: {
 	{
 		id: 'settings',
 		label: 'Settings',
-		description: 'Name, layout, naming and bookmark formats, home and rally.',
+		description: 'Name, layout, naming and bookmark formats, home and rally points.',
 	},
 	{
 		id: 'access',

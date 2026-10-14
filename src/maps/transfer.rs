@@ -23,6 +23,7 @@ use super::access::{owns_character, require_role, require_role_tx};
 use super::command::{CommandOutput, Effect, EventActor, Tx};
 use super::error::{MapError, Result};
 use super::map::Map;
+use super::solar_system::MAX_RALLY_POINTS;
 use super::{
     Actor, AliasScheme, ConnectionType, MapLayout, MassStatus, Role, SignatureGroup, SubjectType,
     SystemStatus, TimeStatus, WormholeSize, events_log, ghost, signatures,
@@ -87,7 +88,24 @@ pub struct SettingsSection {
     pub bookmark_alias_scheme: AliasScheme,
     pub bookmark_ignored_alias: Option<String>,
     pub home_solarsystem_id: Option<i64>,
+    /// Oldest first. On import only the newest two are kept.
+    #[serde(default)]
+    pub rally_solarsystem_ids: Option<Vec<i64>>,
+    /// The single rally point of files written before a map could hold two. Read when
+    /// `rally_solarsystem_ids` is absent, never written.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub rally_solarsystem_id: Option<i64>,
+}
+
+impl SettingsSection {
+    /// The file's rally points, whichever way it spells them.
+    fn rally_ids(&self) -> Vec<i64> {
+        match &self.rally_solarsystem_ids {
+            Some(ids) => ids.clone(),
+            None => self.rally_solarsystem_id.into_iter().collect(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema)]
@@ -548,8 +566,9 @@ async fn export_settings(pool: &PgPool, map_id: i64) -> Result<SettingsSection> 
                   bookmark_wormhole, bookmark_kspace, bookmark_return,
                   (select solar_system_id from map_solar_systems
                    where map_id = m.id and is_home) as "home?",
-                  (select solar_system_id from map_solar_systems
-                   where map_id = m.id and is_rally) as "rally?"
+                  array(select solar_system_id from map_solar_systems
+                        where map_id = m.id and rallied_at is not null
+                        order by rallied_at, id) as "rally!: Vec<i64>"
            from maps m where m.id = $1"#,
         map_id,
     )
@@ -568,7 +587,8 @@ async fn export_settings(pool: &PgPool, map_id: i64) -> Result<SettingsSection> 
         bookmark_alias_scheme: row.alias_scheme,
         bookmark_ignored_alias: Some(row.ignored_alias).filter(|a| !a.is_empty()),
         home_solarsystem_id: row.home,
-        rally_solarsystem_id: row.rally,
+        rally_solarsystem_ids: Some(row.rally),
+        rally_solarsystem_id: None,
     })
 }
 
@@ -973,7 +993,7 @@ async fn known_solarsystem_ids(tx: &mut Tx<'_>, sections: &Sections) -> Result<H
     let mut ids: Vec<i64> = Vec::new();
     if let Some(settings) = &sections.settings {
         ids.extend(settings.home_solarsystem_id);
-        ids.extend(settings.rally_solarsystem_id);
+        ids.extend(settings.rally_ids());
     }
     if let Some(systems) = &sections.solarsystems {
         ids.extend(systems.iter().map(|s| s.solarsystem_id));
@@ -1017,7 +1037,7 @@ async fn import_settings(
     Ok(())
 }
 
-/// Mark the file's home and rally systems, clearing the flags when the file has none (or
+/// Mark the file's home and rally systems, clearing the marks when the file has none (or
 /// names a system that is not on the map). `coalesce(... , false)` keeps ghosts out: a
 /// null system id never equals anything.
 async fn import_home_and_rally(
@@ -1034,12 +1054,35 @@ async fn import_home_and_rally(
     )
     .execute(&mut **tx)
     .await?;
+    // Duplicates would take two of the slots for one system.
+    let mut rally: Vec<i64> = Vec::new();
+    for id in settings.rally_ids() {
+        if !rally.contains(&id) {
+            rally.push(id);
+        }
+    }
     sqlx::query!(
-        "update map_solar_systems
-         set is_rally = coalesce(solar_system_id = $2, false)
-         where map_id = $1 and is_rally is distinct from coalesce(solar_system_id = $2, false)",
+        "update map_solar_systems set rallied_at = null
+         where map_id = $1 and rallied_at is not null",
         map_id,
-        settings.rally_solarsystem_id,
+    )
+    .execute(&mut **tx)
+    .await?;
+    // The newest of the placed ones, a microsecond apart in file order so the oldest stays
+    // the first to make way for the next.
+    sqlx::query!(
+        "update map_solar_systems mss
+         set rallied_at = now() + picked.ord * interval '1 microsecond'
+         from (select placed.id, wanted.ord
+               from unnest($2::bigint[]) with ordinality as wanted (solar_system_id, ord)
+               join map_solar_systems placed
+                   on placed.map_id = $1 and placed.solar_system_id = wanted.solar_system_id
+               order by wanted.ord desc
+               limit $3) picked
+         where mss.id = picked.id",
+        map_id,
+        &rally,
+        MAX_RALLY_POINTS as i64,
     )
     .execute(&mut **tx)
     .await?;

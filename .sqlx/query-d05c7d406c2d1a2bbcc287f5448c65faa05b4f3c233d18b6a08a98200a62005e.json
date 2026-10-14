@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update map_solar_systems set rallied_at = case when $1 then now() end\n         where id = $2 and map_id = $3",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Bool",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "d05c7d406c2d1a2bbcc287f5448c65faa05b4f3c233d18b6a08a98200a62005e"
+}

@@ -84,6 +84,10 @@ keyed by *system*:
 - Unique `(map_id, solar_system_id)` — a system appears at most once per map. Nulls are
   distinct in Postgres, so this caps real systems without capping ghosts.
 - A system always has an `(x, y)` position while placed.
+- A map has at most one **home** (a partial unique index) and at most two **rally
+  points**. A rally point is a `rallied_at` timestamp (`is_rally` is generated from it),
+  so setting a third can clear the oldest. The cap is the app's: an index can only say
+  one.
 - A ghost is never **home**, **rally** or **pinned** (a check constraint). The first two
   mean a place you can go; pinning means a place you have decided matters, which holds the
   node still, roots the tree layout and is passed over by every sweep — that last one

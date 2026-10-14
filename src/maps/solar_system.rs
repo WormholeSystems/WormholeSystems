@@ -663,72 +663,70 @@ pub async fn set_home(pool: &PgPool, actor: Actor, cmd: SetHome) -> Result<()> {
     Ok(())
 }
 
-/// The apply half of a one-per-map flag (home, rally): clear whoever holds it, set the new
-/// holder, and undo by restoring the previous one. The three statements are passed in as
-/// literals so sqlx still checks them against the schema at compile time.
-macro_rules! exclusive_flag {
-    ($apply:ident, $cmd:ident, $holder:literal, $clear:literal, $set:literal,
-     $event:literal, $set_label:literal, $cleared_label:literal) => {
-        pub(super) async fn $apply(tx: &mut Tx<'_>, cmd: $cmd) -> Result<Effect> {
-            let previous: Option<i64> = sqlx::query_scalar!($holder, cmd.map_id)
-                .fetch_optional(&mut **tx)
-                .await?;
-            if cmd.value {
-                sqlx::query!($clear, cmd.map_id).execute(&mut **tx).await?;
-            }
-            let updated = sqlx::query!($set, cmd.value, cmd.map_solar_system_id, cmd.map_id)
-                .execute(&mut **tx)
-                .await?
-                .rows_affected();
-            if updated == 0 {
-                return Err(MapError::NotFound);
-            }
-            let inverse = MapCommand::$cmd(match previous {
-                Some(id) => $cmd {
-                    map_id: cmd.map_id,
-                    map_solar_system_id: id,
-                    value: true,
-                },
-                None => $cmd {
-                    map_id: cmd.map_id,
-                    map_solar_system_id: cmd.map_solar_system_id,
-                    value: false,
-                },
-            });
-            let label = if cmd.value {
-                $set_label
-            } else {
-                $cleared_label
-            };
-            let mut effect = Effect::new($event, label, CommandOutput::None)
-                .undo_with(inverse)
-                .emit(MapEvent::SystemDetailsChanged {
-                    map_id: cmd.map_id,
-                    map_solar_system_id: cmd.map_solar_system_id,
-                });
-            if let Some(previous) = previous
-                && previous != cmd.map_solar_system_id
-            {
-                effect = effect.emit(MapEvent::SystemDetailsChanged {
-                    map_id: cmd.map_id,
-                    map_solar_system_id: previous,
-                });
-            }
-            Ok(effect)
-        }
+pub(super) async fn apply_set_home(tx: &mut Tx<'_>, cmd: SetHome) -> Result<Effect> {
+    let previous: Option<i64> = sqlx::query_scalar!(
+        "select id from map_solar_systems where map_id = $1 and is_home",
+        cmd.map_id,
+    )
+    .fetch_optional(&mut **tx)
+    .await?;
+    if cmd.value {
+        sqlx::query!(
+            "update map_solar_systems set is_home = false where map_id = $1 and is_home",
+            cmd.map_id,
+        )
+        .execute(&mut **tx)
+        .await?;
+    }
+    let updated = sqlx::query!(
+        "update map_solar_systems set is_home = $1 where id = $2 and map_id = $3",
+        cmd.value,
+        cmd.map_solar_system_id,
+        cmd.map_id,
+    )
+    .execute(&mut **tx)
+    .await?
+    .rows_affected();
+    if updated == 0 {
+        return Err(MapError::NotFound);
+    }
+    // Undo puts the previous home back rather than just clearing this one.
+    let inverse = MapCommand::SetHome(match previous {
+        Some(id) => SetHome {
+            map_id: cmd.map_id,
+            map_solar_system_id: id,
+            value: true,
+        },
+        None => SetHome {
+            map_id: cmd.map_id,
+            map_solar_system_id: cmd.map_solar_system_id,
+            value: false,
+        },
+    });
+    let label = if cmd.value {
+        "set the home system"
+    } else {
+        "cleared the home system"
     };
+    let mut effect = Effect::new("systems.home", label, CommandOutput::None)
+        .undo_with(inverse)
+        .emit(MapEvent::SystemDetailsChanged {
+            map_id: cmd.map_id,
+            map_solar_system_id: cmd.map_solar_system_id,
+        });
+    if let Some(previous) = previous
+        && previous != cmd.map_solar_system_id
+    {
+        effect = effect.emit(MapEvent::SystemDetailsChanged {
+            map_id: cmd.map_id,
+            map_solar_system_id: previous,
+        });
+    }
+    Ok(effect)
 }
 
-exclusive_flag!(
-    apply_set_home,
-    SetHome,
-    "select id from map_solar_systems where map_id = $1 and is_home",
-    "update map_solar_systems set is_home = false where map_id = $1 and is_home",
-    "update map_solar_systems set is_home = $1 where id = $2 and map_id = $3",
-    "systems.home",
-    "set the home system",
-    "cleared the home system"
-);
+/// How many rally points a map holds at once. Setting one more replaces the oldest.
+pub const MAX_RALLY_POINTS: usize = 2;
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema)]
 #[ts(export)]
@@ -738,23 +736,157 @@ pub struct SetRally {
     pub value: bool,
 }
 
-/// Mark a placement as the map's rally point (or clear it). One rally per map, enforced by a
-/// partial unique index, so setting a new rally first clears the previous one.
+/// Mark a placement as one of the map's rally points, or clear just that one. A map holds
+/// up to [`MAX_RALLY_POINTS`]: setting one more clears the oldest, and setting one that
+/// already is a rally point makes it the newest.
 pub async fn set_rally(pool: &PgPool, actor: Actor, cmd: SetRally) -> Result<()> {
     execute(pool, actor, MapCommand::SetRally(cmd)).await?;
     Ok(())
 }
 
-exclusive_flag!(
-    apply_set_rally,
-    SetRally,
-    "select id from map_solar_systems where map_id = $1 and is_rally",
-    "update map_solar_systems set is_rally = false where map_id = $1 and is_rally",
-    "update map_solar_systems set is_rally = $1 where id = $2 and map_id = $3",
-    "systems.rally",
-    "set the rally point",
-    "cleared the rally point"
-);
+/// When a placement became a rally point, `None` when it is not one.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RallyMark {
+    pub map_solar_system_id: i64,
+    pub rallied_at: Option<DateTime<Utc>>,
+}
+
+/// Put rally points back exactly as they were. Internal, the inverse of [`SetRally`]: a set
+/// can push the oldest rally point out as well as touch its own, and each has to return to
+/// its old place in the order so the next eviction picks the one it would have.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RestoreRallies {
+    pub map_id: i64,
+    pub marks: Vec<RallyMark>,
+}
+
+pub(super) async fn apply_set_rally(tx: &mut Tx<'_>, cmd: SetRally) -> Result<Effect> {
+    // Two members setting rally points at once would each see room for theirs and leave
+    // the map over the cap, so the map is held while counting.
+    sqlx::query!(
+        "select id from maps where id = $1 for no key update",
+        cmd.map_id,
+    )
+    .fetch_optional(&mut **tx)
+    .await?;
+    let rallied_at = sqlx::query_scalar!(
+        "select rallied_at from map_solar_systems where id = $1 and map_id = $2",
+        cmd.map_solar_system_id,
+        cmd.map_id,
+    )
+    .fetch_optional(&mut **tx)
+    .await?
+    .ok_or(MapError::NotFound)?;
+    let mut before = vec![RallyMark {
+        map_solar_system_id: cmd.map_solar_system_id,
+        rallied_at,
+    }];
+
+    if cmd.value {
+        let others = sqlx::query!(
+            r#"select id, rallied_at as "rallied_at!" from map_solar_systems
+               where map_id = $1 and rallied_at is not null and id <> $2
+               order by rallied_at, id"#,
+            cmd.map_id,
+            cmd.map_solar_system_id,
+        )
+        .fetch_all(&mut **tx)
+        .await?;
+        // Room for this one, and the oldest of the rest make way.
+        let excess = (others.len() + 1).saturating_sub(MAX_RALLY_POINTS);
+        let evicted: Vec<RallyMark> = others
+            .into_iter()
+            .take(excess)
+            .map(|o| RallyMark {
+                map_solar_system_id: o.id,
+                rallied_at: Some(o.rallied_at),
+            })
+            .collect();
+        if !evicted.is_empty() {
+            let ids: Vec<i64> = evicted.iter().map(|m| m.map_solar_system_id).collect();
+            sqlx::query!(
+                "update map_solar_systems set rallied_at = null
+                 where map_id = $1 and id = any($2)",
+                cmd.map_id,
+                &ids,
+            )
+            .execute(&mut **tx)
+            .await?;
+        }
+        before.extend(evicted);
+    }
+
+    sqlx::query!(
+        "update map_solar_systems set rallied_at = case when $1 then now() end
+         where id = $2 and map_id = $3",
+        cmd.value,
+        cmd.map_solar_system_id,
+        cmd.map_id,
+    )
+    .execute(&mut **tx)
+    .await?;
+
+    let label = if cmd.value {
+        "set a rally point"
+    } else {
+        "cleared a rally point"
+    };
+    let events = rally_events(cmd.map_id, &before);
+    Ok(Effect::new("systems.rally", label, CommandOutput::None)
+        .undo_with(MapCommand::RestoreRallies(RestoreRallies {
+            map_id: cmd.map_id,
+            marks: before,
+        }))
+        .emit_all(events))
+}
+
+pub(super) async fn apply_restore_rallies(tx: &mut Tx<'_>, cmd: RestoreRallies) -> Result<Effect> {
+    let mut before = Vec::with_capacity(cmd.marks.len());
+    for mark in cmd.marks {
+        let current = sqlx::query_scalar!(
+            "select rallied_at from map_solar_systems where id = $1 and map_id = $2",
+            mark.map_solar_system_id,
+            cmd.map_id,
+        )
+        .fetch_optional(&mut **tx)
+        .await?;
+        // A placement that has left the map since has nothing to put back.
+        let Some(current) = current else { continue };
+        sqlx::query!(
+            "update map_solar_systems set rallied_at = $1 where id = $2 and map_id = $3",
+            mark.rallied_at,
+            mark.map_solar_system_id,
+            cmd.map_id,
+        )
+        .execute(&mut **tx)
+        .await?;
+        before.push(RallyMark {
+            map_solar_system_id: mark.map_solar_system_id,
+            rallied_at: current,
+        });
+    }
+    let events = rally_events(cmd.map_id, &before);
+    Ok(Effect::new(
+        "systems.rally",
+        "changed the rally points",
+        CommandOutput::None,
+    )
+    .undo_with(MapCommand::RestoreRallies(RestoreRallies {
+        map_id: cmd.map_id,
+        marks: before,
+    }))
+    .emit_all(events))
+}
+
+fn rally_events(map_id: i64, marks: &[RallyMark]) -> Vec<MapEvent> {
+    marks
+        .iter()
+        .map(|m| MapEvent::SystemDetailsChanged {
+            map_id,
+            map_solar_system_id: m.map_solar_system_id,
+        })
+        .collect()
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema)]
 #[ts(export)]

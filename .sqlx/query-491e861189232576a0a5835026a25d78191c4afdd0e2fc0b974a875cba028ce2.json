@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select name, layout, allow_layout_override, alias_scheme, ignored_alias,\n                  bookmark_wormhole, bookmark_kspace, bookmark_return,\n                  (select solar_system_id from map_solar_systems\n                   where map_id = m.id and is_home) as \"home?\",\n                  (select solar_system_id from map_solar_systems\n                   where map_id = m.id and is_rally) as \"rally?\"\n           from maps m where m.id = $1",
+  "query": "select name, layout, allow_layout_override, alias_scheme, ignored_alias,\n                  bookmark_wormhole, bookmark_kspace, bookmark_return,\n                  (select solar_system_id from map_solar_systems\n                   where map_id = m.id and is_home) as \"home?\",\n                  array(select solar_system_id from map_solar_systems\n                        where map_id = m.id and rallied_at is not null\n                        order by rallied_at, id) as \"rally!: Vec<i64>\"\n           from maps m where m.id = $1",
   "describe": {
     "columns": [
       {
@@ -119,8 +119,8 @@
       },
       {
         "ordinal": 9,
-        "name": "rally?",
-        "type_info": "Int8",
+        "name": "rally!: Vec<i64>",
+        "type_info": "Int8Array",
         "origin": "Expression"
       }
     ],
@@ -142,5 +142,5 @@
       null
     ]
   },
-  "hash": "3ba93c935059ca875ac942cca7b3afd316680f220631e31572c822b4d3a84261"
+  "hash": "491e861189232576a0a5835026a25d78191c4afdd0e2fc0b974a875cba028ce2"
 }

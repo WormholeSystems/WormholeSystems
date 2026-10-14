@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select id from map_solar_systems where map_id = $1 and is_rally",
+  "query": "select id from maps where id = $1 for no key update",
   "describe": {
     "columns": [
       {
@@ -9,7 +9,7 @@
         "type_info": "Int8",
         "origin": {
           "Table": {
-            "table": "map_solar_systems",
+            "table": "maps",
             "name": "id"
           }
         }
@@ -24,5 +24,5 @@
       false
     ]
   },
-  "hash": "502f015ab9d271467b345bc1ce39ccc4f8a3076b50d7e618f29c2d0b4e6095d2"
+  "hash": "d334ee3aebd251e84075a16a9aebca4b8351eac3962f795bd73037264966a6cf"
 }

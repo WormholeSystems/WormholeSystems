@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select solar_system_id as \"solar_system_id!\" from map_solar_systems\n           where map_id = $1 and is_rally order by rallied_at, id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "solar_system_id!",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "map_solar_systems",
+            "name": "solar_system_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "39cf65d6c13f8d966e4f41a5b90c061805d891e19dd1abbe256c03e3e95ae7da"
+}
