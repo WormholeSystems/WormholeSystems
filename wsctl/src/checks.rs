@@ -62,16 +62,79 @@ pub fn docker(runner: &mut dyn Runner, dir: &Path) -> Check {
             "Install it from https://docs.docker.com/engine/install/, then start it.",
         );
     };
-    if runner
-        .capture(dir, "docker", &["compose", "version"])
-        .is_err()
-    {
+    let Ok(compose) = runner.capture(dir, "docker", &["compose", "version", "--short"]) else {
         return Check::fatal(
             "Docker Compose v2 is missing",
             "This needs the `docker compose` subcommand, not the old `docker-compose`.",
         );
+    };
+    match compose_version(&compose) {
+        Some(found) if found < MIN_COMPOSE => Check::fatal(
+            format!("Docker Compose {compose} is too old"),
+            format!(
+                "The overlays in deploy/ need {}.{} or later (for `!reset`); update the docker-compose-plugin package.",
+                MIN_COMPOSE.0, MIN_COMPOSE.1
+            ),
+        ),
+        Some(_) => Check::ok(format!("Docker {version} with Compose {compose}")),
+        None => Check::warn(
+            format!("Docker {version}, and a Compose that calls itself {compose:?}"),
+            "Could not tell whether it is 2.24 or later, which the overlays in deploy/ need.",
+        ),
     }
-    Check::ok(format!("Docker {version} with Compose v2"))
+}
+
+/// The oldest Compose that reads `!reset` and `!override`, which the overlays use.
+const MIN_COMPOSE: (u32, u32) = (2, 24);
+
+/// `2.24.0`, `v2.29.1-desktop.1` or `5.5.1` as (major, minor).
+fn compose_version(short: &str) -> Option<(u32, u32)> {
+    let mut parts = short.trim().trim_start_matches('v').split(['.', '-']);
+    let major = parts.next()?.parse().ok()?;
+    let minor = parts.next()?.parse().ok()?;
+    Some((major, minor))
+}
+
+/// Building the API compiles Rust, which wants about 2GB; with less, the compiler is
+/// killed part way and the build fails with nothing useful to say. Counts swap, since
+/// that is the usual fix. None where the memory cannot be read (anything but Linux).
+pub fn memory_for_building() -> Option<Check> {
+    let meminfo = std::fs::read_to_string("/proc/meminfo").ok()?;
+    let kb = |name: &str| -> u64 {
+        meminfo
+            .lines()
+            .find_map(|l| {
+                l.strip_prefix(name)?
+                    .split_whitespace()
+                    .next()?
+                    .parse()
+                    .ok()
+            })
+            .unwrap_or(0)
+    };
+    let total_mb = (kb("MemTotal:") + kb("SwapTotal:")) / 1024;
+    Some(if total_mb < BUILD_NEEDS_MB {
+        Check::warn(
+            format!("{total_mb}MB of memory and swap, and building the API wants about 2GB"),
+            "Add swap, or WS_IMAGES=pull in .env to use the published images instead.",
+        )
+    } else {
+        Check::ok(format!("{total_mb}MB of memory and swap for building"))
+    })
+}
+
+const BUILD_NEEDS_MB: u64 = 1900;
+
+/// The bundled database's loopback port (DB_PORT), which a Postgres already on this
+/// machine is usually holding.
+pub fn database_port(port: u16, ours: bool) -> Check {
+    let mut check = ports(&[port], ours).remove(0);
+    if check.verdict == Verdict::Fatal {
+        check.label = format!("port {port} (DB_PORT, the database on 127.0.0.1) is in use");
+        check.hint =
+            Some("A Postgres on this machine already? Set DB_PORT in .env to a free port.".into());
+    }
+    check
 }
 
 /// The release build wants roughly 2GB of memory and the static data a few GB of disk.
@@ -375,6 +438,15 @@ pub fn deployment(runner: &mut dyn Runner, dir: &Path, deployment: &Deployment) 
         }
     }
 
+    if deployment.database == Database::Bundled {
+        let env = std::fs::read_to_string(dir.join(".env")).unwrap_or_default();
+        let port = crate::envfile::get(&env, "DB_PORT")
+            .and_then(|p| p.parse().ok())
+            .unwrap_or(5432);
+        let ours = crate::stack::service_running(runner, dir, "db");
+        checks.push(database_port(port, ours));
+    }
+
     match &deployment.proxy {
         Proxy::Caddy(site) => {
             let ours = crate::stack::proxy_running(runner, dir);
@@ -409,6 +481,35 @@ pub fn deployment(runner: &mut dyn Runner, dir: &Path, deployment: &Deployment) 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn compose_has_to_read_the_overlays() {
+        assert_eq!(compose_version("2.24.0"), Some((2, 24)));
+        assert_eq!(compose_version("v2.29.1-desktop.1"), Some((2, 29)));
+        assert_eq!(compose_version("5.5.1\n"), Some((5, 5)));
+        assert_eq!(compose_version("dev"), None);
+        assert!(compose_version("2.23.3").unwrap() < MIN_COMPOSE);
+
+        let mut runner = crate::exec::Recording::default();
+        runner
+            .replies
+            .insert("docker compose version --short".into(), "2.20.2".into());
+        assert_eq!(docker(&mut runner, Path::new(".")).verdict, Verdict::Fatal);
+        runner
+            .replies
+            .insert("docker compose version --short".into(), "2.24.6".into());
+        assert_eq!(docker(&mut runner, Path::new(".")).verdict, Verdict::Ok);
+    }
+
+    #[test]
+    fn a_busy_database_port_names_db_port() {
+        let held = std::net::TcpListener::bind(("0.0.0.0", 0)).unwrap();
+        let port = held.local_addr().unwrap().port();
+        let check = database_port(port, false);
+        assert_eq!(check.verdict, Verdict::Fatal);
+        assert!(check.label.contains("DB_PORT"));
+        assert_eq!(database_port(port, true).verdict, Verdict::Ok);
+    }
 
     #[test]
     fn a_name_that_does_not_resolve_is_fatal() {

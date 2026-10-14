@@ -118,8 +118,11 @@ Running as yourself rather than root keeps `target/` yours; without `-u` the bui
 root-owned files behind. With Rust already installed, `cargo run -p wsctl -- setup` does
 the same thing without the container.
 
-It checks the machine before asking for anything: Docker present and running, compose v2,
-disk space, and whether this checkout is behind origin. Then it asks which database and
+It checks the machine before asking for anything: Docker present and running, Compose 2.24
+or later (the overlays in `deploy/` need it), disk space, and whether this checkout is
+behind origin. Building the images here also wants about 2GB of memory and swap, and a
+bundled database its loopback port (`DB_PORT`, 5432) free. `wsctl doctor` runs the same
+checks at any time and changes nothing. Then it asks which database and
 which proxy, the domain and the EVE SSO credentials, checks that the domain resolves to
 this machine and that ports 80 and 443 are free, generates a database password, writes
 `.env` with `chmod 600`, and brings the stack up.
