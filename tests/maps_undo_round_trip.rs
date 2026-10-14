@@ -413,14 +413,6 @@ const KNOWN_GAPS: &[(&str, &str)] = &[
     ),
     ("remove_signatures", "as remove_signature"),
     (
-        "link_signature",
-        "undo restores the scanned state but leaves the link",
-    ),
-    (
-        "unlink_signature",
-        "redo is the inverse of a link, which does not unlink",
-    ),
-    (
         "add_connection_jump",
         "undoing it produces nothing to redo with",
     ),
@@ -448,10 +440,6 @@ const KNOWN_GAPS: &[(&str, &str)] = &[
     (
         "update_signature away from a wormhole",
         "undo brings the ghost back but not the scan's link to it",
-    ),
-    (
-        "track_jump through a ghost",
-        "the scan's link to the ghost's edge is lost",
     ),
 ];
 
