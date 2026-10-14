@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 
 use super::access::require_role;
-use super::command::{CommandOutput, Effect, MapCommand, Sequence, Tx, execute};
+use super::command::{CommandOutput, Effect, MapCommand, Sequence, Tx, run};
 use super::error::{MapError, Result};
 use super::{Actor, MapEvent, Role};
 
@@ -83,9 +83,7 @@ pub async fn add_ignored_system(
     actor: Actor,
     cmd: AddIgnoredSystem,
 ) -> Result<IgnoredSystem> {
-    execute(pool, actor, MapCommand::AddIgnoredSystem(cmd))
-        .await?
-        .ignored()
+    run(pool, actor, cmd).await
 }
 
 pub(super) async fn apply_add(tx: &mut Tx<'_>, cmd: AddIgnoredSystem) -> Result<Effect> {
@@ -139,8 +137,7 @@ pub async fn remove_ignored_system(
     actor: Actor,
     cmd: RemoveIgnoredSystem,
 ) -> Result<()> {
-    execute(pool, actor, MapCommand::RemoveIgnoredSystem(cmd)).await?;
-    Ok(())
+    run(pool, actor, cmd).await
 }
 
 pub(super) async fn apply_remove(tx: &mut Tx<'_>, cmd: RemoveIgnoredSystem) -> Result<Effect> {
@@ -180,9 +177,7 @@ pub async fn clear_ignored_systems(
     actor: Actor,
     cmd: ClearIgnoredSystems,
 ) -> Result<u64> {
-    execute(pool, actor, MapCommand::ClearIgnoredSystems(cmd))
-        .await?
-        .count()
+    run(pool, actor, cmd).await
 }
 
 pub(super) async fn apply_clear(tx: &mut Tx<'_>, cmd: ClearIgnoredSystems) -> Result<Effect> {

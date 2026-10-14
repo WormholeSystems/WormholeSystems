@@ -66,56 +66,138 @@ pub struct Sequence {
     pub steps: Vec<MapCommand>,
 }
 
-/// Every way a map can change. Variants prefixed `Restore` are compensating commands:
-/// they exist only as the inverse of a removal and are not routed by the API.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "command", rename_all = "snake_case")]
-pub enum MapCommand {
-    AddSystem(AddSystem),
-    AddGhostSystem(AddGhostSystem),
-    ResolveGhostSystem(ResolveGhostSystem),
-    RestoreGhostSystem(RestoreGhostSystem),
-    RemoveSystem(RemoveSystem),
-    RemoveSystems(RemoveSystems),
-    RestoreSystems(RestoreSystems),
-    RemoveRestored(RemoveRestored),
-    Sequence(Sequence),
-    ClearMap(ClearMap),
-    MoveSystem(MoveSystem),
-    MoveSystems(MoveSystems),
-    SetAlias(SetAlias),
-    SetStatus(SetStatus),
-    SetOccupier(SetOccupier),
-    SetNotes(SetNotes),
-    SetHome(SetHome),
-    SetRally(SetRally),
-    RestoreRallies(RestoreRallies),
-    SetPinned(SetPinned),
-    AddConnection(AddConnection),
-    SetConnectionStatus(SetConnectionStatus),
-    RemoveConnection(RemoveConnection),
-    CleanStaleConnections(CleanStaleConnections),
-    AgeConnection(AgeConnection),
-    ExpireConnections(ExpireConnections),
-    TrackJump(TrackJump),
-    AddEveScoutConnections(AddEveScoutConnections),
-    AddSignature(AddSignature),
-    UpdateSignature(UpdateSignature),
-    RemoveSignature(RemoveSignature),
-    RemoveSignatures(RemoveSignatures),
-    RestoreSignatures(RestoreSignatures),
-    PasteSignatures(PasteSignatures),
-    LinkSignature(LinkSignature),
-    UnlinkSignature(UnlinkSignature),
-    AddConnectionJump(AddConnectionJump),
-    UpdateConnectionJump(UpdateConnectionJump),
-    RemoveConnectionJump(RemoveConnectionJump),
-    AddWatchlistEntry(AddWatchlistEntry),
-    SetWatchlistPinned(SetWatchlistPinned),
-    RemoveWatchlistEntry(RemoveWatchlistEntry),
-    AddIgnoredSystem(AddIgnoredSystem),
-    RemoveIgnoredSystem(RemoveIgnoredSystem),
-    ClearIgnoredSystems(ClearIgnoredSystems),
+/// The command table, one line per way a map can change: the variant (named after the
+/// struct it carries), what running it hands back when that is more than nothing, and the
+/// function that applies it. Generates [`MapCommand`], its `From` impls, `map_id`, the
+/// dispatch in [`MapCommand::apply`] and each struct's [`Command`] impl, so a new command
+/// is one line here rather than five places that each have to agree.
+///
+/// The variant names are a stored format: serde tags them in snake case into every
+/// history row (see `tests/maps_history_format.rs`), so renaming one breaks undo of the
+/// rows already written.
+macro_rules! map_commands {
+    ($(
+        $variant:ident $(($out:ty))? => $($apply:ident)::+ $(with $actor:ident)?
+    ),+ $(,)?) => {
+        /// Every way a map can change. Variants prefixed `Restore` are compensating
+        /// commands: they exist only as the inverse of a removal and are not routed by the
+        /// API.
+        #[derive(Debug, Clone, Serialize, Deserialize)]
+        #[serde(tag = "command", rename_all = "snake_case")]
+        pub enum MapCommand {
+            $($variant($variant)),+
+        }
+
+        $(
+            impl From<$variant> for MapCommand {
+                fn from(cmd: $variant) -> Self {
+                    MapCommand::$variant(cmd)
+                }
+            }
+
+            impl Command for $variant {
+                type Output = map_commands!(@output $($out)?);
+            }
+        )+
+
+        impl MapCommand {
+            /// Every variant's name, for the test that keeps a stored sample of each.
+            #[doc(hidden)]
+            pub const VARIANTS: &[&str] = &[$(stringify!($variant)),+];
+
+            pub(super) fn map_id(&self) -> i64 {
+                match self {
+                    $(MapCommand::$variant(c) => c.map_id),+
+                }
+            }
+
+            async fn dispatch(self, tx: &mut Tx<'_>, actor: EventActor) -> Result<Effect> {
+                match self {
+                    $(MapCommand::$variant(c) => {
+                        map_commands!(@apply [$($actor)?] $($apply)::+, tx, c, actor)
+                    })+
+                }
+            }
+        }
+    };
+    (@output) => { () };
+    (@output $out:ty) => { $out };
+    (@apply [] $apply:path, $tx:ident, $c:ident, $actor:ident) => { $apply($tx, $c).await };
+    (@apply [actor] $apply:path, $tx:ident, $c:ident, $actor:ident) => {
+        $apply($tx, $c, $actor).await
+    };
+}
+
+map_commands! {
+    AddSystem(MapSolarSystem) => solar_system::apply_add_system,
+    AddGhostSystem(MapSolarSystem) => ghost::apply_add_ghost_system,
+    ResolveGhostSystem(MapSolarSystem) => ghost::apply_resolve_ghost_system,
+    RestoreGhostSystem => ghost::apply_restore_ghost_system,
+    RemoveSystem => solar_system::apply_remove_system,
+    RemoveSystems(u64) => solar_system::apply_remove_systems,
+    RestoreSystems => restore::apply_restore_systems,
+    RemoveRestored => restore::apply_remove_restored,
+    Sequence => apply_sequence with actor,
+    ClearMap(u64) => solar_system::apply_clear_map,
+    MoveSystem => solar_system::apply_move_system,
+    MoveSystems => solar_system::apply_move_systems,
+    SetAlias => solar_system::apply_set_alias,
+    SetStatus => solar_system::apply_set_status,
+    SetOccupier => solar_system::apply_set_occupier,
+    SetNotes => solar_system::apply_set_notes,
+    SetHome => solar_system::apply_set_home,
+    SetRally => solar_system::apply_set_rally,
+    RestoreRallies => solar_system::apply_restore_rallies,
+    SetPinned => solar_system::apply_set_pinned,
+    AddConnection(MapConnection) => connection::apply_add_connection,
+    SetConnectionStatus(MapConnection) => connection::apply_set_connection_status,
+    RemoveConnection => connection::apply_remove_connection,
+    CleanStaleConnections(u64) => connection::apply_clean_stale,
+    AgeConnection => connection::apply_age_connection,
+    ExpireConnections(u64) => connection::apply_expire_connections,
+    TrackJump => tracking::apply_track_jump,
+    AddEveScoutConnections(u64) => eve_scout::apply_add_eve_scout_connections,
+    AddSignature(Signature) => signatures::apply_add_signature,
+    UpdateSignature(Signature) => signatures::apply_update_signature,
+    RemoveSignature(signatures::RemovedSignature) => signatures::apply_remove_signature,
+    RemoveSignatures(signatures::BulkRemoveOutcome) => signatures::apply_remove_signatures,
+    RestoreSignatures => signatures::apply_restore_signatures,
+    PasteSignatures => signatures::apply_paste_signatures,
+    LinkSignature(Signature) => signatures::apply_link_signature,
+    UnlinkSignature(Signature) => signatures::apply_unlink_signature,
+    AddConnectionJump(jumps::ConnectionJump) => jumps::apply_add_jump,
+    UpdateConnectionJump(jumps::ConnectionJump) => jumps::apply_update_jump,
+    RemoveConnectionJump(u64) => jumps::apply_remove_jump,
+    AddWatchlistEntry(watchlist::WatchlistEntry) => watchlist::apply_add_entry,
+    SetWatchlistPinned(watchlist::WatchlistEntry) => watchlist::apply_set_pinned,
+    RemoveWatchlistEntry => watchlist::apply_remove_entry,
+    AddIgnoredSystem(ignored::IgnoredSystem) => ignored::apply_add,
+    RemoveIgnoredSystem => ignored::apply_remove,
+    ClearIgnoredSystems(u64) => ignored::apply_clear,
+}
+
+/// A command struct, and what running it hands back. Implemented by the table above.
+pub trait Command: Into<MapCommand> {
+    type Output: FromOutput;
+
+    /// Unwrap what the command's `apply` produced.
+    fn take(output: CommandOutput) -> Result<Self::Output> {
+        Self::Output::from_output(output)
+    }
+}
+
+/// Run a command as a character and hand back what it produced, typed.
+pub async fn run<C: Command>(pool: &PgPool, actor: Actor, cmd: C) -> Result<C::Output> {
+    C::take(execute(pool, actor, cmd.into()).await?)
+}
+
+/// As [`run`], for background tasks.
+pub(super) async fn run_as<C: Command>(
+    pool: &PgPool,
+    actor: EventActor,
+    cmd: C,
+) -> Result<C::Output> {
+    C::take(execute_as(pool, actor, cmd.into()).await?)
 }
 
 /// What a command hands back to its caller.
@@ -126,81 +208,69 @@ pub enum CommandOutput {
     System(Box<MapSolarSystem>),
     Connection(Box<MapConnection>),
     Signature(Box<Signature>),
-    Jump(Box<super::jumps::ConnectionJump>),
-    Watchlist(Box<super::watchlist::WatchlistEntry>),
-    Ignored(Box<super::ignored::IgnoredSystem>),
-    Removal(Box<super::signatures::RemovedSignature>),
-    BulkRemoval(Box<super::signatures::BulkRemoveOutcome>),
+    Jump(Box<jumps::ConnectionJump>),
+    Watchlist(Box<watchlist::WatchlistEntry>),
+    Ignored(Box<ignored::IgnoredSystem>),
+    Removal(Box<signatures::RemovedSignature>),
+    BulkRemoval(Box<signatures::BulkRemoveOutcome>),
 }
 
 impl CommandOutput {
-    /// A mismatch is a wiring mistake between a command and its `apply`, never something a
-    /// caller can act on.
-    fn wrong(self) -> MapError {
-        MapError::Validation(format!("unexpected command output: {self:?}"))
+    /// The output as the type its command promised. For the places that apply a command
+    /// inside another and need its result.
+    pub(super) fn take<T: FromOutput>(self) -> Result<T> {
+        T::from_output(self)
     }
+}
 
-    pub(super) fn system(self) -> Result<MapSolarSystem> {
-        match self {
-            CommandOutput::System(x) => Ok(*x),
-            other => Err(other.wrong()),
+/// A type a [`CommandOutput`] unwraps into. A mismatch is a wiring mistake between a
+/// command and its `apply`, never something a caller can act on.
+pub trait FromOutput: Sized {
+    fn from_output(output: CommandOutput) -> Result<Self>;
+}
+
+fn wrong_output(output: CommandOutput) -> MapError {
+    MapError::Validation(format!("unexpected command output: {output:?}"))
+}
+
+/// One impl per boxed variant.
+macro_rules! from_output {
+    ($($variant:ident => $ty:ty),+ $(,)?) => {$(
+        impl FromOutput for $ty {
+            fn from_output(output: CommandOutput) -> Result<Self> {
+                match output {
+                    CommandOutput::$variant(x) => Ok(*x),
+                    other => Err(wrong_output(other)),
+                }
+            }
         }
-    }
+    )+};
+}
 
-    pub(super) fn connection(self) -> Result<MapConnection> {
-        match self {
-            CommandOutput::Connection(x) => Ok(*x),
-            other => Err(other.wrong()),
-        }
-    }
+from_output! {
+    System => MapSolarSystem,
+    Connection => MapConnection,
+    Signature => Signature,
+    Jump => jumps::ConnectionJump,
+    Watchlist => watchlist::WatchlistEntry,
+    Ignored => ignored::IgnoredSystem,
+    Removal => signatures::RemovedSignature,
+    BulkRemoval => signatures::BulkRemoveOutcome,
+}
 
-    pub(super) fn signature(self) -> Result<Signature> {
-        match self {
-            CommandOutput::Signature(x) => Ok(*x),
-            other => Err(other.wrong()),
-        }
-    }
-
-    pub(super) fn jump(self) -> Result<super::jumps::ConnectionJump> {
-        match self {
-            CommandOutput::Jump(x) => Ok(*x),
-            other => Err(other.wrong()),
-        }
-    }
-
-    pub(super) fn watchlist(self) -> Result<super::watchlist::WatchlistEntry> {
-        match self {
-            CommandOutput::Watchlist(x) => Ok(*x),
-            other => Err(other.wrong()),
-        }
-    }
-
-    pub(super) fn ignored(self) -> Result<super::ignored::IgnoredSystem> {
-        match self {
-            CommandOutput::Ignored(x) => Ok(*x),
-            other => Err(other.wrong()),
-        }
-    }
-
-    pub(super) fn removal(self) -> Result<super::signatures::RemovedSignature> {
-        match self {
-            CommandOutput::Removal(x) => Ok(*x),
-            other => Err(other.wrong()),
-        }
-    }
-
-    pub(super) fn bulk_removal(self) -> Result<super::signatures::BulkRemoveOutcome> {
-        match self {
-            CommandOutput::BulkRemoval(x) => Ok(*x),
-            other => Err(other.wrong()),
-        }
-    }
-
-    pub(super) fn count(self) -> Result<u64> {
-        match self {
+impl FromOutput for u64 {
+    fn from_output(output: CommandOutput) -> Result<Self> {
+        match output {
             CommandOutput::Count(n) => Ok(n),
-            other => Err(other.wrong()),
+            other => Err(wrong_output(other)),
         }
+    }
+}
+
+/// A command run for its effect alone. Whatever it produced is not wanted.
+impl FromOutput for () {
+    fn from_output(_: CommandOutput) -> Result<Self> {
+        Ok(())
     }
 }
 
@@ -254,56 +324,6 @@ impl Effect {
 }
 
 impl MapCommand {
-    pub(super) fn map_id(&self) -> i64 {
-        match self {
-            MapCommand::AddSystem(c) => c.map_id,
-            MapCommand::AddGhostSystem(c) => c.map_id,
-            MapCommand::ResolveGhostSystem(c) => c.map_id,
-            MapCommand::RestoreGhostSystem(c) => c.map_id,
-            MapCommand::RemoveSystem(c) => c.map_id,
-            MapCommand::RemoveSystems(c) => c.map_id,
-            MapCommand::RestoreSystems(c) => c.map_id,
-            MapCommand::RemoveRestored(c) => c.map_id,
-            MapCommand::Sequence(c) => c.map_id,
-            MapCommand::ClearMap(c) => c.map_id,
-            MapCommand::MoveSystem(c) => c.map_id,
-            MapCommand::MoveSystems(c) => c.map_id,
-            MapCommand::SetAlias(c) => c.map_id,
-            MapCommand::SetStatus(c) => c.map_id,
-            MapCommand::SetOccupier(c) => c.map_id,
-            MapCommand::SetNotes(c) => c.map_id,
-            MapCommand::SetHome(c) => c.map_id,
-            MapCommand::SetRally(c) => c.map_id,
-            MapCommand::RestoreRallies(c) => c.map_id,
-            MapCommand::SetPinned(c) => c.map_id,
-            MapCommand::AddConnection(c) => c.map_id,
-            MapCommand::SetConnectionStatus(c) => c.map_id,
-            MapCommand::RemoveConnection(c) => c.map_id,
-            MapCommand::CleanStaleConnections(c) => c.map_id,
-            MapCommand::AgeConnection(c) => c.map_id,
-            MapCommand::ExpireConnections(c) => c.map_id,
-            MapCommand::TrackJump(c) => c.map_id,
-            MapCommand::AddEveScoutConnections(c) => c.map_id,
-            MapCommand::AddSignature(c) => c.map_id,
-            MapCommand::UpdateSignature(c) => c.map_id,
-            MapCommand::RemoveSignature(c) => c.map_id,
-            MapCommand::RemoveSignatures(c) => c.map_id,
-            MapCommand::RestoreSignatures(c) => c.map_id,
-            MapCommand::PasteSignatures(c) => c.map_id,
-            MapCommand::LinkSignature(c) => c.map_id,
-            MapCommand::UnlinkSignature(c) => c.map_id,
-            MapCommand::AddConnectionJump(c) => c.map_id,
-            MapCommand::UpdateConnectionJump(c) => c.map_id,
-            MapCommand::RemoveConnectionJump(c) => c.map_id,
-            MapCommand::AddWatchlistEntry(c) => c.map_id,
-            MapCommand::SetWatchlistPinned(c) => c.map_id,
-            MapCommand::RemoveWatchlistEntry(c) => c.map_id,
-            MapCommand::AddIgnoredSystem(c) => c.map_id,
-            MapCommand::RemoveIgnoredSystem(c) => c.map_id,
-            MapCommand::ClearIgnoredSystems(c) => c.map_id,
-        }
-    }
-
     /// The ceiling lives here so a new command cannot forget its check. Editing the graph
     /// is Member+; the ignore list changes where everyone's routes and jumps go, so it is
     /// a manager's call.
@@ -317,58 +337,7 @@ impl MapCommand {
     }
 
     pub(super) async fn apply(self, tx: &mut Tx<'_>, actor: EventActor) -> Result<Effect> {
-        match self {
-            MapCommand::AddSystem(c) => solar_system::apply_add_system(tx, c).await,
-            MapCommand::AddGhostSystem(c) => ghost::apply_add_ghost_system(tx, c).await,
-            MapCommand::ResolveGhostSystem(c) => ghost::apply_resolve_ghost_system(tx, c).await,
-            MapCommand::RestoreGhostSystem(c) => ghost::apply_restore_ghost_system(tx, c).await,
-            MapCommand::RemoveSystem(c) => solar_system::apply_remove_system(tx, c).await,
-            MapCommand::RemoveSystems(c) => solar_system::apply_remove_systems(tx, c).await,
-            MapCommand::RestoreSystems(c) => restore::apply_restore_systems(tx, c).await,
-            MapCommand::RemoveRestored(c) => restore::apply_remove_restored(tx, c).await,
-            MapCommand::Sequence(c) => apply_sequence(tx, c, actor).await,
-            MapCommand::ClearMap(c) => solar_system::apply_clear_map(tx, c).await,
-            MapCommand::MoveSystem(c) => solar_system::apply_move_system(tx, c).await,
-            MapCommand::MoveSystems(c) => solar_system::apply_move_systems(tx, c).await,
-            MapCommand::SetAlias(c) => solar_system::apply_set_alias(tx, c).await,
-            MapCommand::SetStatus(c) => solar_system::apply_set_status(tx, c).await,
-            MapCommand::SetOccupier(c) => solar_system::apply_set_occupier(tx, c).await,
-            MapCommand::SetNotes(c) => solar_system::apply_set_notes(tx, c).await,
-            MapCommand::SetHome(c) => solar_system::apply_set_home(tx, c).await,
-            MapCommand::SetRally(c) => solar_system::apply_set_rally(tx, c).await,
-            MapCommand::RestoreRallies(c) => solar_system::apply_restore_rallies(tx, c).await,
-            MapCommand::SetPinned(c) => solar_system::apply_set_pinned(tx, c).await,
-            MapCommand::AddConnection(c) => connection::apply_add_connection(tx, c).await,
-            MapCommand::SetConnectionStatus(c) => {
-                connection::apply_set_connection_status(tx, c).await
-            }
-            MapCommand::RemoveConnection(c) => connection::apply_remove_connection(tx, c).await,
-            MapCommand::CleanStaleConnections(c) => connection::apply_clean_stale(tx, c).await,
-            MapCommand::AgeConnection(c) => connection::apply_age_connection(tx, c).await,
-            MapCommand::ExpireConnections(c) => connection::apply_expire_connections(tx, c).await,
-            MapCommand::TrackJump(c) => tracking::apply_track_jump(tx, c).await,
-            MapCommand::AddEveScoutConnections(c) => {
-                eve_scout::apply_add_eve_scout_connections(tx, c).await
-            }
-            MapCommand::AddSignature(c) => signatures::apply_add_signature(tx, c).await,
-            MapCommand::UpdateSignature(c) => signatures::apply_update_signature(tx, c).await,
-            MapCommand::RemoveSignature(c) => signatures::apply_remove_signature(tx, c).await,
-            MapCommand::RemoveSignatures(c) => signatures::apply_remove_signatures(tx, c).await,
-            MapCommand::RestoreSignatures(c) => signatures::apply_restore_signatures(tx, c).await,
-            MapCommand::PasteSignatures(c) => signatures::apply_paste_signatures(tx, c).await,
-            MapCommand::LinkSignature(c) => signatures::apply_link_signature(tx, c).await,
-            MapCommand::UnlinkSignature(c) => signatures::apply_unlink_signature(tx, c).await,
-            MapCommand::AddConnectionJump(c) => jumps::apply_add_jump(tx, c).await,
-            MapCommand::UpdateConnectionJump(c) => jumps::apply_update_jump(tx, c).await,
-            MapCommand::RemoveConnectionJump(c) => jumps::apply_remove_jump(tx, c).await,
-            MapCommand::AddWatchlistEntry(c) => watchlist::apply_add_entry(tx, c).await,
-            MapCommand::SetWatchlistPinned(c) => watchlist::apply_set_pinned(tx, c).await,
-            MapCommand::RemoveWatchlistEntry(c) => watchlist::apply_remove_entry(tx, c).await,
-            MapCommand::AddIgnoredSystem(c) => ignored::apply_add(tx, c).await,
-            MapCommand::RemoveIgnoredSystem(c) => ignored::apply_remove(tx, c).await,
-            MapCommand::ClearIgnoredSystems(c) => ignored::apply_clear(tx, c).await,
-        }
-        .map(|effect| {
+        Box::pin(self.dispatch(tx, actor)).await.map(|effect| {
             // Background writers never offer an undo.
             if matches!(actor, EventActor::System) {
                 Effect {

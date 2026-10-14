@@ -20,7 +20,7 @@ use sqlx::PgPool;
 use super::Actor;
 use super::Role;
 use super::access::require_role;
-use super::command::{CommandOutput, Effect, EventActor, MapCommand, Tx, execute, execute_as};
+use super::command::{CommandOutput, Effect, EventActor, MapCommand, Tx, run, run_as};
 use super::error::{MapError, Result};
 use super::store::connections::{self, NewConnection};
 use super::store::placements;
@@ -171,9 +171,7 @@ pub async fn add_connection(
         ));
     }
 
-    execute(pool, actor, MapCommand::AddConnection(cmd))
-        .await?
-        .connection()
+    run(pool, actor, cmd).await
 }
 
 pub(super) async fn apply_add_connection(tx: &mut Tx<'_>, cmd: AddConnection) -> Result<Effect> {
@@ -271,9 +269,7 @@ pub async fn set_connection_status(
     actor: Actor,
     cmd: SetConnectionStatus,
 ) -> Result<MapConnection> {
-    execute(pool, actor, MapCommand::SetConnectionStatus(cmd))
-        .await?
-        .connection()
+    run(pool, actor, cmd).await
 }
 
 pub(super) async fn apply_set_connection_status(
@@ -335,8 +331,7 @@ pub struct RemoveConnection {
 
 /// Remove a connection. Linked signatures survive with their `connection_id` cleared.
 pub async fn remove_connection(pool: &PgPool, actor: Actor, cmd: RemoveConnection) -> Result<()> {
-    execute(pool, actor, MapCommand::RemoveConnection(cmd)).await?;
-    Ok(())
+    run(pool, actor, cmd).await
 }
 
 pub(super) async fn apply_remove_connection(
@@ -438,9 +433,7 @@ pub async fn clean_stale_connections(
     actor: Actor,
     cmd: CleanStaleConnections,
 ) -> Result<u64> {
-    execute(pool, actor, MapCommand::CleanStaleConnections(cmd))
-        .await?
-        .count()
+    run(pool, actor, cmd).await
 }
 
 pub(super) async fn apply_clean_stale(
@@ -705,12 +698,12 @@ pub async fn age_connections(pool: &PgPool) -> Result<u64> {
         ) else {
             continue;
         };
-        let cmd = MapCommand::AgeConnection(AgeConnection {
+        let cmd = AgeConnection {
             map_id: row.map_id,
             connection_id: row.id,
             time_status,
-        });
-        match execute_as(pool, EventActor::System, cmd).await {
+        };
+        match run_as(pool, EventActor::System, cmd).await {
             Ok(_) => aged += 1,
             // Someone marked or removed the hole between the read and the write.
             Err(MapError::Conflict(_) | MapError::NotFound) => {}
@@ -782,9 +775,8 @@ pub async fn expire_connections(pool: &PgPool) -> Result<u64> {
 
     let mut removed = 0;
     for map_id in maps {
-        let cmd = MapCommand::ExpireConnections(ExpireConnections { map_id });
-        match execute_as(pool, EventActor::System, cmd).await {
-            Ok(output) => removed += output.count()?,
+        match run_as(pool, EventActor::System, ExpireConnections { map_id }).await {
+            Ok(count) => removed += count,
             Err(MapError::Conflict(_) | MapError::NotFound) => {}
             Err(err) => return Err(err),
         }

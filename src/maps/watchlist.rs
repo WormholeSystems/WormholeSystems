@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 
 use super::access::require_role;
-use super::command::{CommandOutput, Effect, MapCommand, Tx, execute};
+use super::command::{CommandOutput, Effect, MapCommand, Tx, run};
 use super::error::{MapError, Result};
 use super::{Actor, MapEvent, Role};
 
@@ -56,9 +56,7 @@ pub async fn add_watchlist_entry(
     actor: Actor,
     cmd: AddWatchlistEntry,
 ) -> Result<WatchlistEntry> {
-    execute(pool, actor, MapCommand::AddWatchlistEntry(cmd))
-        .await?
-        .watchlist()
+    run(pool, actor, cmd).await
 }
 
 pub(super) async fn apply_add_entry(tx: &mut Tx<'_>, cmd: AddWatchlistEntry) -> Result<Effect> {
@@ -100,9 +98,7 @@ pub async fn set_watchlist_pinned(
     actor: Actor,
     cmd: SetWatchlistPinned,
 ) -> Result<WatchlistEntry> {
-    execute(pool, actor, MapCommand::SetWatchlistPinned(cmd))
-        .await?
-        .watchlist()
+    run(pool, actor, cmd).await
 }
 
 pub(super) async fn apply_set_pinned(tx: &mut Tx<'_>, cmd: SetWatchlistPinned) -> Result<Effect> {
@@ -157,8 +153,7 @@ pub async fn remove_watchlist_entry(
     actor: Actor,
     cmd: RemoveWatchlistEntry,
 ) -> Result<()> {
-    execute(pool, actor, MapCommand::RemoveWatchlistEntry(cmd)).await?;
-    Ok(())
+    run(pool, actor, cmd).await
 }
 
 pub(super) async fn apply_remove_entry(

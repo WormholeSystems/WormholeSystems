@@ -12,7 +12,7 @@
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 
-use super::command::{CommandOutput, Effect, MapCommand, Sequence, Tx, execute};
+use super::command::{CommandOutput, Effect, MapCommand, Sequence, Tx, run};
 use super::connection::{AddConnection, SetConnectionStatus};
 use super::error::{MapError, Result};
 use super::solar_system::{MapSolarSystem, SetAlias};
@@ -216,7 +216,7 @@ async fn raise_unmapped_holes(tx: &mut Tx<'_>, map_id: i64) -> Result<(Vec<i64>,
         )
         .await?;
         events.extend(effect.events);
-        raised.push(effect.output.system()?.id);
+        raised.push(effect.output.take::<super::MapSolarSystem>()?.id);
     }
     Ok((raised, events))
 }
@@ -245,9 +245,7 @@ pub async fn add_ghost_system(
     actor: Actor,
     cmd: AddGhostSystem,
 ) -> Result<MapSolarSystem> {
-    execute(pool, actor, MapCommand::AddGhostSystem(cmd))
-        .await?
-        .system()
+    run(pool, actor, cmd).await
 }
 
 pub(super) async fn apply_add_ghost_system(tx: &mut Tx<'_>, cmd: AddGhostSystem) -> Result<Effect> {
@@ -318,7 +316,7 @@ pub(super) async fn apply_add_ghost_system(tx: &mut Tx<'_>, cmd: AddGhostSystem)
         },
     )
     .await?;
-    let connection = effect.output.connection()?;
+    let connection = effect.output.take::<super::MapConnection>()?;
 
     super::tracking::link(tx, cmd.map_id, signature_pk, connection.id).await?;
 
@@ -417,9 +415,7 @@ pub async fn resolve_ghost_system(
     actor: Actor,
     cmd: ResolveGhostSystem,
 ) -> Result<MapSolarSystem> {
-    execute(pool, actor, MapCommand::ResolveGhostSystem(cmd))
-        .await?
-        .system()
+    run(pool, actor, cmd).await
 }
 
 pub(super) async fn apply_resolve_ghost_system(
