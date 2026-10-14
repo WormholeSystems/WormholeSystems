@@ -13,7 +13,8 @@ pub trait Runner {
     /// progress rather than sitting silent.
     fn run(&mut self, dir: &Path, program: &str, args: &[&str]) -> Result<()>;
 
-    /// Run quietly and hand back stdout, for the commands whose output we read.
+    /// Run quietly and hand back stdout, for the commands whose output we read. What it
+    /// said on stderr is kept for the error when it fails, and dropped when it does not.
     fn capture(&mut self, dir: &Path, program: &str, args: &[&str]) -> Result<String>;
 }
 
@@ -36,14 +37,35 @@ impl Runner for Real {
         let out = Command::new(program)
             .args(args)
             .current_dir(dir)
-            .stderr(Stdio::null())
+            .stdin(Stdio::null())
             .output()
             .with_context(|| format!("could not start `{program}`"))?;
         if !out.status.success() {
-            bail!("`{program} {}` failed", args.join(" "));
+            bail!(
+                "`{program} {}` failed{}",
+                args.join(" "),
+                said(&String::from_utf8_lossy(&out.stderr))
+            );
         }
         Ok(String::from_utf8_lossy(&out.stdout).trim().to_string())
     }
+}
+
+/// The end of what a failed command printed on stderr, indented under the error. The end,
+/// because that is where docker and compose say what went wrong.
+fn said(stderr: &str) -> String {
+    const LINES: usize = 15;
+    let lines: Vec<&str> = stderr.lines().filter(|l| !l.trim().is_empty()).collect();
+    if lines.is_empty() {
+        return String::new();
+    }
+    let tail = &lines[lines.len().saturating_sub(LINES)..];
+    let mut out = String::from(":");
+    for line in tail {
+        out.push_str("\n    ");
+        out.push_str(line.trim_end());
+    }
+    out
 }
 
 /// Records what it was asked to do and answers from a script, for tests.
@@ -65,5 +87,34 @@ impl Runner for Recording {
         let line = format!("{program} {}", args.join(" "));
         self.commands.push(line.clone());
         Ok(self.replies.get(&line).cloned().unwrap_or_default())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Without this a failed `docker compose run` said only that it failed.
+    #[test]
+    fn a_failure_says_what_the_command_printed() {
+        let err = Real
+            .capture(
+                Path::new("."),
+                "sh",
+                &["-c", "echo out; echo first >&2; echo why >&2; exit 3"],
+            )
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("failed:\n    first\n    why"), "{err}");
+        assert!(!err.contains("\n    out"));
+    }
+
+    #[test]
+    fn only_the_end_of_a_long_complaint_is_kept() {
+        let long: String = (1..=40).map(|n| format!("line {n}\n")).collect();
+        let kept = said(&long);
+        assert!(kept.ends_with("line 40"));
+        assert!(!kept.contains("line 25\n"));
+        assert_eq!(said("\n  \n"), "");
     }
 }
