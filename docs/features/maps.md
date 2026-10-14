@@ -419,7 +419,9 @@ when nothing matched.
 
 ### `paste_signatures(actor, map_id, solar_system_id, signatures)`
 
-- **Auth:** `Member`. Rows are `{signature_id, group?, signature_type_id?, name?}`.
+- **Auth:** `Member`. Rows are `{signature_id, group?, signature_type_id?, name?}`, parsed
+  by the client (`parseScan`), which maps localized group and site names from every EVE
+  client language to their English catalog names before matching.
 - **Validates:** the system is placed; every `signature_id` is 7 chars.
 - **Effect:** upsert-only reconciliation (see the
   [invariants](../database/mapping.md#signatures)): adds new rows, refreshes existing
