@@ -1,4 +1,4 @@
-use std::time::SystemTime;
+use std::time::{Duration, SystemTime};
 
 use chrono::{DateTime, Utc};
 use sqlx::PgPool;
@@ -13,6 +13,11 @@ use crate::esi::{EsiError, Result as EsiResult};
 /// requests queue behind background work rather than being served.
 const DEFAULT_MAX_CONNECTIONS: u32 = 20;
 
+/// How long anything waits for a free connection before giving up with an error. sqlx's
+/// default is 30 seconds, which turns a saturated pool into requests that hang rather than
+/// fail; a short wait surfaces the problem while it is happening.
+const ACQUIRE_TIMEOUT: Duration = Duration::from_secs(10);
+
 /// Connect to Postgres and run any pending migrations.
 pub async fn connect(database_url: &str) -> Result<PgPool, sqlx::Error> {
     let max = std::env::var("DATABASE_MAX_CONNECTIONS")
@@ -21,6 +26,7 @@ pub async fn connect(database_url: &str) -> Result<PgPool, sqlx::Error> {
         .unwrap_or(DEFAULT_MAX_CONNECTIONS);
     let pool = PgPoolOptions::new()
         .max_connections(max)
+        .acquire_timeout(ACQUIRE_TIMEOUT)
         .connect(database_url)
         .await?;
     sqlx::migrate!("./migrations").run(&pool).await?;
@@ -104,25 +110,24 @@ impl TokenStore for PgTokenStore {
         .fetch_one(&mut *tx)
         .await?;
 
-        for scope in &token.scopes {
-            let scope_id = sqlx::query_scalar!(
-                "INSERT INTO esi_scopes (name) VALUES ($1)
-                 ON CONFLICT (name) DO UPDATE SET name = excluded.name
-                 RETURNING id",
-                scope
-            )
-            .fetch_one(&mut *tx)
-            .await?;
-
-            sqlx::query!(
-                "INSERT INTO esi_token_scopes (token_id, scope_id) VALUES ($1, $2)
-                 ON CONFLICT DO NOTHING",
-                token_id,
-                scope_id
-            )
-            .execute(&mut *tx)
-            .await?;
-        }
+        // Every scope in one statement. `distinct`, because `do update` refuses to touch the
+        // same row twice in one command; the no-op update is there so `returning` hands back
+        // the ids of names that already existed too.
+        sqlx::query!(
+            "with scopes as (
+                 insert into esi_scopes (name)
+                 select distinct unnest($2::text[])
+                 on conflict (name) do update set name = excluded.name
+                 returning id
+             )
+             insert into esi_token_scopes (token_id, scope_id)
+             select $1, id from scopes
+             on conflict do nothing",
+            token_id,
+            &token.scopes,
+        )
+        .execute(&mut *tx)
+        .await?;
 
         tx.commit().await?;
         Ok(())
