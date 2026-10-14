@@ -467,7 +467,7 @@ pub async fn record_transit(
     };
 
     // One statement for every map at once: those where this user shares their movements
-    // and is a member or better (`effective_role`'s rule, against the live grants), each
+    // and is a member or better (`effective_role`'s view), each
     // with the edge this pair travelled on that map. The wormhole edge wins over a parallel
     // stargate edge; a lone stargate edge means gate travel on that map, so nothing is
     // recorded there. With no edge at all the hole is unmapped, and a pending row is kept
@@ -478,17 +478,8 @@ pub async fn record_transit(
                from map_user_settings mus
                where mus.user_id = $1 and mus.tracking_allowed
                  and exists (
-                     select 1 from map_access_live ma
-                     where ma.map_id = mus.map_id
-                       and ma.role <> 'viewer'
-                       and ma.subject_id in (
-                           select id from characters where user_id = $1
-                           union all
-                           select corporation_id from characters where user_id = $1
-                           union all
-                           select alliance_id from characters
-                           where user_id = $1 and alliance_id is not null
-                       )
+                     select 1 from map_user_roles r
+                     where r.map_id = mus.map_id and r.user_id = $1 and r.role <> 'viewer'
                  )
            ),
            found as (

@@ -1,11 +1,11 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select a.subject_type,\n                  a.subject_id,\n                  coalesce(c.name, corp.name, al.name) as \"name?\",\n                  a.role,\n                  a.expires_at\n           from map_access a\n           left join characters c\n             on a.subject_type = 'character' and c.id = a.subject_id\n           left join corporations corp\n             on a.subject_type = 'corporation' and corp.id = a.subject_id\n           left join alliances al\n             on a.subject_type = 'alliance' and al.id = a.subject_id\n           where a.map_id = $1\n             and (a.expires_at is null or a.expires_at > now())\n           order by\n             case a.role\n               when 'owner' then 0 when 'manager' then 1\n               when 'member' then 2 else 3\n             end,\n             coalesce(c.name, corp.name, al.name)",
+  "query": "select a.subject_type as \"subject_type!: SubjectType\",\n                  a.subject_id as \"subject_id!\",\n                  coalesce(c.name, corp.name, al.name) as \"name?\",\n                  a.role as \"role!: Role\",\n                  a.expires_at\n           from map_access_live a\n           left join characters c\n             on a.subject_type = 'character' and c.id = a.subject_id\n           left join corporations corp\n             on a.subject_type = 'corporation' and corp.id = a.subject_id\n           left join alliances al\n             on a.subject_type = 'alliance' and al.id = a.subject_id\n           where a.map_id = $1\n           order by\n             case a.role\n               when 'owner' then 0 when 'manager' then 1\n               when 'member' then 2 else 3\n             end,\n             coalesce(c.name, corp.name, al.name)",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
-        "name": "subject_type",
+        "name": "subject_type!: SubjectType",
         "type_info": {
           "Custom": {
             "name": "subject_type",
@@ -20,18 +20,18 @@
         },
         "origin": {
           "Table": {
-            "table": "map_access",
+            "table": "map_access_live",
             "name": "subject_type"
           }
         }
       },
       {
         "ordinal": 1,
-        "name": "subject_id",
+        "name": "subject_id!",
         "type_info": "Int8",
         "origin": {
           "Table": {
-            "table": "map_access",
+            "table": "map_access_live",
             "name": "subject_id"
           }
         }
@@ -44,7 +44,7 @@
       },
       {
         "ordinal": 3,
-        "name": "role",
+        "name": "role!: Role",
         "type_info": {
           "Custom": {
             "name": "map_role",
@@ -60,7 +60,7 @@
         },
         "origin": {
           "Table": {
-            "table": "map_access",
+            "table": "map_access_live",
             "name": "role"
           }
         }
@@ -71,7 +71,7 @@
         "type_info": "Timestamptz",
         "origin": {
           "Table": {
-            "table": "map_access",
+            "table": "map_access_live",
             "name": "expires_at"
           }
         }
@@ -83,12 +83,12 @@
       ]
     },
     "nullable": [
-      false,
-      false,
+      true,
+      true,
       null,
-      false,
+      true,
       true
     ]
   },
-  "hash": "4877a1ebc766ed14e0cb6cedd98f264230f1e75e1bf535f6adde9da50298b358"
+  "hash": "28000709acb2e3cf8ffec64b5daa8a2149af9ebe72792876c438327d27d2873c"
 }

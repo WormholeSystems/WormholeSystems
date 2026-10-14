@@ -393,32 +393,23 @@ pub async fn list_maps(pool: &PgPool, user_id: i64) -> Result<Vec<(Map, Role)>> 
                   -- The view cannot promise not-null the way the table does.
                   ma.role as "role!: Role"
            from maps m
-           join map_access_live ma on ma.map_id = m.id
-           where ma.subject_id in (
-                 select id from characters where user_id = $1
-                 union all
-                 select corporation_id from characters where user_id = $1
-                 union all
-                 select alliance_id from characters where user_id = $1 and alliance_id is not null
-           )
+           join map_user_roles ma on ma.map_id = m.id
+           where ma.user_id = $1
            order by m.created_at"#,
         user_id,
     )
     .fetch_all(pool)
     .await?;
 
-    // A map can match more than once (e.g. via a character and its corp); keep the
-    // highest role per map.
-    let mut out: Vec<(Map, Role)> = Vec::new();
-    for r in rows {
-        let role = r.role;
-        let map = map_from_row!(r);
-        match out.iter_mut().find(|(m, _)| m.id == map.id) {
-            Some((_, existing)) => *existing = (*existing).max(role),
-            None => out.push((map, role)),
-        }
-    }
-    Ok(out)
+    // The view has already settled a map matched more than once (a character and its
+    // corp, say) on the highest role, so each map comes back once.
+    Ok(rows
+        .into_iter()
+        .map(|r| {
+            let role = r.role;
+            (map_from_row!(r), role)
+        })
+        .collect())
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema)]

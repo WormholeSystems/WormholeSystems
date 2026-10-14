@@ -1,0 +1,41 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select role as \"role!: Role\" from map_user_roles where map_id = $1 and user_id = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "role!: Role",
+        "type_info": {
+          "Custom": {
+            "name": "map_role",
+            "kind": {
+              "Enum": [
+                "viewer",
+                "member",
+                "manager",
+                "owner"
+              ]
+            }
+          }
+        },
+        "origin": {
+          "Table": {
+            "table": "map_user_roles",
+            "name": "role"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "0d025fe444b471cfdaf23fcb34fbdf1408af14507e29e4aab516564bf328040a"
+}

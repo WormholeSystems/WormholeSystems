@@ -55,17 +55,8 @@ pub async fn characters_on(pool: &PgPool, map_id: i64, viewer: i64) -> Result<Ve
                        and sc.name = 'esi-location.read_location.v1'
                  )
              and exists (
-                     select 1 from map_access_live ma
-                     where ma.map_id = $1
-                       and ma.role <> 'viewer'
-                       and ma.subject_id in (
-                           select id from characters where user_id = u.id
-                           union all
-                           select corporation_id from characters where user_id = u.id
-                           union all
-                           select alliance_id from characters
-                           where user_id = u.id and alliance_id is not null
-                       )
+                     select 1 from map_user_roles r
+                     where r.map_id = $1 and r.user_id = u.id and r.role <> 'viewer'
                  )
            order by c.name"#,
         map_id,

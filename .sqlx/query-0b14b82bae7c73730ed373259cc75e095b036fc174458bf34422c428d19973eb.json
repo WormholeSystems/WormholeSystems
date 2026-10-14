@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select m.id, m.name, m.description, m.image_url, m.created_at, m.alias_scheme,\n                  m.ignored_alias, m.bookmark_wormhole, m.bookmark_kspace, m.bookmark_return,\n                  m.ghost_unlinked_wormholes, m.layout, m.allow_layout_override,\n                  m.is_public, m.share_token,\n                  -- The view cannot promise not-null the way the table does.\n                  ma.role as \"role!: Role\"\n           from maps m\n           join map_access_live ma on ma.map_id = m.id\n           where ma.subject_id in (\n                 select id from characters where user_id = $1\n                 union all\n                 select corporation_id from characters where user_id = $1\n                 union all\n                 select alliance_id from characters where user_id = $1 and alliance_id is not null\n           )\n           order by m.created_at",
+  "query": "select m.id, m.name, m.description, m.image_url, m.created_at, m.alias_scheme,\n                  m.ignored_alias, m.bookmark_wormhole, m.bookmark_kspace, m.bookmark_return,\n                  m.ghost_unlinked_wormholes, m.layout, m.allow_layout_override,\n                  m.is_public, m.share_token,\n                  -- The view cannot promise not-null the way the table does.\n                  ma.role as \"role!: Role\"\n           from maps m\n           join map_user_roles ma on ma.map_id = m.id\n           where ma.user_id = $1\n           order by m.created_at",
   "describe": {
     "columns": [
       {
@@ -206,7 +206,7 @@
         },
         "origin": {
           "Table": {
-            "table": "map_access_live",
+            "table": "map_user_roles",
             "name": "role"
           }
         }
@@ -236,5 +236,5 @@
       true
     ]
   },
-  "hash": "50e58fbd31437daf53ac5a1a2af115c913fd43a0e72218eb910257bc8993aba5"
+  "hash": "0b14b82bae7c73730ed373259cc75e095b036fc174458bf34422c428d19973eb"
 }

@@ -419,6 +419,9 @@ pub(super) struct MapTx {
     tx: Tx<'static>,
     map_id: i64,
     actor: EventActor,
+    /// The role [`MapTx::begin`] found, for the writes that also need it as a ceiling.
+    /// `None` for a background task, which is not checked.
+    role: Option<Role>,
     events: Vec<crate::realtime::MapEvent>,
 }
 
@@ -432,10 +435,20 @@ impl MapTx {
         role: Role,
     ) -> Result<Self> {
         let mut tx = pool.begin().await?;
-        if let EventActor::Character(character) = actor {
-            require_role_tx(&mut tx, map_id, character.user_id, role).await?;
-        }
-        Ok(Self::adopt(tx, map_id, actor))
+        let found = match actor {
+            EventActor::Character(character) => {
+                Some(require_role_tx(&mut tx, map_id, character.user_id, role).await?)
+            }
+            EventActor::System => None,
+        };
+        let mut map_tx = Self::adopt(tx, map_id, actor);
+        map_tx.role = found;
+        Ok(map_tx)
+    }
+
+    /// The actor's role on the map, as checked when the transaction opened.
+    pub(super) fn role(&self) -> Option<Role> {
+        self.role
     }
 
     /// Carry on in a transaction that created the map itself. Its creator owns it, so
@@ -445,6 +458,7 @@ impl MapTx {
             tx,
             map_id,
             actor,
+            role: None,
             events: Vec::new(),
         }
     }

@@ -15,10 +15,11 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 
-use super::access::{require_role, require_role_tx};
-use super::command::{EventActor, MapCommand, Tx};
+use super::access::require_role;
+use super::command::{EventActor, MapCommand, MapTx, Tx};
 use super::error::{MapError, Result};
 use super::{Actor, Role};
+use crate::realtime::MapEvent;
 
 /// How long an entry stays in the history (and so how far back undo can reach).
 pub const RETENTION_DAYS: i32 = 7;
@@ -307,17 +308,20 @@ async fn step_through(
     }
 }
 
+/// Moving through the history is a member's write like any other: checked, and announced
+/// once it commits.
+async fn begin(pool: &PgPool, actor: Actor, map_id: i64) -> Result<MapTx> {
+    MapTx::begin(pool, map_id, EventActor::Character(actor), Role::Member).await
+}
+
 /// Move the map onto an arbitrary step, which is how an abandoned branch is re-entered.
 /// Member+.
 pub async fn goto(pool: &PgPool, actor: Actor, cmd: GotoMapEvent) -> Result<()> {
-    let mut tx = pool.begin().await?;
-    require_role_tx(&mut tx, cmd.map_id, actor.user_id, Role::Member).await?;
+    let mut tx = begin(pool, actor, cmd.map_id).await?;
     let head = head_of(&mut tx, cmd.map_id).await?;
     goto_tx(&mut tx, actor, cmd.map_id, cmd.event_id, head).await?;
-    tx.commit().await?;
-    crate::realtime::hub()
-        .publish(crate::realtime::MapEvent::HistoryChanged { map_id: cmd.map_id });
-    Ok(())
+    tx.emit(MapEvent::HistoryChanged { map_id: cmd.map_id });
+    tx.commit().await
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema)]
@@ -328,33 +332,27 @@ pub struct MapIdBody {
 
 /// Step back to the head's parent. Member+.
 pub async fn undo(pool: &PgPool, actor: Actor, cmd: MapIdBody) -> Result<()> {
-    let mut tx = pool.begin().await?;
-    require_role_tx(&mut tx, cmd.map_id, actor.user_id, Role::Member).await?;
+    let mut tx = begin(pool, actor, cmd.map_id).await?;
     let head = head_of(&mut tx, cmd.map_id).await?;
     let Some(head_id) = head else {
         return Err(MapError::Conflict("there is nothing to undo".into()));
     };
     let parent = fetch_step(&mut tx, cmd.map_id, head_id).await?.parent_id;
     goto_tx(&mut tx, actor, cmd.map_id, parent, head).await?;
-    tx.commit().await?;
-    crate::realtime::hub()
-        .publish(crate::realtime::MapEvent::HistoryChanged { map_id: cmd.map_id });
-    Ok(())
+    tx.emit(MapEvent::HistoryChanged { map_id: cmd.map_id });
+    tx.commit().await
 }
 
 /// Step forward onto the head's most recent child. Member+.
 pub async fn redo(pool: &PgPool, actor: Actor, cmd: MapIdBody) -> Result<()> {
-    let mut tx = pool.begin().await?;
-    require_role_tx(&mut tx, cmd.map_id, actor.user_id, Role::Member).await?;
+    let mut tx = begin(pool, actor, cmd.map_id).await?;
     let head = head_of(&mut tx, cmd.map_id).await?;
-    let Some(child) = newest_child(&mut *tx, cmd.map_id, head).await? else {
+    let Some(child) = newest_child(&mut **tx, cmd.map_id, head).await? else {
         return Err(MapError::Conflict("there is nothing to redo".into()));
     };
     goto_tx(&mut tx, actor, cmd.map_id, Some(child), head).await?;
-    tx.commit().await?;
-    crate::realtime::hub()
-        .publish(crate::realtime::MapEvent::HistoryChanged { map_id: cmd.map_id });
-    Ok(())
+    tx.emit(MapEvent::HistoryChanged { map_id: cmd.map_id });
+    tx.commit().await
 }
 
 /// The map's history and where it currently sits, newest first. Viewer+.

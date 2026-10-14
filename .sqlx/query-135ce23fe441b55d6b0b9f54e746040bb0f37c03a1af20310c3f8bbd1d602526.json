@@ -1,11 +1,11 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select a.subject_type, a.subject_id,\n                  coalesce(c.name, corp.name, al.name) as \"name?\",\n                  a.role, a.expires_at\n           from map_access a\n           left join characters c\n             on a.subject_type = 'character' and c.id = a.subject_id\n           left join corporations corp\n             on a.subject_type = 'corporation' and corp.id = a.subject_id\n           left join alliances al\n             on a.subject_type = 'alliance' and al.id = a.subject_id\n           where a.map_id = $1 and a.role <> 'owner'\n             and (a.expires_at is null or a.expires_at > now())\n           order by a.id",
+  "query": "select a.subject_type as \"subject_type!\", a.subject_id as \"subject_id!\",\n                  coalesce(c.name, corp.name, al.name) as \"name?\",\n                  a.role as \"role!\", a.expires_at\n           from map_access_live a\n           left join characters c\n             on a.subject_type = 'character' and c.id = a.subject_id\n           left join corporations corp\n             on a.subject_type = 'corporation' and corp.id = a.subject_id\n           left join alliances al\n             on a.subject_type = 'alliance' and al.id = a.subject_id\n           where a.map_id = $1 and a.role <> 'owner'\n           order by a.id",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
-        "name": "subject_type",
+        "name": "subject_type!",
         "type_info": {
           "Custom": {
             "name": "subject_type",
@@ -20,18 +20,18 @@
         },
         "origin": {
           "Table": {
-            "table": "map_access",
+            "table": "map_access_live",
             "name": "subject_type"
           }
         }
       },
       {
         "ordinal": 1,
-        "name": "subject_id",
+        "name": "subject_id!",
         "type_info": "Int8",
         "origin": {
           "Table": {
-            "table": "map_access",
+            "table": "map_access_live",
             "name": "subject_id"
           }
         }
@@ -44,7 +44,7 @@
       },
       {
         "ordinal": 3,
-        "name": "role",
+        "name": "role!",
         "type_info": {
           "Custom": {
             "name": "map_role",
@@ -60,7 +60,7 @@
         },
         "origin": {
           "Table": {
-            "table": "map_access",
+            "table": "map_access_live",
             "name": "role"
           }
         }
@@ -71,7 +71,7 @@
         "type_info": "Timestamptz",
         "origin": {
           "Table": {
-            "table": "map_access",
+            "table": "map_access_live",
             "name": "expires_at"
           }
         }
@@ -83,12 +83,12 @@
       ]
     },
     "nullable": [
-      false,
-      false,
+      true,
+      true,
       null,
-      false,
+      true,
       true
     ]
   },
-  "hash": "b6bba5f80ddf63e679e59f8c7ce1927e59585dece959ac8e052551c1e390cb7b"
+  "hash": "135ce23fe441b55d6b0b9f54e746040bb0f37c03a1af20310c3f8bbd1d602526"
 }

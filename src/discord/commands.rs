@@ -339,13 +339,7 @@ async fn account(state: &AppState, user_id: i64) -> String {
     .await
     .unwrap_or_default();
     let maps = sqlx::query_scalar!(
-        "select count(distinct m.id) from maps m
-         join map_access_live ma on ma.map_id = m.id
-         where ma.subject_id in (
-             select id from characters where user_id = $1
-             union all select corporation_id from characters where user_id = $1
-             union all select alliance_id from characters where user_id = $1 and alliance_id is not null
-         )",
+        "select count(*) from map_user_roles where user_id = $1",
         user_id,
     )
     .fetch_one(&state.db)
@@ -741,13 +735,9 @@ const CHOICES: i64 = 25;
 async fn maps_for(state: &AppState, user_id: i64, typed: &str) -> Vec<Value> {
     let like = format!("%{typed}%");
     let rows = sqlx::query!(
-        "select distinct m.id, m.name from maps m
-         join map_access_live ma on ma.map_id = m.id
-         where m.name ilike $2 and ma.subject_id in (
-             select id from characters where user_id = $1
-             union all select corporation_id from characters where user_id = $1
-             union all select alliance_id from characters where user_id = $1 and alliance_id is not null
-         )
+        "select m.id, m.name from maps m
+         join map_user_roles r on r.map_id = m.id
+         where r.user_id = $1 and m.name ilike $2
          order by m.name
          limit $3",
         user_id,

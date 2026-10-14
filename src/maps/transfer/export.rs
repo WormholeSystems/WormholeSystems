@@ -103,10 +103,11 @@ async fn export_settings(pool: &PgPool, map_id: i64) -> Result<SettingsSection> 
 
 async fn export_access(pool: &PgPool, map_id: i64) -> Result<Vec<AccessRow>> {
     let rows = sqlx::query!(
-        r#"select a.subject_type, a.subject_id,
+        // The view widens every column to nullable; the table it reads does not.
+        r#"select a.subject_type as "subject_type!", a.subject_id as "subject_id!",
                   coalesce(c.name, corp.name, al.name) as "name?",
-                  a.role, a.expires_at
-           from map_access a
+                  a.role as "role!", a.expires_at
+           from map_access_live a
            left join characters c
              on a.subject_type = 'character' and c.id = a.subject_id
            left join corporations corp
@@ -114,7 +115,6 @@ async fn export_access(pool: &PgPool, map_id: i64) -> Result<Vec<AccessRow>> {
            left join alliances al
              on a.subject_type = 'alliance' and al.id = a.subject_id
            where a.map_id = $1 and a.role <> 'owner'
-             and (a.expires_at is null or a.expires_at > now())
            order by a.id"#,
         map_id,
     )
@@ -342,9 +342,8 @@ pub async fn transfer_counts(pool: &PgPool, actor: Actor, map_id: i64) -> Result
     require_role(pool, map_id, actor.user_id, Role::Manager).await?;
     let row = sqlx::query!(
         r#"select
-               (select count(*) from map_access a
-                where a.map_id = $1 and a.role <> 'owner'
-                  and (a.expires_at is null or a.expires_at > now())) as "access!",
+               (select count(*) from map_access_live a
+                where a.map_id = $1 and a.role <> 'owner') as "access!",
                (select count(*) from (
                     select solar_system_id from map_solar_system_details where map_id = $1
                     union

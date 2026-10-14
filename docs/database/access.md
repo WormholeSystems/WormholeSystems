@@ -53,6 +53,10 @@ a role. The **owner** is just a `role = owner` row here; there is no `owner_id`.
   `subject_id`. The match is uniform — owner is no longer a special case.
 - The user's **effective role** is the highest they match across all their characters
   (owner > manager > member > viewer).
+- Both are views, so no query spells them out again: `user_subjects (user_id,
+  subject_id)` is every id a user's grants can name, and `map_user_roles (map_id,
+  user_id, role)` is their effective role on each map, over live grants only
+  (`map_access_live`). Migration 0037.
 - Because a grant can target a corporation or alliance, the check is only as correct as
   each character's stored affiliation. That freshness is maintained by
   [affiliation refresh](../processes.md#affiliation-refresh) (on login + periodic), so
