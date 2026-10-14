@@ -143,7 +143,7 @@ async fn sweep(
     };
     for edge in &edges {
         if let Some(one) = crate::maps::restore::capture_connection(tx, map_id, edge.id).await? {
-            snapshot.connections.extend(one.connections);
+            snapshot.absorb(one);
         }
     }
     let ids: Vec<i64> = edges.iter().map(|e| e.id).collect();
@@ -161,8 +161,7 @@ async fn sweep(
 
     if !orphans.is_empty() {
         let captured = crate::maps::restore::capture_systems(tx, map_id, &orphans).await?;
-        snapshot.systems = captured.systems;
-        snapshot.signatures = captured.signatures;
+        snapshot.absorb(captured);
         placements::delete(tx, map_id, &orphans).await?;
     }
 

@@ -391,8 +391,7 @@ async fn round_trip(pool: &PgPool, ghosting: bool, cases: &[Case]) {
 const KNOWN_GAPS: &[(&str, &str)] = &[
     (
         "remove_system",
-        "the jump log of a dying connection is not snapshotted; redo leaves the scan on \
-         the staying side that the removal took, and undo then cannot relink it",
+        "the jump log of a dying connection is not snapshotted",
     ),
     (
         "remove_systems",
@@ -402,10 +401,7 @@ const KNOWN_GAPS: &[(&str, &str)] = &[
         "clear_map",
         "the jump log of a dying connection is not snapshotted",
     ),
-    (
-        "remove_connection",
-        "neither the jump log nor the links of its signatures come back",
-    ),
+    ("remove_connection", "its jump log is not snapshotted"),
     (
         "remove_signature",
         "the jump log of the connection it takes is not snapshotted",

@@ -161,18 +161,17 @@ pub struct RemoveRestored {
 pub(super) async fn apply_remove_restored(tx: &mut Tx<'_>, cmd: RemoveRestored) -> Result<Effect> {
     let mut snapshot = capture_systems(tx, cmd.map_id, &cmd.system_ids).await?;
     for id in &cmd.connection_ids {
-        if let Some(extra) = capture_connection(tx, cmd.map_id, *id).await?
-            && !snapshot.connections.iter().any(|c| c.id == *id)
-        {
-            snapshot.connections.extend(extra.connections);
+        if let Some(extra) = capture_connection(tx, cmd.map_id, *id).await? {
+            snapshot.absorb(extra);
         }
     }
     let extra = super::signatures::capture_signatures(tx, cmd.map_id, &cmd.signature_ids).await?;
-    for s in extra.signatures {
-        if !snapshot.signatures.iter().any(|known| known.id == s.id) {
-            snapshot.signatures.push(s);
-        }
-    }
+    snapshot.absorb(RestoreSystems {
+        map_id: cmd.map_id,
+        systems: Vec::new(),
+        connections: Vec::new(),
+        signatures: extra.signatures,
+    });
     signatures::delete(tx, cmd.map_id, &cmd.signature_ids).await?;
     connections::delete(tx, cmd.map_id, &cmd.connection_ids).await?;
     placements::delete(tx, cmd.map_id, &cmd.system_ids).await?;
@@ -186,17 +185,21 @@ pub(super) async fn apply_remove_restored(tx: &mut Tx<'_>, cmd: RemoveRestored) 
     )
 }
 
-/// Snapshot one connection so removing it can be undone.
+/// Snapshot one connection so removing it can be undone, with the signatures linked to it:
+/// they outlive it unlinked, and restoring it links them again.
 pub(super) async fn capture_connection(
     tx: &mut Tx<'_>,
     map_id: i64,
     connection_id: i64,
 ) -> Result<Option<RestoreSystems>> {
-    let connection = connections::snapshot(tx, map_id, connection_id).await?;
-    Ok(connection.map(|c| RestoreSystems {
+    let Some(connection) = connections::snapshot(tx, map_id, connection_id).await? else {
+        return Ok(None);
+    };
+    let signatures = signatures::snapshot_around(tx, map_id, &[], &[connection_id]).await?;
+    Ok(Some(RestoreSystems {
         map_id,
         systems: Vec::new(),
-        connections: vec![c],
-        signatures: Vec::new(),
+        connections: vec![connection],
+        signatures,
     }))
 }
