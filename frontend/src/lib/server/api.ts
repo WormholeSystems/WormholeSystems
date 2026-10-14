@@ -16,12 +16,14 @@ import { env } from '$env/dynamic/private';
 import type { RequestEvent } from '@sveltejs/kit';
 
 import type { CharacterSummary } from '$lib/api/types/CharacterSummary';
+import type { GridConfig } from '$lib/api/types/GridConfig';
 import type { Instance } from '$lib/api/types/Instance';
 import type { ReferenceCounts } from '$lib/api/types/ReferenceCounts';
 import type { ServerStatus } from '$lib/api/types/ServerStatus';
 import type { MapEntry } from '$lib/api/types/MapEntry';
 import type { MapUserSettings } from '$lib/api/types/MapUserSettings';
 import type { MapView } from '$lib/api/types/MapView';
+import type { Signature } from '$lib/api/types/Signature';
 
 const base = () => env.API_BASE ?? 'http://127.0.0.1:3000';
 
@@ -64,6 +66,16 @@ export function myMaps(event: RequestEvent): Promise<MapEntry[]> {
 /** The caller's own settings for one map. */
 export function mapUserSettings(event: RequestEvent, mapId: number): Promise<MapUserSettings> {
 	return get<MapUserSettings>(event, `/api/maps/${mapId}/settings/user`);
+}
+
+/** Every signature on one map, which the signature panel filters per system. */
+export function mapSignatures(event: RequestEvent, mapId: number): Promise<Signature[]> {
+	return get<Signature[]>(event, `/api/maps/${mapId}/signatures`);
+}
+
+/** The canvas's grid and world size, which the map page draws with. */
+export function gridConfig(event: RequestEvent): Promise<GridConfig> {
+	return get<GridConfig>(event, '/api/grid-config');
 }
 
 /**

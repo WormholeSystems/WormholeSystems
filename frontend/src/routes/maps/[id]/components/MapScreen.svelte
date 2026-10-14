@@ -13,8 +13,6 @@
 
 	import { Button } from '$lib/components/ui/button';
 	import type { MapSystemView } from '$lib/api/types/MapSystemView';
-	import type { MapUserSettings } from '$lib/api/types/MapUserSettings';
-	import type { MapView } from '$lib/api/types/MapView';
 	import { NODE_W, railEndpoint, canvasBackground } from '$lib/map/helpers';
 	import { connectionCountByPlacement, pilotsBySystem, sigCountsBySystem } from '$lib/map/grouping';
 	import { curveBetween } from '$lib/map/edges';
@@ -27,6 +25,7 @@
 	import { setMapContext } from '$lib/components/system-menu/context';
 	import { connectMapSession } from '../state/map-session.svelte';
 	import { MapState } from '../state/map-state.svelte';
+	import type { MapSeed } from '../state/map-queries.svelte';
 	import Scrollbars from './canvas/Scrollbars.svelte';
 	import RallyBadge from './canvas/RallyBadge.svelte';
 	import SystemNode from './canvas/SystemNode.svelte';
@@ -49,7 +48,7 @@
 	}: {
 		mapId: number;
 		signedIn: boolean;
-		seed: { view: MapView | null; settings: MapUserSettings | null };
+		seed: MapSeed;
 	} = $props();
 
 	// svelte-ignore state_referenced_locally -- initial values are the point: the `{#key}`

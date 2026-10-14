@@ -12,7 +12,6 @@ import type { GridConfig } from '$lib/api/types/GridConfig';
 import type { MapSystemView } from '$lib/api/types/MapSystemView';
 import type { MapUserSettings } from '$lib/api/types/MapUserSettings';
 import type { UpdateMapUserSettings } from '$lib/api/types/UpdateMapUserSettings';
-import type { MapView } from '$lib/api/types/MapView';
 import type { SystemDetails } from '$lib/api/types/SystemDetails';
 import type { SystemSearchResult } from '$lib/api/types/SystemSearchResult';
 import type { SocketState } from '$lib/ws';
@@ -32,7 +31,7 @@ import { toast } from 'svelte-sonner';
 import { type MapAction } from '$lib/map/actions';
 import { MapCamera } from './map-camera.svelte';
 import { HistoryStore } from './history.svelte';
-import { createMapQueries, type MapQueries } from './map-queries.svelte';
+import { createMapQueries, type MapQueries, type MapSeed } from './map-queries.svelte';
 import { PanelLayoutStore } from './panel-layout.svelte';
 import { RoutePlanner, type RouteHost } from './route-planner.svelte';
 import type { TrackerHost } from './tracking.svelte';
@@ -307,14 +306,7 @@ export class MapState {
 	/** What the whole map keeps off its routes, as the router and the tracker read it. */
 	ignoredIds = $derived(new Set(this.ignoredRows.map((row) => row.solar_system_id)));
 
-	constructor(
-		mapId: number,
-		signedIn = true,
-		seed: { view: MapView | null; settings: MapUserSettings | null } = {
-			view: null,
-			settings: null,
-		},
-	) {
+	constructor(mapId: number, signedIn = true, seed: MapSeed = { view: null, settings: null }) {
 		this.mapId = mapId;
 		this.camera = new MapCamera(mapId);
 		this.signedIn = signedIn;

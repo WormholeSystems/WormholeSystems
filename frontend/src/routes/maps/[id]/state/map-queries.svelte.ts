@@ -10,6 +10,8 @@ import { key, q } from '$lib/api/queries';
 import type { MapEvent } from '$lib/api/types/MapEvent';
 import type { MapUserSettings } from '$lib/api/types/MapUserSettings';
 import type { MapView } from '$lib/api/types/MapView';
+import type { GridConfig } from '$lib/api/types/GridConfig';
+import type { Signature } from '$lib/api/types/Signature';
 import type { UpdateMapUserSettings } from '$lib/api/types/UpdateMapUserSettings';
 import { MAP_ACTIONS, type MapAction } from '$lib/map/actions';
 import { createCoalescer } from './coalesce';
@@ -22,13 +24,21 @@ interface MapWrite {
 	detail?: string;
 }
 
+/** What the page's load already fetched, handed over so the first frame has it. */
+export interface MapSeed {
+	view: MapView | null;
+	settings: MapUserSettings | null;
+	signatures?: Signature[] | null;
+	grid?: GridConfig | null;
+}
+
 /** Long enough to swallow a paste-scan burst, short enough that nobody notices. */
 const BURST_MS = 60;
 
 export function createMapQueries(
 	mapId: number,
 	signedIn: boolean,
-	seed: { view: MapView | null; settings: MapUserSettings | null },
+	seed: MapSeed,
 	/** Whether the map socket is open, and the server echo will drive the refetch. */
 	isLive: () => boolean,
 ) {
@@ -40,6 +50,12 @@ export function createMapQueries(
 	// suppresses the mount refetch, while a socket-driven invalidation always refetches.
 	if (seed.view) client.setQueryData(key.mapView(mapId), seed.view);
 	if (seed.settings) client.setQueryData(key.userSettings(mapId), seed.settings);
+	if (seed.signatures) client.setQueryData(key.signatures(mapId), seed.signatures);
+	// The grid is the same for every map and never goes stale, so a copy already in the
+	// cache stays; the seed only fills it on the first map of the session.
+	if (seed.grid && client.getQueryData(q.gridConfig().queryKey) === undefined) {
+		client.setQueryData(q.gridConfig().queryKey, seed.grid);
+	}
 
 	const graph = createQuery(() => ({ ...q.mapView(mapId), meta: { toastOnError: true } }));
 	const signatures = createQuery(() => ({
