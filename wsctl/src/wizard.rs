@@ -136,7 +136,10 @@ pub fn setup(
     {
         ui::done(&format!("created the Docker network {network}"));
     }
-    let results = checks::deployment(runner, dir, deployment);
+    let mut results = checks::deployment(runner, dir, deployment);
+    if answers.images == Images::Build {
+        results.extend(checks::memory_for_building());
+    }
     for check in &results {
         ui::report(check);
     }
@@ -622,6 +625,9 @@ pub fn doctor(runner: &mut dyn Runner, dir: &Path) -> Result<()> {
     ui::heading("This machine");
     let mut checks = checks::machine(runner, dir);
     checks.extend(checks::deployment(runner, dir, &deployment));
+    if Images::from_env(&env) == Images::Build {
+        checks.extend(checks::memory_for_building());
+    }
     for check in &checks {
         ui::report(check);
     }
