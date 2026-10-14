@@ -8,6 +8,7 @@ use super::MapEvent;
 use super::command::{CommandOutput, Effect, MapCommand, Tx};
 use super::error::Result;
 use super::store::connections::{self, ConnectionRow};
+use super::store::jumps::{self, JumpRow};
 use super::store::placements::{self, PlacementRow};
 use super::store::signatures::{self, SignatureRow};
 
@@ -19,6 +20,10 @@ pub struct RestoreSystems {
     pub systems: Vec<PlacementRow>,
     pub connections: Vec<ConnectionRow>,
     pub signatures: Vec<SignatureRow>,
+    /// The jump log of those connections, which goes with them by the foreign key. Absent
+    /// from snapshots taken before it was kept, which bring the connection back without it.
+    #[serde(default)]
+    pub jumps: Vec<JumpRow>,
 }
 
 impl RestoreSystems {
@@ -49,6 +54,11 @@ impl RestoreSystems {
         for s in other.signatures {
             if !self.signatures.iter().any(|known| known.id == s.id) {
                 self.signatures.push(s);
+            }
+        }
+        for j in other.jumps {
+            if !self.jumps.iter().any(|known| known.id == j.id) {
+                self.jumps.push(j);
             }
         }
     }
@@ -85,12 +95,14 @@ pub(super) async fn capture_systems(
     // across each dying connection.
     let connection_ids: Vec<i64> = connections.iter().map(|c| c.id).collect();
     let signatures = signatures::snapshot_around(tx, map_id, &system_ids, &connection_ids).await?;
+    let jumps = jumps::snapshot_through(tx, map_id, &connection_ids).await?;
 
     Ok(RestoreSystems {
         map_id,
         systems,
         connections,
         signatures,
+        jumps,
     })
 }
 
@@ -107,6 +119,9 @@ pub(super) async fn apply_restore_systems(tx: &mut Tx<'_>, cmd: RestoreSystems) 
         if signatures::reinsert(tx, cmd.map_id, s).await? {
             inserted.push(s.id);
         }
+    }
+    for j in &cmd.jumps {
+        jumps::reinsert(tx, cmd.map_id, j).await?;
     }
 
     // Undoing a restore drops exactly what was put back, connections and signatures
@@ -171,6 +186,7 @@ pub(super) async fn apply_remove_restored(tx: &mut Tx<'_>, cmd: RemoveRestored) 
         systems: Vec::new(),
         connections: Vec::new(),
         signatures: extra.signatures,
+        jumps: Vec::new(),
     });
     signatures::delete(tx, cmd.map_id, &cmd.signature_ids).await?;
     connections::delete(tx, cmd.map_id, &cmd.connection_ids).await?;
@@ -185,8 +201,8 @@ pub(super) async fn apply_remove_restored(tx: &mut Tx<'_>, cmd: RemoveRestored) 
     )
 }
 
-/// Snapshot one connection so removing it can be undone, with the signatures linked to it:
-/// they outlive it unlinked, and restoring it links them again.
+/// Snapshot one connection so removing it can be undone, with the signatures linked to it
+/// (they outlive it unlinked, and restoring it links them again) and its jump log.
 pub(super) async fn capture_connection(
     tx: &mut Tx<'_>,
     map_id: i64,
@@ -196,10 +212,12 @@ pub(super) async fn capture_connection(
         return Ok(None);
     };
     let signatures = signatures::snapshot_around(tx, map_id, &[], &[connection_id]).await?;
+    let jumps = jumps::snapshot_through(tx, map_id, &[connection_id]).await?;
     Ok(Some(RestoreSystems {
         map_id,
         systems: Vec::new(),
         connections: vec![connection],
         signatures,
+        jumps,
     }))
 }

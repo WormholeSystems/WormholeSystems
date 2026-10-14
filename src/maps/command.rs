@@ -20,7 +20,9 @@ use super::eve_scout::AddEveScoutConnections;
 use super::events_log;
 use super::ghost::{AddGhostSystem, ResolveGhostSystem, RestoreGhostSystem};
 use super::ignored::{AddIgnoredSystem, ClearIgnoredSystems, RemoveIgnoredSystem};
-use super::jumps::{AddConnectionJump, RemoveConnectionJump, UpdateConnectionJump};
+use super::jumps::{
+    AddConnectionJump, RemoveConnectionJump, RestoreConnectionJump, UpdateConnectionJump,
+};
 use super::restore::{RemoveRestored, RestoreSystems};
 use super::signatures::{
     AddSignature, LinkSignature, PasteSignatures, RemoveSignature, RemoveSignatures,
@@ -168,6 +170,7 @@ map_commands! {
     AddConnectionJump(jumps::ConnectionJump) => jumps::apply_add_jump,
     UpdateConnectionJump(jumps::ConnectionJump) => jumps::apply_update_jump,
     RemoveConnectionJump(u64) => jumps::apply_remove_jump,
+    RestoreConnectionJump => jumps::apply_restore_jump,
     AddWatchlistEntry(watchlist::WatchlistEntry) => watchlist::apply_add_entry,
     SetWatchlistPinned(watchlist::WatchlistEntry) => watchlist::apply_set_pinned,
     RemoveWatchlistEntry => watchlist::apply_remove_entry,

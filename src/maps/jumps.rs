@@ -17,6 +17,8 @@ use sqlx::PgPool;
 use super::access::require_role;
 use super::command::{CommandOutput, Effect, MapCommand, Tx, run};
 use super::error::{MapError, Result};
+use super::store;
+use super::store::jumps::JumpRow;
 use super::{Actor, MapEvent, Role};
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema)]
@@ -291,21 +293,56 @@ pub(super) async fn apply_remove_jump(
     tx: &mut Tx<'_>,
     cmd: RemoveConnectionJump,
 ) -> Result<Effect> {
-    let row = sqlx::query!(
-        "delete from map_connection_jumps where id = $1 and map_id = $2
-         returning connection_id",
+    let jump = store::jumps::snapshot(tx, cmd.map_id, &[cmd.jump_pk])
+        .await?
+        .pop()
+        .ok_or(MapError::NotFound)?;
+    sqlx::query!(
+        "delete from map_connection_jumps where id = $1 and map_id = $2",
         cmd.jump_pk,
         cmd.map_id,
     )
-    .fetch_optional(&mut **tx)
-    .await?
-    .ok_or(MapError::NotFound)?;
+    .execute(&mut **tx)
+    .await?;
+    let connection_id = jump.connection_id;
     let mut effect = Effect::new(
         "jumps.removed",
         "removed a jump",
-        CommandOutput::Count(row.connection_id.unwrap_or(0) as u64),
+        CommandOutput::Count(connection_id.unwrap_or(0) as u64),
+    )
+    .undo_with(MapCommand::RestoreConnectionJump(RestoreConnectionJump {
+        map_id: cmd.map_id,
+        jump,
+    }));
+    if let Some(connection_id) = connection_id {
+        effect = effect.emit(MapEvent::ConnectionChanged {
+            map_id: cmd.map_id,
+            connection_id,
+        });
+    }
+    Ok(effect)
+}
+
+/// Put a removed jump back under its own id. Internal, the inverse of
+/// [`RemoveConnectionJump`].
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RestoreConnectionJump {
+    pub map_id: i64,
+    pub jump: JumpRow,
+}
+
+pub(super) async fn apply_restore_jump(
+    tx: &mut Tx<'_>,
+    cmd: RestoreConnectionJump,
+) -> Result<Effect> {
+    store::jumps::reinsert(tx, cmd.map_id, &cmd.jump).await?;
+    let mut effect = Effect::new("jumps.logged", "put a jump back", CommandOutput::None).undo_with(
+        MapCommand::RemoveConnectionJump(RemoveConnectionJump {
+            map_id: cmd.map_id,
+            jump_pk: cmd.jump.id,
+        }),
     );
-    if let Some(connection_id) = row.connection_id {
+    if let Some(connection_id) = cmd.jump.connection_id {
         effect = effect.emit(MapEvent::ConnectionChanged {
             map_id: cmd.map_id,
             connection_id,

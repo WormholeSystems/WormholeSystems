@@ -140,6 +140,7 @@ async fn sweep(
         systems: Vec::new(),
         connections: Vec::new(),
         signatures: Vec::new(),
+        jumps: Vec::new(),
     };
     for edge in &edges {
         if let Some(one) = crate::maps::restore::capture_connection(tx, map_id, edge.id).await? {
