@@ -41,10 +41,10 @@ async fn show(
     Path(map_id): Path<i64>,
 ) -> Result<Response, ApiError> {
     let actor = super::extract::require_role_on_map(&state, &creds, map_id, Role::Viewer).await?;
-    let stored = match current_path(&state, map_id, actor.user_id).await? {
-        Some(path) => state.backgrounds.read(&path).await?,
-        None => None,
-    };
+    let stored = state
+        .backgrounds
+        .image_for(&state.db, map_id, actor.user_id)
+        .await?;
     let Some((format, bytes)) = stored else {
         return Err(ApiError {
             status: StatusCode::NOT_FOUND,
@@ -107,14 +107,10 @@ async fn upload(
         ));
     };
 
-    let stored = state
+    state
         .backgrounds
-        .save(map_id, actor.user_id, &bytes)
+        .replace(&state.db, map_id, actor.user_id, &bytes)
         .await?;
-    let previous = replace_path(&state, map_id, actor.user_id, Some(&stored)).await?;
-    if let Some(old) = previous.filter(|old| old != &stored) {
-        state.backgrounds.remove(&old).await?;
-    }
     Ok(Json(
         user_settings::load(&state.db, map_id, actor.user_id).await?,
     ))
@@ -135,61 +131,13 @@ async fn remove(
     Path(map_id): Path<i64>,
 ) -> ApiResult<user_settings::MapUserSettings> {
     let actor = super::extract::require_role_on_map(&state, &creds, map_id, Role::Viewer).await?;
-    if let Some(old) = replace_path(&state, map_id, actor.user_id, None).await? {
-        state.backgrounds.remove(&old).await?;
-    }
+    state
+        .backgrounds
+        .clear(&state.db, map_id, actor.user_id)
+        .await?;
     Ok(Json(
         user_settings::load(&state.db, map_id, actor.user_id).await?,
     ))
-}
-
-async fn current_path(
-    state: &AppState,
-    map_id: i64,
-    user_id: i64,
-) -> Result<Option<String>, sqlx::Error> {
-    sqlx::query_scalar!(
-        "select background_image_path from map_user_settings where map_id = $1 and user_id = $2",
-        map_id,
-        user_id,
-    )
-    .fetch_optional(&state.db)
-    .await
-    .map(Option::flatten)
-}
-
-/// Point the row at `path` (or at nothing) and hand back what it pointed at before, so the
-/// caller can clear the old file once the row no longer refers to it.
-async fn replace_path(
-    state: &AppState,
-    map_id: i64,
-    user_id: i64,
-    path: Option<&str>,
-) -> Result<Option<String>, sqlx::Error> {
-    let mut tx = state.db.begin().await?;
-    let previous = sqlx::query_scalar!(
-        "select background_image_path from map_user_settings
-         where map_id = $1 and user_id = $2 for update",
-        map_id,
-        user_id,
-    )
-    .fetch_optional(&mut *tx)
-    .await?
-    .flatten();
-    sqlx::query!(
-        "insert into map_user_settings (map_id, user_id, background_image_path)
-         values ($1, $2, $3)
-         on conflict (map_id, user_id) do update set
-             background_image_path = $3,
-             updated_at = now()",
-        map_id,
-        user_id,
-        path,
-    )
-    .execute(&mut *tx)
-    .await?;
-    tx.commit().await?;
-    Ok(previous)
 }
 
 fn multipart_error(err: axum::extract::multipart::MultipartError) -> ApiError {
