@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseScan as parseWith } from './signatures';
+import { parseScan as parseWith, typeById } from './signatures';
 import type { SignatureCatalog } from '$lib/api/types/SignatureCatalog';
 import type { SignatureTypeInfo } from '$lib/api/types/SignatureTypeInfo';
 import translations from '$lib/signatures/translations.json';
@@ -264,5 +264,22 @@ describe('parseScan', () => {
 				},
 			]);
 		});
+	});
+});
+
+describe('typeById', () => {
+	it('finds a type by id, and nothing for an unknown or missing one', () => {
+		expect(typeById(catalog, 20)?.name).toBe('Unsecured Frontier Receiver');
+		expect(typeById(catalog, 99)).toBeNull();
+		expect(typeById(catalog, null)).toBeNull();
+	});
+
+	it('answers from each catalog it is handed', () => {
+		const other: SignatureCatalog = {
+			...catalog,
+			types: [type({ id: 20, name: 'Renamed', signature_category_id: 2 })],
+		};
+		typeById(catalog, 20);
+		expect(typeById(other, 20)?.name).toBe('Renamed');
 	});
 });

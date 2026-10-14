@@ -163,8 +163,18 @@ export function typesForCategory(
 		);
 }
 
+// One index per catalog object, built on first lookup. The catalog is cached for the whole
+// session, and lookups run inside sort comparators and per row, so a scan each time adds up.
+const typeIndex = new WeakMap<SignatureCatalog, Map<number, SignatureTypeInfo>>();
+
 export function typeById(catalog: SignatureCatalog, id: number | null): SignatureTypeInfo | null {
-	return id === null ? null : (catalog.types.find((t) => t.id === id) ?? null);
+	if (id === null) return null;
+	let index = typeIndex.get(catalog);
+	if (!index) {
+		index = new Map(catalog.types.map((t) => [t.id, t]));
+		typeIndex.set(catalog, index);
+	}
+	return index.get(id) ?? null;
 }
 
 /**
