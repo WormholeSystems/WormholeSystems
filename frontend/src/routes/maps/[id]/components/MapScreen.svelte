@@ -12,6 +12,7 @@
 	import { page } from '$app/state';
 
 	import { Button } from '$lib/components/ui/button';
+	import * as Tooltip from '$lib/components/ui/tooltip';
 	import type { MapSystemView } from '$lib/api/types/MapSystemView';
 	import { NODE_W, railEndpoint, canvasBackground } from '$lib/map/helpers';
 	import { connectionCountByPlacement, pilotsBySystem, sigCountsBySystem } from '$lib/map/grouping';
@@ -342,38 +343,41 @@
 				{/if}
 			</svg>
 
-			<!-- Keyed by id so a refetch diffs in place. -->
-			{#each map.systems.all as s (s.id)}
-				<SystemNode
-					node={s}
-					nodeH={map.nodeH}
-					selected={map.selected.has(s.id)}
-					highlighted={map.hoveredSystemId === s.id}
-					pos={map.positions.get(s.id) ?? { x: 0, y: 0 }}
-					sigCounts={sigCounts.get(solarSystemId(s) ?? -1) ?? {
-						total: 0,
-						uncategorized: 0,
-						wormholes: 0,
-					}}
-					connectionCount={connCounts.get(s.id) ?? 0}
-					pilots={pilots.get(solarSystemId(s) ?? -1) ?? []}
-					showThreat={map.userSettings?.show_threat_level ?? true}
-					draggable={!map.layoutLocked && canWrite}
-					linkable={canWrite}
-					editable={canWrite}
-					signatureId={map.ghostSignatures.get(s.id) ?? null}
-					onsavealias={(alias, occupier) => saveAlias(s, alias, occupier)}
-					active={map.activeId === s.id}
-					onselect={(ev) => handleNodeSelect(ev, s)}
-					ondown={(ev) => gestures.onNodeDown(ev, s)}
-					onlink={(ev) => gestures.onLinkDown(ev, s.id)}
-					onmenu={(ev) => {
-						ev.preventDefault();
-						ev.stopPropagation();
-						map.openMenu(ev.clientX, ev.clientY, { kind: 'node', system: s });
-					}}
-				/>
-			{/each}
+			<!-- One tooltip provider for every node's icons rather than one per node. -->
+			<Tooltip.Provider delayDuration={500}>
+				<!-- Keyed by id so a refetch diffs in place. -->
+				{#each map.systems.all as s (s.id)}
+					<SystemNode
+						node={s}
+						nodeH={map.nodeH}
+						selected={map.selected.has(s.id)}
+						highlighted={map.hoveredSystemId === s.id}
+						pos={map.positions.get(s.id) ?? { x: 0, y: 0 }}
+						sigCounts={sigCounts.get(solarSystemId(s) ?? -1) ?? {
+							total: 0,
+							uncategorized: 0,
+							wormholes: 0,
+						}}
+						connectionCount={connCounts.get(s.id) ?? 0}
+						pilots={pilots.get(solarSystemId(s) ?? -1) ?? []}
+						showThreat={map.userSettings?.show_threat_level ?? true}
+						draggable={!map.layoutLocked && canWrite}
+						linkable={canWrite}
+						editable={canWrite}
+						signatureId={map.ghostSignatures.get(s.id) ?? null}
+						onsavealias={(alias, occupier) => saveAlias(s, alias, occupier)}
+						active={map.activeId === s.id}
+						onselect={(ev) => handleNodeSelect(ev, s)}
+						ondown={(ev) => gestures.onNodeDown(ev, s)}
+						onlink={(ev) => gestures.onLinkDown(ev, s.id)}
+						onmenu={(ev) => {
+							ev.preventDefault();
+							ev.stopPropagation();
+							map.openMenu(ev.clientX, ev.clientY, { kind: 'node', system: s });
+						}}
+					/>
+				{/each}
+			</Tooltip.Provider>
 		</div>
 
 		<Scrollbars {map} />

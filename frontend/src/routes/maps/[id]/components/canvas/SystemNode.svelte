@@ -7,7 +7,6 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import * as Popover from '$lib/components/ui/popover';
-	import * as Tooltip from '$lib/components/ui/tooltip';
 	import ClassBadge from '$lib/components/ClassBadge.svelte';
 	import { isWormholeClass } from '$lib/map/classes';
 	import { NODE_W, statusColor } from '$lib/map/helpers';
@@ -82,12 +81,16 @@
 	const unmapped = $derived(Math.max(0, sigCounts.wormholes - connectionCount));
 
 	let editorOpen = $state(false);
+	// The editor is mounted the first time it is asked for and kept after, so most nodes
+	// never build one at all while an opened one still animates closed.
+	let editorMounted = $state(false);
 	let editAlias = $state('');
 	let editOccupier = $state('');
 
 	function openEditor() {
 		editAlias = node.alias ?? '';
 		editOccupier = mapped?.occupying_group ?? '';
+		editorMounted = true;
 		editorOpen = true;
 	}
 
@@ -97,95 +100,95 @@
 	}
 </script>
 
-<Tooltip.Provider delayDuration={500}>
-	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div
-		data-testid="system-node"
-		data-status={node.status}
-		data-threat={threatRing}
-		data-ghost={ghost ? 'true' : undefined}
-		data-rally={node.is_rally ? 'true' : undefined}
-		class="group/node absolute flex flex-col justify-center rounded border px-2 py-0.5 text-[11px] leading-tight transition-colors duration-200
-			{ghost ? 'border-dashed' : ''}
-			{selected
-			? 'bg-amber-100 dark:bg-amber-900'
-			: node.is_rally
-				? 'bg-pink-50 dark:bg-pink-950'
-				: 'bg-card'}
-			{node.is_rally ? 'shadow-[0_0_10px_2px] shadow-pink-500/60' : 'shadow-sm'}
-			{active ? 'z-10 ring-2 ring-amber-500 ring-offset-2 ring-offset-background' : ''}
-			{highlighted ? 'z-20 outline-2 outline-yellow-500' : ''}
-			{threatRing ? 'ring-2' : ''}
-			hover:z-20 hover:outline-2 hover:outline-yellow-500"
-		style:--tw-ring-color={threatRing ? `var(--color-threat-${threatRing})` : null}
-		style:border-color={statusColor(node.status)}
-		style:width="{NODE_W}px"
-		style:height="{pilots.length > 0 ? nodeH + 20 : nodeH}px"
-		style:left="{pos.x}px"
-		style:top="{pos.y}px"
-		onpointerdown={onselect}
-		oncontextmenu={onmenu}
-		ondblclick={() => editable && openEditor()}
-	>
-		{#if !node.is_pinned && draggable}
-			<!-- svelte-ignore a11y_no_static_element_interactions -->
-			<div
-				class="absolute top-[1px] left-1/2 hidden h-2 w-12 -translate-x-1/2 -translate-y-1/2 cursor-move rounded border border-neutral-300 bg-white group-hover/node:z-50 group-hover/node:block dark:border-neutral-600 dark:bg-neutral-700"
-				data-testid="drag-handle"
-				onpointerdown={(ev) => {
-					ev.stopPropagation();
-					ondown(ev);
-				}}
-			></div>
-		{/if}
-		<!-- No connection handle on a ghost: a connection out of it would claim the unknown
-		     system on its far side leads somewhere, which nobody knows yet. -->
-		{#if !ghost && linkable}
-			<!-- svelte-ignore a11y_no_static_element_interactions -->
-			<div
-				class="absolute top-1/2 left-full hidden h-4 w-4 -translate-x-1/2 -translate-y-1/2 cursor-pointer rounded-full border border-neutral-300 bg-white group-hover/node:block hover:block dark:border-neutral-600 dark:bg-neutral-700"
-				data-testid="connection-handle"
-				onpointerdown={onlink}
-			></div>
-		{/if}
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div
+	data-testid="system-node"
+	data-status={node.status}
+	data-threat={threatRing}
+	data-ghost={ghost ? 'true' : undefined}
+	data-rally={node.is_rally ? 'true' : undefined}
+	class="group/node absolute flex flex-col justify-center rounded border px-2 py-0.5 text-[11px] leading-tight transition-colors duration-200
+		{ghost ? 'border-dashed' : ''}
+		{selected
+		? 'bg-amber-100 dark:bg-amber-900'
+		: node.is_rally
+			? 'bg-pink-50 dark:bg-pink-950'
+			: 'bg-card'}
+		{node.is_rally ? 'shadow-[0_0_10px_2px] shadow-pink-500/60' : 'shadow-sm'}
+		{active ? 'z-10 ring-2 ring-amber-500 ring-offset-2 ring-offset-background' : ''}
+		{highlighted ? 'z-20 outline-2 outline-yellow-500' : ''}
+		{threatRing ? 'ring-2' : ''}
+		hover:z-20 hover:outline-2 hover:outline-yellow-500"
+	style:--tw-ring-color={threatRing ? `var(--color-threat-${threatRing})` : null}
+	style:border-color={statusColor(node.status)}
+	style:width="{NODE_W}px"
+	style:height="{pilots.length > 0 ? nodeH + 20 : nodeH}px"
+	style:left="{pos.x}px"
+	style:top="{pos.y}px"
+	onpointerdown={onselect}
+	oncontextmenu={onmenu}
+	ondblclick={() => editable && openEditor()}
+>
+	{#if !node.is_pinned && draggable}
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<div
+			class="absolute top-[1px] left-1/2 hidden h-2 w-12 -translate-x-1/2 -translate-y-1/2 cursor-move rounded border border-neutral-300 bg-white group-hover/node:z-50 group-hover/node:block dark:border-neutral-600 dark:bg-neutral-700"
+			data-testid="drag-handle"
+			onpointerdown={(ev) => {
+				ev.stopPropagation();
+				ondown(ev);
+			}}
+		></div>
+	{/if}
+	<!-- No connection handle on a ghost: a connection out of it would claim the unknown
+	     system on its far side leads somewhere, which nobody knows yet. -->
+	{#if !ghost && linkable}
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<div
+			class="absolute top-1/2 left-full hidden h-4 w-4 -translate-x-1/2 -translate-y-1/2 cursor-pointer rounded-full border border-neutral-300 bg-white group-hover/node:block hover:block dark:border-neutral-600 dark:bg-neutral-700"
+			data-testid="connection-handle"
+			onpointerdown={onlink}
+		></div>
+	{/if}
 
-		<div class="flex min-w-0 items-center gap-1">
-			<ClassBadge
-				classId={mapped?.wormhole_class_id ?? null}
-				security={mapped?.security_status ?? null}
-				class="shrink-0 font-medium"
-			/>
-			{#if node.alias}
-				<span class="shrink-0 font-medium text-foreground">{node.alias}</span>
-				<span class="truncate text-muted-foreground">
-					{mapped?.name ?? signatureId ?? 'Unmapped'}
-				</span>
-			{:else if mapped}
-				<span class="truncate font-medium text-foreground">{mapped.name}</span>
-			{:else if signatureId}
-				<span class="truncate font-medium text-muted-foreground" data-testid="ghost-signature">
-					{signatureId}
-				</span>
-			{:else}
-				<span class="truncate font-medium text-muted-foreground italic">Unmapped</span>
-			{/if}
-			{#if mapped?.occupying_group}
-				<span class="shrink-0 text-muted-foreground">({mapped.occupying_group})</span>
-			{/if}
-
-			<HeaderIcons {node} {sigCounts} {unmapped} />
-		</div>
-
-		{#if mapped && showStatics}
-			<StaticsRow statics={mapped.statics} />
+	<div class="flex min-w-0 items-center gap-1">
+		<ClassBadge
+			classId={mapped?.wormhole_class_id ?? null}
+			security={mapped?.security_status ?? null}
+			class="shrink-0 font-medium"
+		/>
+		{#if node.alias}
+			<span class="shrink-0 font-medium text-foreground">{node.alias}</span>
+			<span class="truncate text-muted-foreground">
+				{mapped?.name ?? signatureId ?? 'Unmapped'}
+			</span>
+		{:else if mapped}
+			<span class="truncate font-medium text-foreground">{mapped.name}</span>
+		{:else if signatureId}
+			<span class="truncate font-medium text-muted-foreground" data-testid="ghost-signature">
+				{signatureId}
+			</span>
 		{:else}
-			<RegionRow region={mapped?.region ?? null} />
+			<span class="truncate font-medium text-muted-foreground italic">Unmapped</span>
+		{/if}
+		{#if mapped?.occupying_group}
+			<span class="shrink-0 text-muted-foreground">({mapped.occupying_group})</span>
 		{/if}
 
-		{#if pilots.length > 0}
-			<PilotsRow {pilots} />
-		{/if}
+		<HeaderIcons {node} {sigCounts} {unmapped} />
+	</div>
 
+	{#if mapped && showStatics}
+		<StaticsRow statics={mapped.statics} />
+	{:else}
+		<RegionRow region={mapped?.region ?? null} />
+	{/if}
+
+	{#if pilots.length > 0}
+		<PilotsRow {pilots} />
+	{/if}
+
+	{#if editorMounted}
 		<Popover.Root bind:open={editorOpen}>
 			<Popover.Trigger class="pointer-events-none absolute inset-x-0 top-0" tabindex={-1} />
 			<Popover.Content
@@ -208,5 +211,5 @@
 				<Button size="sm" onclick={saveEditor}>Save</Button>
 			</Popover.Content>
 		</Popover.Root>
-	</div>
-</Tooltip.Provider>
+	{/if}
+</div>
