@@ -49,8 +49,7 @@ export interface CategoryMeta {
 	categoryId: number | null;
 	label: string;
 	abbrev: string;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	icon: any;
+	icon: typeof CircleHelpIcon;
 	color: string;
 }
 

@@ -4,8 +4,9 @@
 export const TRANSFER_FORMAT = 'wormholesystems-map-export';
 export const TRANSFER_VERSION = 1;
 
-export type TransferSectionId =
-	'settings' | 'access' | 'solarsystems' | 'connections' | 'signatures' | 'routes';
+import type { TransferSectionId } from '$lib/api/client';
+
+export type { TransferSectionId };
 
 export const TRANSFER_SECTIONS: {
 	id: TransferSectionId;

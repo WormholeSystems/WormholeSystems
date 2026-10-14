@@ -23,6 +23,14 @@ export const ROLE_HELP = {
 	owner: 'Everything a manager does, and can delete the map.',
 } satisfies Record<Role, string>;
 
+/** The role's text colour in the map list. */
+export const ROLE_TONE = {
+	owner: 'text-amber-500',
+	manager: 'text-purple-400',
+	member: 'text-emerald-500',
+	viewer: 'text-muted-foreground',
+} satisfies Record<Role, string>;
+
 /** Least privileged first, which is the order they are explained in. */
 export const ROLES_ASCENDING: Role[] = ['viewer', 'member', 'manager', 'owner'];
 
