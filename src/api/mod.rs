@@ -38,7 +38,7 @@ use axum::response::{IntoResponse, Response};
 use axum::routing::get;
 use serde::Serialize;
 use utoipa::openapi::security::{ApiKey, ApiKeyValue, HttpAuthScheme, HttpBuilder, SecurityScheme};
-use utoipa::{Modify, OpenApi, ToResponse, ToSchema};
+use utoipa::{IntoResponses, Modify, OpenApi, ToResponse, ToSchema};
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_scalar::{Scalar, Servable};
 
@@ -110,6 +110,57 @@ pub struct Conflict(ErrorBody);
 #[derive(ToResponse)]
 #[response(description = "EVE's API refused or failed")]
 pub struct UpstreamFailed(ErrorBody);
+
+// The refusals that come up together, so a handler names the set rather than pasting the
+// list. Each is a reference to the shared response above, exactly as the pasted tuples were.
+
+/// What a write to a map can be refused with: a bad body, nobody signed in, too low a role,
+/// no such map (or no access to it), or a change the map's state contradicts.
+#[allow(dead_code)]
+#[derive(IntoResponses)]
+pub enum MapWriteErrors {
+    #[response(status = 400)]
+    BadRequest(#[ref_response] BadRequest),
+    #[response(status = 401)]
+    Unauthorized(#[ref_response] Unauthorized),
+    #[response(status = 403)]
+    Forbidden(#[ref_response] Forbidden),
+    #[response(status = 404)]
+    NotFound(#[ref_response] NotFound),
+    #[response(status = 409)]
+    Conflict(#[ref_response] Conflict),
+}
+
+/// What a role-gated read of a map can be refused with.
+#[allow(dead_code)]
+#[derive(IntoResponses)]
+pub enum MapReadErrors {
+    #[response(status = 401)]
+    Unauthorized(#[ref_response] Unauthorized),
+    #[response(status = 403)]
+    Forbidden(#[ref_response] Forbidden),
+    #[response(status = 404)]
+    NotFound(#[ref_response] NotFound),
+}
+
+/// What a read that a share link also opens can be refused with: there is no role to fall
+/// short of, only access or none.
+#[allow(dead_code)]
+#[derive(IntoResponses)]
+pub enum SharedReadErrors {
+    #[response(status = 401)]
+    Unauthorized(#[ref_response] Unauthorized),
+    #[response(status = 404)]
+    NotFound(#[ref_response] NotFound),
+}
+
+/// What an endpoint that only needs someone signed in can be refused with.
+#[allow(dead_code)]
+#[derive(IntoResponses)]
+pub enum AuthedErrors {
+    #[response(status = 401)]
+    Unauthorized(#[ref_response] Unauthorized),
+}
 
 impl ApiError {
     pub fn bad_request(message: impl Into<String>) -> Self {
@@ -199,6 +250,7 @@ Live updates go over WebSockets, which this document cannot describe: see \
         license(name = "MIT", url = "https://github.com/WormholeSystems/wormholesystems-next/blob/main/LICENSE"),
     ),
     modifiers(&Security),
+    // The default for every operation; a handler names its own only when it differs.
     security(("bearer" = []), ("session" = [])),
     tags(
         (name = "maps", description = "The maps themselves: list yours, create one, read a whole map in one call, rename or reconfigure it, and who is on it right now. Everything else hangs off a map id from here."),
@@ -279,17 +331,45 @@ fn areas() -> OpenApiRouter<AppState> {
         .merge(tokens::routes())
 }
 
+/// The routes and the document that describes them, with the default security written
+/// onto every operation that does not name its own. Handlers only say so when they differ
+/// (public, or session-only); the document still spells it out per operation, for the
+/// clients that read an operation without looking at the top-level default.
+fn split() -> (Router<AppState>, utoipa::openapi::OpenApi) {
+    let (router, mut api) = areas().split_for_parts();
+    let default = api.security.clone();
+    for item in api.paths.paths.values_mut() {
+        for operation in [
+            &mut item.get,
+            &mut item.put,
+            &mut item.post,
+            &mut item.delete,
+            &mut item.options,
+            &mut item.head,
+            &mut item.patch,
+            &mut item.trace,
+        ]
+        .into_iter()
+        .flatten()
+        {
+            if operation.security.is_none() {
+                operation.security = default.clone();
+            }
+        }
+    }
+    (router, api)
+}
+
 /// The OpenAPI document for everything [`router`] serves.
 pub fn openapi() -> utoipa::openapi::OpenApi {
-    let (_, api) = areas().split_for_parts();
-    api
+    split().1
 }
 
 /// The JSON API, compressed for clients that ask for gzip or zstd, so the standalone setup
 /// gets it without Caddy in front. The websockets are routed outside this, and the layer's
 /// default predicate leaves images and replies too small to bother with alone.
 pub fn router() -> Router<AppState> {
-    let (router, api) = areas().split_for_parts();
+    let (router, api) = split();
     let spec = api.clone();
     router
         .route("/api/openapi.json", get(move || async move { Json(spec) }))

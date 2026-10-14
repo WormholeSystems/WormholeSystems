@@ -48,8 +48,7 @@ async fn require_manager(
     path = "/api/maps/{id}/alerts",
     tag = "alerts",
     params(("id" = i64, Path, description = "The map")),
-    responses((status = 200, body = Vec<MapAlert>, description = "OK"), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = Vec<MapAlert>, description = "OK"), super::MapReadErrors),
 )]
 pub async fn list_alerts(
     State(state): State<AppState>,
@@ -66,8 +65,7 @@ pub async fn list_alerts(
     path = "/api/maps/{id}/webhooks",
     tag = "alerts",
     params(("id" = i64, Path, description = "The map")),
-    responses((status = 200, body = Vec<MapWebhook>, description = "OK"), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = Vec<MapWebhook>, description = "OK"), super::MapReadErrors),
 )]
 pub async fn list_webhooks(
     State(state): State<AppState>,
@@ -85,8 +83,7 @@ pub async fn list_webhooks(
     tag = "alerts",
     params(("id" = i64, Path, description = "The map")),
     request_body = SaveWebhook,
-    responses((status = 200, body = MapWebhook, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = MapWebhook, description = "OK"), super::MapWriteErrors),
 )]
 pub async fn create_webhook(
     State(state): State<AppState>,
@@ -107,8 +104,7 @@ pub async fn create_webhook(
     path = "/api/maps/{id}/webhooks/{webhook_id}",
     tag = "alerts",
     params(("id" = i64, Path, description = "The map"), ("webhook_id" = i64, Path, description = "The webhook")),
-    responses((status = 200, description = "Done; the body is `null`"), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), super::MapReadErrors),
 )]
 pub async fn delete_webhook(
     State(state): State<AppState>,
@@ -126,8 +122,7 @@ pub async fn delete_webhook(
     path = "/api/maps/{id}/roles",
     tag = "alerts",
     params(("id" = i64, Path, description = "The map")),
-    responses((status = 200, body = Vec<MapWebhookRole>, description = "OK"), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = Vec<MapWebhookRole>, description = "OK"), super::MapReadErrors),
 )]
 pub async fn list_roles(
     State(state): State<AppState>,
@@ -145,8 +140,7 @@ pub async fn list_roles(
     tag = "alerts",
     params(("id" = i64, Path, description = "The map")),
     request_body = SaveRole,
-    responses((status = 200, body = MapWebhookRole, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = MapWebhookRole, description = "OK"), super::MapWriteErrors),
 )]
 pub async fn create_role(
     State(state): State<AppState>,
@@ -164,8 +158,7 @@ pub async fn create_role(
     path = "/api/maps/{id}/roles/{role_id}",
     tag = "alerts",
     params(("id" = i64, Path, description = "The map"), ("role_id" = i64, Path, description = "The role")),
-    responses((status = 200, description = "Done; the body is `null`"), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), super::MapReadErrors),
 )]
 pub async fn delete_role(
     State(state): State<AppState>,
@@ -184,8 +177,7 @@ pub async fn delete_role(
     tag = "alerts",
     params(("id" = i64, Path, description = "The map")),
     request_body = SaveAlert,
-    responses((status = 200, body = MapAlert, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = MapAlert, description = "OK"), super::MapWriteErrors),
 )]
 pub async fn create_alert(
     State(state): State<AppState>,
@@ -207,8 +199,7 @@ pub async fn create_alert(
     tag = "alerts",
     params(("id" = i64, Path, description = "The map"), ("alert_id" = i64, Path, description = "The alert")),
     request_body = SaveAlert,
-    responses((status = 200, body = MapAlert, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = MapAlert, description = "OK"), super::MapWriteErrors),
 )]
 pub async fn update_alert(
     State(state): State<AppState>,
@@ -236,8 +227,7 @@ pub struct SetAlertActive {
     tag = "alerts",
     params(("id" = i64, Path, description = "The map"), ("alert_id" = i64, Path, description = "The alert")),
     request_body = SetAlertActive,
-    responses((status = 200, body = MapAlert, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = MapAlert, description = "OK"), super::MapWriteErrors),
 )]
 pub async fn set_alert_active(
     State(state): State<AppState>,
@@ -257,8 +247,7 @@ pub async fn set_alert_active(
     path = "/api/maps/{id}/alerts/{alert_id}",
     tag = "alerts",
     params(("id" = i64, Path, description = "The map"), ("alert_id" = i64, Path, description = "The alert")),
-    responses((status = 200, description = "Done; the body is `null`"), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), super::MapReadErrors),
 )]
 pub async fn delete_alert(
     State(state): State<AppState>,
@@ -284,8 +273,7 @@ pub struct EventsQuery {
     path = "/api/maps/{id}/alerts/events",
     tag = "alerts",
     params(("id" = i64, Path, description = "The map"), EventsQuery),
-    responses((status = 200, body = Vec<MapAlertEvent>, description = "OK"), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = Vec<MapAlertEvent>, description = "OK"), super::MapReadErrors),
 )]
 pub async fn list_alert_events(
     State(state): State<AppState>,

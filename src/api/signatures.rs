@@ -73,7 +73,7 @@ pub fn routes() -> OpenApiRouter<AppState> {
     path = "/api/maps/{id}/signatures",
     tag = "signatures",
     params(("id" = i64, Path, description = "The map"), ShareQuery),
-    responses((status = 200, body = Vec<Signature>, description = "OK"), (status = 401, response = super::Unauthorized), (status = 404, response = super::NotFound)),
+    responses((status = 200, body = Vec<Signature>, description = "OK"), super::SharedReadErrors),
     security((), ("bearer" = []), ("session" = [])),
 )]
 pub async fn list_signatures(
@@ -93,8 +93,7 @@ pub async fn list_signatures(
     tag = "signatures",
     params(("id" = i64, Path, description = "The map")),
     request_body = AddSignature,
-    responses((status = 200, body = Signature, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = Signature, description = "OK"), super::MapWriteErrors),
 )]
 pub async fn add_signature(
     State(state): State<AppState>,
@@ -113,8 +112,7 @@ pub async fn add_signature(
     tag = "signatures",
     params(("id" = i64, Path, description = "The map")),
     request_body = PasteSignatures,
-    responses((status = 200, description = "Done; the body is `null`"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), super::MapWriteErrors),
 )]
 pub async fn paste_signatures(
     State(state): State<AppState>,
@@ -133,8 +131,7 @@ pub async fn paste_signatures(
     tag = "signatures",
     params(("id" = i64, Path, description = "The map")),
     request_body = UpdateSignature,
-    responses((status = 200, body = Signature, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = Signature, description = "OK"), super::MapWriteErrors),
 )]
 pub async fn update_signature(
     State(state): State<AppState>,
@@ -153,8 +150,7 @@ pub async fn update_signature(
     tag = "signatures",
     params(("id" = i64, Path, description = "The map")),
     request_body = LinkSignature,
-    responses((status = 200, body = Signature, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = Signature, description = "OK"), super::MapWriteErrors),
 )]
 pub async fn link_signature(
     State(state): State<AppState>,
@@ -173,8 +169,7 @@ pub async fn link_signature(
     tag = "signatures",
     params(("id" = i64, Path, description = "The map")),
     request_body = UnlinkSignature,
-    responses((status = 200, body = Signature, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = Signature, description = "OK"), super::MapWriteErrors),
 )]
 pub async fn unlink_signature(
     State(state): State<AppState>,
@@ -193,8 +188,7 @@ pub async fn unlink_signature(
     tag = "signatures",
     params(("id" = i64, Path, description = "The map")),
     request_body = RemoveSignature,
-    responses((status = 200, description = "Done; the body is `null`"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), super::MapWriteErrors),
 )]
 pub async fn remove_signature(
     State(state): State<AppState>,
@@ -215,8 +209,7 @@ pub async fn remove_signature(
     tag = "signatures",
     params(("id" = i64, Path, description = "The map")),
     request_body = RemoveSignatures,
-    responses((status = 200, description = "Done; the body is `null`"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), super::MapWriteErrors),
 )]
 pub async fn remove_signatures_bulk(
     State(state): State<AppState>,

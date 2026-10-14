@@ -54,6 +54,14 @@ fn the_document_is_written_to_docs() {
                 operation["tags"].as_array().is_some_and(|t| !t.is_empty()),
                 "{method} {path} has no tag"
             );
+            // Spelled out per operation even where it is the default, for the clients
+            // that never look at the top-level one.
+            assert!(
+                operation["security"]
+                    .as_array()
+                    .is_some_and(|s| !s.is_empty()),
+                "{method} {path} says nothing about who may call it"
+            );
         }
     }
     let schemes = parsed["components"]["securitySchemes"].as_object().unwrap();

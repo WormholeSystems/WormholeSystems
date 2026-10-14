@@ -43,8 +43,7 @@ pub fn routes() -> OpenApiRouter<AppState> {
     path = "/api/maps/{id}/transfer/counts",
     tag = "transfer",
     params(("id" = i64, Path, description = "The map")),
-    responses((status = 200, body = TransferCounts, description = "OK"), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = TransferCounts, description = "OK"), super::MapReadErrors),
 )]
 async fn counts(
     State(state): State<AppState>,
@@ -69,8 +68,7 @@ struct ExportQuery {
     path = "/api/maps/{id}/transfer/export",
     tag = "transfer",
     params(("id" = i64, Path, description = "The map"), ExportQuery),
-    responses((status = 200, body = crate::maps::transfer::ExportFile, description = "The export, served as a file download"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = crate::maps::transfer::ExportFile, description = "The export, served as a file download"), (status = 400, response = super::BadRequest), super::MapReadErrors),
 )]
 async fn export(
     State(state): State<AppState>,
@@ -144,8 +142,7 @@ struct ImportBody {
     tag = "transfer",
     params(("id" = i64, Path, description = "The map")),
     request_body = ImportBody,
-    responses((status = 200, body = ImportSummary, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = ImportSummary, description = "OK"), super::MapWriteErrors),
 )]
 async fn import(
     State(state): State<AppState>,
@@ -177,7 +174,6 @@ struct ImportNewBody {
     tag = "transfer",
     request_body = ImportNewBody,
     responses((status = 200, body = crate::maps::Map, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden)),
-    security(("bearer" = []), ("session" = [])),
 )]
 async fn import_new(
     State(state): State<AppState>,

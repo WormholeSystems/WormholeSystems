@@ -23,8 +23,7 @@ pub fn routes() -> OpenApiRouter<AppState> {
     tag = "tracking",
     params(("id" = i64, Path, description = "The map")),
     request_body = crate::maps::tracking::TrackJump,
-    responses((status = 200, description = "Done; the body is `null`"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), super::MapWriteErrors),
 )]
 pub async fn track_jump(
     State(state): State<AppState>,

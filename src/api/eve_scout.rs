@@ -56,8 +56,7 @@ pub struct AddEveScoutToMap {
     tag = "eve scout",
     params(("id" = i64, Path, description = "The map")),
     request_body = AddEveScoutToMap,
-    responses((status = 200, body = u64, description = "How many connections were added"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = u64, description = "How many connections were added"), super::MapWriteErrors),
 )]
 pub async fn add_to_map(
     State(state): State<AppState>,

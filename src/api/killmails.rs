@@ -31,7 +31,7 @@ pub struct KillmailsQuery {
     path = "/api/maps/{id}/killmails",
     tag = "killmails",
     params(("id" = i64, Path, description = "The map"), KillmailsQuery, ShareQuery),
-    responses((status = 200, body = Vec<crate::killmails::MapKillmail>, description = "OK"), (status = 401, response = super::Unauthorized), (status = 404, response = super::NotFound)),
+    responses((status = 200, body = Vec<crate::killmails::MapKillmail>, description = "OK"), super::SharedReadErrors),
     security((), ("bearer" = []), ("session" = [])),
 )]
 pub async fn map_killmails(

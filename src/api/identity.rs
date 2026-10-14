@@ -35,7 +35,7 @@ pub fn routes() -> OpenApiRouter<AppState> {
     get,
     path = "/api/me",
     tag = "identity",
-    responses((status = 200, body = Option<CharacterSummary>, description = "The acting character, or `null` when nobody is signed in"), (status = 401, response = super::Unauthorized)),
+    responses((status = 200, body = Option<CharacterSummary>, description = "The acting character, or `null` when nobody is signed in"), super::AuthedErrors),
     security((), ("bearer" = []), ("session" = [])),
 )]
 pub async fn me(
@@ -55,8 +55,7 @@ pub async fn me(
     get,
     path = "/api/me/status",
     tag = "identity",
-    responses((status = 200, body = Option<CharacterStatus>, description = "The live status, or `null` when it is not tracked yet"), (status = 401, response = super::Unauthorized)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = Option<CharacterStatus>, description = "The live status, or `null` when it is not tracked yet"), super::AuthedErrors),
 )]
 pub async fn me_status(
     State(state): State<AppState>,
@@ -75,8 +74,7 @@ pub async fn me_status(
     get,
     path = "/api/me/discord",
     tag = "identity",
-    responses((status = 200, body = Option<crate::discord::DiscordAccount>, description = "The linked account, or `null`"), (status = 401, response = super::Unauthorized)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = Option<crate::discord::DiscordAccount>, description = "The linked account, or `null`"), super::AuthedErrors),
 )]
 pub async fn my_discord(
     State(state): State<AppState>,
@@ -93,8 +91,7 @@ pub async fn my_discord(
     post,
     path = "/api/me/discord/unlink",
     tag = "identity",
-    responses((status = 200, description = "Done; the body is `null`"), (status = 401, response = super::Unauthorized)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), super::AuthedErrors),
 )]
 pub async fn unlink_discord(State(state): State<AppState>, creds: Credentials) -> ApiResult<()> {
     let actor = require_actor(&state.db, &creds).await?;
@@ -108,8 +105,7 @@ pub async fn unlink_discord(State(state): State<AppState>, creds: Credentials) -
     get,
     path = "/api/me/scopes",
     tag = "identity",
-    responses((status = 200, body = Vec<ScopeStatus>, description = "OK"), (status = 401, response = super::Unauthorized)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = Vec<ScopeStatus>, description = "OK"), super::AuthedErrors),
 )]
 pub async fn my_scopes(
     State(state): State<AppState>,
@@ -126,8 +122,7 @@ pub async fn my_scopes(
     get,
     path = "/api/me/characters",
     tag = "identity",
-    responses((status = 200, body = Vec<CharacterRef>, description = "OK"), (status = 401, response = super::Unauthorized)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = Vec<CharacterRef>, description = "OK"), super::AuthedErrors),
 )]
 pub async fn my_characters(
     State(state): State<AppState>,
@@ -149,8 +144,7 @@ pub struct CharacterIdBody {
     path = "/api/me/switch-character",
     tag = "identity",
     request_body = CharacterIdBody,
-    responses((status = 200, description = "Done; the body is `null`"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 404, response = super::NotFound)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), (status = 400, response = super::BadRequest), super::SharedReadErrors),
 )]
 pub async fn switch_character(
     State(state): State<AppState>,
@@ -174,8 +168,7 @@ pub async fn switch_character(
     path = "/api/me/preferred-character",
     tag = "identity",
     request_body = CharacterIdBody,
-    responses((status = 200, description = "Done; the body is `null`"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 404, response = super::NotFound)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), (status = 400, response = super::BadRequest), super::SharedReadErrors),
 )]
 pub async fn preferred_character(
     State(state): State<AppState>,
@@ -200,7 +193,6 @@ pub async fn preferred_character(
     tag = "identity",
     request_body = CharacterIdBody,
     responses((status = 200, description = "Done; the body is `null`"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
 )]
 pub async fn remove_character(
     State(state): State<AppState>,
@@ -279,7 +271,6 @@ impl From<CharacterError> for ApiError {
     tag = "identity",
     request_body = SetWaypointBody,
     responses((status = 200, description = "Done; the body is `null`"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict), (status = 502, response = super::UpstreamFailed)),
-    security(("bearer" = []), ("session" = [])),
 )]
 pub async fn set_waypoint(
     State(state): State<AppState>,
@@ -311,7 +302,6 @@ pub async fn set_waypoint(
     tag = "identity",
     request_body = SetWaypointAllBody,
     responses((status = 200, description = "Done; the body is `null`"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 409, response = super::Conflict), (status = 502, response = super::UpstreamFailed)),
-    security(("bearer" = []), ("session" = [])),
 )]
 pub async fn set_waypoint_all(
     State(state): State<AppState>,

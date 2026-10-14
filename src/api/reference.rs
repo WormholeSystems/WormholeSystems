@@ -183,8 +183,7 @@ pub struct SearchQuery {
     path = "/api/systems/search",
     tag = "reference",
     params(SearchQuery),
-    responses((status = 200, body = Vec<SystemSearchResult>, description = "OK"), (status = 401, response = super::Unauthorized)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = Vec<SystemSearchResult>, description = "OK"), super::AuthedErrors),
 )]
 pub async fn search_systems(
     State(state): State<AppState>,
@@ -457,8 +456,7 @@ pub struct ResolveQuery {
     path = "/api/threat/{solar_system_id}",
     tag = "reference",
     params(("solar_system_id" = i64, Path, description = "The EVE solar system")),
-    responses((status = 200, body = ThreatAnalysis, description = "OK"), (status = 401, response = super::Unauthorized), (status = 404, response = super::NotFound)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = ThreatAnalysis, description = "OK"), super::SharedReadErrors),
 )]
 pub async fn threat_analysis(
     State(state): State<AppState>,
@@ -502,8 +500,7 @@ pub async fn threat_analysis(
     get,
     path = "/api/skyhooks",
     tag = "reference",
-    responses((status = 200, body = Vec<crate::skyhooks::Skyhook>, description = "OK"), (status = 401, response = super::Unauthorized)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = Vec<crate::skyhooks::Skyhook>, description = "OK"), super::AuthedErrors),
 )]
 pub async fn skyhooks(
     State(state): State<AppState>,

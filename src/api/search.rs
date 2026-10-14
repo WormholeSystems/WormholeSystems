@@ -24,7 +24,7 @@ pub fn routes() -> OpenApiRouter<AppState> {
     path = "/api/maps/{id}/search",
     tag = "search",
     params(("id" = i64, Path, description = "The map"), SearchQuery, ShareQuery),
-    responses((status = 200, body = Vec<MapSearchHit>, description = "OK"), (status = 401, response = super::Unauthorized), (status = 404, response = super::NotFound)),
+    responses((status = 200, body = Vec<MapSearchHit>, description = "OK"), super::SharedReadErrors),
     security((), ("bearer" = []), ("session" = [])),
 )]
 pub async fn search_map(

@@ -29,8 +29,7 @@ pub fn routes() -> OpenApiRouter<AppState> {
     get,
     path = "/api/maps",
     tag = "maps",
-    responses((status = 200, body = Vec<MapEntry>, description = "OK"), (status = 401, response = super::Unauthorized)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = Vec<MapEntry>, description = "OK"), super::AuthedErrors),
 )]
 pub async fn my_maps(
     State(state): State<AppState>,
@@ -59,7 +58,6 @@ pub struct CreateMapBody {
     tag = "maps",
     request_body = CreateMapBody,
     responses((status = 200, body = Map, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden)),
-    security(("bearer" = []), ("session" = [])),
 )]
 pub async fn create_map(
     State(state): State<AppState>,
@@ -86,8 +84,7 @@ pub async fn create_map(
     path = "/api/maps/{id}",
     tag = "maps",
     params(("id" = i64, Path, description = "The map")),
-    responses((status = 200, description = "Done; the body is `null`"), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), super::MapReadErrors),
 )]
 pub async fn delete_map(
     State(state): State<AppState>,
@@ -105,7 +102,7 @@ pub async fn delete_map(
     path = "/api/maps/{id}",
     tag = "maps",
     params(("id" = i64, Path, description = "The map"), ShareQuery),
-    responses((status = 200, body = MapView, description = "OK"), (status = 401, response = super::Unauthorized), (status = 404, response = super::NotFound)),
+    responses((status = 200, body = MapView, description = "OK"), super::SharedReadErrors),
     security((), ("bearer" = []), ("session" = [])),
 )]
 pub async fn fetch_map(
@@ -149,8 +146,7 @@ pub async fn fetch_shared_map(
     path = "/api/maps/{id}/characters",
     tag = "maps",
     params(("id" = i64, Path, description = "The map")),
-    responses((status = 200, body = Vec<MapCharacter>, description = "OK"), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = Vec<MapCharacter>, description = "OK"), super::MapReadErrors),
 )]
 pub async fn map_characters(
     State(state): State<AppState>,
@@ -170,8 +166,7 @@ pub async fn map_characters(
     tag = "maps",
     params(("id" = i64, Path, description = "The map")),
     request_body = UpdateMap,
-    responses((status = 200, body = Map, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = Map, description = "OK"), super::MapWriteErrors),
 )]
 pub async fn update_map(
     State(state): State<AppState>,

@@ -25,8 +25,7 @@ pub fn routes() -> OpenApiRouter<AppState> {
     path = "/api/maps/{id}/events",
     tag = "history",
     params(("id" = i64, Path, description = "The map")),
-    responses((status = 200, body = MapHistory, description = "OK"), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = MapHistory, description = "OK"), super::MapReadErrors),
 )]
 pub async fn list_map_events(
     State(state): State<AppState>,
@@ -47,8 +46,7 @@ pub async fn list_map_events(
     tag = "history",
     params(("id" = i64, Path, description = "The map")),
     request_body = MapIdBody,
-    responses((status = 200, description = "Done; the body is `null`"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), super::MapWriteErrors),
 )]
 pub async fn undo_map_event(
     State(state): State<AppState>,
@@ -68,8 +66,7 @@ pub async fn undo_map_event(
     tag = "history",
     params(("id" = i64, Path, description = "The map")),
     request_body = MapIdBody,
-    responses((status = 200, description = "Done; the body is `null`"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), super::MapWriteErrors),
 )]
 pub async fn redo_map_event(
     State(state): State<AppState>,
@@ -90,8 +87,7 @@ pub async fn redo_map_event(
     tag = "history",
     params(("id" = i64, Path, description = "The map")),
     request_body = GotoMapEvent,
-    responses((status = 200, description = "Done; the body is `null`"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), super::MapWriteErrors),
 )]
 pub async fn goto_map_event(
     State(state): State<AppState>,

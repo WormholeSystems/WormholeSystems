@@ -43,8 +43,7 @@ pub fn routes() -> OpenApiRouter<AppState> {
     tag = "systems",
     params(("id" = i64, Path, description = "The map")),
     request_body = crate::maps::ghost::ResolveGhostSystem,
-    responses((status = 200, body = MapSolarSystem, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = MapSolarSystem, description = "OK"), super::MapWriteErrors),
 )]
 pub async fn resolve_ghost_system(
     State(state): State<AppState>,
@@ -63,8 +62,7 @@ pub async fn resolve_ghost_system(
     tag = "systems",
     params(("id" = i64, Path, description = "The map")),
     request_body = AddSystem,
-    responses((status = 200, body = MapSolarSystem, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = MapSolarSystem, description = "OK"), super::MapWriteErrors),
 )]
 pub async fn add_system(
     State(state): State<AppState>,
@@ -83,8 +81,7 @@ pub async fn add_system(
     tag = "systems",
     params(("id" = i64, Path, description = "The map")),
     request_body = MoveSystem,
-    responses((status = 200, description = "Done; the body is `null`"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), super::MapWriteErrors),
 )]
 pub async fn move_system(
     State(state): State<AppState>,
@@ -103,8 +100,7 @@ pub async fn move_system(
     tag = "systems",
     params(("id" = i64, Path, description = "The map")),
     request_body = MoveSystems,
-    responses((status = 200, description = "Done; the body is `null`"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), super::MapWriteErrors),
 )]
 pub async fn move_systems(
     State(state): State<AppState>,
@@ -123,8 +119,7 @@ pub async fn move_systems(
     tag = "systems",
     params(("id" = i64, Path, description = "The map")),
     request_body = RemoveSystem,
-    responses((status = 200, description = "Done; the body is `null`"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), super::MapWriteErrors),
 )]
 pub async fn remove_system(
     State(state): State<AppState>,
@@ -143,8 +138,7 @@ pub async fn remove_system(
     tag = "systems",
     params(("id" = i64, Path, description = "The map")),
     request_body = RemoveSystems,
-    responses((status = 200, description = "Done; the body is `null`"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), super::MapWriteErrors),
 )]
 pub async fn remove_systems(
     State(state): State<AppState>,
@@ -163,8 +157,7 @@ pub async fn remove_systems(
     tag = "systems",
     params(("id" = i64, Path, description = "The map")),
     request_body = ClearMap,
-    responses((status = 200, description = "Done; the body is `null`"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), super::MapWriteErrors),
 )]
 pub async fn clear_map(
     State(state): State<AppState>,
@@ -188,13 +181,8 @@ macro_rules! detail_handler {
             request_body = $cmd,
             responses(
                 (status = 200, description = "Done; the body is `null`"),
-                (status = 400, response = super::BadRequest),
-                (status = 401, response = super::Unauthorized),
-                (status = 403, response = super::Forbidden),
-                (status = 404, response = super::NotFound),
-                (status = 409, response = super::Conflict),
+                super::MapWriteErrors,
             ),
-            security(("bearer" = []), ("session" = [])),
         )]
         pub async fn $name(
             State(state): State<AppState>,
@@ -264,8 +252,7 @@ detail_handler!(
     path = "/api/maps/{id}/systems/{mss}/details",
     tag = "systems",
     params(("id" = i64, Path, description = "The map"), ("mss" = i64, Path, description = "The placement (map solar system id)")),
-    responses((status = 200, body = SystemDetails, description = "OK"), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = SystemDetails, description = "OK"), super::MapReadErrors),
 )]
 pub async fn system_details(
     State(state): State<AppState>,

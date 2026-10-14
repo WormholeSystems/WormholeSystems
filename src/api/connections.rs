@@ -51,8 +51,7 @@ pub fn routes() -> OpenApiRouter<AppState> {
     tag = "connections",
     params(("id" = i64, Path, description = "The map")),
     request_body = AddConnection,
-    responses((status = 200, body = MapConnection, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = MapConnection, description = "OK"), super::MapWriteErrors),
 )]
 pub async fn add_connection(
     State(state): State<AppState>,
@@ -70,8 +69,7 @@ pub async fn add_connection(
     tag = "connections",
     params(("id" = i64, Path, description = "The map")),
     request_body = SetConnectionStatus,
-    responses((status = 200, body = MapConnection, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = MapConnection, description = "OK"), super::MapWriteErrors),
 )]
 pub async fn set_connection_status(
     State(state): State<AppState>,
@@ -90,8 +88,7 @@ pub async fn set_connection_status(
     tag = "connections",
     params(("id" = i64, Path, description = "The map")),
     request_body = RemoveConnection,
-    responses((status = 200, description = "Done; the body is `null`"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), super::MapWriteErrors),
 )]
 pub async fn remove_connection(
     State(state): State<AppState>,
@@ -110,7 +107,7 @@ pub async fn remove_connection(
     path = "/api/maps/{id}/connections/{cid}/jumps",
     tag = "connections",
     params(("id" = i64, Path, description = "The map"), ("cid" = i64, Path, description = "The connection"), ShareQuery),
-    responses((status = 200, body = Vec<ConnectionJump>, description = "OK"), (status = 401, response = super::Unauthorized), (status = 404, response = super::NotFound)),
+    responses((status = 200, body = Vec<ConnectionJump>, description = "OK"), super::SharedReadErrors),
     security((), ("bearer" = []), ("session" = [])),
 )]
 pub async fn list_connection_jumps(
@@ -130,8 +127,7 @@ pub async fn list_connection_jumps(
     tag = "connections",
     params(("id" = i64, Path, description = "The map")),
     request_body = AddConnectionJump,
-    responses((status = 200, body = ConnectionJump, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = ConnectionJump, description = "OK"), super::MapWriteErrors),
 )]
 pub async fn add_connection_jump(
     State(state): State<AppState>,
@@ -150,8 +146,7 @@ pub async fn add_connection_jump(
     tag = "connections",
     params(("id" = i64, Path, description = "The map")),
     request_body = UpdateConnectionJump,
-    responses((status = 200, body = ConnectionJump, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = ConnectionJump, description = "OK"), super::MapWriteErrors),
 )]
 pub async fn update_connection_jump(
     State(state): State<AppState>,
@@ -170,8 +165,7 @@ pub async fn update_connection_jump(
     tag = "connections",
     params(("id" = i64, Path, description = "The map")),
     request_body = RemoveConnectionJump,
-    responses((status = 200, description = "Done; the body is `null`"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), super::MapWriteErrors),
 )]
 pub async fn remove_connection_jump(
     State(state): State<AppState>,
@@ -191,8 +185,7 @@ pub async fn remove_connection_jump(
     path = "/api/maps/{id}/connections/stale",
     tag = "connections",
     params(("id" = i64, Path, description = "The map")),
-    responses((status = 200, body = Vec<StaleConnection>, description = "OK"), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = Vec<StaleConnection>, description = "OK"), super::MapReadErrors),
 )]
 pub async fn list_stale_connections(
     State(state): State<AppState>,
@@ -212,8 +205,7 @@ pub async fn list_stale_connections(
     tag = "connections",
     params(("id" = i64, Path, description = "The map")),
     request_body = CleanStaleConnections,
-    responses((status = 200, body = u64, description = "How many connections were removed"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = u64, description = "How many connections were removed"), super::MapWriteErrors),
 )]
 pub async fn clean_stale_connections(
     State(state): State<AppState>,

@@ -33,8 +33,7 @@ pub fn routes() -> OpenApiRouter<AppState> {
     path = "/api/maps/{id}/background-image",
     tag = "background image",
     params(("id" = i64, Path, description = "The map")),
-    responses((status = 200, description = "The image bytes", content_type = "image/*"), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "The image bytes", content_type = "image/*"), super::MapReadErrors),
 )]
 async fn show(
     State(state): State<AppState>,
@@ -84,8 +83,7 @@ struct BackgroundImageUpload {
     tag = "background image",
     params(("id" = i64, Path, description = "The map")),
     request_body(content = BackgroundImageUpload, content_type = "multipart/form-data"),
-    responses((status = 200, body = MapUserSettings, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = MapUserSettings, description = "OK"), super::MapWriteErrors),
 )]
 async fn upload(
     State(state): State<AppState>,
@@ -123,8 +121,7 @@ async fn upload(
     path = "/api/maps/{id}/background-image",
     tag = "background image",
     params(("id" = i64, Path, description = "The map")),
-    responses((status = 200, body = MapUserSettings, description = "OK"), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = MapUserSettings, description = "OK"), super::MapReadErrors),
 )]
 async fn remove(
     State(state): State<AppState>,

@@ -24,8 +24,7 @@ pub fn routes() -> OpenApiRouter<AppState> {
     path = "/api/maps/{id}/settings/user",
     tag = "user settings",
     params(("id" = i64, Path, description = "The map")),
-    responses((status = 200, body = MapUserSettings, description = "OK"), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = MapUserSettings, description = "OK"), super::MapReadErrors),
 )]
 pub async fn map_user_settings(
     State(state): State<AppState>,
@@ -46,8 +45,7 @@ pub async fn map_user_settings(
     tag = "user settings",
     params(("id" = i64, Path, description = "The map")),
     request_body = UpdateMapUserSettings,
-    responses((status = 200, body = MapUserSettings, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = MapUserSettings, description = "OK"), super::MapWriteErrors),
 )]
 pub async fn update_map_user_settings(
     State(state): State<AppState>,

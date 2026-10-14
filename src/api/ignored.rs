@@ -27,7 +27,7 @@ pub fn routes() -> OpenApiRouter<AppState> {
     path = "/api/maps/{id}/ignored",
     tag = "ignored systems",
     params(("id" = i64, Path, description = "The map"), ShareQuery),
-    responses((status = 200, body = Vec<IgnoredSystem>, description = "OK"), (status = 401, response = super::Unauthorized), (status = 404, response = super::NotFound)),
+    responses((status = 200, body = Vec<IgnoredSystem>, description = "OK"), super::SharedReadErrors),
     security((), ("bearer" = []), ("session" = [])),
 )]
 pub async fn list_ignored_systems(
@@ -47,8 +47,7 @@ pub async fn list_ignored_systems(
     tag = "ignored systems",
     params(("id" = i64, Path, description = "The map")),
     request_body = AddIgnoredSystem,
-    responses((status = 200, body = IgnoredSystem, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = IgnoredSystem, description = "OK"), super::MapWriteErrors),
 )]
 pub async fn add_ignored_system(
     State(state): State<AppState>,
@@ -67,8 +66,7 @@ pub async fn add_ignored_system(
     tag = "ignored systems",
     params(("id" = i64, Path, description = "The map")),
     request_body = RemoveIgnoredSystem,
-    responses((status = 200, description = "Done; the body is `null`"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), super::MapWriteErrors),
 )]
 pub async fn remove_ignored_system(
     State(state): State<AppState>,
@@ -87,8 +85,7 @@ pub async fn remove_ignored_system(
     tag = "ignored systems",
     params(("id" = i64, Path, description = "The map")),
     request_body = ClearIgnoredSystems,
-    responses((status = 200, body = u64, description = "How many systems were removed from the list"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = u64, description = "How many systems were removed from the list"), super::MapWriteErrors),
 )]
 pub async fn clear_ignored_systems(
     State(state): State<AppState>,
