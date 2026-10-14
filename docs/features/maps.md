@@ -112,6 +112,10 @@ A single `MapError` (thiserror) is returned by every action:
 | `LastOwner`          | The operation would leave the map with zero owners                |
 | `Db(sqlx::Error)`    | Underlying database error                                         |
 
+Over HTTP, `Validation` and `Conflict` answer with their message alone (the status says
+which it was), and `Db` is logged and answered with a generic message, since database
+error text names tables and constraints.
+
 ## Transactions
 
 Any action with more than one write runs in a single transaction, so it is all-or-

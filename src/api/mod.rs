@@ -143,18 +143,27 @@ impl From<MapError> for ApiError {
             MapError::Validation(_) => StatusCode::BAD_REQUEST,
             MapError::Db(_) => StatusCode::INTERNAL_SERVER_ERROR,
         };
-        ApiError {
-            status,
-            message: err.to_string(),
-        }
+        // The status already says which kind of failure it is, so the message is just the
+        // part a person can act on: the form shows it as is, and "invalid: " in front of it
+        // would only be noise.
+        let message = match err {
+            MapError::Conflict(message) | MapError::Validation(message) => message,
+            MapError::Db(err) => return ApiError::from(err),
+            other => other.to_string(),
+        };
+        ApiError { status, message }
     }
 }
 
 impl From<sqlx::Error> for ApiError {
+    /// A database error says things about the schema and the query that the caller has no
+    /// use for and no business seeing. It goes to the log, and the response says only that
+    /// it was on our side.
     fn from(err: sqlx::Error) -> Self {
+        eprintln!("database error: {err}");
         ApiError {
             status: StatusCode::INTERNAL_SERVER_ERROR,
-            message: err.to_string(),
+            message: "something went wrong on our side".into(),
         }
     }
 }
@@ -277,4 +286,32 @@ pub fn router() -> Router<AppState> {
     router
         .route("/api/openapi.json", get(move || async move { Json(spec) }))
         .merge(Scalar::with_url("/api/docs", api))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_refused_change_answers_with_its_message_alone() {
+        let invalid = ApiError::from(MapError::Validation("pick a system".into()));
+        assert_eq!(invalid.status, StatusCode::BAD_REQUEST);
+        assert_eq!(invalid.message, "pick a system");
+
+        let conflict = ApiError::from(MapError::Conflict("already on the map".into()));
+        assert_eq!(conflict.status, StatusCode::CONFLICT);
+        assert_eq!(conflict.message, "already on the map");
+    }
+
+    #[test]
+    fn a_database_error_does_not_reach_the_caller() {
+        let leaky = || sqlx::Error::Protocol("relation \"secret_table\" does not exist".into());
+        for err in [
+            ApiError::from(leaky()),
+            ApiError::from(MapError::Db(leaky())),
+        ] {
+            assert_eq!(err.status, StatusCode::INTERNAL_SERVER_ERROR);
+            assert!(!err.message.contains("secret_table"), "{}", err.message);
+        }
+    }
 }
