@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "with claims as (\n               select * from unnest($1::bigint[], $2::bigint[], $3::bigint[], $4::bigint[],\n                                    $5::timestamptz[], $6::boolean[])\n                   as c(solar_system_id, alliance_id, corporation_id, faction_id,\n                        claimed_since, is_capital_system)\n           ),\n           known as (\n               select c.* from claims c\n               where exists (select 1 from solar_systems s where s.id = c.solar_system_id)\n                 and (c.alliance_id is null\n                      or exists (select 1 from alliances a where a.id = c.alliance_id))\n                 and (c.corporation_id is null\n                      or exists (select 1 from corporations co where co.id = c.corporation_id))\n                 and (c.faction_id is null\n                      or exists (select 1 from factions f where f.id = c.faction_id))\n           ),\n           written as (\n               insert into system_sovereignty as sov\n                   (solar_system_id, alliance_id, corporation_id, faction_id, claimed_since,\n                    is_capital_system)\n               select * from known\n               on conflict (solar_system_id) do update set\n                   alliance_id = excluded.alliance_id,\n                   corporation_id = excluded.corporation_id,\n                   faction_id = excluded.faction_id,\n                   claimed_since = excluded.claimed_since,\n                   is_capital_system = excluded.is_capital_system,\n                   updated_at = now()\n               where (sov.alliance_id, sov.corporation_id, sov.faction_id, sov.claimed_since,\n                      sov.is_capital_system)\n                     is distinct from\n                     (excluded.alliance_id, excluded.corporation_id, excluded.faction_id,\n                      excluded.claimed_since, excluded.is_capital_system)\n           )\n           select (select count(*) from claims) - (select count(*) from known)\n               as \"skipped!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "skipped!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8Array",
+        "Int8Array",
+        "Int8Array",
+        "Int8Array",
+        "TimestamptzArray",
+        "BoolArray"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "d954ba6f5f3397879ec962b29158372d07c91468349f2a38febc3d2a0f571adf"
+}
