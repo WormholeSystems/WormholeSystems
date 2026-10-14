@@ -8,7 +8,9 @@ export const E2E_SESSION = 'e2e-session';
 
 export async function withDb<T>(f: (client: Client) => Promise<T>): Promise<T> {
 	const client = new Client({
-		connectionString: process.env.DATABASE_URL ?? 'postgres://vector:vector@localhost:5432/vector',
+		connectionString:
+			process.env.DATABASE_URL ??
+			'postgres://wormholesystems:wormholesystems@localhost:5432/wormholesystems',
 	});
 	await client.connect();
 	try {

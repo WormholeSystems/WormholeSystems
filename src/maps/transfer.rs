@@ -8,7 +8,7 @@
 //!
 //! Legacy speaks a slightly different vocabulary for the life-cycle enums (mass `fresh`
 //! vs `stable`, ship sizes vs hole sizes, lifetime `healthy` vs `stable`); the `Wire*`
-//! enums here are that vocabulary, with conversions. What vector cannot represent is
+//! enums here are that vocabulary, with conversions. What this app cannot represent is
 //! skipped rather than refused: a ghost placement is not exported, a signature without a
 //! scanner id is not imported.
 
@@ -80,7 +80,7 @@ pub struct SettingsSection {
     pub layout: MapLayout,
     #[serde(deserialize_with = "lenient_bool")]
     pub allow_layout_override: bool,
-    /// A legacy display setting vector does not have; exported as `false`, ignored on
+    /// A legacy display setting this app does not have; exported as `false`, ignored on
     /// import, kept so the file validates over there.
     #[serde(deserialize_with = "lenient_bool")]
     pub constant_width_enabled: bool,
@@ -161,7 +161,7 @@ pub struct ConnectionRow {
 #[ts(export)]
 pub struct SignatureRow {
     pub solarsystem_id: i64,
-    /// The in-game scanner id ("ABC-123"). Legacy allows signatures without one; vector
+    /// The in-game scanner id ("ABC-123"). Legacy allows signatures without one; this app
     /// does not, so those are skipped on import.
     pub signature_id: Option<String>,
     /// The category code ("wormhole", "data", ...). Unmatched codes import as `unknown`.
@@ -245,7 +245,7 @@ fn lenient_bool_opt<'de, D: serde::Deserializer<'de>>(
     Ok(Option::<Wrap>::deserialize(de)?.map(|w| w.0))
 }
 
-/// Legacy's mass vocabulary. Vector's `stable` is legacy's `fresh`, and vector says
+/// Legacy's mass vocabulary. Our `stable` is legacy's `fresh`, and we say
 /// "unknown" with a null.
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema,
@@ -313,7 +313,7 @@ impl WireShipSize {
     }
 }
 
-/// Legacy's lifetime vocabulary has no "unknown": `healthy` is both vector's `stable` and
+/// Legacy's lifetime vocabulary has no "unknown": `healthy` is both our `stable` and
 /// its null, and imports as the null (nothing remarkable to show).
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema,
@@ -1396,7 +1396,7 @@ async fn import_signatures(
     .collect();
 
     for entry in entries {
-        // Vector requires the scanner id (it is the natural key), and the system must be
+        // This app requires the scanner id (it is the natural key), and the system must be
         // on the map for the signature to hang off.
         let Some(signature_id) = entry
             .signature_id

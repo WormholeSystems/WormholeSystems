@@ -148,6 +148,9 @@ impl Answers {
                 }
             }
         }
+        // Pinned rather than left to the checkout's directory name, which is what containers,
+        // the network and the volumes are all named after.
+        set("COMPOSE_PROJECT_NAME", crate::rename::PROJECT.into());
         set("WS_CONTACT_NAME", self.contact_name.clone());
         set("WS_CONTACT_EMAIL", self.contact_email.clone());
         set("EVE_CLIENT_ID", self.eve_client_id.clone());

@@ -5,7 +5,7 @@ import type { WireShipSize } from "./WireShipSize";
 
 export type SignatureRow = { solarsystem_id: number, 
 /**
- * The in-game scanner id ("ABC-123"). Legacy allows signatures without one; vector
+ * The in-game scanner id ("ABC-123"). Legacy allows signatures without one; this app
  * does not, so those are skipped on import.
  */
 signature_id: string | null, 
