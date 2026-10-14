@@ -73,6 +73,36 @@ cd wormholesystems-next
 wsctl setup
 ```
 
+### Without questions
+
+For a provisioning script or CI, `wsctl setup --non-interactive` asks nothing. Every answer
+comes from the environment, then from an existing `.env`, then from the default the
+question would have offered, and it is written to `.env` as the questions would have:
+
+```sh
+WS_CONTACT_NAME="Your Character" WS_CONTACT_EMAIL=you@example.com \
+EVE_CLIENT_ID=... EVE_CLIENT_SECRET=... WS_DOMAIN=map.example.com \
+  wsctl setup --non-interactive
+```
+
+The variables are the `.env` keys themselves (see [What is in `.env`](#what-is-in-env)),
+and any other key `.env` can hold that starts with `WS_`, `EVE_`, `DISCORD_`,
+`ANNOUNCEMENT_`, `ZKB_` or `KILLMAIL_` (or is one of the app's settings in
+`.env.example`) is written there too. Required, and named together in one error when
+missing:
+
+- always: `WS_CONTACT_NAME`, `WS_CONTACT_EMAIL`, `EVE_CLIENT_ID`, `EVE_CLIENT_SECRET`
+- `WS_DATABASE=external`: `WS_DATABASE_URL`
+- `WS_PROXY=router`, `network` or `ports`: `WS_PUBLIC_URL`
+- `DISCORD_CLIENT_ID` set: `DISCORD_APPLICATION_ID`, `DISCORD_PUBLIC_KEY`,
+  `DISCORD_CLIENT_SECRET`
+
+The choices take their usual defaults: everything bundled, Caddy with Let's Encrypt when
+`WS_DOMAIN` is set, pulled images, scheduled backups on (`COMPOSE_PROFILES` without
+`backup` turns them off), the killmail ingest only with `ZKB_LISTEN=1`, the announcement
+only with `ANNOUNCEMENT_MESSAGE`. A plain `.env` written by hand works the same way: run
+it with nothing in the environment and it takes `.env` as the answers.
+
 ### Building it instead
 
 No release for your platform, no token, or you would rather not download a binary. The
