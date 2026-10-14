@@ -5,6 +5,7 @@
 pub mod app;
 
 use sqlx::PgPool;
+use wormholesystems::allowlist::AffiliationAllowlist;
 use wormholesystems::maps::access::SetAccess;
 use wormholesystems::maps::access::set_access;
 use wormholesystems::maps::map::{CreateMap, create_map};
@@ -98,6 +99,7 @@ pub async fn world(pool: &PgPool) -> World {
     let map = create_map(
         pool,
         owner,
+        &AffiliationAllowlist::default(),
         CreateMap {
             name: "Chain".into(),
             description: None,

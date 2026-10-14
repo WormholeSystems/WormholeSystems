@@ -203,7 +203,8 @@ Cloudflare's own certificate and put Caddy behind it.
 | `WS_PROXY_NETWORK` | Standalone only: the Docker network the proxy finds the app on. |
 | `WS_API_PORT`, `WS_WEB_PORT` | Standalone only, when published on the loopback. |
 
-`ALLOWED_AFFILIATION_IDS` is asked for too; see [Who may use it](#who-may-use-it).
+`ALLOWED_AFFILIATION_IDS` and `MAP_CREATOR_AFFILIATION_IDS` are asked for too; see
+[Who may use it](#who-may-use-it).
 
 Discord and the killmail ingest are optional and off unless configured; see `.env.example`.
 `UPLOADS_DIR` (default `data/uploads`) is where uploaded background images land. In the
@@ -238,6 +239,20 @@ cut somebody off at once, delete their sessions:
 docker compose exec db psql -U vector vector -c \
   "delete from sessions where user_id = (select user_id from characters where name = 'Their Name')"
 ```
+
+Map creation can be limited the same way, independently: an instance can let a whole
+alliance in while only its leadership creates maps.
+
+```sh
+MAP_CREATOR_AFFILIATION_IDS=98000002
+```
+
+It is matched against the character a map is created as, the active one, not every
+character on the account: a director's alt in an NPC corporation does not get to create
+maps. It covers importing a file as a new map too. Off the list, the maps page simply has
+no create or import buttons, and the API answers 403. Maps that already exist are not
+affected, and anyone given a role on one works on it as before. Empty, the default, lets
+everyone who can log in create maps.
 
 ## Discord
 

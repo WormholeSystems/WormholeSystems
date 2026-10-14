@@ -18,6 +18,9 @@ use crate::auth::AppState;
 pub struct CharacterSummary {
     pub character_id: i64,
     pub name: String,
+    /// Whether this character may create a map here. An instance can limit that to named
+    /// affiliations, and a button that only produces a 403 is worse than no button.
+    pub can_create_map: bool,
 }
 
 /// Live status of the active character, for the navbar readout.
@@ -90,9 +93,15 @@ pub async fn me(
     )
     .fetch_optional(&state.db)
     .await?;
-    Ok(Json(row.map(|r| CharacterSummary {
+    let Some(row) = row else {
+        return Ok(Json(None));
+    };
+    let can_create_map =
+        crate::maps::map::may_create_map(&state.db, actor, &state.map_creators).await?;
+    Ok(Json(Some(CharacterSummary {
         character_id: actor.character_id,
-        name: r.name,
+        name: row.name,
+        can_create_map,
     })))
 }
 

@@ -7,6 +7,7 @@ use std::collections::HashMap;
 
 use common::{SYS_A, SYS_B, SYS_C, world};
 use sqlx::PgPool;
+use wormholesystems::allowlist::AffiliationAllowlist;
 use wormholesystems::maps::connection::{AddConnection, add_connection};
 use wormholesystems::maps::ignored::{AddIgnoredSystem, add_ignored_system, ignored_ids};
 use wormholesystems::maps::signatures::{
@@ -168,9 +169,15 @@ async fn a_round_trip_reproduces_the_map(pool: PgPool) {
         .unwrap();
     let content = serde_json::to_string(&file).unwrap();
     let parsed = parse_export(&content, all_sections(), true).unwrap();
-    let map = import_map_as_new(&pool, w.owner, parsed, Some("Copy".into()))
-        .await
-        .unwrap();
+    let map = import_map_as_new(
+        &pool,
+        w.owner,
+        &AffiliationAllowlist::default(),
+        parsed,
+        Some("Copy".into()),
+    )
+    .await
+    .unwrap();
 
     assert_eq!(map.name, "Copy");
     let copied = wormholesystems::maps::map::get_map(
@@ -310,9 +317,15 @@ async fn a_legacy_file_imports_with_its_vocabulary_translated(pool: PgPool) {
         ..Default::default()
     };
     let parsed = parse_export(&content, sections, true).unwrap();
-    let map = import_map_as_new(&pool, w.owner, parsed, None)
-        .await
-        .unwrap();
+    let map = import_map_as_new(
+        &pool,
+        w.owner,
+        &AffiliationAllowlist::default(),
+        parsed,
+        None,
+    )
+    .await
+    .unwrap();
     assert_eq!(map.name, "Legacy Chain");
 
     let conn = sqlx::query!(
@@ -513,9 +526,15 @@ async fn importing_routes_into_a_new_map_replaces_the_seeded_watchlist(pool: PgP
         ..Default::default()
     };
     let parsed = parse_export(&content, sections, true).unwrap();
-    let map = import_map_as_new(&pool, w.owner, parsed, None)
-        .await
-        .unwrap();
+    let map = import_map_as_new(
+        &pool,
+        w.owner,
+        &AffiliationAllowlist::default(),
+        parsed,
+        None,
+    )
+    .await
+    .unwrap();
 
     // Only the file's list: the trade-hub seeds made way for it.
     let entries = sqlx::query!(
@@ -585,9 +604,15 @@ async fn a_faction_warfare_signature_keeps_the_legacy_code_on_the_wire(pool: PgP
 
     let content = serde_json::to_string(&file).unwrap();
     let parsed = parse_export(&content, all_sections(), true).unwrap();
-    let map = import_map_as_new(&pool, w.owner, parsed, None)
-        .await
-        .unwrap();
+    let map = import_map_as_new(
+        &pool,
+        w.owner,
+        &AffiliationAllowlist::default(),
+        parsed,
+        None,
+    )
+    .await
+    .unwrap();
     let group = sqlx::query_scalar!(
         r#"select "group" as "group!: SignatureGroup" from signatures
            where map_id = $1 and signature_id = 'MSA-264'"#,

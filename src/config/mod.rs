@@ -32,6 +32,8 @@ pub struct Config {
     pub uploads_dir: std::path::PathBuf,
     /// Who may log in at all. Empty, the default, lets in anyone with an EVE account.
     pub allowed_logins: AffiliationAllowlist,
+    /// Who may create maps. Empty, the default, lets everyone who can log in create one.
+    pub map_creators: AffiliationAllowlist,
 }
 
 /// What the Discord half of the integration needs.
@@ -72,6 +74,7 @@ impl Config {
                 .map(Into::into)
                 .unwrap_or_else(|| std::path::PathBuf::from("data/uploads")),
             allowed_logins: allowlist("ALLOWED_AFFILIATION_IDS")?,
+            map_creators: allowlist("MAP_CREATOR_AFFILIATION_IDS")?,
         })
     }
 }

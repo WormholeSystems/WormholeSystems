@@ -245,6 +245,9 @@
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           }
         },
         "security": [
@@ -290,6 +293,9 @@
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           }
         },
         "security": [
@@ -6362,9 +6368,14 @@
         "description": "The signed-in character, for the UI's auth state.",
         "required": [
           "character_id",
-          "name"
+          "name",
+          "can_create_map"
         ],
         "properties": {
+          "can_create_map": {
+            "type": "boolean",
+            "description": "Whether this character may create a map here. An instance can limit that to named\naffiliations, and a button that only produces a 403 is worse than no button."
+          },
           "character_id": {
             "type": "integer",
             "format": "int64"

@@ -19,6 +19,8 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 
+use crate::allowlist::AffiliationAllowlist;
+
 use super::access::{owns_character, require_role, require_role_tx};
 use super::command::{CommandOutput, Effect, EventActor, Tx};
 use super::error::{MapError, Result};
@@ -880,14 +882,19 @@ pub async fn import_map(
 
 /// Create a fresh map owned by the acting character and load the payload into it. When the
 /// file carries a routes section, the seeded trade-hub watchlist makes way for the file's
-/// list. An explicit `name` wins over the file's.
+/// list. An explicit `name` wins over the file's. Creating a map this way is limited to
+/// `creators` just like creating an empty one.
 pub async fn import_map_as_new(
     pool: &PgPool,
     actor: Actor,
+    creators: &AffiliationAllowlist,
     parsed: ParsedExport,
     name: Option<String>,
 ) -> Result<Map> {
     if !owns_character(pool, actor.user_id, actor.character_id).await? {
+        return Err(MapError::Forbidden);
+    }
+    if !super::map::may_create_map(pool, actor, creators).await? {
         return Err(MapError::Forbidden);
     }
     let name = name

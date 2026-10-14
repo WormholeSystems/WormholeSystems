@@ -4,6 +4,7 @@ mod common;
 
 use common::{SYS_A, SYS_B, add_character, member_with_role, new_user, world};
 use sqlx::PgPool;
+use wormholesystems::allowlist::AffiliationAllowlist;
 use wormholesystems::maps::access::effective_role;
 use wormholesystems::maps::connection::{AddConnection, add_connection};
 use wormholesystems::maps::map::{
@@ -25,6 +26,7 @@ async fn create_returns_fields_and_grants_owner(pool: PgPool) {
     let map = create_map(
         &pool,
         actor,
+        &AffiliationAllowlist::default(),
         CreateMap {
             name: "  Home Chain  ".into(),
             description: Some("J-space".into()),
@@ -66,6 +68,7 @@ async fn create_rejects_blank_name_and_foreign_character(pool: PgPool) {
         create_map(
             &pool,
             actor,
+            &AffiliationAllowlist::default(),
             CreateMap {
                 name: "   ".into(),
                 description: None,
@@ -82,6 +85,7 @@ async fn create_rejects_blank_name_and_foreign_character(pool: PgPool) {
         create_map(
             &pool,
             stranger,
+            &AffiliationAllowlist::default(),
             CreateMap {
                 name: "Chain".into(),
                 description: None,

@@ -176,7 +176,7 @@ struct ImportNewBody {
     path = "/api/maps/transfer/import-new",
     tag = "transfer",
     request_body = ImportNewBody,
-    responses((status = 200, body = crate::maps::Map, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized)),
+    responses((status = 200, body = crate::maps::Map, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden)),
     security(("bearer" = []), ("session" = [])),
 )]
 async fn import_new(
@@ -189,6 +189,6 @@ async fn import_new(
     let sections = SectionSet::from_names(&body.sections)?;
     let parsed = parse_export(&body.content, sections, true)?;
     Ok(Json(
-        import_map_as_new(&state.db, actor, parsed, body.name).await?,
+        import_map_as_new(&state.db, actor, &state.map_creators, parsed, body.name).await?,
     ))
 }

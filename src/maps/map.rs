@@ -8,6 +8,8 @@ use serde::{Deserialize, Serialize};
 
 use sqlx::PgPool;
 
+use crate::allowlist::AffiliationAllowlist;
+
 use super::access::{owns_character, require_role};
 use super::error::{MapError, Result};
 
@@ -115,11 +117,51 @@ impl CreateMap {
     }
 }
 
+/// Whether the acting character may create a map. Anyone may, unless the instance names
+/// who can in `creators`.
+///
+/// Checked against the active character rather than every character on the account: an
+/// account holding a director and an alt in an NPC corporation should not let the alt
+/// create maps, and the active character is the one the map is created as (its owner).
+pub async fn may_create_map(
+    pool: &PgPool,
+    actor: Actor,
+    creators: &AffiliationAllowlist,
+) -> Result<bool> {
+    // Nothing configured means nothing changes, without a query for it.
+    if !creators.is_enforced() {
+        return Ok(true);
+    }
+    let Some(character) = sqlx::query!(
+        "select corporation_id, alliance_id from characters where id = $1 and user_id = $2",
+        actor.character_id,
+        actor.user_id,
+    )
+    .fetch_optional(pool)
+    .await?
+    else {
+        return Ok(false);
+    };
+    Ok(creators.allows(
+        actor.character_id,
+        character.corporation_id,
+        character.alliance_id,
+    ))
+}
+
 /// Create a map and grant ownership to the acting character. Any authenticated user may
-/// create a map.
-pub async fn create_map(pool: &PgPool, actor: Actor, cmd: CreateMap) -> Result<Map> {
+/// create a map, unless the instance limits it to `creators`.
+pub async fn create_map(
+    pool: &PgPool,
+    actor: Actor,
+    creators: &AffiliationAllowlist,
+    cmd: CreateMap,
+) -> Result<Map> {
     cmd.validate()?;
     if !owns_character(pool, actor.user_id, actor.character_id).await? {
+        return Err(MapError::Forbidden);
+    }
+    if !may_create_map(pool, actor, creators).await? {
         return Err(MapError::Forbidden);
     }
 

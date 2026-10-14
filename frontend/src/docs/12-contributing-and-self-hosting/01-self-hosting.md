@@ -48,6 +48,13 @@ A pilot gets in when their character, its corporation or its alliance is on the 
 holds for adding an alt to an account too. Leave it empty to let everyone in. Restart the
 API after changing it; people already signed in stay signed in until their session ends.
 
+## Restricting who can create maps
+
+`MAP_CREATOR_AFFILIATION_IDS` takes the same kind of list and limits who may create (or
+import) a map, separately from who may log in. It is checked against the character you are
+currently acting as. Everyone else can still work on the maps they are given access to; they
+just do not see the button to make one. Empty lets everyone create maps.
+
 ## Looking after it
 
 | Command        | What it does                                                          |
