@@ -14,7 +14,6 @@
 	import { q } from '$lib/api/queries';
 	import type { ConnectionType } from '$lib/api/types/ConnectionType';
 	import type { MapConnection } from '$lib/api/types/MapConnection';
-	import type { MapSystemView } from '$lib/api/types/MapSystemView';
 	import type { MassStatus } from '$lib/api/types/MassStatus';
 	import type { TimeStatus } from '$lib/api/types/TimeStatus';
 	import type { WormholeSize } from '$lib/api/types/WormholeSize';
@@ -22,7 +21,7 @@
 	import { LIFETIME_OPTIONS, MASS_OPTIONS, SIZE_OPTIONS } from '$lib/map/connection-status';
 	import { sizeForJumpMass } from '$lib/map/mass';
 	import { typeById } from '$lib/map/signatures';
-	import { formatBookmark, formatsFromNaming } from '$lib/naming/bookmark';
+	import { connectionBookmarks, formatsFromNaming } from '$lib/naming/bookmark';
 	import type { MapState } from '../../state/map-state.svelte';
 	import { item, panel, sub } from './chrome';
 
@@ -48,49 +47,16 @@
 		map.closeMenu();
 	}
 
-	/**
-	 * The bookmark for each end, as it would be written in game. A bookmark is made while
-	 * standing at the hole, so the name for one end carries the signature read on the
-	 * other: the far side is what the name has to describe.
-	 */
-	const bookmarks = $derived.by(() => {
-		const placed = (id: number) => map.systems.all.find((s) => s.id === id) ?? null;
-		const from = placed(connection.from_system);
-		const to = placed(connection.to_system);
-		if (from === null || to === null) return [];
-		return [bookmarkFor(from, to), bookmarkFor(to, from)].filter((name) => name !== null);
-	});
-
-	/** Null for a ghost: an unflown hole has no system on the far side to name. */
-	function bookmarkFor(end: MapSystemView, opposite: MapSystemView): string | null {
-		if (end.kind !== 'system') return null;
-		const sig =
-			opposite.kind === 'system'
-				? (map.signatures.all.find(
-						(s) => s.connection_id === cid && s.solar_system_id === opposite.solar_system_id,
-					) ?? null)
-				: null;
-		return formatBookmark(
-			{
-				alias: end.alias,
-				name: end.name,
-				region: end.region,
-				wormholeClassId: end.wormhole_class_id,
-				security: end.security_status,
-				occupier: end.occupying_group,
-			},
-			{
-				signatureId: sig?.signature_id ?? null,
-				size: connection.size,
-				massStatus: connection.mass_status,
-				timeStatus: connection.time_status,
-				wormholeCode:
-					catalog && sig ? (typeById(catalog, sig.signature_type_id)?.signature ?? null) : null,
-			},
+	/** The bookmark for each end, as it would be written in game. */
+	const bookmarks = $derived(
+		connectionBookmarks(
+			connection,
+			map.systems.all,
+			map.signatures.all,
+			(typeId) => (catalog ? (typeById(catalog, typeId)?.signature ?? null) : null),
 			formatsFromNaming(map.naming),
-			opposite.alias,
-		);
-	}
+		),
+	);
 
 	function copyBookmark(text: string) {
 		void copyText(text, { success: 'Bookmark copied' });

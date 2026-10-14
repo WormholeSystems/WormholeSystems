@@ -4,7 +4,12 @@
 
 import { isIgnoredAlias } from '$lib/naming/alias';
 import { classMeta, isWormholeClass } from '$lib/map/classes';
+import type { MapConnection } from '$lib/api/types/MapConnection';
 import type { MapNaming } from '$lib/api/types/MapNaming';
+import type { MapSystemView } from '$lib/api/types/MapSystemView';
+import type { Signature } from '$lib/api/types/Signature';
+import type { SignatureTypeInfo } from '$lib/api/types/SignatureTypeInfo';
+import type { MappedSystem } from '$lib/map/system';
 import type { MassStatus } from '$lib/api/types/MassStatus';
 import type { TimeStatus } from '$lib/api/types/TimeStatus';
 import type { WormholeSize } from '$lib/api/types/WormholeSize';
@@ -171,4 +176,95 @@ export function formatBookmark(
 			: formats?.kspace || DEFAULT_FORMAT_KSPACE;
 
 	return renderBookmark(template, bookmarkTokens(system, context));
+}
+
+/** A placed system as a bookmark describes it. */
+export function bookmarkSystemOf(system: MappedSystem): BookmarkSystem {
+	return {
+		alias: system.alias,
+		name: system.name,
+		region: system.region,
+		wormholeClassId: system.wormhole_class_id,
+		security: system.security_status,
+		occupier: system.occupying_group,
+	};
+}
+
+/** The wormhole code (`H296`) of a signature type, when the catalog knows it. */
+export type WormholeCodeOf = (signatureTypeId: number | null) => string | null;
+
+/**
+ * The bookmark for each end of a connection, as it would be written in game. A bookmark is
+ * made while standing at the hole, so the name for one end carries the signature read on
+ * the other: the far side is what the name has to describe, the near side is where the
+ * scanner was. A ghost end has no system to name, so it gets none.
+ */
+export function connectionBookmarks(
+	connection: MapConnection,
+	systems: readonly MapSystemView[],
+	signatures: readonly Signature[],
+	codeOf: WormholeCodeOf,
+	formats: BookmarkFormats | null,
+): string[] {
+	const placed = (id: number) => systems.find((s) => s.id === id) ?? null;
+	const from = placed(connection.from_system);
+	const to = placed(connection.to_system);
+	if (from === null || to === null) return [];
+
+	const nameFor = (end: MapSystemView, near: MapSystemView): string | null => {
+		if (end.kind !== 'system') return null;
+		const sig =
+			near.kind === 'system'
+				? (signatures.find(
+						(s) => s.connection_id === connection.id && s.solar_system_id === near.solar_system_id,
+					) ?? null)
+				: null;
+		return formatBookmark(
+			bookmarkSystemOf(end),
+			{
+				signatureId: sig?.signature_id ?? null,
+				size: connection.size,
+				massStatus: connection.mass_status,
+				timeStatus: connection.time_status,
+				wormholeCode: sig ? codeOf(sig.signature_type_id) : null,
+			},
+			formats,
+			near.alias,
+		);
+	};
+	return [nameFor(from, to), nameFor(to, from)].filter((name) => name !== null);
+}
+
+/**
+ * The bookmark a scanned signature copies: where its hole leads, named from the system it
+ * was scanned in. Until the hole is mapped, the class its type promises is all there is,
+ * and the name and region stay blank rather than borrowing the near side's.
+ */
+export function signatureBookmark(
+	sig: Signature,
+	type: Pick<SignatureTypeInfo, 'signature' | 'target_class'> | null,
+	far: MappedSystem | null,
+	alias: string | null,
+	scannedFromAlias: string | null,
+	formats: BookmarkFormats | null,
+): string {
+	return formatBookmark(
+		{
+			alias,
+			name: far?.name ?? '',
+			region: far?.region ?? null,
+			wormholeClassId: far?.wormhole_class_id ?? type?.target_class ?? null,
+			security: far?.security_status ?? null,
+			occupier: far?.occupying_group ?? null,
+		},
+		{
+			signatureId: sig.signature_id,
+			size: sig.size,
+			massStatus: sig.mass_status,
+			timeStatus: sig.time_status,
+			wormholeCode: type?.signature ?? null,
+		},
+		formats,
+		scannedFromAlias,
+	);
 }

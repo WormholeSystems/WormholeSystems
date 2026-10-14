@@ -8,7 +8,7 @@
 	import { copyText } from '$lib/clipboard';
 
 	import { aliasTargetKind, suggestAlias } from '$lib/naming/alias';
-	import { formatBookmark, formatsFromNaming } from '$lib/naming/bookmark';
+	import { formatsFromNaming, signatureBookmark } from '$lib/naming/bookmark';
 	import { classMeta, isWormholeClass } from '$lib/map/classes';
 	import type { MappedSystem } from '$lib/map/system';
 	import type { MassStatus } from '$lib/api/types/MassStatus';
@@ -20,7 +20,6 @@
 	import { Input } from '$lib/components/ui/input';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import * as Select from '$lib/components/ui/select';
-	import { destClassMeta } from '$lib/map/classes';
 	import { LIFETIME_OPTIONS, SIGNATURE_MASS_OPTIONS } from '$lib/map/connection-status';
 	import { CATEGORIES, categoryMeta, typeById } from '$lib/map/signatures';
 	import type { SignatureContext, SignaturePatch } from '$lib/map/signature-context';
@@ -113,25 +112,13 @@
 		const type = typeById(catalog, sig.signature_type_id);
 		const far = linkedSystem;
 		const farClass = far?.wormhole_class_id ?? type?.target_class ?? null;
-		const text = formatBookmark(
-			{
-				alias: linkedTarget?.alias ?? guessAlias(farClass, far?.security_status ?? null),
-				// Blank rather than borrowing this system's: the far side is genuinely unknown.
-				name: far?.name ?? '',
-				region: far?.region ?? null,
-				wormholeClassId: far?.wormhole_class_id ?? type?.target_class ?? null,
-				security: far?.security_status ?? null,
-				occupier: far?.occupying_group ?? null,
-			},
-			{
-				signatureId: sig.signature_id,
-				size: sig.size,
-				massStatus: sig.mass_status,
-				timeStatus: sig.time_status,
-				wormholeCode: type?.signature ?? null,
-			},
-			formatsFromNaming(ctx.naming),
+		const text = signatureBookmark(
+			sig,
+			type,
+			far,
+			linkedTarget?.alias ?? guessAlias(farClass, far?.security_status ?? null),
 			system.alias,
+			formatsFromNaming(ctx.naming),
 		);
 		void copyText(text, { silent: true });
 		toast.success('Bookmark copied', { description: text });
