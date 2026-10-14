@@ -39,6 +39,31 @@ export class MapCamera {
 		this.mapId = mapId;
 	}
 
+	/**
+	 * Start measuring the canvas element; returns the cleanup. Its size is watched, since
+	 * `getBoundingClientRect` is not reactive and the scrollbars derive from it, and so is
+	 * anything that can move it on screen without resizing it: a page scroll (captured, so
+	 * a scrolling panel counts) or a window resize.
+	 */
+	attach(el: HTMLElement): () => void {
+		this.viewportEl = el;
+		const observer = new ResizeObserver(([entry]) => {
+			const box = entry.contentRect;
+			this.viewportSize = { width: box.width, height: box.height };
+			this.remeasure();
+		});
+		observer.observe(el);
+		const moved = () => this.remeasure();
+		window.addEventListener('scroll', moved, { capture: true, passive: true });
+		window.addEventListener('resize', moved, { passive: true });
+		return () => {
+			observer.disconnect();
+			window.removeEventListener('scroll', moved, { capture: true });
+			window.removeEventListener('resize', moved);
+			if (this.viewportEl === el) this.viewportEl = null;
+		};
+	}
+
 	// Where the canvas sits on screen, measured once and kept until something may have moved
 	// it. Reading it fresh on every pointer move would force a layout each time, right after
 	// the previous move's DOM writes.

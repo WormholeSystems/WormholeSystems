@@ -5,11 +5,8 @@
 	// keeps interaction state.
 	import { solarSystemId } from '$lib/map/system';
 	import { tickingMs } from '$lib/now.svelte';
-	import { trackedPilots } from '$lib/map/tracked-pilots';
-	import { deepLinkTarget, systemParamUrl } from '../state/deep-link';
-
-	import { afterNavigate, replaceState } from '$app/navigation';
-	import { page } from '$app/state';
+	import { syncDeepLink } from '../state/deep-link.svelte';
+	import { followCharacters } from '../state/follow.svelte';
 
 	import { Button } from '$lib/components/ui/button';
 	import * as Tooltip from '$lib/components/ui/tooltip';
@@ -65,28 +62,11 @@
 		void map.characters.mine;
 		tracker.observe();
 	});
-	// Where each followed pilot last took the selection, so clicking elsewhere holds until
-	// one of them moves.
-	const followed = new Map<number, number>();
-	$effect(() => {
-		if (!map.userSettings?.follow_character) return;
-		const pilots = trackedPilots(map.characters.mine, map.userSettings.tracked_character_ids);
-		for (const pilot of pilots) {
-			const systemId = pilot.online ? (pilot.solar_system_id ?? null) : null;
-			if (systemId === null || followed.get(pilot.character_id) === systemId) continue;
-			// A jump into an unmapped hole lands here again once the tracker has drawn it.
-			const placed = map.systems.all.find(
-				(s) => s.kind === 'system' && s.solar_system_id === systemId,
-			);
-			if (!placed) continue;
-			followed.set(pilot.character_id, systemId);
-			map.activeId = placed.id;
-		}
-	});
+	followCharacters(map);
 	// The edge countdowns; one clock for every line rather than a timer per edge.
 	const clock = tickingMs(30_000);
 	const gestures = new MapGestures(map);
-	// The app-wide system context menu reads the map through this getter.
+	// The system menus around panel rows read the map through this getter.
 	setMapContext(() => map);
 
 	let viewportEl = $state<HTMLElement | null>(null);
@@ -118,80 +98,16 @@
 	});
 
 	$effect(() => {
-		map.camera.viewportEl = viewportEl;
-	});
-
-	$effect(() => {
 		map.camera.restoreZoom();
 	});
 
-	// A `?system=` deep link activates its system once the graph is in, exactly once:
-	// clearing the param instead would race the load-time restore.
-	let deepLinkApplied = false;
-	$effect(() => {
-		if (deepLinkApplied || !map.loaded) return;
-		deepLinkApplied = true;
-		if (map.activeId === null) {
-			map.activeId = deepLinkTarget(map.systems.all, page.url.searchParams.get('system'));
-		}
-	});
+	syncDeepLink(map);
 
-	// `getBoundingClientRect` is not reactive, and the virtual scrollbars derive from this.
-	$effect(() => {
-		const el = viewportEl;
-		if (!el) return;
-		const observer = new ResizeObserver(([entry]) => {
-			const box = entry.contentRect;
-			map.camera.viewportSize = { width: box.width, height: box.height };
-			map.camera.remeasure();
-		});
-		observer.observe(el);
-		// The camera keeps the canvas's screen position between gestures; anything that can
-		// shift it without resizing it has to say so. Captured, so a scrolling panel counts.
-		const moved = () => map.camera.remeasure();
-		window.addEventListener('scroll', moved, { capture: true, passive: true });
-		window.addEventListener('resize', moved, { passive: true });
-		return () => {
-			observer.disconnect();
-			window.removeEventListener('scroll', moved, { capture: true });
-			window.removeEventListener('resize', moved);
-		};
-	});
+	$effect(() => (viewportEl ? map.camera.attach(viewportEl) : undefined));
+	$effect(() => (viewportEl ? gestures.attachWheel(viewportEl) : undefined));
 
 	// Realtime: any frame on the map socket means "refetch".
 	$effect(() => connectMapSession(map));
-
-	// `replaceState` throws until the router has started, which is still mid-hydration on
-	// first paint.
-	let routerReady = $state(false);
-	afterNavigate(() => (routerReady = true));
-
-	// Only ever writes the param: clearing it would race the load-time restore, which reads
-	// `?system=` before the map data has arrived and an active system exists.
-	$effect(() => {
-		const active = map.activeSystem;
-		if (!routerReady || active?.kind !== 'system') return;
-		const url = systemParamUrl(page.url, active.solar_system_id);
-		if (url) replaceState(url, {});
-	});
-
-	// Wheel: plain scrolls the page, ctrl/meta is swallowed so pinch does not zoom the whole
-	// app, shift pans the map. Needs a non-passive listener to be allowed to preventDefault.
-	$effect(() => {
-		const el = viewportEl;
-		if (!el) return;
-		const onWheel = (ev: WheelEvent) => {
-			if (ev.ctrlKey || ev.metaKey) {
-				ev.preventDefault();
-				return;
-			}
-			if (!ev.shiftKey) return;
-			ev.preventDefault();
-			map.camera.panBy(-ev.deltaX, -ev.deltaY);
-		};
-		el.addEventListener('wheel', onWheel, { passive: false });
-		return () => el.removeEventListener('wheel', onWheel);
-	});
 
 	function onKey(ev: KeyboardEvent) {
 		if ((ev.key === 'Delete' || ev.key === 'Backspace') && map.selected.size > 0) {
