@@ -36,19 +36,31 @@ export const key = {
 const FIVE_MINUTES = 5 * 60_000;
 
 export const q = {
-	myCharacters: () => queryOptions({ queryKey: key.myCharacters, queryFn: api.myCharacters }),
-	myScopes: () => queryOptions({ queryKey: ['me', 'scopes'], queryFn: api.myScopes }),
-	myDiscord: () => queryOptions({ queryKey: ['me', 'discord'], queryFn: api.myDiscord }),
-	myTokens: () => queryOptions({ queryKey: key.myTokens, queryFn: api.myTokens }),
+	myCharacters: () =>
+		queryOptions({ queryKey: key.myCharacters, queryFn: ({ signal }) => api.myCharacters(signal) }),
+	myScopes: () =>
+		queryOptions({ queryKey: ['me', 'scopes'], queryFn: ({ signal }) => api.myScopes(signal) }),
+	myDiscord: () =>
+		queryOptions({ queryKey: ['me', 'discord'], queryFn: ({ signal }) => api.myDiscord(signal) }),
+	myTokens: () =>
+		queryOptions({ queryKey: key.myTokens, queryFn: ({ signal }) => api.myTokens(signal) }),
 
 	instance: () =>
-		queryOptions({ queryKey: ['instance'], queryFn: api.instance, staleTime: Infinity }),
+		queryOptions({
+			queryKey: ['instance'],
+			queryFn: ({ signal }) => api.instance(signal),
+			staleTime: Infinity,
+		}),
 	gridConfig: () =>
-		queryOptions({ queryKey: ['grid-config'], queryFn: api.gridConfig, staleTime: Infinity }),
+		queryOptions({
+			queryKey: ['grid-config'],
+			queryFn: ({ signal }) => api.gridConfig(signal),
+			staleTime: Infinity,
+		}),
 	serverStatus: () =>
 		queryOptions({
 			queryKey: key.serverStatus,
-			queryFn: api.serverStatus,
+			queryFn: ({ signal }) => api.serverStatus(signal),
 			refetchInterval: 60_000,
 		}),
 	// Background refetch stays on for both feeds: a hidden tab must keep the data the
@@ -56,7 +68,7 @@ export const q = {
 	skyhooks: () =>
 		queryOptions({
 			queryKey: ['skyhooks'],
-			queryFn: api.skyhooks,
+			queryFn: ({ signal }) => api.skyhooks(signal),
 			refetchInterval: FIVE_MINUTES,
 			refetchIntervalInBackground: true,
 			staleTime: FIVE_MINUTES,
@@ -64,99 +76,138 @@ export const q = {
 	eveScout: () =>
 		queryOptions({
 			queryKey: ['evescout'],
-			queryFn: api.eveScout,
+			queryFn: ({ signal }) => api.eveScout(signal),
 			refetchInterval: FIVE_MINUTES,
 			refetchIntervalInBackground: true,
 			staleTime: FIVE_MINUTES,
 		}),
 
-	myMaps: () => queryOptions({ queryKey: key.maps, queryFn: api.myMaps }),
+	myMaps: () => queryOptions({ queryKey: key.maps, queryFn: ({ signal }) => api.myMaps(signal) }),
 	mapView: (id: number) =>
-		queryOptions({ queryKey: key.mapView(id), queryFn: () => api.fetchMap(id) }),
+		queryOptions({ queryKey: key.mapView(id), queryFn: ({ signal }) => api.fetchMap(id, signal) }),
 	listSignatures: (id: number) =>
-		queryOptions({ queryKey: key.signatures(id), queryFn: () => api.listSignatures(id) }),
+		queryOptions({
+			queryKey: key.signatures(id),
+			queryFn: ({ signal }) => api.listSignatures(id, signal),
+		}),
 	mapCharacters: (id: number) =>
-		queryOptions({ queryKey: key.mapCharacters(id), queryFn: () => api.mapCharacters(id) }),
+		queryOptions({
+			queryKey: key.mapCharacters(id),
+			queryFn: ({ signal }) => api.mapCharacters(id, signal),
+		}),
 	mapUserSettings: (id: number) =>
-		queryOptions({ queryKey: key.userSettings(id), queryFn: () => api.mapUserSettings(id) }),
+		queryOptions({
+			queryKey: key.userSettings(id),
+			queryFn: ({ signal }) => api.mapUserSettings(id, signal),
+		}),
 	listAccess: (id: number) =>
-		queryOptions({ queryKey: key.access(id), queryFn: () => api.listAccess(id) }),
+		queryOptions({ queryKey: key.access(id), queryFn: ({ signal }) => api.listAccess(id, signal) }),
 	mapKillmails: (id: number) =>
-		queryOptions({ queryKey: key.killmails(id), queryFn: () => api.mapKillmails(id) }),
+		queryOptions({
+			queryKey: key.killmails(id),
+			queryFn: ({ signal }) => api.mapKillmails(id, null, signal),
+		}),
 	mapHistory: (id: number) =>
-		queryOptions({ queryKey: key.history(id), queryFn: () => api.mapHistory(id) }),
+		queryOptions({
+			queryKey: key.history(id),
+			queryFn: ({ signal }) => api.mapHistory(id, signal),
+		}),
 	listWatchlist: (id: number) =>
-		queryOptions({ queryKey: key.watchlist(id), queryFn: () => api.listWatchlist(id) }),
+		queryOptions({
+			queryKey: key.watchlist(id),
+			queryFn: ({ signal }) => api.listWatchlist(id, signal),
+		}),
 	listIgnored: (id: number) =>
-		queryOptions({ queryKey: key.ignored(id), queryFn: () => api.listIgnored(id) }),
+		queryOptions({
+			queryKey: key.ignored(id),
+			queryFn: ({ signal }) => api.listIgnored(id, signal),
+		}),
 	listStaleConnections: (id: number) =>
-		queryOptions({ queryKey: key.stale(id), queryFn: () => api.listStaleConnections(id) }),
+		queryOptions({
+			queryKey: key.stale(id),
+			queryFn: ({ signal }) => api.listStaleConnections(id, signal),
+		}),
 	transferCounts: (id: number) =>
-		queryOptions({ queryKey: key.transferCounts(id), queryFn: () => api.transferCounts(id) }),
+		queryOptions({
+			queryKey: key.transferCounts(id),
+			queryFn: ({ signal }) => api.transferCounts(id, signal),
+		}),
 
 	listAlerts: (id: number) =>
-		queryOptions({ queryKey: [...key.alerting(id), 'alerts'], queryFn: () => api.listAlerts(id) }),
+		queryOptions({
+			queryKey: [...key.alerting(id), 'alerts'],
+			queryFn: ({ signal }) => api.listAlerts(id, signal),
+		}),
 	alertEvents: (id: number) =>
-		queryOptions({ queryKey: [...key.alerting(id), 'events'], queryFn: () => api.alertEvents(id) }),
+		queryOptions({
+			queryKey: [...key.alerting(id), 'events'],
+			queryFn: ({ signal }) => api.alertEvents(id, signal),
+		}),
 	listWebhooks: (id: number) =>
 		queryOptions({
 			queryKey: [...key.alerting(id), 'webhooks'],
-			queryFn: () => api.listWebhooks(id),
+			queryFn: ({ signal }) => api.listWebhooks(id, signal),
 		}),
 	listAlertRoles: (id: number) =>
 		queryOptions({
 			queryKey: [...key.alerting(id), 'roles'],
-			queryFn: () => api.listAlertRoles(id),
+			queryFn: ({ signal }) => api.listAlertRoles(id, signal),
 		}),
 
 	systemDetails: (id: number, mss: number) =>
 		queryOptions({
 			queryKey: ['maps', id, 'details', mss],
-			queryFn: () => api.systemDetails(id, mss),
+			queryFn: ({ signal }) => api.systemDetails(id, mss, signal),
 		}),
 	listConnectionJumps: (id: number, connectionId: number) =>
 		queryOptions({
 			queryKey: key.connectionJumps(id, connectionId),
-			queryFn: () => api.listConnectionJumps(id, connectionId),
+			queryFn: ({ signal }) => api.listConnectionJumps(id, connectionId, signal),
 		}),
 	searchMap: (id: number, term: string) =>
 		queryOptions({
 			queryKey: ['maps', id, 'search', term],
-			queryFn: () => api.searchMap(id, term),
+			queryFn: ({ signal }) => api.searchMap(id, term, signal),
 		}),
 
 	searchSystems: (term: string) =>
-		queryOptions({ queryKey: ['search', 'systems', term], queryFn: () => api.searchSystems(term) }),
+		queryOptions({
+			queryKey: ['search', 'systems', term],
+			queryFn: ({ signal }) => api.searchSystems(term, signal),
+		}),
 	searchShips: (term: string) =>
-		queryOptions({ queryKey: ['search', 'ships', term], queryFn: () => api.searchShips(term) }),
+		queryOptions({
+			queryKey: ['search', 'ships', term],
+			queryFn: ({ signal }) => api.searchShips(term, signal),
+		}),
 	searchAccessSubjects: (term: string) =>
 		queryOptions({
 			queryKey: ['search', 'access-subjects', term],
-			queryFn: () => api.searchAccessSubjects(term),
+			queryFn: ({ signal }) => api.searchAccessSubjects(term, signal),
 		}),
 
 	effectModifiers: (name: string, wormholeClassId: number) =>
 		queryOptions({
 			queryKey: ['effects', name, wormholeClassId],
-			queryFn: () => api.effectModifiers(name, wormholeClassId),
+			queryFn: ({ signal }) => api.effectModifiers(name, wormholeClassId, signal),
 			staleTime: Infinity,
 		}),
 	threatAnalysis: (solarSystemId: number) =>
 		queryOptions({
 			queryKey: ['threat', solarSystemId],
-			queryFn: () => api.threatAnalysis(solarSystemId),
+			queryFn: ({ signal }) => api.threatAnalysis(solarSystemId, signal),
 		}),
 	signatureCatalog: () =>
 		queryOptions({
 			queryKey: ['reference', 'signature-catalog'],
-			queryFn: api.signatureCatalog,
+			queryFn: ({ signal }) => api.signatureCatalog(signal),
 			staleTime: Infinity,
 			gcTime: Infinity,
 		}),
 	routingGraph: () =>
 		queryOptions({
 			queryKey: ['reference', 'routing-graph'],
-			queryFn: api.routingGraph,
+			queryFn: ({ signal }) => api.routingGraph(signal),
 			staleTime: Infinity,
 			gcTime: Infinity,
 		}),

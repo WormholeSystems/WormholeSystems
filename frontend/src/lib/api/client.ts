@@ -124,8 +124,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 	return res.json();
 }
 
-function get<T>(path: string): Promise<T> {
-	return request<T>(path);
+// A read takes the query's abort signal, so a refetch TanStack Query cancels (a newer one
+// superseding it, a write cancelling a stale read, nobody watching any more) stops
+// downloading instead of finishing a response nobody will use.
+function get<T>(path: string, signal?: AbortSignal): Promise<T> {
+	return request<T>(path, { signal });
 }
 
 function post<T>(path: string, body: unknown): Promise<T> {
@@ -150,11 +153,11 @@ function del<T>(path: string): Promise<T> {
 
 export const api = {
 	// Auth / identity
-	myCharacters: () => get<CharacterRef[]>('/api/me/characters'),
-	myScopes: () => get<ScopeStatus[]>('/api/me/scopes'),
-	myDiscord: () => get<DiscordAccount | null>('/api/me/discord'),
+	myCharacters: (signal?: AbortSignal) => get<CharacterRef[]>('/api/me/characters', signal),
+	myScopes: (signal?: AbortSignal) => get<ScopeStatus[]>('/api/me/scopes', signal),
+	myDiscord: (signal?: AbortSignal) => get<DiscordAccount | null>('/api/me/discord', signal),
 	unlinkDiscord: () => post<null>('/api/me/discord/unlink', {}),
-	myTokens: () => get<PersonalAccessToken[]>('/api/me/tokens'),
+	myTokens: (signal?: AbortSignal) => get<PersonalAccessToken[]>('/api/me/tokens', signal),
 	createToken: (cmd: CreateToken) => post<CreatedToken>('/api/me/tokens', cmd),
 	revokeToken: (id: number) => del<null>(`/api/me/tokens/${id}`),
 	switchCharacter: (characterId: number) =>
@@ -169,26 +172,33 @@ export const api = {
 	setWaypointAll: (body: SetWaypointAllBody) => post<null>('/api/waypoints/all', body),
 
 	// Config / reference data
-	instance: () => get<Instance>('/api/instance'),
-	gridConfig: () => get<GridConfig>('/api/grid-config'),
-	effectModifiers: (name: string, wormholeClassId: number) =>
-		get<EffectModifier[]>(`/api/effects?name=${encodeURIComponent(name)}&class=${wormholeClassId}`),
-	searchSystems: (query: string) =>
-		get<SystemSearchResult[]>(`/api/systems/search?q=${encodeURIComponent(query)}`),
-	resolveSystems: (ids: number[]) =>
-		get<SystemSearchResult[]>(`/api/systems/resolve?ids=${ids.join(',')}`),
-	threatAnalysis: (solarSystemId: number) => get<ThreatAnalysis>(`/api/threat/${solarSystemId}`),
+	instance: (signal?: AbortSignal) => get<Instance>('/api/instance', signal),
+	gridConfig: (signal?: AbortSignal) => get<GridConfig>('/api/grid-config', signal),
+	effectModifiers: (name: string, wormholeClassId: number, signal?: AbortSignal) =>
+		get<EffectModifier[]>(
+			`/api/effects?name=${encodeURIComponent(name)}&class=${wormholeClassId}`,
+			signal,
+		),
+	searchSystems: (query: string, signal?: AbortSignal) =>
+		get<SystemSearchResult[]>(`/api/systems/search?q=${encodeURIComponent(query)}`, signal),
+	resolveSystems: (ids: number[], signal?: AbortSignal) =>
+		get<SystemSearchResult[]>(`/api/systems/resolve?ids=${ids.join(',')}`, signal),
+	threatAnalysis: (solarSystemId: number, signal?: AbortSignal) =>
+		get<ThreatAnalysis>(`/api/threat/${solarSystemId}`, signal),
 	// Cached for a day; bump the version param when the payload shape changes.
-	routingGraph: () => get<RoutingGraph>('/api/routing-graph?v=5'),
+	routingGraph: (signal?: AbortSignal) => get<RoutingGraph>('/api/routing-graph?v=5', signal),
 
 	// Maps
-	myMaps: () => get<MapEntry[]>('/api/maps'),
+	myMaps: (signal?: AbortSignal) => get<MapEntry[]>('/api/maps', signal),
 	createMap: (name: string, description?: string) => post<Map>('/api/maps', { name, description }),
 	deleteMap: (mapId: number) => del<null>(`/api/maps/${mapId}`),
-	fetchMap: (mapId: number) => get<MapView>(`/api/maps/${mapId}`),
-	listSignatures: (mapId: number) => get<Signature[]>(`/api/maps/${mapId}/signatures`),
-	mapCharacters: (mapId: number) => get<MapCharacter[]>(`/api/maps/${mapId}/characters`),
-	mapUserSettings: (mapId: number) => get<MapUserSettings>(`/api/maps/${mapId}/settings/user`),
+	fetchMap: (mapId: number, signal?: AbortSignal) => get<MapView>(`/api/maps/${mapId}`, signal),
+	listSignatures: (mapId: number, signal?: AbortSignal) =>
+		get<Signature[]>(`/api/maps/${mapId}/signatures`, signal),
+	mapCharacters: (mapId: number, signal?: AbortSignal) =>
+		get<MapCharacter[]>(`/api/maps/${mapId}/characters`, signal),
+	mapUserSettings: (mapId: number, signal?: AbortSignal) =>
+		get<MapUserSettings>(`/api/maps/${mapId}/settings/user`, signal),
 	updateMapUserSettings: (mapId: number, update: UpdateMapUserSettings) =>
 		post<MapUserSettings>(`/api/maps/${mapId}/settings/user`, update),
 	uploadBackgroundImage: (mapId: number, file: File) => {
@@ -216,20 +226,21 @@ export const api = {
 		post<null>(`/api/maps/${cmd.map_id}/systems/set-occupier`, cmd),
 	setHome: (cmd: SetHome) => post<null>(`/api/maps/${cmd.map_id}/systems/set-home`, cmd),
 	setNotes: (cmd: SetNotes) => post<null>(`/api/maps/${cmd.map_id}/systems/set-notes`, cmd),
-	systemDetails: (mapId: number, mss: number) =>
-		get<SystemDetails>(`/api/maps/${mapId}/systems/${mss}/details`),
+	systemDetails: (mapId: number, mss: number, signal?: AbortSignal) =>
+		get<SystemDetails>(`/api/maps/${mapId}/systems/${mss}/details`, signal),
 	setRally: (cmd: SetRally) => post<null>(`/api/maps/${cmd.map_id}/systems/set-rally`, cmd),
 	setPinned: (cmd: SetPinned) => post<null>(`/api/maps/${cmd.map_id}/systems/set-pinned`, cmd),
 
-	serverStatus: () => get<ServerStatus>('/api/server-status'),
-	skyhooks: () => get<Skyhook[]>('/api/skyhooks'),
+	serverStatus: (signal?: AbortSignal) => get<ServerStatus>('/api/server-status', signal),
+	skyhooks: (signal?: AbortSignal) => get<Skyhook[]>('/api/skyhooks', signal),
 	// The selected system only matters to a card that follows the selection; the server
 	// ignores it otherwise.
-	mapKillmails: (mapId: number, solarSystemId: number | null = null) =>
+	mapKillmails: (mapId: number, solarSystemId: number | null = null, signal?: AbortSignal) =>
 		get<MapKillmail[]>(
 			solarSystemId === null
 				? `/api/maps/${mapId}/killmails`
 				: `/api/maps/${mapId}/killmails?solar_system_id=${solarSystemId}`,
+			signal,
 		),
 
 	// Places the system, connects it, and links the signature in one undoable step. The
@@ -243,31 +254,33 @@ export const api = {
 		post<MapConnection>(`/api/maps/${cmd.map_id}/connections/set-status`, cmd),
 	removeConnection: (cmd: RemoveConnection) =>
 		post<null>(`/api/maps/${cmd.map_id}/connections/remove`, cmd),
-	listConnectionJumps: (mapId: number, connectionId: number) =>
-		get<ConnectionJump[]>(`/api/maps/${mapId}/connections/${connectionId}/jumps`),
+	listConnectionJumps: (mapId: number, connectionId: number, signal?: AbortSignal) =>
+		get<ConnectionJump[]>(`/api/maps/${mapId}/connections/${connectionId}/jumps`, signal),
 	addConnectionJump: (cmd: AddConnectionJump) =>
 		post<ConnectionJump>(`/api/maps/${cmd.map_id}/connections/jumps/add`, cmd),
 	updateConnectionJump: (cmd: UpdateConnectionJump) =>
 		post<ConnectionJump>(`/api/maps/${cmd.map_id}/connections/jumps/update`, cmd),
 	removeConnectionJump: (cmd: RemoveConnectionJump) =>
 		post<null>(`/api/maps/${cmd.map_id}/connections/jumps/remove`, cmd),
-	searchShips: (query: string) =>
-		get<ShipSearchResult[]>(`/api/ships/search?q=${encodeURIComponent(query)}`),
+	searchShips: (query: string, signal?: AbortSignal) =>
+		get<ShipSearchResult[]>(`/api/ships/search?q=${encodeURIComponent(query)}`, signal),
 
 	// Navigation
-	eveScout: () => get<EveScoutConnection[]>('/api/evescout'),
+	eveScout: (signal?: AbortSignal) => get<EveScoutConnection[]>('/api/evescout', signal),
 	// Puts a hub's public holes on the map in one undoable step; answers with how many
 	// connections it added, the socket drives the refetch.
 	addEveScoutToMap: (cmd: AddEveScoutToMap) =>
 		post<number>(`/api/maps/${cmd.map_id}/evescout/add`, cmd),
-	listWatchlist: (mapId: number) => get<WatchlistEntry[]>(`/api/maps/${mapId}/watchlist`),
+	listWatchlist: (mapId: number, signal?: AbortSignal) =>
+		get<WatchlistEntry[]>(`/api/maps/${mapId}/watchlist`, signal),
 	addWatchlistEntry: (cmd: AddWatchlistEntry) =>
 		post<WatchlistEntry>(`/api/maps/${cmd.map_id}/watchlist/add`, cmd),
 	setWatchlistPinned: (cmd: SetWatchlistPinned) =>
 		post<WatchlistEntry>(`/api/maps/${cmd.map_id}/watchlist/set-pinned`, cmd),
 	removeWatchlistEntry: (cmd: RemoveWatchlistEntry) =>
 		post<null>(`/api/maps/${cmd.map_id}/watchlist/remove`, cmd),
-	listIgnored: (mapId: number) => get<IgnoredSystem[]>(`/api/maps/${mapId}/ignored`),
+	listIgnored: (mapId: number, signal?: AbortSignal) =>
+		get<IgnoredSystem[]>(`/api/maps/${mapId}/ignored`, signal),
 	addIgnored: (cmd: AddIgnoredSystem) =>
 		post<IgnoredSystem>(`/api/maps/${cmd.map_id}/ignored/add`, cmd),
 	removeIgnored: (cmd: RemoveIgnoredSystem) =>
@@ -276,7 +289,8 @@ export const api = {
 		post<number>(`/api/maps/${cmd.map_id}/ignored/clear`, cmd),
 
 	// Import / export
-	transferCounts: (mapId: number) => get<TransferCounts>(`/api/maps/${mapId}/transfer/counts`),
+	transferCounts: (mapId: number, signal?: AbortSignal) =>
+		get<TransferCounts>(`/api/maps/${mapId}/transfer/counts`, signal),
 	// A plain URL rather than a call: the browser follows it and saves the download itself.
 	exportMapUrl: (mapId: number, sections: string[]) =>
 		`/api/maps/${mapId}/transfer/export?sections=${sections.join(',')}`,
@@ -287,17 +301,22 @@ export const api = {
 
 	// Access / settings
 	updateMap: (cmd: UpdateMap) => post<Map>(`/api/maps/${cmd.map_id}/update`, cmd),
-	listAccess: (mapId: number) => get<AccessEntry[]>(`/api/maps/${mapId}/access`),
+	listAccess: (mapId: number, signal?: AbortSignal) =>
+		get<AccessEntry[]>(`/api/maps/${mapId}/access`, signal),
 
 	// --- Discord alerts ---
-	listAlerts: (mapId: number) => get<MapAlert[]>(`/api/maps/${mapId}/alerts`),
-	alertEvents: (mapId: number) => get<MapAlertEvent[]>(`/api/maps/${mapId}/alerts/events`),
-	listWebhooks: (mapId: number) => get<MapWebhook[]>(`/api/maps/${mapId}/webhooks`),
+	listAlerts: (mapId: number, signal?: AbortSignal) =>
+		get<MapAlert[]>(`/api/maps/${mapId}/alerts`, signal),
+	alertEvents: (mapId: number, signal?: AbortSignal) =>
+		get<MapAlertEvent[]>(`/api/maps/${mapId}/alerts/events`, signal),
+	listWebhooks: (mapId: number, signal?: AbortSignal) =>
+		get<MapWebhook[]>(`/api/maps/${mapId}/webhooks`, signal),
 	createWebhook: (mapId: number, body: SaveWebhook) =>
 		post<MapWebhook>(`/api/maps/${mapId}/webhooks`, body),
 	deleteWebhook: (mapId: number, webhookId: number) =>
 		del<null>(`/api/maps/${mapId}/webhooks/${webhookId}`),
-	listAlertRoles: (mapId: number) => get<MapWebhookRole[]>(`/api/maps/${mapId}/roles`),
+	listAlertRoles: (mapId: number, signal?: AbortSignal) =>
+		get<MapWebhookRole[]>(`/api/maps/${mapId}/roles`, signal),
 	createAlertRole: (mapId: number, body: SaveRole) =>
 		post<MapWebhookRole>(`/api/maps/${mapId}/roles`, body),
 	deleteAlertRole: (mapId: number, roleId: number) =>
@@ -310,8 +329,8 @@ export const api = {
 		post<MapAlert>(`/api/maps/${mapId}/alerts/${alertId}/active`, { is_active: isActive }),
 	deleteAlert: (mapId: number, alertId: number) =>
 		del<null>(`/api/maps/${mapId}/alerts/${alertId}`),
-	searchAccessSubjects: (query: string) =>
-		get<AccessSubject[]>(`/api/access-subjects/search?q=${encodeURIComponent(query)}`),
+	searchAccessSubjects: (query: string, signal?: AbortSignal) =>
+		get<AccessSubject[]>(`/api/access-subjects/search?q=${encodeURIComponent(query)}`, signal),
 	setAccess: (cmd: SetAccess) => post<null>(`/api/maps/${cmd.map_id}/access/set`, cmd),
 	shareMap: (mapId: number) => post<string>(`/api/maps/${mapId}/share`, {}),
 	unshareMap: (mapId: number) => del<null>(`/api/maps/${mapId}/share`),
@@ -319,21 +338,22 @@ export const api = {
 		post<null>(`/api/maps/${cmd.map_id}/access/transfer`, cmd),
 	revokeAccess: (cmd: RevokeAccess) => post<null>(`/api/maps/${cmd.map_id}/access/revoke`, cmd),
 
-	searchMap: (mapId: number, query: string) =>
-		get<MapSearchHit[]>(`/api/maps/${mapId}/search?q=${encodeURIComponent(query)}`),
-	listStaleConnections: (mapId: number) =>
-		get<StaleConnection[]>(`/api/maps/${mapId}/connections/stale`),
+	searchMap: (mapId: number, query: string, signal?: AbortSignal) =>
+		get<MapSearchHit[]>(`/api/maps/${mapId}/search?q=${encodeURIComponent(query)}`, signal),
+	listStaleConnections: (mapId: number, signal?: AbortSignal) =>
+		get<StaleConnection[]>(`/api/maps/${mapId}/connections/stale`, signal),
 	cleanStaleConnections: (cmd: CleanStaleConnections) =>
 		post<number>(`/api/maps/${cmd.map_id}/connections/clean-stale`, cmd),
 
 	// History
-	mapHistory: (mapId: number) => get<MapHistory>(`/api/maps/${mapId}/events`),
+	mapHistory: (mapId: number, signal?: AbortSignal) =>
+		get<MapHistory>(`/api/maps/${mapId}/events`, signal),
 	undoMapEvent: (mapId: number) => post<null>(`/api/maps/${mapId}/events/undo`, { map_id: mapId }),
 	redoMapEvent: (mapId: number) => post<null>(`/api/maps/${mapId}/events/redo`, { map_id: mapId }),
 	gotoMapEvent: (cmd: GotoMapEvent) => post<null>(`/api/maps/${cmd.map_id}/events/goto`, cmd),
 
 	// Signatures
-	signatureCatalog: () => get<SignatureCatalog>('/api/signature-types'),
+	signatureCatalog: (signal?: AbortSignal) => get<SignatureCatalog>('/api/signature-types', signal),
 	addSignature: (cmd: AddSignature) =>
 		post<Signature>(`/api/maps/${cmd.map_id}/signatures/add`, cmd),
 	updateSignature: (cmd: UpdateSignature) =>

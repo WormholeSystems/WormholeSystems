@@ -56,7 +56,7 @@
 	// through the same filter rather than landing in the list as is.
 	const killsQuery = createQuery(() => ({
 		queryKey: [...key.killmails(map.mapId), filter, selected, systemKey(map.systems.all)],
-		queryFn: () => api.mapKillmails(map.mapId, selected),
+		queryFn: ({ signal }) => api.mapKillmails(map.mapId, selected, signal),
 		// With nothing selected there is nothing to ask for.
 		enabled: !awaitingSelection,
 	}));
