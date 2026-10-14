@@ -408,8 +408,7 @@ const KNOWN_GAPS: &[(&str, &str)] = &[
     ),
     (
         "remove_signature",
-        "the connection that goes with the last scan on its side is not snapshotted, so \
-         the undo fails on the foreign key",
+        "the jump log of the connection it takes is not snapshotted",
     ),
     ("remove_signatures", "as remove_signature"),
     (
