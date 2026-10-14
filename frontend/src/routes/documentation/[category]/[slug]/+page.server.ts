@@ -1,12 +1,11 @@
 import { error } from '@sveltejs/kit';
 import { findPage, neighbours, render } from '$lib/docs';
-import type { PageLoad } from './$types';
+import type { PageServerLoad } from './$types';
 
-export const load: PageLoad = ({ params }) => {
+export const load: PageServerLoad = ({ params }) => {
 	const page = findPage(params.category, params.slug);
 	if (!page) error(404, 'No such documentation page');
 	return {
-		page,
 		html: render(page.markdown),
 		...neighbours(page),
 		seo: { title: `${page.title} · Documentation`, description: summary(page.markdown) },

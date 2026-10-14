@@ -1,12 +1,9 @@
 <script lang="ts">
 	import ChevronLeftIcon from '@lucide/svelte/icons/chevron-left';
 	import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
-	import type { DocPage } from '$lib/docs';
+	import type { DocLink } from '$lib/docs';
 
-	let {
-		data,
-	}: { data: { page: DocPage; html: string; prev: DocPage | null; next: DocPage | null } } =
-		$props();
+	let { data }: { data: { html: string; prev: DocLink | null; next: DocLink | null } } = $props();
 </script>
 
 <article class="docs-prose min-w-0" data-testid="docs-page">

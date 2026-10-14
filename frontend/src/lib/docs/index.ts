@@ -1,7 +1,9 @@
 import { marked } from 'marked';
 
 /**
- * The documentation tree, built at compile time from the Markdown under `src/docs/`.
+ * The documentation tree, built at compile time from the Markdown under `src/docs/`. Read
+ * by the server loads only: the browser gets each page as rendered HTML plus the sidebar's
+ * titles and links, never the whole tree of Markdown and the parser to go with it.
  * Folders are categories and files are pages; the `NN-` prefix on either orders it and is
  * dropped from the URL, so contributing a page means adding a file and nothing else.
  */
@@ -24,6 +26,23 @@ export interface DocCategory {
 	title: string;
 	slug: string;
 	pages: DocPage[];
+}
+
+/** A page as a link to it: all the sidebar and the prev/next footer need. */
+export interface DocLink {
+	title: string;
+	url: string;
+}
+
+/** A category as the sidebar draws it. */
+export interface DocSection {
+	title: string;
+	slug: string;
+	pages: DocLink[];
+}
+
+export function linkTo(page: DocPage): DocLink {
+	return { title: page.title, url: page.url };
 }
 
 /** `03-bookmarking` → `bookmarking`, which is what the URL and the sidebar both use. */
@@ -133,14 +152,23 @@ export function findPage(categorySlug: string, slug: string): DocPage | null {
 
 /** The pages either side of one, which is what the footer links to. */
 export interface Neighbours {
-	prev: DocPage | null;
-	next: DocPage | null;
+	prev: DocLink | null;
+	next: DocLink | null;
 }
 
 export function neighbours(page: DocPage): Neighbours {
 	const at = pages.indexOf(page);
-	return { prev: pages[at - 1] ?? null, next: pages[at + 1] ?? null };
+	const prev = pages[at - 1];
+	const next = pages[at + 1];
+	return { prev: prev ? linkTo(prev) : null, next: next ? linkTo(next) : null };
 }
+
+/** The sidebar: every category and its pages, without their Markdown. */
+export const sections: DocSection[] = categories.map((category) => ({
+	title: category.title,
+	slug: category.slug,
+	pages: category.pages.map(linkTo),
+}));
 
 /** Markdown to HTML. Raw HTML in a page is escaped rather than rendered. */
 export function render(markdown: string): string {

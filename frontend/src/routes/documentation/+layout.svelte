@@ -3,9 +3,9 @@
 	// narrow one, and the page itself in the middle.
 	import { page } from '$app/state';
 	import type { Snippet } from 'svelte';
-	import type { DocCategory } from '$lib/docs';
+	import type { DocSection } from '$lib/docs';
 
-	let { data, children }: { data: { categories: DocCategory[] }; children: Snippet } = $props();
+	let { data, children }: { data: { categories: DocSection[] }; children: Snippet } = $props();
 
 	const here = $derived(page.url.pathname);
 	const flat = $derived(
