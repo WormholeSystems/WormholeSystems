@@ -142,6 +142,15 @@ async fn kills_are_stored_back_to_back_and_alerted_on(pool: PgPool) {
         .await
         .unwrap();
     assert_eq!(ids, [5101, 5102]);
+    let numbered = sqlx::query_scalar!("select count(ingest_seq) from killmails")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(
+        numbered,
+        Some(2),
+        "live kills are numbered for the name resolver"
+    );
 
     assert!(
         wait_for(async || inbox.lock().unwrap().len() == 2).await,

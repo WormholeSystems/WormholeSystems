@@ -13,13 +13,16 @@ Minimal locally-ingested killmails from zKillboard's R2Z2 stream.
 | `solar_system_id` | bigint | where it happened (no FK: any system id) |
 | `time` | timestamptz | killmail time; retention 730 days |
 | `orgs` | jsonb | participating orgs, deduped: `[{"id", "kind"}]`, alliance preferred over corporation |
+| `ingest_seq` | bigint, null | order the live stream stored it in (`killmails_ingest_seq`); null for archive imports |
 
-Index on `(solar_system_id, time)` for the analysis window scan.
+Index on `(solar_system_id, time)` for the analysis window scan, and a BRIN index on
+`ingest_seq` so the name resolver finds what is new since its last pass.
 
 ## `zkb_state`
 
 Single-row cursor into the R2Z2 sequence stream (`id boolean pk default true`,
-`sequence_id bigint`).
+`sequence_id bigint`), and `named_seq bigint` (default 0): the last `ingest_seq` the
+name resolver is done with.
 
 ## `wormhole_systems` additions
 

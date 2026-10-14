@@ -200,7 +200,14 @@ place:
 - Pruning of connection-jump observations no connection claimed within 10 minutes
   ([`map_connection_jumps`](./database/mapping.md#map_connection_jumps)).
 - Naming the characters, corporations and alliances that killmails and sovereignty only
-  give ids for (`entities::ensure`, every minute over the killmail card's window). Ids
-  ESI no longer knows are noted in
+  give ids for. For killmails, every minute, over the kills the live stream stored since
+  the last pass (`killmails.ingest_seq` past `zkb_state.named_seq`, within the card's
+  7-day window): organisations one at a time through `entities::ensure` (the card wants
+  their tickers), pilots a thousand at a time through `/universe/names`. A batch ESI
+  fails on is retried for three passes before the mark moves past it. Every kill in EVE
+  is named, not only those in mapped systems: a system mapped later should show its week
+  of kills with names at once, and alerts, the access search and threat analysis read the
+  same names. Ids ESI no longer knows are noted in
   [`unresolvable_entities`](./database/universe.md#unresolvable_entities) and left alone
-  for 30 days rather than asked for on every pass.
+  for 30 days rather than asked for on every pass; a bulk call one of them fails is
+  halved until the dead id is found.

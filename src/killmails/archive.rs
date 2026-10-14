@@ -116,7 +116,7 @@ async fn import_day(
         day_alliances.extend(k.detail.final_blow_alliance_id);
     }
 
-    let inserted = super::insert_rows(pool, &kills).await?;
+    let inserted = super::insert_rows(pool, &kills, false).await?;
 
     // Organisations one at a time, because their tickers are what a row shows and only the
     // per-entity endpoint returns them. Characters go through the bulk endpoint.
@@ -125,7 +125,9 @@ async fn import_day(
     let characters: Vec<i64> = day_characters.into_iter().collect();
     crate::entities::ensure(pool, esi, EntityKind::Alliance, &alliances).await;
     crate::entities::ensure(pool, esi, EntityKind::Corporation, &corporations).await;
-    let named = crate::entities::ensure_character_names(pool, esi, &characters).await;
+    let named = crate::entities::ensure_character_names(pool, esi, &characters)
+        .await
+        .named;
 
     sqlx::query!(
         "insert into killmail_imports (day, killmails) values ($1, $2)
