@@ -7,25 +7,30 @@
 use std::collections::BTreeMap;
 
 /// Replace the values of matching `KEY=...` lines and keep everything else verbatim. Keys
-/// the file does not already have are appended.
+/// the file does not already have are appended. A key that is there twice has both lines
+/// replaced: compose reads the last one, a person reading the file finds the first, and
+/// the two should not disagree.
 pub fn patch(current: &str, values: &BTreeMap<String, String>) -> String {
-    let mut remaining = values.clone();
+    let mut seen = std::collections::BTreeSet::new();
     let mut out = String::new();
 
     for line in current.lines() {
-        let patched = key_of(line)
-            .and_then(|key| remaining.remove(key).map(|value| (key, value)))
-            .map(|(key, value)| format!("{key}={}", quote(&value)));
+        let patched = parse(line).and_then(|(export, key, _)| {
+            let value = values.get(key)?;
+            seen.insert(key.to_string());
+            Some(format!("{export}{key}={}", quote(value)))
+        });
         out.push_str(patched.as_deref().unwrap_or(line));
         out.push('\n');
     }
 
+    let remaining: Vec<_> = values.iter().filter(|(k, _)| !seen.contains(*k)).collect();
     if !remaining.is_empty() {
         if !out.is_empty() && !out.ends_with("\n\n") {
             out.push('\n');
         }
         out.push_str("# Added by wsctl\n");
-        for (key, value) in &remaining {
+        for (key, value) in remaining {
             out.push_str(&format!("{key}={}\n", quote(value)));
         }
     }
@@ -33,49 +38,67 @@ pub fn patch(current: &str, values: &BTreeMap<String, String>) -> String {
     out
 }
 
-/// The value of a `KEY=...` line, with surrounding quotes removed.
+/// The value of a `KEY=...` line as compose reads it: the last one when there are several,
+/// quotes and escapes undone.
 pub fn get(env: &str, key: &str) -> Option<String> {
-    env.lines().find_map(|line| {
-        if line.trim_start().starts_with('#') {
-            return None;
-        }
-        let (k, v) = line.split_once('=')?;
-        (k.trim() == key).then(|| unquote(v.trim()))
-    })
+    env.lines()
+        .rev()
+        .filter_map(parse)
+        .find(|(_, k, _)| *k == key)
+        .map(|(_, _, value)| unquote(value))
 }
 
-/// Drop a key entirely. Discord is read as all-or-nothing by the server, so an empty value
-/// left behind would read as "configured" and stop it starting.
+/// Drop a key entirely, every line of it. Discord is read as all-or-nothing by the server,
+/// so an empty value left behind would read as "configured" and stop it starting.
 pub fn remove(current: &str, key: &str) -> String {
     current
         .lines()
-        .filter(|line| key_of(line) != Some(key))
+        .filter(|line| parse(line).is_none_or(|(_, k, _)| k != key))
         .map(|line| format!("{line}\n"))
         .collect()
 }
 
-fn key_of(line: &str) -> Option<&str> {
+/// A `KEY=value` line as (`export ` or nothing, key, raw value). Comments and anything else
+/// are None.
+fn parse(line: &str) -> Option<(&'static str, &str, &str)> {
     let trimmed = line.trim_start();
     if trimmed.starts_with('#') {
         return None;
     }
-    let (key, _) = trimmed.split_once('=')?;
+    let (export, rest) = match trimmed.strip_prefix("export ") {
+        Some(rest) => ("export ", rest.trim_start()),
+        None => ("", trimmed),
+    };
+    let (key, value) = rest.split_once('=')?;
     let key = key.trim();
-    (!key.is_empty() && key.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')).then_some(key)
+    (!key.is_empty() && key.chars().all(|c| c.is_ascii_alphanumeric() || c == '_'))
+        .then_some((export, key, value))
 }
 
-/// Undo `quote`. A backslash escapes whatever follows it, which is what dotenv does inside
-/// double quotes, so a value holding one survives the trip out and back.
+/// Undo `quote`, and read what a person wrote the way compose does. Single quotes are
+/// literal. Inside double quotes a backslash escapes whatever follows it. Bare, a ` #`
+/// starts a comment. Outside single quotes `$$` is one `$`.
 fn unquote(value: &str) -> String {
     let trimmed = value.trim();
+    if trimmed.len() >= 2 && trimmed.starts_with('\'') && trimmed.ends_with('\'') {
+        return trimmed[1..trimmed.len() - 1].to_string();
+    }
     if trimmed.len() < 2 || !trimmed.starts_with('"') || !trimmed.ends_with('"') {
-        return trimmed.to_string();
+        let bare = trimmed
+            .split_once(" #")
+            .map_or(trimmed, |(v, _)| v)
+            .trim_end();
+        return bare.replace("$$", "$");
     }
     let mut out = String::new();
-    let mut chars = trimmed[1..trimmed.len() - 1].chars();
+    let mut chars = trimmed[1..trimmed.len() - 1].chars().peekable();
     while let Some(c) = chars.next() {
         match c {
             '\\' => out.push(chars.next().unwrap_or('\\')),
+            '$' if chars.peek() == Some(&'$') => {
+                chars.next();
+                out.push('$');
+            }
             other => out.push(other),
         }
     }
@@ -83,16 +106,26 @@ fn unquote(value: &str) -> String {
 }
 
 /// Quote anything that would not survive a bare `KEY=value` line. dotenv rejects an
-/// unquoted value with a space in it, and a character name is two words.
+/// unquoted value with a space in it, and a character name is two words. Compose expands
+/// `$` inside double quotes, so a value with one goes in single quotes, which it leaves
+/// alone; one with a single quote in it as well has the `$` escaped instead.
 fn quote(value: &str) -> String {
-    if value.is_empty()
-        || value
+    let plain = !value.is_empty()
+        && !value
             .chars()
-            .any(|c| c.is_whitespace() || "|#\"'$`\\".contains(c))
-    {
-        format!("\"{}\"", value.replace('\\', "\\\\").replace('"', "\\\""))
-    } else {
+            .any(|c| c.is_whitespace() || "|#\"'$`\\".contains(c));
+    if plain {
         value.to_string()
+    } else if value.contains('$') && !value.contains('\'') {
+        format!("'{value}'")
+    } else {
+        format!(
+            "\"{}\"",
+            value
+                .replace('\\', "\\\\")
+                .replace('"', "\\\"")
+                .replace('$', "\\$")
+        )
     }
 }
 
@@ -155,6 +188,41 @@ mod tests {
         assert_eq!(remove(env, "DISCORD_CLIENT_ID"), "A=1\nB=2\n");
     }
 
+    // Compose reads the last of two, so that is the one that counts, and patching one has
+    // to patch both or the file says two things.
+    #[test]
+    fn a_duplicate_key_is_read_last_and_patched_everywhere() {
+        let env = "K=first\nK=last\n";
+        assert_eq!(get(env, "K").as_deref(), Some("last"));
+        assert_eq!(patch(env, &values(&[("K", "new")])), "K=new\nK=new\n");
+        assert_eq!(remove(env, "K"), "");
+    }
+
+    #[test]
+    fn an_exported_key_keeps_its_export() {
+        let env = "export K=old\n";
+        assert_eq!(get(env, "K").as_deref(), Some("old"));
+        assert_eq!(patch(env, &values(&[("K", "new")])), "export K=new\n");
+        assert_eq!(remove(env, "K"), "");
+    }
+
+    #[test]
+    fn values_are_read_the_way_compose_reads_them() {
+        let env = "A='p$ss\\w\"rd'\nB=\"p\\$ss it's\"\nC=bare # a comment\nD=\"x$$y\"\n";
+        assert_eq!(get(env, "A").as_deref(), Some("p$ss\\w\"rd"));
+        assert_eq!(get(env, "B").as_deref(), Some("p$ss it's"));
+        assert_eq!(get(env, "C").as_deref(), Some("bare"));
+        assert_eq!(get(env, "D").as_deref(), Some("x$y"));
+    }
+
+    // Inside double quotes compose would expand `$ss` to whatever that variable is, which
+    // for a password is nothing.
+    #[test]
+    fn a_dollar_is_never_left_for_compose_to_expand() {
+        assert_eq!(quote("pa$s word"), "'pa$s word'");
+        assert_eq!(quote("it's $5"), "\"it's \\$5\"");
+    }
+
     // Round-tripping is the property that matters: whatever is written can be read back.
     #[test]
     fn every_value_survives_a_round_trip() {
@@ -163,6 +231,9 @@ mod tests {
             "two words",
             "with#hash",
             "with$dollar",
+            "both $ and '",
+            "a $$ pair",
+            "trailing \\",
             "with\"quote",
             "with\\backslash",
             "",
