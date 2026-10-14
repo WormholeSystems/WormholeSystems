@@ -203,10 +203,41 @@ Cloudflare's own certificate and put Caddy behind it.
 | `WS_PROXY_NETWORK` | Standalone only: the Docker network the proxy finds the app on. |
 | `WS_API_PORT`, `WS_WEB_PORT` | Standalone only, when published on the loopback. |
 
+`ALLOWED_AFFILIATION_IDS` is asked for too; see [Who may use it](#who-may-use-it).
+
 Discord and the killmail ingest are optional and off unless configured; see `.env.example`.
 `UPLOADS_DIR` (default `data/uploads`) is where uploaded background images land. In the
 container that path is the `uploads` volume, so leave it alone unless the API runs outside
 Docker.
+
+## Who may use it
+
+Anyone with an EVE account can log in to a fresh install. To keep it to your own people, set
+`ALLOWED_AFFILIATION_IDS` to a comma-separated list of character, corporation and alliance
+ids:
+
+```sh
+ALLOWED_AFFILIATION_IDS=99000001,98000002,2112000001
+```
+
+A character gets in when its own id, its corporation's or its alliance's is on the list,
+checked against ESI at every login. Anyone else is sent back to the login page with an
+explanation, and nothing about them is stored. The same goes for adding an alt to an
+account: a character outside the list is not added. The ids are on the corporation's or
+alliance's page at zKillboard or EVE Who. Empty, the default, lets everyone in.
+
+It is read when the API starts, so restart it after a change (`docker compose up -d api`).
+An entry that is not a number stops the API from starting rather than being skipped, since
+a list that is only a typo would otherwise read as empty and let everyone in.
+
+The check is at login only. Somebody who is already signed in keeps their session until it
+runs out (30 days) or they log out, and characters already on an account stay on it. To
+cut somebody off at once, delete their sessions:
+
+```sh
+docker compose exec db psql -U vector vector -c \
+  "delete from sessions where user_id = (select user_id from characters where name = 'Their Name')"
+```
 
 ## Discord
 

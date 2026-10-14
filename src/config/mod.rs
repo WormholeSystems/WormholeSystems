@@ -1,5 +1,6 @@
 //! Application configuration, read from the environment (and a `.env` file in dev).
 
+use crate::allowlist::AffiliationAllowlist;
 use crate::esi::{Scope, SsoConfig};
 use crate::maps::GridConfig;
 
@@ -7,6 +8,8 @@ use crate::maps::GridConfig;
 pub enum ConfigError {
     #[error("missing required environment variable: {0}")]
     Missing(&'static str),
+    #[error("{0}: {1}")]
+    Invalid(&'static str, String),
 }
 
 #[derive(Debug, Clone)]
@@ -27,6 +30,8 @@ pub struct Config {
     /// Where uploaded files (map background images) are kept. Relative to the working
     /// directory unless absolute; in the container it is a volume, so it outlives updates.
     pub uploads_dir: std::path::PathBuf,
+    /// Who may log in at all. Empty, the default, lets in anyone with an EVE account.
+    pub allowed_logins: AffiliationAllowlist,
 }
 
 /// What the Discord half of the integration needs.
@@ -66,6 +71,7 @@ impl Config {
             uploads_dir: nonempty("UPLOADS_DIR")
                 .map(Into::into)
                 .unwrap_or_else(|| std::path::PathBuf::from("data/uploads")),
+            allowed_logins: allowlist("ALLOWED_AFFILIATION_IDS")?,
         })
     }
 }
@@ -92,6 +98,12 @@ fn nonempty(key: &str) -> Option<String> {
 /// where the message names the variable, to wherever the value is first used.
 fn required(key: &'static str) -> Result<String, ConfigError> {
     nonempty(key).ok_or(ConfigError::Missing(key))
+}
+
+/// A comma-separated list of EVE ids, empty when unset.
+fn allowlist(key: &'static str) -> Result<AffiliationAllowlist, ConfigError> {
+    AffiliationAllowlist::parse(&std::env::var(key).unwrap_or_default())
+        .map_err(|err| ConfigError::Invalid(key, err.to_string()))
 }
 
 /// Build the map [`GridConfig`] from the environment; each field falls back to its default

@@ -116,12 +116,16 @@ async fn main() {
     use axum::Router;
     use axum::routing::get;
     use wormholesystems::auth::{self, AppState, Auth};
-    use wormholesystems::config::Config;
+    use wormholesystems::config::{Config, ConfigError};
     use wormholesystems::esi::{EsiClient, Sso};
 
     // Config, the database, and SSO are all essential, so fail fast if any is unavailable.
-    let config = Config::from_env()
-        .expect("missing configuration: copy .env.example to .env and fill in the variables");
+    let config = Config::from_env().unwrap_or_else(|err| match err {
+        ConfigError::Missing(_) => {
+            panic!("{err}: copy .env.example to .env and fill in the variables")
+        }
+        ConfigError::Invalid(..) => panic!("invalid configuration, {err}"),
+    });
     let db = wormholesystems::db::connect(&config.database_url)
         .await
         .expect(
@@ -220,6 +224,7 @@ async fn main() {
         server,
         secure_cookies,
         backgrounds: wormholesystems::maps::BackgroundStore::new(config.uploads_dir),
+        allowed_logins: config.allowed_logins,
     };
 
     let app = Router::new()

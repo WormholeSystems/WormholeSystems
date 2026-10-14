@@ -34,6 +34,20 @@ domain, your EVE credentials, and optionally Discord. It writes them to `.env`, 
 database password, and brings the stack up. The first boot downloads CCP's static data
 export, which is a few hundred megabytes and takes a while.
 
+## Restricting who can log in
+
+By default anyone with an EVE account can log in to your instance. For a corp or alliance
+instance, set `ALLOWED_AFFILIATION_IDS` in `.env` to a comma-separated list of character,
+corporation and alliance ids (`wsctl setup` asks for it):
+
+```sh
+ALLOWED_AFFILIATION_IDS=99000001,98000002,2112000001
+```
+
+A pilot gets in when their character, its corporation or its alliance is on the list. That
+holds for adding an alt to an account too. Leave it empty to let everyone in. Restart the
+API after changing it; people already signed in stay signed in until their session ends.
+
 ## Looking after it
 
 | Command        | What it does                                                          |
