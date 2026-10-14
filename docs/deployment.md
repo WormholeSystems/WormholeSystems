@@ -232,21 +232,19 @@ the checkout, so an older wsctl, or a `.env` that still names it, keeps working.
 
 ### Moving the database out
 
-The data moves with a dump, into the new database while it is still empty: the API creates
-its tables on boot, so restore before the switch, not after. From the checkout, still on
-the bundled database:
+The data moves with a dump. With the API stopped, so nothing is written after it:
 
 ```sh
 docker compose stop api
-docker compose exec -T db pg_dump -U wormholesystems -Fc wormholesystems > wormholesystems.dump
-pg_restore --no-owner --role=wormholesystems -d "postgres://wormholesystems:...@host/wormholesystems" wormholesystems.dump
-wsctl setup                          # pick your own Postgres; starts the app on the restored data
+wsctl backup                         # prints the dump's name
+wsctl setup                          # pick your own Postgres; starts the app on it, empty
+wsctl restore backups/wormholesystems-...-manual.dump
 docker compose rm -sf db
 ```
 
-The map is down from the `stop` until `setup` has the new stack up. `pg_restore` is any
-client that reaches the new database, for example one in a container on the same network.
-The `pgdata` volume stays until you remove it yourself.
+The new database has to exist and be reachable, as above. The map is down from the `stop`
+until the restore has started the API again, and between `setup` and the restore it runs
+on the empty database. The `pgdata` volume stays until you remove it yourself.
 
 ## Changes of your own
 
@@ -320,6 +318,9 @@ caddy`; a certificate file replaced in place needs `docker compose restart caddy
 | `WS_API_PORT`, `WS_WEB_PORT` | `ports`: the API's and the frontend's loopback ports. |
 | `WS_TRUSTED_PROXIES` | `router` only, optional: whose forwarded headers Caddy believes. `private_ranges` unless set. |
 | `COMPOSE_FILE` | The compose files to run, when anything is not bundled. wsctl keeps it in step with the above. |
+| `COMPOSE_PROFILES` | `backup` turns the scheduled dumps on. |
+| `WS_BACKUP_DIR`, `WS_BACKUP_EVERY_HOURS`, `WS_BACKUP_KEEP_DAYS` | Where dumps go (`./backups`), how often the scheduled ones run (24) and how long they are kept (14 days). |
+| `WS_BACKUP_PG_VERSION` | The Postgres client the dumps use (16). wsctl raises it for a newer database of your own. |
 
 `ALLOWED_AFFILIATION_IDS` and `MAP_CREATOR_AFFILIATION_IDS` are asked for too; see
 [Who may use it](#who-may-use-it).
@@ -418,15 +419,34 @@ Two things have to wait until the stack is running, because Discord checks them:
 
 ## Backups
 
-Not automated. The database is what matters. In the full setup:
+The database is what matters, and wsctl dumps it three ways, all with `pg_dump` in a
+container of the `backup` service, against whichever database the API uses (bundled or
+your own), into `backups/` in the checkout (`WS_BACKUP_DIR` moves it):
+
+- `wsctl update` takes one before it starts the new version, since migrations run as the
+  API boots and none of them has a way back. If the dump fails, nothing is restarted;
+  `wsctl update --no-backup` goes ahead without it.
+- `wsctl backup` takes one now.
+- With scheduled backups on (`setup` asks; it is the `backup` profile in
+  `COMPOSE_PROFILES`), the `backup` container takes one every 24 hours
+  (`WS_BACKUP_EVERY_HOURS`) and deletes those older than 14 days (`WS_BACKUP_KEEP_DAYS`).
+
+Each is a `pg_dump` custom-format file, `wormholesystems-<UTC time>-<why>.dump`, readable
+only by whoever owns the backup directory. Copy them somewhere that is not this machine.
 
 ```sh
-docker compose exec -T db pg_dump -U wormholesystems wormholesystems | gzip > wormholesystems-$(date +%F).sql.gz
+wsctl restore backups/wormholesystems-20261014-031500-scheduled.dump
 ```
 
-Restoring is the same in reverse, into a stopped stack with an empty database.
+stops the API, empties the database and restores the dump into it, then starts the API
+again, which migrates it forward if the dump is from an older version. It asks first;
+`--yes` does not. A dump from elsewhere is mounted in read-only, wherever it is.
 
-The one thing outside it is the `uploads` volume: the background images people put behind
-their maps. Losing it costs each of them a picture and nothing else; a settings row that
-points at a missing file simply shows the plain grid again. Copy it out with
+`pg_dump` refuses a server newer than itself. The bundled database is Postgres 16, and so
+is the client by default; for your own, wsctl asks its version before the first dump and
+sets `WS_BACKUP_PG_VERSION` to match when it is newer.
+
+The one thing outside the database is the `uploads` volume: the background images people
+put behind their maps. Losing it costs each of them a picture and nothing else; a settings
+row that points at a missing file simply shows the plain grid again. Copy it out with
 `docker compose cp api:/app/data/uploads ./uploads` if it is worth keeping.

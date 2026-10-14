@@ -14,3 +14,9 @@ services:
     depends_on: !reset {}
     environment:
       DATABASE_URL: ${WS_DATABASE_URL:?WS_DATABASE_URL is not set, run wsctl setup}
+
+  # Dumps the same database the API uses.
+  backup:
+    depends_on: !reset {}
+    environment:
+      DATABASE_URL: ${WS_DATABASE_URL:?WS_DATABASE_URL is not set, run wsctl setup}

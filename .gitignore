@@ -19,6 +19,9 @@
 /compose.override.yml
 /docker-compose.override.yml
 
+# Database dumps from wsctl and the backup service
+/backups/
+
 # macOS
 .DS_Store
 /node_modules

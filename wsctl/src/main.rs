@@ -37,6 +37,19 @@ enum Command {
         /// Fetch the static data even when the loaded build is already current
         #[arg(long)]
         sde: bool,
+        /// Skip the database dump taken before the new version starts
+        #[arg(long)]
+        no_backup: bool,
+    },
+    /// Dump the database into the backup directory now
+    Backup,
+    /// Replace the database with a dump, stopping the API meanwhile
+    Restore {
+        /// The dump, as `wsctl backup` or the scheduled backups write them
+        file: PathBuf,
+        /// Do not ask first
+        #[arg(long)]
+        yes: bool,
     },
     /// What is running, which static data is loaded, whether the URL answers
     Status,
@@ -66,7 +79,9 @@ fn run() -> Result<()> {
             Ok(())
         }
         Some(Command::Setup) => wizard::setup(runner, &dir),
-        Some(Command::Update { sde }) => wizard::update(runner, &dir, sde),
+        Some(Command::Update { sde, no_backup }) => wizard::update(runner, &dir, sde, !no_backup),
+        Some(Command::Backup) => wizard::backup(runner, &dir),
+        Some(Command::Restore { file, yes }) => wizard::restore(runner, &dir, &file, yes),
         Some(Command::Status) => wizard::status(runner, &dir),
         Some(Command::Integrate) => wizard::integrate(&dir),
         Some(Command::DiscordRegister) => wizard::discord_register(runner, &dir),
@@ -86,6 +101,8 @@ fn overview() {
             "pick the database and the proxy, check the machine, start it",
         ),
         ("update", "pull, rebuild, restart, take newer static data"),
+        ("backup", "dump the database now"),
+        ("restore", "put a dump back"),
         ("status", "what is running, and whether it answers"),
         (
             "integrate",

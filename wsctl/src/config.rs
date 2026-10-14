@@ -22,6 +22,43 @@ pub struct Answers {
     /// Who may create maps, as `MAP_CREATOR_AFFILIATION_IDS` takes it. Empty lets everyone
     /// who can log in.
     pub map_creators: String,
+    /// Whether the `backup` service dumps the database on a schedule.
+    pub backups: bool,
+}
+
+/// The compose profile that turns the scheduled dumps on.
+pub const BACKUP_PROFILE: &str = "backup";
+/// Where dumps land unless WS_BACKUP_DIR says otherwise, relative to the checkout.
+pub const DEFAULT_BACKUP_DIR: &str = "backups";
+/// The Postgres the bundled database runs, and the backup client's default.
+pub const BUNDLED_POSTGRES: u32 = 16;
+
+/// Whether COMPOSE_PROFILES turns the scheduled dumps on.
+pub fn backups_on(env: &str) -> bool {
+    envfile::get(env, "COMPOSE_PROFILES")
+        .unwrap_or_default()
+        .split(',')
+        .any(|p| p.trim() == BACKUP_PROFILE)
+}
+
+/// COMPOSE_PROFILES with `profile` on or off, and any others the operator has left as
+/// they are. None when nothing is left.
+pub fn with_profile(current: &str, profile: &str, on: bool) -> Option<String> {
+    let mut profiles: Vec<&str> = current
+        .split(',')
+        .map(str::trim)
+        .filter(|p| !p.is_empty() && *p != profile)
+        .collect();
+    if on {
+        profiles.push(profile);
+    }
+    (!profiles.is_empty()).then(|| profiles.join(","))
+}
+
+/// Where the dumps are on this machine.
+pub fn backup_dir(dir: &std::path::Path, env: &str) -> std::path::PathBuf {
+    let configured = envfile::get(env, "WS_BACKUP_DIR").filter(|d| !d.is_empty());
+    dir.join(configured.as_deref().unwrap_or(DEFAULT_BACKUP_DIR))
 }
 
 /// Where the API and frontend images come from.
@@ -545,6 +582,13 @@ impl Answers {
         for key in self.discord_removals() {
             out = envfile::remove(&out, key);
         }
+        let profiles = envfile::get(&out, "COMPOSE_PROFILES").unwrap_or_default();
+        match with_profile(&profiles, BACKUP_PROFILE, self.backups) {
+            Some(profiles) => {
+                out = envfile::patch(&out, &[("COMPOSE_PROFILES".to_string(), profiles)].into())
+            }
+            None => out = envfile::remove(&out, "COMPOSE_PROFILES"),
+        }
         out
     }
 
@@ -653,6 +697,7 @@ mod tests {
             discord: None,
             allowed_logins: String::new(),
             map_creators: String::new(),
+            backups: false,
         }
     }
 
@@ -1018,6 +1063,25 @@ mod tests {
             Deployment::from_env("WS_DOMAIN=map.example.com\n"),
             deployment(Database::Bundled, site("map.example.com"))
         );
+    }
+
+    // Other profiles are the operator's; only `backup` is wsctl's to switch.
+    #[test]
+    fn scheduled_backups_are_a_profile() {
+        let on = Answers {
+            backups: true,
+            ..answers()
+        };
+        let env = on.apply("COMPOSE_PROFILES=mine\n", &[]);
+        assert_eq!(
+            get(&env, "COMPOSE_PROFILES").as_deref(),
+            Some("mine,backup")
+        );
+        assert!(backups_on(&env));
+        let env = answers().apply(&env, &[]);
+        assert_eq!(get(&env, "COMPOSE_PROFILES").as_deref(), Some("mine"));
+        let env = answers().apply("COMPOSE_PROFILES=backup\n", &[]);
+        assert_eq!(get(&env, "COMPOSE_PROFILES"), None);
     }
 
     #[test]

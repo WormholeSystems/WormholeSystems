@@ -2,7 +2,7 @@
 
 use std::path::Path;
 
-use anyhow::{Result, bail};
+use anyhow::{Context, Result, bail};
 use console::style;
 
 use crate::checks::{self, Verdict};
@@ -116,8 +116,16 @@ pub fn setup(runner: &mut dyn Runner, dir: &Path) -> Result<()> {
         ui::note("the API answers. This waits for that, which takes a few minutes; follow it");
         ui::note("from another shell with:  docker compose logs -f api");
     }
+    if answers.backups {
+        std::fs::create_dir_all(config::backup_dir(dir, &read_env(dir)))?;
+    }
     stack::up(runner, dir, answers.images)?;
     ui::done("running and healthy");
+    // Out of the profile is out of the stack, not off the machine.
+    if !answers.backups && stack::service_running(runner, dir, "backup") {
+        stack::remove(runner, dir, "backup")?;
+        ui::done("stopped the scheduled backups");
+    }
 
     after_boot(&answers);
     report_leftovers(&leftovers);
@@ -156,7 +164,7 @@ fn report_leftovers(leftovers: &[&str]) {
 /// Bring the checkout, the containers and the static data up to date. One command,
 /// because a version of the code and the export it reads are not separately interesting:
 /// whoever is updating the server wants the server updated.
-pub fn update(runner: &mut dyn Runner, dir: &Path, force_sde: bool) -> Result<()> {
+pub fn update(runner: &mut dyn Runner, dir: &Path, force_sde: bool, dump: bool) -> Result<()> {
     require_checkout(dir)?;
     ui::heading("Updating");
     let before = runner
@@ -227,6 +235,21 @@ pub fn update(runner: &mut dyn Runner, dir: &Path, force_sde: bool) -> Result<()
         renamed.role = rename::rename_role(runner, dir)?;
     }
     report_renamed(&renamed);
+    // Migrations run as the new API boots, and none of them has a way back. An install that
+    // was just moved off its old names has the old volumes as its copy already.
+    let has_data = match deployment.database {
+        Database::Bundled => dump && rename::has_database(runner, dir, None)?,
+        Database::External(_) => true,
+    };
+    if dump
+        && old.is_none()
+        && has_data
+        && let Err(err) = dump_before_update(runner, dir)
+    {
+        bail!(
+            "could not dump the database before starting the new version, so nothing was restarted: {err:#}\n  `wsctl update --no-backup` goes ahead without the dump."
+        );
+    }
     stack::up(runner, dir, images)?;
     ui::done("running and healthy");
     // Before the static data, which wants the space a stale cache is sitting on.
@@ -238,6 +261,109 @@ pub fn update(runner: &mut dyn Runner, dir: &Path, force_sde: bool) -> Result<()
         ),
     }
     update_sde(runner, dir, force_sde);
+    Ok(())
+}
+
+fn dump_before_update(runner: &mut dyn Runner, dir: &Path) -> Result<()> {
+    let backups = prepare_backups(runner, dir)?;
+    let name = stack::dump(runner, dir, "pre-update")?;
+    ui::done(&format!(
+        "dumped the database first: {}",
+        backups.join(name).display()
+    ));
+    Ok(())
+}
+
+/// Make the backup directory (as this user, so the dumps in it are theirs to copy off),
+/// and match the backup client to an external database: pg_dump refuses a server newer
+/// than itself. Answers with the directory.
+fn prepare_backups(runner: &mut dyn Runner, dir: &Path) -> Result<std::path::PathBuf> {
+    let env = read_env(dir);
+    if envfile::get(&env, "COMPOSE_FILE")
+        .unwrap_or_default()
+        .contains(config::LEGACY_STANDALONE_COMPOSE)
+    {
+        bail!(
+            "this .env still names compose.standalone.yml, which has no backup service; `wsctl update` moves it over"
+        );
+    }
+    let backups = config::backup_dir(dir, &env);
+    std::fs::create_dir_all(&backups)
+        .with_context(|| format!("could not make {}", backups.display()))?;
+    let pinned = envfile::get(&env, "WS_BACKUP_PG_VERSION").is_some_and(|v| !v.is_empty());
+    if Deployment::from_env(&env).database != Database::Bundled && !pinned {
+        let out = stack::backup(runner, dir, &["server-version"])?;
+        let major = out
+            .lines()
+            .last()
+            .and_then(|line| line.trim().parse::<u32>().ok())
+            .map(|number| number / 10000);
+        if let Some(major) = major.filter(|m| *m > config::BUNDLED_POSTGRES) {
+            let values = [("WS_BACKUP_PG_VERSION".to_string(), major.to_string())].into();
+            std::fs::write(dir.join(ENV), envfile::patch(&env, &values))?;
+            ui::done(&format!(
+                "your database is Postgres {major}, so the backups use its client"
+            ));
+        }
+    }
+    Ok(backups)
+}
+
+/// Dump the database now, into the backup directory.
+pub fn backup(runner: &mut dyn Runner, dir: &Path) -> Result<()> {
+    require_checkout(dir)?;
+    ui::heading("Dumping the database");
+    let backups = prepare_backups(runner, dir)?;
+    let name = stack::dump(runner, dir, "manual")?;
+    ui::done(&format!("{}", backups.join(name).display()));
+    Ok(())
+}
+
+/// Put a dump back. Everything in the database is replaced, so the API is stopped first
+/// and started again on the restored data, migrating it forward if the dump is older.
+pub fn restore(runner: &mut dyn Runner, dir: &Path, file: &Path, yes: bool) -> Result<()> {
+    require_checkout(dir)?;
+    let file =
+        std::fs::canonicalize(file).with_context(|| format!("no dump at {}", file.display()))?;
+    let (Some(parent), Some(name)) = (file.parent(), file.file_name()) else {
+        bail!("{} is not a file", file.display());
+    };
+    let name = name.to_string_lossy();
+    if !yes {
+        if !console::user_attended() {
+            bail!("restoring replaces the whole database; pass --yes to do it without asking");
+        }
+        if !ui::confirm(
+            &format!("Replace everything in the database with {name}?"),
+            false,
+        )? {
+            bail!("nothing changed");
+        }
+    }
+
+    let backups = prepare_backups(runner, dir)?;
+    // A dump in the backup directory is already in the container; anything else is
+    // mounted read-only beside it.
+    let in_backups = std::fs::canonicalize(&backups).is_ok_and(|b| b == parent);
+    let (inside, mounts) = if in_backups {
+        (format!("/backups/{name}"), Vec::new())
+    } else {
+        (
+            format!("/restore/{name}"),
+            vec![format!("{}:/restore:ro", parent.display())],
+        )
+    };
+
+    ui::heading("Restoring");
+    stack::stop(runner, dir, "api")?;
+    if let Err(err) = stack::restore(runner, dir, &inside, &mounts) {
+        bail!(
+            "the restore stopped part way: {err:#}\n  The API is stopped and the database is half restored. Run this again, or with another dump."
+        );
+    }
+    ui::done(&format!("restored {name}"));
+    stack::up(runner, dir, Images::from_env(&read_env(dir)))?;
+    ui::done("running and healthy on the restored data");
     Ok(())
 }
 
@@ -447,6 +573,7 @@ fn ask_everything(existing: &str, http: u16, https: u16) -> Result<Answers> {
 
     answers.discord = ask_discord(existing, &answers.base_url())?;
     answers.images = ask_images(existing)?;
+    answers.backups = ask_backups(existing)?;
     Ok(answers)
 }
 
@@ -696,6 +823,17 @@ fn tidy(input: &str) -> Result<String, String> {
     Ok(input.trim().to_string())
 }
 
+fn ask_backups(existing: &str) -> Result<bool> {
+    println!();
+    ui::note("A dump of the database every day into backups/ in this checkout, kept for two");
+    ui::note("weeks (WS_BACKUP_DIR, WS_BACKUP_EVERY_HOURS and WS_BACKUP_KEEP_DAYS change that).");
+    ui::note("`wsctl update` takes one before every update either way.");
+    ui::confirm(
+        "Scheduled backups?",
+        existing.is_empty() || config::backups_on(existing),
+    )
+}
+
 /// Pulled for a new install. One that has been building keeps the answer it had until its
 /// operator picks the other here.
 fn ask_images(existing: &str) -> Result<Images> {
@@ -931,7 +1069,7 @@ mod tests {
     fn an_update_that_pulls_never_builds() {
         let dir = checkout(&format!("{INSTALLED}WS_IMAGES=pull\n"));
         let mut runner = running();
-        update(&mut runner, &dir, false).unwrap();
+        update(&mut runner, &dir, false, true).unwrap();
         assert!(runner.commands.contains(&"docker compose pull".to_string()));
         assert!(
             runner.commands.contains(
@@ -946,7 +1084,7 @@ mod tests {
     fn an_update_that_never_chose_builds() {
         let dir = checkout(INSTALLED);
         let mut runner = running();
-        update(&mut runner, &dir, false).unwrap();
+        update(&mut runner, &dir, false, true).unwrap();
         let build = runner
             .commands
             .iter()
@@ -969,7 +1107,7 @@ mod tests {
             "COMPOSE_PROJECT_NAME=wormholesystems\nWS_SETUP=standalone\nCOMPOSE_FILE=compose.standalone.yml\nWS_PUBLIC_URL=https://map.example.com\nWS_DATABASE_URL=postgres://ws:secret@postgres:5432/ws\nWS_PROXY_NETWORK=coolify\n",
         );
         let mut runner = running();
-        update(&mut runner, &dir, false).unwrap();
+        update(&mut runner, &dir, false, true).unwrap();
         let env = read_env(&dir);
         assert_eq!(
             envfile::get(&env, "COMPOSE_FILE").as_deref(),
@@ -998,7 +1136,7 @@ mod tests {
             "COMPOSE_PROJECT_NAME=wormholesystems\nWS_DATABASE=external\nWS_DATABASE_URL=postgres://ws@db/ws\nWS_PROXY=network\nWS_PROXY_NETWORK=coolify\nWS_PUBLIC_URL=https://map.example.com\n",
         );
         std::fs::write(dir.join("compose.override.yml"), "services: {}\n").unwrap();
-        update(&mut running(), &dir, false).unwrap();
+        update(&mut running(), &dir, false, true).unwrap();
         assert_eq!(
             envfile::get(&read_env(&dir), "COMPOSE_FILE").as_deref(),
             Some(
@@ -1007,12 +1145,100 @@ mod tests {
         );
     }
 
+    const EXTERNAL: &str = "COMPOSE_PROJECT_NAME=wormholesystems\nWS_IMAGES=pull\nWS_DATABASE=external\nWS_DATABASE_URL=postgres://ws@db/ws\nWS_PROXY=network\nWS_PROXY_NETWORK=coolify\nWS_PUBLIC_URL=https://map.example.com\n";
+    const DUMP: &str = "docker compose run --rm -T backup dump pre-update";
+    const UP: &str = "docker compose up -d --wait --wait-timeout 1800 --no-build";
+
+    // No migration has a way back, so the database is dumped before the new API boots.
+    // A newer Postgres than the client is noticed first: pg_dump refuses one.
+    #[test]
+    fn an_update_dumps_the_database_before_starting_the_new_version() {
+        let dir = checkout(EXTERNAL);
+        let mut runner = running();
+        runner.replies.insert(
+            "docker compose run --rm -T backup server-version".into(),
+            "170004".into(),
+        );
+        update(&mut runner, &dir, false, true).unwrap();
+        let at = |line: &str| runner.commands.iter().position(|c| c == line);
+        assert!(at(DUMP).expect("dumped") < at(UP).expect("started"));
+        assert!(at("docker compose pull").unwrap() < at(DUMP).unwrap());
+        assert_eq!(
+            envfile::get(&read_env(&dir), "WS_BACKUP_PG_VERSION").as_deref(),
+            Some("17")
+        );
+        assert!(dir.join("backups").is_dir());
+    }
+
+    #[test]
+    fn an_update_can_skip_the_dump() {
+        let dir = checkout(EXTERNAL);
+        let mut runner = running();
+        update(&mut runner, &dir, false, false).unwrap();
+        assert!(!runner.commands.iter().any(|c| c.contains("backup")));
+    }
+
+    // An install whose database has never been created has nothing to dump.
+    #[test]
+    fn an_update_without_a_database_dumps_nothing() {
+        let dir = checkout(INSTALLED);
+        let mut runner = running();
+        update(&mut runner, &dir, false, true).unwrap();
+        assert!(!runner.commands.iter().any(|c| c.contains("backup")));
+    }
+
+    #[test]
+    fn a_restore_stops_the_api_and_starts_it_on_the_restored_data() {
+        let dir = checkout(EXTERNAL);
+        std::fs::create_dir_all(dir.join("backups")).unwrap();
+        let file = dir.join("backups").join("x.dump");
+        std::fs::write(&file, "").unwrap();
+        let mut runner = running();
+        runner.replies.insert(
+            "docker compose run --rm -T backup server-version".into(),
+            "160004".into(),
+        );
+        restore(&mut runner, &dir, &file, true).unwrap();
+        let tail: Vec<&str> = runner
+            .commands
+            .iter()
+            .skip_while(|c| !c.contains("stop api"))
+            .map(String::as_str)
+            .collect();
+        assert_eq!(
+            tail,
+            vec![
+                "docker compose stop api",
+                "docker compose run --rm -T backup restore /backups/x.dump",
+                UP,
+            ]
+        );
+        // The client the bundled database has is new enough for a 16.
+        assert_eq!(envfile::get(&read_env(&dir), "WS_BACKUP_PG_VERSION"), None);
+    }
+
+    // A dump from anywhere else is mounted in rather than copied.
+    #[test]
+    fn a_dump_from_elsewhere_is_mounted_read_only() {
+        let dir = checkout(INSTALLED);
+        let elsewhere = checkout("");
+        let file = elsewhere.join("old.dump");
+        std::fs::write(&file, "").unwrap();
+        let mut runner = running();
+        restore(&mut runner, &dir, &file, true).unwrap();
+        let parent = std::fs::canonicalize(&*elsewhere).unwrap();
+        assert!(runner.commands.contains(&format!(
+            "docker compose run --rm -T -v {}:/restore:ro backup restore /restore/old.dump",
+            parent.display()
+        )));
+    }
+
     // A bundled install gets the two keys written and no COMPOSE_FILE: compose's default
     // is already the whole stack.
     #[test]
     fn an_update_leaves_a_bundled_install_on_the_default_file() {
         let dir = checkout(&format!("{INSTALLED}WS_DOMAIN=map.example.com\n"));
-        update(&mut running(), &dir, false).unwrap();
+        update(&mut running(), &dir, false, true).unwrap();
         let env = read_env(&dir);
         assert_eq!(envfile::get(&env, "COMPOSE_FILE"), None);
         assert_eq!(envfile::get(&env, "WS_PROXY").as_deref(), Some("caddy"));
