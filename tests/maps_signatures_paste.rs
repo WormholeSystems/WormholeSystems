@@ -11,8 +11,10 @@ use wormholesystems::maps::signatures::{
     RemoveSignatures, Signature, UpdateSignature, add_signature, expire_signatures, link_signature,
     list_signatures, paste_signatures, remove_signature, remove_signatures, update_signature,
 };
-use wormholesystems::maps::solar_system::{AddSystem, add_system};
-use wormholesystems::maps::{Actor, ConnectionType, MapError, SignatureGroup, WormholeSize};
+use wormholesystems::maps::solar_system::{AddSystem, RemoveSystem, add_system, remove_system};
+use wormholesystems::maps::{
+    Actor, ConnectionType, MapError, MapSystemView, SignatureGroup, WormholeSize,
+};
 
 async fn place(pool: &PgPool, actor: Actor, map_id: i64, system: i64) -> i64 {
     add_system(
@@ -725,4 +727,126 @@ async fn paste_files_faction_warfare_sites_under_their_own_group(pool: PgPool) {
     assert_eq!(sig.group, SignatureGroup::FactionWarfare);
     assert_eq!(sig.signature_type_id, None);
     assert_eq!(sig.name.as_deref(), Some("Minmatar Large NVY-1"));
+}
+
+/// The placement's `signatures_pasted_at`, as the map read shows it.
+async fn pasted_at(
+    pool: &PgPool,
+    actor: Actor,
+    map_id: i64,
+    placement: i64,
+) -> Option<chrono::DateTime<chrono::Utc>> {
+    let system = get_map(pool, actor, GetMap { map_id })
+        .await
+        .unwrap()
+        .systems
+        .into_iter()
+        .find(|s| s.id() == placement)
+        .expect("placement on the map");
+    match system {
+        MapSystemView::System {
+            signatures_pasted_at,
+            ..
+        } => signatures_pasted_at,
+        MapSystemView::Ghost { .. } => panic!("a placed system, not a ghost"),
+    }
+}
+
+async fn paste_one(pool: &PgPool, actor: Actor, map_id: i64, sid: &str) {
+    paste_signatures(
+        pool,
+        actor,
+        PasteSignatures {
+            map_id,
+            solar_system_id: SYS_A,
+            signatures: vec![PastedSignature {
+                signature_id: sid.into(),
+                group: None,
+                signature_type_id: None,
+                name: None,
+            }],
+        },
+    )
+    .await
+    .unwrap();
+}
+
+async fn undo(pool: &PgPool, actor: Actor, map_id: i64) {
+    wormholesystems::maps::events_log::undo(
+        pool,
+        actor,
+        wormholesystems::maps::events_log::MapIdBody { map_id },
+    )
+    .await
+    .unwrap();
+}
+
+#[sqlx::test]
+async fn a_paste_records_when_it_happened_and_undo_puts_the_old_time_back(pool: PgPool) {
+    let w = world(&pool).await;
+    let placement = place(&pool, w.owner, w.map_id, SYS_A).await;
+    assert_eq!(pasted_at(&pool, w.owner, w.map_id, placement).await, None);
+
+    paste_one(&pool, w.owner, w.map_id, "AAA-111").await;
+    let first = pasted_at(&pool, w.owner, w.map_id, placement)
+        .await
+        .expect("set by the paste");
+
+    // A hand edit is not a rescan.
+    add_signature(
+        &pool,
+        w.owner,
+        AddSignature {
+            map_id: w.map_id,
+            solar_system_id: SYS_A,
+            signature_id: "BBB-222".into(),
+            group: SignatureGroup::Data,
+            ..Default::default()
+        },
+    )
+    .await
+    .unwrap();
+    assert_eq!(
+        pasted_at(&pool, w.owner, w.map_id, placement).await,
+        Some(first)
+    );
+
+    // Pasting the same scan again still counts: the list was checked against it.
+    paste_one(&pool, w.owner, w.map_id, "AAA-111").await;
+    let second = pasted_at(&pool, w.owner, w.map_id, placement)
+        .await
+        .unwrap();
+    assert!(second > first);
+
+    undo(&pool, w.owner, w.map_id).await;
+    assert_eq!(
+        pasted_at(&pool, w.owner, w.map_id, placement).await,
+        Some(first)
+    );
+    undo(&pool, w.owner, w.map_id).await; // the hand edit
+    undo(&pool, w.owner, w.map_id).await; // the first paste
+    assert_eq!(pasted_at(&pool, w.owner, w.map_id, placement).await, None);
+}
+
+#[sqlx::test]
+async fn the_paste_time_comes_back_with_a_removed_system(pool: PgPool) {
+    let w = world(&pool).await;
+    let placement = place(&pool, w.owner, w.map_id, SYS_A).await;
+    paste_one(&pool, w.owner, w.map_id, "AAA-111").await;
+    let pasted = pasted_at(&pool, w.owner, w.map_id, placement).await;
+    assert!(pasted.is_some());
+
+    remove_system(
+        &pool,
+        w.owner,
+        RemoveSystem {
+            map_id: w.map_id,
+            map_solar_system_id: placement,
+        },
+    )
+    .await
+    .unwrap();
+    undo(&pool, w.owner, w.map_id).await;
+
+    assert_eq!(pasted_at(&pool, w.owner, w.map_id, placement).await, pasted);
 }

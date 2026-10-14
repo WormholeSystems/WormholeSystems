@@ -8332,6 +8332,14 @@
                 "type": "number",
                 "format": "double"
               },
+              "signatures_pasted_at": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "description": "When a scan was last pasted into this system; `None` if nobody has yet. Hand\nedits leave it alone."
+              },
               "solar_system_id": {
                 "type": "integer",
                 "format": "int64"

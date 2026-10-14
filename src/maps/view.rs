@@ -1,6 +1,7 @@
 //! The map read model: everything a node displays, assembled by the map read and the
 //! system pickers from joins across the SDE, intel and sovereignty tables.
 
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 
@@ -166,6 +167,9 @@ pub enum MapSystemView {
         is_home: bool,
         is_rally: bool,
         is_pinned: bool,
+        /// When a scan was last pasted into this system; `None` if nobody has yet. Hand
+        /// edits leave it alone.
+        signatures_pasted_at: Option<DateTime<Utc>>,
         // Intel (map_solar_system_details; defaults when no row exists yet).
         status: super::SystemStatus,
         occupying_group: Option<String>,

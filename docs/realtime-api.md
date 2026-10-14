@@ -41,7 +41,7 @@ about. The schemas are in the OpenAPI document under `components.schemas.MapEven
 | `system_added` | `map_id`, `map_solar_system_id` | A system was placed | `GET /api/maps/{id}` |
 | `system_moved` | `map_id`, `map_solar_system_id` | A placement moved | `GET /api/maps/{id}` |
 | `system_removed` | `map_id`, `map_solar_system_id` | A placement was removed | `GET /api/maps/{id}` |
-| `system_details_changed` | `map_id`, `map_solar_system_id` | Alias, status, occupier, home, rally, pinned or notes changed; the position did not | `GET /api/maps/{id}`, and the placement's details if you show notes |
+| `system_details_changed` | `map_id`, `map_solar_system_id` | Alias, status, occupier, home, rally, pinned or notes changed, or a scan was pasted into it (its `signatures_pasted_at` moved); the position did not | `GET /api/maps/{id}`, and the placement's details if you show notes |
 | `connection_changed` | `map_id`, `connection_id` | A connection was added, removed, or had its mass, lifetime or size change, including the changes the signature sync trigger makes | `GET /api/maps/{id}` |
 | `signature_changed` | `map_id`, `solar_system_id` | A signature in that system was added, edited, linked, unlinked or removed | `GET /api/maps/{id}/signatures` |
 | `access_changed` | `map_id` | A grant was made, changed or revoked | `GET /api/maps/{id}/access`, and your own role |

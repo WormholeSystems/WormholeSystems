@@ -43,6 +43,7 @@
 	import { deletedByPaste, pasteStatus } from '$lib/signatures/paste-diff';
 	import SignatureColumns, { SORT_COLUMNS } from '$lib/components/SignatureColumns.svelte';
 	import SignatureRow from './SignatureRow.svelte';
+	import SignaturesPastedAt from './SignaturesPastedAt.svelte';
 	import { solarSystemId, systemName } from '$lib/map/system';
 
 	let {
@@ -204,6 +205,9 @@
 		{/if}
 		{#if hiddenCount > 0}
 			<span class="ml-1 text-muted-foreground/70">{hiddenCount} hidden</span>
+		{/if}
+		{#if system.kind === 'system'}
+			<SignaturesPastedAt pastedAt={system.signatures_pasted_at} />
 		{/if}
 		{#snippet actions()}
 			<Tooltip.Provider delayDuration={300}>

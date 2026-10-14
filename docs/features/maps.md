@@ -426,7 +426,11 @@ when nothing matched.
 - **Effect:** upsert-only reconciliation (see the
   [invariants](../database/mapping.md#signatures)): adds new rows, refreshes existing
   ones, preserves wormhole types and links, never deletes, never touches life-cycle
-  state. Deleting vanished rows is the client's explicit `remove_signatures` call.
+  state. Deleting vanished rows is the client's explicit `remove_signatures` call. Sets
+  the placement's `signatures_pasted_at` to now (even when nothing in the list changed),
+  which the signatures panel shows as the list's age; undo restores the previous time.
+- **Events:** `SignatureChanged` for the system and `SystemDetailsChanged` for its
+  placement.
 
 ### `list_signatures(actor, map_id) -> Vec<Signature>`
 

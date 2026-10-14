@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update map_solar_systems set signatures_pasted_at = now() where id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "12c92a54d10f379e9fa7ec60f4452e25c2ee05ac021e3efa09ee68789a6b9d86"
+}

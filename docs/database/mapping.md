@@ -54,6 +54,7 @@ while the system is on the map; removing the system deletes this row.
 | `alias`           | text, null  | temporary, user-set; lost on removal             |
 | `raised_by_signature_id` | fk signatures, null | the scan this ghost is the far side of; cascade |
 | `hangs_off_id`    | fk self, null | the placement the scan was made in; cascade    |
+| `signatures_pasted_at` | timestamptz, null | when a scan was last pasted into the system; only a paste sets it, undo puts the previous time back |
 | `created_at`      | timestamptz |                                                  |
 
 ### Ghost placements

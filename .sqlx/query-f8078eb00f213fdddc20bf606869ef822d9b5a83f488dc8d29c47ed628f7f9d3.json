@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update map_solar_systems set signatures_pasted_at = $1\n             where map_id = $2 and solar_system_id = $3\n             returning id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "map_solar_systems",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Timestamptz",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "f8078eb00f213fdddc20bf606869ef822d9b5a83f488dc8d29c47ed628f7f9d3"
+}
