@@ -5,13 +5,12 @@
 	import PlusIcon from '@lucide/svelte/icons/plus';
 	import Trash2Icon from '@lucide/svelte/icons/trash-2';
 
-	import { createMutation, createQuery } from '@tanstack/svelte-query';
-	import { toast } from 'svelte-sonner';
+	import { createQuery } from '@tanstack/svelte-query';
 
 	import { browser } from '$app/environment';
 	import { page } from '$app/state';
-	import { api, errorMessage } from '$lib/api/client';
 	import { q } from '$lib/api/queries';
+	import { createIdentityActions } from '$lib/characters/identity';
 	import type { CharacterSummary } from '$lib/api/types/CharacterSummary';
 	import type { MapEntry } from '$lib/api/types/MapEntry';
 	import type { ServerStatus as ServerState } from '$lib/api/types/ServerStatus';
@@ -49,21 +48,7 @@
 	const overflow = $derived(pinned.slice(INLINE));
 	const here = $derived(page.url.pathname);
 
-	// The reload is deliberate: every cached read is scoped to the signed-in identity, and
-	// the open page (sockets included) was built for the old one.
-	const identity = createMutation(() => ({
-		mutationFn: (work: () => Promise<unknown>) => work(),
-		onSuccess: () => location.reload(),
-		onError: (err: unknown) => toast.error(errorMessage(err)),
-	}));
-
-	function switchCharacter(id: number) {
-		identity.mutate(() => api.switchCharacter(id));
-	}
-
-	function removeCharacter(id: number) {
-		identity.mutate(() => api.removeCharacter(id));
-	}
+	const identity = createIdentityActions();
 </script>
 
 <nav class="sticky top-0 z-40 border-b border-border bg-background">
@@ -163,7 +148,7 @@
 							{#each characters as c (c.character_id)}
 								<DropdownMenu.Item
 									class={c.is_active ? 'text-foreground' : ''}
-									onSelect={() => switchCharacter(c.character_id)}
+									onSelect={() => identity.switchTo(c.character_id)}
 								>
 									<EveImage
 										kind="character"
@@ -190,7 +175,7 @@
 							{#if characters.length > 1}
 								<DropdownMenu.Item
 									variant="destructive"
-									onSelect={() => removeCharacter(me.character_id)}
+									onSelect={() => identity.remove(me.character_id, true)}
 								>
 									<Trash2Icon />
 									Remove {me.name}
