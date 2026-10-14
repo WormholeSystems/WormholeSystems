@@ -58,6 +58,26 @@ pub fn ask_optional(prompt: &str, default: Option<String>) -> Result<String> {
     Ok(text.prompt().context("cancelled")?.trim().to_string())
 }
 
+/// An answer that may be left blank, pre-filled with the current one so it can be edited or
+/// cleared. `tidy` checks the input and returns what is stored.
+pub fn edit(
+    prompt: &str,
+    current: &str,
+    tidy: fn(&str) -> Result<String, String>,
+) -> Result<String> {
+    let answer = Text::new(prompt)
+        .with_initial_value(current)
+        .with_validator(move |input: &str| {
+            Ok(match tidy(input) {
+                Ok(_) => Validation::Valid,
+                Err(message) => Validation::Invalid(message.into()),
+            })
+        })
+        .prompt()
+        .context("cancelled")?;
+    tidy(&answer).map_err(anyhow::Error::msg)
+}
+
 /// A secret, echoed as nothing. Not confirmed twice: it is pasted, not remembered.
 pub fn ask_secret(prompt: &str, keep: Option<String>) -> Result<String> {
     if let Some(existing) = keep

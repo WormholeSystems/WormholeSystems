@@ -58,6 +58,7 @@ pub fn state(pool: &PgPool) -> AppState {
         backgrounds: wormholesystems::maps::BackgroundStore::new(
             std::env::temp_dir().join("ws-test-uploads"),
         ),
+        allowed_logins: Default::default(),
     }
 }
 

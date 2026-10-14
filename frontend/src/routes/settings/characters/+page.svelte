@@ -9,6 +9,8 @@
 
 	import { createQuery } from '@tanstack/svelte-query';
 
+	import { page } from '$app/state';
+
 	import { api, errorMessage } from '$lib/api/client';
 	import { confirmDanger } from '$lib/confirm.svelte';
 	import { apiAction } from '$lib/api/mutations';
@@ -27,6 +29,8 @@
 	const scopes = $derived(scopesQuery.data ?? []);
 	const loadError = $derived(charactersQuery.error ?? scopesQuery.error);
 	const error = $derived(loadError ? errorMessage(loadError) : null);
+	// Adding a character the instance does not let in comes back here, without it.
+	const refused = $derived(page.url.searchParams.get('refused') === '1');
 
 	const act = apiAction(() => [key.me]);
 
@@ -46,6 +50,12 @@
 </script>
 
 <div class="flex flex-col gap-6">
+	{#if refused}
+		<p class="text-sm text-destructive" role="alert" data-testid="character-refused">
+			That character was not added. This instance is limited to certain characters, corporations or
+			alliances, and it is not one of them.
+		</p>
+	{/if}
 	{#if error}
 		<p class="text-sm text-destructive" data-testid="characters-error">{error}</p>
 	{/if}

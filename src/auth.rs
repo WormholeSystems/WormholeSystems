@@ -31,6 +31,9 @@ pub struct AppState {
     pub secure_cookies: bool,
     /// Where the per-viewer map background images live.
     pub backgrounds: crate::maps::BackgroundStore,
+    /// Who may sign in. Checked at the SSO callback only, so it decides who gets a session
+    /// and whose characters join an account; a session already open runs out as usual.
+    pub allowed_logins: crate::allowlist::AffiliationAllowlist,
 }
 
 pub struct Auth {
@@ -206,6 +209,16 @@ pub async fn callback(
             .into_response();
     };
 
+    // Before anything is stored: a refused character gets no account, no token and no
+    // session, and is not added to the account it was being linked to either.
+    if !state.allowed_logins.allows(
+        claims.character_id,
+        Some(affiliation.corporation_id),
+        affiliation.alliance_id,
+    ) {
+        return Redirect::to(refused_destination(flow.link_user_id.is_some())).into_response();
+    }
+
     let Ok(corp) = auth.esi.corporation(affiliation.corporation_id).await else {
         return (StatusCode::BAD_GATEWAY, "could not resolve corporation").into_response();
     };
@@ -266,6 +279,17 @@ pub async fn callback(
         .build();
     let destination = flow.redirect_to.unwrap_or_else(|| "/".to_string());
     (jar.add(cookie), Redirect::to(&destination)).into_response()
+}
+
+/// Where a character the instance does not let in is sent, with a flag the page turns into
+/// an explanation. Adding an alt starts from the characters page and returns there; a
+/// plain login has no page of its own to go back to but the login page.
+fn refused_destination(linking: bool) -> &'static str {
+    if linking {
+        "/settings/characters?refused=1"
+    } else {
+        "/login?refused=1"
+    }
 }
 
 /// `GET /auth/logout`: end the session and clear the cookie.

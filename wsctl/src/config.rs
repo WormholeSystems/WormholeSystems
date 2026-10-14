@@ -18,6 +18,8 @@ pub struct Answers {
     pub eve_client_id: String,
     pub eve_client_secret: String,
     pub discord: Option<Discord>,
+    /// Who may log in, as `ALLOWED_AFFILIATION_IDS` takes it. Empty lets everyone in.
+    pub allowed_logins: String,
 }
 
 /// How the install meets the world.
@@ -151,6 +153,8 @@ impl Answers {
             "EVE_REDIRECT_URI",
             format!("{}/auth/callback", self.base_url()),
         );
+        // Written even when empty: emptying it is how an instance is opened up again.
+        set("ALLOWED_AFFILIATION_IDS", self.allowed_logins.clone());
         if let Some(discord) = &self.discord {
             set("DISCORD_APPLICATION_ID", discord.application_id.clone());
             set("DISCORD_PUBLIC_KEY", discord.public_key.clone());
@@ -198,6 +202,20 @@ impl Answers {
     }
 }
 
+/// A list of EVE ids as the server reads it: numbers, comma separated. Spaces and commas
+/// both separate on the way in, since that is how a list gets pasted. Anything else is
+/// refused here, because the server refuses to start on it.
+pub fn affiliation_ids(input: &str) -> Result<String, String> {
+    let mut ids = Vec::new();
+    for entry in input.split([',', ' ']).filter(|e| !e.is_empty()) {
+        match entry.parse::<u64>() {
+            Ok(id) if id > 0 => ids.push(id.to_string()),
+            _ => return Err(format!("{entry} is not an EVE id")),
+        }
+    }
+    Ok(ids.join(","))
+}
+
 /// A password nobody has to think about. Alphanumeric so it survives a URL, a shell and a
 /// compose file without escaping.
 pub fn generated_password() -> String {
@@ -223,7 +241,24 @@ mod tests {
             eve_client_id: "abc".into(),
             eve_client_secret: "shh".into(),
             discord: None,
+            allowed_logins: String::new(),
         }
+    }
+
+    #[test]
+    fn affiliation_ids_are_tidied_into_what_the_server_reads() {
+        assert_eq!(
+            affiliation_ids(" 99000001, 98000002 2112000001,").unwrap(),
+            "99000001,98000002,2112000001"
+        );
+        assert_eq!(affiliation_ids("").unwrap(), "");
+        assert!(affiliation_ids("99000001,Goonswarm").is_err());
+    }
+
+    // An empty list has to be written as such, or a list emptied in the wizard would stay.
+    #[test]
+    fn the_login_allowlist_is_written_even_when_empty() {
+        assert_eq!(answers().env_values()["ALLOWED_AFFILIATION_IDS"], "");
     }
 
     #[test]

@@ -6,7 +6,9 @@ use anyhow::{Result, bail};
 use console::style;
 
 use crate::checks::{self, Verdict};
-use crate::config::{Answers, DEFAULT_NETWORK, Discord, Setup, Standalone, generated_password};
+use crate::config::{
+    self, Answers, DEFAULT_NETWORK, Discord, Setup, Standalone, generated_password,
+};
 use crate::envfile;
 use crate::exec::Runner;
 use crate::integrate;
@@ -359,6 +361,16 @@ fn ask_everything(existing: &str, http: u16, https: u16) -> Result<Answers> {
     ));
     answers.eve_client_id = ui::ask("Client ID", keep("EVE_CLIENT_ID"))?;
     answers.eve_client_secret = ui::ask_secret("Client secret", keep("EVE_CLIENT_SECRET"))?;
+
+    println!();
+    ui::note("Who may log in: EVE character, corporation and alliance ids, comma separated.");
+    ui::note("A pilot gets in when their character, corporation or alliance is listed.");
+    ui::note("Leave it empty to let anyone with an EVE account in.");
+    answers.allowed_logins = ui::edit(
+        "Allowed ids",
+        &envfile::get(existing, "ALLOWED_AFFILIATION_IDS").unwrap_or_default(),
+        config::affiliation_ids,
+    )?;
 
     answers.discord = ask_discord(existing, &answers.base_url())?;
     Ok(answers)
