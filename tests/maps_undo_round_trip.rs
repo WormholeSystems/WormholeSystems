@@ -413,10 +413,6 @@ const KNOWN_GAPS: &[(&str, &str)] = &[
     ),
     ("remove_signatures", "as remove_signature"),
     (
-        "paste_signatures",
-        "redo drops the new scans and the paste time",
-    ),
-    (
         "link_signature",
         "undo restores the scanned state but leaves the link",
     ),
