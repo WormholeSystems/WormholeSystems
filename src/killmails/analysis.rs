@@ -142,24 +142,46 @@ pub async fn analyze(pool: &PgPool, esi: &EsiClient) -> Result<(), Box<dyn std::
     .execute(&mut *tx)
     .await?;
 
+    // Both written in one statement each, from parallel arrays.
     let mut totals: std::collections::HashMap<i64, i64> = std::collections::HashMap::new();
+    let mut systems = Vec::with_capacity(stats.len());
+    let mut entity_ids = Vec::with_capacity(stats.len());
+    let mut entity_types = Vec::with_capacity(stats.len());
+    let mut entity_names = Vec::with_capacity(stats.len());
+    let mut kills = Vec::with_capacity(stats.len());
     for s in &stats {
         *totals.entry(s.solar_system_id).or_default() += s.kills;
-        let name = &names[&(s.entity_type.clone(), s.entity_id)];
-        sqlx::query!("insert into wormhole_system_threats (solar_system_id, entity_id, entity_type, name, kills)
-             values ($1, $2, $3, $4, $5)", s.solar_system_id, s.entity_id, &s.entity_type, name, s.kills as i32)
-        .execute(&mut *tx)
-        .await?;
+        systems.push(s.solar_system_id);
+        entity_ids.push(s.entity_id);
+        entity_types.push(s.entity_type.clone());
+        entity_names.push(names[&(s.entity_type.clone(), s.entity_id)].clone());
+        kills.push(s.kills as i32);
     }
-    for (system, total) in &totals {
-        sqlx::query!(
-            "update wormhole_systems set threat_level = $2 where solar_system_id = $1",
-            system,
-            threat_level(*total)
-        )
-        .execute(&mut *tx)
-        .await?;
-    }
+    sqlx::query!(
+        "insert into wormhole_system_threats (solar_system_id, entity_id, entity_type, name, kills)
+         select * from unnest($1::bigint[], $2::bigint[], $3::text[], $4::text[], $5::int[])",
+        &systems,
+        &entity_ids,
+        &entity_types,
+        &entity_names,
+        &kills,
+    )
+    .execute(&mut *tx)
+    .await?;
+
+    let (levelled, levels): (Vec<i64>, Vec<crate::maps::ThreatLevel>) = totals
+        .iter()
+        .map(|(system, total)| (*system, threat_level(*total)))
+        .unzip();
+    sqlx::query!(
+        "update wormhole_systems w set threat_level = l.level
+         from unnest($1::bigint[], $2::threat_level[]) as l(solar_system_id, level)
+         where w.solar_system_id = l.solar_system_id",
+        &levelled,
+        &levels as &[crate::maps::ThreatLevel],
+    )
+    .execute(&mut *tx)
+    .await?;
     tx.commit().await?;
     Ok(())
 }
