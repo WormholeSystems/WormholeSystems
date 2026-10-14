@@ -134,7 +134,9 @@ older than the map knows, so the mark beats the age.
 - The lifetime the class pair gives a hole rides along on the connection as
   `lifetime_hours`, so the client can count down: from a mark, 4 h (`eol`) or 1 h
   (`critical`) after `time_status_updated_at`; before one, at most `created_at` plus the
-  lifetime, since when a hole was mapped is at best when it opened.
+  lifetime, since when a hole was mapped is at best when it opened. Every wormhole gets
+  a countdown, marked or not, so the estimate reads 4 h and 1 h left at the ages the
+  loop marks it; past the deadline it reads "any moment now".
 
 ### Expiry
 

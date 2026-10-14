@@ -18,4 +18,8 @@ You can set a connection's lifetime by hand, but the app also **ages it automati
 
 > Different wormhole types live different lengths of time, so the app uses the hole's type to decide when to age it. A standard hole and a C6 static don't reach end-of-life at the same wall-clock age.
 
+## Time remaining
+
+Click a connection and its status shows how long it has left, whatever its lifetime. A hole marked EOL or critical counts down from the moment it was marked. Anything else is estimated from how long it has been on the map: 24 hours for most holes, 48 for a C6 hole into known space and 16 for a drifter hole into known space. The estimate starts when the hole reached the map, not when it opened, so treat it as the most it could have left. Once the time runs out it reads "any moment now".
+
 Lifetime is independent of [mass](/documentation/connections/mass) — a hole can be fresh on mass and still end-of-life on time. Autopilot can be told how aged a hole it's willing to use; see [Wormhole filters](/documentation/autopilot-and-routing/wormhole-filters).

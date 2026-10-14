@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { MapConnection } from '$lib/api/types/MapConnection';
 
-import { formatRemaining, lifetimeDeadline } from './lifetime';
+import { describeRemaining, formatRemaining, lifetimeDeadline } from './lifetime';
 
 const T0 = Date.parse('2026-09-03T10:00:00Z');
 const HOUR = 3_600_000;
@@ -38,9 +38,27 @@ describe('lifetimeDeadline', () => {
 		});
 	});
 
-	it('has nothing to say about stargates or holes of unknown lifetime', () => {
+	it('has nothing to say about a stargate, which is permanent', () => {
 		expect(lifetimeDeadline(hole({ kind: 'stargate' }))).toBeNull();
-		expect(lifetimeDeadline(hole({ lifetime_hours: null }))).toBeNull();
+	});
+
+	it('still counts a hole of unreadable shape down from the ordinary day', () => {
+		expect(lifetimeDeadline(hole({ lifetime_hours: null }))).toEqual({
+			at: T0 + 24 * HOUR,
+			estimated: true,
+		});
+	});
+
+	// The background ageing marks EOL at four hours left and critical at one, so the
+	// estimate has to read exactly that when the mark lands.
+	it.each([
+		['an ordinary hole', 24, 20, 23],
+		['a C6 hole into known space', 48, 44, 47],
+		['a drifter hole into known space', 16, 12, 15],
+	])('agrees with the ageing on %s', (_label, lifetime, eolAt, criticalAt) => {
+		const deadline = lifetimeDeadline(hole({ lifetime_hours: lifetime }))!;
+		expect(deadline.at - (T0 + eolAt * HOUR)).toBe(4 * HOUR);
+		expect(deadline.at - (T0 + criticalAt * HOUR)).toBe(HOUR);
 	});
 });
 
@@ -49,5 +67,13 @@ describe('formatRemaining', () => {
 		expect(formatRemaining(T0 + 2 * HOUR + 13 * 60_000 + 1, T0)).toBe('2h 14m');
 		expect(formatRemaining(T0 + 45 * 60_000, T0)).toBe('45m');
 		expect(formatRemaining(T0 - HOUR, T0)).toBe('0m');
+	});
+});
+
+describe('describeRemaining', () => {
+	it('reads like formatRemaining until the deadline passes', () => {
+		expect(describeRemaining(T0 + 18 * HOUR, T0)).toBe('18h 0m');
+		expect(describeRemaining(T0, T0)).toBe('any moment now');
+		expect(describeRemaining(T0 - HOUR, T0)).toBe('any moment now');
 	});
 });

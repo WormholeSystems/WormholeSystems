@@ -42,7 +42,8 @@
 
 	const timeLeft = $derived.by(() => {
 		const deadline = connection ? lifetimeDeadline(connection) : null;
-		return deadline && !deadline.estimated ? formatRemaining(deadline.at, now) : null;
+		if (!deadline || deadline.estimated) return null;
+		return deadline.at <= now ? 'closing any moment' : `${formatRemaining(deadline.at, now)} left`;
 	});
 
 	function sinceAgo(iso: string): string {
@@ -75,7 +76,7 @@
 					{lifetime === 'eol' ? 'End of Life (<4h)' : 'Critical (<1h)'}
 				</span>
 				<span>
-					{lifetimeSince ? sinceAgo(lifetimeSince) : ''}{timeLeft ? `, ${timeLeft} left` : ''}
+					{lifetimeSince ? sinceAgo(lifetimeSince) : ''}{timeLeft ? `, ${timeLeft}` : ''}
 				</span>
 			{/if}
 		</div>
