@@ -425,22 +425,102 @@ pub(super) async fn execute_as(
     actor: EventActor,
     cmd: MapCommand,
 ) -> Result<CommandOutput> {
-    let map_id = cmd.map_id();
-    let mut tx = pool.begin().await?;
-    if let EventActor::Character(character) = actor {
-        require_role_tx(&mut tx, map_id, character.user_id, cmd.required_role()).await?;
-    }
+    let mut tx = MapTx::begin(pool, cmd.map_id(), actor, cmd.required_role()).await?;
     let effect = cmd.apply(&mut tx, actor).await?;
-    // Whatever the command was, the ghosts it left behind or now owes are settled here, so
-    // no write has to remember on its own. Undo of a command undoes its ghosts with it.
-    let (ghosts, ghost_events) = ghost::reconcile(&mut tx, map_id).await?;
-    let effect = ghost::with_undo_steps(map_id, ghosts, effect).emit_all(ghost_events);
-    events_log::record(&mut tx, map_id, actor, &effect).await?;
+    let output = tx.settle(effect).await?;
     tx.commit().await?;
-    // Published after commit, so nobody refetches a change that then rolls back.
-    let hub = super::hub();
-    for event in effect.events {
-        hub.publish(event);
+    Ok(output)
+}
+
+/// A write to one map, from the role check to the announcement. [`execute_as`] runs every
+/// command through one; the writes that are not commands (settings, share links, imports,
+/// observed transits) use it directly, so none of them hand-rolls the order: check the
+/// role inside the transaction, so a grant revoked meanwhile cannot slip a write through,
+/// and publish only after commit, so nobody refetches a change that then rolls back.
+pub(super) struct MapTx {
+    tx: Tx<'static>,
+    map_id: i64,
+    actor: EventActor,
+    events: Vec<super::MapEvent>,
+}
+
+impl MapTx {
+    /// Open the transaction and check the actor holds `role` on the map in it. A background
+    /// task has no role to check.
+    pub(super) async fn begin(
+        pool: &PgPool,
+        map_id: i64,
+        actor: EventActor,
+        role: Role,
+    ) -> Result<Self> {
+        let mut tx = pool.begin().await?;
+        if let EventActor::Character(character) = actor {
+            require_role_tx(&mut tx, map_id, character.user_id, role).await?;
+        }
+        Ok(Self::adopt(tx, map_id, actor))
     }
-    Ok(effect.output)
+
+    /// Carry on in a transaction that created the map itself. Its creator owns it, so
+    /// there is nothing to check yet.
+    pub(super) fn adopt(tx: Tx<'static>, map_id: i64, actor: EventActor) -> Self {
+        Self {
+            tx,
+            map_id,
+            actor,
+            events: Vec::new(),
+        }
+    }
+
+    /// Queue an event to publish once the write commits.
+    pub(super) fn emit(&mut self, event: super::MapEvent) {
+        self.events.push(event);
+    }
+
+    /// Settle the ghosts the write left behind or now owes, so no write has to remember on
+    /// its own. Their events are queued with the rest; the steps that would undo them are
+    /// handed back for the caller to fold into its own undo, or to drop when it has none.
+    pub(super) async fn reconcile_ghosts(&mut self) -> Result<Vec<MapCommand>> {
+        let (undo, events) = ghost::reconcile(&mut self.tx, self.map_id).await?;
+        self.events.extend(events);
+        Ok(undo)
+    }
+
+    /// Write the history row for an effect and queue its events. Hands back its output.
+    pub(super) async fn record(&mut self, effect: Effect) -> Result<CommandOutput> {
+        events_log::record(&mut self.tx, self.map_id, self.actor, &effect).await?;
+        self.events.extend(effect.events);
+        Ok(effect.output)
+    }
+
+    /// Reconcile the ghosts and record the effect with them, so undoing the change undoes
+    /// its ghosts too. What a command does after applying, and an import after loading.
+    pub(super) async fn settle(&mut self, effect: Effect) -> Result<CommandOutput> {
+        let ghosts = self.reconcile_ghosts().await?;
+        let effect = ghost::with_undo_steps(self.map_id, ghosts, effect);
+        self.record(effect).await
+    }
+
+    /// Commit, then announce.
+    pub(super) async fn commit(self) -> Result<()> {
+        self.tx.commit().await?;
+        let hub = super::hub();
+        for event in self.events {
+            hub.publish(event);
+        }
+        Ok(())
+    }
+}
+
+impl std::ops::Deref for MapTx {
+    type Target = Tx<'static>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.tx
+    }
+}
+
+impl std::ops::DerefMut for MapTx {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.tx
+    }
 }

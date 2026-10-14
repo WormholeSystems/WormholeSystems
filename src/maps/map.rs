@@ -11,10 +11,11 @@ use sqlx::PgPool;
 use crate::allowlist::AffiliationAllowlist;
 
 use super::access::{owns_character, require_role};
+use super::command::{EventActor, MapTx};
 use super::error::{MapError, Result};
 
 use super::view::{MapSystemView, sovereignty_of};
-use super::{Actor, AliasScheme, MapLayout, MapView, Role, SubjectType};
+use super::{Actor, AliasScheme, MapEvent, MapLayout, MapView, Role, SubjectType};
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema)]
 #[ts(export)]
@@ -289,9 +290,7 @@ impl UpdateMap {
 /// Rename / re-describe / re-icon a map. Owner only.
 pub async fn update_map(pool: &PgPool, actor: Actor, cmd: UpdateMap) -> Result<Map> {
     cmd.validate()?;
-    require_role(pool, cmd.map_id, actor.user_id, Role::Owner).await?;
-
-    let mut tx = pool.begin().await?;
+    let mut tx = MapTx::begin(pool, cmd.map_id, EventActor::Character(actor), Role::Owner).await?;
     let current = map_from_row!(
         sqlx::query!(
             r#"select id, name, description, image_url, created_at, alias_scheme, ignored_alias,
@@ -300,7 +299,7 @@ pub async fn update_map(pool: &PgPool, actor: Actor, cmd: UpdateMap) -> Result<M
              from maps where id = $1"#,
             cmd.map_id,
         )
-        .fetch_optional(&mut *tx)
+        .fetch_optional(&mut **tx)
         .await?
         .ok_or(MapError::NotFound)?
     );
@@ -345,15 +344,15 @@ pub async fn update_map(pool: &PgPool, actor: Actor, cmd: UpdateMap) -> Result<M
             allow_layout_override,
             is_public,
         )
-        .fetch_one(&mut *tx)
+        .fetch_one(&mut **tx)
         .await?
     );
+    tx.emit(MapEvent::MapUpdated { map_id: cmd.map_id });
     // Drawing unmapped holes is a map setting, so turning it on draws the holes already
     // scanned and turning it off takes those nodes away, rather than waiting for the next
     // scan to notice.
     super::ghost::reconcile(&mut tx, cmd.map_id).await?;
     tx.commit().await?;
-    super::hub().publish(super::events::MapEvent::MapUpdated { map_id: cmd.map_id });
     Ok(map)
 }
 
@@ -589,25 +588,26 @@ pub async fn read_map(
 /// Mint a share link for the map, replacing any link already out there. Manager+. One link
 /// at a time, so regenerating is how you lock out whoever holds the old one.
 pub async fn rotate_share_token(pool: &PgPool, actor: Actor, map_id: i64) -> Result<String> {
-    require_role(pool, map_id, actor.user_id, Role::Manager).await?;
+    let mut tx = MapTx::begin(pool, map_id, EventActor::Character(actor), Role::Manager).await?;
     let token = uuid::Uuid::new_v4().simple().to_string();
     sqlx::query!(
         "update maps set share_token = $2 where id = $1",
         map_id,
         token,
     )
-    .execute(pool)
+    .execute(&mut **tx)
     .await?;
-    super::hub().publish(super::events::MapEvent::MapUpdated { map_id });
+    tx.emit(MapEvent::MapUpdated { map_id });
+    tx.commit().await?;
     Ok(token)
 }
 
 /// Withdraw the share link. Whoever has it is out; the map itself is untouched. Manager+.
 pub async fn revoke_share_token(pool: &PgPool, actor: Actor, map_id: i64) -> Result<()> {
-    require_role(pool, map_id, actor.user_id, Role::Manager).await?;
+    let mut tx = MapTx::begin(pool, map_id, EventActor::Character(actor), Role::Manager).await?;
     sqlx::query!("update maps set share_token = null where id = $1", map_id)
-        .execute(pool)
+        .execute(&mut **tx)
         .await?;
-    super::hub().publish(super::events::MapEvent::MapUpdated { map_id });
-    Ok(())
+    tx.emit(MapEvent::MapUpdated { map_id });
+    tx.commit().await
 }

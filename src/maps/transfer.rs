@@ -21,15 +21,15 @@ use sqlx::PgPool;
 
 use crate::allowlist::AffiliationAllowlist;
 
-use super::access::{owns_character, require_role, require_role_tx};
-use super::command::{CommandOutput, Effect, EventActor, Tx};
+use super::access::{owns_character, require_role};
+use super::command::{CommandOutput, Effect, EventActor, MapTx, Tx};
 use super::error::{MapError, Result};
 use super::map::Map;
 use super::solar_system::MAX_RALLY_POINTS;
 use super::store;
 use super::{
     Actor, AliasScheme, ConnectionType, MapLayout, MassStatus, Role, SignatureGroup, SubjectType,
-    SystemStatus, TimeStatus, WormholeSize, events_log, ghost, signatures,
+    SystemStatus, TimeStatus, WormholeSize, signatures,
 };
 
 pub const FORMAT: &str = "wormholesystems-map-export";
@@ -872,12 +872,10 @@ pub async fn import_map(
     map_id: i64,
     parsed: &ParsedExport,
 ) -> Result<ImportSummary> {
-    let mut tx = pool.begin().await?;
-    require_role_tx(&mut tx, map_id, actor.user_id, Role::Manager).await?;
+    let mut tx = MapTx::begin(pool, map_id, EventActor::Character(actor), Role::Manager).await?;
     let summary = import_into_tx(&mut tx, map_id, parsed).await?;
-    let events = finish_import(&mut tx, map_id, actor, &summary).await?;
+    finish_import(&mut tx, map_id, parsed, &summary).await?;
     tx.commit().await?;
-    publish_after_import(map_id, parsed, events);
     Ok(summary)
 }
 
@@ -915,42 +913,34 @@ pub async fn import_map_as_new(
             .execute(&mut *tx)
             .await?;
     }
+    let mut tx = MapTx::adopt(tx, map.id, EventActor::Character(actor));
     let summary = import_into_tx(&mut tx, map.id, &parsed).await?;
-    let events = finish_import(&mut tx, map.id, actor, &summary).await?;
-    let map = super::map::fetch_map(&mut *tx, map.id).await?;
+    finish_import(&mut tx, map.id, &parsed, &summary).await?;
+    let map = super::map::fetch_map(&mut **tx, map.id).await?;
     tx.commit().await?;
-    publish_after_import(map.id, &parsed, events);
     Ok(map)
 }
 
-/// Reconcile ghosts and write the journal entry, inside the import's transaction.
+/// Settle the ghosts, write the journal entry and queue everything an import can touch for
+/// open clients. `HistoryChanged` makes them refetch the view, signatures, watchlist and
+/// history in one go.
 async fn finish_import(
-    tx: &mut Tx<'_>,
+    tx: &mut MapTx,
     map_id: i64,
-    actor: Actor,
+    parsed: &ParsedExport,
     summary: &ImportSummary,
-) -> Result<Vec<super::MapEvent>> {
-    let (_, ghost_events) = ghost::reconcile(tx, map_id).await?;
-    let effect = Effect::new("map.imported", "imported a map export", CommandOutput::None)
-        .entries(summary.changed().max(1));
-    events_log::record(tx, map_id, EventActor::Character(actor), &effect).await?;
-    Ok(ghost_events)
-}
-
-/// Everything an import can touch, told to open clients after commit. `HistoryChanged`
-/// makes them refetch the view, signatures, watchlist and history in one go.
-fn publish_after_import(map_id: i64, parsed: &ParsedExport, ghost_events: Vec<super::MapEvent>) {
-    let hub = super::hub();
-    hub.publish(super::MapEvent::HistoryChanged { map_id });
+) -> Result<()> {
+    tx.emit(super::MapEvent::HistoryChanged { map_id });
     if parsed.sections.settings.is_some() {
-        hub.publish(super::MapEvent::MapUpdated { map_id });
+        tx.emit(super::MapEvent::MapUpdated { map_id });
     }
     if parsed.sections.access.is_some() {
-        hub.publish(super::MapEvent::AccessChanged { map_id });
+        tx.emit(super::MapEvent::AccessChanged { map_id });
     }
-    for event in ghost_events {
-        hub.publish(event);
-    }
+    let effect = Effect::new("map.imported", "imported a map export", CommandOutput::None)
+        .entries(summary.changed().max(1));
+    tx.settle(effect).await?;
+    Ok(())
 }
 
 async fn import_into_tx(
