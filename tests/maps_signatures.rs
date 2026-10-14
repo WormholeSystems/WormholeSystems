@@ -4,7 +4,7 @@
 mod common;
 
 use common::catalog::{C247, K162, seed_catalog};
-use common::map::place;
+use common::map::{connect, place};
 use common::{SYS_A, SYS_B, member_with_role, world};
 use sqlx::PgPool;
 use wormholesystems::maps::connection::{
@@ -859,4 +859,94 @@ async fn linking_and_unlinking_touch_the_signature(pool: PgPool) {
     .await
     .unwrap();
     assert!(touched(&pool, sig.id).await, "unlinking");
+}
+
+/// The last scan on one side of a hole takes the hole with it. Undoing that has to bring
+/// the hole back before the scan, and the scan on the other side has to get its link back.
+#[sqlx::test]
+async fn undoing_the_removal_of_a_holes_last_scan_brings_the_hole_back(pool: PgPool) {
+    use wormholesystems::maps::events_log::{MapIdBody, redo, undo};
+
+    let w = world(&pool).await;
+    let a = place(&pool, w.owner, w.map_id, SYS_A).await;
+    let b = place(&pool, w.owner, w.map_id, SYS_B).await;
+    let conn = connect(&pool, w.owner, w.map_id, a, b).await;
+    let mut scans = Vec::new();
+    for (system, id) in [(SYS_A, "AAA-111"), (SYS_B, "BBB-222")] {
+        let sig = add_signature(
+            &pool,
+            w.owner,
+            AddSignature {
+                map_id: w.map_id,
+                solar_system_id: system,
+                signature_id: id.into(),
+                group: SignatureGroup::Wormhole,
+                ..Default::default()
+            },
+        )
+        .await
+        .unwrap();
+        link_signature(
+            &pool,
+            w.owner,
+            LinkSignature {
+                map_id: w.map_id,
+                signature_pk: sig.id,
+                connection_id: conn.id,
+            },
+        )
+        .await
+        .unwrap();
+        scans.push(sig.id);
+    }
+
+    for remove in [true, false] {
+        if remove {
+            remove_signature(
+                &pool,
+                w.owner,
+                RemoveSignature {
+                    map_id: w.map_id,
+                    signature_pk: scans[0],
+                },
+            )
+            .await
+            .unwrap();
+        } else {
+            remove_signatures(
+                &pool,
+                w.owner,
+                RemoveSignatures {
+                    map_id: w.map_id,
+                    signature_pks: vec![scans[0]],
+                },
+            )
+            .await
+            .unwrap();
+        }
+        let view = get_map(&pool, w.owner, GetMap { map_id: w.map_id })
+            .await
+            .unwrap();
+        assert!(view.connections.is_empty(), "the hole went with its scan");
+
+        undo(&pool, w.owner, MapIdBody { map_id: w.map_id })
+            .await
+            .unwrap();
+        let view = get_map(&pool, w.owner, GetMap { map_id: w.map_id })
+            .await
+            .unwrap();
+        assert_eq!(view.connections[0].id, conn.id);
+        let sigs = list_signatures(&pool, w.owner, w.map_id).await.unwrap();
+        assert!(sigs.iter().all(|s| s.connection_id == Some(conn.id)));
+
+        redo(&pool, w.owner, MapIdBody { map_id: w.map_id })
+            .await
+            .unwrap();
+        undo(&pool, w.owner, MapIdBody { map_id: w.map_id })
+            .await
+            .unwrap();
+        let sigs = list_signatures(&pool, w.owner, w.map_id).await.unwrap();
+        assert_eq!(sigs.len(), 2);
+        assert!(sigs.iter().all(|s| s.connection_id == Some(conn.id)));
+    }
 }

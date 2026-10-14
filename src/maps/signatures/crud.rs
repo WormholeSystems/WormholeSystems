@@ -348,13 +348,14 @@ pub(in crate::maps) async fn apply_remove_signature(
         .pop()
         .ok_or(MapError::NotFound)?;
 
+    let mut gone = raised_snapshot;
     let mut removed_connection_id = None;
     if let Some(conn_id) = sig.connection_id
-        && delete_connection_if_side_empty(tx, cmd.map_id, conn_id, sig.solar_system_id)
-            .await?
-            .is_some()
+        && let Some(dead) =
+            delete_connection_if_side_empty(tx, cmd.map_id, conn_id, sig.solar_system_id).await?
     {
         removed_connection_id = Some(conn_id);
+        absorb(&mut gone, dead.snapshot);
     }
 
     let mut events = vec![MapEvent::SignatureChanged {
@@ -380,9 +381,9 @@ pub(in crate::maps) async fn apply_remove_signature(
             removed_placement_ids: raised,
         })),
     )
-    .undo_with(undo_with_raised(
+    .undo_with(undo_with_gone(
         cmd.map_id,
-        raised_snapshot,
+        gone,
         MapCommand::RestoreSignatures(restore),
     ))
     .emit_all(events))
@@ -401,18 +402,29 @@ async fn capture_raised(
     ))
 }
 
-/// Undo of a delete that took nodes with it. The nodes go back first: their snapshot
-/// carries the edge, and the scan cannot name an edge that is not there yet. It carries
-/// the scan too, so the second step is usually the one that finds nothing left to do.
-fn undo_with_raised(
+/// Add what else a delete took to the snapshot of it.
+fn absorb(
+    gone: &mut Option<crate::maps::restore::RestoreSystems>,
+    more: crate::maps::restore::RestoreSystems,
+) {
+    match gone {
+        Some(gone) => gone.absorb(more),
+        None => *gone = Some(more),
+    }
+}
+
+/// Undo of a delete that took nodes or connections with it. Those go back first: the
+/// scan cannot name an edge that is not there yet. Their snapshot may carry the scan too,
+/// so the second step is then the one that finds nothing left to do.
+fn undo_with_gone(
     map_id: i64,
-    raised: Option<crate::maps::restore::RestoreSystems>,
+    gone: Option<crate::maps::restore::RestoreSystems>,
     inverse: MapCommand,
 ) -> MapCommand {
-    let Some(raised) = raised else { return inverse };
+    let Some(gone) = gone else { return inverse };
     MapCommand::Sequence(crate::maps::command::Sequence {
         map_id,
-        steps: vec![MapCommand::RestoreSystems(raised), inverse],
+        steps: vec![MapCommand::RestoreSystems(gone), inverse],
     })
 }
 
@@ -467,14 +479,16 @@ pub(in crate::maps) async fn apply_remove_signatures(
     sides.sort_unstable();
     sides.dedup();
 
+    let mut gone = raised_snapshot;
     let mut removed_connection_ids = Vec::new();
     let mut endpoint_candidates: Vec<i64> = Vec::new();
     for (conn_id, side_system) in sides {
-        if let Some(far_side) =
+        if let Some(dead) =
             delete_connection_if_side_empty(tx, cmd.map_id, conn_id, side_system).await?
         {
             removed_connection_ids.push(conn_id);
-            endpoint_candidates.extend(far_side);
+            endpoint_candidates.extend(dead.far_side);
+            absorb(&mut gone, dead.snapshot);
         }
     }
     endpoint_candidates.sort_unstable();
@@ -485,8 +499,11 @@ pub(in crate::maps) async fn apply_remove_signatures(
     // in: that is where the user is working, and losing its last hole doesn't make it stale.
     let mut removed_placement_ids = raised;
     for placement_id in endpoint_candidates {
+        let snapshot =
+            crate::maps::restore::capture_systems(tx, cmd.map_id, &[placement_id]).await?;
         if store::placements::delete_if_orphan(tx, cmd.map_id, placement_id).await? {
             removed_placement_ids.push(placement_id);
+            absorb(&mut gone, snapshot);
         }
     }
 
@@ -524,23 +541,31 @@ pub(in crate::maps) async fn apply_remove_signatures(
         })),
     )
     .entries(count)
-    .undo_with(undo_with_raised(
+    .undo_with(undo_with_gone(
         cmd.map_id,
-        raised_snapshot,
+        gone,
         MapCommand::RestoreSignatures(restore),
     ))
     .emit_all(events))
 }
 
+/// A connection the last scan on one of its sides took with it.
+struct DeadConnection {
+    /// The placement at the far end from that side, if it is not a ghost's.
+    far_side: Option<i64>,
+    /// The connection and the scans still linked to it, which lose their link by the
+    /// foreign key and get it back when this is restored.
+    snapshot: crate::maps::restore::RestoreSystems,
+}
+
 /// Delete `conn_id` if no signature in `side_system` still references it (the legacy
-/// same-side survivor rule). Returns `None` when a survivor kept it alive, otherwise the
-/// placement at the far end from `side_system`.
+/// same-side survivor rule). Returns `None` when a survivor kept it alive.
 async fn delete_connection_if_side_empty(
     tx: &mut Tx<'_>,
     map_id: i64,
     conn_id: i64,
     side_system: i64,
-) -> Result<Option<Option<i64>>> {
+) -> Result<Option<DeadConnection>> {
     let survivors = sqlx::query_scalar!(
         "select count(*) from signatures
          where connection_id = $1 and solar_system_id = $2",
@@ -553,6 +578,11 @@ async fn delete_connection_if_side_empty(
     if survivors > 0 {
         return Ok(None);
     }
+    let Some(mut snapshot) = crate::maps::restore::capture_connection(tx, map_id, conn_id).await?
+    else {
+        return Ok(None);
+    };
+    snapshot.signatures = store::signatures::snapshot_around(tx, map_id, &[], &[conn_id]).await?;
     let Some(endpoints) = store::connections::delete(tx, map_id, &[conn_id])
         .await?
         .pop()
@@ -570,7 +600,7 @@ async fn delete_connection_if_side_empty(
     )
     .fetch_optional(&mut **tx)
     .await?;
-    Ok(Some(far_side))
+    Ok(Some(DeadConnection { far_side, snapshot }))
 }
 
 /// Every signature on a map. Viewer+.

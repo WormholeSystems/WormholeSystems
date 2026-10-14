@@ -33,6 +33,25 @@ impl RestoreSystems {
     fn is_connection_only(&self) -> bool {
         self.systems.is_empty() && !self.connections.is_empty()
     }
+
+    /// Take in another snapshot of the same map, each row once.
+    pub(super) fn absorb(&mut self, other: RestoreSystems) {
+        for s in other.systems {
+            if !self.systems.iter().any(|known| known.id == s.id) {
+                self.systems.push(s);
+            }
+        }
+        for c in other.connections {
+            if !self.connections.iter().any(|known| known.id == c.id) {
+                self.connections.push(c);
+            }
+        }
+        for s in other.signatures {
+            if !self.signatures.iter().any(|known| known.id == s.id) {
+                self.signatures.push(s);
+            }
+        }
+    }
 }
 
 /// Take the signatures the snapshot claimed that the database will not cascade: the ones in
