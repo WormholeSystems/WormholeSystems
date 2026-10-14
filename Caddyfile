@@ -23,6 +23,16 @@
 	# caddy.d/*.site in the checkout. Kept out of this file so an update never fights them.
 	import /etc/caddy/conf.d/*.site
 
+	# The cheap ones nothing here depends on breaking. `?` sets each only where the app
+	# has not, so a header the API or the frontend sends itself wins. No HSTS: whether this
+	# will only ever be served over https is the operator's call (see caddy.d/).
+	header {
+		?X-Content-Type-Options nosniff
+		?Referrer-Policy strict-origin-when-cross-origin
+		?X-Frame-Options SAMEORIGIN
+		-Server
+	}
+
 	handle /api/* {
 		reverse_proxy api:3000
 	}
