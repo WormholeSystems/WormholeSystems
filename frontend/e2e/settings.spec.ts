@@ -73,10 +73,8 @@ test('a grant can be given an end date, and taken back to permanent', async ({ p
 
 	// Dropping the end date is confirmed first: it is a permission that stops expiring.
 	await page.getByTestId('access-expiry').click();
-	await expect(page.getByTestId('clear-expiry-dialog')).toContainText(
-		'until somebody takes it away',
-	);
-	await page.getByTestId('clear-expiry-confirm').click();
+	await expect(page.getByTestId('confirm-dialog')).toContainText('until somebody takes it away');
+	await page.getByTestId('confirm-accept').click();
 	await expect(page.getByTestId('access-expiry')).toHaveCount(0);
 });
 

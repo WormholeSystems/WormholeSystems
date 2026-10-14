@@ -29,6 +29,7 @@
 	import * as Field from '$lib/components/ui/field';
 	import { Input } from '$lib/components/ui/input';
 	import { Textarea } from '$lib/components/ui/textarea';
+	import { confirmDanger } from '$lib/confirm.svelte';
 	import { timeAgo } from '$lib/format';
 	import { lookup } from '$lib/lookup';
 	import { ROLE_TONE } from '$lib/map/roles';
@@ -59,7 +60,6 @@
 	let newDescription = $state('');
 
 	// The whole entry, not just an id, so the dialog can name what it is about to destroy.
-	let deleting = $state<MapEntry | null>(null);
 
 	// Importing an export file as a new map.
 	let importing = $state(false);
@@ -153,11 +153,13 @@
 		settingsWriter.save(map.id, { is_archived: value });
 	}
 
-	function confirmDelete() {
-		const map = deleting;
-		if (!map) return;
-		deleting = null;
-		act.mutate(() => api.deleteMap(map.id));
+	async function deleteMap(map: MapEntry) {
+		const sure = await confirmDanger({
+			title: `Delete “${map.name}”?`,
+			body: 'This removes the map and everything on it for everyone who can see it. There is no undo.',
+			action: 'Delete map',
+		});
+		if (sure) act.mutate(() => api.deleteMap(map.id));
 	}
 </script>
 
@@ -265,7 +267,7 @@
 								<DropdownMenu.Separator />
 								<DropdownMenu.Item
 									class="text-destructive data-highlighted:text-destructive"
-									onSelect={() => (deleting = map)}
+									onSelect={() => deleteMap(map)}
 									data-testid="map-delete"
 								>
 									<Trash2Icon />
@@ -497,23 +499,6 @@
 				data-testid="import-map-create"
 			>
 				Import
-			</Button>
-		</Dialog.Footer>
-	</Dialog.Content>
-</Dialog.Root>
-
-<Dialog.Root open={deleting !== null} onOpenChange={(o) => !o && (deleting = null)}>
-	<Dialog.Content class="sm:max-w-md" data-testid="delete-map-dialog">
-		<Dialog.Header>
-			<Dialog.Title>Delete “{deleting?.name}”?</Dialog.Title>
-			<Dialog.Description>
-				This removes the map and everything on it for everyone who can see it. There is no undo.
-			</Dialog.Description>
-		</Dialog.Header>
-		<Dialog.Footer>
-			<Button variant="ghost" onclick={() => (deleting = null)}>Cancel</Button>
-			<Button variant="destructive" onclick={confirmDelete} data-testid="confirm-delete-map">
-				Delete map
 			</Button>
 		</Dialog.Footer>
 	</Dialog.Content>

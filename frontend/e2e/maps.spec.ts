@@ -28,8 +28,8 @@ test('create a map, then delete it from the list', async ({ page }) => {
 	// Deleting asks first: the old list did it on one unguarded click.
 	await card.getByTestId('map-menu').click();
 	await page.getByTestId('map-delete').click();
-	await expect(page.getByTestId('delete-map-dialog')).toContainText('E2E List Map');
-	await page.getByTestId('confirm-delete-map').click();
+	await expect(page.getByTestId('confirm-dialog')).toContainText('E2E List Map');
+	await page.getByTestId('confirm-accept').click();
 	await expect(card).toHaveCount(0);
 });
 
