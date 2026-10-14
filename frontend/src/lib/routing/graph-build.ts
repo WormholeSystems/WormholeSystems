@@ -57,6 +57,15 @@ export function chainEdges(
 	return edges;
 }
 
+/** Whether two [`chainEdges`] results would build the same graph. Order counts, as it does there. */
+export function sameEdges(a: DynamicEdge[], b: DynamicEdge[]): boolean {
+	if (a.length !== b.length) return false;
+	return a.every((x, i) => {
+		const y = b[i];
+		return x.a === y.a && x.b === y.b && x.via === y.via && x.mass === y.mass && x.time === y.time;
+	});
+}
+
 /** Connections on the active route: endpoints at adjacent path indices (legacy rule). */
 export function routeConnectionIds(
 	path: number[],

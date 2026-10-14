@@ -258,6 +258,65 @@ export function findRoutes(
 	return out;
 }
 
+/**
+ * Every route out of one origin, from a single relaxation that runs to the end. The
+ * panels around the map all measure from the same place, so one of these answers the
+ * watchlist, the pilots, the skyhooks, Find and the planner at once instead of each
+ * running its own search.
+ */
+export class RouteSearch {
+	private relaxation: Relaxation;
+	/** Settled systems in cost order, which is the order Find reports them in. */
+	private order: number[] = [];
+
+	constructor(
+		private graph: RouteGraph,
+		readonly from: number,
+		private settings: RoutingSettings,
+		private ignored: ReadonlySet<number>,
+	) {
+		// The same relaxation an early-stopping search runs, only never stopped: everything
+		// it has settled by the time it would have stopped is identical, so the answers are.
+		this.relaxation = relax(graph, from, settings, ignored, new Set([from]), (id) => {
+			this.order.push(id);
+			return true;
+		});
+	}
+
+	/**
+	 * As [`findRoute`] from this origin. A target the search steps around is still a fine
+	 * place to arrive, which the shared search cannot know, so that one is searched alone.
+	 */
+	routeTo(to: number): RouteResult | null {
+		if (to !== this.from && (to === ZARZAKH_SYSTEM_ID || this.ignored.has(to))) {
+			return findRoute(this.graph, this.from, to, this.settings, this.ignored);
+		}
+		return reconstruct(this.relaxation, this.from, to);
+	}
+
+	/** As [`findRoutes`]: the routes to the targets that can be reached. */
+	routesTo(targets: Iterable<number>): Map<number, RouteResult> {
+		const out = new Map<number, RouteResult>();
+		for (const target of new Set(targets)) {
+			const result = this.routeTo(target);
+			if (result) out.set(target, result);
+		}
+		return out;
+	}
+
+	/** As [`findClosestSystems`]. */
+	closest(matches: (id: number) => boolean, limit: number): ClosestSystem[] {
+		const out: ClosestSystem[] = [];
+		for (const id of this.order) {
+			if (out.length >= limit) break;
+			if (!matches(id)) continue;
+			const result = reconstruct(this.relaxation, this.from, id);
+			out.push({ id, jumps: result?.jumps ?? 0, route: result?.route ?? [] });
+		}
+		return out;
+	}
+}
+
 /** Shared so the watchlist and the pilots card agree on what "close" means. */
 export function jumpTone(jumps: number): string {
 	if (jumps < 8) return 'text-green-400';

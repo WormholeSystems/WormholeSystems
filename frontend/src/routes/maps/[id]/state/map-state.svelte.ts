@@ -190,11 +190,18 @@ export class MapState {
 		),
 	);
 
+	// One derived per field, so the object below is rebuilt only when a routing setting
+	// itself changed. Built straight off the settings it would be a new object after every
+	// save of anything, and every route on the page would be searched again.
+	private routePreference = $derived(this.userSettings?.route_preference ?? 'shorter');
+	private securityPenalty = $derived(this.userSettings?.security_penalty ?? 50);
+	private allowTimeStatus = $derived(this.userSettings?.route_allow_time_status ?? 'critical');
+	private allowMassStatus = $derived(this.userSettings?.route_allow_mass_status ?? 'reduced');
 	routingSettings = $derived<RoutingSettings>({
-		preference: this.userSettings?.route_preference ?? 'shorter',
-		securityPenalty: this.userSettings?.security_penalty ?? 50,
-		allowTimeStatus: this.userSettings?.route_allow_time_status ?? 'critical',
-		allowMassStatus: this.userSettings?.route_allow_mass_status ?? 'reduced',
+		preference: this.routePreference,
+		securityPenalty: this.securityPenalty,
+		allowTimeStatus: this.allowTimeStatus,
+		allowMassStatus: this.allowMassStatus,
 	});
 	useEveScout = $derived(this.userSettings?.route_use_evescout ?? false);
 	useWormholes = $derived(this.userSettings?.route_use_wormholes ?? true);
@@ -456,6 +463,7 @@ export class MapState {
 			useEveScout: () => this.useEveScout,
 			useWormholes: () => this.useWormholes,
 			mapIgnored: () => this.ignoredIds,
+			settings: () => this.routingSettings,
 			loadTables: () => this.queries.client.ensureQueryData(q.routingGraph()),
 		};
 	}

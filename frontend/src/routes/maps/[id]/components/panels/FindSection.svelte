@@ -16,11 +16,7 @@
 	import EveImage from '$lib/components/EveImage.svelte';
 	import SystemRow from '../pickers/SystemRow.svelte';
 	import { SYSTEM_CELLS_4, SYSTEM_LIST_ACTIONS, SYSTEM_ROW } from '../pickers/columns';
-	import {
-		findClosestSystems,
-		jumpTone as badgeTone,
-		type RouteGraph,
-	} from '$lib/routing/algorithm';
+	import { jumpTone as badgeTone, type RouteGraph } from '$lib/routing/algorithm';
 	import { findMatcher } from '$lib/routing/find-conditions';
 	import type { MapState } from '../../state/map-state.svelte';
 	import {
@@ -117,14 +113,7 @@
 					stations: map.route.stationSystems,
 					security: map.route.security,
 				});
-		return findClosestSystems(
-			graph,
-			origin,
-			matches,
-			Number(findLimit),
-			map.routingSettings,
-			map.route.avoided,
-		);
+		return map.route.search(origin)?.closest(matches, Number(findLimit)) ?? [];
 	});
 </script>
 
