@@ -578,11 +578,10 @@ async fn delete_connection_if_side_empty(
     if survivors > 0 {
         return Ok(None);
     }
-    let Some(mut snapshot) = crate::maps::restore::capture_connection(tx, map_id, conn_id).await?
+    let Some(snapshot) = crate::maps::restore::capture_connection(tx, map_id, conn_id).await?
     else {
         return Ok(None);
     };
-    snapshot.signatures = store::signatures::snapshot_around(tx, map_id, &[], &[conn_id]).await?;
     let Some(endpoints) = store::connections::delete(tx, map_id, &[conn_id])
         .await?
         .pop()
