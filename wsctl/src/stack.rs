@@ -116,7 +116,7 @@ pub fn network_exists(runner: &mut dyn Runner, dir: &Path, name: &str) -> bool {
         .is_ok()
 }
 
-/// Make the network a standalone install joins, unless it is there already. Quiet: docker
+/// Make the network your proxy finds the app on, unless it is there already. Quiet: docker
 /// answers with the new network's id, which nobody needs to see.
 pub fn ensure_network(runner: &mut dyn Runner, dir: &Path, name: &str) -> Result<bool> {
     if network_exists(runner, dir, name) {

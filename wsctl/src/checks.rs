@@ -7,9 +7,7 @@ use std::net::{IpAddr, ToSocketAddrs};
 use std::path::Path;
 use std::process::{Command, Stdio};
 
-use anyhow::Result;
-
-use crate::config::Standalone;
+use crate::config::{Database, Deployment, Proxy};
 use crate::exec::Runner;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -161,7 +159,7 @@ pub fn repo(runner: &mut dyn Runner, dir: &Path) -> Check {
     }
 }
 
-/// Whether the database a standalone install points at answers where the API will look
+/// Whether an external database answers where the API will look
 /// for it: inside the Docker network, not on this machine's loopback.
 pub fn database(runner: &mut dyn Runner, dir: &Path, network: &str, url: &str) -> Check {
     let Some((host, port)) = database_address(url) else {
@@ -280,38 +278,57 @@ pub fn public_ip() -> Option<IpAddr> {
     None
 }
 
-pub fn all(
-    runner: &mut dyn Runner,
-    dir: &Path,
-    domain: &str,
-    http: u16,
-    https: u16,
-) -> Result<Vec<Check>> {
-    let ours = crate::stack::proxy_running(runner, dir);
-    let mut checks = vec![docker(runner, dir), disk(dir), repo(runner, dir)];
-    checks.extend(ports(&[http, https], ours));
-    checks.push(dns(domain, public_ip()));
-    Ok(checks)
+/// The machine itself: what every install needs whichever way it is put together.
+pub fn machine(runner: &mut dyn Runner, dir: &Path) -> Vec<Check> {
+    vec![docker(runner, dir), disk(dir), repo(runner, dir)]
 }
 
-/// What `doctor` looks at for a standalone install: no ports 80 and 443 and no DNS, those
-/// belong to the proxy in front; the network, the database, and the loopback ports instead.
-pub fn standalone(runner: &mut dyn Runner, dir: &Path, standalone: &Standalone) -> Vec<Check> {
-    let mut checks = vec![docker(runner, dir), disk(dir), repo(runner, dir)];
-    let network = network(runner, dir, &standalone.network);
-    let network_ok = network.verdict == Verdict::Ok;
-    checks.push(network);
-    if network_ok {
-        checks.push(database(
-            runner,
-            dir,
-            &standalone.network,
-            &standalone.database_url,
-        ));
+/// What the install's own choices need: the ports and the name Caddy takes, the networks
+/// a proxy finds the app on, the database it connects to.
+pub fn deployment(runner: &mut dyn Runner, dir: &Path, deployment: &Deployment) -> Vec<Check> {
+    let mut checks = Vec::new();
+
+    let proxy_network = deployment.proxy_network();
+    if let Some(name) = proxy_network {
+        checks.push(network(runner, dir, name));
     }
-    if let Some((api, web)) = standalone.host_ports {
-        let ours = crate::stack::service_running(runner, dir, "api");
-        checks.extend(ports(&[api, web], ours));
+    if let Database::External(db) = &deployment.database {
+        let mut reachable = true;
+        if let Some(name) = db.network.as_deref().filter(|n| Some(*n) != proxy_network) {
+            let check = network(runner, dir, name);
+            reachable = check.verdict == Verdict::Ok;
+            checks.push(check);
+        }
+        // Probed from where the API will look: the database's network, or the one the API
+        // shares with the proxy, or plain Docker networking for a database by address.
+        let from = db
+            .network
+            .as_deref()
+            .or(deployment.app_network())
+            .unwrap_or("bridge");
+        if reachable && crate::stack::network_exists(runner, dir, from) {
+            checks.push(database(runner, dir, from, &db.url));
+        }
+    }
+
+    match &deployment.proxy {
+        Proxy::Caddy(site) => {
+            let ours = crate::stack::proxy_running(runner, dir);
+            checks.extend(ports(&[site.http_port, site.https_port], ours));
+            checks.push(dns(&site.domain, public_ip()));
+        }
+        Proxy::Router(router) => {
+            if let Some(port) = router.port {
+                let ours = crate::stack::proxy_running(runner, dir);
+                checks.extend(ports(&[port], ours));
+            }
+        }
+        Proxy::Direct(direct) => {
+            if let Some((api, web)) = direct.host_ports {
+                let ours = crate::stack::service_running(runner, dir, "api");
+                checks.extend(ports(&[api, web], ours));
+            }
+        }
     }
     checks
 }
@@ -381,6 +398,41 @@ mod tests {
 
     // The API runs in a container, so the operator's localhost is not the API's localhost.
     // This is the most likely wrong answer, and docker would only say "connection refused".
+    // The database is probed from where the API will look for it: its own network when it
+    // has one, else the one the API shares with the proxy.
+    #[test]
+    fn an_external_database_is_probed_from_the_api_side() {
+        use crate::config::{Direct, ExternalDb};
+        let deployment = |network: Option<&str>| Deployment {
+            database: Database::External(ExternalDb {
+                url: "postgres://ws:secret@postgres:5432/ws".into(),
+                network: network.map(Into::into),
+            }),
+            proxy: Proxy::Direct(Direct {
+                public_url: "https://map.example.com".into(),
+                network: Some("coolify".into()),
+                host_ports: None,
+            }),
+        };
+        let probe = |network: &str| {
+            format!("docker run --rm --network {network} alpine nc -z -w 5 postgres 5432")
+        };
+
+        let mut runner = crate::exec::Recording::default();
+        let checks = super::deployment(&mut runner, Path::new("."), &deployment(None));
+        assert!(runner.commands.contains(&probe("coolify")));
+        assert_eq!(worst(&checks), Verdict::Ok);
+
+        let mut runner = crate::exec::Recording::default();
+        super::deployment(&mut runner, Path::new("."), &deployment(Some("pg")));
+        assert!(runner.commands.contains(&probe("pg")));
+        assert!(
+            runner
+                .commands
+                .contains(&"docker network inspect --format {{.Name}} pg".to_string())
+        );
+    }
+
     #[test]
     fn a_database_on_localhost_is_fatal() {
         let mut runner = crate::exec::Recording::default();
