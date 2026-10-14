@@ -190,6 +190,22 @@ costs messages and never holds up anything else (`src/alerts/mod.rs`).
   slack, at most 10 minutes) on maps with a proximity or jump-range alert. The claims
   make the replay harmless for what was already handled.
 
+## Retention sweep
+
+Once a day (`retention::sweep`), rows that only ever accumulate are dropped:
+
+| Table | Removed | Why that long |
+|---|---|---|
+| `map_alert_deliveries` | `killmail:` keys older than 30 days; `placement:` keys older than 30 days whose placement no longer exists | a delivery is the dedup record, so it stays while its occasion can recur; a killmail is only offered once |
+| `map_alert_events` | older than 90 days | the alert settings page shows the newest 50 to 200 |
+| `sessions` | past `expires_at` | already refused at the door |
+
+Delivery keys of any other shape are kept. A placement removed and then restored by undo
+keeps its id, so a delivery swept after the removal can let that alert fire once more; that
+takes a removal undone within the 7 day history of a delivery at least 30 days old.
+
+`oauth_login_flows` is cleaned separately (see below).
+
 ## See also — other periodic work
 
 Documented with their own tables; listed here so the background-work picture is in one

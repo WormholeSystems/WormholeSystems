@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from map_alert_deliveries d\n         where d.created_at < now() - make_interval(days => $1)\n           and (d.dedup_key like 'killmail:%'\n                or (d.dedup_key like 'placement:%'\n                    and not exists (\n                        select 1 from map_solar_systems s\n                        where s.id = case when d.dedup_key like 'placement:%'\n                                          then split_part(d.dedup_key, ':', 2)::bigint\n                                     end\n                    )))",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "747cea712cee8bd13fb006e565d1af6205d46946cdf539154080295a7b446768"
+}

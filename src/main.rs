@@ -214,6 +214,9 @@ async fn main() {
     // Background: drop command-journal entries past the undo retention window.
     wormholesystems::maps::events_log::start_purge(db.clone());
 
+    // Background: drop old alert deliveries and audit rows, and expired sessions.
+    wormholesystems::retention::start(db.clone());
+
     // Commands place nodes of their own (a paste raising ghosts), and a command has only
     // its transaction, so the geometry is installed for the process here.
     wormholesystems::maps::set_grid(config.grid);
