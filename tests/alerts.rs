@@ -14,9 +14,7 @@ use serde_json::Value;
 use sqlx::PgPool;
 use wormholesystems::alerts::filters::{Candidates, Match, Mode, Rule, Side, Subject};
 use wormholesystems::alerts::{self, AlertKind, Runtime};
-use wormholesystems::maps::connection::{AddConnection, add_connection};
-use wormholesystems::maps::solar_system::{AddSystem, add_system};
-use wormholesystems::maps::{Actor, ConnectionType};
+use wormholesystems::maps::Actor;
 
 async fn make_webhook(pool: &PgPool, map_id: i64, url: &str) -> i64 {
     sqlx::query_scalar!(
@@ -173,23 +171,11 @@ async fn proximity_alert(
 }
 
 async fn place(pool: &PgPool, runtime: &Runtime, actor: Actor, map_id: i64, sys: i64) -> i64 {
-    let placed = add_system(
-        pool,
-        actor,
-        AddSystem {
-            map_id,
-            solar_system_id: sys,
-            x: 0.0,
-            y: 0.0,
-            alias: None,
-        },
-    )
-    .await
-    .unwrap();
-    for out in runtime.placed(pool, map_id, placed.id).await {
+    let placed = common::map::place(pool, actor, map_id, sys).await;
+    for out in runtime.placed(pool, map_id, placed).await {
         runtime.send(pool, out).await;
     }
-    placed.id
+    placed
 }
 
 async fn connect(
@@ -200,19 +186,7 @@ async fn connect(
     from: i64,
     to: i64,
 ) -> i64 {
-    let connection = add_connection(
-        pool,
-        actor,
-        AddConnection {
-            map_id,
-            from_system: from,
-            to_system: to,
-            kind: ConnectionType::Wormhole,
-            size: None,
-        },
-    )
-    .await
-    .unwrap();
+    let connection = common::map::connect(pool, actor, map_id, from, to).await;
     for out in runtime.connected(pool, map_id, connection.id).await {
         runtime.send(pool, out).await;
     }
@@ -538,22 +512,10 @@ async fn the_subscriber_hands_messages_to_the_delivery_worker(pool: PgPool) {
     // Give the subscriber a moment to subscribe before anything is published.
     tokio::time::sleep(std::time::Duration::from_millis(50)).await;
 
-    let placed = add_system(
-        &pool,
-        w.owner,
-        AddSystem {
-            map_id: w.map_id,
-            solar_system_id: SYS_B,
-            x: 0.0,
-            y: 0.0,
-            alias: None,
-        },
-    )
-    .await
-    .unwrap();
+    let placed = common::map::place(&pool, w.owner, w.map_id, SYS_B).await;
     hub.publish(wormholesystems::maps::MapEvent::SystemAdded {
         map_id: w.map_id,
-        map_solar_system_id: placed.id,
+        map_solar_system_id: placed,
     });
 
     for _ in 0..100 {

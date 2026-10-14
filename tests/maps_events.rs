@@ -4,11 +4,10 @@
 
 mod common;
 
+use common::map::{connect, place_at};
 use common::{SYS_A, SYS_B, SYS_C, member_with_role, world};
 use sqlx::PgPool;
-use wormholesystems::maps::connection::{
-    AddConnection, RemoveConnection, add_connection, remove_connection,
-};
+use wormholesystems::maps::connection::{RemoveConnection, remove_connection};
 use wormholesystems::maps::connection::{SetConnectionStatus, set_connection_status};
 use wormholesystems::maps::events_log::{
     GotoMapEvent, MapEventEntry, MapHistory, MapIdBody, goto, list_history, redo, undo,
@@ -18,29 +17,11 @@ use wormholesystems::maps::signatures::{
     AddSignature, RemoveSignature, add_signature, list_signatures, remove_signature,
 };
 use wormholesystems::maps::solar_system::{
-    AddSystem, RemoveSystem, RemoveSystems, SetAlias, add_system, remove_system, remove_systems,
-    set_alias,
+    RemoveSystem, RemoveSystems, SetAlias, remove_system, remove_systems, set_alias,
 };
 use wormholesystems::maps::{
     Actor, ConnectionType, MapConnection, MapError, MapSystemView, MassStatus, Role, SignatureGroup,
 };
-
-async fn place(pool: &PgPool, actor: Actor, map_id: i64, sys: i64, x: f64) -> i64 {
-    add_system(
-        pool,
-        actor,
-        AddSystem {
-            map_id,
-            solar_system_id: sys,
-            x,
-            y: 0.0,
-            alias: None,
-        },
-    )
-    .await
-    .unwrap()
-    .id
-}
 
 async fn systems(pool: &PgPool, actor: Actor, map_id: i64) -> Vec<MapSystemView> {
     get_map(pool, actor, GetMap { map_id })
@@ -81,28 +62,12 @@ async fn step_forward(pool: &PgPool, actor: Actor, map_id: i64) {
     redo(pool, actor, MapIdBody { map_id }).await.unwrap()
 }
 
-async fn connect(pool: &PgPool, actor: Actor, map_id: i64, from: i64, to: i64) -> MapConnection {
-    add_connection(
-        pool,
-        actor,
-        AddConnection {
-            map_id,
-            from_system: from,
-            to_system: to,
-            kind: ConnectionType::Wormhole,
-            size: None,
-        },
-    )
-    .await
-    .unwrap()
-}
-
 #[sqlx::test]
 async fn every_mutation_records_a_step_and_advances_the_cursor(pool: PgPool) {
     let w = world(&pool).await;
 
-    let a = place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
-    let b = place(&pool, w.owner, w.map_id, SYS_B, 100.0).await;
+    let a = place_at(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    let b = place_at(&pool, w.owner, w.map_id, SYS_B, 100.0).await;
     set_alias(
         &pool,
         w.owner,
@@ -147,7 +112,7 @@ async fn every_mutation_records_a_step_and_advances_the_cursor(pool: PgPool) {
 #[sqlx::test]
 async fn a_history_longer_than_the_page_still_marks_what_is_applied(pool: PgPool) {
     let w = world(&pool).await;
-    let a = place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    let a = common::map::place_at(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
     for i in 0..60 {
         set_alias(
             &pool,
@@ -182,7 +147,7 @@ async fn a_history_longer_than_the_page_still_marks_what_is_applied(pool: PgPool
 #[sqlx::test]
 async fn undo_and_redo_settle_instead_of_toggling_for_ever(pool: PgPool) {
     let w = world(&pool).await;
-    place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    place_at(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
     let journal_len = history(&pool, w.owner, w.map_id).await.entries.len();
 
     for _ in 0..3 {
@@ -214,13 +179,13 @@ async fn undo_and_redo_settle_instead_of_toggling_for_ever(pool: PgPool) {
 #[sqlx::test]
 async fn a_change_after_an_undo_branches_and_the_old_branch_stays_reachable(pool: PgPool) {
     let w = world(&pool).await;
-    place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
-    place(&pool, w.owner, w.map_id, SYS_B, 100.0).await;
+    place_at(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    place_at(&pool, w.owner, w.map_id, SYS_B, 100.0).await;
     let added_b = newest(&pool, w.owner, w.map_id).await.id;
 
     // Undo B, then do something else: C branches off the same parent instead of erasing B.
     step_back(&pool, w.owner, w.map_id).await;
-    place(&pool, w.owner, w.map_id, SYS_C, 200.0).await;
+    place_at(&pool, w.owner, w.map_id, SYS_C, 200.0).await;
     let added_c = newest(&pool, w.owner, w.map_id).await.id;
 
     let h = history(&pool, w.owner, w.map_id).await;
@@ -259,8 +224,8 @@ async fn a_change_after_an_undo_branches_and_the_old_branch_stays_reachable(pool
 #[sqlx::test]
 async fn undo_restores_a_removed_system_with_its_edges_and_signatures(pool: PgPool) {
     let w = world(&pool).await;
-    let a = place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
-    let b = place(&pool, w.owner, w.map_id, SYS_B, 100.0).await;
+    let a = place_at(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    let b = place_at(&pool, w.owner, w.map_id, SYS_B, 100.0).await;
     connect(&pool, w.owner, w.map_id, a, b).await;
     add_signature(
         &pool,
@@ -338,8 +303,8 @@ async fn undo_restores_a_removed_system_with_its_edges_and_signatures(pool: PgPo
 #[sqlx::test]
 async fn undo_round_trips_a_connection_status_change(pool: PgPool) {
     let w = world(&pool).await;
-    let a = place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
-    let b = place(&pool, w.owner, w.map_id, SYS_B, 100.0).await;
+    let a = place_at(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    let b = place_at(&pool, w.owner, w.map_id, SYS_B, 100.0).await;
     let conn = connect(&pool, w.owner, w.map_id, a, b).await;
     assert_eq!(conn.mass_status, None);
 
@@ -377,7 +342,7 @@ async fn undo_round_trips_a_connection_status_change(pool: PgPool) {
 #[sqlx::test]
 async fn undo_walks_back_through_several_steps_one_at_a_time(pool: PgPool) {
     let w = world(&pool).await;
-    let a = place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    let a = place_at(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
     set_alias(
         &pool,
         w.owner,
@@ -412,7 +377,7 @@ async fn undo_walks_back_through_several_steps_one_at_a_time(pool: PgPool) {
 async fn any_member_can_step_the_map_back(pool: PgPool) {
     let w = world(&pool).await;
     let mate = member_with_role(&pool, w.owner, w.map_id, 1002, 2002, Role::Member).await;
-    place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    place_at(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
 
     step_back(&pool, mate, w.map_id).await;
     assert!(systems(&pool, w.owner, w.map_id).await.is_empty());
@@ -422,7 +387,7 @@ async fn any_member_can_step_the_map_back(pool: PgPool) {
 async fn history_is_viewer_readable_and_moving_it_is_member_only(pool: PgPool) {
     let w = world(&pool).await;
     let viewer = member_with_role(&pool, w.owner, w.map_id, 1003, 2003, Role::Viewer).await;
-    place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    place_at(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
 
     assert_eq!(history(&pool, viewer, w.map_id).await.entries.len(), 1);
 
@@ -447,9 +412,9 @@ async fn history_is_viewer_readable_and_moving_it_is_member_only(pool: PgPool) {
 #[sqlx::test]
 async fn a_bulk_removal_undoes_as_one_step(pool: PgPool) {
     let w = world(&pool).await;
-    let a = place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
-    let b = place(&pool, w.owner, w.map_id, SYS_B, 100.0).await;
-    let c = place(&pool, w.owner, w.map_id, SYS_C, 200.0).await;
+    let a = place_at(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    let b = place_at(&pool, w.owner, w.map_id, SYS_B, 100.0).await;
+    let c = place_at(&pool, w.owner, w.map_id, SYS_C, 200.0).await;
     connect(&pool, w.owner, w.map_id, a, b).await;
 
     remove_systems(
@@ -477,7 +442,7 @@ async fn a_bulk_removal_undoes_as_one_step(pool: PgPool) {
 #[sqlx::test]
 async fn undoing_a_signature_removal_brings_it_back(pool: PgPool) {
     let w = world(&pool).await;
-    place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    place_at(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
     let sig = add_signature(
         &pool,
         w.owner,
@@ -521,8 +486,8 @@ async fn undoing_a_signature_removal_brings_it_back(pool: PgPool) {
 #[sqlx::test]
 async fn removing_a_connection_and_undoing_it_keeps_the_endpoints(pool: PgPool) {
     let w = world(&pool).await;
-    let a = place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
-    let b = place(&pool, w.owner, w.map_id, SYS_B, 100.0).await;
+    let a = place_at(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    let b = place_at(&pool, w.owner, w.map_id, SYS_B, 100.0).await;
     let conn = connect(&pool, w.owner, w.map_id, a, b).await;
 
     remove_connection(
@@ -554,9 +519,9 @@ async fn cleaning_stale_connections_undoes_as_one_step(pool: PgPool) {
     use wormholesystems::maps::solar_system::{SetPinned, set_pinned};
 
     let w = world(&pool).await;
-    let a = place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
-    let b = place(&pool, w.owner, w.map_id, SYS_B, 100.0).await;
-    let c = place(&pool, w.owner, w.map_id, SYS_C, 200.0).await;
+    let a = place_at(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    let b = place_at(&pool, w.owner, w.map_id, SYS_B, 100.0).await;
+    let c = place_at(&pool, w.owner, w.map_id, SYS_C, 200.0).await;
     set_pinned(
         &pool,
         w.owner,
@@ -629,8 +594,8 @@ async fn a_freshly_critical_connection_is_not_swept(pool: PgPool) {
     use wormholesystems::maps::connection::{CleanStaleConnections, clean_stale_connections};
 
     let w = world(&pool).await;
-    let a = place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
-    let b = place(&pool, w.owner, w.map_id, SYS_B, 100.0).await;
+    let a = place_at(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    let b = place_at(&pool, w.owner, w.map_id, SYS_B, 100.0).await;
     let conn = connect(&pool, w.owner, w.map_id, a, b).await;
     set_connection_status(
         &pool,

@@ -3,31 +3,14 @@
 
 mod common;
 
+use common::map::place_at;
 use common::{SYS_A, SYS_B, SYS_C, member_with_role, world};
 use sqlx::PgPool;
 use wormholesystems::maps::events_log::{MapIdBody, list_history, redo, undo};
 use wormholesystems::maps::map::{GetMap, get_map};
 use wormholesystems::maps::signatures::{AddSignature, add_signature, list_signatures};
-use wormholesystems::maps::solar_system::{AddSystem, add_system};
 use wormholesystems::maps::tracking::{TrackJump, track_jump};
 use wormholesystems::maps::{Actor, MapError, Role, SignatureGroup, WormholeSize};
-
-async fn place(pool: &PgPool, actor: Actor, map_id: i64, sys: i64, x: f64) -> i64 {
-    add_system(
-        pool,
-        actor,
-        AddSystem {
-            map_id,
-            solar_system_id: sys,
-            x,
-            y: 0.0,
-            alias: None,
-        },
-    )
-    .await
-    .unwrap()
-    .id
-}
 
 async fn scan(pool: &PgPool, actor: Actor, map_id: i64, sys: i64, id: &str) -> i64 {
     add_signature(
@@ -82,7 +65,7 @@ async fn connections(pool: &PgPool, actor: Actor, map_id: i64) -> usize {
 #[sqlx::test]
 async fn a_jump_places_the_system_connects_it_and_links_the_signature(pool: PgPool) {
     let w = world(&pool).await;
-    let a = place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    let a = place_at(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
     let sig = scan(&pool, w.owner, w.map_id, SYS_A, "ABC-123").await;
 
     track_jump(
@@ -121,7 +104,7 @@ async fn a_jump_places_the_system_connects_it_and_links_the_signature(pool: PgPo
 #[sqlx::test]
 async fn the_whole_jump_is_one_undo(pool: PgPool) {
     let w = world(&pool).await;
-    let a = place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    let a = place_at(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
     let sig = scan(&pool, w.owner, w.map_id, SYS_A, "ABC-123").await;
     track_jump(
         &pool,
@@ -166,8 +149,8 @@ async fn the_whole_jump_is_one_undo(pool: PgPool) {
 #[sqlx::test]
 async fn jumping_into_a_system_already_on_the_map_connects_rather_than_duplicates(pool: PgPool) {
     let w = world(&pool).await;
-    let a = place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
-    place(&pool, w.owner, w.map_id, SYS_B, 300.0).await;
+    let a = place_at(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    place_at(&pool, w.owner, w.map_id, SYS_B, 300.0).await;
 
     track_jump(&pool, w.owner, jump(w.map_id, a, SYS_B))
         .await
@@ -180,7 +163,7 @@ async fn jumping_into_a_system_already_on_the_map_connects_rather_than_duplicate
 #[sqlx::test]
 async fn jumping_a_connection_that_is_already_mapped_only_links_the_signature(pool: PgPool) {
     let w = world(&pool).await;
-    let a = place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    let a = place_at(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
     let sig = scan(&pool, w.owner, w.map_id, SYS_A, "ABC-123").await;
     track_jump(&pool, w.owner, jump(w.map_id, a, SYS_B))
         .await
@@ -233,7 +216,7 @@ async fn jumping_a_connection_that_is_already_mapped_only_links_the_signature(po
 #[sqlx::test]
 async fn flying_a_stargate_builds_nothing(pool: PgPool) {
     let w = world(&pool).await;
-    let a = place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    let a = place_at(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
     // A stargate needs a type, which needs a group and a category; only the FKs matter.
     for statement in [
         "insert into categories (id, name, published) values (6, 'Ship', true) on conflict do nothing",
@@ -263,7 +246,7 @@ async fn flying_a_stargate_builds_nothing(pool: PgPool) {
 #[sqlx::test]
 async fn a_viewer_cannot_build_the_chain(pool: PgPool) {
     let w = world(&pool).await;
-    let a = place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    let a = place_at(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
     let viewer = member_with_role(&pool, w.owner, w.map_id, 1002, 2002, Role::Viewer).await;
 
     let err = track_jump(&pool, viewer, jump(w.map_id, a, SYS_B)).await;
@@ -276,7 +259,7 @@ async fn a_viewer_cannot_build_the_chain(pool: PgPool) {
 #[sqlx::test]
 async fn the_connection_claims_the_transit_recorded_before_it_existed(pool: PgPool) {
     let w = world(&pool).await;
-    let a = place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    let a = place_at(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
 
     sqlx::query(
         "insert into categories (id, name, published) values (6, 'Ship', true)

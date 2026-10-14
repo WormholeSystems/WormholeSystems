@@ -2,6 +2,7 @@
 
 mod common;
 
+use common::map::place_at;
 use common::{SYS_A, SYS_B, SYS_C, member_with_role, world};
 use sqlx::PgPool;
 use wormholesystems::maps::events_log::{MapIdBody, redo, undo};
@@ -264,9 +265,9 @@ async fn move_and_alias_update_the_row(pool: PgPool) {
 #[sqlx::test]
 async fn pinned_and_home_systems_are_passed_over_rather_than_refused(pool: PgPool) {
     let w = world(&pool).await;
-    let home = place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
-    let pinned = place(&pool, w.owner, w.map_id, SYS_B, 200.0).await;
-    let ordinary = place(&pool, w.owner, w.map_id, SYS_C, 400.0).await;
+    let home = place_at(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    let pinned = place_at(&pool, w.owner, w.map_id, SYS_B, 200.0).await;
+    let ordinary = place_at(&pool, w.owner, w.map_id, SYS_C, 400.0).await;
     mark_home(&pool, w.owner, w.map_id, home).await;
     pin(&pool, w.owner, w.map_id, pinned, true).await;
 
@@ -316,7 +317,7 @@ async fn pinned_and_home_systems_are_passed_over_rather_than_refused(pool: PgPoo
 #[sqlx::test]
 async fn unpinning_gives_the_system_back(pool: PgPool) {
     let w = world(&pool).await;
-    let pinned = place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    let pinned = place_at(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
     pin(&pool, w.owner, w.map_id, pinned, true).await;
 
     remove_system(
@@ -349,8 +350,8 @@ async fn unpinning_gives_the_system_back(pool: PgPool) {
 #[sqlx::test]
 async fn a_pinned_system_will_not_move_but_the_home_system_will(pool: PgPool) {
     let w = world(&pool).await;
-    let home = place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
-    let pinned = place(&pool, w.owner, w.map_id, SYS_B, 200.0).await;
+    let home = place_at(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    let pinned = place_at(&pool, w.owner, w.map_id, SYS_B, 200.0).await;
     mark_home(&pool, w.owner, w.map_id, home).await;
     pin(&pool, w.owner, w.map_id, pinned, true).await;
 
@@ -470,29 +471,6 @@ async fn position(
     s.position()
 }
 
-async fn place(
-    pool: &PgPool,
-    actor: wormholesystems::maps::Actor,
-    map_id: i64,
-    sys: i64,
-    x: f64,
-) -> i64 {
-    add_system(
-        pool,
-        actor,
-        AddSystem {
-            map_id,
-            solar_system_id: sys,
-            x,
-            y: 0.0,
-            alias: None,
-        },
-    )
-    .await
-    .unwrap()
-    .id
-}
-
 async fn placed_ids(pool: &PgPool, actor: wormholesystems::maps::Actor, map_id: i64) -> Vec<i64> {
     wormholesystems::maps::map::get_map(pool, actor, wormholesystems::maps::map::GetMap { map_id })
         .await
@@ -508,8 +486,8 @@ async fn placed_ids(pool: &PgPool, actor: wormholesystems::maps::Actor, map_id: 
 #[sqlx::test]
 async fn a_map_has_one_home_and_undo_returns_the_last_one(pool: PgPool) {
     let w = world(&pool).await;
-    let first = place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
-    let second = place(&pool, w.owner, w.map_id, SYS_B, 200.0).await;
+    let first = place_at(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    let second = place_at(&pool, w.owner, w.map_id, SYS_B, 200.0).await;
 
     mark_home(&pool, w.owner, w.map_id, first).await;
     mark_home(&pool, w.owner, w.map_id, second).await;
@@ -530,9 +508,9 @@ async fn a_map_has_one_home_and_undo_returns_the_last_one(pool: PgPool) {
 #[sqlx::test]
 async fn a_third_rally_point_replaces_the_oldest_and_undo_brings_it_back(pool: PgPool) {
     let w = world(&pool).await;
-    let a = place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
-    let b = place(&pool, w.owner, w.map_id, SYS_B, 200.0).await;
-    let c = place(&pool, w.owner, w.map_id, SYS_C, 400.0).await;
+    let a = place_at(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    let b = place_at(&pool, w.owner, w.map_id, SYS_B, 200.0).await;
+    let c = place_at(&pool, w.owner, w.map_id, SYS_C, 400.0).await;
 
     rally(&pool, w.owner, w.map_id, a, true).await.unwrap();
     rally(&pool, w.owner, w.map_id, b, true).await.unwrap();
@@ -561,9 +539,9 @@ async fn a_third_rally_point_replaces_the_oldest_and_undo_brings_it_back(pool: P
 #[sqlx::test]
 async fn a_rally_point_clears_on_its_own(pool: PgPool) {
     let w = world(&pool).await;
-    let a = place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
-    let b = place(&pool, w.owner, w.map_id, SYS_B, 200.0).await;
-    let c = place(&pool, w.owner, w.map_id, SYS_C, 400.0).await;
+    let a = place_at(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    let b = place_at(&pool, w.owner, w.map_id, SYS_B, 200.0).await;
+    let c = place_at(&pool, w.owner, w.map_id, SYS_C, 400.0).await;
     rally(&pool, w.owner, w.map_id, a, true).await.unwrap();
     rally(&pool, w.owner, w.map_id, b, true).await.unwrap();
 
@@ -596,9 +574,9 @@ async fn a_rally_point_clears_on_its_own(pool: PgPool) {
 #[sqlx::test]
 async fn a_restored_rally_point_keeps_its_place(pool: PgPool) {
     let w = world(&pool).await;
-    let a = place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
-    let b = place(&pool, w.owner, w.map_id, SYS_B, 200.0).await;
-    let c = place(&pool, w.owner, w.map_id, SYS_C, 400.0).await;
+    let a = place_at(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    let b = place_at(&pool, w.owner, w.map_id, SYS_B, 200.0).await;
+    let c = place_at(&pool, w.owner, w.map_id, SYS_C, 400.0).await;
     rally(&pool, w.owner, w.map_id, a, true).await.unwrap();
     rally(&pool, w.owner, w.map_id, b, true).await.unwrap();
 
@@ -680,7 +658,7 @@ async fn intel_of(pool: &PgPool, map_id: i64) -> Option<(String, Option<String>,
 #[sqlx::test]
 async fn each_intel_write_sets_its_own_column_and_undoes_alone(pool: PgPool) {
     let w = world(&pool).await;
-    let id = place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    let id = place_at(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
     let (map_id, map_solar_system_id) = (w.map_id, id);
 
     set_occupier(
@@ -762,8 +740,8 @@ async fn each_intel_write_sets_its_own_column_and_undoes_alone(pool: PgPool) {
 #[sqlx::test]
 async fn clearing_leaves_a_placement_it_did_not_snapshot(pool: PgPool) {
     let w = world(&pool).await;
-    place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
-    place(&pool, w.owner, w.map_id, SYS_B, 100.0).await;
+    place_at(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    place_at(&pool, w.owner, w.map_id, SYS_B, 100.0).await;
 
     // Somebody else's placement, not committed yet. Their lock on the connections stalls
     // the clear's snapshot after it has read which placements to take.

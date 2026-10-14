@@ -3,6 +3,7 @@
 
 mod common;
 
+use common::catalog::{C247, THERA, seed_catalog, seed_thera};
 use common::{SYS_A, SYS_B, SYS_C, member_with_role, world};
 use sqlx::PgPool;
 use wormholesystems::maps::eve_scout::{
@@ -15,27 +16,6 @@ use wormholesystems::maps::solar_system::{AddSystem, add_system};
 use wormholesystems::maps::{
     Actor, MapError, MassStatus, Role, SignatureGroup, TimeStatus, WormholeSize,
 };
-
-const THERA: i64 = 31000005;
-const C247: i64 = 510;
-
-/// Thera in the universe, and a wormhole catalogue of one identified type.
-async fn seed_thera_and_catalog(pool: &PgPool) {
-    for statement in [
-        "insert into solar_systems (id, constellation_id, region_id, name, security_status)
-         values (31000005, 20000001, 10000001, 'Thera', -0.99)",
-        "insert into signature_categories (id, name, code) values (1, 'Wormhole', 'wormhole')",
-        "insert into categories (id, name) values (2, 'Celestial')",
-        "insert into groups (id, category_id, name) values (988, 2, 'Wormhole')",
-        "insert into types (id, group_id, name) values (30832, 988, 'Wormhole C247')",
-        "insert into wormhole_types (code, type_id, max_mass_per_jump)
-         values ('C247', 30832, 300000000)",
-        "insert into signature_types (id, signature, name, signature_category_id)
-         values (510, 'C247', 'C247 - C3', 1)",
-    ] {
-        sqlx::query(statement).execute(pool).await.unwrap();
-    }
-}
 
 fn hole(solar_system_id: i64, hub_signature: &str, signature: &str) -> EveScoutHole {
     EveScoutHole {
@@ -65,7 +45,8 @@ async fn view(pool: &PgPool, actor: Actor, map_id: i64) -> wormholesystems::maps
 #[sqlx::test]
 async fn puts_the_hub_its_holes_and_both_ends_signatures_on_the_map(pool: PgPool) {
     let w = world(&pool).await;
-    seed_thera_and_catalog(&pool).await;
+    seed_catalog(&pool).await;
+    seed_thera(&pool).await;
 
     let added = add_eve_scout_connections(
         &pool,
@@ -118,7 +99,8 @@ async fn puts_the_hub_its_holes_and_both_ends_signatures_on_the_map(pool: PgPool
 #[sqlx::test]
 async fn a_second_run_reuses_what_is_there_and_adds_nothing(pool: PgPool) {
     let w = world(&pool).await;
-    seed_thera_and_catalog(&pool).await;
+    seed_catalog(&pool).await;
+    seed_thera(&pool).await;
     let placed_before = add_system(
         &pool,
         w.owner,
@@ -166,7 +148,8 @@ async fn a_second_run_reuses_what_is_there_and_adds_nothing(pool: PgPool) {
 #[sqlx::test]
 async fn an_unknown_scan_on_either_end_becomes_the_hole(pool: PgPool) {
     let w = world(&pool).await;
-    seed_thera_and_catalog(&pool).await;
+    seed_catalog(&pool).await;
+    seed_thera(&pool).await;
     add_system(
         &pool,
         w.owner,
@@ -213,7 +196,8 @@ async fn an_unknown_scan_on_either_end_becomes_the_hole(pool: PgPool) {
 #[sqlx::test]
 async fn the_whole_run_is_one_undo(pool: PgPool) {
     let w = world(&pool).await;
-    seed_thera_and_catalog(&pool).await;
+    seed_catalog(&pool).await;
+    seed_thera(&pool).await;
     add_system(
         &pool,
         w.owner,
@@ -287,7 +271,8 @@ async fn the_whole_run_is_one_undo(pool: PgPool) {
 #[sqlx::test]
 async fn only_thera_and_turnur_are_hubs(pool: PgPool) {
     let w = world(&pool).await;
-    seed_thera_and_catalog(&pool).await;
+    seed_catalog(&pool).await;
+    seed_thera(&pool).await;
     let err = add_eve_scout_connections(
         &pool,
         w.owner,
@@ -303,7 +288,8 @@ async fn only_thera_and_turnur_are_hubs(pool: PgPool) {
 #[sqlx::test]
 async fn a_viewer_may_not(pool: PgPool) {
     let w = world(&pool).await;
-    seed_thera_and_catalog(&pool).await;
+    seed_catalog(&pool).await;
+    seed_thera(&pool).await;
     let viewer = member_with_role(&pool, w.owner, w.map_id, 1002, 2002, Role::Viewer).await;
     let err = add_eve_scout_connections(
         &pool,

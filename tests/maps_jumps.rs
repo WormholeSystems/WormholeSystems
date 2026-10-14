@@ -2,32 +2,14 @@
 
 mod common;
 
+use common::map::{connect, place};
 use common::{SYS_A, SYS_B, SYS_C, member_with_role, world};
 use sqlx::PgPool;
-use wormholesystems::maps::connection::{AddConnection, add_connection};
 use wormholesystems::maps::jumps::{
     AddConnectionJump, JumpDirection, RemoveConnectionJump, UpdateConnectionJump, add_jump,
     claim_pending, list_jumps, prune_unclaimed, record_transit, remove_jump, update_jump,
 };
-use wormholesystems::maps::solar_system::{AddSystem, add_system};
-use wormholesystems::maps::{Actor, ConnectionType, MapError, Role};
-
-async fn place(pool: &PgPool, actor: Actor, map_id: i64, system: i64) -> i64 {
-    add_system(
-        pool,
-        actor,
-        AddSystem {
-            map_id,
-            solar_system_id: system,
-            x: 0.0,
-            y: 0.0,
-            alias: None,
-        },
-    )
-    .await
-    .unwrap()
-    .id
-}
+use wormholesystems::maps::{MapError, Role};
 
 /// A ship type (SDE category 6 → group → type with a hull mass).
 async fn seed_ship(pool: &PgPool, type_id: i64, name: &str, mass: f64) {
@@ -51,23 +33,6 @@ async fn seed_ship(pool: &PgPool, type_id: i64, name: &str, mass: f64) {
     .execute(pool)
     .await
     .unwrap();
-}
-
-async fn wormhole_between(pool: &PgPool, actor: Actor, map_id: i64, a: i64, b: i64) -> i64 {
-    add_connection(
-        pool,
-        actor,
-        AddConnection {
-            map_id,
-            from_system: a,
-            to_system: b,
-            kind: ConnectionType::Wormhole,
-            size: None,
-        },
-    )
-    .await
-    .unwrap()
-    .id
 }
 
 /// Let the owner share their movements on the map.
@@ -102,7 +67,7 @@ async fn manual_jump_crud(pool: PgPool) {
     seed_ship(&pool, 587, "Rifter", 1_067_000.0).await;
     let a = place(&pool, w.owner, w.map_id, SYS_A).await;
     let b = place(&pool, w.owner, w.map_id, SYS_B).await;
-    let conn = wormhole_between(&pool, w.owner, w.map_id, a, b).await;
+    let conn = connect(&pool, w.owner, w.map_id, a, b).await.id;
 
     // Neither mass nor ship type → Validation; viewers can't log at all.
     let err = add_jump(
@@ -244,7 +209,7 @@ async fn transit_capture_and_claiming(pool: PgPool) {
     allow_tracking(&pool, w.map_id, w.owner.user_id).await;
     let a = place(&pool, w.owner, w.map_id, SYS_A).await;
     let b = place(&pool, w.owner, w.map_id, SYS_B).await;
-    wormhole_between(&pool, w.owner, w.map_id, a, b).await;
+    connect(&pool, w.owner, w.map_id, a, b).await;
 
     // Gate travel is ignored, even without a mapped edge. (587 doubles as the gate's
     // type id; only the FK matters here.)
@@ -295,7 +260,7 @@ async fn transit_capture_and_claiming(pool: PgPool) {
             .unwrap();
     assert_eq!(pending, 1);
     let c = place(&pool, w.owner, w.map_id, SYS_C).await;
-    let conn = wormhole_between(&pool, w.owner, w.map_id, b, c).await;
+    let conn = connect(&pool, w.owner, w.map_id, b, c).await.id;
     let claimed: i64 =
         sqlx::query_scalar("select count(*) from map_connection_jumps where connection_id = $1")
             .bind(conn)
@@ -327,7 +292,7 @@ async fn transit_is_recorded_only_on_maps_that_take_it(pool: PgPool) {
     allow_tracking(&pool, w.map_id, w.owner.user_id).await;
     let a = place(&pool, w.owner, w.map_id, SYS_A).await;
     let b = place(&pool, w.owner, w.map_id, SYS_B).await;
-    let hole = wormhole_between(&pool, w.owner, w.map_id, a, b).await;
+    let hole = connect(&pool, w.owner, w.map_id, a, b).await.id;
 
     // A second map with the same pair as a gate.
     let gates = wormholesystems::maps::map::create_map(
@@ -345,19 +310,15 @@ async fn transit_is_recorded_only_on_maps_that_take_it(pool: PgPool) {
     allow_tracking(&pool, gates, w.owner.user_id).await;
     let ga = place(&pool, w.owner, gates, SYS_A).await;
     let gb = place(&pool, w.owner, gates, SYS_B).await;
-    add_connection(
+    common::map::connect_kind(
         &pool,
         w.owner,
-        AddConnection {
-            map_id: gates,
-            from_system: ga,
-            to_system: gb,
-            kind: ConnectionType::Stargate,
-            size: None,
-        },
+        gates,
+        ga,
+        gb,
+        wormholesystems::maps::ConnectionType::Stargate,
     )
-    .await
-    .unwrap();
+    .await;
 
     // A third the owner can only view, with the origin placed.
     let other = member_with_role(&pool, w.owner, w.map_id, 1002, 2002, Role::Member).await;
@@ -422,7 +383,7 @@ async fn claim_window_and_prune(pool: PgPool) {
         .unwrap();
     }
 
-    let conn = wormhole_between(&pool, w.owner, w.map_id, a, b).await;
+    let conn = connect(&pool, w.owner, w.map_id, a, b).await.id;
     let claimed = claim_pending(&pool, w.map_id, conn, SYS_A, SYS_B)
         .await
         .unwrap();

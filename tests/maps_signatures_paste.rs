@@ -2,6 +2,8 @@
 
 mod common;
 
+use common::catalog::seed_catalog;
+use common::map::place;
 use common::{SYS_A, SYS_B, world};
 use sqlx::PgPool;
 use wormholesystems::maps::connection::{AddConnection, add_connection};
@@ -11,55 +13,10 @@ use wormholesystems::maps::signatures::{
     RemoveSignatures, Signature, UpdateSignature, add_signature, expire_signatures, link_signature,
     list_signatures, paste_signatures, remove_signature, remove_signatures, update_signature,
 };
-use wormholesystems::maps::solar_system::{AddSystem, RemoveSystem, add_system, remove_system};
+use wormholesystems::maps::solar_system::{RemoveSystem, remove_system};
 use wormholesystems::maps::{
     Actor, ConnectionType, MapError, MapSystemView, SignatureGroup, WormholeSize,
 };
-
-async fn place(pool: &PgPool, actor: Actor, map_id: i64, system: i64) -> i64 {
-    add_system(
-        pool,
-        actor,
-        AddSystem {
-            map_id,
-            solar_system_id: system,
-            x: 0.0,
-            y: 0.0,
-            alias: None,
-        },
-    )
-    .await
-    .unwrap()
-    .id
-}
-
-/// A minimal signature catalog: category 1 = Wormhole with K162 and C247 (300,000,000 kg
-/// per jump, so medium), 2 = Data with one type.
-async fn seed_catalog(pool: &PgPool) {
-    for (id, name, code) in [(1, "Wormhole", "wormhole"), (2, "Data Site", "data")] {
-        sqlx::query("insert into signature_categories (id, name, code) values ($1, $2, $3)")
-            .bind(id as i64)
-            .bind(name)
-            .bind(code)
-            .execute(pool)
-            .await
-            .unwrap();
-    }
-    for statement in [
-        "insert into categories (id, name) values (2, 'Celestial')",
-        "insert into groups (id, category_id, name) values (988, 2, 'Wormhole')",
-        "insert into types (id, group_id, name)
-         values (30831, 988, 'Wormhole K162'), (30832, 988, 'Wormhole C247')",
-        "insert into wormhole_types (code, type_id, max_mass_per_jump)
-         values ('K162', 30831, null), ('C247', 30832, 300000000)",
-        "insert into signature_types (id, signature, name, signature_category_id, target_class)
-         values (500, 'K162', 'K162 - Unknown', 1, null),
-                (510, 'C247', 'C247 - C3', 1, 3),
-                (600, null, 'Unsecured Frontier Enclave Relay', 2, null)",
-    ] {
-        sqlx::query(statement).execute(pool).await.unwrap();
-    }
-}
 
 async fn sig_by_id(pool: &PgPool, actor: Actor, map_id: i64, sid: &str) -> Option<Signature> {
     list_signatures(pool, actor, map_id)
