@@ -24,6 +24,54 @@ pub struct Answers {
     pub map_creators: String,
     /// Whether the `backup` service dumps the database on a schedule.
     pub backups: bool,
+    /// The killmail ingest, with how many days of history to fill in on its first start.
+    /// None leaves it off.
+    pub killmails: Option<u32>,
+    /// The banner above every page. None turns it off.
+    pub announcement: Option<Announcement>,
+}
+
+/// What the killmail ingest fills in on its first start unless told otherwise.
+pub const DEFAULT_BACKFILL_DAYS: u32 = 90;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Announcement {
+    /// `info`, `warning` or `critical`.
+    pub level: String,
+    pub title: String,
+    pub message: String,
+    pub link_url: String,
+    pub link_label: String,
+    pub dismissible: bool,
+}
+
+impl Announcement {
+    pub const LEVELS: [&str; 3] = ["info", "warning", "critical"];
+
+    /// The one `.env` has, if its message is set: an empty message is how it is off.
+    pub fn from_env(env: &str) -> Option<Self> {
+        let get = |key: &str| envfile::get(env, key).unwrap_or_default();
+        let message = get("ANNOUNCEMENT_MESSAGE");
+        (!message.is_empty()).then(|| Self {
+            level: Some(get("ANNOUNCEMENT_LEVEL"))
+                .filter(|l| Self::LEVELS.contains(&l.as_str()))
+                .unwrap_or_else(|| "info".into()),
+            title: get("ANNOUNCEMENT_TITLE"),
+            message,
+            link_url: get("ANNOUNCEMENT_LINK_URL"),
+            link_label: get("ANNOUNCEMENT_LINK_LABEL"),
+            dismissible: get("ANNOUNCEMENT_DISMISSIBLE") != "false",
+        })
+    }
+}
+
+/// The killmail ingest as `.env` has it: on when ZKB_LISTEN is 1, as the server reads it.
+pub fn killmails_from_env(env: &str) -> Option<u32> {
+    (envfile::get(env, "ZKB_LISTEN").as_deref() == Some("1")).then(|| {
+        envfile::get(env, "KILLMAIL_BACKFILL_DAYS")
+            .and_then(|d| d.parse().ok())
+            .unwrap_or(DEFAULT_BACKFILL_DAYS)
+    })
 }
 
 /// The compose profile that turns the scheduled dumps on.
@@ -579,7 +627,7 @@ impl Answers {
     /// The `.env` the answers make out of the current one.
     pub fn apply(&self, env: &str, overrides: &[&str]) -> String {
         let mut out = envfile::patch(&self.deployment.apply(env, overrides), &self.env_values());
-        for key in self.discord_removals() {
+        for key in self.removals() {
             out = envfile::remove(&out, key);
         }
         let profiles = envfile::get(&out, "COMPOSE_PROFILES").unwrap_or_default();
@@ -615,6 +663,22 @@ impl Answers {
         // Written even when empty: emptying it is how an instance is opened up again.
         set("ALLOWED_AFFILIATION_IDS", self.allowed_logins.clone());
         set("MAP_CREATOR_AFFILIATION_IDS", self.map_creators.clone());
+        if let Some(days) = self.killmails {
+            set("ZKB_LISTEN", "1".into());
+            set("KILLMAIL_BACKFILL_DAYS", days.to_string());
+        }
+        // Off is an empty message, which keeps the rest of it for the next time.
+        match &self.announcement {
+            Some(a) => {
+                set("ANNOUNCEMENT_LEVEL", a.level.clone());
+                set("ANNOUNCEMENT_TITLE", a.title.clone());
+                set("ANNOUNCEMENT_MESSAGE", a.message.clone());
+                set("ANNOUNCEMENT_LINK_URL", a.link_url.clone());
+                set("ANNOUNCEMENT_LINK_LABEL", a.link_label.clone());
+                set("ANNOUNCEMENT_DISMISSIBLE", a.dismissible.to_string());
+            }
+            None => set("ANNOUNCEMENT_MESSAGE", String::new()),
+        }
         if let Some(discord) = &self.discord {
             set("DISCORD_APPLICATION_ID", discord.application_id.clone());
             set("DISCORD_PUBLIC_KEY", discord.public_key.clone());
@@ -629,6 +693,15 @@ impl Answers {
             }
         }
         values
+    }
+
+    /// The keys to strike out: Discord's after it was turned off, and the killmail ingest's.
+    fn removals(&self) -> Vec<&'static str> {
+        let mut out = self.discord_removals();
+        if self.killmails.is_none() {
+            out.extend(["ZKB_LISTEN", "KILLMAIL_BACKFILL_DAYS"]);
+        }
+        out
     }
 
     fn discord_removals(&self) -> Vec<&'static str> {
@@ -698,6 +771,8 @@ mod tests {
             allowed_logins: String::new(),
             map_creators: String::new(),
             backups: false,
+            killmails: None,
+            announcement: None,
         }
     }
 
@@ -1063,6 +1138,47 @@ mod tests {
             Deployment::from_env("WS_DOMAIN=map.example.com\n"),
             deployment(Database::Bundled, site("map.example.com"))
         );
+    }
+
+    #[test]
+    fn the_killmail_ingest_is_on_or_gone() {
+        let on = Answers {
+            killmails: Some(30),
+            ..answers()
+        };
+        let env = on.apply("", &[]);
+        assert_eq!(get(&env, "ZKB_LISTEN").as_deref(), Some("1"));
+        assert_eq!(killmails_from_env(&env), Some(30));
+        let env = answers().apply(&env, &[]);
+        assert_eq!(get(&env, "ZKB_LISTEN"), None);
+        assert_eq!(get(&env, "KILLMAIL_BACKFILL_DAYS"), None);
+        assert_eq!(
+            killmails_from_env("ZKB_LISTEN=1\n"),
+            Some(DEFAULT_BACKFILL_DAYS)
+        );
+    }
+
+    // An empty message is how the server reads the banner as off, and the rest of it is
+    // kept for the next time.
+    #[test]
+    fn the_announcement_is_off_while_its_message_is_empty() {
+        let banner = Announcement {
+            level: "warning".into(),
+            title: "Downtime".into(),
+            message: "Moving servers on Sunday".into(),
+            link_url: String::new(),
+            link_label: String::new(),
+            dismissible: false,
+        };
+        let on = Answers {
+            announcement: Some(banner.clone()),
+            ..answers()
+        };
+        let env = on.apply("", &[]);
+        assert_eq!(Announcement::from_env(&env), Some(banner));
+        let env = answers().apply(&env, &[]);
+        assert_eq!(Announcement::from_env(&env), None);
+        assert_eq!(get(&env, "ANNOUNCEMENT_TITLE").as_deref(), Some("Downtime"));
     }
 
     // Other profiles are the operator's; only `backup` is wsctl's to switch.
