@@ -237,6 +237,8 @@ pub(crate) async fn reinsert_overwriting(
 }
 
 /// Link a signature to a connection, or with `None` let it go. Linking fires the sync.
+/// Either way the signature has been touched, as it is when a link lets it go to make room
+/// for another, so the edit stamp moves whether or not the sync changed its state.
 pub(crate) async fn set_connection(
     tx: &mut Tx<'_>,
     map_id: i64,
@@ -244,7 +246,8 @@ pub(crate) async fn set_connection(
     connection_id: Option<i64>,
 ) -> Result<()> {
     sqlx::query!(
-        "update signatures set connection_id = $1 where id = $2 and map_id = $3",
+        "update signatures set connection_id = $1, updated_at = now()
+         where id = $2 and map_id = $3",
         connection_id,
         signature_pk,
         map_id,

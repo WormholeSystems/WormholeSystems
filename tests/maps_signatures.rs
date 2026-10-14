@@ -815,3 +815,85 @@ async fn only_signature(pool: &PgPool, actor: Actor, map_id: i64) -> Signature {
     assert_eq!(sigs.len(), 1);
     sigs.pop().unwrap()
 }
+
+/// Wind a signature's edit stamp back a day.
+async fn backdate(pool: &PgPool, signature_pk: i64) {
+    sqlx::query("update signatures set updated_at = now() - interval '1 day' where id = $1")
+        .bind(signature_pk)
+        .execute(pool)
+        .await
+        .unwrap();
+}
+
+/// Whether the edit stamp has moved since it was wound back.
+async fn touched(pool: &PgPool, signature_pk: i64) -> bool {
+    sqlx::query_scalar(
+        "select updated_at > now() - interval '1 minute' from signatures where id = $1",
+    )
+    .bind(signature_pk)
+    .fetch_one(pool)
+    .await
+    .unwrap()
+}
+
+/// Linking and unlinking are edits to the signature like any other, the same as the unlink
+/// a link does to make room, whether or not the sync had any state to change.
+#[sqlx::test]
+async fn linking_and_unlinking_touch_the_signature(pool: PgPool) {
+    let w = world(&pool).await;
+    let a = place(&pool, w.owner, w.map_id, SYS_A).await;
+    let b = place(&pool, w.owner, w.map_id, SYS_B).await;
+    let conn = add_connection(
+        &pool,
+        w.owner,
+        AddConnection {
+            map_id: w.map_id,
+            from_system: a,
+            to_system: b,
+            kind: wormholesystems::maps::ConnectionType::Wormhole,
+            size: None,
+        },
+    )
+    .await
+    .unwrap();
+    let sig = add_signature(
+        &pool,
+        w.owner,
+        AddSignature {
+            map_id: w.map_id,
+            solar_system_id: SYS_A,
+            signature_id: "ABC-123".into(),
+            group: SignatureGroup::Wormhole,
+            ..Default::default()
+        },
+    )
+    .await
+    .unwrap();
+
+    backdate(&pool, sig.id).await;
+    link_signature(
+        &pool,
+        w.owner,
+        LinkSignature {
+            map_id: w.map_id,
+            signature_pk: sig.id,
+            connection_id: conn.id,
+        },
+    )
+    .await
+    .unwrap();
+    assert!(touched(&pool, sig.id).await, "linking");
+
+    backdate(&pool, sig.id).await;
+    unlink_signature(
+        &pool,
+        w.owner,
+        UnlinkSignature {
+            map_id: w.map_id,
+            signature_pk: sig.id,
+        },
+    )
+    .await
+    .unwrap();
+    assert!(touched(&pool, sig.id).await, "unlinking");
+}
