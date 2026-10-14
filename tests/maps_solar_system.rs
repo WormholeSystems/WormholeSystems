@@ -6,11 +6,12 @@ use common::{SYS_A, SYS_B, SYS_C, member_with_role, world};
 use sqlx::PgPool;
 use wormholesystems::maps::events_log::{MapIdBody, redo, undo};
 use wormholesystems::maps::solar_system::{
-    AddSystem, MoveSystem, MoveSystems, RemoveSystem, RemoveSystems, SetAlias, SetHome, SetPinned,
-    SetRally, SystemMove, add_system, move_system, move_systems, remove_system, remove_systems,
-    set_alias, set_home, set_pinned, set_rally,
+    AddSystem, MoveSystem, MoveSystems, RemoveSystem, RemoveSystems, SetAlias, SetHome, SetNotes,
+    SetOccupier, SetPinned, SetRally, SetStatus, SystemMove, add_system, move_system, move_systems,
+    remove_system, remove_systems, set_alias, set_home, set_notes, set_occupier, set_pinned,
+    set_rally, set_status,
 };
-use wormholesystems::maps::{MapError, Role};
+use wormholesystems::maps::{MapError, Role, SystemStatus};
 
 #[sqlx::test]
 async fn add_system_returns_fields_and_persists(pool: PgPool) {
@@ -659,4 +660,98 @@ async fn rallies_of(pool: &PgPool, map_id: i64) -> Vec<i64> {
     .fetch_all(pool)
     .await
     .unwrap()
+}
+
+/// The intel recorded against a placed system: status, occupier and notes.
+async fn intel_of(pool: &PgPool, map_id: i64) -> Option<(String, Option<String>, Option<String>)> {
+    sqlx::query_as(
+        "select status::text, occupying_group, notes from map_solar_system_details
+         where map_id = $1",
+    )
+    .bind(map_id)
+    .fetch_optional(pool)
+    .await
+    .unwrap()
+}
+
+/// Status, occupier and notes share one row, and each write touches its own column only:
+/// setting the notes must not reset a status somebody else set, and undo puts back just
+/// the one it changed.
+#[sqlx::test]
+async fn each_intel_write_sets_its_own_column_and_undoes_alone(pool: PgPool) {
+    let w = world(&pool).await;
+    let id = place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    let (map_id, map_solar_system_id) = (w.map_id, id);
+
+    set_occupier(
+        &pool,
+        w.owner,
+        SetOccupier {
+            map_id,
+            map_solar_system_id,
+            occupier: Some("Hard Knocks".into()),
+        },
+    )
+    .await
+    .unwrap();
+    let occupied = Some(("unknown".to_string(), Some("Hard Knocks".to_string()), None));
+    assert_eq!(intel_of(&pool, map_id).await, occupied);
+
+    set_status(
+        &pool,
+        w.owner,
+        SetStatus {
+            map_id,
+            map_solar_system_id,
+            status: SystemStatus::Hostile,
+        },
+    )
+    .await
+    .unwrap();
+    set_notes(
+        &pool,
+        w.owner,
+        SetNotes {
+            map_id,
+            map_solar_system_id,
+            notes: Some("rolled at downtime".into()),
+        },
+    )
+    .await
+    .unwrap();
+    assert_eq!(
+        intel_of(&pool, map_id).await,
+        Some((
+            "hostile".to_string(),
+            Some("Hard Knocks".to_string()),
+            Some("rolled at downtime".to_string()),
+        ))
+    );
+
+    let body = MapIdBody { map_id };
+    undo(&pool, w.owner, body.clone()).await.unwrap();
+    undo(&pool, w.owner, body.clone()).await.unwrap();
+    assert_eq!(intel_of(&pool, map_id).await, occupied);
+    redo(&pool, w.owner, body).await.unwrap();
+    assert_eq!(
+        intel_of(&pool, map_id).await,
+        Some(("hostile".to_string(), Some("Hard Knocks".to_string()), None))
+    );
+
+    // Clearing is a write of its own, not a skipped one.
+    set_occupier(
+        &pool,
+        w.owner,
+        SetOccupier {
+            map_id,
+            map_solar_system_id,
+            occupier: None,
+        },
+    )
+    .await
+    .unwrap();
+    assert_eq!(
+        intel_of(&pool, map_id).await,
+        Some(("hostile".to_string(), None, None))
+    );
 }

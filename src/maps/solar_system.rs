@@ -403,63 +403,25 @@ pub async fn set_status(pool: &PgPool, actor: Actor, cmd: SetStatus) -> Result<(
     run(pool, actor, cmd).await
 }
 
-/// The system behind a placement, or a plain refusal when it is still a ghost. Intel is
-/// keyed by system rather than by placement, so there is nowhere to put it yet.
-async fn system_behind(tx: &mut Tx<'_>, map_id: i64, map_solar_system_id: i64) -> Result<i64> {
-    sqlx::query_scalar!(
-        "select solar_system_id from map_solar_systems where id = $1 and map_id = $2",
-        map_solar_system_id,
-        map_id,
-    )
-    .fetch_optional(&mut **tx)
-    .await?
-    .ok_or(MapError::NotFound)?
-    .ok_or_else(|| {
-        MapError::Validation("assign a system to that hole before recording intel on it".into())
-    })
-}
-
 pub(super) async fn apply_set_status(tx: &mut Tx<'_>, cmd: SetStatus) -> Result<Effect> {
-    system_behind(tx, cmd.map_id, cmd.map_solar_system_id).await?;
-    let before = sqlx::query_scalar!(
-        r#"select coalesce(d.status, 'unknown') as "status!: super::SystemStatus"
-           from map_solar_systems mss
-           left join map_solar_system_details d
-               on d.map_id = mss.map_id and d.solar_system_id = mss.solar_system_id
-           where mss.id = $1 and mss.map_id = $2"#,
-        cmd.map_solar_system_id,
-        cmd.map_id,
-    )
-    .fetch_optional(&mut **tx)
-    .await?
-    .ok_or(MapError::NotFound)?;
-
-    sqlx::query!(
-        "insert into map_solar_system_details (map_id, solar_system_id, status)
-         select map_id, solar_system_id, $3 from map_solar_systems where id = $2 and map_id = $1
-         on conflict (map_id, solar_system_id)
-             do update set status = excluded.status, updated_at = now()",
-        cmd.map_id,
-        cmd.map_solar_system_id,
-        cmd.status,
-    )
-    .execute(&mut **tx)
-    .await?;
+    let before = intel(tx, cmd.map_id, cmd.map_solar_system_id).await?;
+    let change = IntelChange {
+        status: Some(cmd.status),
+        ..IntelChange::default()
+    };
+    write_intel(tx, cmd.map_id, cmd.map_solar_system_id, &change).await?;
+    let label = format!("set a system to {}", cmd.status.as_str());
     let inverse = MapCommand::SetStatus(SetStatus {
-        map_id: cmd.map_id,
-        map_solar_system_id: cmd.map_solar_system_id,
-        status: before,
+        status: before.status,
+        ..cmd
     });
-    Ok(Effect::new(
+    Ok(intel_changed(
         "systems.status",
-        format!("set a system to {}", cmd.status.as_str()),
-        CommandOutput::None,
-    )
-    .undo_with(inverse)
-    .emit(MapEvent::SystemDetailsChanged {
-        map_id: cmd.map_id,
-        map_solar_system_id: cmd.map_solar_system_id,
-    }))
+        label,
+        cmd.map_id,
+        cmd.map_solar_system_id,
+        inverse,
+    ))
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema)]
@@ -477,40 +439,27 @@ pub async fn set_occupier(pool: &PgPool, actor: Actor, cmd: SetOccupier) -> Resu
 }
 
 pub(super) async fn apply_set_occupier(tx: &mut Tx<'_>, cmd: SetOccupier) -> Result<Effect> {
-    system_behind(tx, cmd.map_id, cmd.map_solar_system_id).await?;
-    let before = detail_text(
-        tx,
-        cmd.map_id,
-        cmd.map_solar_system_id,
-        DetailColumn::Occupier,
-    )
-    .await?;
-    sqlx::query!(
-        "insert into map_solar_system_details (map_id, solar_system_id, occupying_group)
-         select map_id, solar_system_id, $3 from map_solar_systems where id = $2 and map_id = $1
-         on conflict (map_id, solar_system_id)
-             do update set occupying_group = excluded.occupying_group, updated_at = now()",
-        cmd.map_id,
-        cmd.map_solar_system_id,
-        cmd.occupier.as_deref(),
-    )
-    .execute(&mut **tx)
-    .await?;
+    let before = intel(tx, cmd.map_id, cmd.map_solar_system_id).await?;
+    let change = IntelChange {
+        occupier: Some(cmd.occupier.clone()),
+        ..IntelChange::default()
+    };
+    write_intel(tx, cmd.map_id, cmd.map_solar_system_id, &change).await?;
     let label = match &cmd.occupier {
         Some(occupier) => format!("set the occupier to {occupier}"),
         None => "cleared an occupier".to_string(),
     };
     let inverse = MapCommand::SetOccupier(SetOccupier {
-        map_id: cmd.map_id,
-        map_solar_system_id: cmd.map_solar_system_id,
-        occupier: before,
+        occupier: before.occupier,
+        ..cmd
     });
-    Ok(Effect::new("systems.occupier", label, CommandOutput::None)
-        .undo_with(inverse)
-        .emit(MapEvent::SystemDetailsChanged {
-            map_id: cmd.map_id,
-            map_solar_system_id: cmd.map_solar_system_id,
-        }))
+    Ok(intel_changed(
+        "systems.occupier",
+        label,
+        cmd.map_id,
+        cmd.map_solar_system_id,
+        inverse,
+    ))
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema)]
@@ -528,32 +477,117 @@ pub async fn set_notes(pool: &PgPool, actor: Actor, cmd: SetNotes) -> Result<()>
 }
 
 pub(super) async fn apply_set_notes(tx: &mut Tx<'_>, cmd: SetNotes) -> Result<Effect> {
-    system_behind(tx, cmd.map_id, cmd.map_solar_system_id).await?;
-    let before = detail_text(tx, cmd.map_id, cmd.map_solar_system_id, DetailColumn::Notes).await?;
-    sqlx::query!(
-        "insert into map_solar_system_details (map_id, solar_system_id, notes)
-         select map_id, solar_system_id, $3 from map_solar_systems where id = $2 and map_id = $1
-         on conflict (map_id, solar_system_id)
-             do update set notes = excluded.notes, updated_at = now()",
+    let before = intel(tx, cmd.map_id, cmd.map_solar_system_id).await?;
+    let change = IntelChange {
+        notes: Some(cmd.notes.clone()),
+        ..IntelChange::default()
+    };
+    write_intel(tx, cmd.map_id, cmd.map_solar_system_id, &change).await?;
+    let inverse = MapCommand::SetNotes(SetNotes {
+        notes: before.notes,
+        ..cmd
+    });
+    Ok(intel_changed(
+        "systems.notes",
+        "edited notes",
         cmd.map_id,
         cmd.map_solar_system_id,
-        cmd.notes.as_deref(),
+        inverse,
+    ))
+}
+
+/// The intel recorded against a placement's system, as it stands.
+struct Intel {
+    status: super::SystemStatus,
+    occupier: Option<String>,
+    notes: Option<String>,
+}
+
+/// Which intel columns a write sets. `None` leaves a column as it is; the inner `None` of
+/// the text columns clears it.
+#[derive(Default)]
+struct IntelChange {
+    status: Option<super::SystemStatus>,
+    occupier: Option<Option<String>>,
+    notes: Option<Option<String>>,
+}
+
+/// A placement's intel, or a plain refusal when it is still a ghost. Intel is keyed by
+/// system rather than by placement, so a ghost has nowhere to put it yet.
+async fn intel(tx: &mut Tx<'_>, map_id: i64, map_solar_system_id: i64) -> Result<Intel> {
+    let row = sqlx::query!(
+        r#"select mss.solar_system_id,
+                  coalesce(d.status, 'unknown') as "status!: super::SystemStatus",
+                  d.occupying_group, d.notes
+           from map_solar_systems mss
+           left join map_solar_system_details d
+               on d.map_id = mss.map_id and d.solar_system_id = mss.solar_system_id
+           where mss.id = $1 and mss.map_id = $2"#,
+        map_solar_system_id,
+        map_id,
+    )
+    .fetch_optional(&mut **tx)
+    .await?
+    .ok_or(MapError::NotFound)?;
+    if row.solar_system_id.is_none() {
+        return Err(MapError::Validation(
+            "assign a system to that hole before recording intel on it".into(),
+        ));
+    }
+    Ok(Intel {
+        status: row.status,
+        occupier: row.occupying_group,
+        notes: row.notes,
+    })
+}
+
+/// Upsert the details row behind a placement, setting only the columns the change names.
+/// A row made here starts from the column defaults for the rest.
+async fn write_intel(
+    tx: &mut Tx<'_>,
+    map_id: i64,
+    map_solar_system_id: i64,
+    change: &IntelChange,
+) -> Result<()> {
+    sqlx::query!(
+        "insert into map_solar_system_details
+             (map_id, solar_system_id, status, occupying_group, notes)
+         select map_id, solar_system_id, coalesce($3, 'unknown'::system_status), $5, $7
+         from map_solar_systems where id = $2 and map_id = $1
+         on conflict (map_id, solar_system_id) do update set
+             status = coalesce($3, map_solar_system_details.status),
+             occupying_group = case when $4 then excluded.occupying_group
+                                    else map_solar_system_details.occupying_group end,
+             notes = case when $6 then excluded.notes else map_solar_system_details.notes end,
+             updated_at = now()",
+        map_id,
+        map_solar_system_id,
+        change.status as Option<super::SystemStatus>,
+        change.occupier.is_some(),
+        change.occupier.clone().flatten(),
+        change.notes.is_some(),
+        change.notes.clone().flatten(),
     )
     .execute(&mut **tx)
     .await?;
-    let inverse = MapCommand::SetNotes(SetNotes {
-        map_id: cmd.map_id,
-        map_solar_system_id: cmd.map_solar_system_id,
-        notes: before,
-    });
-    Ok(
-        Effect::new("systems.notes", "edited notes", CommandOutput::None)
-            .undo_with(inverse)
-            .emit(MapEvent::SystemDetailsChanged {
-                map_id: cmd.map_id,
-                map_solar_system_id: cmd.map_solar_system_id,
-            }),
-    )
+    Ok(())
+}
+
+/// The effect of an intel write: one placement's details changed, and `inverse` puts back
+/// what they were.
+fn intel_changed(
+    kind: &'static str,
+    label: impl Into<String>,
+    map_id: i64,
+    map_solar_system_id: i64,
+    inverse: MapCommand,
+) -> Effect {
+    Effect::new(kind, label, CommandOutput::None)
+        .undo_with(inverse)
+        .emit(MapEvent::SystemDetailsChanged {
+            map_id,
+            map_solar_system_id,
+        })
 }
 
 /// A placed system's member-gated intel details (currently just the notes). Viewers never
@@ -885,48 +919,4 @@ pub(super) async fn apply_set_pinned(tx: &mut Tx<'_>, cmd: SetPinned) -> Result<
             map_id: cmd.map_id,
             map_solar_system_id: cmd.map_solar_system_id,
         }))
-}
-
-/// The current occupier / notes value, erroring when the placement is missing. Two
-/// literal queries rather than a built string, so the SQL stays checked at compile time.
-async fn detail_text(
-    tx: &mut Tx<'_>,
-    map_id: i64,
-    map_solar_system_id: i64,
-    column: DetailColumn,
-) -> Result<Option<String>> {
-    let value = match column {
-        DetailColumn::Occupier => {
-            sqlx::query_scalar!(
-                "select d.occupying_group
-             from map_solar_systems mss
-             left join map_solar_system_details d
-                 on d.map_id = mss.map_id and d.solar_system_id = mss.solar_system_id
-             where mss.id = $1 and mss.map_id = $2",
-                map_solar_system_id,
-                map_id,
-            )
-            .fetch_optional(&mut **tx)
-            .await?
-        }
-        DetailColumn::Notes => {
-            sqlx::query_scalar!(
-                "select d.notes
-             from map_solar_systems mss
-             left join map_solar_system_details d
-                 on d.map_id = mss.map_id and d.solar_system_id = mss.solar_system_id
-             where mss.id = $1 and mss.map_id = $2",
-                map_solar_system_id,
-                map_id,
-            )
-            .fetch_optional(&mut **tx)
-            .await?
-        }
-    };
-    value.ok_or(MapError::NotFound)
-}
-
-enum DetailColumn {
-    Occupier,
-    Notes,
 }
