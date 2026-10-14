@@ -9,7 +9,7 @@ use sqlx::PgPool;
 use wormholesystems::maps::eve_scout::{
     AddEveScoutConnections, EveScoutHole, add_eve_scout_connections,
 };
-use wormholesystems::maps::events_log::{MapIdBody, list_history, redo, undo};
+use wormholesystems::maps::history::{MapIdBody, list_history, redo, undo};
 use wormholesystems::maps::map::{GetMap, get_map};
 use wormholesystems::maps::signatures::{AddSignature, add_signature, list_signatures};
 use wormholesystems::maps::solar_system::{AddSystem, add_system};

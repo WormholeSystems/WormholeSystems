@@ -18,7 +18,8 @@ use super::error::{MapError, Result};
 use super::restore::RemoveRestored;
 use super::signatures::{LinkSignature, UnlinkSignature, UpdateSignature};
 use super::solar_system::{AddSystem, SetAlias};
-use super::{ConnectionType, MapEvent, MassStatus, SignatureGroup, TimeStatus, WormholeSize};
+use super::{ConnectionType, MassStatus, SignatureGroup, TimeStatus, WormholeSize};
+use crate::realtime::MapEvent;
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema)]
 #[ts(export)]

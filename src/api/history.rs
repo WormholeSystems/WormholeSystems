@@ -9,7 +9,7 @@ use utoipa_axum::routes;
 use super::ApiResult;
 use super::extract::{acting_on, require_actor};
 use crate::app::AppState;
-use crate::maps::events_log::{GotoMapEvent, MapHistory, MapIdBody};
+use crate::maps::history::{GotoMapEvent, MapHistory, MapIdBody};
 
 pub fn routes() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
@@ -34,7 +34,7 @@ pub async fn list_map_events(
     Path(map_id): Path<i64>,
 ) -> ApiResult<MapHistory> {
     let actor = require_actor(&state.db, &creds).await?;
-    let history = crate::maps::events_log::list_history(&state.db, actor, map_id).await?;
+    let history = crate::maps::history::list_history(&state.db, actor, map_id).await?;
     Ok(Json(history))
 }
 
@@ -57,7 +57,7 @@ pub async fn undo_map_event(
     Json(cmd): Json<MapIdBody>,
 ) -> ApiResult<()> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    crate::maps::events_log::undo(&state.db, actor, cmd).await?;
+    crate::maps::history::undo(&state.db, actor, cmd).await?;
     Ok(Json(()))
 }
 
@@ -78,7 +78,7 @@ pub async fn redo_map_event(
     Json(cmd): Json<MapIdBody>,
 ) -> ApiResult<()> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    crate::maps::events_log::redo(&state.db, actor, cmd).await?;
+    crate::maps::history::redo(&state.db, actor, cmd).await?;
     Ok(Json(()))
 }
 
@@ -100,6 +100,6 @@ pub async fn goto_map_event(
     Json(cmd): Json<GotoMapEvent>,
 ) -> ApiResult<()> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    crate::maps::events_log::goto(&state.db, actor, cmd).await?;
+    crate::maps::history::goto(&state.db, actor, cmd).await?;
     Ok(Json(()))
 }

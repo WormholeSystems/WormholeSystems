@@ -15,7 +15,8 @@ use super::command::{CommandOutput, Effect, EventActor, MapTx};
 use super::error::{MapError, Result};
 
 use super::view::{MapSystemView, sovereignty_of};
-use super::{Actor, AliasScheme, MapEvent, MapLayout, MapView, Role, SubjectType};
+use super::{Actor, AliasScheme, MapLayout, MapView, Role, SubjectType};
+use crate::realtime::MapEvent;
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema)]
 #[ts(export)]

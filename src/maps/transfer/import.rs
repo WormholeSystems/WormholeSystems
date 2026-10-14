@@ -129,12 +129,12 @@ async fn finish_import(
     parsed: &ParsedExport,
     summary: &ImportSummary,
 ) -> Result<()> {
-    tx.emit(crate::maps::MapEvent::HistoryChanged { map_id });
+    tx.emit(crate::realtime::MapEvent::HistoryChanged { map_id });
     if parsed.sections.settings.is_some() {
-        tx.emit(crate::maps::MapEvent::MapUpdated { map_id });
+        tx.emit(crate::realtime::MapEvent::MapUpdated { map_id });
     }
     if parsed.sections.access.is_some() {
-        tx.emit(crate::maps::MapEvent::AccessChanged { map_id });
+        tx.emit(crate::realtime::MapEvent::AccessChanged { map_id });
     }
     let effect = Effect::new("map.imported", "imported a map export", CommandOutput::None)
         .entries(summary.changed().max(1));

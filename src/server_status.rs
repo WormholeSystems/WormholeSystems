@@ -14,7 +14,7 @@ use sqlx::PgPool;
 use tokio::sync::watch;
 
 use crate::esi::{EsiClient, EsiError};
-use crate::user_channel::{UserEvent, UserHub};
+use crate::realtime::{UserEvent, UserHub};
 
 /// What the server is doing, as one word for the client to render.
 #[derive(

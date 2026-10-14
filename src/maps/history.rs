@@ -315,7 +315,8 @@ pub async fn goto(pool: &PgPool, actor: Actor, cmd: GotoMapEvent) -> Result<()> 
     let head = head_of(&mut tx, cmd.map_id).await?;
     goto_tx(&mut tx, actor, cmd.map_id, cmd.event_id, head).await?;
     tx.commit().await?;
-    super::hub().publish(super::events::MapEvent::HistoryChanged { map_id: cmd.map_id });
+    crate::realtime::hub()
+        .publish(crate::realtime::MapEvent::HistoryChanged { map_id: cmd.map_id });
     Ok(())
 }
 
@@ -336,7 +337,8 @@ pub async fn undo(pool: &PgPool, actor: Actor, cmd: MapIdBody) -> Result<()> {
     let parent = fetch_step(&mut tx, cmd.map_id, head_id).await?.parent_id;
     goto_tx(&mut tx, actor, cmd.map_id, parent, head).await?;
     tx.commit().await?;
-    super::hub().publish(super::events::MapEvent::HistoryChanged { map_id: cmd.map_id });
+    crate::realtime::hub()
+        .publish(crate::realtime::MapEvent::HistoryChanged { map_id: cmd.map_id });
     Ok(())
 }
 
@@ -350,7 +352,8 @@ pub async fn redo(pool: &PgPool, actor: Actor, cmd: MapIdBody) -> Result<()> {
     };
     goto_tx(&mut tx, actor, cmd.map_id, Some(child), head).await?;
     tx.commit().await?;
-    super::hub().publish(super::events::MapEvent::HistoryChanged { map_id: cmd.map_id });
+    crate::realtime::hub()
+        .publish(crate::realtime::MapEvent::HistoryChanged { map_id: cmd.map_id });
     Ok(())
 }
 

@@ -37,7 +37,7 @@ pub fn state(pool: &PgPool) -> AppState {
         sso: Arc::new(sso),
         esi: wormholesystems::esi::EsiClient::new(),
         db: pool.clone(),
-        user_hub: wormholesystems::user_channel::UserHub::new(),
+        user_hub: wormholesystems::realtime::UserHub::new(),
         server: ServerWatch::fixed(ServerStatus {
             state: ServerState::Online,
             players: 1,

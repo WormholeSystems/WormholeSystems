@@ -7,9 +7,10 @@ use chrono::{DateTime, Utc};
 use wormholesystems::maps::connection::SetConnectionStatus;
 use wormholesystems::maps::signatures::AddSignature;
 use wormholesystems::maps::{
-    AliasScheme, ConnectionType, Map, MapConnection, MapEvent, MapLayout, MapSystemView, MapView,
-    MassStatus, SignatureGroup, Static, SystemStatus, ThreatLevel, TimeStatus, WormholeSize,
+    AliasScheme, ConnectionType, Map, MapConnection, MapLayout, MapSystemView, MapView, MassStatus,
+    SignatureGroup, Static, SystemStatus, ThreatLevel, TimeStatus, WormholeSize,
 };
+use wormholesystems::realtime::MapEvent;
 
 /// A fixed timestamp (chrono's `clock` feature is off — no `Utc::now()`).
 fn ts() -> DateTime<Utc> {

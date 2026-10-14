@@ -273,7 +273,7 @@ pub async fn set_access(pool: &PgPool, actor: Actor, cmd: SetAccess) -> Result<(
     ensure_has_owner(&mut tx, cmd.map_id).await?;
     tx.commit().await?;
     // Published here, not in the handler, so no caller can forget the event.
-    super::hub().publish(super::events::MapEvent::AccessChanged { map_id: cmd.map_id });
+    crate::realtime::hub().publish(crate::realtime::MapEvent::AccessChanged { map_id: cmd.map_id });
     Ok(())
 }
 
@@ -303,7 +303,7 @@ pub async fn revoke_access(pool: &PgPool, actor: Actor, cmd: RevokeAccess) -> Re
     ensure_has_owner(&mut tx, cmd.map_id).await?;
     tx.commit().await?;
     // Published here, not in the handler, so no caller can forget the event.
-    super::hub().publish(super::events::MapEvent::AccessChanged { map_id: cmd.map_id });
+    crate::realtime::hub().publish(crate::realtime::MapEvent::AccessChanged { map_id: cmd.map_id });
     Ok(())
 }
 
@@ -359,7 +359,7 @@ pub async fn transfer_ownership(pool: &PgPool, actor: Actor, cmd: TransferOwners
     ensure_has_owner(&mut tx, cmd.map_id).await?;
     tx.commit().await?;
     // Published here, not in the handler, so no caller can forget the event.
-    super::hub().publish(super::events::MapEvent::AccessChanged { map_id: cmd.map_id });
+    crate::realtime::hub().publish(crate::realtime::MapEvent::AccessChanged { map_id: cmd.map_id });
     Ok(())
 }
 

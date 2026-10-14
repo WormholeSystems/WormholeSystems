@@ -3,11 +3,12 @@
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 
+use crate::maps::Actor;
 use crate::maps::command::{CommandOutput, Effect, MapCommand, Sequence, Tx, run};
 use crate::maps::connection::SetConnectionStatus;
 use crate::maps::error::{MapError, Result};
 use crate::maps::store;
-use crate::maps::{Actor, MapEvent};
+use crate::realtime::MapEvent;
 
 use super::{Signature, UpdateSignature, fetch_signature_tx, is_wormhole};
 

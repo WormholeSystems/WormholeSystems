@@ -5,7 +5,7 @@ mod common;
 use common::map::place_at;
 use common::{SYS_A, SYS_B, SYS_C, member_with_role, world};
 use sqlx::PgPool;
-use wormholesystems::maps::events_log::{MapIdBody, redo, undo};
+use wormholesystems::maps::history::{MapIdBody, redo, undo};
 use wormholesystems::maps::solar_system::{
     AddSystem, ClearMap, MoveSystem, MoveSystems, RemoveSystem, RemoveSystems, SetAlias, SetHome,
     SetNotes, SetOccupier, SetPinned, SetRally, SetStatus, SystemMove, add_system, clear_map,

@@ -331,13 +331,13 @@ async fn deliver_loop(
 /// on one without, and leaves Discord to the delivery worker; that keeps it ahead of a big
 /// paste. If it does fall behind, it replays the gap from the tables.
 pub fn start(pool: PgPool, runtime: Arc<Runtime>) {
-    start_on(pool, crate::maps::hub().clone(), runtime);
+    start_on(pool, crate::realtime::hub().clone(), runtime);
 }
 
 /// [`start`] on a hub of the caller's. For tests: the process-wide hub carries every other
 /// test's maps, whose ids collide with this one's across test databases.
 #[doc(hidden)]
-pub fn start_on(pool: PgPool, hub: crate::maps::MapHub, runtime: Arc<Runtime>) {
+pub fn start_on(pool: PgPool, hub: crate::realtime::MapHub, runtime: Arc<Runtime>) {
     tokio::spawn(async move {
         let mut events = hub.subscribe_all();
         // When the last event came off the channel. What was missed was published after
@@ -347,14 +347,14 @@ pub fn start_on(pool: PgPool, hub: crate::maps::MapHub, runtime: Arc<Runtime>) {
         loop {
             let event = events.recv().await;
             let out = match event {
-                Ok(crate::maps::MapEvent::SystemAdded {
+                Ok(crate::realtime::MapEvent::SystemAdded {
                     map_id,
                     map_solar_system_id,
                 }) => {
                     received = Instant::now();
                     runtime.placed(&pool, map_id, map_solar_system_id).await
                 }
-                Ok(crate::maps::MapEvent::ConnectionChanged {
+                Ok(crate::realtime::MapEvent::ConnectionChanged {
                     map_id,
                     connection_id,
                 }) => {

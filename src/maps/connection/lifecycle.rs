@@ -11,7 +11,8 @@ use crate::maps::command::{CommandOutput, Effect, EventActor, MapCommand, Tx, ru
 use crate::maps::error::{MapError, Result};
 use crate::maps::store::connections;
 use crate::maps::store::placements;
-use crate::maps::{Actor, ConnectionType, MapEvent, Role, TimeStatus};
+use crate::maps::{Actor, ConnectionType, Role, TimeStatus};
+use crate::realtime::MapEvent;
 
 use super::fetch_connection_tx;
 

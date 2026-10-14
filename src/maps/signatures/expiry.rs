@@ -2,8 +2,8 @@
 
 use sqlx::PgPool;
 
-use crate::maps::MapEvent;
 use crate::maps::error::Result;
+use crate::realtime::MapEvent;
 
 /// Purge stale signatures (legacy expiry): unlinked wormhole sigs older than 3 days, other
 /// sigs untouched for 7 days (presence in a paste refreshes `updated_at`, keeping live
@@ -38,7 +38,7 @@ pub fn start_expiry(pool: PgPool) {
             let pool = pool.clone();
             async move {
                 for (map_id, solar_system_id) in expire_signatures(&pool).await? {
-                    crate::maps::hub().publish(MapEvent::SignatureChanged {
+                    crate::realtime::hub().publish(MapEvent::SignatureChanged {
                         map_id,
                         solar_system_id,
                     });

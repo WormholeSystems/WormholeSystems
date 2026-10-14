@@ -10,7 +10,7 @@ use common::{SYS_A, SYS_B, SYS_C, world};
 use serde_json::{Value, json};
 use sqlx::PgPool;
 use wormholesystems::allowlist::AffiliationAllowlist;
-use wormholesystems::maps::events_log::{MapIdBody, redo, undo};
+use wormholesystems::maps::history::{MapIdBody, redo, undo};
 use wormholesystems::maps::map::{CreateMap, UpdateMap, create_map, update_map};
 use wormholesystems::maps::{Actor, CommandOutput, MapCommand, execute};
 

@@ -1,5 +1,5 @@
 //! Two-tier character-status polling, see
-//! [processes.md](../docs/processes.md#character-status-polling).
+//! [processes.md](../../docs/processes.md#character-status-polling).
 //!
 //! Tier 1 polls online state for the characters of active users every 60s; tier 2 polls
 //! location and ship for the online ones every 5s. Both are bounded by a [`Semaphore`] so we
@@ -27,8 +27,8 @@ use crate::background::spawn_every;
 use crate::db::PgTokenStore;
 use crate::esi::scopes::Scope;
 use crate::esi::{EsiClient, Result as EsiResult, Sso, Token, TokenCache, TokenStore};
+use crate::realtime::{UserEvent, UserHub};
 use crate::server_status::ServerWatch;
-use crate::user_channel::{UserEvent, UserHub};
 
 /// Max ESI requests in flight per tick, the one tuning knob. Raise to fit more characters
 /// in the 5s tier-2 budget; lower to stay further under ESI's error limit.
@@ -420,6 +420,6 @@ async fn announce_presence(poller: &Poller, user_id: i64) {
         return;
     };
     for map_id in map_ids {
-        crate::maps::hub().publish(crate::maps::MapEvent::CharactersChanged { map_id });
+        crate::realtime::hub().publish(crate::realtime::MapEvent::CharactersChanged { map_id });
     }
 }

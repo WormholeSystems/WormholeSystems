@@ -418,7 +418,7 @@ pub async fn update_map_user_settings(
     // else's pilot list, and the poller only announces maps that are already shared: with
     // nothing published here, switching it off never reaches the other viewers at all.
     if body.tracking_allowed.is_some() {
-        crate::maps::hub().publish(crate::maps::MapEvent::CharactersChanged { map_id });
+        crate::realtime::hub().publish(crate::realtime::MapEvent::CharactersChanged { map_id });
     }
 
     Ok(Json(load(&state.db, map_id, actor.user_id).await?))

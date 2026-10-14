@@ -12,7 +12,7 @@ the [mapping](../database/mapping.md) tables.
 
 Mapping runs as a **single server process** and is expected to for the foreseeable future.
 That makes the simplest option also the best one: an **in-process publish/subscribe bus**
-([`MapHub`](../../src/maps/events.rs)) built on `tokio::broadcast`, one channel per `map_id`.
+([`MapHub`](../../src/realtime/map_hub.rs)) built on `tokio::broadcast`, one channel per `map_id`.
 
 Why not the alternatives:
 
@@ -73,7 +73,7 @@ changes too. The trigger never needs to emit anything itself.
 
 ## Status & what's deferred
 
-Built now: `MapEvent` + `MapHub` (the bus, unit-tested in `events.rs`).
+Built now: `MapEvent` + `MapHub` (the bus, unit-tested in `realtime/map_hub.rs`).
 
 Built since: the **Axum WebSocket endpoint** (`src/api/ws.rs`), the **Svelte client**
 subscription (any frame → refetch, `frontend/src/lib/ws.ts`), and the **`publish` calls**

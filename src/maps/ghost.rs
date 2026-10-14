@@ -18,7 +18,8 @@ use super::connection::{AddConnection, SetConnectionStatus};
 use super::error::{MapError, Result};
 use super::solar_system::{MapSolarSystem, SetAlias};
 use super::store::placements::{self, NewPlacement, PlacementRow};
-use super::{Actor, ConnectionType, MapEvent, MassStatus, TimeStatus, WormholeSize};
+use super::{Actor, ConnectionType, MassStatus, TimeStatus, WormholeSize};
+use crate::realtime::MapEvent;
 
 /// Node width in world px, and the clear space kept between nodes, both mirroring
 /// `frontend/src/lib/map/helpers.ts` so a server-placed node lands on the same lattice.

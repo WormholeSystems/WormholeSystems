@@ -19,7 +19,8 @@ use super::command::{CommandOutput, Effect, MapCommand, Tx, run};
 use super::error::{MapError, Result};
 use super::store;
 use super::store::jumps::JumpRow;
-use super::{Actor, MapEvent, Role};
+use super::{Actor, Role};
+use crate::realtime::MapEvent;
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema)]
 #[ts(export)]
@@ -528,7 +529,7 @@ pub async fn record_transit(
 
     for row in recorded {
         if let Some(connection_id) = row.connection_id {
-            super::hub().publish(MapEvent::ConnectionChanged {
+            crate::realtime::hub().publish(MapEvent::ConnectionChanged {
                 map_id: row.map_id,
                 connection_id,
             });

@@ -17,9 +17,8 @@ use super::restore::RemoveRestored;
 use super::signatures::AddSignature;
 use super::solar_system::AddSystem;
 use super::tracking::{SignatureState, signature_state, undo_signature};
-use super::{
-    Actor, ConnectionType, MapEvent, MassStatus, SignatureGroup, TimeStatus, WormholeSize,
-};
+use super::{Actor, ConnectionType, MassStatus, SignatureGroup, TimeStatus, WormholeSize};
+use crate::realtime::MapEvent;
 use crate::util::security::ccp_round_security;
 
 /// Thera and Turnur, the two systems EVE Scout keeps public connections for.

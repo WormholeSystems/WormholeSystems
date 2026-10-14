@@ -1,6 +1,6 @@
 //! Per-user private realtime channel, the server side of the `/ws/user` socket.
 //!
-//! Like [`MapHub`](crate::maps::MapHub) but keyed by `user_id`. Most events are routed
+//! Like [`MapHub`](crate::realtime::MapHub) but keyed by `user_id`. Most events are routed
 //! explicitly, so only the addressed user's connections receive them; a few concern everyone
 //! and go out to every live channel.
 

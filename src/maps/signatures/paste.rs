@@ -7,7 +7,8 @@ use crate::maps::command::{CommandOutput, Effect, MapCommand, Tx, run};
 use crate::maps::error::Result;
 use crate::maps::store;
 use crate::maps::store::signatures::NewSignature;
-use crate::maps::{Actor, MapEvent, SignatureGroup};
+use crate::maps::{Actor, SignatureGroup};
+use crate::realtime::MapEvent;
 
 use super::{
     capture_signatures, category_id_for, ensure_system_placed, is_wormhole, validate_signature_id,

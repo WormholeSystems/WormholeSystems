@@ -24,7 +24,7 @@ pub struct AppState {
     pub sso: Arc<Sso>,
     pub esi: EsiClient,
     pub db: PgPool,
-    pub user_hub: crate::user_channel::UserHub,
+    pub user_hub: crate::realtime::UserHub,
     /// The latest Tranquility status, for the header indicator.
     pub server: crate::server_status::ServerWatch,
     /// `None` when no Discord application is configured, which disables the bot half.
@@ -108,7 +108,7 @@ pub async fn serve(config: Config) {
     // its transaction, so the geometry is installed for the process here.
     crate::maps::set_grid(config.grid);
 
-    let user_hub = crate::user_channel::UserHub::new();
+    let user_hub = crate::realtime::UserHub::new();
     let server = start_background(&config, &db, &sso, &esi, &user_hub).await;
 
     let state = AppState {
@@ -158,7 +158,7 @@ async fn start_background(
     db: &PgPool,
     sso: &Arc<Sso>,
     esi: &EsiClient,
-    user_hub: &crate::user_channel::UserHub,
+    user_hub: &crate::realtime::UserHub,
 ) -> crate::server_status::ServerWatch {
     // Is Tranquility up? Everything below that talks to ESI gates on it, so it is started
     // first.
@@ -171,7 +171,7 @@ async fn start_background(
 
     // Poll live character status for active users, pinging each user's private channel on
     // a change.
-    crate::tracking::start(
+    crate::pilots::poller::start(
         db.clone(),
         sso.clone(),
         esi.clone(),
@@ -222,7 +222,7 @@ async fn start_background(
     crate::maps::connection::start_lifecycle(db.clone());
 
     // Drop command-journal entries past the undo retention window.
-    crate::maps::events_log::start_purge(db.clone());
+    crate::maps::history::start_purge(db.clone());
 
     // Drop old alert deliveries and audit rows, and expired sessions.
     crate::retention::start(db.clone());

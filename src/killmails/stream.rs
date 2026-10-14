@@ -262,7 +262,7 @@ async fn announce(pool: &PgPool, solar_system_id: i64) {
         return;
     };
     for map_id in map_ids {
-        crate::maps::hub().publish(crate::maps::MapEvent::KillmailReceived { map_id });
+        crate::realtime::hub().publish(crate::realtime::MapEvent::KillmailReceived { map_id });
     }
 }
 

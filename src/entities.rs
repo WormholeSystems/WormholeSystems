@@ -14,7 +14,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use sqlx::PgPool;
 
 use crate::esi::{EsiClient, EsiError};
-use crate::tracking::run_bounded;
+use crate::pilots::poller::run_bounded;
 
 /// Entries older than this are re-fetched: pilots change corp, corps change alliance.
 const FRESH_FOR: &str = "7 days";

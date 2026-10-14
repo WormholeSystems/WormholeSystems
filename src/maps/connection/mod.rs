@@ -13,7 +13,8 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use super::{ConnectionType, MapEvent, MassStatus, TimeStatus, WormholeSize};
+use super::{ConnectionType, MassStatus, TimeStatus, WormholeSize};
+use crate::realtime::MapEvent;
 
 use sqlx::PgPool;
 

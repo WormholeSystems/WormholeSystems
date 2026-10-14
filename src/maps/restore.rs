@@ -4,13 +4,13 @@
 
 use serde::{Deserialize, Serialize};
 
-use super::MapEvent;
 use super::command::{CommandOutput, Effect, MapCommand, Tx};
 use super::error::Result;
 use super::store::connections::{self, ConnectionRow};
 use super::store::jumps::{self, JumpRow};
 use super::store::placements::{self, PlacementRow};
 use super::store::signatures::{self, SignatureRow};
+use crate::realtime::MapEvent;
 
 /// The inverse of a removal: placements plus everything that cascaded with them. Internal,
 /// produced by the remove commands and never routed by the API.

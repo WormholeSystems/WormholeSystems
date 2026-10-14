@@ -9,7 +9,7 @@ use axum::response::{IntoResponse, Response};
 use tokio::sync::broadcast::error::RecvError;
 
 use crate::app::AppState;
-use crate::user_channel::UserHub;
+use crate::realtime::UserHub;
 
 /// `GET /ws/map/{map_id}`: the map's events as JSON, gated at the same bar as reading it:
 /// a grant, or the share it has been opened with. A watcher following a link gets the
@@ -105,7 +105,7 @@ async fn user_heartbeat(mut socket: WebSocket, pool: sqlx::PgPool, users: UserHu
 }
 
 async fn stream_map_events(mut socket: WebSocket, map_id: i64) {
-    let mut rx = crate::maps::hub().subscribe(map_id);
+    let mut rx = crate::realtime::hub().subscribe(map_id);
     loop {
         let received = tokio::select! {
             _ = crate::background::stopped() => {

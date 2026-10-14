@@ -7,7 +7,7 @@
 //!
 //! The acting [`Actor`](crate::maps::Actor) is resolved server-side from the session
 //! cookie or a bearer token ([`extract::Credentials`]), never sent by the client. Each
-//! mutating handler publishes the matching [`MapEvent`](crate::maps::MapEvent) to the hub
+//! mutating handler publishes the matching [`MapEvent`](crate::realtime::MapEvent) to the hub
 //! after the action commits.
 pub mod access;
 pub mod alerts;
@@ -219,7 +219,7 @@ Live updates go over WebSockets, which this document cannot describe: see \
     components(
         responses(BadRequest, Unauthorized, Forbidden, NotFound, Conflict, UpstreamFailed),
         // The WebSocket frames, so a client generated from the document has them too.
-        schemas(crate::maps::MapEvent, crate::user_channel::UserEvent),
+        schemas(crate::realtime::MapEvent, crate::realtime::UserEvent),
     ),
 )]
 struct ApiDoc;
