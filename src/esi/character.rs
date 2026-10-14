@@ -54,12 +54,12 @@ impl EsiClient {
         token: &str,
         character_id: i64,
     ) -> Result<CharacterLocation> {
-        self.get_json(&format!("/characters/{character_id}/location"), Some(token))
+        self.get_json_polled(&format!("/characters/{character_id}/location"), token)
             .await
     }
 
     pub async fn character_ship(&self, token: &str, character_id: i64) -> Result<CharacterShip> {
-        self.get_json(&format!("/characters/{character_id}/ship"), Some(token))
+        self.get_json_polled(&format!("/characters/{character_id}/ship"), token)
             .await
     }
 
@@ -68,7 +68,7 @@ impl EsiClient {
         token: &str,
         character_id: i64,
     ) -> Result<CharacterOnline> {
-        self.get_json(&format!("/characters/{character_id}/online"), Some(token))
+        self.get_json_polled(&format!("/characters/{character_id}/online"), token)
             .await
     }
 

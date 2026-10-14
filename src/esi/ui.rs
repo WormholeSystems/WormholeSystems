@@ -15,8 +15,11 @@ impl EsiClient {
              &add_to_beginning={add_to_beginning}&clear_other_waypoints={clear_other_waypoints}"
         );
         // The waypoint endpoint returns an empty body, so we just check the status.
-        self.send_checked(self.request(reqwest::Method::POST, &path, Some(token)))
-            .await?;
+        self.send_checked(
+            self.request(reqwest::Method::POST, &path, Some(token)),
+            Some(token),
+        )
+        .await?;
         Ok(())
     }
 }
