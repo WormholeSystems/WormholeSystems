@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update map_solar_systems mss\n         set rallied_at = now() + picked.ord * interval '1 microsecond'\n         from (select placed.id, wanted.ord\n               from unnest($2::bigint[]) with ordinality as wanted (solar_system_id, ord)\n               join map_solar_systems placed\n                   on placed.map_id = $1 and placed.solar_system_id = wanted.solar_system_id\n               order by wanted.ord desc\n               limit $3) picked\n         where mss.id = picked.id",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8Array",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "4036bf389a42ed242578de7b5eda7e0a084a81b895e7d954ec49c51c1809f91c"
+}

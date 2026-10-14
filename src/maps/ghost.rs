@@ -607,7 +607,7 @@ async fn unresolve(
     let placed = sqlx::query_as!(
         MapSolarSystem,
         "update map_solar_systems
-         set solar_system_id = null, is_home = false, is_rally = false,
+         set solar_system_id = null, is_home = false, rallied_at = null,
              raised_by_signature_id = $3, hangs_off_id = $4
          where id = $1 and map_id = $2
          returning id, map_id, solar_system_id, position_x, position_y, alias, created_at",

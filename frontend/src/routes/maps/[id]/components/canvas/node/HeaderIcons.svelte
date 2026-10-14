@@ -63,7 +63,7 @@
 	{/if}
 	{#if node.is_rally}
 		<Tooltip.Root>
-			<Tooltip.Trigger class="flex"><FlagIcon class="size-[14px] text-red-400" /></Tooltip.Trigger>
+			<Tooltip.Trigger class="flex"><FlagIcon class="size-[14px] text-pink-500" /></Tooltip.Trigger>
 			<Tooltip.Content>Rally point</Tooltip.Content>
 		</Tooltip.Root>
 	{/if}

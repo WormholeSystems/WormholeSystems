@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select rallied_at from map_solar_systems where id = $1 and map_id = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "rallied_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "map_solar_systems",
+            "name": "rallied_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "d8a975231894bcfb1f59a27a8f42188ba54a148241f6c1c835b830ec2544476c"
+}

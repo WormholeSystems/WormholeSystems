@@ -3,6 +3,8 @@
 
 mod common;
 
+use std::collections::HashMap;
+
 use common::{SYS_A, SYS_B, SYS_C, world};
 use sqlx::PgPool;
 use wormholesystems::maps::connection::{AddConnection, add_connection};
@@ -10,7 +12,9 @@ use wormholesystems::maps::ignored::{AddIgnoredSystem, add_ignored_system, ignor
 use wormholesystems::maps::signatures::{
     AddSignature, LinkSignature, add_signature, link_signature,
 };
-use wormholesystems::maps::solar_system::{AddSystem, SetHome, add_system, set_home};
+use wormholesystems::maps::solar_system::{
+    AddSystem, SetHome, SetRally, add_system, set_home, set_rally,
+};
 use wormholesystems::maps::transfer::{
     SectionSet, export_map, import_map, import_map_as_new, parse_export,
 };
@@ -593,4 +597,140 @@ async fn a_faction_warfare_signature_keeps_the_legacy_code_on_the_wire(pool: PgP
     .await
     .unwrap();
     assert_eq!(group, SignatureGroup::FactionWarfare);
+}
+
+/// Every rally point goes out, oldest first, under the list key alone.
+#[sqlx::test]
+async fn export_carries_every_rally_point(pool: PgPool) {
+    let w = populated_world(&pool).await;
+    let placed = placements_by_system(&pool, w.map_id).await;
+    for sys in [SYS_B, SYS_A] {
+        set_rally(
+            &pool,
+            w.owner,
+            SetRally {
+                map_id: w.map_id,
+                map_solar_system_id: placed[&sys],
+                value: true,
+            },
+        )
+        .await
+        .unwrap();
+    }
+
+    let file = export_map(&pool, w.owner, w.map_id, all_sections())
+        .await
+        .unwrap();
+    let json = serde_json::to_value(&file).unwrap();
+    let settings = &json["sections"]["settings"];
+    assert_eq!(
+        settings["rally_solarsystem_ids"],
+        serde_json::json!([SYS_B, SYS_A])
+    );
+    assert!(settings.get("rally_solarsystem_id").is_none());
+
+    // And they come back in the same order on the copy.
+    let parsed = parse_export(&json.to_string(), all_sections(), true).unwrap();
+    let map = import_map_as_new(&pool, w.owner, parsed, None)
+        .await
+        .unwrap();
+    assert_eq!(rally_systems(&pool, map.id).await, vec![SYS_B, SYS_A]);
+}
+
+/// The list as written, the single id older files carry, unknown or unplaced ids dropped,
+/// and only the newest two kept.
+#[sqlx::test]
+async fn import_reads_rally_points_in_either_spelling(pool: PgPool) {
+    let w = populated_world(&pool).await;
+    add_system(
+        &pool,
+        w.owner,
+        AddSystem {
+            map_id: w.map_id,
+            solar_system_id: SYS_C,
+            x: 500.0,
+            y: 200.0,
+            alias: None,
+        },
+    )
+    .await
+    .unwrap();
+    let sections = SectionSet {
+        settings: true,
+        ..Default::default()
+    };
+
+    for (rally, expected) in [
+        (
+            format!(r#""rally_solarsystem_ids": [{SYS_A}, {SYS_B}]"#),
+            vec![SYS_A, SYS_B],
+        ),
+        (format!(r#""rally_solarsystem_id": {SYS_B}"#), vec![SYS_B]),
+        (
+            format!(r#""rally_solarsystem_ids": [99999999, {SYS_C}]"#),
+            vec![SYS_C],
+        ),
+        (
+            format!(r#""rally_solarsystem_ids": [{SYS_A}, {SYS_B}, {SYS_C}]"#),
+            vec![SYS_B, SYS_C],
+        ),
+        (r#""rally_solarsystem_ids": null"#.to_string(), vec![]),
+        (r#""home_solarsystem_id": null"#.to_string(), vec![]),
+    ] {
+        let parsed = parse_export(&rally_settings_file(&rally), sections, false).unwrap();
+        import_map(&pool, w.owner, w.map_id, &parsed).await.unwrap();
+        assert_eq!(rally_systems(&pool, w.map_id).await, expected, "{rally}");
+    }
+
+    let malformed = rally_settings_file(r#""rally_solarsystem_ids": ["abc"]"#);
+    assert!(matches!(
+        parse_export(&malformed, sections, false),
+        Err(MapError::Validation(_))
+    ));
+}
+
+fn rally_settings_file(rally: &str) -> String {
+    format!(
+        r#"{{
+        "format": "wormholesystems-map-export",
+        "version": 1,
+        "exported_at": "2026-10-04T10:00:00+00:00",
+        "map_name": "Rally Chain",
+        "sections": {{
+            "settings": {{
+                "name": "Rally Chain", "layout": "manual", "allow_layout_override": true,
+                "constant_width_enabled": false, "bookmark_format_wormhole": "{{alias}}",
+                "bookmark_format_kspace": "{{name}}", "bookmark_format_return": "return",
+                "bookmark_alias_scheme": "numeric", "bookmark_ignored_alias": null,
+                "home_solarsystem_id": null, {rally}
+            }}
+        }}
+    }}"#
+    )
+}
+
+async fn placements_by_system(pool: &PgPool, map_id: i64) -> HashMap<i64, i64> {
+    sqlx::query!(
+        r#"select id, solar_system_id as "solar_system_id!" from map_solar_systems
+           where map_id = $1 and solar_system_id is not null"#,
+        map_id,
+    )
+    .fetch_all(pool)
+    .await
+    .unwrap()
+    .into_iter()
+    .map(|r| (r.solar_system_id, r.id))
+    .collect()
+}
+
+/// The map's rally systems, oldest first.
+async fn rally_systems(pool: &PgPool, map_id: i64) -> Vec<i64> {
+    sqlx::query_scalar!(
+        r#"select solar_system_id as "solar_system_id!" from map_solar_systems
+           where map_id = $1 and is_rally order by rallied_at, id"#,
+        map_id,
+    )
+    .fetch_all(pool)
+    .await
+    .unwrap()
 }

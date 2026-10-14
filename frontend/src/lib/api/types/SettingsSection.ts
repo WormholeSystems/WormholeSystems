@@ -7,4 +7,13 @@ export type SettingsSection = { name: string, layout: MapLayout, allow_layout_ov
  * A legacy display setting vector does not have; exported as `false`, ignored on
  * import, kept so the file validates over there.
  */
-constant_width_enabled: boolean, bookmark_format_wormhole: string, bookmark_format_kspace: string, bookmark_format_return: string, bookmark_alias_scheme: AliasScheme, bookmark_ignored_alias: string | null, home_solarsystem_id: number | null, rally_solarsystem_id: number | null, };
+constant_width_enabled: boolean, bookmark_format_wormhole: string, bookmark_format_kspace: string, bookmark_format_return: string, bookmark_alias_scheme: AliasScheme, bookmark_ignored_alias: string | null, home_solarsystem_id: number | null, 
+/**
+ * Oldest first. On import only the newest two are kept.
+ */
+rally_solarsystem_ids: Array<number> | null, 
+/**
+ * The single rally point of files written before a map could hold two. Read when
+ * `rally_solarsystem_ids` is absent, never written.
+ */
+rally_solarsystem_id?: number, };

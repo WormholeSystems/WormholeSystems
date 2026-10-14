@@ -1,0 +1,169 @@
+{
+  "db_name": "PostgreSQL",
+<<<<<<<< HEAD:.sqlx/query-d15080722c8fd2a621f37da76d22d25a77f0cb1ef3bf13c330d2a990de4a8cfb.json
+  "query": "select id, solar_system_id, position_x, position_y, alias, is_home, is_rally, is_pinned,\n                raised_by_signature_id, hangs_off_id, signatures_pasted_at\n         from map_solar_systems where map_id = $1 and id = any($2)",
+========
+  "query": "select id, solar_system_id, position_x, position_y, alias, is_home, is_rally, rallied_at,\n                is_pinned, raised_by_signature_id, hangs_off_id\n         from map_solar_systems where map_id = $1 and id = any($2)",
+>>>>>>>> bf11a4f (feat(rally): two rally points per map, a third replacing the oldest):.sqlx/query-a9247bf6a54434596cf106fa31c20ce52910f12e34b13391ef84483b1cde92de.json
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "map_solar_systems",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "solar_system_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "map_solar_systems",
+            "name": "solar_system_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "position_x",
+        "type_info": "Float8",
+        "origin": {
+          "Table": {
+            "table": "map_solar_systems",
+            "name": "position_x"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "position_y",
+        "type_info": "Float8",
+        "origin": {
+          "Table": {
+            "table": "map_solar_systems",
+            "name": "position_y"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "alias",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "map_solar_systems",
+            "name": "alias"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "is_home",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "map_solar_systems",
+            "name": "is_home"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "is_rally",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "map_solar_systems",
+            "name": "is_rally"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "rallied_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "map_solar_systems",
+            "name": "rallied_at"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "is_pinned",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "map_solar_systems",
+            "name": "is_pinned"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "raised_by_signature_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "map_solar_systems",
+            "name": "raised_by_signature_id"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "hangs_off_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "map_solar_systems",
+            "name": "hangs_off_id"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "signatures_pasted_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "map_solar_systems",
+            "name": "signatures_pasted_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8Array"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      false,
+      true,
+      false,
+      false,
+      true,
+      false,
+      true,
+      true,
+      true
+    ]
+  },
+<<<<<<<< HEAD:.sqlx/query-d15080722c8fd2a621f37da76d22d25a77f0cb1ef3bf13c330d2a990de4a8cfb.json
+  "hash": "d15080722c8fd2a621f37da76d22d25a77f0cb1ef3bf13c330d2a990de4a8cfb"
+========
+  "hash": "a9247bf6a54434596cf106fa31c20ce52910f12e34b13391ef84483b1cde92de"
+>>>>>>>> bf11a4f (feat(rally): two rally points per map, a third replacing the oldest):.sqlx/query-a9247bf6a54434596cf106fa31c20ce52910f12e34b13391ef84483b1cde92de.json
+}

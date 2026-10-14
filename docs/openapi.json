@@ -9937,7 +9937,19 @@
               "integer",
               "null"
             ],
-            "format": "int64"
+            "format": "int64",
+            "description": "The single rally point of files written before a map could hold two. Read when\n`rally_solarsystem_ids` is absent, never written."
+          },
+          "rally_solarsystem_ids": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "Oldest first. On import only the newest two are kept."
           }
         }
       },

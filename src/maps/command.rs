@@ -27,8 +27,8 @@ use super::signatures::{
     RestoreSignatures, UnlinkSignature, UpdateSignature,
 };
 use super::solar_system::{
-    AddSystem, ClearMap, MoveSystem, MoveSystems, RemoveSystem, RemoveSystems, SetAlias, SetHome,
-    SetNotes, SetOccupier, SetPinned, SetRally, SetStatus,
+    AddSystem, ClearMap, MoveSystem, MoveSystems, RemoveSystem, RemoveSystems, RestoreRallies,
+    SetAlias, SetHome, SetNotes, SetOccupier, SetPinned, SetRally, SetStatus,
 };
 use super::tracking::TrackJump;
 use super::watchlist::{AddWatchlistEntry, RemoveWatchlistEntry, SetWatchlistPinned};
@@ -89,6 +89,7 @@ pub enum MapCommand {
     SetNotes(SetNotes),
     SetHome(SetHome),
     SetRally(SetRally),
+    RestoreRallies(RestoreRallies),
     SetPinned(SetPinned),
     AddConnection(AddConnection),
     SetConnectionStatus(SetConnectionStatus),
@@ -273,6 +274,7 @@ impl MapCommand {
             MapCommand::SetNotes(c) => c.map_id,
             MapCommand::SetHome(c) => c.map_id,
             MapCommand::SetRally(c) => c.map_id,
+            MapCommand::RestoreRallies(c) => c.map_id,
             MapCommand::SetPinned(c) => c.map_id,
             MapCommand::AddConnection(c) => c.map_id,
             MapCommand::SetConnectionStatus(c) => c.map_id,
@@ -334,6 +336,7 @@ impl MapCommand {
             MapCommand::SetNotes(c) => solar_system::apply_set_notes(tx, c).await,
             MapCommand::SetHome(c) => solar_system::apply_set_home(tx, c).await,
             MapCommand::SetRally(c) => solar_system::apply_set_rally(tx, c).await,
+            MapCommand::RestoreRallies(c) => solar_system::apply_restore_rallies(tx, c).await,
             MapCommand::SetPinned(c) => solar_system::apply_set_pinned(tx, c).await,
             MapCommand::AddConnection(c) => connection::apply_add_connection(tx, c).await,
             MapCommand::SetConnectionStatus(c) => {
