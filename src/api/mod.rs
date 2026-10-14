@@ -49,11 +49,12 @@ use crate::maps::MapError;
 // Wire types live next to their handlers; these re-exports save the rest of the crate from
 // caring which area a type belongs to.
 pub use crate::integrations::eve_scout::EveScoutConnection;
+pub use crate::maps::map::MapEntry;
+pub use crate::maps::presence::MapCharacter;
 pub use access::AccessSubject;
 pub use connections::ShipSearchResult;
 pub use identity::{CharacterRef, CharacterStatus, CharacterSummary, ScopeStatus};
 pub use layout::{BreakpointLayout, LayoutItem, PANEL_IDS, PanelLayouts, validate_layouts};
-pub use maps::{MapCharacter, MapEntry};
 pub use reference::{SystemSearchResult, ThreatAnalysis, ThreatEntity};
 pub use search::{MapSearchHit, ThreatMatch};
 pub use signatures::{SignatureCatalog, SignatureCategoryInfo, SignatureTypeInfo};
