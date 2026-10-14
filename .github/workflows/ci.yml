@@ -23,12 +23,12 @@ jobs:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_USER: vector
-          POSTGRES_PASSWORD: vector
-          POSTGRES_DB: vector
+          POSTGRES_USER: wormholesystems
+          POSTGRES_PASSWORD: wormholesystems
+          POSTGRES_DB: wormholesystems
         ports: ["5432:5432"]
         options: >-
-          --health-cmd "pg_isready -U vector"
+          --health-cmd "pg_isready -U wormholesystems"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
@@ -43,7 +43,7 @@ jobs:
       WS_CONTACT_EMAIL: "ci@wormhole.systems"
       # `#[sqlx::test]` makes a fresh database per test from this connection and applies the
       # migrations itself. The tests seed the handful of systems they need, so no SDE.
-      DATABASE_URL: postgres://vector:vector@localhost:5432/vector
+      DATABASE_URL: postgres://wormholesystems:wormholesystems@localhost:5432/wormholesystems
 
     steps:
       - uses: actions/checkout@v4

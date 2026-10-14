@@ -11,6 +11,7 @@ mod config;
 mod envfile;
 mod exec;
 mod integrate;
+mod rename;
 mod stack;
 mod ui;
 mod wizard;

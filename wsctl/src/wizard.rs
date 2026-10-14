@@ -12,6 +12,7 @@ use crate::config::{
 use crate::envfile;
 use crate::exec::Runner;
 use crate::integrate;
+use crate::rename::{self, Renamed};
 use crate::stack;
 use crate::ui;
 
@@ -75,6 +76,11 @@ pub fn setup(runner: &mut dyn Runner, dir: &Path) -> Result<()> {
     if fatal {
         bail!("sort the above out and run this again");
     }
+
+    // Before .env names the new project, which is what tells compose to stop looking at
+    // the old one.
+    let renamed = rename::run(runner, dir, answers.setup == Setup::Full)?;
+    report_renamed(&renamed);
 
     write_env(dir, &template(dir), &answers)?;
     ui::done("wrote .env");
@@ -153,6 +159,28 @@ pub fn update(runner: &mut dyn Runner, dir: &Path, force_sde: bool) -> Result<()
         ui::done(&format!("{before} → {after}"));
     }
 
+    let env = read_env(dir);
+    let full = Standalone::from_env(&env).is_none();
+    let renamed = rename::run(runner, dir, full)?;
+    if renamed.anything() {
+        let mut values = std::collections::BTreeMap::new();
+        values.insert(
+            "COMPOSE_PROJECT_NAME".to_string(),
+            rename::PROJECT.to_string(),
+        );
+        // The old compose file fell back to `vector` for a password nobody set, and the
+        // renamed role still has it; the new fallback would not match.
+        if full
+            && envfile::get(&env, "POSTGRES_PASSWORD")
+                .unwrap_or_default()
+                .is_empty()
+        {
+            values.insert("POSTGRES_PASSWORD".to_string(), "vector".to_string());
+        }
+        std::fs::write(dir.join(ENV), envfile::patch(&env, &values))?;
+        report_renamed(&renamed);
+    }
+
     // Migrations run on boot, so a rebuild and a restart is the whole of it.
     stack::build(runner, dir)?;
     stack::up(runner, dir)?;
@@ -167,6 +195,33 @@ pub fn update(runner: &mut dyn Runner, dir: &Path, force_sde: bool) -> Result<()
     }
     update_sde(runner, dir, force_sde);
     Ok(())
+}
+
+/// Say what moved, and what is left behind to clean up once the new names are running.
+fn report_renamed(renamed: &Renamed) {
+    if let Some(old) = &renamed.from_project {
+        ui::done(&format!(
+            "moved the stack from project {old} to {}",
+            rename::PROJECT
+        ));
+    }
+    if renamed.role {
+        ui::done(&format!(
+            "renamed the database role and database to {}",
+            rename::PROJECT
+        ));
+    }
+    for volume in &renamed.skipped {
+        println!(
+            "  {} kept the existing {}_* volume instead of copying {volume}",
+            style("!").yellow(),
+            rename::PROJECT
+        );
+    }
+    if !renamed.copied.is_empty() {
+        ui::note("The old volumes are still there, untouched. Once the new stack looks right:");
+        ui::note(&format!("  docker volume rm {}", renamed.copied.join(" ")));
+    }
 }
 
 /// What `status` says about the static data. Reports and changes nothing, unlike its

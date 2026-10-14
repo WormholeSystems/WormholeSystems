@@ -89,6 +89,13 @@ wsctl update
 Fast-forwards the checkout, rebuilds, restarts, and takes CCP's static data when a newer
 build is out. Migrations run on boot, so there is no separate step for those either.
 
+An install from before wsctl 0.5 ran under its directory's name with a database role called
+`vector`. Update wsctl first (the install one-liner again), then `wsctl update` moves it:
+it stops the old containers, copies each old volume into a `wormholesystems_*` one and
+renames the role and database inside the copy. The old volumes stay as they were, and it
+prints the command to remove them once the new stack looks right. An older wsctl leaves the
+API unable to log in to the database until the new one has run, and changes nothing else.
+
 It also prunes the build cache and images the rebuild left behind, keeping only what the
 last day's builds used. Every api build leaves a full set of layers, and without this a
 small disk fills up within a few weeks of updates.
@@ -160,8 +167,8 @@ the full setup:
 
 ```sh
 docker compose stop api
-docker compose exec -T db pg_dump -U vector -Fc vector > vector.dump
-pg_restore --no-owner --role=wormholesystems -d "postgres://wormholesystems:...@host/wormholesystems" vector.dump
+docker compose exec -T db pg_dump -U wormholesystems -Fc wormholesystems > wormholesystems.dump
+pg_restore --no-owner --role=wormholesystems -d "postgres://wormholesystems:...@host/wormholesystems" wormholesystems.dump
 wsctl setup                          # pick standalone; starts the app on the restored data
 docker compose up -d --remove-orphans
 ```
@@ -237,7 +244,7 @@ runs out (30 days) or they log out, and characters already on an account stay on
 cut somebody off at once, delete their sessions:
 
 ```sh
-docker compose exec db psql -U vector vector -c \
+docker compose exec db psql -U wormholesystems wormholesystems -c \
   "delete from sessions where user_id = (select user_id from characters where name = 'Their Name')"
 ```
 
@@ -303,7 +310,7 @@ Two things have to wait until the stack is running, because Discord checks them:
 Not automated. The database is what matters. In the full setup:
 
 ```sh
-docker compose exec -T db pg_dump -U vector vector | gzip > wormholesystems-$(date +%F).sql.gz
+docker compose exec -T db pg_dump -U wormholesystems wormholesystems | gzip > wormholesystems-$(date +%F).sql.gz
 ```
 
 Restoring is the same in reverse, into a stopped stack with an empty database.

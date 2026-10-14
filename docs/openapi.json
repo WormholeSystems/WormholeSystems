@@ -10005,7 +10005,7 @@
           },
           "constant_width_enabled": {
             "type": "boolean",
-            "description": "A legacy display setting vector does not have; exported as `false`, ignored on\nimport, kept so the file validates over there."
+            "description": "A legacy display setting this app does not have; exported as `false`, ignored on\nimport, kept so the file validates over there."
           },
           "home_solarsystem_id": {
             "type": [
@@ -10308,7 +10308,7 @@
               "string",
               "null"
             ],
-            "description": "The in-game scanner id (\"ABC-123\"). Legacy allows signatures without one; vector\ndoes not, so those are skipped on import."
+            "description": "The in-game scanner id (\"ABC-123\"). Legacy allows signatures without one; this app\ndoes not, so those are skipped on import."
           },
           "solarsystem_id": {
             "type": "integer",
@@ -11576,7 +11576,7 @@
       },
       "WireLifetime": {
         "type": "string",
-        "description": "Legacy's lifetime vocabulary has no \"unknown\": `healthy` is both vector's `stable` and\nits null, and imports as the null (nothing remarkable to show).",
+        "description": "Legacy's lifetime vocabulary has no \"unknown\": `healthy` is both our `stable` and\nits null, and imports as the null (nothing remarkable to show).",
         "enum": [
           "healthy",
           "eol",
@@ -11586,7 +11586,7 @@
       },
       "WireMassStatus": {
         "type": "string",
-        "description": "Legacy's mass vocabulary. Vector's `stable` is legacy's `fresh`, and vector says\n\"unknown\" with a null.",
+        "description": "Legacy's mass vocabulary. Our `stable` is legacy's `fresh`, and we say\n\"unknown\" with a null.",
         "enum": [
           "fresh",
           "reduced",
