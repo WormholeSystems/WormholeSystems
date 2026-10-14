@@ -98,7 +98,7 @@ pub async fn ensure_seeded(pool: &PgPool) -> Result<bool, BoxError> {
 
 /// Bump when the seed logic or bundled static data changes in a way that requires
 /// re-seeding an already-loaded SDE build.
-const SEED_REVISION: i32 = 6;
+const SEED_REVISION: i32 = 7;
 
 /// The SDE build currently unpacked in `data/sde` (from its `_sde.jsonl` marker).
 #[derive(Deserialize)]
