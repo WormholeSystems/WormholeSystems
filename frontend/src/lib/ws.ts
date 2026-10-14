@@ -10,7 +10,10 @@ function socketUrl(path: string): string {
 	return `${scheme}://${location.host}${path}`;
 }
 
-export type SocketState = 'connecting' | 'open' | 'reconnecting';
+export type SocketState = 'connecting' | 'open' | 'reconnecting' | 'revoked';
+
+/** The server closes a map socket with this once the reader has lost access to the map. */
+export const ACCESS_REVOKED = 4403;
 
 /**
  * One place for the wire cast. The frames are produced by this repo's own backend and
@@ -66,8 +69,16 @@ export function openMapSocket(
 			// Unreadable frame: fall back to a full refetch rather than ignoring it.
 			onEvent(parsed === null ? null : (parsed as MapEvent));
 		};
-		ws.onclose = () => {
+		ws.onclose = (event) => {
 			if (closed) return;
+			if (event.code === ACCESS_REVOKED) {
+				// Retrying would only be refused again. One refetch lets the map's own 403
+				// handling take over.
+				closed = true;
+				onState?.('revoked');
+				onEvent(null);
+				return;
+			}
 			reconnecting = true;
 			onState?.('reconnecting');
 			timer = setTimeout(connect, retryMs);
