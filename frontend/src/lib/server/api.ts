@@ -15,6 +15,7 @@
 import { env } from '$env/dynamic/private';
 import type { RequestEvent } from '@sveltejs/kit';
 
+import { createApi } from '$lib/api/client';
 import type { CharacterSummary } from '$lib/api/types/CharacterSummary';
 import type { GridConfig } from '$lib/api/types/GridConfig';
 import type { Instance } from '$lib/api/types/Instance';
@@ -27,17 +28,18 @@ import type { Signature } from '$lib/api/types/Signature';
 
 const base = () => env.API_BASE ?? 'http://127.0.0.1:3000';
 
-async function get<T>(event: RequestEvent, path: string): Promise<T> {
-	const res = await event.fetch(`${base()}${path}`, {
-		headers: { cookie: event.request.headers.get('cookie') ?? '' },
-	});
-	if (!res.ok) throw new Error(`API ${path} failed: ${res.status}`);
-	return res.json();
+/**
+ * The browser's typed client, pointed at the backend and carrying the visitor's session.
+ * Failures are the same `ApiError`, status included, so a load can tell a map it may not
+ * open from a backend that is down.
+ */
+function serverApi(event: RequestEvent) {
+	return createApi(event.fetch, base(), { cookie: event.request.headers.get('cookie') ?? '' });
 }
 
 /** The signed-in character, or null. Used by the layout and the /maps auth gate. */
 export function currentCharacter(event: RequestEvent): Promise<CharacterSummary | null> {
-	return get<CharacterSummary | null>(event, '/api/me');
+	return serverApi(event).me();
 }
 
 /**
@@ -46,7 +48,7 @@ export function currentCharacter(event: RequestEvent): Promise<CharacterSummary 
  */
 export async function sharedMapId(event: RequestEvent, token: string): Promise<number | null> {
 	try {
-		const view = await get<MapView>(event, `/api/share/${encodeURIComponent(token)}`);
+		const view = await serverApi(event).sharedMap(token);
 		return view.map.id;
 	} catch {
 		return null;
@@ -55,27 +57,27 @@ export async function sharedMapId(event: RequestEvent, token: string): Promise<n
 
 /** A map's graph and the caller's role on it, for the settings pages. */
 export function mapView(event: RequestEvent, mapId: number): Promise<MapView> {
-	return get<MapView>(event, `/api/maps/${mapId}`);
+	return serverApi(event).fetchMap(mapId);
 }
 
 /** Every map the caller can see. */
 export function myMaps(event: RequestEvent): Promise<MapEntry[]> {
-	return get<MapEntry[]>(event, '/api/maps');
+	return serverApi(event).myMaps();
 }
 
 /** The caller's own settings for one map. */
 export function mapUserSettings(event: RequestEvent, mapId: number): Promise<MapUserSettings> {
-	return get<MapUserSettings>(event, `/api/maps/${mapId}/settings/user`);
+	return serverApi(event).mapUserSettings(mapId);
 }
 
 /** Every signature on one map, which the signature panel filters per system. */
 export function mapSignatures(event: RequestEvent, mapId: number): Promise<Signature[]> {
-	return get<Signature[]>(event, `/api/maps/${mapId}/signatures`);
+	return serverApi(event).listSignatures(mapId);
 }
 
 /** The canvas's grid and world size, which the map page draws with. */
 export function gridConfig(event: RequestEvent): Promise<GridConfig> {
-	return get<GridConfig>(event, '/api/grid-config');
+	return serverApi(event).gridConfig();
 }
 
 /**
@@ -83,12 +85,14 @@ export function gridConfig(event: RequestEvent): Promise<GridConfig> {
  * to zeroes, which the page renders as a row it simply does not draw.
  */
 export function referenceCounts(event: RequestEvent): Promise<ReferenceCounts> {
-	return get<ReferenceCounts>(event, '/api/reference-counts').catch(() => ({
-		solar_systems: 0,
-		wormhole_systems: 0,
-		stargates: 0,
-		wormhole_types: 0,
-	}));
+	return serverApi(event)
+		.referenceCounts()
+		.catch(() => ({
+			solar_systems: 0,
+			wormhole_systems: 0,
+			stargates: 0,
+			wormhole_types: 0,
+		}));
 }
 
 /**
@@ -96,7 +100,9 @@ export function referenceCounts(event: RequestEvent): Promise<ReferenceCounts> {
  * component polls anyway, and an unknown state is one it already knows how to draw.
  */
 export function serverStatus(event: RequestEvent): Promise<ServerStatus | null> {
-	return get<ServerStatus>(event, '/api/server-status').catch(() => null);
+	return serverApi(event)
+		.serverStatus()
+		.catch(() => null);
 }
 
 /**
@@ -104,5 +110,7 @@ export function serverStatus(event: RequestEvent): Promise<ServerStatus | null> 
  * answer: the page is better off without a banner than without a page.
  */
 export function instance(event: RequestEvent): Promise<Instance | null> {
-	return get<Instance>(event, '/api/instance').catch(() => null);
+	return serverApi(event)
+		.instance()
+		.catch(() => null);
 }
