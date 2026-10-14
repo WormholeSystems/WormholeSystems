@@ -3,7 +3,8 @@
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 
-use crate::maps::command::{CommandOutput, Effect, MapCommand, Tx, run};
+use crate::maps::command::{CommandOutput, Effect, MapCommand, Sequence, Tx, run};
+use crate::maps::connection::SetConnectionStatus;
 use crate::maps::error::{MapError, Result};
 use crate::maps::store;
 use crate::maps::{Actor, MapEvent};
@@ -64,6 +65,15 @@ pub(in crate::maps) async fn apply_link_signature(
     // it would mean two scans of one hole. Saying "this one is the hole" therefore lets
     // the other go, rather than refusing; the loose one keeps its own scanned state and
     // can take the connection it really belongs to.
+    // The connection's state before the merge raises it, for the undo.
+    let connection = sqlx::query!(
+        "select mass_status, time_status, size from map_connections
+         where id = $1 and map_id = $2",
+        cmd.connection_id,
+        cmd.map_id,
+    )
+    .fetch_one(&mut **tx)
+    .await?;
     let displaced = sqlx::query_scalar!(
         "update signatures set connection_id = null, updated_at = now()
          where map_id = $1 and connection_id = $2 and solar_system_id = $3 and id <> $4
@@ -81,8 +91,21 @@ pub(in crate::maps) async fn apply_link_signature(
 
     // Re-read: the merge trigger may have changed this row's state after the UPDATE.
     let linked = fetch_signature_tx(tx, cmd.map_id, cmd.signature_pk).await?;
-    // Undo restores the pre-merge life-cycle state, and hands the connection back to the
-    // signature this link took it from, which unlinks this one again in its turn.
+    // Undo takes the link back first, so the old life-cycle state goes back onto this
+    // signature alone and the connection's own state can be put back beside it. Then the
+    // connection goes back to the signature this link took it from, if any.
+    let unlink = match sig.connection_id {
+        Some(old) if old == cmd.connection_id => None,
+        Some(old) => Some(MapCommand::LinkSignature(LinkSignature {
+            map_id: cmd.map_id,
+            signature_pk: cmd.signature_pk,
+            connection_id: old,
+        })),
+        None => Some(MapCommand::UnlinkSignature(UnlinkSignature {
+            map_id: cmd.map_id,
+            signature_pk: cmd.signature_pk,
+        })),
+    };
     let restore_state = MapCommand::UpdateSignature(UpdateSignature {
         map_id: cmd.map_id,
         signature_pk: cmd.signature_pk,
@@ -94,20 +117,27 @@ pub(in crate::maps) async fn apply_link_signature(
         mass_status: Some(sig.mass_status),
         time_status: Some(sig.time_status),
     });
-    let inverse = match displaced {
-        None => restore_state,
-        Some(signature_pk) => MapCommand::Sequence(crate::maps::command::Sequence {
+    let restore_connection = MapCommand::SetConnectionStatus(SetConnectionStatus {
+        map_id: cmd.map_id,
+        connection_id: cmd.connection_id,
+        mass_status: Some(connection.mass_status),
+        time_status: Some(connection.time_status),
+        size: Some(connection.size),
+        ..SetConnectionStatus::default()
+    });
+    let mut steps: Vec<MapCommand> = unlink.into_iter().collect();
+    steps.extend([restore_state, restore_connection]);
+    steps.extend(displaced.map(|signature_pk| {
+        MapCommand::LinkSignature(LinkSignature {
             map_id: cmd.map_id,
-            steps: vec![
-                restore_state,
-                MapCommand::LinkSignature(LinkSignature {
-                    map_id: cmd.map_id,
-                    signature_pk,
-                    connection_id: cmd.connection_id,
-                }),
-            ],
-        }),
-    };
+            signature_pk,
+            connection_id: cmd.connection_id,
+        })
+    }));
+    let inverse = MapCommand::Sequence(Sequence {
+        map_id: cmd.map_id,
+        steps,
+    });
     let events = [
         MapEvent::SignatureChanged {
             map_id: cmd.map_id,

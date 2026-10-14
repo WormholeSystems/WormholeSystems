@@ -668,7 +668,8 @@ async fn a_connection_takes_one_signature_per_system(pool: PgPool) {
         "displaced, and free to take the hole it really is"
     );
 
-    // Undoing that hands the connection back rather than leaving it on the new claimant.
+    // Undoing that hands the connection back rather than leaving it on the new claimant,
+    // and the claimant goes back to the hole it was on before.
     wormholesystems::maps::events_log::undo(
         &pool,
         w.owner,
@@ -678,7 +679,7 @@ async fn a_connection_takes_one_signature_per_system(pool: PgPool) {
     .unwrap();
     let sigs = list_signatures(&pool, w.owner, w.map_id).await.unwrap();
     assert_eq!(scanned(&sigs, "AAA-111").connection_id, Some(first.id));
-    assert_eq!(scanned(&sigs, "BBB-222").connection_id, None);
+    assert_eq!(scanned(&sigs, "BBB-222").connection_id, Some(second.id));
 }
 
 /// Bulk deleting the signature of a system's only connection takes the connection and the
