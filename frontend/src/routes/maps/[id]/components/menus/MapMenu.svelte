@@ -19,7 +19,7 @@
 	function addSystem() {
 		map.linkFrom = null;
 		// Centred on the click, so the new system lands where the map was right-clicked.
-		const w = map.camera.toWorld(menu.x, menu.y);
+		const w = menu.world;
 		map.searchAnchor = { x: w.x - NODE_W / 2, y: w.y - map.nodeH / 2 };
 		map.paletteOpen = true;
 	}
