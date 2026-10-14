@@ -22,4 +22,6 @@ Pastes from any EVE client language work: English, German, French, Spanish, Russ
 
 You stay in control of the missing ones: confirm to delete the stale signatures, or keep them. Because the paste reconciles rather than blindly replacing, you can re-paste a fresh scan any time and the list stays current.
 
+The panel header shows how long ago a scan was last pasted into the system (hover it for the exact time), so you can tell at a glance whether the list is still fresh. Only a paste moves it: adding or editing a signature by hand does not.
+
 > Signatures only need their ID to be recorded — the six-character code is enough. You can resolve the type later, by hand or by pasting a more complete scan once you've probed it down. Temporary event sites that aren't in the database can be stored under a free-text name. Factional Warfare sites, which the scanner labels `Factional Warfare Site - Combat Site`, are filed under their own category with the pasted type name.

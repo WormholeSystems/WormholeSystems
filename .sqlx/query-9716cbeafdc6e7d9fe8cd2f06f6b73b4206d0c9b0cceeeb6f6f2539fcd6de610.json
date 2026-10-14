@@ -1,0 +1,25 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into map_solar_systems\n                 (id, map_id, solar_system_id, position_x, position_y, alias,\n                  is_home, is_rally, is_pinned, raised_by_signature_id, hangs_off_id,\n                  signatures_pasted_at)\n             overriding system value\n             values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)\n             on conflict (id) do nothing",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int8",
+        "Float8",
+        "Float8",
+        "Text",
+        "Bool",
+        "Bool",
+        "Bool",
+        "Int8",
+        "Int8",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "9716cbeafdc6e7d9fe8cd2f06f6b73b4206d0c9b0cceeeb6f6f2539fcd6de610"
+}

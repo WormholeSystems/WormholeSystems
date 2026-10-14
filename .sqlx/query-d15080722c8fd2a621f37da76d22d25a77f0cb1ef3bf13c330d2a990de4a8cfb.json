@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select id, solar_system_id, position_x, position_y, alias, is_home, is_rally, is_pinned,\n                raised_by_signature_id, hangs_off_id\n         from map_solar_systems where map_id = $1 and id = any($2)",
+  "query": "select id, solar_system_id, position_x, position_y, alias, is_home, is_rally, is_pinned,\n                raised_by_signature_id, hangs_off_id, signatures_pasted_at\n         from map_solar_systems where map_id = $1 and id = any($2)",
   "describe": {
     "columns": [
       {
@@ -112,6 +112,17 @@
             "name": "hangs_off_id"
           }
         }
+      },
+      {
+        "ordinal": 10,
+        "name": "signatures_pasted_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "map_solar_systems",
+            "name": "signatures_pasted_at"
+          }
+        }
       }
     ],
     "parameters": {
@@ -130,8 +141,9 @@
       false,
       false,
       true,
+      true,
       true
     ]
   },
-  "hash": "be85203029a2e72e95f7aedca4c00821e8cafc5e0affac8ada3e0dbcd488bc43"
+  "hash": "d15080722c8fd2a621f37da76d22d25a77f0cb1ef3bf13c330d2a990de4a8cfb"
 }

@@ -165,6 +165,7 @@ fn map_view_round_trips() {
                 is_home: true,
                 is_rally: false,
                 is_pinned: false,
+                signatures_pasted_at: Some(ts()),
                 status: SystemStatus::Active,
                 occupying_group: Some("Lazerhawks".into()),
                 name: "J104809".into(),

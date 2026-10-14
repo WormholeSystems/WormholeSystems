@@ -41,6 +41,7 @@ function system(
 		is_home: false,
 		is_rally: false,
 		is_pinned: false,
+		signatures_pasted_at: null,
 		status: 'unknown',
 		occupying_group: null,
 		// What the SDE gives every wormhole; the k-space entries below say otherwise.

@@ -13,7 +13,12 @@ import type { ThreatLevel } from "./ThreatLevel";
  * scanned: a ghost has no security, statics, or intel, and saying that in the type makes
  * the check impossible to skip.
  */
-export type MapSystemView = { "kind": "system", id: number, map_id: number, solar_system_id: number, position_x: number, position_y: number, alias: string | null, is_home: boolean, is_rally: boolean, is_pinned: boolean, status: SystemStatus, occupying_group: string | null, name: string, security_status: number, 
+export type MapSystemView = { "kind": "system", id: number, map_id: number, solar_system_id: number, position_x: number, position_y: number, alias: string | null, is_home: boolean, is_rally: boolean, is_pinned: boolean, 
+/**
+ * When a scan was last pasted into this system; `None` if nobody has yet. Hand
+ * edits leave it alone.
+ */
+signatures_pasted_at: string | null, status: SystemStatus, occupying_group: string | null, name: string, security_status: number, 
 /**
  * Absent on the systems the SDE gives no class, which is not the same as a ghost
  * having none.

@@ -2,6 +2,7 @@
 //! everything that cascaded with them (connections, signatures), and restoring replays it
 //! under the original ids so the pieces still line up.
 
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 use super::command::{CommandOutput, Effect, MapCommand, Tx};
@@ -25,6 +26,9 @@ pub struct RestoredSystem {
     pub raised_by_signature_id: Option<i64>,
     #[serde(default)]
     pub hangs_off_id: Option<i64>,
+    /// Comes back with the signatures, so the panel still says how old they are.
+    #[serde(default)]
+    pub signatures_pasted_at: Option<DateTime<Utc>>,
 }
 
 /// A connection that cascaded away with its endpoint.
@@ -111,7 +115,7 @@ pub(super) async fn capture_systems(
     let systems: Vec<RestoredSystem> = sqlx::query_as!(
         RestoredSystem,
         "select id, solar_system_id, position_x, position_y, alias, is_home, is_rally, is_pinned,
-                raised_by_signature_id, hangs_off_id
+                raised_by_signature_id, hangs_off_id, signatures_pasted_at
          from map_solar_systems where map_id = $1 and id = any($2)",
         map_id,
         ids,
@@ -168,9 +172,10 @@ pub(super) async fn apply_restore_systems(tx: &mut Tx<'_>, cmd: RestoreSystems) 
         sqlx::query!(
             "insert into map_solar_systems
                  (id, map_id, solar_system_id, position_x, position_y, alias,
-                  is_home, is_rally, is_pinned, raised_by_signature_id, hangs_off_id)
+                  is_home, is_rally, is_pinned, raised_by_signature_id, hangs_off_id,
+                  signatures_pasted_at)
              overriding system value
-             values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+             values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
              on conflict (id) do nothing",
             s.id,
             cmd.map_id,
@@ -183,6 +188,7 @@ pub(super) async fn apply_restore_systems(tx: &mut Tx<'_>, cmd: RestoreSystems) 
             s.is_pinned,
             s.raised_by_signature_id,
             s.hangs_off_id,
+            s.signatures_pasted_at,
         )
         .execute(&mut **tx)
         .await?;

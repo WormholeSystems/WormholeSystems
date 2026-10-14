@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select\n               mss.id, mss.map_id, mss.solar_system_id, mss.position_x, mss.position_y,\n               mss.alias, mss.is_home, mss.is_rally, mss.is_pinned,\n               coalesce(d.status, 'unknown') as \"status!: super::SystemStatus\",\n               d.occupying_group,\n               ss.name as \"name?\", ss.security_status as \"security_status?\",\n               ss.wormhole_class_id,\n               r.name as \"region?\", ss.region_id as \"region_id?\",\n               ss.constellation_id as \"constellation_id?\", c.name as \"constellation?\",\n               ws.effect_name,\n               coalesce(ws.is_shattered, false) as \"is_shattered!\",\n               ws.threat_level as \"threat_level?: super::ThreatLevel\",\n               sov.kind as \"sov_kind?\", sov.entity_id as \"sov_id?\",\n               sov.name as \"sov_name?\", sov.ticker as \"sov_ticker?\"\n           from map_solar_systems mss\n           -- Left joins throughout: a ghost placement has no system to join to.\n           left join solar_systems ss on ss.id = mss.solar_system_id\n           left join regions r on r.id = ss.region_id\n           left join constellations c on c.id = ss.constellation_id\n           left join map_solar_system_details d\n               on d.map_id = mss.map_id and d.solar_system_id = mss.solar_system_id\n           left join wormhole_systems ws on ws.solar_system_id = ss.id\n           left join system_sovereignty_resolved sov on sov.solar_system_id = ss.id\n           where mss.map_id = $1\n           order by mss.id",
+  "query": "select\n               mss.id, mss.map_id, mss.solar_system_id, mss.position_x, mss.position_y,\n               mss.alias, mss.is_home, mss.is_rally, mss.is_pinned, mss.signatures_pasted_at,\n               coalesce(d.status, 'unknown') as \"status!: super::SystemStatus\",\n               d.occupying_group,\n               ss.name as \"name?\", ss.security_status as \"security_status?\",\n               ss.wormhole_class_id,\n               r.name as \"region?\", ss.region_id as \"region_id?\",\n               ss.constellation_id as \"constellation_id?\", c.name as \"constellation?\",\n               ws.effect_name,\n               coalesce(ws.is_shattered, false) as \"is_shattered!\",\n               ws.threat_level as \"threat_level?: super::ThreatLevel\",\n               sov.kind as \"sov_kind?\", sov.entity_id as \"sov_id?\",\n               sov.name as \"sov_name?\", sov.ticker as \"sov_ticker?\"\n           from map_solar_systems mss\n           -- Left joins throughout: a ghost placement has no system to join to.\n           left join solar_systems ss on ss.id = mss.solar_system_id\n           left join regions r on r.id = ss.region_id\n           left join constellations c on c.id = ss.constellation_id\n           left join map_solar_system_details d\n               on d.map_id = mss.map_id and d.solar_system_id = mss.solar_system_id\n           left join wormhole_systems ws on ws.solar_system_id = ss.id\n           left join system_sovereignty_resolved sov on sov.solar_system_id = ss.id\n           where mss.map_id = $1\n           order by mss.id",
   "describe": {
     "columns": [
       {
@@ -104,6 +104,17 @@
       },
       {
         "ordinal": 9,
+        "name": "signatures_pasted_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "map_solar_systems",
+            "name": "signatures_pasted_at"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
         "name": "status!: super::SystemStatus",
         "type_info": {
           "Custom": {
@@ -123,7 +134,7 @@
         "origin": "Expression"
       },
       {
-        "ordinal": 10,
+        "ordinal": 11,
         "name": "occupying_group",
         "type_info": "Text",
         "origin": {
@@ -134,7 +145,7 @@
         }
       },
       {
-        "ordinal": 11,
+        "ordinal": 12,
         "name": "name?",
         "type_info": "Text",
         "origin": {
@@ -145,7 +156,7 @@
         }
       },
       {
-        "ordinal": 12,
+        "ordinal": 13,
         "name": "security_status?",
         "type_info": "Float8",
         "origin": {
@@ -156,7 +167,7 @@
         }
       },
       {
-        "ordinal": 13,
+        "ordinal": 14,
         "name": "wormhole_class_id",
         "type_info": "Int4",
         "origin": {
@@ -167,7 +178,7 @@
         }
       },
       {
-        "ordinal": 14,
+        "ordinal": 15,
         "name": "region?",
         "type_info": "Text",
         "origin": {
@@ -178,7 +189,7 @@
         }
       },
       {
-        "ordinal": 15,
+        "ordinal": 16,
         "name": "region_id?",
         "type_info": "Int8",
         "origin": {
@@ -189,7 +200,7 @@
         }
       },
       {
-        "ordinal": 16,
+        "ordinal": 17,
         "name": "constellation_id?",
         "type_info": "Int8",
         "origin": {
@@ -200,7 +211,7 @@
         }
       },
       {
-        "ordinal": 17,
+        "ordinal": 18,
         "name": "constellation?",
         "type_info": "Text",
         "origin": {
@@ -211,7 +222,7 @@
         }
       },
       {
-        "ordinal": 18,
+        "ordinal": 19,
         "name": "effect_name",
         "type_info": "Text",
         "origin": {
@@ -222,13 +233,13 @@
         }
       },
       {
-        "ordinal": 19,
+        "ordinal": 20,
         "name": "is_shattered!",
         "type_info": "Bool",
         "origin": "Expression"
       },
       {
-        "ordinal": 20,
+        "ordinal": 21,
         "name": "threat_level?: super::ThreatLevel",
         "type_info": {
           "Custom": {
@@ -250,7 +261,7 @@
         }
       },
       {
-        "ordinal": 21,
+        "ordinal": 22,
         "name": "sov_kind?",
         "type_info": "Text",
         "origin": {
@@ -261,7 +272,7 @@
         }
       },
       {
-        "ordinal": 22,
+        "ordinal": 23,
         "name": "sov_id?",
         "type_info": "Int8",
         "origin": {
@@ -272,7 +283,7 @@
         }
       },
       {
-        "ordinal": 23,
+        "ordinal": 24,
         "name": "sov_name?",
         "type_info": "Text",
         "origin": {
@@ -283,7 +294,7 @@
         }
       },
       {
-        "ordinal": 24,
+        "ordinal": 25,
         "name": "sov_ticker?",
         "type_info": "Text",
         "origin": {
@@ -309,6 +320,7 @@
       false,
       false,
       false,
+      true,
       null,
       true,
       false,
@@ -327,5 +339,5 @@
       true
     ]
   },
-  "hash": "fd16a15190f7edf895a48318dfa5a945c76028cbe78e33f66f2ba6b2a5194bc2"
+  "hash": "76036f1946b8601acddf6e93a8c22c2fc8b040657686e79d07a9d8bae07879b2"
 }

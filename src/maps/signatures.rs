@@ -982,6 +982,25 @@ pub(super) async fn apply_paste_signatures(
     let mut restore = capture_signatures(tx, cmd.map_id, &existing_ids).await?;
     restore.replaces_system = Some(cmd.solar_system_id);
 
+    // Only a paste moves this: it says when the list last matched a scan, which a hand
+    // edit does not. Undo puts the previous time back with the previous list.
+    let placement = sqlx::query!(
+        "select id, signatures_pasted_at from map_solar_systems
+         where map_id = $1 and solar_system_id = $2
+         for update",
+        cmd.map_id,
+        cmd.solar_system_id,
+    )
+    .fetch_one(&mut **tx)
+    .await?;
+    restore.pasted_at = placement.signatures_pasted_at;
+    sqlx::query!(
+        "update map_solar_systems set signatures_pasted_at = now() where id = $1",
+        placement.id,
+    )
+    .execute(&mut **tx)
+    .await?;
+
     for s in &cmd.signatures {
         let sid = s.signature_id.trim();
         if sid.is_empty() {
@@ -1069,6 +1088,10 @@ pub(super) async fn apply_paste_signatures(
     .emit(MapEvent::SignatureChanged {
         map_id: cmd.map_id,
         solar_system_id: cmd.solar_system_id,
+    })
+    .emit(MapEvent::SystemDetailsChanged {
+        map_id: cmd.map_id,
+        map_solar_system_id: placement.id,
     }))
 }
 
@@ -1113,6 +1136,9 @@ pub struct RestoreSignatures {
     /// When set, the system is reset to exactly this snapshot (used by paste undo, which
     /// must also drop rows the paste created).
     pub replaces_system: Option<i64>,
+    /// The system's paste time before the paste, put back with `replaces_system`.
+    #[serde(default)]
+    pub pasted_at: Option<DateTime<Utc>>,
 }
 
 /// Snapshot signature rows so a removal or paste can be undone.
@@ -1137,6 +1163,7 @@ pub(super) async fn capture_signatures(
         map_id,
         signatures,
         replaces_system: None,
+        pasted_at: None,
     })
 }
 
@@ -1145,6 +1172,7 @@ pub(super) async fn apply_restore_signatures(
     cmd: RestoreSignatures,
 ) -> Result<Effect> {
     // Paste undo: clear whatever the paste left behind before replaying the snapshot.
+    let mut events = Vec::new();
     if let Some(solar_system_id) = cmd.replaces_system {
         sqlx::query!(
             "delete from signatures where map_id = $1 and solar_system_id = $2",
@@ -1153,6 +1181,22 @@ pub(super) async fn apply_restore_signatures(
         )
         .execute(&mut **tx)
         .await?;
+        let placement = sqlx::query_scalar!(
+            "update map_solar_systems set signatures_pasted_at = $1
+             where map_id = $2 and solar_system_id = $3
+             returning id",
+            cmd.pasted_at,
+            cmd.map_id,
+            solar_system_id,
+        )
+        .fetch_optional(&mut **tx)
+        .await?;
+        events.extend(
+            placement.map(|map_solar_system_id| MapEvent::SystemDetailsChanged {
+                map_id: cmd.map_id,
+                map_solar_system_id,
+            }),
+        );
     }
     for s in &cmd.signatures {
         sqlx::query!(
@@ -1194,13 +1238,14 @@ pub(super) async fn apply_restore_signatures(
         .collect();
     systems.sort_unstable();
     systems.dedup();
-    let events: Vec<MapEvent> = systems
-        .into_iter()
-        .map(|solar_system_id| MapEvent::SignatureChanged {
-            map_id: cmd.map_id,
-            solar_system_id,
-        })
-        .collect();
+    events.extend(
+        systems
+            .into_iter()
+            .map(|solar_system_id| MapEvent::SignatureChanged {
+                map_id: cmd.map_id,
+                solar_system_id,
+            }),
+    );
     Ok(Effect::new(
         "signatures.restored",
         format!("restored {count} signatures"),
