@@ -7,6 +7,7 @@ use std::path::Path;
 
 use anyhow::{Context, Result};
 
+use crate::config::Images;
 use crate::exec::Runner;
 
 /// `docker compose <args>`, which is how the whole stack is addressed.
@@ -24,6 +25,23 @@ pub fn build(runner: &mut dyn Runner, dir: &Path) -> Result<()> {
     runner.run(dir, "docker", &as_refs(&compose(&["build"])))
 }
 
+/// Fetch every image the stack runs: the published API and frontend, and the Postgres and
+/// Caddy releases, which a build never touches.
+pub fn pull(runner: &mut dyn Runner, dir: &Path) -> Result<()> {
+    runner
+        .run(dir, "docker", &as_refs(&compose(&["pull"])))
+        .context("could not pull the images; `WS_IMAGES=build` in .env builds them here instead")
+}
+
+/// Have the images ready before anything is stopped, so the old containers keep serving
+/// for however long this takes.
+pub fn images(runner: &mut dyn Runner, dir: &Path, images: Images) -> Result<()> {
+    match images {
+        Images::Pull => pull(runner, dir),
+        Images::Build => build(runner, dir),
+    }
+}
+
 /// How long `up` waits for every container to report healthy. The first boot downloads the
 /// static data and seeds from it before the API answers, which is minutes on a small
 /// machine; every later start is seconds.
@@ -31,13 +49,17 @@ const WAIT_SECS: &str = "1800";
 
 /// Start or recreate whatever changed, and wait until it is actually serving: a stack that
 /// started and then fell over is reported as the failure it is, not as "running".
-pub fn up(runner: &mut dyn Runner, dir: &Path) -> Result<()> {
+///
+/// Pulling installs say `--no-build`: a service with both `image` and `build` that is missing
+/// its image is otherwise built on the spot, and a pull that failed quietly would turn into
+/// a Rust compile on a server that was never meant to run one.
+pub fn up(runner: &mut dyn Runner, dir: &Path, images: Images) -> Result<()> {
+    let mut args = vec!["up", "-d", "--wait", "--wait-timeout", WAIT_SECS];
+    if images == Images::Pull {
+        args.push("--no-build");
+    }
     runner
-        .run(
-            dir,
-            "docker",
-            &as_refs(&compose(&["up", "-d", "--wait", "--wait-timeout", WAIT_SECS])),
-        )
+        .run(dir, "docker", &as_refs(&compose(&args)))
         .context(
             "the stack did not come up healthy; `docker compose ps` says which container, and `docker compose logs <service>` why",
         )
@@ -195,13 +217,27 @@ mod tests {
     #[test]
     fn the_stack_is_addressed_as_a_whole() {
         let mut runner = Recording::default();
-        up(&mut runner, Path::new(".")).unwrap();
-        build(&mut runner, Path::new(".")).unwrap();
+        images(&mut runner, Path::new("."), Images::Build).unwrap();
+        up(&mut runner, Path::new("."), Images::Build).unwrap();
         assert_eq!(
             runner.commands,
             vec![
-                "docker compose up -d --wait --wait-timeout 1800",
                 "docker compose build",
+                "docker compose up -d --wait --wait-timeout 1800",
+            ]
+        );
+    }
+
+    #[test]
+    fn a_pulling_install_never_builds() {
+        let mut runner = Recording::default();
+        images(&mut runner, Path::new("."), Images::Pull).unwrap();
+        up(&mut runner, Path::new("."), Images::Pull).unwrap();
+        assert_eq!(
+            runner.commands,
+            vec![
+                "docker compose pull",
+                "docker compose up -d --wait --wait-timeout 1800 --no-build",
             ]
         );
     }

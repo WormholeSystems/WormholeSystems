@@ -7,7 +7,7 @@ use console::style;
 
 use crate::checks::{self, Verdict};
 use crate::config::{
-    self, Answers, DEFAULT_NETWORK, Discord, Setup, Standalone, generated_password,
+    self, Answers, DEFAULT_NETWORK, Discord, Images, Setup, Standalone, generated_password,
 };
 use crate::envfile;
 use crate::exec::Runner;
@@ -93,9 +93,12 @@ pub fn setup(runner: &mut dyn Runner, dir: &Path) -> Result<()> {
     write_env(dir, &template(dir), &answers, full && has_database)?;
     ui::done("wrote .env");
 
-    // Built before anything is stopped, so a running install only goes down for the move.
-    ui::heading("Building");
-    stack::build(runner, dir)?;
+    // Ready before anything is stopped, so a running install only goes down for the move.
+    ui::heading(match answers.images {
+        Images::Pull => "Pulling the images",
+        Images::Build => "Building",
+    });
+    stack::images(runner, dir, answers.images)?;
     let mut renamed = match &old {
         Some(old) => rename::move_project(runner, dir, old)?,
         None => Renamed::default(),
@@ -110,7 +113,7 @@ pub fn setup(runner: &mut dyn Runner, dir: &Path) -> Result<()> {
         ui::note("the API answers. This waits for that, which takes a few minutes; follow it");
         ui::note("from another shell with:  docker compose logs -f api");
     }
-    stack::up(runner, dir)?;
+    stack::up(runner, dir, answers.images)?;
     ui::done("running and healthy");
 
     after_boot(&answers);
@@ -206,9 +209,15 @@ pub fn update(runner: &mut dyn Runner, dir: &Path, force_sde: bool) -> Result<()
         std::fs::write(dir.join(ENV), envfile::patch(&env, &values))?;
     }
 
-    // Migrations run on boot, so a rebuild and a restart is the whole of it. The build
-    // comes first, while the old containers keep serving.
-    stack::build(runner, dir)?;
+    // Migrations run on boot, so new images and a restart is the whole of it. The images
+    // come first, while the old containers keep serving.
+    let images = Images::from_env(&env);
+    if !Images::chosen(&env) {
+        ui::note("This install builds its images here. Prebuilt ones for amd64 and arm64 are");
+        ui::note("published for every push to main; WS_IMAGES=pull in .env (or wsctl setup)");
+        ui::note("switches to them and skips the compile.");
+    }
+    stack::images(runner, dir, images)?;
     let mut renamed = match &old {
         Some(old) => rename::move_project(runner, dir, old)?,
         None => Renamed::default(),
@@ -217,7 +226,7 @@ pub fn update(runner: &mut dyn Runner, dir: &Path, force_sde: bool) -> Result<()
         renamed.role = rename::rename_role(runner, dir)?;
     }
     report_renamed(&renamed);
-    stack::up(runner, dir)?;
+    stack::up(runner, dir, images)?;
     ui::done("running and healthy");
     // Before the static data, which wants the space a stale cache is sitting on.
     match stack::prune(runner, dir) {
@@ -469,6 +478,7 @@ fn ask_everything(existing: &str, http: u16, https: u16) -> Result<Answers> {
     )?;
 
     answers.discord = ask_discord(existing, &answers.base_url())?;
+    answers.images = ask_images(existing)?;
     Ok(answers)
 }
 
@@ -528,6 +538,33 @@ fn ask_standalone(previous: Standalone) -> Result<Standalone> {
         database_url,
         network,
         host_ports,
+    })
+}
+
+/// Pulled for a new install. One that has been building keeps the answer it had until its
+/// operator picks the other here.
+fn ask_images(existing: &str) -> Result<Images> {
+    let current = if existing.is_empty() {
+        Images::Pull
+    } else {
+        Images::from_env(existing)
+    };
+    println!();
+    ui::note("The API and the frontend are published as images for amd64 and arm64, built from");
+    ui::note("every push to main. Building them here instead compiles the Rust API on this");
+    ui::note("machine: about 2GB of memory and ten minutes or more on a small server.");
+    let choice = ui::choose(
+        "Images",
+        &[
+            "Pull the published images",
+            "Build them here from this checkout",
+        ],
+        usize::from(current == Images::Build),
+    )?;
+    Ok(if choice == 0 {
+        Images::Pull
+    } else {
+        Images::Build
     })
 }
 
@@ -682,6 +719,85 @@ fn normalise_url(input: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::exec::Recording;
+    use std::path::PathBuf;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    /// A checkout of its own for one test: a compose file to find and the given `.env`.
+    /// Removed again when the test is done with it.
+    struct Checkout(PathBuf);
+
+    impl std::ops::Deref for Checkout {
+        type Target = Path;
+        fn deref(&self) -> &Path {
+            &self.0
+        }
+    }
+
+    impl Drop for Checkout {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+
+    fn checkout(env: &str) -> Checkout {
+        static NEXT: AtomicUsize = AtomicUsize::new(0);
+        let dir = std::env::temp_dir().join(format!(
+            "wsctl-test-{}-{}",
+            std::process::id(),
+            NEXT.fetch_add(1, Ordering::Relaxed)
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(dir.join("docker-compose.yml"), "services: {}\n").unwrap();
+        std::fs::write(dir.join(ENV), env).unwrap();
+        Checkout(dir)
+    }
+
+    /// Docker as an install that already runs under the current names answers it.
+    fn running() -> Recording {
+        let mut runner = Recording::default();
+        runner.replies.insert(
+            "docker compose config".into(),
+            "name: wormholesystems\n".into(),
+        );
+        runner
+    }
+
+    const INSTALLED: &str = "COMPOSE_PROJECT_NAME=wormholesystems\nPOSTGRES_PASSWORD=secret\n";
+
+    #[test]
+    fn an_update_that_pulls_never_builds() {
+        let dir = checkout(&format!("{INSTALLED}WS_IMAGES=pull\n"));
+        let mut runner = running();
+        update(&mut runner, &dir, false).unwrap();
+        assert!(runner.commands.contains(&"docker compose pull".to_string()));
+        assert!(
+            runner.commands.contains(
+                &"docker compose up -d --wait --wait-timeout 1800 --no-build".to_string()
+            )
+        );
+        assert!(!runner.commands.iter().any(|c| c.contains("compose build")));
+    }
+
+    // An install from before the choice has always built, and keeps doing so.
+    #[test]
+    fn an_update_that_never_chose_builds() {
+        let dir = checkout(INSTALLED);
+        let mut runner = running();
+        update(&mut runner, &dir, false).unwrap();
+        let build = runner
+            .commands
+            .iter()
+            .position(|c| c == "docker compose build")
+            .expect("built");
+        let up = runner
+            .commands
+            .iter()
+            .position(|c| c == "docker compose up -d --wait --wait-timeout 1800")
+            .expect("started");
+        assert!(build < up);
+        assert!(!runner.commands.contains(&"docker compose pull".to_string()));
+    }
 
     #[test]
     fn a_public_url_keeps_its_scheme_and_loses_the_trailing_slash() {
