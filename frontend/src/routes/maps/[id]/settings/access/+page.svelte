@@ -12,7 +12,6 @@
 	import { confirmDanger } from '$lib/confirm.svelte';
 	import { key, q } from '$lib/api/queries';
 	import type { AccessEntry } from '$lib/api/types/AccessEntry';
-	import type { MapView } from '$lib/api/types/MapView';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 
@@ -21,20 +20,17 @@
 	import { sortState } from '$lib/sort-state.svelte';
 	import { Switch } from '$lib/components/ui/switch';
 	import SettingRow from '$lib/components/settings/SettingRow.svelte';
-	import { atLeast, byRole, ROLE_LABEL } from '$lib/map/roles';
+	import { byRole, ROLE_LABEL } from '$lib/map/roles';
 	import GrantForm from './GrantForm.svelte';
+	import { mapSettings } from '../context.svelte';
 
-	let { data }: { data: { view: MapView } } = $props();
-
-	const mapId = $derived(Number(page.params.id) || 0);
-	// Share token and the public flag change on this page, so the query owns the view after
-	// the layout's first frame.
-	const viewQuery = createQuery(() => ({ ...q.mapView(mapId), initialData: data.view }));
-	const view = $derived(viewQuery.data);
+	const ctx = mapSettings();
+	const mapId = $derived(ctx.mapId);
+	const view = $derived(ctx.view);
 	const accessQuery = createQuery(() => q.listAccess(mapId));
 	const access = $derived(accessQuery.data ?? []);
 
-	const canManage = $derived(atLeast(view.role, 'manager'));
+	const canManage = $derived(ctx.canManage);
 
 	let filter = $state('');
 	const sort = sortState('map-access-sort', ['name', 'subject_type', 'role', 'expires_at'], {

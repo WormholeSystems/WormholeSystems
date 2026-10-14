@@ -18,13 +18,17 @@
 	import type { MapView } from '$lib/api/types/MapView';
 	import SettingsShell from '$lib/components/settings/SettingsShell.svelte';
 	import type { Section } from '$lib/components/settings/SettingsShell.svelte';
-	import { atLeast } from '$lib/map/roles';
+	import { provideMapSettings } from './context.svelte';
 
 	let { children, data }: { children: import('svelte').Snippet; data: { view: MapView } } =
 		$props();
 
-	const mapId = $derived(Number(page.params.id) || 0);
-	const canManage = $derived(atLeast(data.view.role, 'manager'));
+	const ctx = provideMapSettings(
+		() => Number(page.params.id) || 0,
+		() => data.view,
+	);
+	const mapId = $derived(ctx.mapId);
+	const canManage = $derived(ctx.canManage);
 
 	const sections = $derived.by<Section[]>(() => {
 		const base = `/maps/${mapId}/settings`;
@@ -86,7 +90,7 @@
 </script>
 
 <SettingsShell
-	title={`${data.view.map.name} settings`}
+	title={`${ctx.view.map.name} settings`}
 	subtitle="Some of these change the map for everyone on it; the rest are only yours."
 	back={{ href: `/maps/${mapId}`, label: 'Back to the map' }}
 	{sections}

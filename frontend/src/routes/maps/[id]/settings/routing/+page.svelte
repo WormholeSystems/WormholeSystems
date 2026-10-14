@@ -2,11 +2,6 @@
 	// How routes are chosen. The same settings the route planner's popover edits, in a form
 	// with room to say what each one costs you, and below them the map's own ignore list.
 	import { createQuery } from '@tanstack/svelte-query';
-	import { page } from '$app/state';
-	import type { MapView } from '$lib/api/types/MapView';
-	import type { UpdateMapUserSettings } from '$lib/api/types/UpdateMapUserSettings';
-	import { atLeast } from '$lib/map/roles';
-	import { createUserSettingsWriter } from '$lib/map/user-settings';
 	import {
 		ROUTE_LIFETIMES,
 		ROUTE_MASSES,
@@ -22,17 +17,15 @@
 	import { Slider } from '$lib/components/ui/slider';
 	import { Switch } from '$lib/components/ui/switch';
 	import IgnoredSystemsCard from './IgnoredSystemsCard.svelte';
+	import { mapSettings } from '../context.svelte';
 
-	let { data }: { data: { view: MapView } } = $props();
-
-	const mapId = $derived(Number(page.params.id) || 0);
-	const settingsQuery = createQuery(() => q.mapUserSettings(mapId));
-	const settings = $derived(settingsQuery.data ?? null);
+	const ctx = mapSettings();
+	const mapId = $derived(ctx.mapId);
+	const settings = $derived(ctx.settings);
 	const ignoredQuery = createQuery(() => q.listIgnored(mapId));
-	const canManage = $derived(atLeast(data.view.role, 'manager'));
+	const canManage = $derived(ctx.canManage);
 
-	const settingsWriter = createUserSettingsWriter();
-	const saveUserSettings = (patch: UpdateMapUserSettings) => settingsWriter.save(mapId, patch);
+	const saveUserSettings = ctx.saveUserSettings;
 
 	function choose(field: RouteChoiceField, value: string) {
 		const patch = routeChoicePatch(field, value);

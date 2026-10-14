@@ -1,11 +1,9 @@
 <script lang="ts">
 	// What the map shows you, per viewer. Placement is the exception: the mode is the map's,
 	// and the row only appears when the map hands the choice to each viewer.
-	import { createQuery } from '@tanstack/svelte-query';
 	import ImageUpIcon from '@lucide/svelte/icons/image-up';
 	import Trash2Icon from '@lucide/svelte/icons/trash-2';
-	import { page } from '$app/state';
-	import { createBackgroundImageWriter, createUserSettingsWriter } from '$lib/map/user-settings';
+	import { createBackgroundImageWriter } from '$lib/map/user-settings';
 	import {
 		ACCEPTED_IMAGE_TYPES,
 		BACKGROUND_MODES,
@@ -14,9 +12,6 @@
 	} from '$lib/map/background';
 	import { KILLMAIL_FILTERS } from '$lib/map/killmails';
 	import { PLACEMENTS as BASE_PLACEMENTS } from '$lib/map/placement';
-	import { q } from '$lib/api/queries';
-	import type { MapView } from '$lib/api/types/MapView';
-	import type { UpdateMapUserSettings } from '$lib/api/types/UpdateMapUserSettings';
 	import SettingRow from '$lib/components/settings/SettingRow.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
@@ -24,17 +19,14 @@
 	import { Switch } from '$lib/components/ui/switch';
 	import type { MapLayout } from '$lib/api/types/MapLayout';
 	import { oneOf } from '$lib/lookup';
+	import { mapSettings } from '../context.svelte';
 
-	let { data }: { data: { view: MapView } } = $props();
+	const ctx = mapSettings();
+	const mapId = $derived(ctx.mapId);
+	const settings = $derived(ctx.settings);
+	const view = $derived(ctx.view);
 
-	const mapId = $derived(Number(page.params.id) || 0);
-	const settingsQuery = createQuery(() => q.mapUserSettings(mapId));
-	const settings = $derived(settingsQuery.data ?? null);
-	const viewQuery = createQuery(() => ({ ...q.mapView(mapId), initialData: data.view }));
-	const view = $derived(viewQuery.data);
-
-	const settingsWriter = createUserSettingsWriter();
-	const saveUserSettings = (patch: UpdateMapUserSettings) => settingsWriter.save(mapId, patch);
+	const saveUserSettings = ctx.saveUserSettings;
 
 	const image = createBackgroundImageWriter();
 	let fileInput = $state<HTMLInputElement | null>(null);

@@ -6,7 +6,6 @@
 	import UploadIcon from '@lucide/svelte/icons/upload';
 
 	import { createQuery } from '@tanstack/svelte-query';
-	import { page } from '$app/state';
 	import { toast } from 'svelte-sonner';
 
 	import { api, errorMessage } from '$lib/api/client';
@@ -24,8 +23,10 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Switch } from '$lib/components/ui/switch';
+	import { mapSettings } from '../context.svelte';
 
-	const mapId = $derived(Number(page.params.id) || 0);
+	const ctx = mapSettings();
+	const mapId = $derived(ctx.mapId);
 	const countsQuery = createQuery(() => q.transferCounts(mapId));
 	const counts = $derived(countsQuery.data);
 

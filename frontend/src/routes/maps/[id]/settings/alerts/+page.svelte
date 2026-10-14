@@ -7,7 +7,6 @@
 	import { lookup } from '$lib/lookup';
 
 	import { createQuery } from '@tanstack/svelte-query';
-	import { page } from '$app/state';
 	import { api, errorMessage } from '$lib/api/client';
 	import { confirmDanger } from '$lib/confirm.svelte';
 	import { after, apiAction } from '$lib/api/mutations';
@@ -30,8 +29,10 @@
 	import { cn } from '$lib/utils';
 	import AlertForm from './AlertForm.svelte';
 	import DestinationsCard from './DestinationsCard.svelte';
+	import { mapSettings } from '../context.svelte';
 
-	const mapId = $derived(Number(page.params.id));
+	const ctx = mapSettings();
+	const mapId = $derived(ctx.mapId);
 
 	let editing = $state<MapAlert | null>(null);
 	let creating = $state(false);

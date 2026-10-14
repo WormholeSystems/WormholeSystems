@@ -9,7 +9,6 @@
 	import { createQuery } from '@tanstack/svelte-query';
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
-	import { page } from '$app/state';
 	import { toast } from 'svelte-sonner';
 
 	import { api } from '$lib/api/client';
@@ -17,7 +16,6 @@
 	import { draft as draftOf } from '$lib/draft.svelte';
 	import { after, apiAction } from '$lib/api/mutations';
 	import { key, q } from '$lib/api/queries';
-	import type { MapView } from '$lib/api/types/MapView';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
@@ -25,23 +23,19 @@
 	import SettingRow from '$lib/components/settings/SettingRow.svelte';
 	import * as Select from '$lib/components/ui/select';
 	import { Switch } from '$lib/components/ui/switch';
-	import { atLeast } from '$lib/map/roles';
 	import { PLACEMENTS } from '$lib/map/placement';
+	import { mapSettings } from './context.svelte';
 
-	let { data }: { data: { view: MapView } } = $props();
-
-	const mapId = $derived(Number(page.params.id) || 0);
-	// The layout's load is the first frame; after a save the cache owns the value, so
-	// everything mutable reads the query, not `data`.
-	const viewQuery = createQuery(() => ({ ...q.mapView(mapId), initialData: data.view }));
-	const view = $derived(viewQuery.data);
+	const ctx = mapSettings();
+	const mapId = $derived(ctx.mapId);
+	const view = $derived(ctx.view);
 
 	// Seeded from the map and re-seeded only when it changes underneath, so a save landing
 	// or somebody else's rename does not clobber what is being typed.
 	const name = draftOf(() => view.map.name);
 	const description = draftOf(() => view.map.description ?? '');
 
-	const canManage = $derived(atLeast(view.role, 'manager'));
+	const canManage = $derived(ctx.canManage);
 	const isOwner = $derived(view.role === 'owner');
 	const dirty = $derived(
 		name.value.trim() !== view.map.name ||
