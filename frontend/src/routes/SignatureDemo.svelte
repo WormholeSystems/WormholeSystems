@@ -4,6 +4,7 @@
 	import { createQuery } from '@tanstack/svelte-query';
 
 	import { q } from '$lib/api/queries';
+	import { tickingMs } from '$lib/now.svelte';
 	import MapPanelHeader from '$lib/components/map-panel/MapPanelHeader.svelte';
 	import SignatureColumns from '$lib/components/SignatureColumns.svelte';
 	import type { SignatureContext } from '$lib/map/signature-context';
@@ -21,6 +22,7 @@
 
 	const catalogQuery = createQuery(() => q.signatureCatalog());
 	const catalog = $derived(catalogQuery.data ?? null);
+	const clock = tickingMs(30_000);
 </script>
 
 <div class="overflow-hidden rounded border border-border bg-card">
@@ -40,6 +42,7 @@
 				canWrite={false}
 				showStaticsFirst={false}
 				status={sig.signature_id === 'GHI-789' ? 'new' : null}
+				now={clock.current}
 			/>
 		{/each}
 	{:else}

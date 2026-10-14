@@ -10,6 +10,7 @@
 	import * as v from 'valibot';
 	import { readStored, writeStored } from '$lib/storage';
 	import { sortState } from '$lib/sort-state.svelte';
+	import { tickingMs } from '$lib/now.svelte';
 
 	import { toast } from 'svelte-sonner';
 
@@ -56,6 +57,9 @@
 
 	// svelte-ignore state_referenced_locally -- the map instance is stable for this mount.
 	const ctx = makeSignatureContext(map);
+	// One clock for every row's age, rather than a timer per row. The ages count whole
+	// minutes, so half a minute is plenty.
+	const clock = tickingMs(30_000);
 
 	const catalogQuery = createQuery(() => q.signatureCatalog());
 	const catalog = $derived(catalogQuery.data ?? null);
@@ -432,6 +436,7 @@
 							{canWrite}
 							{showStaticsFirst}
 							status={rowStatus(sig)}
+							now={clock.current}
 						/>
 					{/each}
 				{:else if !creating}

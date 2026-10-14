@@ -37,6 +37,7 @@
 		canWrite,
 		showStaticsFirst,
 		status,
+		now,
 	}: {
 		ctx: SignatureContext;
 		system: MappedSystem;
@@ -46,6 +47,8 @@
 		canWrite: boolean;
 		showStaticsFirst: boolean;
 		status: 'new' | 'updated' | 'deleted' | null;
+		/** Epoch ms from the panel's shared clock. */
+		now: number;
 	} = $props();
 
 	const isWormhole = $derived(sig.group === 'wormhole');
@@ -266,7 +269,7 @@
 	{/if}
 
 	<div class="w-10 shrink-0 text-right">
-		<TimeDetails {sig} {connection} {compact} />
+		<TimeDetails {sig} {connection} {compact} {now} />
 	</div>
 
 	<div class="flex w-12 shrink-0 items-center justify-end gap-1">
