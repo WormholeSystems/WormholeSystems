@@ -68,24 +68,36 @@ fn said(stderr: &str) -> String {
     out
 }
 
-/// Records what it was asked to do and answers from a script, for tests.
+/// Records what it was asked to do and answers from a script, for tests. Every command
+/// succeeds unless it is in `failures`.
 #[cfg(test)]
 #[derive(Default)]
 pub struct Recording {
     pub commands: Vec<String>,
     pub replies: std::collections::HashMap<String, String>,
+    pub failures: std::collections::HashSet<String>,
+}
+
+#[cfg(test)]
+impl Recording {
+    fn record(&mut self, program: &str, args: &[&str]) -> Result<String> {
+        let line = format!("{program} {}", args.join(" "));
+        self.commands.push(line.clone());
+        if self.failures.contains(&line) {
+            bail!("`{line}` failed");
+        }
+        Ok(line)
+    }
 }
 
 #[cfg(test)]
 impl Runner for Recording {
     fn run(&mut self, _dir: &Path, program: &str, args: &[&str]) -> Result<()> {
-        self.commands.push(format!("{program} {}", args.join(" ")));
-        Ok(())
+        self.record(program, args).map(drop)
     }
 
     fn capture(&mut self, _dir: &Path, program: &str, args: &[&str]) -> Result<String> {
-        let line = format!("{program} {}", args.join(" "));
-        self.commands.push(line.clone());
+        let line = self.record(program, args)?;
         Ok(self.replies.get(&line).cloned().unwrap_or_default())
     }
 }

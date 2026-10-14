@@ -126,11 +126,37 @@ pub fn ps(runner: &mut dyn Runner, dir: &Path) -> Result<String> {
     runner.capture(dir, "docker", &as_refs(&compose(&["ps"])))
 }
 
-/// One-shot command in a throwaway api container, with no dependencies started.
-pub fn api(runner: &mut dyn Runner, dir: &Path, args: &[&str]) -> Result<String> {
-    let mut full = vec!["run", "--rm", "--no-deps", "-T", "api", "wormholesystems"];
+fn api_args<'a>(args: &[&'a str]) -> Vec<&'a str> {
+    let mut full = vec![
+        "compose",
+        "run",
+        "--rm",
+        "--no-deps",
+        "-T",
+        "api",
+        "wormholesystems",
+    ];
     full.extend_from_slice(args);
-    runner.capture(dir, "docker", &as_refs(&compose(&full)))
+    full
+}
+
+/// One-shot command in a throwaway api container, with no dependencies started, whose
+/// output is read.
+pub fn api(runner: &mut dyn Runner, dir: &Path, args: &[&str]) -> Result<String> {
+    runner.capture(dir, "docker", &api_args(args))
+}
+
+/// The same, with its output on the terminal as it goes, for the long ones.
+pub fn api_streamed(runner: &mut dyn Runner, dir: &Path, args: &[&str]) -> Result<()> {
+    runner.run(dir, "docker", &api_args(args))
+}
+
+/// Where Docker keeps its volumes on this machine, when it says.
+pub fn docker_root(runner: &mut dyn Runner, dir: &Path) -> Option<String> {
+    runner
+        .capture(dir, "docker", &["info", "--format", "{{.DockerRootDir}}"])
+        .ok()
+        .filter(|root| !root.is_empty())
 }
 
 /// Whether this stack's own proxy is up. It is the thing holding 80 and 443 on a machine
