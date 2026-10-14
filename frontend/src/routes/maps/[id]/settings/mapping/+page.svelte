@@ -5,43 +5,30 @@
 	// The scanning card is the map's setting, not this viewer's: an unmapped hole put on the
 	// map is a node everyone sees.
 	import { createQuery } from '@tanstack/svelte-query';
-	import { page } from '$app/state';
-	import {
-		AUTOMATION,
-		automationPatch,
-		createUserSettingsWriter,
-		settingBlocker,
-		settingOn,
-	} from '$lib/map/user-settings';
+	import { AUTOMATION, automationPatch, settingBlocker, settingOn } from '$lib/map/user-settings';
 	import { api } from '$lib/api/client';
 	import { apiAction } from '$lib/api/mutations';
 	import { key, q } from '$lib/api/queries';
-	import type { MapView } from '$lib/api/types/MapView';
-	import type { UpdateMapUserSettings } from '$lib/api/types/UpdateMapUserSettings';
 	import SettingRow from '$lib/components/settings/SettingRow.svelte';
 	import * as Card from '$lib/components/ui/card';
 	import { Switch } from '$lib/components/ui/switch';
-	import { atLeast } from '$lib/map/roles';
 	import { LOCATION_SCOPE } from '$lib/esi/scopes';
+	import { mapSettings } from '../context.svelte';
 
-	let { data }: { data: { view: MapView } } = $props();
-
-	const mapId = $derived(Number(page.params.id) || 0);
+	const ctx = mapSettings();
+	const mapId = $derived(ctx.mapId);
 	const scopesQuery = createQuery(() => q.myScopes());
 	const scopes = $derived(scopesQuery.data ?? []);
-	const settingsQuery = createQuery(() => q.mapUserSettings(mapId));
-	const settings = $derived(settingsQuery.data ?? null);
-	const viewQuery = createQuery(() => ({ ...q.mapView(mapId), initialData: data.view }));
+	const settings = $derived(ctx.settings);
 
 	const hasLocation = $derived(scopes.some((s) => s.scope === LOCATION_SCOPE && s.granted));
 	const MAPPING = (
 		['tracking_allowed', 'prompt_for_signature', 'preselect_signature', 'suggest_alias'] as const
 	).map((k) => AUTOMATION[k]);
-	const canManage = $derived(atLeast(viewQuery.data.role, 'manager'));
-	const ghosting = $derived(viewQuery.data.map.ghost_unlinked_wormholes);
+	const canManage = $derived(ctx.canManage);
+	const ghosting = $derived(ctx.view.map.ghost_unlinked_wormholes);
 
-	const settingsWriter = createUserSettingsWriter();
-	const saveUserSettings = (patch: UpdateMapUserSettings) => settingsWriter.save(mapId, patch);
+	const saveUserSettings = ctx.saveUserSettings;
 	const mapAct = apiAction(() => [key.mapView(mapId)]);
 
 	function updateMap(ghost: boolean) {
