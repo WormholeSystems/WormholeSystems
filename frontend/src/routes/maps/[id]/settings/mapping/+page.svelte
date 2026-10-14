@@ -6,7 +6,13 @@
 	// map is a node everyone sees.
 	import { createQuery } from '@tanstack/svelte-query';
 	import { page } from '$app/state';
-	import { createUserSettingsWriter } from '$lib/map/user-settings';
+	import {
+		AUTOMATION,
+		automationPatch,
+		createUserSettingsWriter,
+		settingBlocker,
+		settingOn,
+	} from '$lib/map/user-settings';
 	import { api } from '$lib/api/client';
 	import { apiAction } from '$lib/api/mutations';
 	import { key, q } from '$lib/api/queries';
@@ -28,8 +34,9 @@
 	const viewQuery = createQuery(() => ({ ...q.mapView(mapId), initialData: data.view }));
 
 	const hasLocation = $derived(scopes.some((s) => s.scope === LOCATION_SCOPE && s.granted));
-	const tracking = $derived(settings?.tracking_allowed ?? false);
-	const prompting = $derived(tracking && (settings?.prompt_for_signature ?? true));
+	const MAPPING = (
+		['tracking_allowed', 'prompt_for_signature', 'preselect_signature', 'suggest_alias'] as const
+	).map((k) => AUTOMATION[k]);
 	const canManage = $derived(atLeast(viewQuery.data.role, 'manager'));
 	const ghosting = $derived(viewQuery.data.map.ghost_unlinked_wormholes);
 
@@ -76,76 +83,25 @@
 			</Card.Description>
 		</Card.Header>
 		<Card.Content class="flex flex-col py-0">
-			<SettingRow
-				id="tracking-allowed"
-				label="Share my location on this map"
-				description="Puts you on your system for everyone here, measures distances from where you actually are, and lets the map build the chain as you jump. Revocable at any time."
-				blocked={hasLocation ? undefined : 'Needs the character location permission from EVE.'}
-			>
-				{#snippet control()}
-					<Switch
-						checked={tracking && hasLocation}
-						disabled={!hasLocation}
-						aria-label="Share my location on this map"
-						onCheckedChange={(v) => saveUserSettings({ tracking_allowed: v })}
-					/>
-				{/snippet}
-			</SettingRow>
-
-			<SettingRow
-				id="prompt-for-signature"
-				label="Ask which signature I jumped"
-				description="On arriving somewhere new, the map asks which signature the hole was and links it. Without this the connection is still drawn, just unnamed."
-				disabled={!tracking}
-				blocked={tracking ? undefined : 'Needs location sharing.'}
-			>
-				{#snippet control()}
-					<Switch
-						checked={(settings?.prompt_for_signature ?? true) && tracking}
-						disabled={!tracking}
-						aria-label="Ask which signature I jumped"
-						onCheckedChange={(v) => saveUserSettings({ prompt_for_signature: v })}
-					/>
-				{/snippet}
-			</SettingRow>
-
-			<SettingRow
-				id="preselect-signature"
-				label="Preselect the likeliest signature"
-				description="The prompt opens with the best match already chosen, so working through freshly scanned holes in order is one Enter each. Off, nothing is chosen until you pick it."
-				disabled={!prompting}
-				blocked={prompting
-					? undefined
-					: tracking
-						? 'Needs the signature prompt.'
-						: 'Needs location sharing.'}
-			>
-				{#snippet control()}
-					<Switch
-						checked={(settings?.preselect_signature ?? false) && prompting}
-						disabled={!prompting}
-						aria-label="Preselect the likeliest signature"
-						onCheckedChange={(v) => saveUserSettings({ preselect_signature: v })}
-					/>
-				{/snippet}
-			</SettingRow>
-
-			<SettingRow
-				id="suggest-alias"
-				label="Name new systems for me"
-				description="Fills in the next alias from the chain's naming scheme, so holes are named the same way by everyone on the map."
-				disabled={!tracking}
-				blocked={tracking ? undefined : 'Needs location sharing.'}
-			>
-				{#snippet control()}
-					<Switch
-						checked={(settings?.suggest_alias ?? true) && tracking}
-						disabled={!tracking}
-						aria-label="Name new systems for me"
-						onCheckedChange={(v) => saveUserSettings({ suggest_alias: v })}
-					/>
-				{/snippet}
-			</SettingRow>
+			{#each MAPPING as setting (setting.key)}
+				{@const blocked = settingBlocker(settings, setting.key, hasLocation)}
+				<SettingRow
+					id={setting.key.replaceAll('_', '-')}
+					label={setting.label}
+					description={setting.body}
+					disabled={blocked !== null}
+					blocked={blocked ?? undefined}
+				>
+					{#snippet control()}
+						<Switch
+							checked={settingOn(settings, setting.key, hasLocation)}
+							disabled={blocked !== null}
+							aria-label={setting.label}
+							onCheckedChange={(v) => saveUserSettings(automationPatch(setting.key, v))}
+						/>
+					{/snippet}
+				</SettingRow>
+			{/each}
 		</Card.Content>
 	</Card.Root>
 </div>

@@ -6,8 +6,13 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Popover from '$lib/components/ui/popover';
 	import { Switch } from '$lib/components/ui/switch';
-	import type { UpdateMapUserSettings } from '$lib/api/types/UpdateMapUserSettings';
 	import { trackedPilots } from '$lib/map/tracked-pilots';
+	import {
+		AUTOMATION,
+		automationPatch,
+		settingBlocker,
+		settingValue,
+	} from '$lib/map/user-settings';
 	import type { MapState } from '../../state/map-state.svelte';
 
 	let { map }: { map: MapState } = $props();
@@ -15,47 +20,17 @@
 	const settings = $derived(map.userSettings);
 	// Nothing here happens unless the tracker is running, so say so rather than offering
 	// switches that quietly do nothing.
-	const tracking = $derived(settings?.tracking_allowed ?? false);
+	const tracking = $derived(settingValue(settings, 'tracking_allowed'));
 
-	const OPTIONS: {
-		key:
-			| 'prompt_for_signature'
-			| 'preselect_signature'
-			| 'suggest_alias'
-			| 'copy_bookmark'
-			| 'follow_character';
-		label: string;
-		hint: string;
-		/** A setting this one only means something under. */
-		needs?: 'prompt_for_signature';
-	}[] = [
-		{
-			key: 'prompt_for_signature',
-			label: 'Ask which signature',
-			hint: 'Otherwise the hole is mapped without a signature linked.',
-		},
-		{
-			key: 'preselect_signature',
-			label: 'Preselect the likeliest',
-			hint: 'The prompt opens with the best match chosen, so Enter confirms it.',
-			needs: 'prompt_for_signature',
-		},
-		{
-			key: 'suggest_alias',
-			label: 'Suggest an alias',
-			hint: "Prefills the next name in the chain's sequence.",
-		},
-		{
-			key: 'copy_bookmark',
-			label: 'Copy the bookmark',
-			hint: 'Puts the new bookmark on your clipboard once the jump is mapped.',
-		},
-		{
-			key: 'follow_character',
-			label: 'Follow me',
-			hint: 'Selects the system you are in as you fly, so the cards keep up.',
-		},
-	];
+	const OPTIONS = (
+		[
+			'prompt_for_signature',
+			'preselect_signature',
+			'suggest_alias',
+			'copy_bookmark',
+			'follow_character',
+		] as const
+	).map((k) => AUTOMATION[k]);
 
 	const pilots = $derived(map.characters.mine);
 	const tracked = $derived(
@@ -63,12 +38,6 @@
 			trackedPilots(pilots, settings?.tracked_character_ids ?? []).map((p) => p.character_id),
 		),
 	);
-
-	function update(key: (typeof OPTIONS)[number]['key'], value: boolean) {
-		const patch: UpdateMapUserSettings = {};
-		patch[key] = value;
-		map.patchUserSettings(patch);
-	}
 
 	function togglePilot(characterId: number, on: boolean) {
 		const next = new Set(tracked);
@@ -111,9 +80,9 @@
 					</span>
 					<Switch
 						id="tracking-{option.key}"
-						disabled={!tracking || (option.needs !== undefined && !settings?.[option.needs])}
-						checked={settings?.[option.key] ?? false}
-						onCheckedChange={(v) => update(option.key, v)}
+						disabled={settingBlocker(settings, option.key) !== null}
+						checked={settingValue(settings, option.key)}
+						onCheckedChange={(v) => map.patchUserSettings(automationPatch(option.key, v))}
 						data-testid="setting-{option.key}"
 					/>
 				</label>
