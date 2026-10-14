@@ -125,4 +125,17 @@ describe('MapGestures', () => {
 		gestures.onPointerMove(pointer(150, 50));
 		expect(host.drag).toBeNull();
 	});
+
+	it('leaves the drag alone while the pointer stays inside one grid cell', () => {
+		const { host } = fakeHost([system(1, 100, 100)]);
+		const gestures = new MapGestures(host);
+		gestures.onNodeDown(pointer(50, 50), host.systems.all[0]);
+		gestures.onPointerMove(pointer(100, 50));
+		const before = host.drag;
+		gestures.onPointerMove(pointer(103, 52));
+		expect(host.drag).toBe(before);
+		gestures.onPointerMove(pointer(130, 50));
+		expect(host.drag).not.toBe(before);
+		expect(host.drag?.x).toBe(180);
+	});
 });

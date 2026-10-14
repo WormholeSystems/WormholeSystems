@@ -12,10 +12,11 @@
 	let hDragging = false;
 	let vDragging = false;
 
-	// Visible world span = viewport_size / zoom. Thumb fraction = visible / world.
+	// Visible world span = viewport_size / zoom. Thumb fraction = visible / world. The size
+	// is the observed one: measuring the element here would force a layout every pan frame.
 	const hThumb = $derived.by(() => {
 		const frac = Math.min(
-			map.camera.viewportRect().width / map.camera.zoom / map.grid.world_width,
+			map.camera.viewportSize.width / map.camera.zoom / map.grid.world_width,
 			1,
 		);
 		const start = clamp(-map.camera.pan.x / map.camera.zoom / map.grid.world_width, 0, 1 - frac);
@@ -23,7 +24,7 @@
 	});
 	const vThumb = $derived.by(() => {
 		const frac = Math.min(
-			map.camera.viewportRect().height / map.camera.zoom / map.grid.world_height,
+			map.camera.viewportSize.height / map.camera.zoom / map.grid.world_height,
 			1,
 		);
 		const start = clamp(-map.camera.pan.y / map.camera.zoom / map.grid.world_height, 0, 1 - frac);

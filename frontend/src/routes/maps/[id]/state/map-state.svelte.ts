@@ -19,11 +19,11 @@ import type { SocketState } from '$lib/ws';
 import type { PanelId } from '../components/panels/registry';
 import type { RoutingSettings } from '$lib/routing/algorithm';
 import { NODE_W, clamp } from '$lib/map/helpers';
-import { freeEdges, treeEdges, type EdgeGeometry } from '$lib/map/edges';
+import { freeEdgeRouter, treeEdges, type EdgeGeometry } from '$lib/map/edges';
 import { draggedPositions, type Drag } from '$lib/map/gestures';
 import type { Vec2 } from '$lib/map/helpers';
 import { compareForTree, computeTreeLayout } from '$lib/map/tree';
-import { reusePositions, treeShapeKey } from '$lib/map/positions';
+import { edgeTopologyKey, reusePositions, treeShapeKey } from '$lib/map/positions';
 import { routeOrigin } from '$lib/routing/origin';
 import { ghostSignatureIds } from '$lib/map/ghosts';
 import { layoutMode } from '$lib/map/layout-mode';
@@ -243,12 +243,25 @@ export class MapState {
 		ghostSignatureIds(this.systemsView, this.connectionsView, this.queries.signatures.data ?? []),
 	);
 
-	/** Every connection's line and badge anchor, routed the way this layout draws them. */
-	edgeGeometry = $derived.by<Map<number, EdgeGeometry>>(() =>
-		this.layout === 'tree'
-			? treeEdges(this.connectionsView, this.positions, this.nodeH)
-			: freeEdges(this.connectionsView, this.positions, this.nodeH),
-	);
+	/** Which connections exist and what they join; a status change leaves it equal. */
+	private edgeTopology = $derived(edgeTopologyKey(this.connectionsView));
+	private routeFreeEdges = freeEdgeRouter();
+
+	/**
+	 * Every connection's line and badge anchor, routed the way this layout draws them. Reruns
+	 * when a node moves or the topology changes, not when a refetch only changed statuses.
+	 */
+	edgeGeometry = $derived.by<Map<number, EdgeGeometry>>(() => {
+		void this.edgeTopology;
+		const positions = this.positions;
+		const nodeH = this.nodeH;
+		const tree = this.layout === 'tree';
+		return untrack(() =>
+			tree
+				? treeEdges(this.connectionsView, positions, nodeH)
+				: this.routeFreeEdges(this.connectionsView, positions, nodeH),
+		);
+	});
 
 	// The last lookup handed out, so the next one can keep the entries that did not move.
 	// Plain field on purpose: it is a memo, not something anything should react to.

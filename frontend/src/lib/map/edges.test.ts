@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { MapConnection } from '$lib/api/types/MapConnection';
 import { LIFETIME_OPTIONS, MASS_OPTIONS } from './connection-status';
-import { edgeDecorations, freeEdges, treeEdges } from './edges';
+import { edgeDecorations, freeEdgeRouter, freeEdges, treeEdges } from './edges';
 import { NODE_W } from './helpers';
 
 const NODE_H = 40;
@@ -421,5 +421,45 @@ describe('a level run stays straight', () => {
 		]);
 		const g = treeEdges([connection(10, 1, 2), connection(11, 1, 3)], positions, NODE_H2);
 		expect(g.get(10)!.to.y).toBe(340 + NODE_H2 / 2);
+	});
+});
+
+describe('freeEdgeRouter', () => {
+	it('reroutes only the edges whose ends moved', () => {
+		const route = freeEdgeRouter();
+		const a = { x: 0, y: 0 };
+		const b = { x: 300, y: 0 };
+		const c = { x: 600, y: 0 };
+		const connections = [connection(1, 1, 2), connection(2, 2, 3), connection(3, 1, 3)];
+		const first = route(
+			connections,
+			new Map([
+				[1, a],
+				[2, b],
+				[3, c],
+			]),
+			NODE_H,
+		);
+		const after = new Map([
+			[1, a],
+			[2, b],
+			[3, { x: 600, y: 200 }],
+		]);
+		const second = route(connections, after, NODE_H);
+		expect(second.get(1)).toBe(first.get(1));
+		expect(second.get(2)).not.toBe(first.get(2));
+		expect(second.get(3)).not.toBe(first.get(3));
+		// The same answer the stateless router gives.
+		expect([...second.values()]).toEqual([...freeEdges(connections, after, NODE_H).values()]);
+	});
+
+	it('hands back the same map when nothing moved', () => {
+		const route = freeEdgeRouter();
+		const positions = new Map([
+			[1, { x: 0, y: 0 }],
+			[2, { x: 300, y: 0 }],
+		]);
+		const first = route([connection(1, 1, 2)], positions, NODE_H);
+		expect(route([connection(1, 1, 2)], positions, NODE_H)).toBe(first);
 	});
 });

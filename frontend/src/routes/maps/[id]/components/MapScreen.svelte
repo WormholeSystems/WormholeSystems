@@ -142,9 +142,19 @@
 		const observer = new ResizeObserver(([entry]) => {
 			const box = entry.contentRect;
 			map.camera.viewportSize = { width: box.width, height: box.height };
+			map.camera.remeasure();
 		});
 		observer.observe(el);
-		return () => observer.disconnect();
+		// The camera keeps the canvas's screen position between gestures; anything that can
+		// shift it without resizing it has to say so. Captured, so a scrolling panel counts.
+		const moved = () => map.camera.remeasure();
+		window.addEventListener('scroll', moved, { capture: true, passive: true });
+		window.addEventListener('resize', moved, { passive: true });
+		return () => {
+			observer.disconnect();
+			window.removeEventListener('scroll', moved, { capture: true });
+			window.removeEventListener('resize', moved);
+		};
 	});
 
 	// Realtime: any frame on the map socket means "refetch".
