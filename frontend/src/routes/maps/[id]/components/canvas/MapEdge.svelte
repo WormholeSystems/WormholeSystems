@@ -6,7 +6,7 @@
 
 	import type { MapConnection } from '$lib/api/types/MapConnection';
 	import { edgeDecorations, type EdgeGeometry } from '$lib/map/edges';
-	import { edgeColor } from '$lib/map/helpers';
+	import { edgeColor } from '$lib/map/connection-status';
 	import { formatRemaining, lifetimeDeadline } from '$lib/map/lifetime';
 	import type { MapState } from '../../state/map-state.svelte';
 

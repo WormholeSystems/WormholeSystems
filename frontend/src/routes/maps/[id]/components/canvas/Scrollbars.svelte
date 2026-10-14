@@ -2,7 +2,7 @@
 	// Proportional scrollbars: thumb size and position are the viewport-over-world ratio at
 	// the current zoom. They fade out once the view settles, since they only answer "where am
 	// I in the chain" while you are navigating.
-	import { clamp } from '$lib/map/helpers';
+	import { clamp } from '$lib/map/geometry';
 	import type { MapState } from '../../state/map-state.svelte';
 
 	let { map }: { map: MapState } = $props();

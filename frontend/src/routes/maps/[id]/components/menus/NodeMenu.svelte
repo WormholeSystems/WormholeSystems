@@ -21,8 +21,7 @@
 	import EveImage from '$lib/components/EveImage.svelte';
 	import { isWormholeClass } from '$lib/map/classes';
 	import { systemLinkGroups } from '$lib/map/external-links';
-	import { statusColor } from '$lib/map/helpers';
-	import { STATUS_ICONS, STATUS_OPTIONS, statusLabel } from '$lib/map/status';
+	import { STATUS_ICONS, STATUS_OPTIONS, statusColor, statusLabel } from '$lib/map/status';
 	import type { MapState } from '../../state/map-state.svelte';
 	import { item, panel, sub } from './chrome';
 	import ExternalLinks from './ExternalLinks.svelte';

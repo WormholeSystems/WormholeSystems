@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { MapConnection } from '$lib/api/types/MapConnection';
 import { LIFETIME_OPTIONS, MASS_OPTIONS } from './connection-status';
 import { edgeDecorations, freeEdgeRouter, freeEdges, treeEdges } from './edges';
-import { NODE_W } from './helpers';
+import { NODE_W } from './geometry';
 
 const NODE_H = 40;
 

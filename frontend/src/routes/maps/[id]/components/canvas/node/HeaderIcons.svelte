@@ -20,7 +20,7 @@
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import EffectBadge from '$lib/components/EffectBadge.svelte';
 	import SovereigntyBadge from '$lib/components/SovereigntyBadge.svelte';
-	import { statusColor } from '$lib/map/helpers';
+	import { statusColor } from '$lib/map/status';
 
 	let {
 		node,

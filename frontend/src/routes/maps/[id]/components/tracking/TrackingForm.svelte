@@ -27,7 +27,7 @@
 	import { cn } from '$lib/utils';
 	import type { MapState } from '../../state/map-state.svelte';
 	import type { JumpPrompt, JumpTracker } from '../../state/tracking.svelte';
-	import { sizeForJumpMass } from '$lib/map/helpers';
+	import { sizeForJumpMass } from '$lib/map/mass';
 
 	let { map, tracker, prompt }: { map: MapState; tracker: JumpTracker; prompt: JumpPrompt } =
 		$props();

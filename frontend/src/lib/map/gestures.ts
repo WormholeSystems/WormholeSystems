@@ -1,7 +1,7 @@
 // The pure math under the map's pointer gestures: where a drag puts every co-dragged
 // node, and what a rubber band selects.
 
-import { NODE_W, type Vec2 } from './helpers';
+import { NODE_W, type Vec2 } from './geometry';
 
 /**
  * A live drag. `members` are the co-dragged nodes with their start top-left; each moves by

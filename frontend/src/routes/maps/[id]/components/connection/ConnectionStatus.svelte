@@ -69,7 +69,7 @@
 		if (!option) return { label: 'Unknown', text: 'text-muted-foreground', dot: 'bg-neutral-500' };
 		switch (option.value) {
 			case 'reduced':
-				return { label: option.label, text: 'text-amber-500', dot: 'bg-amber-500' };
+				return { label: option.label, text: 'text-orange-500', dot: option.dot };
 			case 'critical':
 				return { label: option.label, text: 'text-red-500', dot: 'bg-red-500' };
 			default:

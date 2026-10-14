@@ -20,7 +20,7 @@
 	import type { WormholeSize } from '$lib/api/types/WormholeSize';
 	import { copyText } from '$lib/clipboard';
 	import { LIFETIME_OPTIONS, MASS_OPTIONS, SIZE_OPTIONS } from '$lib/map/connection-status';
-	import { sizeForJumpMass } from '$lib/map/helpers';
+	import { sizeForJumpMass } from '$lib/map/mass';
 	import { typeById } from '$lib/map/signatures';
 	import { formatBookmark, formatsFromNaming } from '$lib/naming/bookmark';
 	import type { MapState } from '../../state/map-state.svelte';

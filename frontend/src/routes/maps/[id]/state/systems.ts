@@ -7,7 +7,8 @@ import type { ResolveGhostSystem } from '$lib/api/types/ResolveGhostSystem';
 import type { MapSystemView } from '$lib/api/types/MapSystemView';
 import type { SystemStatus } from '$lib/api/types/SystemStatus';
 import type { MapAction } from '$lib/map/actions';
-import { centerWorld, freePosition, heuristicSize, type Vec2 } from '$lib/map/helpers';
+import { centerWorld, freePosition, type Vec2 } from '$lib/map/geometry';
+import { heuristicSize } from '$lib/map/mass';
 import type { MapCamera } from './map-camera.svelte';
 
 export interface SystemsHost {
