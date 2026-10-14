@@ -1,3 +1,5 @@
+import { SvelteMap } from 'svelte/reactivity';
+
 import { api } from '$lib/api/client';
 import type { SystemSearchResult } from '$lib/api/types/SystemSearchResult';
 
@@ -9,7 +11,9 @@ import type { SystemSearchResult } from '$lib/api/types/SystemSearchResult';
 const CHUNK = 200;
 
 export function createSystemResolver(fetchRows: (ids: number[]) => Promise<SystemSearchResult[]>) {
-	let resolved = $state(new Map<number, SystemSearchResult>());
+	// Per-key reactivity: a batch landing wakes the reads of the ids it brought (and of ids
+	// still missing), not every row that already had its answer.
+	const resolved = new SvelteMap<number, SystemSearchResult>();
 	// One promise per id currently on the wire, so concurrent asks share the fetch.
 	const pending = new Map<number, Promise<void>>();
 	// Ids a successful fetch did not answer: the server does not know them, and asking
@@ -29,14 +33,15 @@ export function createSystemResolver(fetchRows: (ids: number[]) => Promise<Syste
 			const chunk = missing.slice(at, at + CHUNK);
 			const batch = fetchRows(chunk)
 				.then((rows) => {
-					const next = new Map(resolved);
-					for (const row of rows) next.set(row.id, row);
+					const answered = new Set(rows.map((row) => row.id));
 					for (const id of chunk) {
-						if (!next.has(id)) unknown.add(id);
+						if (!answered.has(id) && !resolved.has(id)) unknown.add(id);
 					}
-					// Reassigning invalidates every derived reading the cache, so an
-					// all-unknown answer must not write, or those reads would loop.
-					if (rows.length > 0) resolved = next;
+					// A row that is already known is not written again: a write wakes its
+					// readers, which would only ask again.
+					for (const row of rows) {
+						if (!resolved.has(row.id)) resolved.set(row.id, row);
+					}
 				})
 				.catch(() => {})
 				.finally(() => {
@@ -82,12 +87,9 @@ export function createSystemResolver(fetchRows: (ids: number[]) => Promise<Syste
 		},
 		/** Hand over rows another payload already carried, so nobody fetches them again. */
 		seed(rows: Iterable<SystemSearchResult>) {
-			let next: Map<number, SystemSearchResult> | null = null;
 			for (const row of rows) {
-				if (resolved.has(row.id)) continue;
-				(next ??= new Map(resolved)).set(row.id, row);
+				if (!resolved.has(row.id)) resolved.set(row.id, row);
 			}
-			if (next) resolved = next;
 		},
 	};
 }
