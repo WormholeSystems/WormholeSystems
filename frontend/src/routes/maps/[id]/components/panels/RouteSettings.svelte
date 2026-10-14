@@ -10,6 +10,8 @@
 		ROUTE_LIFETIMES,
 		ROUTE_MASSES,
 		ROUTE_PREFS,
+		routeChoicePatch,
+		type RouteChoiceField,
 		type RouteOption,
 	} from '$lib/routing/options';
 	import type { MapState } from '../../state/map-state.svelte';
@@ -28,8 +30,9 @@
 	const LIFETIMES = ROUTE_LIFETIMES.map(short);
 	const MASSES = ROUTE_MASSES.map(short);
 
-	function update(patch: Record<string, unknown>) {
-		map.patchUserSettings(patch).catch(() => {});
+	function choose(field: RouteChoiceField, value: string) {
+		const patch = routeChoicePatch(field, value);
+		if (patch) map.patchUserSettings(patch);
 	}
 </script>
 
@@ -37,13 +40,13 @@
 	title: string,
 	items: { value: string; label: string; hint: string }[],
 	current: string,
-	key: string,
+	key: RouteChoiceField,
 )}
 	<div class="flex flex-col gap-1">
 		<span class="text-[10px] font-medium tracking-wider text-muted-foreground uppercase">
 			{title}
 		</span>
-		<Select.Root type="single" value={current} onValueChange={(v) => update({ [key]: v })}>
+		<Select.Root type="single" value={current} onValueChange={(v) => choose(key, v)}>
 			<Select.Trigger class="h-7 w-full text-xs" data-testid="setting-{key}">
 				{items.find((i) => i.value === current)?.label}
 			</Select.Trigger>
@@ -86,7 +89,7 @@
 					step={5}
 					value={settings?.security_penalty ?? 50}
 					aria-label="Security penalty"
-					onValueCommit={(v) => update({ security_penalty: v })}
+					onValueCommit={(v) => map.patchUserSettings({ security_penalty: v })}
 				/>
 			</div>
 		{/if}
@@ -106,7 +109,7 @@
 			Use chain connections
 			<Switch
 				checked={settings?.route_use_wormholes ?? true}
-				onCheckedChange={(v) => update({ route_use_wormholes: v })}
+				onCheckedChange={(v) => map.patchUserSettings({ route_use_wormholes: v })}
 				data-testid="setting-wormholes"
 			/>
 		</label>
@@ -114,7 +117,7 @@
 			Use EVE Scout
 			<Switch
 				checked={settings?.route_use_evescout ?? false}
-				onCheckedChange={(v) => update({ route_use_evescout: v })}
+				onCheckedChange={(v) => map.patchUserSettings({ route_use_evescout: v })}
 				data-testid="setting-evescout"
 			/>
 		</label>

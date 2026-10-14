@@ -5,12 +5,13 @@
 	// Non-managers still see the names read-only.
 	import { createQuery } from '@tanstack/svelte-query';
 	import { page } from '$app/state';
-	import { userSettingsSaver } from '$lib/map/user-settings';
+	import { createUserSettingsWriter } from '$lib/map/user-settings';
 	import { api } from '$lib/api/client';
 	import { apiAction } from '$lib/api/mutations';
 	import { key, q } from '$lib/api/queries';
 	import type { MapNaming } from '$lib/api/types/MapNaming';
 	import type { MapView } from '$lib/api/types/MapView';
+	import type { UpdateMapUserSettings } from '$lib/api/types/UpdateMapUserSettings';
 	import SettingRow from '$lib/components/settings/SettingRow.svelte';
 	import * as Card from '$lib/components/ui/card';
 	import { Switch } from '$lib/components/ui/switch';
@@ -27,7 +28,8 @@
 	const canManage = $derived(atLeast(viewQuery.data.role, 'manager'));
 	const tracking = $derived(settings?.tracking_allowed ?? false);
 
-	const saveUserSettings = userSettingsSaver(() => mapId);
+	const settingsWriter = createUserSettingsWriter();
+	const saveUserSettings = (patch: UpdateMapUserSettings) => settingsWriter.save(mapId, patch);
 	const mapAct = apiAction(() => [key.mapView(mapId)]);
 
 	function saveNaming(naming: MapNaming) {

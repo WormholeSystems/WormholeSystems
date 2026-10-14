@@ -6,11 +6,12 @@
 	// map is a node everyone sees.
 	import { createQuery } from '@tanstack/svelte-query';
 	import { page } from '$app/state';
-	import { userSettingsSaver } from '$lib/map/user-settings';
+	import { createUserSettingsWriter } from '$lib/map/user-settings';
 	import { api } from '$lib/api/client';
 	import { apiAction } from '$lib/api/mutations';
 	import { key, q } from '$lib/api/queries';
 	import type { MapView } from '$lib/api/types/MapView';
+	import type { UpdateMapUserSettings } from '$lib/api/types/UpdateMapUserSettings';
 	import SettingRow from '$lib/components/settings/SettingRow.svelte';
 	import * as Card from '$lib/components/ui/card';
 	import { Switch } from '$lib/components/ui/switch';
@@ -32,7 +33,8 @@
 	const canManage = $derived(atLeast(viewQuery.data.role, 'manager'));
 	const ghosting = $derived(viewQuery.data.map.ghost_unlinked_wormholes);
 
-	const saveUserSettings = userSettingsSaver(() => mapId);
+	const settingsWriter = createUserSettingsWriter();
+	const saveUserSettings = (patch: UpdateMapUserSettings) => settingsWriter.save(mapId, patch);
 	const mapAct = apiAction(() => [key.mapView(mapId)]);
 
 	function updateMap(ghost: boolean) {

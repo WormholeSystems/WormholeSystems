@@ -68,6 +68,7 @@ export const MAP_ACTIONS = {
 	goToEvent: { failed: 'Could not go to that point', done: 'Map moved back to' },
 	saveLayout: { failed: 'Could not save the layout', done: 'Layout saved' },
 	setPlacement: { failed: 'Could not change the placement' },
+	saveSettings: { failed: 'Could not save your settings' },
 
 	// Lands in the EVE client, where the app cannot show you anything.
 	setWaypoint: { failed: 'Could not set the destination', done: 'Destination set' },

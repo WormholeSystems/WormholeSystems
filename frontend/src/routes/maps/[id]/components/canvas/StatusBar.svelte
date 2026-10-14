@@ -12,6 +12,7 @@
 	import BrushCleaningIcon from '@lucide/svelte/icons/brush-cleaning';
 	import TriangleAlertIcon from '@lucide/svelte/icons/triangle-alert';
 	import Undo2Icon from '@lucide/svelte/icons/undo-2';
+	import type { UpdateMapUserSettings } from '$lib/api/types/UpdateMapUserSettings';
 	import { solarSystemId } from '$lib/map/system';
 
 	import { page } from '$app/state';
@@ -50,12 +51,9 @@
 	function toggleSetting(key: 'tracking_allowed' | 'show_threat_level') {
 		const current = map.userSettings;
 		if (!current) return;
-		map
-			.patchUserSettings({ [key]: !current[key] })
-			.then(() => {
-				if (key === 'tracking_allowed') map.characters.refresh();
-			})
-			.catch(() => {});
+		const patch: UpdateMapUserSettings = {};
+		patch[key] = !current[key];
+		map.patchUserSettings(patch);
 	}
 </script>
 

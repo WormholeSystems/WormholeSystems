@@ -5,6 +5,8 @@
 import type { MassStatus } from '$lib/api/types/MassStatus';
 import type { RoutePreference } from '$lib/api/types/RoutePreference';
 import type { TimeStatus } from '$lib/api/types/TimeStatus';
+import type { UpdateMapUserSettings } from '$lib/api/types/UpdateMapUserSettings';
+import { oneOf } from '$lib/lookup';
 
 export interface RouteOption<T> {
 	value: T;
@@ -94,3 +96,37 @@ export const ROUTE_MASSES: RouteOption<MassStatus>[] = [
 		shortHint: '> 50%',
 	},
 ];
+
+/** The three route settings picked from a list. */
+export type RouteChoiceField =
+	'route_preference' | 'route_allow_time_status' | 'route_allow_mass_status';
+
+/**
+ * The settings patch for a value a route picker handed back, or null when it is not one of
+ * that field's options. A select deals in strings; this is where they become the field's
+ * own type again.
+ */
+export function routeChoicePatch(
+	field: RouteChoiceField,
+	value: string,
+): UpdateMapUserSettings | null {
+	const pick = <T extends string>(options: RouteOption<T>[]) =>
+		oneOf(
+			options.map((o) => o.value),
+			value,
+		);
+	switch (field) {
+		case 'route_preference': {
+			const v = pick(ROUTE_PREFS);
+			return v ? { route_preference: v } : null;
+		}
+		case 'route_allow_time_status': {
+			const v = pick(ROUTE_LIFETIMES);
+			return v ? { route_allow_time_status: v } : null;
+		}
+		case 'route_allow_mass_status': {
+			const v = pick(ROUTE_MASSES);
+			return v ? { route_allow_mass_status: v } : null;
+		}
+	}
+}

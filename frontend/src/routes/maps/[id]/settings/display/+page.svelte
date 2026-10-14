@@ -6,7 +6,7 @@
 	import Trash2Icon from '@lucide/svelte/icons/trash-2';
 	import { toast } from 'svelte-sonner';
 	import { page } from '$app/state';
-	import { userSettingsSaver } from '$lib/map/user-settings';
+	import { createUserSettingsWriter } from '$lib/map/user-settings';
 	import {
 		ACCEPTED_IMAGE_TYPES,
 		BACKGROUND_MODES,
@@ -19,6 +19,7 @@
 	import { apiAction } from '$lib/api/mutations';
 	import { key, q } from '$lib/api/queries';
 	import type { MapView } from '$lib/api/types/MapView';
+	import type { UpdateMapUserSettings } from '$lib/api/types/UpdateMapUserSettings';
 	import SettingRow from '$lib/components/settings/SettingRow.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
@@ -36,7 +37,8 @@
 	const viewQuery = createQuery(() => ({ ...q.mapView(mapId), initialData: data.view }));
 	const view = $derived(viewQuery.data);
 
-	const saveUserSettings = userSettingsSaver(() => mapId);
+	const settingsWriter = createUserSettingsWriter();
+	const saveUserSettings = (patch: UpdateMapUserSettings) => settingsWriter.save(mapId, patch);
 
 	// The image goes as a file rather than a settings patch, so it has its own action.
 	const imageAction = apiAction(() => [key.userSettings(mapId)]);
