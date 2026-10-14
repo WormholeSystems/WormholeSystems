@@ -43,8 +43,8 @@ pub struct AppState {
     pub map_creators: crate::allowlist::AffiliationAllowlist,
     /// The site-wide banner, if the operator set one.
     pub announcement: Option<Arc<crate::announcement::Announcement>>,
-    /// Where EVE Scout's public signatures are read from.
-    pub eve_scout_url: Arc<str>,
+    /// EVE Scout's public Thera and Turnur holes, with the last read cached.
+    pub eve_scout: Arc<crate::integrations::eve_scout::EveScout>,
 }
 
 /// Everything the server answers: sign-in, Discord, the realtime sockets, the JSON API and
@@ -123,7 +123,9 @@ pub async fn serve(config: Config) {
         allowed_logins: config.allowed_logins,
         map_creators: config.map_creators,
         announcement: config.announcement.map(Arc::new),
-        eve_scout_url: config.eve_scout_url.into(),
+        eve_scout: Arc::new(crate::integrations::eve_scout::EveScout::new(
+            config.eve_scout_url,
+        )),
     };
 
     let addr = config.listen_addr;

@@ -53,7 +53,9 @@ pub fn state(pool: &PgPool) -> AppState {
         allowed_logins: Default::default(),
         map_creators: Default::default(),
         announcement: None,
-        eve_scout_url: "http://127.0.0.1:9/unreachable".into(),
+        eve_scout: Arc::new(wormholesystems::integrations::eve_scout::EveScout::new(
+            "http://127.0.0.1:9/unreachable",
+        )),
     }
 }
 

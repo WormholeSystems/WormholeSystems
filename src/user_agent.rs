@@ -47,18 +47,26 @@ fn agent(contact: &Contact) -> String {
     )
 }
 
-/// A client that identifies itself. Every outbound client in the app is built from one of
-/// these two, so there is one place the identity can be wrong.
+/// The client that identifies itself. Every outbound request in the app goes through this
+/// one or the blocking one below, so there is one place the identity can be wrong. Shared:
+/// a clone is a handle onto the same connection pool, so asking for it per request costs
+/// nothing and reuses connections. A caller that wants a tighter deadline sets one on the
+/// request.
 ///
 /// Without timeouts a connection that goes quiet hangs its request forever, and the pollers
 /// awaiting it with it. The read timeout resets on every chunk, so large bodies still work.
 pub fn client() -> reqwest::Client {
-    reqwest::Client::builder()
-        .user_agent(get())
-        .connect_timeout(std::time::Duration::from_secs(10))
-        .read_timeout(std::time::Duration::from_secs(30))
-        .build()
-        .expect("http client")
+    static CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
+    CLIENT
+        .get_or_init(|| {
+            reqwest::Client::builder()
+                .user_agent(get())
+                .connect_timeout(std::time::Duration::from_secs(10))
+                .read_timeout(std::time::Duration::from_secs(30))
+                .build()
+                .expect("http client")
+        })
+        .clone()
 }
 
 pub fn blocking_client() -> reqwest::blocking::Client {

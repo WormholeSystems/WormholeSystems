@@ -136,6 +136,10 @@ pub enum SendError {
 
 const ATTEMPTS: usize = 3;
 
+/// One attempt at Discord, start to finish. The shared client only bounds a stalled read,
+/// and a message held up for half a minute holds up the ones queued behind it.
+const SEND_TIMEOUT: Duration = Duration::from_secs(15);
+
 /// Post a message to a Discord webhook, honouring rate limits.
 ///
 /// A 404 is a webhook somebody deleted, a 401 or 403 one whose token was rotated. Neither
@@ -178,6 +182,7 @@ pub async fn post_dm(
 ) -> Result<(), SendError> {
     let opened = http
         .post(format!("{}/users/@me/channels", crate::discord::API))
+        .timeout(SEND_TIMEOUT)
         .header("authorization", format!("Bot {token}"))
         .json(&serde_json::json!({ "recipient_id": discord_user_id }))
         .send()
@@ -210,7 +215,7 @@ async fn send(
         let Some(request) = request.try_clone() else {
             return Err(SendError::Failed("request is not retryable".into()));
         };
-        let response = match request.json(message).send().await {
+        let response = match request.timeout(SEND_TIMEOUT).json(message).send().await {
             Ok(response) => response,
             Err(err) => {
                 last = err.to_string();

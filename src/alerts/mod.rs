@@ -75,11 +75,7 @@ pub struct Runtime {
 impl Runtime {
     /// Load the graph and start the delivery worker.
     pub async fn load(pool: &PgPool, bot_token: Option<String>) -> sqlx::Result<Runtime> {
-        let http = reqwest::Client::builder()
-            .user_agent(crate::user_agent::get())
-            .timeout(Duration::from_secs(15))
-            .build()
-            .unwrap_or_default();
+        let http = crate::user_agent::client();
         let (outbox, inbox) = mpsc::channel(OUTBOX_CAPACITY);
         tokio::spawn(deliver_loop(
             pool.clone(),

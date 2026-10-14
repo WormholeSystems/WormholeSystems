@@ -6770,7 +6770,7 @@
             "format": "int64"
           },
           "mass_status": {
-            "type": "string"
+            "$ref": "#/components/schemas/MassStatus"
           },
           "max_ship_size": {
             "type": [
@@ -6794,7 +6794,7 @@
             "format": "int64"
           },
           "time_status": {
-            "type": "string"
+            "$ref": "#/components/schemas/TimeStatus"
           },
           "updated_at": {
             "type": [
