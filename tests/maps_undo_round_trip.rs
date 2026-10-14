@@ -25,8 +25,8 @@ const SYS_E: i64 = 30000147;
 /// - `time_status_updated_at`, for the edits only (`$2`): the stamp trigger marks a lifetime
 ///   change as made now, undo included, and the edit commands carry no old stamp to put
 ///   back. A removal does, so there it is compared.
-/// - The watchlist and the ignore list by system rather than by id: an undone removal
-///   comes back as a new row.
+/// - The ignore list by system rather than by id: an undone removal comes back as a new
+///   row, which nothing names by id.
 /// - A details row holding nothing but the defaults says the same as no row at all.
 const TABLES: [(&str, &str); 7] = [
     (
@@ -62,9 +62,7 @@ const TABLES: [(&str, &str); 7] = [
     ),
     (
         "map_watchlist",
-        "select coalesce(jsonb_agg(
-                    jsonb_build_object('id', t.solar_system_id, 'is_pinned', t.is_pinned)
-                    order by t.solar_system_id), '[]')
+        "select coalesce(jsonb_agg(to_jsonb(t) order by t.id), '[]')
          from map_watchlist t where map_id = $1 and $2 in (true, false)",
     ),
     (
@@ -388,13 +386,10 @@ async fn round_trip(pool: &PgPool, ghosting: bool, cases: &[Case]) {
 }
 
 /// Cases whose undo or redo does not yet put the map back, and what it gets wrong.
-const KNOWN_GAPS: &[(&str, &str)] = &[
-    ("remove_watchlist_entry", "the entry comes back unpinned"),
-    (
-        "update_signature away from a wormhole",
-        "undo brings the ghost back but not the scan's link to it",
-    ),
-];
+const KNOWN_GAPS: &[(&str, &str)] = &[(
+    "update_signature away from a wormhole",
+    "undo brings the ghost back but not the scan's link to it",
+)];
 
 const CASES: &[Case] = &[
     ("add_system", |s| {

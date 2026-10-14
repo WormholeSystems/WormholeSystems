@@ -2,6 +2,7 @@
 //! (legacy `map_route_solarsystems`). Rows are map-scoped and shared; routing against
 //! them happens client-side. Mutations are Member+; reads Viewer+.
 
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 
@@ -162,20 +163,64 @@ pub(super) async fn apply_remove_entry(
 ) -> Result<Effect> {
     let row = sqlx::query!(
         "delete from map_watchlist where id = $1 and map_id = $2
-         returning solar_system_id",
+         returning solar_system_id, is_pinned, created_at",
         cmd.entry_id,
         cmd.map_id,
     )
     .fetch_optional(&mut **tx)
     .await?
     .ok_or(MapError::NotFound)?;
-    let inverse = MapCommand::AddWatchlistEntry(AddWatchlistEntry {
+    let inverse = MapCommand::RestoreWatchlistEntry(RestoreWatchlistEntry {
         map_id: cmd.map_id,
+        entry_id: cmd.entry_id,
         solar_system_id: row.solar_system_id,
+        is_pinned: row.is_pinned,
+        created_at: row.created_at,
     });
     Ok(Effect::new(
         "watchlist.removed",
         "unwatched a system",
+        CommandOutput::None,
+    )
+    .undo_with(inverse)
+    .emit(MapEvent::WatchlistChanged { map_id: cmd.map_id }))
+}
+
+/// Put a removed entry back as it was, under its own id so the steps that name it still
+/// find it. Internal, the inverse of [`RemoveWatchlistEntry`].
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RestoreWatchlistEntry {
+    pub map_id: i64,
+    pub entry_id: i64,
+    pub solar_system_id: i64,
+    pub is_pinned: bool,
+    pub created_at: DateTime<Utc>,
+}
+
+pub(super) async fn apply_restore_entry(
+    tx: &mut Tx<'_>,
+    cmd: RestoreWatchlistEntry,
+) -> Result<Effect> {
+    sqlx::query!(
+        "insert into map_watchlist (id, map_id, solar_system_id, is_pinned, created_at)
+         overriding system value
+         values ($1, $2, $3, $4, $5)
+         on conflict do nothing",
+        cmd.entry_id,
+        cmd.map_id,
+        cmd.solar_system_id,
+        cmd.is_pinned,
+        cmd.created_at,
+    )
+    .execute(&mut **tx)
+    .await?;
+    let inverse = MapCommand::RemoveWatchlistEntry(RemoveWatchlistEntry {
+        map_id: cmd.map_id,
+        entry_id: cmd.entry_id,
+    });
+    Ok(Effect::new(
+        "watchlist.added",
+        "watched a system again",
         CommandOutput::None,
     )
     .undo_with(inverse)

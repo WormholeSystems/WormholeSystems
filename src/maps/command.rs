@@ -33,7 +33,9 @@ use super::solar_system::{
     SetAlias, SetHome, SetNotes, SetOccupier, SetPinned, SetRally, SetStatus,
 };
 use super::tracking::TrackJump;
-use super::watchlist::{AddWatchlistEntry, RemoveWatchlistEntry, SetWatchlistPinned};
+use super::watchlist::{
+    AddWatchlistEntry, RemoveWatchlistEntry, RestoreWatchlistEntry, SetWatchlistPinned,
+};
 use super::{
     Actor, MapConnection, MapSolarSystem, Role, Signature, connection, eve_scout, ghost, ignored,
     jumps, restore, signatures, solar_system, tracking, watchlist,
@@ -174,6 +176,7 @@ map_commands! {
     AddWatchlistEntry(watchlist::WatchlistEntry) => watchlist::apply_add_entry,
     SetWatchlistPinned(watchlist::WatchlistEntry) => watchlist::apply_set_pinned,
     RemoveWatchlistEntry => watchlist::apply_remove_entry,
+    RestoreWatchlistEntry => watchlist::apply_restore_entry,
     AddIgnoredSystem(ignored::IgnoredSystem) => ignored::apply_add,
     RemoveIgnoredSystem => ignored::apply_remove,
     ClearIgnoredSystems(u64) => ignored::apply_clear,
