@@ -1,8 +1,8 @@
 import { defineConfig } from '@playwright/test';
 
 // E2E tests run against the real stack: Postgres (docker compose up db), the Rust API,
-// and the vite dev server. Both servers are reused when already running (the solo dev
-// setup), so locally the tests attach to your running stack.
+// and the vite dev server. Both servers are reused when already running, so locally the
+// tests attach to your running stack.
 export default defineConfig({
 	testDir: 'e2e',
 	// The suite shares one dev stack: six workers against one debug-build API, one Postgres

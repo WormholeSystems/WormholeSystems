@@ -19,9 +19,9 @@ async function createMap(api: Api, name: string) {
 
 /**
  * These assert exact rows, so they need the stubbed upstream (EVE_SCOUT_URL in
- * playwright.config.ts). A dev API server started outside the suite — Solo's `API` process,
- * say, which restarts on every Rust change — is reused as-is and talks to the real
- * eve-scout.com, whose contents change by the hour. Skip rather than fail on someone else's
+ * playwright.config.ts). A dev API server started outside the suite, say one that
+ * restarts on every Rust change, is reused as-is and talks to the real eve-scout.com,
+ * whose contents change by the hour. Skip rather than fail on someone else's
  * data, and say which it was.
  */
 test.beforeEach(async ({ api }) => {
