@@ -4,4 +4,4 @@
  * Legacy's lifetime vocabulary has no "unknown": `healthy` is both vector's `stable` and
  * its null, and imports as the null (nothing remarkable to show).
  */
-export type WireLifetime = "healthy" | "eol" | "critical";
+export type WireLifetime = "healthy" | "eol" | "critical" | "expired";

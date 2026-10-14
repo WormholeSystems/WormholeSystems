@@ -40,8 +40,15 @@ export const ROUTE_PREFS: RouteOption<RoutePreference>[] = [
 
 export const ROUTE_LIFETIMES: RouteOption<TimeStatus>[] = [
 	{
-		value: 'critical',
+		value: 'expired',
 		label: 'Anything',
+		hint: 'Including holes closing any moment',
+		shortLabel: 'Expired',
+		shortHint: 'imminent',
+	},
+	{
+		value: 'critical',
+		label: 'Not expired',
 		hint: 'Including holes about to collapse',
 		shortLabel: 'Critical',
 		shortHint: '< 1 hour',

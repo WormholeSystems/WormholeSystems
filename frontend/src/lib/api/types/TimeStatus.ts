@@ -2,6 +2,7 @@
 
 /**
  * A wormhole's remaining lifetime, worst last. `Eol` ≈ "<4h"; `Critical` ≈ "<1h"
- * (super-EOL). Same severity-ordering / merge semantics as [`MassStatus`].
+ * (super-EOL); `Expired` is the in-game "Expired, closure imminent", past any reliable
+ * lifetime. Same severity-ordering / merge semantics as [`MassStatus`].
  */
-export type TimeStatus = "stable" | "eol" | "critical";
+export type TimeStatus = "stable" | "eol" | "critical" | "expired";

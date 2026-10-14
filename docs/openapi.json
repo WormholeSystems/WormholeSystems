@@ -1731,7 +1731,7 @@
         "tags": [
           "connections"
         ],
-        "summary": "`GET /api/maps/{id}/connections/stale`, edges that have been critical for over an hour.",
+        "summary": "`GET /api/maps/{id}/connections/stale`, edges that have been critical or expired for\nover an hour.",
         "operationId": "list_stale_connections",
         "parameters": [
           {
@@ -10544,7 +10544,8 @@
           },
           "critical_since": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "When it was marked critical or expired, whichever it is now."
           },
           "from_name": {
             "type": "string"
@@ -10885,11 +10886,12 @@
       },
       "TimeStatus": {
         "type": "string",
-        "description": "A wormhole's remaining lifetime, worst last. `Eol` ≈ \"<4h\"; `Critical` ≈ \"<1h\"\n(super-EOL). Same severity-ordering / merge semantics as [`MassStatus`].",
+        "description": "A wormhole's remaining lifetime, worst last. `Eol` ≈ \"<4h\"; `Critical` ≈ \"<1h\"\n(super-EOL); `Expired` is the in-game \"Expired, closure imminent\", past any reliable\nlifetime. Same severity-ordering / merge semantics as [`MassStatus`].",
         "enum": [
           "stable",
           "eol",
-          "critical"
+          "critical",
+          "expired"
         ]
       },
       "TrackJump": {
@@ -11490,7 +11492,8 @@
         "enum": [
           "healthy",
           "eol",
-          "critical"
+          "critical",
+          "expired"
         ]
       },
       "WireMassStatus": {

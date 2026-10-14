@@ -322,6 +322,7 @@ pub enum WireLifetime {
     Healthy,
     Eol,
     Critical,
+    Expired,
 }
 
 impl WireLifetime {
@@ -330,6 +331,7 @@ impl WireLifetime {
             WireLifetime::Healthy => None,
             WireLifetime::Eol => Some(TimeStatus::Eol),
             WireLifetime::Critical => Some(TimeStatus::Critical),
+            WireLifetime::Expired => Some(TimeStatus::Expired),
         }
     }
 
@@ -337,6 +339,7 @@ impl WireLifetime {
         match status {
             Some(TimeStatus::Eol) => WireLifetime::Eol,
             Some(TimeStatus::Critical) => WireLifetime::Critical,
+            Some(TimeStatus::Expired) => WireLifetime::Expired,
             Some(TimeStatus::Stable) | None => WireLifetime::Healthy,
         }
     }

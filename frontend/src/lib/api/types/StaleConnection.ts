@@ -3,4 +3,8 @@
 /**
  * One stale edge, for the status bar's cleanup popover.
  */
-export type StaleConnection = { connection_id: number, from_name: string, to_name: string, critical_since: string, };
+export type StaleConnection = { connection_id: number, from_name: string, to_name: string, 
+/**
+ * When it was marked critical or expired, whichever it is now.
+ */
+critical_since: string, };

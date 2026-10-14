@@ -39,7 +39,11 @@ const SIZE_LABELS: Partial<Record<WormholeSize, string>> = {
 /** Stable resolves to nothing, so mass only appears once the hole has actually degraded. */
 const MASS_LABELS: Partial<Record<MassStatus, string>> = { reduced: 'reduced', critical: 'crit' };
 /** Kept in the EOL vocabulary so it never reads as mass "crit". */
-const LIFE_LABELS: Partial<Record<TimeStatus, string>> = { eol: 'EOL', critical: 'EOL!' };
+const LIFE_LABELS: Partial<Record<TimeStatus, string>> = {
+	eol: 'EOL',
+	critical: 'EOL!',
+	expired: 'EOL!!',
+};
 
 export interface BookmarkSystem {
 	alias: string | null;

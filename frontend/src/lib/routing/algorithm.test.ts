@@ -60,6 +60,13 @@ describe('findRoute', () => {
 		expect(path(findRoute(graph(LINE, [dying]), 1, 5, settings()))).toEqual([1, 5]);
 	});
 
+	it('keeps an expired hole out at the default tolerance, and takes it once allowed', () => {
+		const expired: DynamicEdge = { a: 1, b: 5, via: 'wormhole', mass: null, time: 'expired' };
+		expect(path(findRoute(graph(LINE, [expired]), 1, 5, settings()))).toEqual([1, 2, 3, 4, 5]);
+		const anything = settings({ allowTimeStatus: 'expired' });
+		expect(path(findRoute(graph(LINE, [expired]), 1, 5, anything))).toEqual([1, 5]);
+	});
+
 	it('routes around a system the viewer has ignored', () => {
 		const detour: [number, number][] = [...LINE, [2, 9], [9, 4]];
 		const found = findRoute(graph(detour), 1, 5, settings(), new Set([3]));

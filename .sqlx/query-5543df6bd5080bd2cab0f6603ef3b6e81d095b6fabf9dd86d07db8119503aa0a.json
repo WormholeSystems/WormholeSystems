@@ -152,7 +152,8 @@
               "Enum": [
                 "stable",
                 "eol",
-                "critical"
+                "critical",
+                "expired"
               ]
             }
           }
@@ -266,7 +267,8 @@
               "Enum": [
                 "stable",
                 "eol",
-                "critical"
+                "critical",
+                "expired"
               ]
             }
           }

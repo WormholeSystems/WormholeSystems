@@ -40,6 +40,12 @@
 		sig.time_status_updated_at ?? connection?.time_status_updated_at ?? null,
 	);
 
+	const LIFETIME_LABELS = {
+		eol: 'End of Life (<4h)',
+		critical: 'Critical (<1h)',
+		expired: 'Expired (imminent)',
+	} as const;
+
 	const timeLeft = $derived.by(() => {
 		const deadline = connection ? lifetimeDeadline(connection) : null;
 		if (!deadline || deadline.estimated) return null;
@@ -59,7 +65,7 @@
 	<Tooltip.Trigger
 		data-lifetime={lifetime && lifetime !== 'stable' ? lifetime : null}
 		data-mass={mass && mass !== 'stable' ? mass : null}
-		class="sig-time flex w-full items-center justify-end font-mono text-xs whitespace-nowrap text-muted-foreground tabular-nums data-[lifetime=critical]:text-red-500 data-[lifetime=eol]:text-purple-500 data-[mass=critical]:text-red-500 data-[mass=reduced]:text-orange-500 {compact
+		class="sig-time flex w-full items-center justify-end font-mono text-xs whitespace-nowrap text-muted-foreground tabular-nums data-[lifetime=critical]:text-red-500 data-[lifetime=eol]:text-purple-500 data-[lifetime=expired]:text-red-500 data-[lifetime=expired]:motion-safe:animate-pulse data-[mass=critical]:text-red-500 data-[mass=reduced]:text-orange-500 {compact
 			? 'h-5'
 			: 'h-6'}"
 	>
@@ -71,10 +77,8 @@
 			<span>{utcShort(baseDate)}</span>
 			<span class="font-semibold">Last modified at</span>
 			<span>{utcShort(sig.updated_at)}</span>
-			{#if lifetime === 'eol' || lifetime === 'critical'}
-				<span class="font-semibold">
-					{lifetime === 'eol' ? 'End of Life (<4h)' : 'Critical (<1h)'}
-				</span>
+			{#if lifetime && lifetime !== 'stable'}
+				<span class="font-semibold">{LIFETIME_LABELS[lifetime]}</span>
 				<span>
 					{lifetimeSince ? sinceAgo(lifetimeSince) : ''}{timeLeft ? `, ${timeLeft}` : ''}
 				</span>

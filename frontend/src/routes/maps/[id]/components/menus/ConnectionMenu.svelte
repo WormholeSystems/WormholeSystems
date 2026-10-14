@@ -123,8 +123,11 @@
 	}
 </script>
 
-{#snippet dot(color: string)}
-	<span class="inline-block size-2 shrink-0 rounded-full" style="background-color: {color}"></span>
+{#snippet dot(color: string, pulse = false)}
+	<span
+		class="inline-block size-2 shrink-0 rounded-full {pulse ? 'motion-safe:animate-pulse' : ''}"
+		style="background-color: {color}"
+	></span>
 {/snippet}
 
 {#snippet check(selected: boolean)}
@@ -153,7 +156,7 @@
 	<div class={panel} data-testid="lifetime-submenu">
 		{#each LIFETIME_OPTIONS as o (o.value)}
 			<button class={item} onclick={() => setLifetime(o.value)}>
-				{@render dot(o.color)}
+				{@render dot(o.color, o.value === 'expired')}
 				{o.label}
 				<span class="ml-auto text-muted-foreground">{o.hint ?? ''}</span>
 				{@render check(

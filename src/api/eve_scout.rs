@@ -74,6 +74,7 @@ pub(crate) fn eve_scout_connection(sig: &serde_json::Value) -> Option<EveScoutCo
         _ => "stable",
     };
     let time = match sig.get("life").and_then(|v| v.as_str()) {
+        Some(l) if l.contains("expired") => "expired",
         Some(l) if l.contains("crit") => "critical",
         Some(l) if l.contains("eol") => "eol",
         Some(_) => "stable",
@@ -247,6 +248,11 @@ mod eve_scout_tests {
         let edge = eve_scout_connection(&sig).unwrap();
         assert_eq!(edge.mass_status, "stable");
         assert_eq!(edge.time_status, "critical");
+
+        let sig = serde_json::json!({
+            "in_system_id": 30000142, "out_system_id": 31000005, "life": "expired"
+        });
+        assert_eq!(eve_scout_connection(&sig).unwrap().time_status, "expired");
 
         let sig = serde_json::json!({ "in_system_id": 30000142 });
         assert!(eve_scout_connection(&sig).is_none());

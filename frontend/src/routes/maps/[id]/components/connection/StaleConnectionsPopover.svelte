@@ -1,5 +1,5 @@
 <script lang="ts">
-	// Holes critical for over an hour: list them, and offer to sweep them all at once.
+	// Holes critical or expired for over an hour: list them, and offer to sweep them all at once.
 	import TriangleAlertIcon from '@lucide/svelte/icons/triangle-alert';
 
 	import { Badge } from '$lib/components/ui/badge';
@@ -29,7 +29,7 @@
 		</Popover.Trigger>
 		<Popover.Content class="w-80 p-0" align="center">
 			<div class="border-b border-border/50 px-3 py-2 text-xs">
-				Critical for over an hour, so probably long gone.
+				Critical or expired for over an hour, so probably long gone.
 			</div>
 			<ul class="max-h-64 overflow-y-auto py-1" data-testid="stale-list">
 				{#each map.connections.stale as s (s.connection_id)}

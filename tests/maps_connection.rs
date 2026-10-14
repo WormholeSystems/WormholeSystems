@@ -553,6 +553,97 @@ async fn ageing_uses_the_class_pair_and_never_downgrades(pool: PgPool) {
     assert_eq!(status_of(&pool, to_c6).await, Some(TimeStatus::Eol));
 }
 
+/// Expired is only ever read off the hole: the clock leaves an expired hole where it is,
+/// and the stale cleanup takes it an hour after the mark, like a critical one.
+#[sqlx::test]
+async fn an_expired_hole_is_not_aged_and_goes_stale_after_an_hour(pool: PgPool) {
+    use wormholesystems::maps::connection::{
+        CleanStaleConnections, age_connections, clean_stale_connections, list_stale_connections,
+    };
+
+    let w = world(&pool).await;
+    seed_wormhole_system(&pool, 31000001, 3).await;
+    let a = place(&pool, w.owner, w.map_id, SYS_A).await;
+    let j = place(&pool, w.owner, w.map_id, 31000001).await;
+    let conn = connect(&pool, w.owner, w.map_id, a, j, ConnectionType::Wormhole).await;
+    set_connection_status(
+        &pool,
+        w.owner,
+        SetConnectionStatus {
+            map_id: w.map_id,
+            connection_id: conn,
+            time_status: Some(Some(TimeStatus::Expired)),
+            ..Default::default()
+        },
+    )
+    .await
+    .unwrap();
+
+    age_by(&pool, conn, 30).await;
+    assert_eq!(age_connections(&pool).await.unwrap(), 0);
+    assert_eq!(status_of(&pool, conn).await, Some(TimeStatus::Expired));
+
+    assert!(
+        list_stale_connections(&pool, w.owner, w.map_id)
+            .await
+            .unwrap()
+            .is_empty(),
+        "a fresh mark is not stale yet"
+    );
+    marked_ago(&pool, conn, 1).await;
+    let stale = list_stale_connections(&pool, w.owner, w.map_id)
+        .await
+        .unwrap();
+    assert_eq!(stale.len(), 1);
+    assert_eq!(stale[0].connection_id, conn);
+
+    let removed =
+        clean_stale_connections(&pool, w.owner, CleanStaleConnections { map_id: w.map_id })
+            .await
+            .unwrap();
+    assert_eq!(removed, 1);
+}
+
+/// Worst wins on link: an expired signature drags a critical connection along.
+#[sqlx::test]
+async fn an_expired_signature_wins_over_a_critical_connection(pool: PgPool) {
+    let w = world(&pool).await;
+    seed_wormhole_system(&pool, 31000001, 3).await;
+    let a = place(&pool, w.owner, w.map_id, SYS_A).await;
+    let j = place(&pool, w.owner, w.map_id, 31000001).await;
+    let conn = connect(&pool, w.owner, w.map_id, a, j, ConnectionType::Wormhole).await;
+    set_connection_status(
+        &pool,
+        w.owner,
+        SetConnectionStatus {
+            map_id: w.map_id,
+            connection_id: conn,
+            time_status: Some(Some(TimeStatus::Critical)),
+            ..Default::default()
+        },
+    )
+    .await
+    .unwrap();
+
+    let sig: i64 = sqlx::query_scalar(
+        r#"insert into signatures (map_id, solar_system_id, signature_id, "group", time_status)
+           values ($1, $2, 'ABC-123', 'wormhole', 'expired') returning id"#,
+    )
+    .bind(w.map_id)
+    .bind(SYS_A)
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    sqlx::query("update signatures set connection_id = $2 where id = $1")
+        .bind(sig)
+        .bind(conn)
+        .execute(&pool)
+        .await
+        .unwrap();
+
+    assert_eq!(status_of(&pool, conn).await, Some(TimeStatus::Expired));
+}
+
 /// A wormhole three days old cannot exist: it goes, with the placement it strands, while
 /// pinned systems, stargates and younger holes stay. Its signature is unlinked, not deleted.
 #[sqlx::test]

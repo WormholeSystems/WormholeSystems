@@ -32,6 +32,12 @@
 				return { label, text: 'text-purple-500', dot: 'bg-purple-500' };
 			case 'critical':
 				return { label, text: 'text-red-500', dot: 'bg-red-500' };
+			case 'expired':
+				return {
+					label: `${label} (${option.hint})`,
+					text: 'text-red-500',
+					dot: option.dot,
+				};
 			default:
 				return { label, text: 'text-green-500', dot: 'bg-green-500' };
 		}
@@ -82,9 +88,7 @@
 		return timeAgo(ms, new Date(clock.current));
 	}
 
-	const degraded = $derived(
-		connection.time_status === 'eol' || connection.time_status === 'critical',
-	);
+	const degraded = $derived(connection.time_status !== null && connection.time_status !== 'stable');
 	const lifetimeSince = $derived(
 		connection.time_status_updated_at === null
 			? null

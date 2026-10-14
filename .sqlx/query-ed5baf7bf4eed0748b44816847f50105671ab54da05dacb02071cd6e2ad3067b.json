@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select c.id, c.map_id, c.time_status as \"time_status: TimeStatus\",\n                  c.time_status_updated_at, c.created_at,\n                  fs.wormhole_class_id as \"from_class?\", ts.wormhole_class_id as \"to_class?\"\n           from map_connections c\n           join map_solar_systems fm on fm.id = c.from_system\n           left join solar_systems fs on fs.id = fm.solar_system_id\n           join map_solar_systems tm on tm.id = c.to_system\n           left join solar_systems ts on ts.id = tm.solar_system_id\n           where c.type = 'wormhole'\n             and c.time_status is distinct from 'critical'",
+  "query": "select c.id, c.map_id, c.time_status as \"time_status: TimeStatus\",\n                  c.time_status_updated_at, c.created_at,\n                  fs.wormhole_class_id as \"from_class?\", ts.wormhole_class_id as \"to_class?\"\n           from map_connections c\n           join map_solar_systems fm on fm.id = c.from_system\n           left join solar_systems fs on fs.id = fm.solar_system_id\n           join map_solar_systems tm on tm.id = c.to_system\n           left join solar_systems ts on ts.id = tm.solar_system_id\n           where c.type = 'wormhole'\n             and c.time_status is distinct from 'critical'\n             and c.time_status is distinct from 'expired'",
   "describe": {
     "columns": [
       {
@@ -35,7 +35,8 @@
               "Enum": [
                 "stable",
                 "eol",
-                "critical"
+                "critical",
+                "expired"
               ]
             }
           }
@@ -105,5 +106,5 @@
       true
     ]
   },
-  "hash": "3ab2bb2fa182a13878acacb04fe468bf3a903dc5e6327b786670cd13e6a57775"
+  "hash": "ed5baf7bf4eed0748b44816847f50105671ab54da05dacb02071cd6e2ad3067b"
 }

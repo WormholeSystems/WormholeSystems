@@ -21,6 +21,15 @@ export const LIFETIME_OPTIONS: StatusOption<TimeStatus>[] = [
 	{ value: 'stable', label: 'Healthy', hint: null, color: HEALTHY_DOT, dot: 'bg-neutral-500' },
 	{ value: 'eol', label: 'End of Life', hint: '< 4h', color: '#a855f7', dot: 'bg-purple-500' },
 	{ value: 'critical', label: 'Critical', hint: '< 1h', color: '#ef4444', dot: 'bg-red-500' },
+	// In game "Expired, closure imminent": red like critical, and pulsing so the two still
+	// read apart.
+	{
+		value: 'expired',
+		label: 'Expired',
+		hint: 'imminent',
+		color: '#ef4444',
+		dot: 'bg-red-500 motion-safe:animate-pulse',
+	},
 ];
 
 export const MASS_OPTIONS: StatusOption<MassStatus>[] = [
