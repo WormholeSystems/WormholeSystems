@@ -618,14 +618,12 @@ pub async fn prune_unclaimed(pool: &PgPool) -> Result<u64> {
 }
 
 pub fn start_prune(pool: PgPool) {
-    tokio::spawn(async move {
-        let mut ticker = tokio::time::interval(std::time::Duration::from_secs(300));
-        ticker.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
-        loop {
-            ticker.tick().await;
-            if let Err(err) = prune_unclaimed(&pool).await {
-                tracing::error!("connection jump prune failed: {err}");
-            }
-        }
-    });
+    crate::background::spawn_every(
+        "connection jump prune",
+        std::time::Duration::from_secs(300),
+        move || {
+            let pool = pool.clone();
+            async move { prune_unclaimed(&pool).await.map(drop) }
+        },
+    );
 }

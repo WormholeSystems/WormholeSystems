@@ -436,14 +436,12 @@ pub async fn purge(pool: &PgPool) -> Result<u64> {
 }
 
 pub fn start_purge(pool: PgPool) {
-    tokio::spawn(async move {
-        let mut ticker = tokio::time::interval(std::time::Duration::from_secs(6 * 60 * 60));
-        ticker.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
-        loop {
-            ticker.tick().await;
-            if let Err(err) = purge(&pool).await {
-                tracing::error!("map event purge failed: {err}");
-            }
-        }
-    });
+    crate::background::spawn_every(
+        "map event purge",
+        std::time::Duration::from_secs(6 * 60 * 60),
+        move || {
+            let pool = pool.clone();
+            async move { purge(&pool).await.map(drop) }
+        },
+    );
 }

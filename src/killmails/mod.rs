@@ -257,11 +257,11 @@ pub fn start(
         .and_then(|d| d.parse().ok())
         .unwrap_or(BACKFILL_DAYS);
     tokio::spawn(stream::listen(pool.clone(), maps, alerts));
-    tokio::spawn(stream::resolve_loop(pool.clone(), esi.clone()));
+    stream::start_resolver(pool.clone(), esi.clone());
     if days > 0 {
         tokio::spawn(archive::backfill_loop(pool.clone(), esi.clone(), days));
     }
-    tokio::spawn(analysis::analysis_loop(pool, esi));
+    analysis::start(pool, esi);
 }
 
 #[cfg(test)]

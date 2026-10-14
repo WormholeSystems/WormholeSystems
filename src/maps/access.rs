@@ -63,16 +63,20 @@ pub async fn sweep_expired(pool: &PgPool) -> Result<u64> {
 /// row somebody meant to be gone, and rather than per-minute because the view already makes
 /// it stop counting — this is tidying, not enforcement.
 pub fn spawn_expiry_sweep(pool: PgPool) {
-    tokio::spawn(async move {
-        loop {
-            match sweep_expired(&pool).await {
-                Ok(0) => {}
-                Ok(n) => tracing::info!("access: {n} expired grant(s) removed"),
-                Err(err) => tracing::error!("access expiry sweep failed: {err}"),
+    crate::background::spawn_every(
+        "access expiry sweep",
+        std::time::Duration::from_secs(60 * 60),
+        move || {
+            let pool = pool.clone();
+            async move {
+                let removed = sweep_expired(&pool).await?;
+                if removed > 0 {
+                    tracing::info!("access: {removed} expired grant(s) removed");
+                }
+                Ok::<_, crate::maps::MapError>(())
             }
-            tokio::time::sleep(std::time::Duration::from_secs(60 * 60)).await;
-        }
-    });
+        },
+    );
 }
 
 /// Whether this user can see the map at all. The yes/no form of [`effective_role`], for the

@@ -293,12 +293,15 @@ const NAME_RETRIES: u32 = 3;
 /// its last week of kills should read as names right then. The same names also serve the
 /// killmail alerts (which reach beyond the chain), the access search, and the threat
 /// analysis. With the bulk endpoint that is a call or two a minute, so not worth narrowing.
-pub(super) async fn resolve_loop(pool: PgPool, esi: EsiClient) {
-    let mut resolver = NameResolver::default();
-    loop {
-        resolver.pass(&pool, &esi).await;
-        tokio::time::sleep(Duration::from_secs(60)).await;
-    }
+pub(super) fn start_resolver(pool: PgPool, esi: EsiClient) {
+    let resolver = std::sync::Arc::new(tokio::sync::Mutex::new(NameResolver::default()));
+    crate::background::spawn_every("killmail names", Duration::from_secs(60), move || {
+        let (pool, esi, resolver) = (pool.clone(), esi.clone(), resolver.clone());
+        async move {
+            resolver.lock().await.pass(&pool, &esi).await;
+            Ok::<_, std::convert::Infallible>(())
+        }
+    });
 }
 
 /// Where the name resolver has got to: the last `ingest_seq` it is done with, read from

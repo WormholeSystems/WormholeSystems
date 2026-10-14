@@ -31,22 +31,20 @@ pub async fn expire_signatures(pool: &PgPool) -> Result<Vec<(i64, i64)>> {
 /// Publishes a `SignatureChanged` per affected system so open maps refresh. The cutoffs are
 /// days, so the tick cadence is uncritical.
 pub fn start_expiry(pool: PgPool, hub: MapHub) {
-    tokio::spawn(async move {
-        let mut ticker = tokio::time::interval(std::time::Duration::from_secs(6 * 60 * 60));
-        ticker.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
-        loop {
-            ticker.tick().await;
-            match expire_signatures(&pool).await {
-                Ok(pairs) => {
-                    for (map_id, solar_system_id) in pairs {
-                        hub.publish(MapEvent::SignatureChanged {
-                            map_id,
-                            solar_system_id,
-                        });
-                    }
+    crate::background::spawn_every(
+        "signature expiry",
+        std::time::Duration::from_secs(6 * 60 * 60),
+        move || {
+            let (pool, hub) = (pool.clone(), hub.clone());
+            async move {
+                for (map_id, solar_system_id) in expire_signatures(&pool).await? {
+                    hub.publish(MapEvent::SignatureChanged {
+                        map_id,
+                        solar_system_id,
+                    });
                 }
-                Err(err) => tracing::error!("signature expiry failed: {err}"),
+                Ok::<_, crate::maps::MapError>(())
             }
-        }
-    });
+        },
+    );
 }

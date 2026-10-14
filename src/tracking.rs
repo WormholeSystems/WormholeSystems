@@ -21,8 +21,9 @@ use std::time::Duration;
 use sqlx::PgPool;
 use tokio::sync::{Semaphore, SemaphorePermit};
 use tokio::task::JoinSet;
-use tokio::time::{MissedTickBehavior, interval, timeout};
+use tokio::time::timeout;
 
+use crate::background::spawn_every;
 use crate::db::PgTokenStore;
 use crate::esi::scopes::Scope;
 use crate::esi::{EsiClient, Result as EsiResult, Sso, Token, TokenCache, TokenStore};
@@ -116,48 +117,39 @@ pub fn start(
         tokens: TokenCache::new(),
         db: Semaphore::new(db),
     });
-    tokio::spawn(tier_one(poller.clone(), server.clone()));
-    tokio::spawn(tier_two(poller, server));
+    let (one, one_server) = (poller.clone(), server.clone());
+    spawn_every("tracking tier-1", Duration::from_secs(60), move || {
+        tier_one(one.clone(), one_server.clone())
+    });
+    spawn_every("tracking tier-2", Duration::from_secs(5), move || {
+        tier_two(poller.clone(), server.clone())
+    });
 }
 
 /// Tier 1: online state, every 60s, for every character of an active user.
-async fn tier_one(poller: Arc<Poller>, server: ServerWatch) {
-    let mut ticker = interval(Duration::from_secs(60));
-    ticker.set_missed_tick_behavior(MissedTickBehavior::Skip);
-    loop {
-        ticker.tick().await;
-        // Nobody can be online while the server is not, and every call would fail against
-        // the error limit. See [`crate::server_status`].
-        if !server.should_poll() {
-            continue;
-        }
-        match active_characters(&poller.pool, false).await {
-            Ok(due) => {
-                // Everyone tier 2 polls is in this set too, so this is where tokens for
-                // characters that dropped out of polling are let go.
-                let ids: HashSet<i64> = due.iter().map(|d| d.character_id).collect();
-                poller.tokens.retain(|id| ids.contains(&id));
-                run_polls("tier-1", &due, |d| poll_online(poller.clone(), d)).await
-            }
-            Err(err) => tracing::error!("tracking tier-1 select failed: {err}"),
-        }
+async fn tier_one(poller: Arc<Poller>, server: ServerWatch) -> Result<(), sqlx::Error> {
+    // Nobody can be online while the server is not, and every call would fail against the
+    // error limit. See [`crate::server_status`].
+    if !server.should_poll() {
+        return Ok(());
     }
+    let due = active_characters(&poller.pool, false).await?;
+    // Everyone tier 2 polls is in this set too, so this is where tokens for characters that
+    // dropped out of polling are let go.
+    let ids: HashSet<i64> = due.iter().map(|d| d.character_id).collect();
+    poller.tokens.retain(|id| ids.contains(&id));
+    run_polls("tier-1", &due, |d| poll_online(poller.clone(), d)).await;
+    Ok(())
 }
 
 /// Tier 2: location + ship, every 5s, for currently-online characters of active users.
-async fn tier_two(poller: Arc<Poller>, server: ServerWatch) {
-    let mut ticker = interval(Duration::from_secs(5));
-    ticker.set_missed_tick_behavior(MissedTickBehavior::Skip);
-    loop {
-        ticker.tick().await;
-        if !server.should_poll() {
-            continue;
-        }
-        match active_characters(&poller.pool, true).await {
-            Ok(due) => run_polls("tier-2", &due, |d| poll_location_ship(poller.clone(), d)).await,
-            Err(err) => tracing::error!("tracking tier-2 select failed: {err}"),
-        }
+async fn tier_two(poller: Arc<Poller>, server: ServerWatch) -> Result<(), sqlx::Error> {
+    if !server.should_poll() {
+        return Ok(());
     }
+    let due = active_characters(&poller.pool, true).await?;
+    run_polls("tier-2", &due, |d| poll_location_ship(poller.clone(), d)).await;
+    Ok(())
 }
 
 /// Characters whose user has been active within the last 5 minutes. With `online_only`, also

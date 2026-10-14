@@ -10,7 +10,6 @@ use std::time::Duration;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
-use tokio::time::{MissedTickBehavior, interval};
 
 use crate::esi::EsiClient;
 use crate::esi::skyhooks::RaidableSkyhook;
@@ -80,18 +79,14 @@ pub struct Skyhook {
 
 /// Spawn the sync loop. Returns immediately; the loop runs for the process lifetime.
 pub fn start(pool: PgPool, esi: EsiClient, server: ServerWatch) {
-    tokio::spawn(async move {
-        let mut ticker = interval(interval_secs());
-        ticker.set_missed_tick_behavior(MissedTickBehavior::Skip);
-        loop {
-            ticker.tick().await;
+    crate::background::spawn_every("skyhook sync", interval_secs(), move || {
+        let (pool, esi, server) = (pool.clone(), esi.clone(), server.clone());
+        async move {
             // Nobody is raiding while the server is down, and the call would fail anyway.
             if !server.should_poll() {
-                continue;
+                return Ok(());
             }
-            if let Err(err) = sync_once(&pool, &esi).await {
-                tracing::error!("skyhook sync failed: {err}");
-            }
+            sync_once(&pool, &esi).await.map(drop)
         }
     });
 }

@@ -7,7 +7,6 @@
 use std::time::Duration;
 
 use sqlx::PgPool;
-use tokio::time::{MissedTickBehavior, interval};
 
 /// How long a delivery is kept once its occasion cannot come round again.
 pub const DELIVERY_RETENTION_DAYS: i32 = 30;
@@ -24,16 +23,14 @@ pub struct Swept {
 
 /// Spawn the daily sweep. Returns immediately; the loop runs for the process lifetime.
 pub fn start(pool: PgPool) {
-    tokio::spawn(async move {
-        let mut ticker = interval(Duration::from_secs(24 * 60 * 60));
-        ticker.set_missed_tick_behavior(MissedTickBehavior::Skip);
-        loop {
-            ticker.tick().await;
-            if let Err(err) = sweep(&pool).await {
-                tracing::error!("retention sweep failed: {err}");
-            }
-        }
-    });
+    crate::background::spawn_every(
+        "retention sweep",
+        Duration::from_secs(24 * 60 * 60),
+        move || {
+            let pool = pool.clone();
+            async move { sweep(&pool).await.map(drop) }
+        },
+    );
 }
 
 pub async fn sweep(pool: &PgPool) -> sqlx::Result<Swept> {

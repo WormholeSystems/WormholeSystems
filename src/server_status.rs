@@ -5,13 +5,13 @@
 //! nothing. Pollers ask [`ServerWatch::should_poll`] before each tick, and this loop is the
 //! only one that keeps running, because it is what notices the recovery.
 
+use std::sync::Arc;
 use std::time::Duration;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use tokio::sync::watch;
-use tokio::time::{MissedTickBehavior, interval};
 
 use crate::esi::{EsiClient, EsiError};
 use crate::user_channel::{UserEvent, UserHub};
@@ -119,36 +119,37 @@ impl ServerWatch {
 /// Spawn the status loop. Returns the handle the other pollers gate on.
 pub fn start(pool: PgPool, esi: EsiClient, users: UserHub) -> ServerWatch {
     let (tx, rx) = watch::channel(ServerStatus::unknown());
+    let tx = Arc::new(tx);
     tokio::spawn(async move {
         // Start from the last known value so a restart does not blank the header, then
         // correct it on the first poll a moment later.
         if let Ok(Some(stored)) = load(&pool).await {
             let _ = tx.send(stored);
         }
-
-        let mut ticker = interval(poll_interval());
-        ticker.set_missed_tick_behavior(MissedTickBehavior::Skip);
-        loop {
-            ticker.tick().await;
-            // Held back by our own ESI backoff, which says nothing about Tranquility: keep
-            // what we last knew rather than calling it unreachable.
-            let Some(status) = poll(&esi).await else {
-                continue;
-            };
-            if let Err(err) = save(&pool, &status).await {
-                tracing::error!("could not store the server status: {err}");
+        crate::background::spawn_every("server status poll", poll_interval(), move || {
+            let (pool, esi, users, tx) = (pool.clone(), esi.clone(), users.clone(), tx.clone());
+            async move {
+                // Held back by our own ESI backoff, which says nothing about Tranquility:
+                // keep what we last knew rather than calling it unreachable.
+                let Some(status) = poll(&esi).await else {
+                    return Ok(());
+                };
+                let saved = save(&pool, &status).await;
+                // Only tell the clients when something actually changed; the players count
+                // moves constantly and nobody needs a push every minute for it.
+                let changed = {
+                    let previous = tx.borrow();
+                    previous.state != status.state
+                        || previous.server_version != status.server_version
+                };
+                let _ = tx.send(status);
+                if changed {
+                    users.broadcast(UserEvent::ServerStatusChanged);
+                }
+                // Reported last: a status that could not be stored is still the status.
+                saved.map_err(|err| format!("could not store the server status: {err}"))
             }
-            // Only tell the clients when something actually changed; the players count
-            // moves constantly and nobody needs a push every minute for it.
-            let changed = {
-                let previous = tx.borrow();
-                previous.state != status.state || previous.server_version != status.server_version
-            };
-            let _ = tx.send(status);
-            if changed {
-                users.broadcast(UserEvent::ServerStatusChanged);
-            }
-        }
+        });
     });
     ServerWatch(rx)
 }

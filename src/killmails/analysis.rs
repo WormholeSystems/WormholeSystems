@@ -27,16 +27,22 @@ pub fn threat_level(total_kills: i64) -> crate::maps::ThreatLevel {
     }
 }
 
-pub(super) async fn analysis_loop(pool: PgPool, esi: EsiClient) {
-    loop {
-        if let Err(err) = analyze(&pool, &esi).await {
-            tracing::error!("threat analysis failed: {err}");
-        }
-        if let Err(err) = purge(&pool).await {
-            tracing::error!("killmail purge failed: {err}");
-        }
-        tokio::time::sleep(Duration::from_secs(24 * 60 * 60)).await;
-    }
+/// The daily pass: recompute the threats, then drop killmails past retention.
+pub(super) fn start(pool: PgPool, esi: EsiClient) {
+    crate::background::spawn_every(
+        "threat analysis",
+        Duration::from_secs(24 * 60 * 60),
+        move || {
+            let (pool, esi) = (pool.clone(), esi.clone());
+            async move {
+                let analyzed = analyze(&pool, &esi).await.map_err(|err| err.to_string());
+                if let Err(err) = purge(&pool).await {
+                    tracing::error!("killmail purge failed: {err}");
+                }
+                analyzed
+            }
+        },
+    );
 }
 
 /// Advisory lock key for [`analyze`], which replaces the whole table and so cannot overlap
