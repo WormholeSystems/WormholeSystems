@@ -9,6 +9,7 @@
 //! already (the hole led back into the chain) the ghost is merged into that placement
 //! rather than duplicating it.
 
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 
@@ -655,7 +656,7 @@ async fn merge(
 
     let ghost = sqlx::query!(
         r#"delete from map_solar_systems where id = $1 and map_id = $2
-           returning position_x, position_y, alias,
+           returning position_x, position_y, alias, created_at,
                raised_by_signature_id as "raised_by_signature_id!",
                hangs_off_id as "hangs_off_id!""#,
         ghost_id,
@@ -711,6 +712,7 @@ async fn merge(
         hangs_off_id: ghost.hangs_off_id,
         from_connection_ids: from_ids,
         to_connection_ids: to_ids,
+        created_at: Some(ghost.created_at),
     })))
 }
 
@@ -727,6 +729,10 @@ pub struct RestoreGhostSystem {
     pub hangs_off_id: i64,
     pub from_connection_ids: Vec<i64>,
     pub to_connection_ids: Vec<i64>,
+    /// When the ghost was raised, so it comes back as old as it was. Absent from older
+    /// history, which brings it back as new.
+    #[serde(default)]
+    pub created_at: Option<DateTime<Utc>>,
 }
 
 pub(super) async fn apply_restore_ghost_system(
@@ -750,6 +756,7 @@ pub(super) async fn apply_restore_ghost_system(
             raised_by_signature_id: Some(cmd.raised_by_signature_id),
             hangs_off_id: Some(cmd.hangs_off_id),
             signatures_pasted_at: None,
+            created_at: cmd.created_at,
         },
     )
     .await?;

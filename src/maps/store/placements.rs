@@ -35,6 +35,10 @@ pub struct PlacementRow {
     /// Comes back with the signatures, so the panel still says how old they are.
     #[serde(default)]
     pub signatures_pasted_at: Option<DateTime<Utc>>,
+    /// When it was first placed, so an undo does not make it new. Absent from snapshots
+    /// taken before it was kept, which come back as placed now.
+    #[serde(default)]
+    pub created_at: Option<DateTime<Utc>>,
 }
 
 /// A placement that is not on the map yet. Home, rally and the paste time are earned on the
@@ -147,9 +151,10 @@ pub(crate) async fn snapshot(
 ) -> Result<Vec<PlacementRow>> {
     Ok(sqlx::query_as!(
         PlacementRow,
-        "select id, solar_system_id, position_x, position_y, alias, is_home, is_rally, rallied_at,
-                is_pinned, raised_by_signature_id, hangs_off_id, signatures_pasted_at
-         from map_solar_systems where map_id = $1 and id = any($2)",
+        r#"select id, solar_system_id, position_x, position_y, alias, is_home, is_rally,
+                  rallied_at, is_pinned, raised_by_signature_id, hangs_off_id,
+                  signatures_pasted_at, created_at as "created_at?"
+           from map_solar_systems where map_id = $1 and id = any($2)"#,
         map_id,
         ids,
     )
@@ -164,10 +169,11 @@ pub(crate) async fn reinsert(tx: &mut Tx<'_>, map_id: i64, row: &PlacementRow) -
         "insert into map_solar_systems
              (id, map_id, solar_system_id, position_x, position_y, alias,
               is_home, rallied_at, is_pinned, raised_by_signature_id, hangs_off_id,
-              signatures_pasted_at)
+              signatures_pasted_at, created_at)
          overriding system value
          values ($1, $2, $3, $4, $5, $6, $7,
-                 coalesce($8, case when $9 then now() end), $10, $11, $12, $13)
+                 coalesce($8, case when $9 then now() end), $10, $11, $12, $13,
+                 coalesce($14, now()))
          on conflict (id) do nothing",
         row.id,
         map_id,
@@ -182,6 +188,7 @@ pub(crate) async fn reinsert(tx: &mut Tx<'_>, map_id: i64, row: &PlacementRow) -
         row.raised_by_signature_id,
         row.hangs_off_id,
         row.signatures_pasted_at,
+        row.created_at,
     )
     .execute(&mut **tx)
     .await?;
