@@ -27,9 +27,13 @@ services:
       retries: 10
     logging: *logging
 
-  # The rest of the stack (Caddy + API + frontend). `docker compose up -d --build` runs all
-  # of it; `docker compose up -d db` still starts the database alone for host-side dev.
+  # The rest of the stack (Caddy + API + frontend). `docker compose up -d --build` builds
+  # and runs all of it; `docker compose up -d db` still starts the database alone for
+  # host-side dev.
   api:
+    # Published for amd64 and arm64 by .github/workflows/images.yml. `docker compose build`
+    # makes the same image here from this checkout instead; WS_IMAGES in .env says which.
+    image: ${WS_IMAGE_PREFIX:-ghcr.io/wormholesystems/wormholesystems}-api:${WS_VERSION:-main}
     build: .
     restart: unless-stopped
     env_file: .env
@@ -60,6 +64,7 @@ services:
     logging: *logging
 
   web:
+    image: ${WS_IMAGE_PREFIX:-ghcr.io/wormholesystems/wormholesystems}-web:${WS_VERSION:-main}
     build: frontend
     restart: unless-stopped
     environment:
