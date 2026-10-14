@@ -148,4 +148,115 @@ describe('parseScan', () => {
 	it('parses nothing from empty input', () => {
 		expect(parseScan('', catalog)).toEqual([]);
 	});
+	describe('localized clients', () => {
+		// The real catalog's ids and names for the sites these pastes mention.
+		const localized: SignatureCatalog = {
+			categories: [
+				{ id: 1, name: 'Wormhole', code: 'wormhole' },
+				{ id: 2, name: 'Data Site', code: 'data' },
+				{ id: 3, name: 'Relic Site', code: 'relic' },
+				{ id: 4, name: 'Combat Site', code: 'combat' },
+				{ id: 5, name: 'Gas Site', code: 'gas' },
+				{ id: 6, name: 'Ore Site', code: 'ore' },
+				{ id: 8, name: 'Factional Warfare Site', code: 'faction-warfare' },
+			],
+			types: [
+				type({ id: 124, name: 'Unsecured Perimeter Amplifier', signature_category_id: 2 }),
+				type({ id: 65, name: 'Ruined Sansha Temple Site', signature_category_id: 3 }),
+				type({ id: 17, name: 'Core Garrison', signature_category_id: 4 }),
+				type({ id: 35, name: 'Unstable Wormhole', signature_category_id: 4 }),
+				type({ id: 136, name: 'Barren Perimeter Reservoir', signature_category_id: 5 }),
+			],
+		};
+
+		it('parses a German paste with decimal commas', () => {
+			const paste = [
+				'ABC-123\tKosmische Signatur\tDatengebiet\tUngesicherter Verstärker im Außenbereich\t100,0%\t4,2 AE',
+				'DEF-456\tKosmische Signatur\tWurmloch\tInstabiles Wurmloch\t100,0%\t12,34 AE',
+				'GHI-789\tKosmische Signatur\t\t\t0,0%\t6,51 AE',
+			].join('\n');
+
+			expect(parseScan(paste, localized)).toEqual([
+				{ signature_id: 'ABC-123', group: 'data', signature_type_id: 124, name: undefined },
+				{
+					signature_id: 'DEF-456',
+					group: 'wormhole',
+					signature_type_id: undefined,
+					name: 'Instabiles Wurmloch',
+				},
+				{
+					signature_id: 'GHI-789',
+					group: undefined,
+					signature_type_id: undefined,
+					name: undefined,
+				},
+			]);
+		});
+
+		it('parses Russian and Chinese pastes', () => {
+			const paste = [
+				'ABC-123\tСкрытый сигнал\tАрхеологический район\tРазрушенный храмовый комплекс Sansha\t100,0%\t3,10 а.е.',
+				'DEF-456\t空间信号\t战斗地点\t核心兵站\t100.0%\t5.03 AU',
+			].join('\n');
+
+			expect(parseScan(paste, localized)).toEqual([
+				{ signature_id: 'ABC-123', group: 'relic', signature_type_id: 65, name: undefined },
+				{ signature_id: 'DEF-456', group: 'combat', signature_type_id: 17, name: undefined },
+			]);
+		});
+
+		it('parses a clipboard mixing several languages', () => {
+			const paste = [
+				'AAA-111\tCosmic Signature\tGas Site\tBarren Perimeter Reservoir\t100.0%\t5.03 AU',
+				'BBB-222\tKosmische Signatur\tGasgebiet\tKarges Gasvorkommen\t100,0%\t4,2 AE',
+				'CCC-333\t코즈믹 시그니처\t가스 사이트\t황량한 변방 가스 매장지\t100.0%\t1.20 AU',
+				'DDD-444\t宇宙のシグネチャ\tガスサイト\t荒地の防御ライン貯水池\t100.0%\t2.40 AU',
+				'EEE-555\tSignature cosmique\tSite de collecte de gaz\tRéservoir de périmètre aride\t100,0%\t7,00 UA',
+				'FFF-666\tSeñal cósmica\tZona de gas\tReserva perimetral baldía\t100,0%\t8,00 UA',
+			].join('\n');
+
+			const rows = parseScan(paste, localized);
+			expect(rows).toHaveLength(6);
+			for (const row of rows) {
+				expect(row).toMatchObject({ group: 'gas', signature_type_id: 136, name: undefined });
+			}
+		});
+
+		it('recognizes localized faction warfare sites', () => {
+			const line =
+				'BUH-704\tКосмическая аномалия\tРайон прохождения межгосударственных войн - Боевой район\tМинматарский объект\t100,0%\t13,83 а.е.';
+
+			expect(parseScan(line, localized)).toEqual([
+				{
+					signature_id: 'BUH-704',
+					group: 'faction_warfare',
+					signature_type_id: undefined,
+					name: 'Минматарский объект',
+				},
+			]);
+		});
+
+		it('treats non-breaking spaces like regular spaces', () => {
+			const line =
+				'ABC-123\tКосмическая аномалия\tБоевой\u00a0район\tНеустойчивая\u00a0червоточина\t100,0%\t1,00 а.е.';
+
+			expect(parseScan(line, localized)).toEqual([
+				{ signature_id: 'ABC-123', group: 'combat', signature_type_id: 35, name: undefined },
+			]);
+		});
+
+		it('keeps the raw name when a translation is shared by several sites', () => {
+			const line =
+				'ABC-123\tKosmische Anomalie\tMineraliengebiet\tGewöhnliche Erzvorkommen im Grenzgebiet\t100,0%\t1,00 AE';
+
+			expect(parseScan(line, localized)).toEqual([
+				{
+					signature_id: 'ABC-123',
+					group: 'ore',
+					signature_type_id: undefined,
+					name: 'Gewöhnliche Erzvorkommen im Grenzgebiet',
+				},
+			]);
+		});
+	});
 });

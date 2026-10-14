@@ -19,7 +19,15 @@ import type { Signature } from '$lib/api/types/Signature';
 import type { SignatureCatalog } from '$lib/api/types/SignatureCatalog';
 import type { SignatureGroup } from '$lib/api/types/SignatureGroup';
 import type { SignatureTypeInfo } from '$lib/api/types/SignatureTypeInfo';
+import translations from '$lib/signatures/translations.json';
 import { destClassMeta } from './classes';
+
+// Localized category and site names from the EVE client's localization files, mapped to
+// their English catalog names. Site names are keyed by English category, because one
+// localized name can mean different sites in different categories. A localized name that
+// several sites share is left out, so it stays a raw name rather than a wrong guess.
+const localizedCategories: Record<string, string> = translations.categories;
+const localizedTypes: Record<string, Record<string, string>> = translations.types;
 
 export interface CategoryMeta {
 	group: SignatureGroup;
@@ -150,6 +158,9 @@ export function typeById(catalog: SignatureCatalog, id: number | null): Signatur
  * skipped. Category matches by exact name then by ` - ` segments (first known segment wins).
  * Type matches by exact name within the category, but never for wormholes, whose type the user
  * picks rather than the scanner. An unmatched type name is kept as the raw `name`.
+ *
+ * Names from any client language match: localized categories and sites are mapped to their
+ * English names first, so a clipboard mixing rows from different clients parses the same.
  */
 export function parseScan(text: string, catalog: SignatureCatalog): PastedSignature[] {
 	const out: PastedSignature[] = [];
@@ -159,12 +170,14 @@ export function parseScan(text: string, catalog: SignatureCatalog): PastedSignat
 		const sid = (cols[0] ?? '').trim();
 		if (sid.length !== 7) continue;
 
-		const category = matchCategory(catalog, (cols[2] ?? '').trim());
-		const typeName = (cols[3] ?? '').trim();
+		const category = matchCategory(catalog, normalizeName(cols[2] ?? ''));
+		const typeName = normalizeName(cols[3] ?? '');
 		let typeId: number | null = null;
 		if (category !== null && groupForCategoryId(category) !== 'wormhole' && typeName) {
+			const categoryName = catalog.categories.find((c) => c.id === category)?.name ?? '';
+			const englishName = localizedTypes[categoryName]?.[typeName] ?? typeName;
 			typeId =
-				catalog.types.find((t) => t.signature_category_id === category && t.name === typeName)
+				catalog.types.find((t) => t.signature_category_id === category && t.name === englishName)
 					?.id ?? null;
 		}
 		out.push({
@@ -221,13 +234,26 @@ export function compareSignatures(
 	}
 }
 
+/**
+ * Some client languages separate words with non-breaking spaces, so names are compared on
+ * collapsed whitespace.
+ */
+function normalizeName(name: string): string {
+	return name.replace(/\s+/g, ' ').trim();
+}
+
+function findCategory(catalog: SignatureCatalog, name: string): number | null {
+	const english = localizedCategories[name] ?? name;
+	return catalog.categories.find((c) => c.name === english)?.id ?? null;
+}
+
 function matchCategory(catalog: SignatureCatalog, name: string): number | null {
 	if (!name) return null;
-	const exact = catalog.categories.find((c) => c.name === name);
-	if (exact) return exact.id;
+	const exact = findCategory(catalog, name);
+	if (exact !== null) return exact;
 	for (const segment of name.split(' - ')) {
-		const hit = catalog.categories.find((c) => c.name === segment.trim());
-		if (hit) return hit.id;
+		const hit = findCategory(catalog, segment.trim());
+		if (hit !== null) return hit;
 	}
 	return null;
 }
