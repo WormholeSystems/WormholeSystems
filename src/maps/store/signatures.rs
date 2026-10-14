@@ -4,6 +4,7 @@
 //! connection (see [mapping.md](../../../docs/database/mapping.md)). Only updates are
 //! stamped by trigger, so an insert that carries a lifetime stamps it itself.
 
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 use crate::maps::command::Tx;
@@ -25,6 +26,13 @@ pub struct SignatureRow {
     pub mass_status: Option<MassStatus>,
     pub time_status: Option<TimeStatus>,
     pub connection_id: Option<i64>,
+    /// When it was first scanned and when its lifetime was last marked, put back as they
+    /// were so the age and "EOL since" survive an undo. Absent from snapshots taken before
+    /// they were kept, which come back as new.
+    #[serde(default)]
+    pub created_at: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub time_status_updated_at: Option<DateTime<Utc>>,
 }
 
 /// A signature that is not on the map yet.
@@ -121,7 +129,8 @@ pub(crate) async fn snapshot(
         r#"select id, solar_system_id, signature_id, "group",
                   signature_type_id, name, size,
                   mass_status,
-                  time_status, connection_id
+                  time_status, connection_id, created_at as "created_at?",
+                  time_status_updated_at
            from signatures where map_id = $1 and id = any($2)"#,
         map_id,
         ids,
@@ -143,7 +152,8 @@ pub(crate) async fn snapshot_around(
         r#"select id, solar_system_id, signature_id, "group",
                   signature_type_id, name, size,
                   mass_status,
-                  time_status, connection_id
+                  time_status, connection_id, created_at as "created_at?",
+                  time_status_updated_at
            from signatures
            where map_id = $1
              and (solar_system_id = any($2) or connection_id = any($3))"#,
@@ -161,9 +171,10 @@ pub(crate) async fn reinsert(tx: &mut Tx<'_>, map_id: i64, row: &SignatureRow) -
     sqlx::query!(
         r#"insert into signatures
                (id, map_id, solar_system_id, signature_id, "group", signature_type_id,
-                name, size, mass_status, time_status, connection_id)
+                name, size, mass_status, time_status, connection_id, created_at,
+                time_status_updated_at)
            overriding system value
-           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, coalesce($12, now()), $13)
            on conflict (id) do nothing"#,
         row.id,
         map_id,
@@ -176,6 +187,8 @@ pub(crate) async fn reinsert(tx: &mut Tx<'_>, map_id: i64, row: &SignatureRow) -
         row.mass_status,
         row.time_status,
         row.connection_id,
+        row.created_at,
+        row.time_status_updated_at,
     )
     .execute(&mut **tx)
     .await?;
@@ -192,9 +205,10 @@ pub(crate) async fn reinsert_overwriting(
     sqlx::query!(
         r#"insert into signatures
                (id, map_id, solar_system_id, signature_id, "group", signature_type_id,
-                name, size, mass_status, time_status, connection_id)
+                name, size, mass_status, time_status, connection_id, created_at,
+                time_status_updated_at)
            overriding system value
-           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, coalesce($12, now()), $13)
            on conflict (id) do update set
                "group" = excluded."group",
                signature_type_id = excluded.signature_type_id,
@@ -214,6 +228,8 @@ pub(crate) async fn reinsert_overwriting(
         row.mass_status,
         row.time_status,
         row.connection_id,
+        row.created_at,
+        row.time_status_updated_at,
     )
     .execute(&mut **tx)
     .await?;

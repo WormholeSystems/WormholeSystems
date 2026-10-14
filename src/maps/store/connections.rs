@@ -23,6 +23,14 @@ pub struct ConnectionRow {
     pub time_status: Option<TimeStatus>,
     pub size: Option<WormholeSize>,
     pub preserve_mass: bool,
+    /// The two clocks a hole's life runs on: its age drives the ageing and the expiry, and
+    /// the lifetime mark says since when it has been EOL. Put back as they were, so an undo
+    /// does not hand a dying hole a fresh lifetime. Absent from snapshots taken before they
+    /// were kept, which come back as new.
+    #[serde(default)]
+    pub created_at: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub time_status_updated_at: Option<DateTime<Utc>>,
 }
 
 /// A connection that is not on the map yet.
@@ -97,7 +105,7 @@ pub(crate) async fn snapshot(
         r#"select id, from_system, to_system, type as kind,
                   mass_status,
                   time_status,
-                  size, preserve_mass
+                  size, preserve_mass, created_at as "created_at?", time_status_updated_at
            from map_connections where id = $1 and map_id = $2"#,
         connection_id,
         map_id,
@@ -118,7 +126,7 @@ pub(crate) async fn snapshot_touching(
         r#"select id, from_system, to_system, type as kind,
                   mass_status,
                   time_status,
-                  size, preserve_mass
+                  size, preserve_mass, created_at as "created_at?", time_status_updated_at
            from map_connections
            where map_id = $1 and (from_system = any($2) or to_system = any($2))"#,
         map_id,
@@ -134,9 +142,9 @@ pub(crate) async fn reinsert(tx: &mut Tx<'_>, map_id: i64, row: &ConnectionRow) 
     sqlx::query!(
         "insert into map_connections
              (id, map_id, from_system, to_system, type, mass_status, time_status, size,
-              preserve_mass)
+              preserve_mass, created_at, time_status_updated_at)
          overriding system value
-         values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, coalesce($10, now()), $11)
          on conflict (id) do nothing",
         row.id,
         map_id,
@@ -147,6 +155,8 @@ pub(crate) async fn reinsert(tx: &mut Tx<'_>, map_id: i64, row: &ConnectionRow) 
         row.time_status,
         row.size,
         row.preserve_mass,
+        row.created_at,
+        row.time_status_updated_at,
     )
     .execute(&mut **tx)
     .await?;
