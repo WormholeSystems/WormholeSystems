@@ -9,6 +9,7 @@ use rand::Rng;
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Answers {
     pub setup: Setup,
+    pub images: Images,
     /// Full setup only. Empty means no domain: plain http on this machine.
     pub domain: String,
     pub http_port: u16,
@@ -23,6 +24,40 @@ pub struct Answers {
     /// Who may create maps, as `MAP_CREATOR_AFFILIATION_IDS` takes it. Empty lets everyone
     /// who can log in.
     pub map_creators: String,
+}
+
+/// Where the API and frontend images come from.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum Images {
+    /// The ones CI publishes for every push to main.
+    #[default]
+    Pull,
+    /// Compiled here from the checkout, which is what every install did before there were
+    /// published ones.
+    Build,
+}
+
+impl Images {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Images::Pull => "pull",
+            Images::Build => "build",
+        }
+    }
+
+    /// What an install runs from. One that never chose builds, since that is what it has
+    /// always done; it keeps doing so until its operator opts in.
+    pub fn from_env(env: &str) -> Self {
+        match crate::envfile::get(env, "WS_IMAGES").as_deref() {
+            Some("pull") => Images::Pull,
+            _ => Images::Build,
+        }
+    }
+
+    /// Whether `.env` says at all, as opposed to falling back to building.
+    pub fn chosen(env: &str) -> bool {
+        crate::envfile::get(env, "WS_IMAGES").is_some_and(|v| !v.is_empty())
+    }
 }
 
 /// How the install meets the world.
@@ -151,6 +186,7 @@ impl Answers {
         // Pinned rather than left to the checkout's directory name, which is what containers,
         // the network and the volumes are all named after.
         set("COMPOSE_PROJECT_NAME", crate::rename::PROJECT.into());
+        set("WS_IMAGES", self.images.as_str().into());
         set("WS_CONTACT_NAME", self.contact_name.clone());
         set("WS_CONTACT_EMAIL", self.contact_email.clone());
         set("EVE_CLIENT_ID", self.eve_client_id.clone());
@@ -240,6 +276,7 @@ mod tests {
     fn answers() -> Answers {
         Answers {
             setup: Setup::Full,
+            images: Images::Pull,
             domain: "map.example.com".into(),
             http_port: 80,
             https_port: 443,
@@ -400,6 +437,29 @@ mod tests {
     #[test]
     fn an_install_without_a_choice_is_full() {
         assert_eq!(Standalone::from_env("WS_DOMAIN=map.example.com\n"), None);
+    }
+
+    #[test]
+    fn the_image_source_is_written_and_read_back() {
+        let building = Answers {
+            images: Images::Build,
+            ..answers()
+        };
+        let env = crate::envfile::patch("", &building.env_values());
+        assert_eq!(Images::from_env(&env), Images::Build);
+        let env = crate::envfile::patch("", &answers().env_values());
+        assert_eq!(Images::from_env(&env), Images::Pull);
+    }
+
+    // Pulling is the default for a new install, not for one that has always built: its
+    // operator never agreed to run somebody else's image.
+    #[test]
+    fn an_install_that_never_chose_keeps_building() {
+        assert_eq!(
+            Images::from_env("WS_DOMAIN=map.example.com\n"),
+            Images::Build
+        );
+        assert!(!Images::chosen("WS_DOMAIN=map.example.com\n"));
     }
 
     #[test]

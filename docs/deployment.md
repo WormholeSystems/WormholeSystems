@@ -26,8 +26,26 @@ everything else goes to the SvelteKit server. The database port is bound to the 
 ## Before you start
 
 A server with Docker Engine and Compose v2, 5GB of disk, and a DNS A record pointing at it.
-The release build wants about 2GB of memory: on a 2GB machine, add swap first or the
-compiler is killed part way through.
+
+## Images
+
+The API and the frontend are published to GitHub's registry for amd64 and arm64, from
+every push to main (`ghcr.io/wormholesystems/wormholesystems-api` and `-web`, tagged
+`main` and `sha-<commit>`) and from every release tag (`1.2.3`, `1.2`, `latest`).
+`wsctl setup` asks whether to pull those or build them here from the checkout, and writes
+`WS_IMAGES=pull` or `build` to `.env`. A new install pulls by default.
+
+Building wants about 2GB of memory for the Rust compile: on a 2GB machine, add swap first
+or the compiler is killed part way through. Pulling needs none of that.
+
+`WS_VERSION` picks the tag (`main` unless set) and `WS_IMAGE_PREFIX` the registry, for a
+fork or a mirror. With `main`, the image can trail the checkout by however long CI takes
+to build it after a push; pin a release to keep the two in step.
+
+An install from before wsctl 0.6 has no `WS_IMAGES` and keeps building, as it always has.
+To switch, set `WS_IMAGES=pull` in `.env` (or run `wsctl setup` again and pick it); the
+next `wsctl update` pulls instead of compiling. `wsctl update` says so each time until the
+choice is made.
 
 ## First run
 
@@ -86,7 +104,7 @@ docker compose logs -f api
 wsctl update
 ```
 
-Fast-forwards the checkout, rebuilds, restarts, waits for the new containers to report
+Fast-forwards the checkout, pulls or rebuilds the images, restarts, waits for the new containers to report
 healthy, and takes CCP's static data when a newer build is out. Migrations run on boot, so there is no separate step for those either.
 
 An install from before wsctl 0.5 ran under its directory's name with a database role called
@@ -96,7 +114,7 @@ renames the role and database inside the copy. The old volumes stay as they were
 prints the command to remove them once the new stack looks right. An older wsctl leaves the
 API unable to log in to the database until the new one has run, and changes nothing else.
 
-It also prunes the build cache and images the rebuild left behind, keeping only what the
+It also prunes the build cache and images the update left behind, keeping only what the
 last day's builds used. Every api build leaves a full set of layers, and without this a
 small disk fills up within a few weeks of updates.
 
@@ -213,6 +231,8 @@ Cloudflare's own certificate and put Caddy behind it.
 | `EVE_CLIENT_ID`, `EVE_CLIENT_SECRET` | The SSO application. |
 | `EVE_REDIRECT_URI` | Derived from the domain; must match the application exactly. |
 | `POSTGRES_PASSWORD` | Full only. Generated once. Changing it means changing it in Postgres too. |
+| `WS_IMAGES` | `pull` the published images or `build` them here. Missing means build. |
+| `WS_VERSION`, `WS_IMAGE_PREFIX` | Which published images: the tag (`main`) and where they live. |
 | `WS_SETUP` | `full` or `standalone`. Missing means full. |
 | `COMPOSE_FILE` | Standalone only: the compose files to run instead of `docker-compose.yml`. |
 | `WS_PUBLIC_URL` | Standalone only: the address your proxy serves; the callbacks derive from it. |
