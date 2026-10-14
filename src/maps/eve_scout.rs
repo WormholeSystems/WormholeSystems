@@ -331,7 +331,7 @@ async fn connect(
     far: i64,
     hole: &EveScoutHole,
 ) -> Result<i64> {
-    let effect = super::connection::apply_add_connection(
+    let effect = super::connection::connect(
         tx,
         AddConnection {
             map_id,

@@ -1292,7 +1292,6 @@
           "connections"
         ],
         "summary": "`POST /api/maps/{id}/connections/add`",
-        "description": "The ghost guard sits here, not in the command: raising a ghost creates the one connection\nan unmapped hole may have, and that goes through the same command from the inside.",
         "operationId": "add_connection",
         "parameters": [
           {

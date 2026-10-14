@@ -8,8 +8,8 @@ use serde::{Deserialize, Serialize};
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
 
+use super::ApiResult;
 use super::extract::{ShareQuery, acting_on, read_map_as, require_actor};
-use super::{ApiError, ApiResult};
 use crate::app::AppState;
 use crate::maps::MapConnection;
 use crate::maps::connection::{
@@ -45,9 +45,6 @@ pub fn routes() -> OpenApiRouter<AppState> {
 }
 
 /// `POST /api/maps/{id}/connections/add`
-///
-/// The ghost guard sits here, not in the command: raising a ghost creates the one connection
-/// an unmapped hole may have, and that goes through the same command from the inside.
 #[utoipa::path(
     post,
     path = "/api/maps/{id}/connections/add",
@@ -64,24 +61,7 @@ pub async fn add_connection(
     Json(cmd): Json<AddConnection>,
 ) -> ApiResult<MapConnection> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    let ghost_endpoint = sqlx::query_scalar!(
-        r#"select exists(
-               select 1 from map_solar_systems
-               where map_id = $1 and id in ($2, $3) and solar_system_id is null
-           ) as "ghost!""#,
-        map_id,
-        cmd.from_system,
-        cmd.to_system,
-    )
-    .fetch_one(&state.db)
-    .await?;
-    if ghost_endpoint {
-        return Err(ApiError::bad_request(
-            "assign a system to that hole before connecting anything to it",
-        ));
-    }
-    let conn = crate::maps::connection::add_connection(&state.db, actor, cmd).await?;
-    Ok(Json(conn))
+    Ok(Json(crate::maps::run(&state.db, actor, cmd).await?))
 }
 
 #[utoipa::path(

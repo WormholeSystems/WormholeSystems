@@ -1219,3 +1219,33 @@ async fn undoing_a_signature_delete_brings_its_node_back(pool: PgPool) {
         "and still linked to the edge it raised"
     );
 }
+
+// The command refuses an edge to a ghost however it is reached, not only from the API: what
+// is beyond an unmapped hole is the one thing nobody knows yet.
+#[sqlx::test]
+async fn nothing_connects_to_a_ghost_but_the_scan_that_raised_it(pool: PgPool) {
+    use wormholesystems::maps::ConnectionType;
+    use wormholesystems::maps::connection::AddConnection;
+
+    let w = world(&pool).await;
+    place(&pool, w.owner, w.map_id, SYS_A).await;
+    let other = place(&pool, w.owner, w.map_id, SYS_B).await;
+    ghosting(&pool, w.owner, w.map_id).await;
+    let sig = scan(&pool, w.owner, w.map_id, SYS_A, "ABC-123").await;
+    let ghost = ghost_for(&pool, w.map_id, sig).await;
+
+    let err = wormholesystems::maps::run(
+        &pool,
+        w.owner,
+        AddConnection {
+            map_id: w.map_id,
+            from_system: other,
+            to_system: ghost,
+            kind: ConnectionType::Wormhole,
+            size: None,
+        },
+    )
+    .await
+    .unwrap_err();
+    assert!(matches!(err, MapError::Validation(_)), "{err:?}");
+}

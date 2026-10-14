@@ -307,7 +307,7 @@ pub(super) async fn apply_add_ghost_system(tx: &mut Tx<'_>, cmd: AddGhostSystem)
     )
     .await?;
 
-    let effect = super::connection::apply_add_connection(
+    let effect = super::connection::connect(
         tx,
         AddConnection {
             map_id: cmd.map_id,
