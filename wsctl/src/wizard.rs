@@ -18,6 +18,8 @@ use crate::ui;
 
 const ENV: &str = ".env";
 const EXAMPLE: &str = ".env.example";
+/// What the compose file fell back to for the database password before wsctl 0.5.
+const LEGACY_PASSWORD: &str = "vector";
 
 /// The compose file is what every command here drives, so its absence is the one thing
 /// worth saying plainly rather than letting docker fail three steps later.
@@ -77,16 +79,31 @@ pub fn setup(runner: &mut dyn Runner, dir: &Path) -> Result<()> {
         bail!("sort the above out and run this again");
     }
 
-    // Before .env names the new project, which is what tells compose to stop looking at
-    // the old one.
-    let renamed = rename::run(runner, dir, answers.setup == Setup::Full)?;
-    report_renamed(&renamed);
+    // Before .env names the new project, which is what the old name is read from. A fresh
+    // checkout has no .env yet, and nothing under any name to move.
+    let full = answers.setup == Setup::Full;
+    let (old, has_database) = if existing.is_empty() {
+        (None, false)
+    } else {
+        let old = rename::old_project(runner, dir)?;
+        let has_database = rename::has_database(runner, dir, old.as_deref())?;
+        (old, has_database)
+    };
 
-    write_env(dir, &template(dir), &answers)?;
+    write_env(dir, &template(dir), &answers, full && has_database)?;
     ui::done("wrote .env");
 
+    // Built before anything is stopped, so a running install only goes down for the move.
     ui::heading("Building");
     stack::build(runner, dir)?;
+    let mut renamed = match &old {
+        Some(old) => rename::move_project(runner, dir, old)?,
+        None => Renamed::default(),
+    };
+    if full {
+        renamed.role = rename::rename_role(runner, dir)?;
+    }
+    report_renamed(&renamed);
     ui::heading("Starting");
     stack::up(runner, dir)?;
 
@@ -161,28 +178,39 @@ pub fn update(runner: &mut dyn Runner, dir: &Path, force_sde: bool) -> Result<()
 
     let env = read_env(dir);
     let full = Standalone::from_env(&env).is_none();
-    let renamed = rename::run(runner, dir, full)?;
-    if renamed.anything() {
-        let mut values = std::collections::BTreeMap::new();
+    let old = rename::old_project(runner, dir)?;
+    let mut values = std::collections::BTreeMap::new();
+    if old.is_some() {
         values.insert(
             "COMPOSE_PROJECT_NAME".to_string(),
             rename::PROJECT.to_string(),
         );
-        // The old compose file fell back to `vector` for a password nobody set, and the
-        // renamed role still has it; the new fallback would not match.
-        if full
-            && envfile::get(&env, "POSTGRES_PASSWORD")
-                .unwrap_or_default()
-                .is_empty()
-        {
-            values.insert("POSTGRES_PASSWORD".to_string(), "vector".to_string());
-        }
+    }
+    // The old compose file fell back to `vector` for a password nobody set, and the
+    // database still has it; the new fallback would not match.
+    if full
+        && envfile::get(&env, "POSTGRES_PASSWORD")
+            .unwrap_or_default()
+            .is_empty()
+        && rename::has_database(runner, dir, old.as_deref())?
+    {
+        values.insert("POSTGRES_PASSWORD".to_string(), LEGACY_PASSWORD.to_string());
+    }
+    if !values.is_empty() {
         std::fs::write(dir.join(ENV), envfile::patch(&env, &values))?;
-        report_renamed(&renamed);
     }
 
-    // Migrations run on boot, so a rebuild and a restart is the whole of it.
+    // Migrations run on boot, so a rebuild and a restart is the whole of it. The build
+    // comes first, while the old containers keep serving.
     stack::build(runner, dir)?;
+    let mut renamed = match &old {
+        Some(old) => rename::move_project(runner, dir, old)?,
+        None => Renamed::default(),
+    };
+    if full {
+        renamed.role = rename::rename_role(runner, dir)?;
+    }
+    report_renamed(&renamed);
     stack::up(runner, dir)?;
     ui::done("running");
     // Before the static data, which wants the space a stale cache is sitting on.
@@ -578,16 +606,22 @@ fn template(dir: &Path) -> String {
         .unwrap_or_default()
 }
 
-fn write_env(dir: &Path, existing: &str, answers: &Answers) -> Result<()> {
+fn write_env(dir: &Path, existing: &str, answers: &Answers, has_database: bool) -> Result<()> {
     let mut values = answers.env_values();
     // A database nobody chose a password for is a database with the password in the README.
-    // Standalone has no database of its own to set one for.
+    // Standalone has no database of its own to set one for. One that already exists was
+    // made with the old fallback, and a new password in .env would not change it.
     if answers.setup == Setup::Full
         && envfile::get(existing, "POSTGRES_PASSWORD")
             .unwrap_or_default()
             .is_empty()
     {
-        values.insert("POSTGRES_PASSWORD".into(), generated_password());
+        let password = if has_database {
+            LEGACY_PASSWORD.to_string()
+        } else {
+            generated_password()
+        };
+        values.insert("POSTGRES_PASSWORD".into(), password);
     }
 
     let mut out = envfile::patch(existing, &values);
