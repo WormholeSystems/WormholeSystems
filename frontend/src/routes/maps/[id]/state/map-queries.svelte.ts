@@ -1,19 +1,19 @@
 // The map page's server data, as queries. Socket frames become invalidations here, and
-// the two mutations carry the policy every map write shares. Component init only: the
+// the mutations carry the policy every map write shares. Component init only: the
 // queries need the provider's client.
 
 import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query';
 import { toast } from 'svelte-sonner';
 
-import { api, errorMessage } from '$lib/api/client';
+import { errorMessage } from '$lib/api/client';
 import { key, q } from '$lib/api/queries';
 import type { MapEvent } from '$lib/api/types/MapEvent';
 import type { MapUserSettings } from '$lib/api/types/MapUserSettings';
 import type { MapView } from '$lib/api/types/MapView';
 import type { GridConfig } from '$lib/api/types/GridConfig';
 import type { Signature } from '$lib/api/types/Signature';
-import type { UpdateMapUserSettings } from '$lib/api/types/UpdateMapUserSettings';
 import { MAP_ACTIONS, type MapAction } from '$lib/map/actions';
+import { createUserSettingsWriter } from '$lib/map/user-settings';
 import { createCoalescer } from './coalesce';
 import { keysFor } from './invalidations';
 
@@ -117,13 +117,7 @@ export function createMapQueries(
 			toast.error(MAP_ACTIONS[vars.action].failed, { description: errorMessage(err) }),
 	}));
 
-	const saveSettings = createMutation(() => ({
-		// A fetch already on the wire could land after this write with older data; cancel
-		// it rather than letting the slower read win.
-		onMutate: () => client.cancelQueries({ queryKey: key.userSettings(mapId) }),
-		mutationFn: (patch: UpdateMapUserSettings) => api.updateMapUserSettings(mapId, patch),
-		onSuccess: (saved: MapUserSettings) => client.setQueryData(key.userSettings(mapId), saved),
-	}));
+	const settingsWriter = createUserSettingsWriter();
 
 	return {
 		client,
@@ -139,7 +133,7 @@ export function createMapQueries(
 		eveScout,
 		myCharacters,
 		write,
-		saveSettings,
+		settingsWriter,
 		invalidateAll,
 		/** Refetch what one socket frame invalidated; [`keysFor`] holds the table. */
 		applyEvent(event: MapEvent | null) {

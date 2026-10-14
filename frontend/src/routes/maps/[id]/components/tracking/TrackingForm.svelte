@@ -153,7 +153,7 @@
 
 	/** Stop asking, and map the rest of this session's jumps unlinked. */
 	function disablePrompt() {
-		map.patchUserSettings({ prompt_for_signature: false }).catch(() => {});
+		map.patchUserSettings({ prompt_for_signature: false });
 		tracker.dismiss();
 	}
 

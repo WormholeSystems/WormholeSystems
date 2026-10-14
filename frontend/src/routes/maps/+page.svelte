@@ -32,6 +32,7 @@
 	import { timeAgo } from '$lib/format';
 	import { lookup } from '$lib/lookup';
 	import { ROLE_TONE } from '$lib/map/roles';
+	import { createUserSettingsWriter } from '$lib/map/user-settings';
 	import { TRANSFER_SECTIONS, readExportFile, type ExportFilePeek } from '$lib/map/transfer';
 	import { ticking } from '$lib/now.svelte';
 	import { filterMaps, splitArchived, totalsOf } from './page-model';
@@ -140,15 +141,16 @@
 	// does both.
 	const act = apiAction(() => [key.maps]);
 
+	const settingsWriter = createUserSettingsWriter();
+
 	function setPinned(map: MapEntry, value: boolean) {
-		after(
-			act.mutateAsync(() => api.updateMapUserSettings(map.id, { is_pinned: value })),
-			() => toast.success(value ? `${map.name} pinned to the top bar` : `${map.name} unpinned`),
+		after(settingsWriter.saveAsync(map.id, { is_pinned: value }), () =>
+			toast.success(value ? `${map.name} pinned to the top bar` : `${map.name} unpinned`),
 		);
 	}
 
 	function setArchived(map: MapEntry, value: boolean) {
-		act.mutate(() => api.updateMapUserSettings(map.id, { is_archived: value }));
+		settingsWriter.save(map.id, { is_archived: value });
 	}
 
 	function confirmDelete() {

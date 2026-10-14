@@ -19,6 +19,7 @@
 	import type { MapSystemView } from '$lib/api/types/MapSystemView';
 	import type { PastedSignature } from '$lib/api/types/PastedSignature';
 	import type { Signature } from '$lib/api/types/Signature';
+	import type { UpdateMapUserSettings } from '$lib/api/types/UpdateMapUserSettings';
 	import { createQuery } from '@tanstack/svelte-query';
 
 	import { q } from '$lib/api/queries';
@@ -196,8 +197,8 @@
 		}
 	}
 
-	async function setSetting(patch: Record<string, boolean>) {
-		await map.patchUserSettings(patch);
+	function setSetting(patch: UpdateMapUserSettings) {
+		map.patchUserSettings(patch);
 	}
 </script>
 

@@ -26,7 +26,6 @@ import { routeOrigin } from '$lib/routing/origin';
 import { ghostSignatureIds } from '$lib/map/ghosts';
 import { layoutMode } from '$lib/map/layout-mode';
 import { orphanedSystems } from '$lib/map/orphans';
-import { toast } from 'svelte-sonner';
 import { type MapAction } from '$lib/map/actions';
 import { MapCamera } from './map-camera.svelte';
 import { HistoryStore } from './history.svelte';
@@ -373,10 +372,10 @@ export class MapState {
 			setHiddenPanels: (panels) =>
 				this.queries.patchSettingsLocal((s) => ({ ...s, hidden_panels: panels })),
 			save: (layouts, hidden) => {
-				const write = this.patchUserSettings({
-					layout_breakpoints: layouts,
-					hidden_panels: hidden,
-				}).then((saved) => saved.layout_breakpoints ?? null);
+				const write = this.saveUserSettings(
+					{ layout_breakpoints: layouts, hidden_panels: hidden },
+					{ quiet: true },
+				).then((saved) => saved.layout_breakpoints ?? null);
 				this.run('saveLayout', write);
 				return write;
 			},
@@ -526,9 +525,7 @@ export class MapState {
 	setLayoutOverride(mode: 'manual' | 'tree') {
 		const own = mode === this.data?.map.layout ? null : mode;
 		this.queries.patchSettingsLocal((s) => ({ ...s, layout_override: own ?? undefined }));
-		this.patchUserSettings({ layout_override: own }).catch((err) =>
-			toast.error(`placement: ${errorMessage(err)}`),
-		);
+		this.patchUserSettings({ layout_override: own });
 	}
 
 	/** The map's own placement mode, set from the introduction. */
@@ -537,11 +534,19 @@ export class MapState {
 	}
 
 	/**
-	 * Write one or more of the viewer's own settings. Everything goes through the one
-	 * mutation, which also holds the write against a slower read already on the wire.
+	 * Write one or more of the viewer's own settings and move on. Everything goes through
+	 * the one writer ([`createUserSettingsWriter`]), which toasts a failure.
 	 */
-	patchUserSettings(patch: UpdateMapUserSettings): Promise<MapUserSettings> {
-		return this.queries.saveSettings.mutateAsync(patch);
+	patchUserSettings(patch: UpdateMapUserSettings): void {
+		this.queries.settingsWriter.save(this.mapId, patch);
+	}
+
+	/** The same write, for a caller that waits on the stored settings. */
+	saveUserSettings(
+		patch: UpdateMapUserSettings,
+		opts?: { quiet?: boolean },
+	): Promise<MapUserSettings> {
+		return this.queries.settingsWriter.saveAsync(this.mapId, patch, opts);
 	}
 
 	orphaned = $derived(orphanedSystems(this.systemsView, this.connectionsView));

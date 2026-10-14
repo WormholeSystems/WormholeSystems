@@ -63,7 +63,7 @@
 	const kills = $derived(killsQuery.data ?? []);
 
 	function setFilter(value: KillmailScope) {
-		map.patchUserSettings({ killmail_filter: value }).catch(() => {});
+		map.patchUserSettings({ killmail_filter: value });
 	}
 
 	/** The row's system in the shape the context menu wants, from the payload. */

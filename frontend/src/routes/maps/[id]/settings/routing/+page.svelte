@@ -4,12 +4,15 @@
 	import { createQuery } from '@tanstack/svelte-query';
 	import { page } from '$app/state';
 	import type { MapView } from '$lib/api/types/MapView';
+	import type { UpdateMapUserSettings } from '$lib/api/types/UpdateMapUserSettings';
 	import { atLeast } from '$lib/map/roles';
-	import { userSettingsSaver } from '$lib/map/user-settings';
+	import { createUserSettingsWriter } from '$lib/map/user-settings';
 	import {
 		ROUTE_LIFETIMES,
 		ROUTE_MASSES,
 		ROUTE_PREFS,
+		routeChoicePatch,
+		type RouteChoiceField,
 		type RouteOption,
 	} from '$lib/routing/options';
 	import { q } from '$lib/api/queries';
@@ -28,7 +31,13 @@
 	const ignoredQuery = createQuery(() => q.listIgnored(mapId));
 	const canManage = $derived(atLeast(data.view.role, 'manager'));
 
-	const saveUserSettings = userSettingsSaver(() => mapId);
+	const settingsWriter = createUserSettingsWriter();
+	const saveUserSettings = (patch: UpdateMapUserSettings) => settingsWriter.save(mapId, patch);
+
+	function choose(field: RouteChoiceField, value: string) {
+		const patch = routeChoicePatch(field, value);
+		if (patch) saveUserSettings(patch);
+	}
 
 	const full = <T,>(o: RouteOption<T>) => ({ value: o.value, label: o.label, hint: o.hint });
 	const PREFERENCES = ROUTE_PREFS.map(full);
@@ -44,14 +53,10 @@
 {#snippet picker(
 	options: { value: string; label: string; hint: string }[],
 	current: string,
-	key: string,
+	key: RouteChoiceField,
 	testid: string,
 )}
-	<Select.Root
-		type="single"
-		value={current}
-		onValueChange={(v) => v && saveUserSettings({ [key]: v })}
-	>
+	<Select.Root type="single" value={current} onValueChange={(v) => choose(key, v)}>
 		<Select.Trigger class="w-56" data-testid={testid}>
 			{options.find((o) => o.value === current)?.label}
 		</Select.Trigger>

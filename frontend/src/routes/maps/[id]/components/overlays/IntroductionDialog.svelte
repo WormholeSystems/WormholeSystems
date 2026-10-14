@@ -5,7 +5,6 @@
 	// Granting one permission asks for everything already consented to as well, because SSO
 	// reissues the token wholesale and a per-scope link would drop the rest. The settings step
 	// disables what the missing scopes cannot support rather than offering dead switches.
-	import { errorMessage } from '$lib/api/client';
 	import Logo from '$lib/components/Logo.svelte';
 	import ArrowLeftIcon from '@lucide/svelte/icons/arrow-left';
 	import ArrowRightIcon from '@lucide/svelte/icons/arrow-right';
@@ -14,9 +13,9 @@
 
 	import { createQuery } from '@tanstack/svelte-query';
 	import { page } from '$app/state';
-	import { toast } from 'svelte-sonner';
 
 	import { q } from '$lib/api/queries';
+	import type { UpdateMapUserSettings } from '$lib/api/types/UpdateMapUserSettings';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Switch } from '$lib/components/ui/switch';
@@ -60,13 +59,8 @@
 		map.setPlacement(layout);
 	}
 
-	function update(patch: Record<string, boolean>) {
-		map
-			.patchUserSettings(patch)
-			.then(() => {
-				if ('tracking_allowed' in patch) map.characters.refresh();
-			})
-			.catch((err) => toast.error(`setup: ${errorMessage(err)}`));
+	function update(patch: UpdateMapUserSettings) {
+		map.patchUserSettings(patch);
 	}
 
 	function finish() {
@@ -238,7 +232,11 @@
 										checked={row.value && row.enabled}
 										disabled={!row.enabled}
 										aria-label={row.name}
-										onCheckedChange={(v) => update({ [row.key]: v })}
+										onCheckedChange={(v) => {
+											const patch: UpdateMapUserSettings = {};
+											patch[row.key] = v;
+											update(patch);
+										}}
 									/>
 								</div>
 							</div>

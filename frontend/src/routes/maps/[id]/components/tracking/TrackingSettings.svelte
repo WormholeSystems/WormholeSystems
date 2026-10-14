@@ -6,6 +6,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Popover from '$lib/components/ui/popover';
 	import { Switch } from '$lib/components/ui/switch';
+	import type { UpdateMapUserSettings } from '$lib/api/types/UpdateMapUserSettings';
 	import { trackedPilots } from '$lib/map/tracked-pilots';
 	import type { MapState } from '../../state/map-state.svelte';
 
@@ -63,15 +64,17 @@
 		),
 	);
 
-	function update(key: string, value: boolean | number[]) {
-		map.patchUserSettings({ [key]: value }).catch(() => {});
+	function update(key: (typeof OPTIONS)[number]['key'], value: boolean) {
+		const patch: UpdateMapUserSettings = {};
+		patch[key] = value;
+		map.patchUserSettings(patch);
 	}
 
 	function togglePilot(characterId: number, on: boolean) {
 		const next = new Set(tracked);
 		if (on) next.add(characterId);
 		else next.delete(characterId);
-		update('tracked_character_ids', [...next]);
+		map.patchUserSettings({ tracked_character_ids: [...next] });
 	}
 </script>
 
