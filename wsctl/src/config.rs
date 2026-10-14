@@ -204,9 +204,16 @@ pub const ROUTER_PORT_COMPOSE: &str = "deploy/router-port.yml";
 pub const LEGACY_STANDALONE_COMPOSE: &str = "compose.standalone.yml";
 pub const LEGACY_PORTS_COMPOSE: &str = "compose.standalone.ports.yml";
 
+/// The files compose reads on its own next to docker-compose.yml, for changes of the
+/// operator's that survive updates. Compose stops looking for them once COMPOSE_FILE is
+/// set, so wsctl names whichever exist there itself.
+pub const OVERRIDE_COMPOSE: [&str; 2] = ["compose.override.yml", "docker-compose.override.yml"];
+
 /// Every compose file wsctl decides about. Anything else in COMPOSE_FILE was put there by
 /// the operator, and stays.
-const MANAGED_COMPOSE: [&str; 9] = [
+const MANAGED_COMPOSE: [&str; 11] = [
+    OVERRIDE_COMPOSE[0],
+    OVERRIDE_COMPOSE[1],
     BASE_COMPOSE,
     EXTERNAL_DB_COMPOSE,
     DB_NETWORK_COMPOSE,
@@ -339,9 +346,10 @@ impl Deployment {
         files
     }
 
-    /// COMPOSE_FILE as it should read, keeping whatever the operator added to the current
-    /// one after wsctl's own. None when compose's default is already right.
-    pub fn compose_file(&self, current: &str) -> Option<String> {
+    /// COMPOSE_FILE as it should read: wsctl's own files, then whatever the operator added
+    /// to the current one, then the override files that exist (`overrides`), last so they
+    /// win. None when compose's default reads exactly that already.
+    pub fn compose_file(&self, current: &str, overrides: &[&str]) -> Option<String> {
         let mut files: Vec<&str> = self.compose_files();
         files.extend(
             current
@@ -349,7 +357,12 @@ impl Deployment {
                 .map(str::trim)
                 .filter(|f| !f.is_empty() && !MANAGED_COMPOSE.contains(f)),
         );
-        (files.len() > 1).then(|| files.join(":"))
+        // docker-compose.yml alone picks up its overrides by itself.
+        if files.len() == 1 {
+            return None;
+        }
+        files.extend(overrides);
+        Some(files.join(":"))
     }
 
     /// The network the API and the frontend are on for the operator's proxy, if any.
@@ -408,7 +421,9 @@ impl Deployment {
 
     /// Write this into `.env`: its keys set, the keys of choices not taken struck out so a
     /// stale one cannot keep selecting them, and COMPOSE_FILE to match.
-    pub fn apply(&self, env: &str) -> String {
+    ///
+    /// `overrides` are the override files present in the checkout ([`overrides`]).
+    pub fn apply(&self, env: &str, overrides: &[&str]) -> String {
         let mut values = BTreeMap::new();
         let mut removals = vec!["WS_SETUP"];
         let mut set = |k: &str, v: String| {
@@ -479,7 +494,7 @@ impl Deployment {
         }
 
         let current = envfile::get(env, "COMPOSE_FILE").unwrap_or_default();
-        match self.compose_file(&current) {
+        match self.compose_file(&current, overrides) {
             Some(files) => set("COMPOSE_FILE", files),
             None => removals.push("COMPOSE_FILE"),
         }
@@ -490,6 +505,14 @@ impl Deployment {
         }
         out
     }
+}
+
+/// The override files the checkout has, in the order compose would read them.
+pub fn overrides(dir: &std::path::Path) -> Vec<&'static str> {
+    OVERRIDE_COMPOSE
+        .into_iter()
+        .filter(|file| dir.join(file).is_file())
+        .collect()
 }
 
 /// The address of a Caddy without a domain, seen from this machine.
@@ -517,8 +540,8 @@ impl Answers {
     }
 
     /// The `.env` the answers make out of the current one.
-    pub fn apply(&self, env: &str) -> String {
-        let mut out = envfile::patch(&self.deployment.apply(env), &self.env_values());
+    pub fn apply(&self, env: &str, overrides: &[&str]) -> String {
+        let mut out = envfile::patch(&self.deployment.apply(env, overrides), &self.env_values());
         for key in self.discord_removals() {
             out = envfile::remove(&out, key);
         }
@@ -707,7 +730,7 @@ mod tests {
                     ..Default::default()
                 }),
             );
-            let env = d.apply("");
+            let env = d.apply("", &[]);
             assert_eq!(get(&env, "WS_TLS").as_deref(), Some(tls.as_str()));
             assert_eq!(Deployment::from_env(&env), d);
         }
@@ -733,7 +756,7 @@ mod tests {
             }),
         );
         assert_eq!(remote.base_url(), "http://203.0.113.5:8080");
-        let env = remote.apply("");
+        let env = remote.apply("", &[]);
         assert_eq!(
             get(&env, "WS_PUBLIC_URL").as_deref(),
             Some("http://203.0.113.5:8080")
@@ -757,7 +780,7 @@ mod tests {
 
     #[test]
     fn discord_off_writes_nothing_and_strikes_the_keys_out() {
-        let env = answers().apply("DISCORD_CLIENT_ID=old\n");
+        let env = answers().apply("DISCORD_CLIENT_ID=old\n", &[]);
         assert!(!env.contains("DISCORD_"));
     }
 
@@ -786,8 +809,11 @@ mod tests {
     #[test]
     fn all_bundled_needs_no_compose_file() {
         let all = deployment(Database::Bundled, site(""));
-        assert_eq!(all.compose_file(""), None);
-        let env = all.apply("COMPOSE_FILE=compose.standalone.yml\nWS_SETUP=standalone\n");
+        assert_eq!(all.compose_file("", &[]), None);
+        let env = all.apply(
+            "COMPOSE_FILE=compose.standalone.yml\nWS_SETUP=standalone\n",
+            &[],
+        );
         assert_eq!(get(&env, "COMPOSE_FILE"), None);
         assert_eq!(get(&env, "WS_SETUP"), None);
         assert_eq!(get(&env, "WS_DATABASE").as_deref(), Some("bundled"));
@@ -825,7 +851,7 @@ mod tests {
         ];
         for (deployment, expected) in cases {
             assert_eq!(
-                deployment.compose_file("").as_deref(),
+                deployment.compose_file("", &[]).as_deref(),
                 Some(expected),
                 "{deployment:?}"
             );
@@ -842,17 +868,44 @@ mod tests {
         );
     }
 
+    // Compose reads compose.override.yml by itself only while COMPOSE_FILE is unset; with
+    // one, an override that is not named in it is silently ignored.
+    #[test]
+    fn an_override_file_is_named_once_compose_file_is_needed() {
+        let all = deployment(Database::Bundled, site(""));
+        assert_eq!(all.compose_file("", &["compose.override.yml"]), None);
+        let d = deployment(external(None), site(""));
+        assert_eq!(
+            d.compose_file(
+                "docker-compose.yml:deploy/external-db.yml:compose.override.yml",
+                &[]
+            )
+            .as_deref(),
+            Some("docker-compose.yml:deploy/external-db.yml"),
+            "a removed override goes from the list"
+        );
+        assert_eq!(
+            d.compose_file("mine.yml", &["compose.override.yml"])
+                .as_deref(),
+            Some("docker-compose.yml:deploy/external-db.yml:mine.yml:compose.override.yml")
+        );
+    }
+
     #[test]
     fn files_the_operator_added_are_kept_after_ours() {
         let d = deployment(external(None), site(""));
         assert_eq!(
-            d.compose_file("compose.standalone.yml:mine.yml:compose.standalone.ports.yml")
-                .as_deref(),
+            d.compose_file(
+                "compose.standalone.yml:mine.yml:compose.standalone.ports.yml",
+                &[]
+            )
+            .as_deref(),
             Some("docker-compose.yml:deploy/external-db.yml:mine.yml")
         );
         let all = deployment(Database::Bundled, site(""));
         assert_eq!(
-            all.compose_file("docker-compose.yml:mine.yml").as_deref(),
+            all.compose_file("docker-compose.yml:mine.yml", &[])
+                .as_deref(),
             Some("docker-compose.yml:mine.yml")
         );
     }
@@ -865,7 +918,7 @@ mod tests {
             deployment: deployment(external(None), direct(Some("web"), None)),
             ..answers()
         };
-        let env = a.apply("");
+        let env = a.apply("", &[]);
         assert_eq!(
             get(&env, "WS_PUBLIC_URL").as_deref(),
             Some("https://map.example.com")
@@ -879,7 +932,7 @@ mod tests {
     #[test]
     fn the_keys_of_choices_not_taken_are_struck_out() {
         let before = "WS_DATABASE_URL=postgres://x@y/z\nWS_PROXY_NETWORK=web\nWS_API_PORT=1\nWS_WEB_PORT=2\nWS_ROUTER_PORT=3\nWS_PUBLIC_URL=https://x\nWS_DOMAIN=old.example.com\n";
-        let env = deployment(Database::Bundled, site("map.example.com")).apply(before);
+        let env = deployment(Database::Bundled, site("map.example.com")).apply(before, &[]);
         for key in [
             "WS_DATABASE_URL",
             "WS_PROXY_NETWORK",
@@ -893,7 +946,7 @@ mod tests {
         assert_eq!(get(&env, "WS_DOMAIN").as_deref(), Some("map.example.com"));
 
         // Leaving Caddy leaves its settings alone, to be offered again on the way back.
-        let env = deployment(Database::Bundled, router(None, Some(8080))).apply(&env);
+        let env = deployment(Database::Bundled, router(None, Some(8080))).apply(&env, &[]);
         assert_eq!(get(&env, "WS_DOMAIN").as_deref(), Some("map.example.com"));
         assert_eq!(get(&env, "WS_ROUTER_PORT").as_deref(), Some("8080"));
     }
@@ -914,7 +967,7 @@ mod tests {
             deployment(Database::Bundled, router(Some("web"), Some(9000))),
         ];
         for written in all {
-            let env = written.apply("");
+            let env = written.apply("", &[]);
             let mut expected = written.clone();
             if let Proxy::Direct(d) = &mut expected.proxy {
                 d.public_url = "https://map.example.com".into();
@@ -940,7 +993,7 @@ mod tests {
                 })
             )
         );
-        let rewritten = read.apply(env);
+        let rewritten = read.apply(env, &[]);
         assert_eq!(
             get(&rewritten, "COMPOSE_FILE").as_deref(),
             Some(

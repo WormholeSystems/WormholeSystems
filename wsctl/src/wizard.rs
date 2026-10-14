@@ -198,7 +198,7 @@ pub fn update(runner: &mut dyn Runner, dir: &Path, force_sde: bool) -> Result<()
     // Written out every time rather than only when something is missing: a .env from
     // wsctl 0.5 moves from WS_SETUP onto the two choices and their overlays, and
     // COMPOSE_FILE follows whatever else changed.
-    let rewritten = deployment.apply(&envfile::patch(&env, &values));
+    let rewritten = deployment.apply(&envfile::patch(&env, &values), &config::overrides(dir));
     if rewritten != env {
         std::fs::write(dir.join(ENV), &rewritten)?;
     }
@@ -799,7 +799,7 @@ fn template(dir: &Path) -> String {
 }
 
 fn write_env(dir: &Path, existing: &str, answers: &Answers, has_database: bool) -> Result<()> {
-    let mut out = answers.apply(existing);
+    let mut out = answers.apply(existing, &config::overrides(dir));
     // A database nobody chose a password for is a database with the password in the README.
     // An external one has no container here to set one for. One that already exists was
     // made with the old fallback, and a new password in .env would not change it.
@@ -988,6 +988,23 @@ mod tests {
         // Nothing of the bundled database is touched: there is none.
         assert!(!runner.commands.iter().any(|c| c.contains("psql")));
         assert!(!runner.commands.iter().any(|c| c.contains("volume ls")));
+    }
+
+    // Labels for the operator's Traefik, say: written once, and still there after every
+    // update, which rewrites COMPOSE_FILE.
+    #[test]
+    fn an_update_names_the_override_file_it_finds() {
+        let dir = checkout(
+            "COMPOSE_PROJECT_NAME=wormholesystems\nWS_DATABASE=external\nWS_DATABASE_URL=postgres://ws@db/ws\nWS_PROXY=network\nWS_PROXY_NETWORK=coolify\nWS_PUBLIC_URL=https://map.example.com\n",
+        );
+        std::fs::write(dir.join("compose.override.yml"), "services: {}\n").unwrap();
+        update(&mut running(), &dir, false).unwrap();
+        assert_eq!(
+            envfile::get(&read_env(&dir), "COMPOSE_FILE").as_deref(),
+            Some(
+                "docker-compose.yml:deploy/external-db.yml:deploy/app-network.yml:compose.override.yml"
+            )
+        );
     }
 
     // A bundled install gets the two keys written and no COMPOSE_FILE: compose's default
