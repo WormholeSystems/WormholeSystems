@@ -61,6 +61,27 @@ export class MapGestures {
 		map.selected = bandSelection(b, nodes, map.nodeH);
 	}
 
+	/**
+	 * Wheel over the canvas: plain scrolls the page, ctrl/meta is swallowed so a pinch does
+	 * not zoom the whole app, shift pans the map.
+	 */
+	onWheel(ev: WheelEvent) {
+		if (ev.ctrlKey || ev.metaKey) {
+			ev.preventDefault();
+			return;
+		}
+		if (!ev.shiftKey) return;
+		ev.preventDefault();
+		this.map.camera.panBy(-ev.deltaX, -ev.deltaY);
+	}
+
+	/** Listen for the wheel on `el`; returns the cleanup. Non-passive, to be allowed to preventDefault. */
+	attachWheel(el: HTMLElement): () => void {
+		const onWheel = (ev: WheelEvent) => this.onWheel(ev);
+		el.addEventListener('wheel', onWheel, { passive: false });
+		return () => el.removeEventListener('wheel', onWheel);
+	}
+
 	onPointerMove(ev: PointerEvent) {
 		const map = this.map;
 		const w = map.camera.toWorld(ev.clientX, ev.clientY);
