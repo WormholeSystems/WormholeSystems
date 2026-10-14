@@ -57,7 +57,7 @@ pub async fn add_watchlist_entry(
     Json(cmd): Json<AddWatchlistEntry>,
 ) -> ApiResult<WatchlistEntry> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    let entry = crate::maps::watchlist::add_watchlist_entry(&state.db, actor, cmd).await?;
+    let entry = crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(entry))
 }
 
@@ -77,7 +77,7 @@ pub async fn set_watchlist_pinned(
     Json(cmd): Json<SetWatchlistPinned>,
 ) -> ApiResult<WatchlistEntry> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    let entry = crate::maps::watchlist::set_watchlist_pinned(&state.db, actor, cmd).await?;
+    let entry = crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(entry))
 }
 
@@ -97,6 +97,6 @@ pub async fn remove_watchlist_entry(
     Json(cmd): Json<RemoveWatchlistEntry>,
 ) -> ApiResult<()> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    crate::maps::watchlist::remove_watchlist_entry(&state.db, actor, cmd).await?;
+    crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(()))
 }

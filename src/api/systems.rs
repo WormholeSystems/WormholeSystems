@@ -53,7 +53,7 @@ pub async fn resolve_ghost_system(
     Json(cmd): Json<crate::maps::ghost::ResolveGhostSystem>,
 ) -> ApiResult<MapSolarSystem> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    let placed = crate::maps::ghost::resolve_ghost_system(&state.db, actor, cmd).await?;
+    let placed = crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(placed))
 }
 
@@ -73,7 +73,7 @@ pub async fn add_system(
     Json(cmd): Json<AddSystem>,
 ) -> ApiResult<MapSolarSystem> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    let placed = crate::maps::solar_system::add_system(&state.db, actor, cmd).await?;
+    let placed = crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(placed))
 }
 
@@ -93,7 +93,7 @@ pub async fn move_system(
     Json(cmd): Json<MoveSystem>,
 ) -> ApiResult<()> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    crate::maps::solar_system::move_system(&state.db, actor, cmd).await?;
+    crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(()))
 }
 
@@ -113,7 +113,7 @@ pub async fn move_systems(
     Json(cmd): Json<MoveSystems>,
 ) -> ApiResult<()> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    crate::maps::solar_system::move_systems(&state.db, actor, cmd).await?;
+    crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(()))
 }
 
@@ -133,7 +133,7 @@ pub async fn remove_system(
     Json(cmd): Json<RemoveSystem>,
 ) -> ApiResult<()> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    crate::maps::solar_system::remove_system(&state.db, actor, cmd).await?;
+    crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(()))
 }
 
@@ -153,7 +153,7 @@ pub async fn remove_systems(
     Json(cmd): Json<RemoveSystems>,
 ) -> ApiResult<()> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    crate::maps::solar_system::remove_systems(&state.db, actor, cmd).await?;
+    crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(()))
 }
 
@@ -173,7 +173,7 @@ pub async fn clear_map(
     Json(cmd): Json<ClearMap>,
 ) -> ApiResult<()> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    crate::maps::solar_system::clear_map(&state.db, actor, cmd).await?;
+    crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(()))
 }
 

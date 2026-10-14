@@ -57,7 +57,7 @@ pub async fn add_ignored_system(
     Json(cmd): Json<AddIgnoredSystem>,
 ) -> ApiResult<IgnoredSystem> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    let row = crate::maps::ignored::add_ignored_system(&state.db, actor, cmd).await?;
+    let row = crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(row))
 }
 
@@ -77,7 +77,7 @@ pub async fn remove_ignored_system(
     Json(cmd): Json<RemoveIgnoredSystem>,
 ) -> ApiResult<()> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    crate::maps::ignored::remove_ignored_system(&state.db, actor, cmd).await?;
+    crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(()))
 }
 
@@ -97,6 +97,6 @@ pub async fn clear_ignored_systems(
     Json(cmd): Json<ClearIgnoredSystems>,
 ) -> ApiResult<u64> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    let count = crate::maps::ignored::clear_ignored_systems(&state.db, actor, cmd).await?;
+    let count = crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(count))
 }

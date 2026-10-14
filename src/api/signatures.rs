@@ -103,7 +103,7 @@ pub async fn add_signature(
     Json(cmd): Json<AddSignature>,
 ) -> ApiResult<Signature> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    let sig = crate::maps::signatures::add_signature(&state.db, actor, cmd).await?;
+    let sig = crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(sig))
 }
 
@@ -123,7 +123,7 @@ pub async fn paste_signatures(
     Json(cmd): Json<PasteSignatures>,
 ) -> ApiResult<()> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    crate::maps::signatures::paste_signatures(&state.db, actor, cmd).await?;
+    crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(()))
 }
 
@@ -143,7 +143,7 @@ pub async fn update_signature(
     Json(cmd): Json<UpdateSignature>,
 ) -> ApiResult<Signature> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    let sig = crate::maps::signatures::update_signature(&state.db, actor, cmd).await?;
+    let sig = crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(sig))
 }
 
@@ -163,7 +163,7 @@ pub async fn link_signature(
     Json(cmd): Json<LinkSignature>,
 ) -> ApiResult<Signature> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    let sig = crate::maps::signatures::link_signature(&state.db, actor, cmd).await?;
+    let sig = crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(sig))
 }
 
@@ -183,7 +183,7 @@ pub async fn unlink_signature(
     Json(cmd): Json<UnlinkSignature>,
 ) -> ApiResult<Signature> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    let sig = crate::maps::signatures::unlink_signature(&state.db, actor, cmd).await?;
+    let sig = crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(sig))
 }
 
@@ -203,7 +203,7 @@ pub async fn remove_signature(
     Json(cmd): Json<RemoveSignature>,
 ) -> ApiResult<()> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    crate::maps::signatures::remove_signature(&state.db, actor, cmd).await?;
+    crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(()))
 }
 
@@ -225,7 +225,7 @@ pub async fn remove_signatures_bulk(
     Json(cmd): Json<RemoveSignatures>,
 ) -> ApiResult<()> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    crate::maps::signatures::remove_signatures(&state.db, actor, cmd).await?;
+    crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(()))
 }
 

@@ -239,17 +239,6 @@ pub struct AddGhostSystem {
     pub size: Option<WormholeSize>,
 }
 
-/// Put the far side of a wormhole signature on the map, before anyone knows what it is.
-/// Member+. Reached through the signature writes ([`ghost_unmapped_holes`]) rather than
-/// directly: a hole exists because a scan says so.
-pub async fn add_ghost_system(
-    pool: &PgPool,
-    actor: Actor,
-    cmd: AddGhostSystem,
-) -> Result<MapSolarSystem> {
-    run(pool, actor, cmd).await
-}
-
 pub(super) async fn apply_add_ghost_system(tx: &mut Tx<'_>, cmd: AddGhostSystem) -> Result<Effect> {
     let source = sqlx::query!(
         "select solar_system_id from map_solar_systems where id = $1 and map_id = $2",

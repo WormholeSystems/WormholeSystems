@@ -80,7 +80,7 @@ pub async fn set_connection_status(
     Json(cmd): Json<SetConnectionStatus>,
 ) -> ApiResult<MapConnection> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    let conn = crate::maps::connection::set_connection_status(&state.db, actor, cmd).await?;
+    let conn = crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(conn))
 }
 
@@ -100,7 +100,7 @@ pub async fn remove_connection(
     Json(cmd): Json<RemoveConnection>,
 ) -> ApiResult<()> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    crate::maps::connection::remove_connection(&state.db, actor, cmd).await?;
+    crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(()))
 }
 
@@ -140,7 +140,7 @@ pub async fn add_connection_jump(
     Json(cmd): Json<AddConnectionJump>,
 ) -> ApiResult<ConnectionJump> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    let jump = crate::maps::jumps::add_jump(&state.db, actor, cmd).await?;
+    let jump = crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(jump))
 }
 
@@ -160,7 +160,7 @@ pub async fn update_connection_jump(
     Json(cmd): Json<UpdateConnectionJump>,
 ) -> ApiResult<ConnectionJump> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    let jump = crate::maps::jumps::update_jump(&state.db, actor, cmd).await?;
+    let jump = crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(jump))
 }
 
@@ -222,7 +222,7 @@ pub async fn clean_stale_connections(
     Json(cmd): Json<CleanStaleConnections>,
 ) -> ApiResult<u64> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    let removed = crate::maps::connection::clean_stale_connections(&state.db, actor, cmd).await?;
+    let removed = crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(removed))
 }
 
