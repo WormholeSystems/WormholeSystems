@@ -397,12 +397,14 @@ pub async fn update(
 }
 
 /// Turns the alert on or off by hand. Turning it back on clears the reason it stopped.
+/// `via` notes where it was done from, when that was not the settings page.
 pub async fn set_active(
     pool: &PgPool,
     map_id: i64,
     alert_id: i64,
     user_id: i64,
     is_active: bool,
+    via: Option<&str>,
 ) -> Result<MapAlert> {
     let updated = sqlx::query!(
         "update map_alerts set
@@ -426,7 +428,7 @@ pub async fn set_active(
         map_id,
         Some(user_id),
         if is_active { "enabled" } else { "disabled" },
-        None,
+        via,
     )
     .await;
     get(pool, map_id, alert_id).await
@@ -445,4 +447,24 @@ pub async fn delete(pool: &PgPool, map_id: i64, alert_id: i64, user_id: i64) -> 
     };
     crate::alerts::log(pool, None, map_id, Some(user_id), "deleted", Some(&name)).await;
     Ok(())
+}
+
+/// Register a Discord role the map's alerts can mention, or rename it if the map has it
+/// already. Returns the role's id on this map.
+pub async fn register_role(
+    pool: &PgPool,
+    map_id: i64,
+    name: &str,
+    discord_role_id: &str,
+) -> Result<i64> {
+    Ok(sqlx::query_scalar!(
+        "insert into map_webhook_roles (map_id, name, discord_role_id) values ($1, $2, $3)
+         on conflict (map_id, discord_role_id) do update set name = excluded.name
+         returning id",
+        map_id,
+        name,
+        discord_role_id,
+    )
+    .fetch_one(pool)
+    .await?)
 }

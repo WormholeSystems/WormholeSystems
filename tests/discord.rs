@@ -329,3 +329,62 @@ async fn a_discord_alert_is_refused_for_the_same_reasons_as_on_the_page(pool: Pg
     assert_eq!(alert.name, "Carrier range of Jita");
     assert_eq!(alert.jdc_level, Some(4));
 }
+
+/// Turning an alert off and deleting it from Discord goes through the same store as the
+/// settings page: the audit trail says where it came from, and the reply what happened.
+#[sqlx::test(migrations = "./migrations")]
+async fn an_alert_is_switched_off_and_removed_from_discord(pool: PgPool) {
+    let w = common::world(&pool).await;
+    link(&pool, w.owner.user_id, "9001").await;
+    let created = command(
+        &pool,
+        &in_dm("9001"),
+        &format!(
+            r#"[{{"name":"alert-dm","type":2,"options":[{{"name":"proximity","type":1,"options":[
+                 {{"name":"map","value":"{}"}},{{"name":"system","value":"{}"}},
+                 {{"name":"jumps","value":5}}]}}]}}]"#,
+            w.map_id,
+            common::SYS_A,
+        ),
+    )
+    .await;
+    assert!(created.starts_with("Alert created"), "{created}");
+    let id = sqlx::query_scalar!("select id from map_alerts where map_id = $1", w.map_id)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    let alerts_action = |action: &str| {
+        format!(
+            r#"[{{"name":"alerts","type":2,"options":[{{"name":"{action}","type":1,"options":[
+                 {{"name":"alert","value":{id}}}]}}]}}]"#
+        )
+    };
+
+    let reply = command(&pool, &in_dm("9001"), &alerts_action("disable")).await;
+    assert!(reply.ends_with("is now off."), "{reply}");
+    let row = sqlx::query!(
+        "select is_active, disabled_reason from map_alerts where id = $1",
+        id
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    assert!(!row.is_active);
+    assert_eq!(row.disabled_reason.as_deref(), Some("manual"));
+    let detail = sqlx::query_scalar!(
+        "select detail from map_alert_events where map_alert_id = $1 and kind = 'disabled'",
+        id
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    assert_eq!(detail.as_deref(), Some("via Discord"));
+
+    let reply = command(&pool, &in_dm("9001"), &alerts_action("remove")).await;
+    assert!(reply.starts_with("Deleted **"), "{reply}");
+    let left = sqlx::query_scalar!("select count(*) from map_alerts where id = $1", id)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(left, Some(0));
+}
