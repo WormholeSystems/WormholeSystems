@@ -23,6 +23,7 @@ import { freeEdges, treeEdges, type EdgeGeometry } from '$lib/map/edges';
 import { draggedPositions, type Drag } from '$lib/map/gestures';
 import type { Vec2 } from '$lib/map/helpers';
 import { compareForTree, computeTreeLayout } from '$lib/map/tree';
+import { reusePositions, treeShapeKey } from '$lib/map/positions';
 import { routeOrigin } from '$lib/routing/origin';
 import { ghostSignatureIds } from '$lib/map/ghosts';
 import { layoutMode } from '$lib/map/layout-mode';
@@ -207,21 +208,35 @@ export class MapState {
 	/** Automatic placement owns the positions, so dragging one would fight the layout. */
 	layoutLocked = $derived(this.layout === 'tree');
 
+	/**
+	 * What the tree layout reads off the chain, as a string. A string compares by value, so
+	 * a refetch that changed only statuses or masses leaves it equal and the layout below
+	 * does not rerun.
+	 */
+	private treeShape = $derived(
+		this.layout === 'tree' ? treeShapeKey(this.systemsView, this.connectionsView) : null,
+	);
+
 	/** Derived from the shape of the chain, recomputed only when that shape changes. */
 	treePositions = $derived.by(() => {
-		if (this.layout !== 'tree') return null;
-		const systems = new Map(this.systemsView.map((s) => [s.id, s]));
-		return computeTreeLayout(
-			{
-				nodeIds: this.systemsView.map((s) => s.id),
-				edges: this.connectionsView.map((c) => ({ from: c.from_system, to: c.to_system })),
-				rootIds: this.systemsView.filter((s) => s.is_pinned).map((s) => s.id),
-				homeId: this.systemsView.find((s) => s.is_home)?.id ?? null,
-				fallbackRootId: null,
-				compareNodes: compareForTree(systems),
-			},
-			{ gridSize: this.grid.cell_size },
-		);
+		if (this.treeShape === null) return null;
+		const gridSize = this.grid.cell_size;
+		// The shape key above already says when this has to rerun; reading the arrays
+		// tracked would rerun it on every refetch.
+		return untrack(() => {
+			const systems = new Map(this.systemsView.map((s) => [s.id, s]));
+			return computeTreeLayout(
+				{
+					nodeIds: this.systemsView.map((s) => s.id),
+					edges: this.connectionsView.map((c) => ({ from: c.from_system, to: c.to_system })),
+					rootIds: this.systemsView.filter((s) => s.is_pinned).map((s) => s.id),
+					homeId: this.systemsView.find((s) => s.is_home)?.id ?? null,
+					fallbackRootId: null,
+					compareNodes: compareForTree(systems),
+				},
+				{ gridSize },
+			);
+		});
 	});
 
 	ghostSignatures = $derived.by(() =>
@@ -235,20 +250,28 @@ export class MapState {
 			: freeEdges(this.connectionsView, this.positions, this.nodeH),
 	);
 
+	// The last lookup handed out, so the next one can keep the entries that did not move.
+	// Plain field on purpose: it is a memo, not something anything should react to.
+	private lastPositions: Map<number, Vec2> | null = null;
+
 	// Position lookup: the automatic layout when one is active; else live drag, then an
-	// optimistic override, then the server position.
+	// optimistic override, then the server position. Entries keep their identity while
+	// their coordinates do, so only the nodes and edges that moved redraw.
 	positions = $derived.by(() => {
-		const tree = this.treePositions;
-		if (tree) return tree;
-		const out = new Map<number, { x: number; y: number }>();
-		const dragged = this.drag ? draggedPositions(this.drag) : new Map<number, Vec2>();
-		for (const s of this.systemsView) {
-			out.set(
-				s.id,
-				dragged.get(s.id) ?? this.pending[s.id] ?? { x: s.position_x, y: s.position_y },
-			);
+		let out = this.treePositions;
+		if (!out) {
+			out = new Map<number, Vec2>();
+			const dragged = this.drag ? draggedPositions(this.drag) : new Map<number, Vec2>();
+			for (const s of this.systemsView) {
+				out.set(
+					s.id,
+					dragged.get(s.id) ?? this.pending[s.id] ?? { x: s.position_x, y: s.position_y },
+				);
+			}
 		}
-		return out;
+		const next = reusePositions(new Map(out), this.lastPositions);
+		this.lastPositions = next;
+		return next;
 	});
 
 	/**
