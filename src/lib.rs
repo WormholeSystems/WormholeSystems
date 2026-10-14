@@ -1,3 +1,4 @@
+pub mod affiliation;
 pub mod alerts;
 pub mod allowlist;
 pub mod announcement;

@@ -14,32 +14,46 @@ change too. Both triggers use the bulk
 
 ### On authentication
 
-When a user logs in — or links / re-authenticates a character — we refetch the
-affiliation of the user's characters and update their corp/alliance **before**
-resolving access. So someone who just left a corporation can't get in on stale data at
-login.
+When a character signs in, or is added to an account, the login fetches that
+character's affiliation and stores its corp/alliance **before** opening the session. So
+someone who just left a corporation can't get in on stale data at login. The account's
+other characters are left to the periodic job.
 
 ### Periodic (the background job)
 
 Users who don't log in would otherwise keep stale affiliations indefinitely, so a
-scheduled job refetches the affiliations of **all** characters assigned to users:
+background loop (`affiliation::start`) refetches the affiliations of **all** characters
+assigned to users, hourly, skipping a tick while Tranquility is down:
 
 - Batch every character id through `POST /characters/affiliation` (≤ 1000 ids per
   call), update `corporation_id` / `alliance_id`, and bump `updated_at`.
+- Corporations and alliances not seen before are fetched first (`entities::ensure`),
+  since the columns are foreign keys to them. One that cannot be fetched is stored as
+  `null` until the next run: less access for an hour, never more.
 - A character that has left its corporation/alliance stops matching that corp/alliance
   `map_access` grant on the next run → **access is lost within one refresh interval.**
+- A batch ESI refuses is skipped and retried next run; the rest of the run goes on.
+
+**Why every account character, not just the active ones.** A session is not the only
+way access is used: personal access tokens, the Discord bot and alerts all act for a
+user with no session open. The bulk endpoint makes the whole set cheap, one public call
+per thousand characters. Characters only named from killmails (no `user_id`) are left
+out: no access hangs on them.
+
+**Why hourly.** ESI caches an affiliation for an hour, so asking more often returns the
+same answer. Worst case, someone who leaves a corp keeps its maps for about two hours:
+ESI's cache, then our next run.
 
 **Invariants & expected behaviour**
 
-- After a run, every character's stored corp/alliance equals what ESI reports.
+- After a run, every account character's stored corp/alliance equals what ESI reports
+  (or `null` for an organisation that could not be named).
 - A character no longer in a granted corporation/alliance loses that
   affiliation-derived access at the next run — bounded staleness equals the interval.
 - **Direct character-id grants are unaffected** by affiliation changes; they persist
   until explicitly removed.
-
-> **Open — interval.** How fresh must access be — i.e. the maximum acceptable lag
-> between someone leaving a corp and losing access? That sets the job interval (e.g.
-> 15 min vs. hourly), and whether each run is a full sweep or staggered batches.
+- Map WebSockets check access when they connect, so an open map stays open until it
+  reconnects; every request it makes is checked again.
 
 ## Character status polling
 

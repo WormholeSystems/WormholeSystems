@@ -174,6 +174,10 @@ async fn main() {
         server.clone(),
     );
 
+    // Background: keep every account character's corp/alliance current, since corp and
+    // alliance grants on a map match against them.
+    wormholesystems::affiliation::start(db.clone(), esi.clone(), server.clone());
+
     // Background: keep sovereignty (and its alliance/corp entities) current for map display.
     wormholesystems::sovereignty::start(db.clone(), esi.clone(), server.clone());
 
