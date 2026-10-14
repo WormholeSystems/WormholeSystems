@@ -16,6 +16,8 @@
 		naming: null,
 		systems: DEMO_SYSTEMS,
 		connections: DEMO_CONNECTIONS,
+		systemById: new Map(DEMO_SYSTEMS.map((s) => [s.id, s])),
+		connectionById: new Map(DEMO_CONNECTIONS.map((c) => [c.id, c])),
 		sigs: DEMO_SIGNATURES,
 	};
 	const system = HOME_SYSTEM;

@@ -27,6 +27,7 @@ const ACTION_FOR: Record<string, MapAction> = {
 export interface ConnectionsHost {
 	mapId: number;
 	all(): MapConnection[];
+	byId(): ReadonlyMap<number, MapConnection>;
 	stale(): StaleConnection[];
 	systems(): MapSystemView[];
 	run: RunAction;
@@ -39,6 +40,11 @@ export class ConnectionsApi {
 
 	get all(): MapConnection[] {
 		return this.host.all();
+	}
+
+	/** Every connection by id, built once per graph. */
+	get byId(): ReadonlyMap<number, MapConnection> {
+		return this.host.byId();
 	}
 
 	/** Connections critical for over an hour, offered for a one-click sweep. */

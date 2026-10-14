@@ -15,7 +15,10 @@
 	let {
 		name,
 		wormholeClassId,
-		/** Whether clicking opens the modifier table. Off in list rows, whose own click wins. */
+		/**
+		 * Whether clicking opens the modifier table. Off in list rows, whose own click wins;
+		 * the row then has to sit inside a `Tooltip.Provider`.
+		 */
 		detail = true,
 	}: { name: string; wormholeClassId: number; detail?: boolean } = $props();
 
@@ -44,14 +47,14 @@
 {/snippet}
 
 {#if !detail}
-	<Tooltip.Provider delayDuration={300}>
-		<Tooltip.Root>
-			<Tooltip.Trigger aria-label={name} class="flex cursor-help">
-				{@render circle()}
-			</Tooltip.Trigger>
-			<Tooltip.Content>{name}</Tooltip.Content>
-		</Tooltip.Root>
-	</Tooltip.Provider>
+	<!-- The row around it provides the tooltip context, so a long list mounts one provider
+	     per row rather than one per badge. -->
+	<Tooltip.Root>
+		<Tooltip.Trigger aria-label={name} class="flex cursor-help">
+			{@render circle()}
+		</Tooltip.Trigger>
+		<Tooltip.Content>{name}</Tooltip.Content>
+	</Tooltip.Root>
 {:else}
 	<Popover.Root bind:open>
 		<Popover.Trigger
