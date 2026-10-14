@@ -43,13 +43,44 @@ pub(in crate::maps) async fn apply_restore_signatures(
     tx: &mut Tx<'_>,
     cmd: RestoreSignatures,
 ) -> Result<Effect> {
-    // Paste undo: clear whatever the paste left behind before replaying the snapshot.
+    let ids: Vec<i64> = cmd.signatures.iter().map(|s| s.id).collect();
+    let mut inverse = MapCommand::RemoveSignatures(RemoveSignatures {
+        map_id: cmd.map_id,
+        signature_pks: ids.clone(),
+    });
+    // Paste undo: the system goes back to exactly the snapshot, so whatever the paste added
+    // goes. What it stands at now is the undo of that, which makes redoing a paste this
+    // same command the other way round rather than a removal of the rows put back.
     let mut events = Vec::new();
     if let Some(solar_system_id) = cmd.replaces_system {
-        sqlx::query!(
-            "delete from signatures where map_id = $1 and solar_system_id = $2",
+        let current_ids: Vec<i64> = sqlx::query_scalar!(
+            "select id from signatures where map_id = $1 and solar_system_id = $2",
             cmd.map_id,
             solar_system_id,
+        )
+        .fetch_all(&mut **tx)
+        .await?;
+        let mut current = capture_signatures(tx, cmd.map_id, &current_ids).await?;
+        current.replaces_system = Some(solar_system_id);
+        current.pasted_at = sqlx::query_scalar!(
+            "select signatures_pasted_at from map_solar_systems
+             where map_id = $1 and solar_system_id = $2",
+            cmd.map_id,
+            solar_system_id,
+        )
+        .fetch_optional(&mut **tx)
+        .await?
+        .flatten();
+        inverse = MapCommand::RestoreSignatures(current);
+
+        // Only the rows the snapshot does not hold: the rest are overwritten below, and
+        // deleting them would take the ghosts they raised along by the foreign key.
+        sqlx::query!(
+            "delete from signatures
+             where map_id = $1 and solar_system_id = $2 and not (id = any($3))",
+            cmd.map_id,
+            solar_system_id,
+            &ids,
         )
         .execute(&mut **tx)
         .await?;
@@ -74,7 +105,6 @@ pub(in crate::maps) async fn apply_restore_signatures(
         store::signatures::reinsert_overwriting(tx, cmd.map_id, s).await?;
     }
     let count = cmd.signatures.len() as i64;
-    let ids: Vec<i64> = cmd.signatures.iter().map(|s| s.id).collect();
     let mut systems: Vec<i64> = cmd
         .signatures
         .iter()
@@ -97,9 +127,6 @@ pub(in crate::maps) async fn apply_restore_signatures(
         CommandOutput::None,
     )
     .entries(count)
-    .undo_with(MapCommand::RemoveSignatures(RemoveSignatures {
-        map_id: cmd.map_id,
-        signature_pks: ids,
-    }))
+    .undo_with(inverse)
     .emit_all(events))
 }
