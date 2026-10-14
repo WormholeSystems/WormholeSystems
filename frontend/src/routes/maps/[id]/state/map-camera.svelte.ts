@@ -4,7 +4,7 @@
 import * as v from 'valibot';
 
 import { readStored, writeStored } from '$lib/storage';
-import { clamp, type Vec2 } from '$lib/map/helpers';
+import { clamp, type Vec2 } from '$lib/map/geometry';
 
 /** Half size is where node text stops being readable, double where a chain stops fitting. */
 const ZOOM_MIN = 0.5;

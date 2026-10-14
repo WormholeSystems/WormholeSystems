@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { dragMembers, bandSelection, draggedPositions, type Drag } from './gestures';
-import { NODE_W } from './helpers';
+import { NODE_W } from './geometry';
 
 const NODE_H = 40;
 

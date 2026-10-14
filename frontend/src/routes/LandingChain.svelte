@@ -3,7 +3,7 @@
 	// edge router. Nothing here is a drawing of the product, so nothing here can drift
 	// away from it.
 	import { treeEdges } from '$lib/map/edges';
-	import { gridBackground } from '$lib/map/helpers';
+	import { gridBackground } from '$lib/map/background';
 	import SystemNode from './maps/[id]/components/canvas/SystemNode.svelte';
 	import { DEMO_CONNECTIONS, DEMO_PILOTS, DEMO_SYSTEMS } from './demo-chain';
 

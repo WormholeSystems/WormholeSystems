@@ -7,7 +7,7 @@
 	import type { SignatureTypeInfo } from '$lib/api/types/SignatureTypeInfo';
 	import MassBar from '$lib/components/MassBar.svelte';
 	import * as Tooltip from '$lib/components/ui/tooltip';
-	import { formatKt, remainingMass } from '$lib/map/helpers';
+	import { formatKt, remainingMass } from '$lib/map/mass';
 	import type { MapState } from '../../state/map-state.svelte';
 	import JumpLogPopover from './JumpLogPopover.svelte';
 

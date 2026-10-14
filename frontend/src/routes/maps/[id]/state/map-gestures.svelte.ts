@@ -5,7 +5,7 @@
 import type { GridConfig } from '$lib/api/types/GridConfig';
 import type { MapSystemView } from '$lib/api/types/MapSystemView';
 import { dragMembers, bandSelection, draggedPositions, type Drag } from '$lib/map/gestures';
-import { nodeAt, type Vec2 } from '$lib/map/helpers';
+import { nodeAt, type Vec2 } from '$lib/map/geometry';
 import type { MapCamera } from './map-camera.svelte';
 
 /** How far a press may wander (screen px) and still count as a tap. */

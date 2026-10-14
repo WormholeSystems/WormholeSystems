@@ -5,7 +5,7 @@
 import type { MapConnection } from '$lib/api/types/MapConnection';
 import type { MapSystemView } from '$lib/api/types/MapSystemView';
 import { systemName } from './system';
-import type { Vec2 } from './helpers';
+import type { Vec2 } from './geometry';
 
 /**
  * Everything the tree layout reads off the chain, as one comparable string: which nodes

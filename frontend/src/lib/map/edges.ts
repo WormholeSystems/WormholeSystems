@@ -3,7 +3,8 @@
 
 import type { MapConnection } from '$lib/api/types/MapConnection';
 import { massBadgeColor, timeBadgeColor } from './connection-status';
-import { NODE_W, railEndpoint, sizeLetter, type Vec2 } from './helpers';
+import { NODE_W, railEndpoint, type Vec2 } from './geometry';
+import { sizeLetter } from './mass';
 
 export type { Vec2 };
 

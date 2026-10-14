@@ -1,7 +1,7 @@
 <script lang="ts">
 	// Physics of the resolved wormhole type, from the enriched signature catalog.
 	import type { SignatureTypeInfo } from '$lib/api/types/SignatureTypeInfo';
-	import { formatKt, shipSizeLetter } from '$lib/map/helpers';
+	import { formatKt, jumpMassLetter } from '$lib/map/mass';
 
 	let { type }: { type: SignatureTypeInfo } = $props();
 </script>
@@ -29,7 +29,7 @@
 		{/if}
 		<div class="col-span-full grid grid-cols-subgrid">
 			<span>Ship Size</span>
-			<span class="text-right">{shipSizeLetter(type.max_jump_mass ?? null)}</span>
+			<span class="text-right">{jumpMassLetter(type.max_jump_mass ?? null)}</span>
 		</div>
 		{#if type.signature_strength != null}
 			<div class="col-span-full grid grid-cols-subgrid">

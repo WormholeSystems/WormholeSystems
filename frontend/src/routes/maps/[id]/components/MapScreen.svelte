@@ -14,7 +14,8 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import type { MapSystemView } from '$lib/api/types/MapSystemView';
-	import { NODE_W, railEndpoint, canvasBackground } from '$lib/map/helpers';
+	import { NODE_W, railEndpoint } from '$lib/map/geometry';
+	import { canvasBackground } from '$lib/map/background';
 	import { connectionCountByPlacement, pilotsBySystem, sigCountsBySystem } from '$lib/map/grouping';
 	import { curveBetween } from '$lib/map/edges';
 	import CanvasControls from './canvas/CanvasControls.svelte';

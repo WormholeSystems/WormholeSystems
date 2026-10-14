@@ -10,7 +10,7 @@ import type { StaleConnection } from '$lib/api/types/StaleConnection';
 import type { TrackJump } from '$lib/api/types/TrackJump';
 import type { UpdateConnectionJump } from '$lib/api/types/UpdateConnectionJump';
 import type { MapAction } from '$lib/map/actions';
-import { heuristicSize } from '$lib/map/helpers';
+import { heuristicSize } from '$lib/map/mass';
 
 export type ConnectionPatch = Omit<SetConnectionStatus, 'map_id' | 'connection_id'>;
 

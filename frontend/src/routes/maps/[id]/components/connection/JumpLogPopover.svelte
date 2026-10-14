@@ -21,7 +21,7 @@
 	import EveImage from '$lib/components/EveImage.svelte';
 	import { timeAgoShort, utcShort } from '$lib/format';
 	import { tickingMs } from '$lib/now.svelte';
-	import { formatKt } from '$lib/map/helpers';
+	import { formatKt } from '$lib/map/mass';
 	import { solarSystemId } from '$lib/map/system';
 	import type { MapState } from '../../state/map-state.svelte';
 	import JumpForm from './JumpForm.svelte';

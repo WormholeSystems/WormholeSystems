@@ -11,7 +11,7 @@
 
 	import { errorMessage } from '$lib/api/client';
 	import { confirmDanger } from '$lib/confirm.svelte';
-	import { NODE_W } from '$lib/map/helpers';
+	import { NODE_W } from '$lib/map/geometry';
 	import type { MapState, Menu } from '../../state/map-state.svelte';
 	import { item, panel, sub } from './chrome';
 

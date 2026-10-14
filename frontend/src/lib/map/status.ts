@@ -29,3 +29,8 @@ export const STATUS_OPTIONS: SystemStatus[] = [
 export function statusLabel(status: SystemStatus): string {
 	return status[0].toUpperCase() + status.slice(1);
 }
+
+/** The node border / status icon color for a system's intel status. */
+export function statusColor(status: SystemStatus): string {
+	return `var(--color-status-${status})`;
+}

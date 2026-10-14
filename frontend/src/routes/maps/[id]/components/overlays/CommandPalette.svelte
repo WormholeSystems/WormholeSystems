@@ -15,7 +15,7 @@
 	import SystemRow from '../pickers/SystemRow.svelte';
 	import { SYSTEM_CELLS_5, SYSTEM_LIST_HINT, SYSTEM_ROW } from '../pickers/columns';
 	import SystemMenu from '$lib/components/system-menu/SystemMenu.svelte';
-	import { NODE_W } from '$lib/map/helpers';
+	import { NODE_W } from '$lib/map/geometry';
 	import type { MapState } from '../../state/map-state.svelte';
 
 	let { map, open = $bindable() }: { map: MapState; open: boolean } = $props();

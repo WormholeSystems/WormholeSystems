@@ -2,7 +2,7 @@
 	// Wormhole physics for one static, the tooltip/popover body (legacy StaticDetails).
 	import type { Static } from '$lib/api/types/Static';
 	import { destClassMeta } from '$lib/map/classes';
-	import { formatKt, shipSizeLetter } from '$lib/map/helpers';
+	import { formatKt, jumpMassLetter } from '$lib/map/mass';
 
 	let { static: st }: { static: Static } = $props();
 
@@ -33,7 +33,7 @@
 		</div>
 		<div class="flex justify-between gap-4">
 			<span class="text-muted-foreground">Ship Size</span>
-			<span>{shipSizeLetter(st.max_jump_mass)}</span>
+			<span>{jumpMassLetter(st.max_jump_mass)}</span>
 		</div>
 		<div class="flex justify-between gap-4">
 			<span class="text-muted-foreground">Lifetime</span>

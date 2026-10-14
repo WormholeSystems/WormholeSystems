@@ -9,7 +9,8 @@
 	import * as Popover from '$lib/components/ui/popover';
 	import ClassBadge from '$lib/components/ClassBadge.svelte';
 	import { isWormholeClass } from '$lib/map/classes';
-	import { NODE_W, statusColor } from '$lib/map/helpers';
+	import { NODE_W } from '$lib/map/geometry';
+	import { statusColor } from '$lib/map/status';
 	import HeaderIcons from './node/HeaderIcons.svelte';
 	import PilotsRow from './node/PilotsRow.svelte';
 	import RegionRow from './node/RegionRow.svelte';
