@@ -248,7 +248,6 @@ fn http_client() -> reqwest::Client {
 pub fn start(
     pool: PgPool,
     esi: EsiClient,
-    maps: crate::maps::MapHub,
     alerts: Option<std::sync::Arc<crate::alerts::Runtime>>,
     config: &crate::config::KillmailConfig,
 ) {
@@ -258,7 +257,6 @@ pub fn start(
     let days = config.backfill_days;
     tokio::spawn(stream::listen(
         pool.clone(),
-        maps,
         alerts,
         config.base_url.clone(),
     ));

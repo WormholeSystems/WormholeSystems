@@ -13,7 +13,7 @@ use axum::response::{IntoResponse, Redirect, Response};
 use axum_extra::extract::CookieJar;
 use serde::Deserialize;
 
-use crate::auth::AppState;
+use crate::app::AppState;
 use crate::oauth_flow::{self, FlowKind};
 use crate::session;
 

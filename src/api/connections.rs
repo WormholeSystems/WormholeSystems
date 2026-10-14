@@ -10,7 +10,7 @@ use utoipa_axum::routes;
 
 use super::extract::{ShareQuery, acting_on, read_map_as, require_actor};
 use super::{ApiError, ApiResult};
-use crate::auth::AppState;
+use crate::app::AppState;
 use crate::maps::MapConnection;
 use crate::maps::connection::{
     AddConnection, CleanStaleConnections, RemoveConnection, SetConnectionStatus, StaleConnection,

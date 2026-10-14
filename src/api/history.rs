@@ -8,7 +8,7 @@ use utoipa_axum::routes;
 
 use super::ApiResult;
 use super::extract::{acting_on, require_actor};
-use crate::auth::AppState;
+use crate::app::AppState;
 use crate::maps::events_log::{GotoMapEvent, MapHistory, MapIdBody};
 
 pub fn routes() -> OpenApiRouter<AppState> {

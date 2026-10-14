@@ -8,7 +8,7 @@ use axum_extra::extract::CookieJar;
 use serde::Deserialize;
 
 use super::ApiError;
-use crate::auth::AppState;
+use crate::app::AppState;
 use crate::maps::Actor;
 
 /// What a request carries to say who it is from: the session cookie a browser sends, or
@@ -119,7 +119,7 @@ pub(crate) async fn acting_on(
 /// 401/403. For reads and the handlers that mutate outside the command pipeline; the
 /// pipeline itself re-checks inside its transaction.
 pub(crate) async fn require_role_on_map(
-    state: &crate::auth::AppState,
+    state: &crate::app::AppState,
     creds: &Credentials,
     map_id: i64,
     min_role: crate::maps::Role,

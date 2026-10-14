@@ -8,8 +8,7 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use tokio::sync::broadcast::error::RecvError;
 
-use crate::auth::AppState;
-use crate::maps::MapHub;
+use crate::app::AppState;
 use crate::user_channel::UserHub;
 
 /// `GET /ws/map/{map_id}`: the map's events as JSON, gated at the same bar as reading it:
@@ -28,7 +27,7 @@ pub async fn map_ws(
     let token = crate::api::extract::share_cookie(&creds, map_id);
 
     match crate::maps::access::reader_for(&state.db, map_id, actor, token.as_deref()).await {
-        Ok(_) => ws.on_upgrade(move |socket| stream_map_events(socket, state.hub, map_id)),
+        Ok(_) => ws.on_upgrade(move |socket| stream_map_events(socket, map_id)),
         Err(crate::maps::MapError::NotFound) => StatusCode::NOT_FOUND.into_response(),
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     }
@@ -105,8 +104,8 @@ async fn user_heartbeat(mut socket: WebSocket, pool: sqlx::PgPool, users: UserHu
     }
 }
 
-async fn stream_map_events(mut socket: WebSocket, hub: MapHub, map_id: i64) {
-    let mut rx = hub.subscribe(map_id);
+async fn stream_map_events(mut socket: WebSocket, map_id: i64) {
+    let mut rx = crate::maps::hub().subscribe(map_id);
     loop {
         let received = tokio::select! {
             _ = crate::background::stopped() => {

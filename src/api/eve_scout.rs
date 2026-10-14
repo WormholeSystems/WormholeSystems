@@ -9,7 +9,7 @@ use utoipa_axum::routes;
 
 use super::ApiResult;
 use super::extract::acting_on;
-use crate::auth::AppState;
+use crate::app::AppState;
 use crate::maps::eve_scout::{AddEveScoutConnections, EveScoutHole, HUBS, size_from_eve_scout};
 use crate::maps::{MassStatus, TimeStatus};
 

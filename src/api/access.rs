@@ -11,7 +11,7 @@ use utoipa_axum::routes;
 use super::ApiResult;
 use super::extract::{acting_on, require_actor};
 use super::reference::SearchQuery;
-use crate::auth::AppState;
+use crate::app::AppState;
 use crate::maps::access::{AccessEntry, RevokeAccess, SetAccess};
 
 /// A grantable subject from the access-subject search.

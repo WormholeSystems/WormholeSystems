@@ -10,7 +10,7 @@ use utoipa_axum::routes;
 
 use super::extract::require_actor;
 use super::{ApiError, ApiResult};
-use crate::auth::AppState;
+use crate::app::AppState;
 use crate::maps::view::{sovereignty_of, statics_for};
 use crate::maps::{EffectModifier, GridConfig};
 
@@ -156,8 +156,8 @@ pub async fn instance(State(state): State<AppState>) -> ApiResult<Instance> {
     responses((status = 200, body = GridConfig, description = "OK")),
     security(()),
 )]
-pub async fn grid_config(State(state): State<AppState>) -> ApiResult<GridConfig> {
-    Ok(Json(state.grid))
+pub async fn grid_config(State(_state): State<AppState>) -> ApiResult<GridConfig> {
+    Ok(Json(crate::maps::grid()))
 }
 
 #[derive(Deserialize, utoipa::IntoParams)]

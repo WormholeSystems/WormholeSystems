@@ -10,7 +10,7 @@ use utoipa_axum::routes;
 
 use super::extract::{require_actor, session_actor, session_id};
 use super::{ApiError, ApiResult};
-use crate::auth::AppState;
+use crate::app::AppState;
 
 /// The signed-in character, for the UI's auth state.
 #[derive(Clone, Debug, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema)]
@@ -401,8 +401,7 @@ async fn esi_waypoint(
     use axum::http::StatusCode;
     let store = crate::db::PgTokenStore::new(state.db.clone());
     let token = state
-        .auth
-        .sso()
+        .sso
         .access_token(&store, character_id, crate::esi::Scope::WriteWaypoint)
         .await
         .map_err(|err| match err {
@@ -416,8 +415,7 @@ async fn esi_waypoint(
             },
         })?;
     state
-        .auth
-        .esi()
+        .esi
         .set_waypoint(
             &token,
             destination_id,

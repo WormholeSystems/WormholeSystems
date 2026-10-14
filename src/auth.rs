@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Redirect, Response};
@@ -7,60 +5,12 @@ use axum_extra::extract::CookieJar;
 use axum_extra::extract::cookie::{Cookie, SameSite};
 use serde::Deserialize;
 
+use crate::app::AppState;
 use crate::db::PgTokenStore;
 use crate::esi::scopes::Scope;
 use crate::esi::token::TokenStore;
-use crate::esi::{EsiClient, Sso};
 use crate::oauth_flow::{self, FlowKind};
 use crate::session;
-
-#[derive(Clone)]
-pub struct AppState {
-    pub auth: Arc<Auth>,
-    pub db: sqlx::PgPool,
-    pub hub: crate::maps::MapHub,
-    pub user_hub: crate::user_channel::UserHub,
-    pub grid: crate::maps::GridConfig,
-    /// The latest Tranquility status, for the header indicator.
-    pub server: crate::server_status::ServerWatch,
-    /// `None` when no Discord application is configured, which disables the bot half.
-    pub discord: Option<Arc<crate::config::DiscordConfig>>,
-    /// Whether this deployment is served over HTTPS, taken from the callback URL EVE was
-    /// given. The session cookie is marked `Secure` when it is, so a browser will not send
-    /// it in the clear; local development over plain http would never receive it back.
-    pub secure_cookies: bool,
-    /// Where the per-viewer map background images live.
-    pub backgrounds: crate::maps::BackgroundStore,
-    /// Who may sign in. Checked at the SSO callback only, so it decides who gets a session
-    /// and whose characters join an account; a session already open runs out as usual.
-    pub allowed_logins: crate::allowlist::AffiliationAllowlist,
-    /// Who may create maps, independent of who may log in: an instance can admit a whole
-    /// alliance while only its leadership creates maps.
-    pub map_creators: crate::allowlist::AffiliationAllowlist,
-    /// The site-wide banner, if the operator set one.
-    pub announcement: Option<Arc<crate::announcement::Announcement>>,
-    /// Where EVE Scout's public signatures are read from.
-    pub eve_scout_url: Arc<str>,
-}
-
-pub struct Auth {
-    sso: Arc<Sso>,
-    esi: EsiClient,
-}
-
-impl Auth {
-    pub fn new(sso: Arc<Sso>, esi: EsiClient) -> Self {
-        Auth { sso, esi }
-    }
-
-    pub fn sso(&self) -> &Arc<Sso> {
-        &self.sso
-    }
-
-    pub fn esi(&self) -> &EsiClient {
-        &self.esi
-    }
-}
 
 #[derive(Deserialize)]
 pub struct LoginQuery {
@@ -135,9 +85,9 @@ pub async fn login(
         Err(err) => return server_error(err),
     };
     let url = if scopes.is_empty() {
-        state.auth.sso.authorize_url(&csrf)
+        state.sso.authorize_url(&csrf)
     } else {
-        state.auth.sso.authorize_url_for(&csrf, &scopes)
+        state.sso.authorize_url_for(&csrf, &scopes)
     };
     Redirect::to(&url).into_response()
 }
@@ -171,8 +121,6 @@ pub async fn callback(
     jar: CookieJar,
     Query(query): Query<CallbackQuery>,
 ) -> Response {
-    let auth = &state.auth;
-
     // The `state` is single-use and short-lived: consume it, rejecting unknown/expired.
     let flow = match oauth_flow::consume(&state.db, FlowKind::EveLogin, &query.state).await {
         Ok(Some(flow)) => flow,
@@ -180,7 +128,7 @@ pub async fn callback(
         Err(err) => return server_error(err),
     };
 
-    let (token, claims) = match auth.sso.exchange_code(&query.code).await {
+    let (token, claims) = match state.sso.exchange_code(&query.code).await {
         Ok(pair) => pair,
         Err(err) => {
             return (StatusCode::BAD_GATEWAY, format!("login failed: {err}")).into_response();
@@ -189,7 +137,7 @@ pub async fn callback(
 
     // Corp/alliance drive access checks, so they're required and refreshed on every login.
     // We also cache the entity rows (name/ticker) the character's deferred FKs reference.
-    let affiliation = auth
+    let affiliation = state
         .esi
         .affiliation(&[claims.character_id])
         .await
@@ -213,7 +161,7 @@ pub async fn callback(
         return Redirect::to(refused_destination(flow.link_user_id.is_some())).into_response();
     }
 
-    let Ok(corp) = auth.esi.corporation(affiliation.corporation_id).await else {
+    let Ok(corp) = state.esi.corporation(affiliation.corporation_id).await else {
         return (StatusCode::BAD_GATEWAY, "could not resolve corporation").into_response();
     };
     let corporation = session::Entity {
@@ -222,7 +170,7 @@ pub async fn callback(
         ticker: corp.ticker,
     };
     let alliance = match affiliation.alliance_id {
-        Some(alliance_id) => match auth.esi.alliance(alliance_id).await {
+        Some(alliance_id) => match state.esi.alliance(alliance_id).await {
             Ok(a) => Some(session::Entity {
                 id: alliance_id,
                 name: a.name,

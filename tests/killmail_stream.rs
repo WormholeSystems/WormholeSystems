@@ -120,13 +120,7 @@ async fn kills_are_stored_back_to_back_and_alerted_on(pool: PgPool) {
     let runtime = Arc::new(Runtime::load(&pool, None).await.unwrap());
     // Nothing listens on the ESI address, so naming fails quietly and changes nothing here.
     let esi = EsiClient::with_config(reqwest::Client::new(), "http://127.0.0.1:9", "2025-08-26");
-    wormholesystems::killmails::start(
-        pool.clone(),
-        esi,
-        wormholesystems::maps::MapHub::new(),
-        Some(runtime),
-        &config,
-    );
+    wormholesystems::killmails::start(pool.clone(), esi, Some(runtime), &config);
 
     let stored = wait_for(async || {
         sqlx::query_scalar!("select sequence_id from zkb_state")

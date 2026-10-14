@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
 
-use crate::auth::AppState;
+use crate::app::AppState;
 use crate::maps::alerts as store;
 use crate::maps::{MapError, Role};
 

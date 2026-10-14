@@ -8,7 +8,7 @@ use serde_json::{Value, json};
 
 use crate::alerts::ships::JumpShip;
 use crate::alerts::{AlertDelivery, AlertKind, AlertMention, filters};
-use crate::auth::AppState;
+use crate::app::AppState;
 use crate::maps::alerts::SaveAlert;
 use crate::maps::{MapError, Role};
 

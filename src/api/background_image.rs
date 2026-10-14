@@ -11,7 +11,7 @@ use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
 
 use super::{ApiError, ApiResult, user_settings};
-use crate::auth::AppState;
+use crate::app::AppState;
 use crate::maps::Role;
 use crate::maps::background::MAX_IMAGE_BYTES;
 

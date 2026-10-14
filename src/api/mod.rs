@@ -43,7 +43,7 @@ use utoipa::{Modify, OpenApi, ToResponse, ToSchema};
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_scalar::{Scalar, Servable};
 
-use crate::auth::AppState;
+use crate::app::AppState;
 use crate::maps::MapError;
 
 // Wire types live next to their handlers; these re-exports save the rest of the crate from

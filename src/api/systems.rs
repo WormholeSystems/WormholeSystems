@@ -9,7 +9,7 @@ use utoipa_axum::routes;
 
 use super::ApiResult;
 use super::extract::{acting_on, require_actor};
-use crate::auth::AppState;
+use crate::app::AppState;
 use crate::maps::MapSolarSystem;
 use crate::maps::solar_system::{
     AddSystem, ClearMap, MoveSystem, MoveSystems, RemoveSystem, RemoveSystems, SetAlias, SetHome,

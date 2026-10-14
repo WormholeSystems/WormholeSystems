@@ -43,7 +43,6 @@ const ALERT_BATCH: usize = 100;
 
 pub(super) async fn listen(
     pool: PgPool,
-    maps: crate::maps::MapHub,
     alerts: Option<std::sync::Arc<crate::alerts::Runtime>>,
     base: String,
 ) {
@@ -70,7 +69,7 @@ pub(super) async fn listen(
                 }
             },
         };
-        match ingest(&pool, &http, &base, &maps, alerts.as_ref(), last + 1).await {
+        match ingest(&pool, &http, &base, alerts.as_ref(), last + 1).await {
             Ok(true) => {
                 cursor = Some(last + 1);
                 tokio::time::sleep(PACE).await;
@@ -117,7 +116,6 @@ async fn ingest(
     pool: &PgPool,
     http: &reqwest::Client,
     base: &str,
-    maps: &crate::maps::MapHub,
     alerts: Option<&mpsc::Sender<Pending>>,
     next: i64,
 ) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
@@ -147,7 +145,7 @@ async fn ingest(
             detail: extract_detail(&km.esi, &km.zkb),
         };
         super::insert_rows(pool, std::slice::from_ref(&row), true).await?;
-        announce(pool, maps, solar_system_id).await;
+        announce(pool, solar_system_id).await;
         if let Some(alerts) = alerts {
             offer(alerts, row);
         }
@@ -253,7 +251,7 @@ async fn kill_for(
 
 /// Tell every map holding this system that something died in it. The event carries no
 /// payload: what a client shows depends on its own filter, so it refetches.
-async fn announce(pool: &PgPool, maps: &crate::maps::MapHub, solar_system_id: i64) {
+async fn announce(pool: &PgPool, solar_system_id: i64) {
     let Ok(map_ids) = sqlx::query_scalar!(
         "select distinct map_id from map_solar_systems where solar_system_id = $1",
         solar_system_id,
@@ -264,7 +262,7 @@ async fn announce(pool: &PgPool, maps: &crate::maps::MapHub, solar_system_id: i6
         return;
     };
     for map_id in map_ids {
-        maps.publish(crate::maps::MapEvent::KillmailReceived { map_id });
+        crate::maps::hub().publish(crate::maps::MapEvent::KillmailReceived { map_id });
     }
 }
 

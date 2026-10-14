@@ -14,7 +14,7 @@ use ed25519_dalek::{Signature, VerifyingKey};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
-use crate::auth::AppState;
+use crate::app::AppState;
 
 /// Discord's interaction types, as far as this cares.
 const PING: u8 = 1;

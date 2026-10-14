@@ -10,7 +10,7 @@ use utoipa_axum::routes;
 
 use super::extract::{ShareQuery, acting_on, read_map_as};
 use super::{ApiError, ApiResult};
-use crate::auth::AppState;
+use crate::app::AppState;
 use crate::maps::Signature;
 use crate::maps::signatures::{
     AddSignature, LinkSignature, PasteSignatures, RemoveSignature, RemoveSignatures,

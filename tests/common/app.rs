@@ -9,15 +9,16 @@ use axum::body::Body;
 use axum::http::{Request, Response, StatusCode, header};
 use sqlx::PgPool;
 use tower::ServiceExt;
-use wormholesystems::auth::{AppState, Auth};
+use wormholesystems::app::AppState;
 use wormholesystems::esi::sso::{Sso, SsoConfig};
 use wormholesystems::maps::Actor;
 use wormholesystems::server_status::{ServerState, ServerStatus, ServerWatch};
 
-/// The real router with a test `AppState`. Auth and the server watch are stubs: nothing
-/// under test touches EVE, but every extractor and error mapping is the production one.
+/// The real router with a test `AppState`. SSO and the server watch are stubs: nothing
+/// under test touches EVE, but every route, extractor and error mapping is the production
+/// one, the WebSockets included.
 pub fn app(pool: &PgPool) -> Router {
-    wormholesystems::api::router().with_state(state(pool))
+    wormholesystems::app::router(state(pool))
 }
 
 /// The state the router runs on, for the code that takes it directly, such as the bot.
@@ -33,19 +34,10 @@ pub fn state(pool: &PgPool) -> AppState {
         },
     );
     AppState {
-        auth: Arc::new(Auth::new(
-            Arc::new(sso),
-            wormholesystems::esi::EsiClient::new(),
-        )),
+        sso: Arc::new(sso),
+        esi: wormholesystems::esi::EsiClient::new(),
         db: pool.clone(),
-        hub: wormholesystems::maps::MapHub::new(),
         user_hub: wormholesystems::user_channel::UserHub::new(),
-        grid: wormholesystems::maps::GridConfig {
-            cell_size: 20.0,
-            world_width: 4000.0,
-            world_height: 2000.0,
-            viewport_height: 1400.0,
-        },
         server: ServerWatch::fixed(ServerStatus {
             state: ServerState::Online,
             players: 1,

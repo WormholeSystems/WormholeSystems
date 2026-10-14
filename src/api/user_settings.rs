@@ -16,7 +16,7 @@ use crate::maps::{
 use super::extract::Credentials;
 use super::layout::PanelLayouts;
 use super::{ApiError, ApiResult};
-use crate::auth::AppState;
+use crate::app::AppState;
 
 pub fn routes() -> OpenApiRouter<AppState> {
     OpenApiRouter::new().routes(routes!(map_user_settings, update_map_user_settings))
@@ -418,9 +418,7 @@ pub async fn update_map_user_settings(
     // else's pilot list, and the poller only announces maps that are already shared: with
     // nothing published here, switching it off never reaches the other viewers at all.
     if body.tracking_allowed.is_some() {
-        state
-            .hub
-            .publish(crate::maps::MapEvent::CharactersChanged { map_id });
+        crate::maps::hub().publish(crate::maps::MapEvent::CharactersChanged { map_id });
     }
 
     Ok(Json(load(&state.db, map_id, actor.user_id).await?))

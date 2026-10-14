@@ -8,7 +8,7 @@ use utoipa_axum::routes;
 
 use super::ApiResult;
 use super::extract::{Credentials, require_session_actor};
-use crate::auth::AppState;
+use crate::app::AppState;
 use crate::tokens::{CreateToken, CreatedToken, PersonalAccessToken};
 
 pub fn routes() -> OpenApiRouter<AppState> {

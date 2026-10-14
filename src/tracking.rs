@@ -27,7 +27,6 @@ use crate::background::spawn_every;
 use crate::db::PgTokenStore;
 use crate::esi::scopes::Scope;
 use crate::esi::{EsiClient, Result as EsiResult, Sso, Token, TokenCache, TokenStore};
-use crate::maps::MapHub;
 use crate::server_status::ServerWatch;
 use crate::user_channel::{UserEvent, UserHub};
 
@@ -55,7 +54,6 @@ struct Poller {
     sso: Arc<Sso>,
     esi: EsiClient,
     users: UserHub,
-    maps: MapHub,
     store: PgTokenStore,
     tokens: TokenCache,
     /// The poller's share of the pool. [`CONCURRENCY`] polls can be in flight and each
@@ -96,15 +94,7 @@ impl TokenStore for Throttled<'_> {
 }
 
 /// Spawn the polling loops. Returns immediately; the loops run for the process lifetime.
-/// `maps` receives `ConnectionChanged` events when a transit lands on a mapped hole.
-pub fn start(
-    pool: PgPool,
-    sso: Arc<Sso>,
-    esi: EsiClient,
-    users: UserHub,
-    maps: MapHub,
-    server: ServerWatch,
-) {
+pub fn start(pool: PgPool, sso: Arc<Sso>, esi: EsiClient, users: UserHub, server: ServerWatch) {
     // Half the pool, leaving the rest to requests and the other background work.
     let db = (pool.options().get_max_connections() as usize / 2).max(1);
     let poller = Arc::new(Poller {
@@ -113,7 +103,6 @@ pub fn start(
         sso,
         esi,
         users,
-        maps,
         tokens: TokenCache::new(),
         db: Semaphore::new(db),
     });
@@ -431,8 +420,6 @@ async fn announce_presence(poller: &Poller, user_id: i64) {
         return;
     };
     for map_id in map_ids {
-        poller
-            .maps
-            .publish(crate::maps::MapEvent::CharactersChanged { map_id });
+        crate::maps::hub().publish(crate::maps::MapEvent::CharactersChanged { map_id });
     }
 }

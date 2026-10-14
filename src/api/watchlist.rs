@@ -8,7 +8,7 @@ use utoipa_axum::routes;
 
 use super::ApiResult;
 use super::extract::{ShareQuery, acting_on, read_map_as};
-use crate::auth::AppState;
+use crate::app::AppState;
 use crate::maps::watchlist::{
     AddWatchlistEntry, RemoveWatchlistEntry, SetWatchlistPinned, WatchlistEntry,
 };

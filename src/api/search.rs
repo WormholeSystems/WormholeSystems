@@ -10,7 +10,7 @@ use utoipa_axum::routes;
 use super::extract::{ShareQuery, read_map_as};
 use super::reference::{SearchQuery, systems_for};
 use super::{ApiError, ApiResult, SystemSearchResult};
-use crate::auth::AppState;
+use crate::app::AppState;
 use crate::maps::view::sovereignty_of;
 use crate::maps::view::statics_for;
 

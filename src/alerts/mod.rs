@@ -330,7 +330,14 @@ async fn deliver_loop(
 /// placement. It only evaluates, which is a few queries on a map with alerts and nothing
 /// on one without, and leaves Discord to the delivery worker; that keeps it ahead of a big
 /// paste. If it does fall behind, it replays the gap from the tables.
-pub fn start(pool: PgPool, hub: crate::maps::MapHub, runtime: Arc<Runtime>) {
+pub fn start(pool: PgPool, runtime: Arc<Runtime>) {
+    start_on(pool, crate::maps::hub().clone(), runtime);
+}
+
+/// [`start`] on a hub of the caller's. For tests: the process-wide hub carries every other
+/// test's maps, whose ids collide with this one's across test databases.
+#[doc(hidden)]
+pub fn start_on(pool: PgPool, hub: crate::maps::MapHub, runtime: Arc<Runtime>) {
     tokio::spawn(async move {
         let mut events = hub.subscribe_all();
         // When the last event came off the channel. What was missed was published after

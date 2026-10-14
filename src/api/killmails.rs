@@ -9,7 +9,7 @@ use utoipa_axum::routes;
 
 use super::ApiResult;
 use super::extract::{ShareQuery, read_map_as};
-use crate::auth::AppState;
+use crate::app::AppState;
 
 pub fn routes() -> OpenApiRouter<AppState> {
     OpenApiRouter::new().routes(routes!(map_killmails))

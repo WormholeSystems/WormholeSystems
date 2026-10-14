@@ -29,9 +29,9 @@ pub mod watchlist;
 pub use command::{Command, CommandOutput, EventActor, MapCommand, execute, run};
 
 /// The process-wide event hub, like [`GRID`] below: global so a committed command can
-/// announce itself without every caller threading the hub through. `main` clones this one
-/// into the app state and the background loops; tests publish into it with no subscribers,
-/// which is a no-op.
+/// announce itself without every caller threading the hub through. The only one: the
+/// WebSockets, the background loops and the alert subscriber all use it, so a test driving
+/// the router hears what its commands publish.
 static HUB: std::sync::OnceLock<events::MapHub> = std::sync::OnceLock::new();
 
 pub fn hub() -> &'static events::MapHub {

@@ -8,7 +8,7 @@ use utoipa_axum::routes;
 
 use super::ApiResult;
 use super::extract::acting_on;
-use crate::auth::AppState;
+use crate::app::AppState;
 
 pub fn routes() -> OpenApiRouter<AppState> {
     OpenApiRouter::new().routes(routes!(track_jump))
