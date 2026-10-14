@@ -26,6 +26,9 @@ Four containers, from `docker-compose.yml`:
 | `api` | the Axum API and every background job | Caddy only |
 | `db` | Postgres 16 | the other containers, and `127.0.0.1` on the host |
 
+With scheduled backups on there is a fifth, `backup`, which dumps the database once a day
+and reaches nothing else; see [Backups](#backups).
+
 Caddy is the only thing published. `/api`, `/auth`, `/ws` and `/discord` go to the API;
 everything else goes to the SvelteKit server. The database port is bound to the loopback so
 `psql` works over SSH and nothing else can reach it.
@@ -152,8 +155,15 @@ docker compose logs -f api
 wsctl update
 ```
 
-Fast-forwards the checkout, pulls or rebuilds the images, restarts, waits for the new containers to report
-healthy, and takes CCP's static data when a newer build is out. Migrations run on boot, so there is no separate step for those either.
+Fast-forwards the checkout, pulls or rebuilds the images while the old containers keep
+serving, dumps the database (see [Backups](#backups)), restarts, waits for the new
+containers to report healthy, and takes CCP's static data when a newer build is out.
+Migrations run on boot, so there is no separate step for those either.
+
+It also brings `.env` up to date with the version it is running: an install set up by wsctl
+0.5 is moved to the choices described in [From wsctl 0.5](#from-wsctl-05), and
+`COMPOSE_FILE` is written again each time, so a `compose.override.yml` added since is
+picked up.
 
 An install from before wsctl 0.5 ran under its directory's name with a database role called
 `vector`. Update wsctl first (the install one-liner again), then `wsctl update` moves it:
@@ -168,7 +178,10 @@ small disk fills up within a few weeks of updates.
 
 The static data is the slow half: another ~550MB and a re-seed of a few minutes. It is
 skipped when the loaded build is already current, and `--sde` fetches it regardless, which
-is what to reach for if a download was interrupted:
+is what to reach for if a download was interrupted. The fetch clears the old files first,
+so it checks that CCP answers and that Docker has 2GB free before it starts; if the
+download fails anyway, the API keeps running on the build its database has, and downloads
+again the next time it starts.
 
 ```sh
 wsctl update --sde
