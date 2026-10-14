@@ -69,9 +69,21 @@ export const MAP_ACTIONS = {
 	saveLayout: { failed: 'Could not save the layout', done: 'Layout saved' },
 	setPlacement: { failed: 'Could not change the placement' },
 	saveSettings: { failed: 'Could not save your settings' },
+	setBackground: { failed: 'Could not change the background' },
 
 	// Lands in the EVE client, where the app cannot show you anything.
 	setWaypoint: { failed: 'Could not set the destination', done: 'Destination set' },
 } as const satisfies Record<string, ActionCopy>;
 
 export type MapAction = keyof typeof MAP_ACTIONS;
+
+/**
+ * Run one write and say how it went. The work is handed over unstarted, so the runner
+ * decides when it begins. Resolves or rejects with the write; the failure is already said,
+ * so a caller that does not wait on it can drop the promise.
+ */
+export type RunAction = <T>(
+	action: MapAction,
+	exec: () => Promise<T>,
+	detail?: string,
+) => Promise<T>;

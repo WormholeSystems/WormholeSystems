@@ -6,12 +6,12 @@
 	import Trash2Icon from '@lucide/svelte/icons/trash-2';
 	import { toast } from 'svelte-sonner';
 	import { page } from '$app/state';
-	import { createUserSettingsWriter } from '$lib/map/user-settings';
+	import { createBackgroundImageWriter, createUserSettingsWriter } from '$lib/map/user-settings';
 	import {
 		ACCEPTED_IMAGE_TYPES,
 		BACKGROUND_MODES,
 		BACKGROUND_MODE_VALUES,
-		rejectImage,
+		takePickedFile,
 	} from '$lib/map/background';
 	import { KILLMAIL_FILTERS } from '$lib/map/killmails';
 	import { PLACEMENTS as BASE_PLACEMENTS } from '$lib/map/placement';
@@ -40,22 +40,12 @@
 	const settingsWriter = createUserSettingsWriter();
 	const saveUserSettings = (patch: UpdateMapUserSettings) => settingsWriter.save(mapId, patch);
 
-	// The image goes as a file rather than a settings patch, so it has its own action.
-	const imageAction = apiAction(() => [key.userSettings(mapId)]);
+	const image = createBackgroundImageWriter();
 	let fileInput = $state<HTMLInputElement | null>(null);
 
 	function chooseImage(event: Event) {
-		const input = event.currentTarget as HTMLInputElement;
-		const file = input.files?.[0];
-		// Cleared so picking the same file again after a removal fires change again.
-		input.value = '';
-		if (!file) return;
-		const reason = rejectImage(file);
-		if (reason) {
-			toast.error(reason);
-			return;
-		}
-		imageAction.mutate(() => api.uploadBackgroundImage(mapId, file));
+		const file = takePickedFile(event);
+		if (file) image.upload(mapId, file);
 	}
 
 	const backgroundMode = $derived(settings?.background_image_mode ?? 'grid');
@@ -183,7 +173,7 @@
 				<Button
 					variant="outline"
 					size="sm"
-					disabled={imageAction.isPending}
+					disabled={image.pending}
 					onclick={() => fileInput?.click()}
 					data-testid="background-image-choose"
 				>
@@ -195,8 +185,8 @@
 						variant="ghost"
 						size="sm"
 						class="text-muted-foreground hover:text-destructive"
-						disabled={imageAction.isPending}
-						onclick={() => imageAction.mutate(() => api.removeBackgroundImage(mapId))}
+						disabled={image.pending}
+						onclick={() => image.remove(mapId)}
 						aria-label="Remove background image"
 						data-testid="background-image-remove"
 					>

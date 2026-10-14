@@ -28,7 +28,7 @@
 				title={option.label}
 				aria-pressed={map.layout === option.mode}
 				data-testid="placement-{option.mode}"
-				onclick={() => map.setLayoutOverride(option.mode as 'manual' | 'tree')}
+				onclick={() => map.placement.setForMe(option.mode as 'manual' | 'tree')}
 			>
 				<Icon class="size-4" />
 			</button>

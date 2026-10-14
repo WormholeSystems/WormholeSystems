@@ -5,7 +5,7 @@ import { api } from '$lib/api/client';
 import type { PastedSignature } from '$lib/api/types/PastedSignature';
 import type { Signature } from '$lib/api/types/Signature';
 import type { UpdateSignature } from '$lib/api/types/UpdateSignature';
-import type { MapAction } from '$lib/map/actions';
+import type { RunAction } from '$lib/map/actions';
 
 /**
  * The fields a row may change. Taken from the wire type rather than restated, so a field
@@ -16,7 +16,7 @@ export type SignaturePatch = Omit<UpdateSignature, 'map_id' | 'signature_pk'>;
 export interface SignaturesHost {
 	mapId: number;
 	all(): Signature[];
-	run(action: MapAction, promise: Promise<unknown>, detail?: string): void;
+	run: RunAction;
 }
 
 export class SignaturesApi {
@@ -28,16 +28,14 @@ export class SignaturesApi {
 
 	/** Merge a scan-window paste into one system's signatures. */
 	paste(solarSystemId: number, signatures: PastedSignature[]) {
-		this.host.run(
-			'pasteSignatures',
+		this.host.run('pasteSignatures', () =>
 			api.pasteSignatures({ map_id: this.host.mapId, solar_system_id: solarSystemId, signatures }),
 		);
 	}
 
 	/** The inline new row: a bare id in the unknown group until a paste fills it in. */
 	add(solarSystemId: number, signatureId: string) {
-		this.host.run(
-			'addSignature',
+		this.host.run('addSignature', () =>
 			api.addSignature({
 				map_id: this.host.mapId,
 				solar_system_id: solarSystemId,
@@ -48,30 +46,26 @@ export class SignaturesApi {
 	}
 
 	update(signaturePk: number, patch: SignaturePatch) {
-		this.host.run(
-			'updateSignature',
+		this.host.run('updateSignature', () =>
 			api.updateSignature({ map_id: this.host.mapId, signature_pk: signaturePk, ...patch }),
 		);
 	}
 
 	remove(signaturePk: number) {
-		this.host.run(
-			'removeSignature',
+		this.host.run('removeSignature', () =>
 			api.removeSignature({ map_id: this.host.mapId, signature_pk: signaturePk }),
 		);
 	}
 
 	/** Sweep the rows a paste no longer sees. */
 	removeMissing(signaturePks: number[]) {
-		this.host.run(
-			'removeMissingSignatures',
+		this.host.run('removeMissingSignatures', () =>
 			api.removeSignaturesBulk({ map_id: this.host.mapId, signature_pks: signaturePks }),
 		);
 	}
 
 	link(signaturePk: number, connectionId: number) {
-		this.host.run(
-			'linkSignature',
+		this.host.run('linkSignature', () =>
 			api.linkSignature({
 				map_id: this.host.mapId,
 				signature_pk: signaturePk,
@@ -81,8 +75,7 @@ export class SignaturesApi {
 	}
 
 	unlink(signaturePk: number) {
-		this.host.run(
-			'unlinkSignature',
+		this.host.run('unlinkSignature', () =>
 			api.unlinkSignature({ map_id: this.host.mapId, signature_pk: signaturePk }),
 		);
 	}

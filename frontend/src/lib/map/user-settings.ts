@@ -15,6 +15,7 @@ import { key } from '$lib/api/queries';
 import type { MapUserSettings } from '$lib/api/types/MapUserSettings';
 import type { UpdateMapUserSettings } from '$lib/api/types/UpdateMapUserSettings';
 import { MAP_ACTIONS } from '$lib/map/actions';
+import { rejectImage } from '$lib/map/background';
 
 /** The switches that make the map work for you while you fly. */
 export type AutomationKey =
@@ -216,3 +217,40 @@ export function createUserSettingsWriter() {
 }
 
 export type UserSettingsWriter = ReturnType<typeof createUserSettingsWriter>;
+
+/**
+ * The background picture, which goes as a file rather than a settings patch. Shared by the
+ * map's popover and the display settings page. Component init only.
+ */
+export function createBackgroundImageWriter() {
+	const client = useQueryClient();
+	const mutation = createMutation(() => ({
+		mutationFn: ({ mapId, file }: { mapId: number; file: File | null }) =>
+			file ? api.uploadBackgroundImage(mapId, file) : api.removeBackgroundImage(mapId),
+		// Both answer with the settings as stored, so there is nothing to refetch.
+		onSuccess: (saved: MapUserSettings, { mapId }: { mapId: number; file: File | null }) =>
+			client.setQueryData(key.userSettings(mapId), saved),
+		onError: (err: unknown) =>
+			toast.error(MAP_ACTIONS.setBackground.failed, { description: errorMessage(err) }),
+	}));
+
+	return {
+		get pending(): boolean {
+			return mutation.isPending;
+		},
+		/** Checked first, so a wrong file is turned away with a reason before any upload. */
+		upload(mapId: number, file: File) {
+			const reason = rejectImage(file);
+			if (reason) {
+				toast.error(reason);
+				return;
+			}
+			mutation.mutate({ mapId, file });
+		},
+		remove(mapId: number) {
+			mutation.mutate({ mapId, file: null });
+		},
+	};
+}
+
+export type BackgroundImageWriter = ReturnType<typeof createBackgroundImageWriter>;

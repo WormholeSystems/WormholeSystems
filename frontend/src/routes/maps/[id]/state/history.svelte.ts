@@ -4,12 +4,12 @@
 import { api } from '$lib/api/client';
 import type { MapHistory } from '$lib/api/types/MapHistory';
 import { headEntry, redoEntry, stepDetail } from '$lib/map/history-tree';
-import type { MapAction } from '$lib/map/actions';
+import type { RunAction } from '$lib/map/actions';
 
 export interface HistoryHost {
 	mapId: number;
 	data(): MapHistory | null;
-	run(action: MapAction, promise: Promise<unknown>, detail?: string): void;
+	run: RunAction;
 }
 
 export class HistoryStore {
@@ -34,11 +34,11 @@ export class HistoryStore {
 	// and after the call it is somewhere else. "Undone" alone leaves you to work out what
 	// went, which on a map somebody else is also editing is not obvious.
 	undo() {
-		this.host.run('undo', api.undoMapEvent(this.host.mapId), stepDetail(this.headEntry));
+		this.host.run('undo', () => api.undoMapEvent(this.host.mapId), stepDetail(this.headEntry));
 	}
 
 	redo() {
-		this.host.run('redo', api.redoMapEvent(this.host.mapId), stepDetail(this.redoEntry));
+		this.host.run('redo', () => api.redoMapEvent(this.host.mapId), stepDetail(this.redoEntry));
 	}
 
 	/** Jump the map to any step, which is how a branch left behind by an undo is re-entered. */
@@ -46,7 +46,7 @@ export class HistoryStore {
 		const target = this.entries.find((e) => e.id === eventId) ?? null;
 		this.host.run(
 			'goToEvent',
-			api.gotoMapEvent({ map_id: this.host.mapId, event_id: eventId }),
+			() => api.gotoMapEvent({ map_id: this.host.mapId, event_id: eventId }),
 			eventId === null ? 'Back to the empty map' : stepDetail(target),
 		);
 	}
