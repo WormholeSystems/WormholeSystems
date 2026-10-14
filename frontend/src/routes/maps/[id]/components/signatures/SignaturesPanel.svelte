@@ -35,6 +35,7 @@
 		compareSignatures,
 		formatSignatureId,
 		loadCatalog,
+		loadScanNames,
 		parseScan,
 		typeById,
 	} from '$lib/map/signatures';
@@ -130,7 +131,8 @@
 
 	async function handlePasteText(text: string) {
 		if (!canWrite) return;
-		const rows = parseScan(text, await map.loadCatalog());
+		const [types, names] = await Promise.all([map.loadCatalog(), loadScanNames()]);
+		const rows = parseScan(text, types, names);
 		if (rows.length === 0) {
 			toast.error('Nothing in that paste looked like a signature');
 			return;

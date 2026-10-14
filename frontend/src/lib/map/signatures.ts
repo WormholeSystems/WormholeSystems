@@ -19,15 +19,30 @@ import type { Signature } from '$lib/api/types/Signature';
 import type { SignatureCatalog } from '$lib/api/types/SignatureCatalog';
 import type { SignatureGroup } from '$lib/api/types/SignatureGroup';
 import type { SignatureTypeInfo } from '$lib/api/types/SignatureTypeInfo';
-import translations from '$lib/signatures/translations.json';
 import { destClassMeta } from './classes';
 
-// Localized category and site names from the EVE client's localization files, mapped to
-// their English catalog names. Site names are keyed by English category, because one
-// localized name can mean different sites in different categories. A localized name that
-// several sites share is left out, so it stays a raw name rather than a wrong guess.
-const localizedCategories: Record<string, string> = translations.categories;
-const localizedTypes: Record<string, Record<string, string>> = translations.types;
+/**
+ * Localized category and site names from the EVE client's localization files, mapped to
+ * their English catalog names. Site names are keyed by English category, because one
+ * localized name can mean different sites in different categories. A localized name that
+ * several sites share is left out, so it stays a raw name rather than a wrong guess.
+ */
+export interface ScanNames {
+	categories: Record<string, string>;
+	types: Record<string, Record<string, string>>;
+}
+
+let scanNames: Promise<ScanNames> | null = null;
+
+/**
+ * The localized names [`parseScan`] reads. Fetched on the first paste rather than shipped
+ * with every page that shows a signature row: the table is most of a hundred kilobytes, and
+ * only a paste ever looks at it.
+ */
+export function loadScanNames(): Promise<ScanNames> {
+	scanNames ??= import('$lib/signatures/translations.json').then((m) => m.default);
+	return scanNames;
+}
 
 export interface CategoryMeta {
 	group: SignatureGroup;
@@ -162,7 +177,11 @@ export function typeById(catalog: SignatureCatalog, id: number | null): Signatur
  * Names from any client language match: localized categories and sites are mapped to their
  * English names first, so a clipboard mixing rows from different clients parses the same.
  */
-export function parseScan(text: string, catalog: SignatureCatalog): PastedSignature[] {
+export function parseScan(
+	text: string,
+	catalog: SignatureCatalog,
+	names: ScanNames,
+): PastedSignature[] {
 	const out: PastedSignature[] = [];
 	for (const line of text.split('\n')) {
 		const cols = line.split('\t');
@@ -170,12 +189,12 @@ export function parseScan(text: string, catalog: SignatureCatalog): PastedSignat
 		const sid = (cols[0] ?? '').trim();
 		if (sid.length !== 7) continue;
 
-		const category = matchCategory(catalog, normalizeName(cols[2] ?? ''));
+		const category = matchCategory(catalog, names, normalizeName(cols[2] ?? ''));
 		const typeName = normalizeName(cols[3] ?? '');
 		let typeId: number | null = null;
 		if (category !== null && groupForCategoryId(category) !== 'wormhole' && typeName) {
 			const categoryName = catalog.categories.find((c) => c.id === category)?.name ?? '';
-			const englishName = localizedTypes[categoryName]?.[typeName] ?? typeName;
+			const englishName = names.types[categoryName]?.[typeName] ?? typeName;
 			typeId =
 				catalog.types.find((t) => t.signature_category_id === category && t.name === englishName)
 					?.id ?? null;
@@ -242,17 +261,17 @@ function normalizeName(name: string): string {
 	return name.replace(/\s+/g, ' ').trim();
 }
 
-function findCategory(catalog: SignatureCatalog, name: string): number | null {
-	const english = localizedCategories[name] ?? name;
+function findCategory(catalog: SignatureCatalog, names: ScanNames, name: string): number | null {
+	const english = names.categories[name] ?? name;
 	return catalog.categories.find((c) => c.name === english)?.id ?? null;
 }
 
-function matchCategory(catalog: SignatureCatalog, name: string): number | null {
+function matchCategory(catalog: SignatureCatalog, names: ScanNames, name: string): number | null {
 	if (!name) return null;
-	const exact = findCategory(catalog, name);
+	const exact = findCategory(catalog, names, name);
 	if (exact !== null) return exact;
 	for (const segment of name.split(' - ')) {
-		const hit = findCategory(catalog, segment.trim());
+		const hit = findCategory(catalog, names, segment.trim());
 		if (hit !== null) return hit;
 	}
 	return null;
