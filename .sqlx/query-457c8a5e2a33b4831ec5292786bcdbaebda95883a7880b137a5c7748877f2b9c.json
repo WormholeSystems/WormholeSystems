@@ -1,10 +1,6 @@
 {
   "db_name": "PostgreSQL",
-<<<<<<<< HEAD:.sqlx/query-d15080722c8fd2a621f37da76d22d25a77f0cb1ef3bf13c330d2a990de4a8cfb.json
-  "query": "select id, solar_system_id, position_x, position_y, alias, is_home, is_rally, is_pinned,\n                raised_by_signature_id, hangs_off_id, signatures_pasted_at\n         from map_solar_systems where map_id = $1 and id = any($2)",
-========
-  "query": "select id, solar_system_id, position_x, position_y, alias, is_home, is_rally, rallied_at,\n                is_pinned, raised_by_signature_id, hangs_off_id\n         from map_solar_systems where map_id = $1 and id = any($2)",
->>>>>>>> bf11a4f (feat(rally): two rally points per map, a third replacing the oldest):.sqlx/query-a9247bf6a54434596cf106fa31c20ce52910f12e34b13391ef84483b1cde92de.json
+  "query": "select id, solar_system_id, position_x, position_y, alias, is_home, is_rally, rallied_at,\n                is_pinned, raised_by_signature_id, hangs_off_id, signatures_pasted_at\n         from map_solar_systems where map_id = $1 and id = any($2)",
   "describe": {
     "columns": [
       {
@@ -129,7 +125,7 @@
         }
       },
       {
-        "ordinal": 10,
+        "ordinal": 11,
         "name": "signatures_pasted_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -161,9 +157,5 @@
       true
     ]
   },
-<<<<<<<< HEAD:.sqlx/query-d15080722c8fd2a621f37da76d22d25a77f0cb1ef3bf13c330d2a990de4a8cfb.json
-  "hash": "d15080722c8fd2a621f37da76d22d25a77f0cb1ef3bf13c330d2a990de4a8cfb"
-========
-  "hash": "a9247bf6a54434596cf106fa31c20ce52910f12e34b13391ef84483b1cde92de"
->>>>>>>> bf11a4f (feat(rally): two rally points per map, a third replacing the oldest):.sqlx/query-a9247bf6a54434596cf106fa31c20ce52910f12e34b13391ef84483b1cde92de.json
+  "hash": "457c8a5e2a33b4831ec5292786bcdbaebda95883a7880b137a5c7748877f2b9c"
 }

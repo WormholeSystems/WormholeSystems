@@ -656,9 +656,15 @@ async fn export_carries_every_rally_point(pool: PgPool) {
 
     // And they come back in the same order on the copy.
     let parsed = parse_export(&json.to_string(), all_sections(), true).unwrap();
-    let map = import_map_as_new(&pool, w.owner, parsed, None)
-        .await
-        .unwrap();
+    let map = import_map_as_new(
+        &pool,
+        w.owner,
+        &AffiliationAllowlist::default(),
+        parsed,
+        None,
+    )
+    .await
+    .unwrap();
     assert_eq!(rally_systems(&pool, map.id).await, vec![SYS_B, SYS_A]);
 }
 
@@ -792,9 +798,15 @@ async fn an_expired_hole_round_trips_as_expired(pool: PgPool) {
     assert!(content.contains(r#""lifetime":"expired""#));
 
     let parsed = parse_export(&content, all_sections(), true).unwrap();
-    let map = import_map_as_new(&pool, w.owner, parsed, None)
-        .await
-        .unwrap();
+    let map = import_map_as_new(
+        &pool,
+        w.owner,
+        &AffiliationAllowlist::default(),
+        parsed,
+        None,
+    )
+    .await
+    .unwrap();
     let status = sqlx::query_scalar!(
         r#"select time_status as "time_status: TimeStatus" from map_connections
            where map_id = $1"#,
