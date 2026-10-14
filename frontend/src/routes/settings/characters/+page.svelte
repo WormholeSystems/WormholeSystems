@@ -15,6 +15,7 @@
 	import { confirmDanger } from '$lib/confirm.svelte';
 	import { apiAction } from '$lib/api/mutations';
 	import { key, q } from '$lib/api/queries';
+	import { createIdentityActions } from '$lib/characters/identity';
 	import { scopeMeta } from '$lib/esi/scopes';
 	import type { CharacterRef } from '$lib/api/types/CharacterRef';
 	import EveImage from '$lib/components/EveImage.svelte';
@@ -33,14 +34,14 @@
 	const refused = $derived(page.url.searchParams.get('refused') === '1');
 
 	const act = apiAction(() => [key.me]);
+	const identity = createIdentityActions();
 
 	async function remove(character: CharacterRef) {
 		const sure = await confirmDanger({
 			title: `Remove ${character.name} from this account?`,
 			action: 'Remove',
 		});
-		if (!sure) return;
-		act.mutate(() => api.removeCharacter(character.character_id));
+		if (sure) identity.remove(character.character_id, character.is_active);
 	}
 
 	const missing = $derived(scopes.filter((s) => !s.granted));
@@ -130,7 +131,7 @@
 						<Button
 							variant="ghost"
 							size="sm"
-							onclick={() => act.mutate(() => api.switchCharacter(character.character_id))}
+							onclick={() => identity.switchTo(character.character_id)}
 							data-testid="switch-character">Act as</Button
 						>
 						<Button
