@@ -2,15 +2,22 @@
 //! CSRF `state`, redirects to [`Sso::authorize_url`], then calls [`Sso::exchange_code`].
 //! [`Sso::access_token`] resolves a usable token through a [`TokenStore`] with refresh.
 
-use std::time::{Duration, SystemTime};
+use std::time::{Duration, Instant, SystemTime};
 
+use jsonwebtoken::jwk::JwkSet;
 use serde::Deserialize;
+use tokio::sync::Mutex;
 
 use super::scopes::Scope;
 use super::token::{Token, TokenStore};
 use super::{EsiError, Result, jwt};
 
 const METADATA_URL: &str = "https://login.eveonline.com/.well-known/oauth-authorization-server";
+
+/// How long the SSO's signing keys are reused before they are fetched again. Every login
+/// and every token refresh validates a JWT, and the keys rarely change; a token signed by a
+/// key we have not seen yet fetches them early regardless.
+const JWKS_TTL: Duration = Duration::from_secs(60 * 60);
 
 #[derive(Clone)]
 pub struct SsoConfig {
@@ -50,6 +57,8 @@ pub struct Sso {
     http: reqwest::Client,
     config: SsoConfig,
     metadata: Metadata,
+    /// The signing keys and when they were fetched.
+    jwks: Mutex<Option<(JwkSet, Instant)>>,
 }
 
 impl Sso {
@@ -59,6 +68,7 @@ impl Sso {
             http,
             config,
             metadata,
+            jwks: Mutex::new(None),
         })
     }
 
@@ -75,6 +85,7 @@ impl Sso {
                 token_endpoint: "http://127.0.0.1:0/token".into(),
                 jwks_uri: "http://127.0.0.1:0/jwks".into(),
             },
+            jwks: Mutex::new(None),
         }
     }
 
@@ -164,14 +175,13 @@ impl Sso {
 
     async fn build_token(&self, resp: TokenResponse) -> Result<(Token, jwt::Claims)> {
         // Scopes come from the validated JWT, not the token response body.
+        let jwks = self.jwks_for(&jwt::key_id(&resp.access_token)?).await?;
         let claims = jwt::validate(
-            &self.http,
-            &self.metadata.jwks_uri,
+            &jwks,
             &self.metadata.issuer,
             &self.config.client_id,
             &resp.access_token,
-        )
-        .await?;
+        )?;
         let token = Token {
             access_token: resp.access_token,
             refresh_token: resp.refresh_token,
@@ -179,5 +189,25 @@ impl Sso {
             scopes: claims.scopes.clone(),
         };
         Ok((token, claims))
+    }
+
+    /// The SSO's signing keys, from the cache while they are fresh and include `kid`.
+    async fn jwks_for(&self, kid: &str) -> Result<JwkSet> {
+        let mut cached = self.jwks.lock().await;
+        if let Some((keys, fetched_at)) = cached.as_ref()
+            && fetched_at.elapsed() < JWKS_TTL
+            && keys.find(kid).is_some()
+        {
+            return Ok(keys.clone());
+        }
+        let keys: JwkSet = self
+            .http
+            .get(&self.metadata.jwks_uri)
+            .send()
+            .await?
+            .json()
+            .await?;
+        *cached = Some((keys.clone(), Instant::now()));
+        Ok(keys)
     }
 }
