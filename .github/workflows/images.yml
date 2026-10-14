@@ -112,6 +112,7 @@ jobs:
         env:
           IMAGE: ${{ env.PREFIX }}-${{ matrix.image }}
         run: |
+          # shellcheck disable=SC2046 # one argument per tag and per digest, split on purpose
           docker buildx imagetools create \
             $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
             $(printf "$IMAGE@sha256:%s " *)

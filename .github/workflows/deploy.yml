@@ -1,0 +1,146 @@
+name: Deploy files
+
+# What an install runs, checked without running it:
+#   compose  every combination of overlays wsctl can write still makes a valid stack
+#   caddy    the Caddyfile adapts for every WS_TLS and behind a proxy
+#   images   both Dockerfiles still build (no push), when a change touches what goes in them
+#
+# The compose and Caddy checks take seconds, so they run whenever the deploy files change.
+on:
+  pull_request:
+    paths:
+      - docker-compose.yml
+      - compose.*.yml
+      - deploy/**
+      - Caddyfile
+      - Dockerfile
+      - .dockerignore
+      - frontend/Dockerfile
+      - frontend/.dockerignore
+      - frontend/package.json
+      - frontend/package-lock.json
+      - Cargo.toml
+      - Cargo.lock
+      - .env.example
+      - .github/workflows/deploy.yml
+  push:
+    branches: [main]
+    paths:
+      - docker-compose.yml
+      - compose.*.yml
+      - deploy/**
+      - Caddyfile
+      - .env.example
+      - .github/workflows/deploy.yml
+
+jobs:
+  compose:
+    name: compose ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Everything bundled, which is compose's default file and nothing else.
+          - name: bundled
+            files: ""
+          # What wsctl 0.5 wrote, still in use until `wsctl update` moves it.
+          - name: legacy standalone
+            files: compose.standalone.yml
+          - name: legacy standalone with ports
+            files: compose.standalone.yml:compose.standalone.ports.yml
+          - name: external database
+            files: docker-compose.yml:deploy/external-db.yml
+          - name: external database on its own network
+            files: docker-compose.yml:deploy/external-db.yml:deploy/db-network.yml
+          - name: proxy on the network
+            files: docker-compose.yml:deploy/app-network.yml
+          - name: standalone
+            files: docker-compose.yml:deploy/external-db.yml:deploy/app-network.yml
+          - name: standalone with ports
+            files: docker-compose.yml:deploy/external-db.yml:deploy/app-network.yml:deploy/app-ports.yml
+          - name: proxy on loopback ports
+            files: docker-compose.yml:deploy/app-ports.yml
+          - name: router on the network
+            files: docker-compose.yml:deploy/router-network.yml
+          - name: router on a port
+            files: docker-compose.yml:deploy/router-port.yml
+          - name: router on both, external database
+            files: docker-compose.yml:deploy/external-db.yml:deploy/db-network.yml:deploy/router-network.yml:deploy/router-port.yml
+    env:
+      COMPOSE_FILE: ${{ matrix.files }}
+      COMPOSE_PROFILES: backup
+      WS_DATABASE_URL: postgres://wormholesystems:secret@postgres:5432/wormholesystems
+      WS_DATABASE_NETWORK: databases
+    steps:
+      - uses: actions/checkout@v5
+      # The services read .env, so there has to be one.
+      - run: cp .env.example .env
+      # An empty COMPOSE_FILE is not the same as none: compose reads it as a path.
+      - name: docker compose config
+        run: |
+          [ -n "$COMPOSE_FILE" ] || unset COMPOSE_FILE
+          docker compose config --quiet
+          docker compose config --services
+
+  caddy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: caddy adapt
+        run: |
+          adapt() {
+            echo "== $*"
+            docker run --rm "$@" -v "$PWD/Caddyfile:/etc/caddy/Caddyfile:ro" \
+              caddy:2 caddy adapt --config /etc/caddy/Caddyfile > /dev/null
+          }
+          adapt -e WS_DOMAIN=:80
+          for tls in acme files internal off; do
+            adapt -e WS_DOMAIN=map.example.com -e WS_TLS=$tls
+          done
+          # What the router overlays set.
+          adapt -e WS_DOMAIN=:80 -e WS_TLS=off -e WS_TRUSTED_PROXIES=private_ranges
+
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      images: ${{ steps.filter.outputs.images }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            images:
+              - Dockerfile
+              - .dockerignore
+              - frontend/Dockerfile
+              - frontend/.dockerignore
+              - frontend/package.json
+              - frontend/package-lock.json
+              - Cargo.toml
+              - Cargo.lock
+              - .github/workflows/deploy.yml
+
+  images:
+    name: build ${{ matrix.image }}
+    needs: changes
+    if: needs.changes.outputs.images == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: api
+            context: .
+          - image: web
+            context: frontend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          push: false
+          # Read the cache the published images leave, so this is not a cold build.
+          cache-from: type=gha,scope=${{ matrix.image }}-amd64

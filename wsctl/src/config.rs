@@ -1011,6 +1011,19 @@ mod tests {
         );
     }
 
+    // A name here that is not a file in the checkout would only show up as compose failing
+    // on somebody's server.
+    #[test]
+    fn every_compose_file_wsctl_writes_is_in_the_checkout() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("..");
+        for file in MANAGED_COMPOSE
+            .iter()
+            .filter(|f| !OVERRIDE_COMPOSE.contains(f))
+        {
+            assert!(root.join(file).is_file(), "{file} is missing");
+        }
+    }
+
     #[test]
     fn files_the_operator_added_are_kept_after_ours() {
         let d = deployment(external(None), site(""));
