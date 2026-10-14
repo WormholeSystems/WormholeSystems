@@ -175,7 +175,7 @@ impl EsiClient {
         let entry = paused.entry(key.to_string()).or_insert(until);
         if *entry <= until {
             if key == ANYONE {
-                eprintln!(
+                tracing::warn!(
                     "ESI: backing off for {}s ({})",
                     wait.as_secs(),
                     resp.status()

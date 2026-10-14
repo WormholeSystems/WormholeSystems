@@ -113,7 +113,7 @@ impl Runtime {
         let alerts = match fetch_active(pool, None).await {
             Ok(alerts) => Arc::new(alerts),
             Err(err) => {
-                eprintln!("alerts: could not load the active alerts: {err}");
+                tracing::error!("alerts: could not load the active alerts: {err}");
                 return Arc::default();
             }
         };
@@ -231,9 +231,10 @@ impl Runtime {
             if let Err(err) = self.outbox.try_send(out) {
                 let out = match err {
                     mpsc::error::TrySendError::Full(out) => {
-                        eprintln!(
+                        tracing::warn!(
                             "alerts: delivery queue full, dropping alert {} ({})",
-                            out.alert.id, out.key
+                            out.alert.id,
+                            out.key
                         );
                         out
                     }
@@ -358,7 +359,7 @@ pub fn start(pool: PgPool, hub: crate::maps::MapHub, runtime: Arc<Runtime>) {
                     Vec::new()
                 }
                 Err(tokio::sync::broadcast::error::RecvError::Lagged(missed)) => {
-                    eprintln!("alerts: map events lagged, {missed} missed; replaying the gap");
+                    tracing::warn!("alerts: map events lagged, {missed} missed; replaying the gap");
                     let since = received.elapsed() + LAG_REPLAY_SLACK;
                     received = Instant::now();
                     runtime.replay(&pool, since).await
@@ -493,9 +494,10 @@ async fn fetch_active(pool: &PgPool, kind: Option<AlertKind>) -> sqlx::Result<Ve
                 filters::Match::from_db(&row.filter_match),
                 serde_json::from_value(row.filters),
             ) else {
-                eprintln!(
+                tracing::warn!(
                     "alerts: skipping alert {} ({}): row does not decode",
-                    row.id, row.name
+                    row.id,
+                    row.name
                 );
                 return None;
             };

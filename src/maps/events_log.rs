@@ -442,7 +442,7 @@ pub fn start_purge(pool: PgPool) {
         loop {
             ticker.tick().await;
             if let Err(err) = purge(&pool).await {
-                eprintln!("map event purge failed: {err}");
+                tracing::error!("map event purge failed: {err}");
             }
         }
     });

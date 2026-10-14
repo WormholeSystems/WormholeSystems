@@ -30,10 +30,10 @@ pub fn threat_level(total_kills: i64) -> crate::maps::ThreatLevel {
 pub(super) async fn analysis_loop(pool: PgPool, esi: EsiClient) {
     loop {
         if let Err(err) = analyze(&pool, &esi).await {
-            eprintln!("threat analysis failed: {err}");
+            tracing::error!("threat analysis failed: {err}");
         }
         if let Err(err) = purge(&pool).await {
-            eprintln!("killmail purge failed: {err}");
+            tracing::error!("killmail purge failed: {err}");
         }
         tokio::time::sleep(Duration::from_secs(24 * 60 * 60)).await;
     }

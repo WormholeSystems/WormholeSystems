@@ -152,20 +152,17 @@ async fn import_day(
 pub async fn backfill(pool: &PgPool, esi: &EsiClient, days: u32) -> Result<(), BoxError> {
     let http = http_client();
     let missing = missing_days(pool, days).await?;
-    println!("{} of the last {days} days to import", missing.len());
+    tracing::info!("{} of the last {days} days to import", missing.len());
     for day in missing {
-        print!("{day}: downloading… ");
-        use std::io::Write;
-        std::io::stdout().flush().ok();
         match import_day(pool, esi, &http, day).await? {
-            Some(summary) => println!("{summary}"),
-            None => println!("no archive"),
+            Some(summary) => tracing::info!("{day}: {summary}"),
+            None => tracing::info!("{day}: no archive"),
         }
     }
 
-    println!("running threat analysis…");
+    tracing::info!("running threat analysis…");
     super::analyze(pool, esi).await?;
-    println!("backfill complete.");
+    tracing::info!("backfill complete.");
     Ok(())
 }
 
@@ -175,24 +172,24 @@ pub(super) async fn backfill_loop(pool: PgPool, esi: EsiClient, days: u32) {
     let http = http_client();
     let missing = match missing_days(&pool, days).await {
         Ok(days) => days,
-        Err(err) => return eprintln!("killmail backfill: {err}"),
+        Err(err) => return tracing::warn!("killmail backfill: {err}"),
     };
     if missing.is_empty() {
         return;
     }
-    println!("killmail backfill: {} days missing", missing.len());
+    tracing::info!("killmail backfill: {} days missing", missing.len());
     let mut imported = 0usize;
     for day in missing {
         match import_day(&pool, &esi, &http, day).await {
             Ok(Some(_)) => imported += 1,
             Ok(None) => {}
-            Err(err) => eprintln!("killmail backfill {day}: {err}"),
+            Err(err) => tracing::warn!("killmail backfill {day}: {err}"),
         }
     }
-    println!("killmail backfill: {imported} days imported");
+    tracing::info!("killmail backfill: {imported} days imported");
     if imported > 0
         && let Err(err) = super::analyze(&pool, &esi).await
     {
-        eprintln!("threat analysis after backfill failed: {err}");
+        tracing::error!("threat analysis after backfill failed: {err}");
     }
 }

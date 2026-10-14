@@ -42,8 +42,10 @@ pub fn start(pool: PgPool, esi: EsiClient, server: ServerWatch) {
             }
             match refresh(&pool, &esi).await {
                 Ok(0) => {}
-                Ok(n) => println!("affiliation: {n} character(s) changed corporation or alliance"),
-                Err(err) => eprintln!("affiliation refresh failed: {err}"),
+                Ok(n) => {
+                    tracing::info!("affiliation: {n} character(s) changed corporation or alliance")
+                }
+                Err(err) => tracing::error!("affiliation refresh failed: {err}"),
             }
         }
     });
@@ -64,7 +66,7 @@ pub async fn refresh(pool: &PgPool, esi: &EsiClient) -> sqlx::Result<u64> {
         let affiliations = match esi.affiliation(chunk).await {
             Ok(affiliations) => affiliations,
             Err(err) => {
-                eprintln!("affiliation batch of {} skipped: {err}", chunk.len());
+                tracing::warn!("affiliation batch of {} skipped: {err}", chunk.len());
                 continue;
             }
         };

@@ -17,7 +17,7 @@ axum = { version = "0.8", features = ["ws", "multipart"] }
 axum-extra = { version = "0.10", features = ["cookie"] }
 # Compressing API responses. A map read is tens of kilobytes of repetitive JSON.
 tower-http = { version = "0.6", features = ["compression-gzip", "compression-zstd"] }
-tokio = { version = "1", features = ["fs", "macros", "rt-multi-thread", "net", "sync", "time"] }
+tokio = { version = "1", features = ["fs", "macros", "rt-multi-thread", "net", "signal", "sync", "time"] }
 
 # Domain
 reqwest = { version = "0.13.4", features = ["blocking", "json", "form"] }
@@ -27,6 +27,9 @@ zip = "8.6.0"
 tar = { version = "0.4", default-features = false }
 bzip2 = { version = "0.6", features = ["static"] }
 dotenvy = "0.15"
+# Logging. `RUST_LOG` picks the level per module, `info` when unset.
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 thiserror = "2"
 uuid = { version = "1", features = ["v4"] }
 # default-features off drops `clock` — we only use DateTime<Utc> as a type, never now().

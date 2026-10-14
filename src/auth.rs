@@ -295,7 +295,7 @@ pub async fn logout(State(state): State<AppState>, jar: CookieJar) -> Response {
 /// A failure on our side. The detail is for the log: a database error describes the schema,
 /// and the person mid-login can do nothing with it.
 fn server_error(err: impl std::fmt::Display) -> Response {
-    eprintln!("login failed: {err}");
+    tracing::error!("login failed: {err}");
     (
         StatusCode::INTERNAL_SERVER_ERROR,
         "login failed on our side, please try again",

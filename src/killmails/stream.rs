@@ -66,7 +66,7 @@ pub(super) async fn listen(
                     seq
                 }
                 Err(err) => {
-                    eprintln!("killmail ingest error: {err}");
+                    tracing::error!("killmail ingest error: {err}");
                     tokio::time::sleep(Duration::from_secs(30)).await;
                     continue;
                 }
@@ -79,7 +79,7 @@ pub(super) async fn listen(
             }
             Ok(false) => tokio::time::sleep(IDLE).await,
             Err(err) => {
-                eprintln!("killmail ingest error: {err}");
+                tracing::error!("killmail ingest error: {err}");
                 tokio::time::sleep(Duration::from_secs(30)).await;
             }
         }
@@ -175,7 +175,7 @@ fn offer(alerts: &mpsc::Sender<Pending>, row: KillmailRow) {
         detail: row.detail,
     };
     if let Err(mpsc::error::TrySendError::Full(pending)) = alerts.try_send(pending) {
-        eprintln!(
+        tracing::warn!(
             "killmail alerts: queue full, no alerts for killmail {}",
             pending.killmail_id
         );
@@ -318,7 +318,7 @@ impl NameResolver {
                 .fetch_optional(pool)
                 .await
                 .map(|seq| seq.unwrap_or(0))
-                .inspect_err(|err| eprintln!("killmail names: {err}"))
+                .inspect_err(|err| tracing::warn!("killmail names: {err}"))
                 .ok();
         }
         if let Some(from) = self.mark {
@@ -352,7 +352,7 @@ async fn resolve_new(pool: &PgPool, esi: &EsiClient, from: i64, held: &mut u32) 
         {
             Ok(rows) => rows,
             Err(err) => {
-                eprintln!("killmail names: {err}");
+                tracing::warn!("killmail names: {err}");
                 return mark;
             }
         };
@@ -389,7 +389,9 @@ async fn resolve_new(pool: &PgPool, esi: &EsiClient, from: i64, held: &mut u32) 
             return mark;
         }
         if failed > 0 {
-            eprintln!("killmail names: giving up on {failed} names after {NAME_RETRIES} tries");
+            tracing::warn!(
+                "killmail names: giving up on {failed} names after {NAME_RETRIES} tries"
+            );
         }
         *held = 0;
         mark = last;
@@ -397,7 +399,7 @@ async fn resolve_new(pool: &PgPool, esi: &EsiClient, from: i64, held: &mut u32) 
             .execute(pool)
             .await
         {
-            eprintln!("killmail names: {err}");
+            tracing::warn!("killmail names: {err}");
         }
         if !full {
             return mark;

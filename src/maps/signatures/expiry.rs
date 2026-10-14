@@ -45,7 +45,7 @@ pub fn start_expiry(pool: PgPool, hub: MapHub) {
                         });
                     }
                 }
-                Err(err) => eprintln!("signature expiry failed: {err}"),
+                Err(err) => tracing::error!("signature expiry failed: {err}"),
             }
         }
     });

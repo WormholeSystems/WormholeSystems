@@ -90,7 +90,7 @@ pub fn start(pool: PgPool, esi: EsiClient, server: ServerWatch) {
                 continue;
             }
             if let Err(err) = sync_once(&pool, &esi).await {
-                eprintln!("skyhook sync failed: {err}");
+                tracing::error!("skyhook sync failed: {err}");
             }
         }
     });
@@ -109,7 +109,7 @@ pub async fn sync_once(pool: &PgPool, esi: &EsiClient) -> Result<usize, SyncErro
     let fetched = esi.raidable_skyhooks().await?;
     let stored = store(pool, &fetched).await?;
     if stored < fetched.len() {
-        eprintln!(
+        tracing::warn!(
             "skyhook sync: {} of {} planets are not in the SDE, so they were skipped",
             fetched.len() - stored,
             fetched.len()

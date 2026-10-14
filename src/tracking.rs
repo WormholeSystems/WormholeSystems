@@ -139,7 +139,7 @@ async fn tier_one(poller: Arc<Poller>, server: ServerWatch) {
                 poller.tokens.retain(|id| ids.contains(&id));
                 run_polls("tier-1", &due, |d| poll_online(poller.clone(), d)).await
             }
-            Err(err) => eprintln!("tracking tier-1 select failed: {err}"),
+            Err(err) => tracing::error!("tracking tier-1 select failed: {err}"),
         }
     }
 }
@@ -155,7 +155,7 @@ async fn tier_two(poller: Arc<Poller>, server: ServerWatch) {
         }
         match active_characters(&poller.pool, true).await {
             Ok(due) => run_polls("tier-2", &due, |d| poll_location_ship(poller.clone(), d)).await,
-            Err(err) => eprintln!("tracking tier-2 select failed: {err}"),
+            Err(err) => tracing::error!("tracking tier-2 select failed: {err}"),
         }
     }
 }
@@ -251,7 +251,7 @@ where
     .await;
     let (count, sample) = std::mem::take(&mut *failed.lock().expect("poll failures lock"));
     if let Some(sample) = sample {
-        eprintln!(
+        tracing::error!(
             "tracking {tier}: {count} of {} poll(s) failed, e.g. {sample}",
             due.len()
         );
@@ -376,7 +376,7 @@ async fn poll_location(poller: &Poller, token: &str, id: i64) -> Result<bool, St
             crate::maps::jumps::record_transit(&poller.pool, id, prev, location.solar_system_id)
                 .await
         {
-            eprintln!("jump capture failed for character {id}: {err}");
+            tracing::error!("jump capture failed for character {id}: {err}");
         }
     }
     Ok(true)

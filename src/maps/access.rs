@@ -67,8 +67,8 @@ pub fn spawn_expiry_sweep(pool: PgPool) {
         loop {
             match sweep_expired(&pool).await {
                 Ok(0) => {}
-                Ok(n) => println!("access: {n} expired grant(s) removed"),
-                Err(err) => eprintln!("access expiry sweep failed: {err}"),
+                Ok(n) => tracing::info!("access: {n} expired grant(s) removed"),
+                Err(err) => tracing::error!("access expiry sweep failed: {err}"),
             }
             tokio::time::sleep(std::time::Duration::from_secs(60 * 60)).await;
         }

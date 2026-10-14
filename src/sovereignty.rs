@@ -43,7 +43,7 @@ async fn sync_once(pool: &PgPool, esi: &EsiClient) {
     let systems = match esi.sovereignty_systems().await {
         Ok(systems) => systems,
         Err(err) => {
-            eprintln!("sovereignty fetch failed: {err}");
+            tracing::error!("sovereignty fetch failed: {err}");
             return;
         }
     };
@@ -55,10 +55,10 @@ async fn sync_once(pool: &PgPool, esi: &EsiClient) {
         // A system we don't have in the SDE, or an entity that failed to resolve. The
         // next tick retries it.
         Ok(skipped) if skipped > 0 => {
-            eprintln!("sovereignty: {skipped} claim(s) skipped, unknown system or holder")
+            tracing::warn!("sovereignty: {skipped} claim(s) skipped, unknown system or holder")
         }
         Ok(_) => {}
-        Err(err) => eprintln!("sovereignty store failed: {err}"),
+        Err(err) => tracing::error!("sovereignty store failed: {err}"),
     }
 }
 

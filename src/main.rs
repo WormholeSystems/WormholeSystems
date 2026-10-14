@@ -1,5 +1,7 @@
 #[tokio::main]
 async fn main() {
+    init_logging();
+
     // `wormholesystems seed` populates the reference tables from the SDE + data/static, then exits.
     let args: Vec<String> = std::env::args().collect();
     if args.iter().any(|a| a == "seed") {
@@ -28,7 +30,7 @@ async fn main() {
             std::env::var("DISCORD_APPLICATION_ID").expect("DISCORD_APPLICATION_ID not set");
         let token = std::env::var("DISCORD_BOT_TOKEN").expect("DISCORD_BOT_TOKEN not set");
         match wormholesystems::discord::commands::register(&application_id, &token).await {
-            Ok(()) => println!("registered the /wh command."),
+            Ok(()) => tracing::info!("registered the /wh command."),
             Err(err) => panic!("could not register commands: {err}"),
         }
         return;
@@ -44,11 +46,13 @@ async fn main() {
             .await
             .expect("join failed")
         {
-            Ok(true) => println!(
+            Ok(true) => tracing::info!(
                 "SDE downloaded and unpacked into {}",
                 wormholesystems::sde::SDE_DIR
             ),
-            Ok(false) => println!("SDE already unpacked in {}", wormholesystems::sde::SDE_DIR),
+            Ok(false) => {
+                tracing::info!("SDE already unpacked in {}", wormholesystems::sde::SDE_DIR)
+            }
             Err(err) => panic!("could not fetch the SDE: {err}"),
         }
         return;
@@ -107,7 +111,7 @@ async fn main() {
         wormholesystems::killmails::analyze(&db, &wormholesystems::esi::EsiClient::new())
             .await
             .expect("threat analysis failed");
-        println!("threat analysis complete.");
+        tracing::info!("threat analysis complete.");
         return;
     }
 
@@ -134,7 +138,7 @@ async fn main() {
     // Keep the reference tables in sync with the bundled SDE. Runs only on first boot
     // or when data/sde holds a newer build; otherwise it's a single cheap query.
     match wormholesystems::seed::ensure_seeded(&db).await {
-        Ok(true) => println!("seeded reference tables from the SDE"),
+        Ok(true) => tracing::info!("seeded reference tables from the SDE"),
         Ok(false) => {}
         Err(e) => panic!("could not seed the SDE reference tables: {e}"),
     }
@@ -147,7 +151,7 @@ async fn main() {
             .expect("could not reach the EVE SSO: check your network connection"),
     );
     if config.esi_base_url != wormholesystems::esi::BASE_URL {
-        println!("ESI: {}", config.esi_base_url);
+        tracing::info!("ESI: {}", config.esi_base_url);
     }
     let esi = EsiClient::with_config(
         wormholesystems::user_agent::client(),
@@ -191,7 +195,7 @@ async fn main() {
     let alerts = match wormholesystems::alerts::Runtime::load(&db, bot_token).await {
         Ok(runtime) => Some(Arc::new(runtime)),
         Err(err) => {
-            eprintln!("alerts disabled, could not load the stargate graph: {err}");
+            tracing::error!("alerts disabled, could not load the stargate graph: {err}");
             None
         }
     };
@@ -262,8 +266,19 @@ async fn main() {
 
     let addr = std::env::var("LISTEN_ADDR").unwrap_or_else(|_| "127.0.0.1:3000".to_string());
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
-    println!("listening on http://{addr}");
+    tracing::info!("listening on http://{addr}");
     axum::serve(listener, app.into_make_service())
         .await
         .unwrap();
+}
+
+/// Logs go to stderr, so the few subcommands whose stdout is read by a script (`sde-status`)
+/// keep it to themselves. `RUST_LOG` narrows or widens it per module; unset means `info`.
+fn init_logging() {
+    use tracing_subscriber::EnvFilter;
+    let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
+    tracing_subscriber::fmt()
+        .with_env_filter(filter)
+        .with_writer(std::io::stderr)
+        .init();
 }

@@ -66,13 +66,13 @@ async fn ensure_sde_present() -> Result<(), BoxError> {
             .join("_sde.jsonl")
             .exists()
         {
-            println!("SDE not found under {}, downloading the latest build (~100 MB), this can take a minute…", crate::sde::SDE_DIR);
+            tracing::info!("SDE not found under {}, downloading the latest build (~100 MB), this can take a minute…", crate::sde::SDE_DIR);
         }
         crate::sde::ensure_present()
     })
     .await??;
     if downloaded {
-        println!("SDE downloaded and unpacked into {}", crate::sde::SDE_DIR);
+        tracing::info!("SDE downloaded and unpacked into {}", crate::sde::SDE_DIR);
     }
     Ok(())
 }
@@ -148,7 +148,7 @@ async fn seed_all(pool: &PgPool) -> Result<(), BoxError> {
                 .push_bind(c.published)
         }
     );
-    println!("categories: {n}");
+    tracing::info!("categories: {n}");
 
     let n = bulk!(
         tx,
@@ -162,7 +162,7 @@ async fn seed_all(pool: &PgPool) -> Result<(), BoxError> {
                 .push_bind(g.published)
         }
     );
-    println!("groups: {n}");
+    tracing::info!("groups: {n}");
 
     let n = bulk!(
         tx,
@@ -176,7 +176,7 @@ async fn seed_all(pool: &PgPool) -> Result<(), BoxError> {
                 .push_bind(m.has_types)
         }
     );
-    println!("market_groups: {n}");
+    tracing::info!("market_groups: {n}");
 
     let n = bulk!(
         tx,
@@ -195,7 +195,7 @@ async fn seed_all(pool: &PgPool) -> Result<(), BoxError> {
                 .push_bind(t.icon_id)
         }
     );
-    println!("types: {n}");
+    tracing::info!("types: {n}");
 
     // factions <-> corporations form a deferred cycle; both go in this transaction.
     let n = bulk!(
@@ -213,7 +213,7 @@ async fn seed_all(pool: &PgPool) -> Result<(), BoxError> {
                 .push_bind(f.size_factor)
         }
     );
-    println!("factions: {n}");
+    tracing::info!("factions: {n}");
 
     // Only the SDE-owned columns are updated: alliance_id and member_count stay ESI-managed.
     let n = bulk!(
@@ -229,7 +229,7 @@ async fn seed_all(pool: &PgPool) -> Result<(), BoxError> {
                 .push_bind(c.ceo_id)
         }
     );
-    println!("corporations: {n}");
+    tracing::info!("corporations: {n}");
 
     let n = bulk!(
         tx,
@@ -243,7 +243,7 @@ async fn seed_all(pool: &PgPool) -> Result<(), BoxError> {
                 .push_bind(r.wormhole_class_id)
         }
     );
-    println!("regions: {n}");
+    tracing::info!("regions: {n}");
 
     let n = bulk!(
         tx,
@@ -257,7 +257,7 @@ async fn seed_all(pool: &PgPool) -> Result<(), BoxError> {
                 .push_bind(c.faction_id)
         }
     );
-    println!("constellations: {n}");
+    tracing::info!("constellations: {n}");
 
     let n = bulk!(
         tx,
@@ -281,7 +281,7 @@ async fn seed_all(pool: &PgPool) -> Result<(), BoxError> {
                 .push_bind(s.position.z)
         }
     );
-    println!("solar_systems: {n}");
+    tracing::info!("solar_systems: {n}");
 
     seed_entities(&mut tx, &corporations).await?;
     seed_static(&mut tx, &solar_systems).await?;
@@ -344,7 +344,7 @@ async fn seed_all(pool: &PgPool) -> Result<(), BoxError> {
     .await?;
 
     tx.commit().await?;
-    println!("seeding complete (SDE build {}).", build.build_number);
+    tracing::info!("seeding complete (SDE build {}).", build.build_number);
     Ok(())
 }
 
@@ -366,7 +366,7 @@ async fn seed_entities(
             &units,
             |b, u| { b.push_bind(u.id).push_bind(&u.name) }
         );
-        println!("dogma_units: {n}");
+        tracing::info!("dogma_units: {n}");
     }
     {
         let attrs = crate::sde::load_all::<dogma::DogmaAttribute>()?;
@@ -384,7 +384,7 @@ async fn seed_entities(
                     .push_bind(a.published)
             }
         );
-        println!("dogma_attributes: {n}");
+        tracing::info!("dogma_attributes: {n}");
     }
     {
         // typeDogma nests the attributes per type; flatten to (type_id, attribute_id, value).
@@ -402,7 +402,7 @@ async fn seed_entities(
             &rows,
             |b, r| { b.push_bind(r.0).push_bind(r.1).push_bind(r.2) }
         );
-        println!("type_attributes: {n}");
+        tracing::info!("type_attributes: {n}");
     }
     {
         let stargates = crate::sde::load_all::<universe::Stargate>()?;
@@ -419,7 +419,7 @@ async fn seed_entities(
                     .push_bind(s.type_id)
             }
         );
-        println!("stargates: {n}");
+        tracing::info!("stargates: {n}");
     }
     {
         let planets = crate::sde::load_all::<universe::Planet>()?;
@@ -436,7 +436,7 @@ async fn seed_entities(
                     .push_bind(p.unique_name.as_ref().map(en))
             }
         );
-        println!("planets: {n}");
+        tracing::info!("planets: {n}");
     }
     {
         let moons = crate::sde::load_all::<universe::Moon>()?;
@@ -453,7 +453,7 @@ async fn seed_entities(
                     .push_bind(m.unique_name.as_ref().map(en))
             }
         );
-        println!("moons: {n}");
+        tracing::info!("moons: {n}");
     }
     {
         let belts = crate::sde::load_all::<universe::AsteroidBelt>()?;
@@ -470,7 +470,7 @@ async fn seed_entities(
                     .push_bind(a.unique_name.as_ref().map(en))
             }
         );
-        println!("asteroid_belts: {n}");
+        tracing::info!("asteroid_belts: {n}");
     }
     {
         // Station owners are NPC corps; null any owner we didn't seed so the
@@ -558,7 +558,7 @@ async fn seed_entities(
                     .push_bind(Some(name))
             }
         );
-        println!("stations: {n}");
+        tracing::info!("stations: {n}");
     }
     {
         // Station services and the per-operation service sets, for the navigation
@@ -574,7 +574,7 @@ async fn seed_entities(
                     .push_bind(s.service_name.en.clone().unwrap_or_default())
             }
         );
-        println!("station_services: {n}");
+        tracing::info!("station_services: {n}");
 
         let operations = crate::sde::load_all::<npc::StationOperation>()?;
         let service_ids: HashSet<i64> = services.iter().map(|s| s.id).collect();
@@ -595,7 +595,7 @@ async fn seed_entities(
             &pairs,
             |b, (op, svc)| { b.push_bind(op).push_bind(svc) }
         );
-        println!("station_operation_services: {n}");
+        tracing::info!("station_operation_services: {n}");
     }
     Ok(())
 }
@@ -699,7 +699,7 @@ async fn seed_static(
     let n = bulk!(tx, "wormhole_effects (name)", &effect_names, |b, name| {
         b.push_bind(name)
     });
-    println!("wormhole_effects: {n}");
+    tracing::info!("wormhole_effects: {n}");
     let n = bulk!(
         tx,
         "wormhole_effect_modifiers (effect_name, kind, stat, wormhole_class_id, value)",
@@ -712,7 +712,7 @@ async fn seed_static(
                 .push_bind(&m.4)
         }
     );
-    println!("wormhole_effect_modifiers: {n}");
+    tracing::info!("wormhole_effect_modifiers: {n}");
 
     // wormhole types + sources
     let wh: WormholesFile = read_json("data/static/wormholes.json")?;
@@ -741,14 +741,14 @@ async fn seed_static(
                 .push_bind(t.signature_strength)
         }
     );
-    println!("wormhole_types: {n}");
+    tracing::info!("wormhole_types: {n}");
     let n = bulk!(
         tx,
         "wormhole_type_sources (wormhole_code, wormhole_class_id)",
         &sources,
         |b, s| { b.push_bind(&s.0).push_bind(s.1) }
     );
-    println!("wormhole_type_sources: {n}");
+    tracing::info!("wormhole_type_sources: {n}");
 
     // wormhole systems + statics (need a real class; skip rows without one)
     let whs: WhSystemsFile = read_json("data/static/wormhole_systems.json")?;
@@ -775,14 +775,14 @@ async fn seed_static(
                 .push_bind(s.shattered)
         }
     );
-    println!("wormhole_systems: {n}");
+    tracing::info!("wormhole_systems: {n}");
     let n = bulk!(
         tx,
         "wormhole_system_statics (solar_system_id, wormhole_code)",
         &statics,
         |b, s| { b.push_bind(s.0).push_bind(&s.1) }
     );
-    println!("wormhole_system_statics: {n}");
+    tracing::info!("wormhole_system_statics: {n}");
 
     // signature catalogue
     let sig: SignaturesFile = read_json("data/static/signatures.json")?;
@@ -798,7 +798,7 @@ async fn seed_static(
         &sig.categories,
         |b, c| { b.push_bind(c.id).push_bind(&c.name).push_bind(&c.code) }
     );
-    println!("signature_categories: {n}");
+    tracing::info!("signature_categories: {n}");
     let n = bulk!(
         tx,
         "signature_types (id, signature, name, signature_category_id, target_class, extra)",
@@ -812,14 +812,14 @@ async fn seed_static(
                 .push_bind(t.extra.clone())
         }
     );
-    println!("signature_types: {n}");
+    tracing::info!("signature_types: {n}");
     let n = bulk!(
         tx,
         "signature_type_spawn_areas (signature_type_id, wormhole_class_id)",
         &spawn_areas,
         |b, s| { b.push_bind(s.0).push_bind(s.1) }
     );
-    println!("signature_type_spawn_areas: {n}");
+    tracing::info!("signature_type_spawn_areas: {n}");
 
     // jove observatories: source is region -> [system names]; resolve names to ids.
     let by_name: HashMap<String, i64> = solar_systems.iter().map(|s| (en(&s.name), s.id)).collect();
@@ -837,7 +837,7 @@ async fn seed_static(
         &jove_ids,
         |b, id| { b.push_bind(*id) }
     );
-    println!("jove_observatories: {n}");
+    tracing::info!("jove_observatories: {n}");
 
     Ok(())
 }

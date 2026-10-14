@@ -136,7 +136,7 @@ pub fn start(pool: PgPool, esi: EsiClient, users: UserHub) -> ServerWatch {
                 continue;
             };
             if let Err(err) = save(&pool, &status).await {
-                eprintln!("could not store the server status: {err}");
+                tracing::error!("could not store the server status: {err}");
             }
             // Only tell the clients when something actually changed; the players count
             // moves constantly and nobody needs a push every minute for it.

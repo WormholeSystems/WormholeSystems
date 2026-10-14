@@ -500,7 +500,7 @@ async fn create_alert(
             match register_role(state, map_id, role, data.role_name(role)).await {
                 Ok(id) => Some(id),
                 Err(err) => {
-                    eprintln!("discord: registering role {role} on map {map_id}: {err}");
+                    tracing::error!("discord: registering role {role} on map {map_id}: {err}");
                     return "I could not register that role just now.".into();
                 }
             }
@@ -658,7 +658,7 @@ fn store_failed(name: &str, err: crate::maps::MapError) -> String {
     match err {
         crate::maps::MapError::NotFound => format!("**{name}** is gone already."),
         err => {
-            eprintln!("discord: changing alert {name}: {err}");
+            tracing::error!("discord: changing alert {name}: {err}");
             format!("I could not change **{name}** just now. Try again in a moment.")
         }
     }

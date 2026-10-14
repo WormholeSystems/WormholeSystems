@@ -624,7 +624,7 @@ pub fn start_prune(pool: PgPool) {
         loop {
             ticker.tick().await;
             if let Err(err) = prune_unclaimed(&pool).await {
-                eprintln!("connection jump prune failed: {err}");
+                tracing::error!("connection jump prune failed: {err}");
             }
         }
     });

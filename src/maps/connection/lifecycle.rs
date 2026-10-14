@@ -440,13 +440,13 @@ pub fn start_lifecycle(pool: PgPool) {
             ticker.tick().await;
             match expire_connections(&pool).await {
                 Ok(0) => {}
-                Ok(n) => println!("connections: {n} dead connection(s) removed"),
-                Err(err) => eprintln!("connection expiry failed: {err}"),
+                Ok(n) => tracing::info!("connections: {n} dead connection(s) removed"),
+                Err(err) => tracing::error!("connection expiry failed: {err}"),
             }
             match age_connections(&pool).await {
                 Ok(0) => {}
-                Ok(n) => println!("connections: {n} connection(s) aged"),
-                Err(err) => eprintln!("connection ageing failed: {err}"),
+                Ok(n) => tracing::info!("connections: {n} connection(s) aged"),
+                Err(err) => tracing::error!("connection ageing failed: {err}"),
             }
         }
     });

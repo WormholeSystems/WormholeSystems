@@ -204,7 +204,9 @@ reporting a stack that started and then fell over. The first boot is allowed 20 
 since the API seeds the static data before it answers.
 
 Every container logs through Docker's `json-file` driver, capped at five files of 10MB
-each. `WS_LOG_MAX_SIZE` and `WS_LOG_MAX_FILES` in `.env` change that.
+each. `WS_LOG_MAX_SIZE` and `WS_LOG_MAX_FILES` in `.env` change that. The API logs at
+`info` by default; `RUST_LOG` in `.env` changes the level, for everything (`warn`) or per
+module (`info,wormholesystems::killmails=debug`).
 
 ## Choosing the pieces
 

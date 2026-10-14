@@ -160,7 +160,7 @@ impl From<sqlx::Error> for ApiError {
     /// use for and no business seeing. It goes to the log, and the response says only that
     /// it was on our side.
     fn from(err: sqlx::Error) -> Self {
-        eprintln!("database error: {err}");
+        tracing::error!("database error: {err}");
         ApiError {
             status: StatusCode::INTERNAL_SERVER_ERROR,
             message: "something went wrong on our side".into(),

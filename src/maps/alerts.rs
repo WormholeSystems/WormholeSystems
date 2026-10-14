@@ -132,9 +132,10 @@ impl AlertRow {
             filters::Match::from_db(&self.filter_match),
             serde_json::from_value(self.filters),
         ) else {
-            eprintln!(
+            tracing::warn!(
                 "alerts: hiding alert {} ({}): row does not decode",
-                self.id, self.name
+                self.id,
+                self.name
             );
             return None;
         };

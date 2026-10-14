@@ -30,7 +30,7 @@ pub fn start(pool: PgPool) {
         loop {
             ticker.tick().await;
             if let Err(err) = sweep(&pool).await {
-                eprintln!("retention sweep failed: {err}");
+                tracing::error!("retention sweep failed: {err}");
             }
         }
     });
