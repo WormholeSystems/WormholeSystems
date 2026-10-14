@@ -71,6 +71,7 @@ run Postgres in Docker and the API and frontend on the host instead:
 
 ```sh
 docker compose up -d db
+cargo install sqlx-cli --no-default-features --features postgres,rustls,sqlx-toml
 cargo sqlx migrate run
 cargo run -- seed          # the SDE: a few hundred MB the first time
 cargo run                  # API on :3000

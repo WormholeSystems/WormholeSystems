@@ -21,3 +21,10 @@
 
 # Stray ts-rs default output (real export goes to frontend/src/lib/api/types)
 /bindings
+
+# Playwright output
+test-results/
+
+# Personal dev tooling
+/solo.yml
+.claude/worktrees/
