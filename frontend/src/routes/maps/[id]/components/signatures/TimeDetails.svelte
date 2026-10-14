@@ -6,16 +6,19 @@
 	import type { Signature } from '$lib/api/types/Signature';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { timeAgoShort, utcShort } from '$lib/format';
-	import { tickingMs } from '$lib/now.svelte';
 
 	let {
 		sig,
 		connection,
 		compact,
-	}: { sig: Signature; connection: MapConnection | null; compact: boolean } = $props();
-
-	const clock = tickingMs();
-	const now = $derived(clock.current);
+		now,
+	}: {
+		sig: Signature;
+		connection: MapConnection | null;
+		compact: boolean;
+		/** The panel's clock, shared by every row: nothing here changes faster than a minute. */
+		now: number;
+	} = $props();
 
 	// Wormhole ages run from creation (earliest of signature or connection); sites from the
 	// last update.
