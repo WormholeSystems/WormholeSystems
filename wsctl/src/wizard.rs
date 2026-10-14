@@ -492,21 +492,57 @@ fn update_sde(runner: &mut dyn Runner, dir: &Path, force: bool) {
         return;
     }
 
+    // A forced fetch clears the volume before it downloads, so whatever would make it fail
+    // part way is checked first: CCP not answering, or no room for the archive and what it
+    // unpacks to.
+    if status.latest.is_empty() {
+        println!(
+            "  {} could not ask CCP for the latest build; static data left at {}",
+            style("!").yellow(),
+            status.loaded
+        );
+        return;
+    }
+    let free = stack::docker_root(runner, dir).and_then(|root| checks::free_gb(Path::new(&root)));
+    if let Some(free) = free.filter(|gb| *gb < SDE_NEEDS_GB) {
+        println!(
+            "  {} {free}GB free where Docker keeps its volumes, and the static data wants {SDE_NEEDS_GB}GB; left at {}",
+            style("!").yellow(),
+            status.loaded
+        );
+        return;
+    }
+
     ui::note("A few hundred MB of static data, then a re-seed. This takes a while.");
-    let fetched = stack::api(runner, dir, &["sde-fetch", "--force"])
-        .and_then(|_| stack::restart(runner, dir, "api"));
-    match fetched {
+    if let Err(err) = stack::api_streamed(runner, dir, &["sde-fetch", "--force"]) {
+        // Not restarted: the running API has the old build loaded and keeps serving it,
+        // but one that starts now finds the volume empty and has to download first.
+        println!(
+            "  {} the static data download failed, after clearing the old files: {err:#}",
+            style("✗").red()
+        );
+        ui::note(&format!(
+            "The database still has build {} and the map keeps working. The API downloads",
+            status.loaded
+        ));
+        ui::note("the static data again the next time it starts; `wsctl update --sde` tries now.");
+        return;
+    }
+    match stack::restart(runner, dir, "api") {
         Ok(()) => ui::done(&format!(
             "static data {} → {}; the API re-seeds from it as it boots",
             status.loaded, status.latest
         )),
         Err(err) => println!(
-            "  {} static data left at {}: {err:#}",
+            "  {} fetched build {}, but could not restart the API to load it: {err:#}",
             style("!").yellow(),
-            status.loaded
+            status.latest
         ),
     }
 }
+
+/// Room for the archive and what it unpacks to, with some to spare.
+const SDE_NEEDS_GB: u64 = 2;
 
 pub fn status(runner: &mut dyn Runner, dir: &Path) -> Result<()> {
     require_checkout(dir)?;
@@ -1310,6 +1346,53 @@ mod tests {
                 "docker-compose.yml:deploy/external-db.yml:deploy/app-network.yml:compose.override.yml"
             )
         );
+    }
+
+    const SDE_STATUS: &str = "docker compose run --rm --no-deps -T api wormholesystems sde-status";
+    const SDE_FETCH: &str =
+        "docker compose run --rm --no-deps -T api wormholesystems sde-fetch --force";
+
+    fn newer_sde() -> Recording {
+        let mut runner = running();
+        runner.replies.insert(
+            SDE_STATUS.into(),
+            "loaded=3409592 released=2026-06-25\nlatest=3473160\nupdate_available=yes".into(),
+        );
+        runner
+    }
+
+    #[test]
+    fn newer_static_data_is_fetched_and_the_api_restarted() {
+        let mut runner = newer_sde();
+        update_sde(&mut runner, Path::new("."), false);
+        let tail: Vec<&str> = runner
+            .commands
+            .iter()
+            .skip_while(|c| *c != SDE_FETCH)
+            .map(String::as_str)
+            .collect();
+        assert_eq!(tail, vec![SDE_FETCH, "docker compose restart api"]);
+    }
+
+    // The fetch empties the volume first, so after a failure a restart would boot an API
+    // with nothing to seed from. The one running keeps the build it has.
+    #[test]
+    fn a_failed_fetch_leaves_the_api_running() {
+        let mut runner = newer_sde();
+        runner.failures.insert(SDE_FETCH.into());
+        update_sde(&mut runner, Path::new("."), true);
+        assert!(runner.commands.contains(&SDE_FETCH.to_string()));
+        assert!(!runner.commands.iter().any(|c| c.contains("restart")));
+    }
+
+    #[test]
+    fn without_word_from_ccp_nothing_is_cleared() {
+        let mut runner = running();
+        runner
+            .replies
+            .insert(SDE_STATUS.into(), "loaded=3409592\n".into());
+        update_sde(&mut runner, Path::new("."), true);
+        assert!(!runner.commands.contains(&SDE_FETCH.to_string()));
     }
 
     const EXTERNAL: &str = "COMPOSE_PROJECT_NAME=wormholesystems\nWS_IMAGES=pull\nWS_DATABASE=external\nWS_DATABASE_URL=postgres://ws@db/ws\nWS_PROXY=network\nWS_PROXY_NETWORK=coolify\nWS_PUBLIC_URL=https://map.example.com\n";

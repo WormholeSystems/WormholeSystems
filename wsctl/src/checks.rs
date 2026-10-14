@@ -272,7 +272,7 @@ fn port_is_free(port: u16) -> bool {
     std::net::TcpListener::bind(("0.0.0.0", port)).is_ok()
 }
 
-fn free_gb(path: &Path) -> Option<u64> {
+pub fn free_gb(path: &Path) -> Option<u64> {
     let out = Command::new("df")
         .args(["-Pk", path.to_str()?])
         .stderr(Stdio::null())
