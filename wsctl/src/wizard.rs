@@ -598,11 +598,17 @@ fn probe_url(runner: &mut dyn Runner, dir: &Path, url: &str) -> checks::Check {
 pub fn discord_register(runner: &mut dyn Runner, dir: &Path) -> Result<()> {
     require_checkout(dir)?;
     let env = read_env(dir);
-    if envfile::get(&env, "DISCORD_BOT_TOKEN")
-        .unwrap_or_default()
-        .is_empty()
-    {
-        bail!("DISCORD_BOT_TOKEN is not set; the slash command needs the bot");
+    // The command reads both, and without either it panics in a container instead of
+    // saying which.
+    let unset: Vec<&str> = ["DISCORD_APPLICATION_ID", "DISCORD_BOT_TOKEN"]
+        .into_iter()
+        .filter(|key| envfile::get(&env, key).unwrap_or_default().is_empty())
+        .collect();
+    if !unset.is_empty() {
+        bail!(
+            "{} not set in .env; registering the slash command needs the application and its bot",
+            unset.join(" and ")
+        );
     }
     stack::api(runner, dir, &["discord-register"])?;
     ui::done("uploaded; Discord takes a few minutes to roll it out");
@@ -1377,6 +1383,22 @@ mod tests {
         assert_eq!(
             probe_url(&mut runner, Path::new("."), url).verdict,
             Verdict::Fatal
+        );
+    }
+
+    #[test]
+    fn registering_the_command_needs_the_application_and_the_bot() {
+        let dir = checkout("DISCORD_BOT_TOKEN=t\n");
+        let mut runner = Recording::default();
+        let err = discord_register(&mut runner, &dir).unwrap_err().to_string();
+        assert!(err.contains("DISCORD_APPLICATION_ID"), "{err}");
+        assert!(runner.commands.is_empty());
+
+        let dir = checkout("DISCORD_BOT_TOKEN=t\nDISCORD_APPLICATION_ID=1\n");
+        discord_register(&mut runner, &dir).unwrap();
+        assert_eq!(
+            runner.commands,
+            vec!["docker compose run --rm --no-deps -T api wormholesystems discord-register"]
         );
     }
 
