@@ -11,7 +11,7 @@ use sqlx::PgPool;
 use crate::allowlist::AffiliationAllowlist;
 
 use super::access::{owns_character, require_role};
-use super::command::{EventActor, MapTx};
+use super::command::{CommandOutput, Effect, EventActor, MapTx};
 use super::error::{MapError, Result};
 
 use super::view::{MapSystemView, sovereignty_of};
@@ -350,8 +350,18 @@ pub async fn update_map(pool: &PgPool, actor: Actor, cmd: UpdateMap) -> Result<M
     tx.emit(MapEvent::MapUpdated { map_id: cmd.map_id });
     // Drawing unmapped holes is a map setting, so turning it on draws the holes already
     // scanned and turning it off takes those nodes away, rather than waiting for the next
-    // scan to notice.
-    super::ghost::reconcile(&mut tx, cmd.map_id).await?;
+    // scan to notice. The nodes are a change to the chain like any other, so they go in the
+    // history, but only for the record: undo moves through commands, and a settings change
+    // is not one, so stepping back over it would bring the nodes back against the setting.
+    if !tx.reconcile_ghosts().await?.is_empty() {
+        let label = if map.ghost_unlinked_wormholes {
+            "drew the unmapped holes"
+        } else {
+            "took the unmapped holes off the map"
+        };
+        tx.record(Effect::new("map.ghosts", label, CommandOutput::None))
+            .await?;
+    }
     tx.commit().await?;
     Ok(map)
 }
