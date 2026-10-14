@@ -10,10 +10,11 @@ use axum::response::{IntoResponse, Response};
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
 
-use super::{ApiError, ApiResult, user_settings};
+use super::{ApiError, ApiResult};
 use crate::app::AppState;
 use crate::maps::Role;
 use crate::maps::background::MAX_IMAGE_BYTES;
+use crate::maps::user_settings::{self, MapUserSettings};
 
 /// Room for the multipart framing around an image at the size limit; the image itself is
 /// checked against the real limit once it is out of the envelope.
@@ -83,7 +84,7 @@ struct BackgroundImageUpload {
     tag = "background image",
     params(("id" = i64, Path, description = "The map")),
     request_body(content = BackgroundImageUpload, content_type = "multipart/form-data"),
-    responses((status = 200, body = user_settings::MapUserSettings, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
+    responses((status = 200, body = MapUserSettings, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
     security(("bearer" = []), ("session" = [])),
 )]
 async fn upload(
@@ -91,7 +92,7 @@ async fn upload(
     creds: Credentials,
     Path(map_id): Path<i64>,
     mut multipart: Multipart,
-) -> ApiResult<user_settings::MapUserSettings> {
+) -> ApiResult<MapUserSettings> {
     let actor = super::extract::require_role_on_map(&state, &creds, map_id, Role::Viewer).await?;
 
     let mut image = None;
@@ -122,14 +123,14 @@ async fn upload(
     path = "/api/maps/{id}/background-image",
     tag = "background image",
     params(("id" = i64, Path, description = "The map")),
-    responses((status = 200, body = user_settings::MapUserSettings, description = "OK"), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound)),
+    responses((status = 200, body = MapUserSettings, description = "OK"), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound)),
     security(("bearer" = []), ("session" = [])),
 )]
 async fn remove(
     State(state): State<AppState>,
     creds: Credentials,
     Path(map_id): Path<i64>,
-) -> ApiResult<user_settings::MapUserSettings> {
+) -> ApiResult<MapUserSettings> {
     let actor = super::extract::require_role_on_map(&state, &creds, map_id, Role::Viewer).await?;
     state
         .backgrounds

@@ -24,6 +24,7 @@ pub mod solar_system;
 mod store;
 pub mod tracking;
 pub mod transfer;
+pub mod user_settings;
 pub mod view;
 pub mod watchlist;
 

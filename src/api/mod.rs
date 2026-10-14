@@ -19,7 +19,6 @@ pub mod history;
 pub mod identity;
 pub mod ignored;
 pub mod killmails;
-pub mod layout;
 pub mod maps;
 pub mod reference;
 pub mod search;
@@ -52,14 +51,16 @@ pub use crate::integrations::eve_scout::EveScoutConnection;
 pub use crate::maps::map::MapEntry;
 pub use crate::maps::presence::MapCharacter;
 pub use crate::maps::search::{MapSearchHit, ThreatMatch};
+pub use crate::maps::user_settings::panels::{
+    BreakpointLayout, LayoutItem, PANEL_IDS, PanelLayouts, validate_layouts,
+};
+pub use crate::maps::user_settings::{MapUserSettings, UpdateMapUserSettings};
 pub use crate::maps::view::SystemSearchResult;
 pub use access::AccessSubject;
 pub use connections::ShipSearchResult;
 pub use identity::{CharacterRef, CharacterStatus, CharacterSummary, ScopeStatus};
-pub use layout::{BreakpointLayout, LayoutItem, PANEL_IDS, PanelLayouts, validate_layouts};
 pub use reference::{ThreatAnalysis, ThreatEntity};
 pub use signatures::{SignatureCatalog, SignatureCategoryInfo, SignatureTypeInfo};
-pub use user_settings::{MapUserSettings, UpdateMapUserSettings};
 
 /// An API error: a status code plus a message, rendered as `{"error": "..."}`.
 #[derive(Debug)]

@@ -3,7 +3,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use super::ApiError;
+use crate::maps::error::{MapError, Result};
 
 /// Tile positions keyed by breakpoint (`xs` / `sm` / `md` / `lg`).
 pub type PanelLayouts = std::collections::BTreeMap<String, BreakpointLayout>;
@@ -49,39 +49,38 @@ const BREAKPOINT_KEYS: [&str; 4] = ["xs", "sm", "md", "lg"];
 
 /// Reject anything that would not render: unknown ids, duplicates, or a tile outside the
 /// grid it claims to be in.
-pub fn validate_layouts(layouts: &PanelLayouts) -> Result<(), ApiError> {
+pub fn validate_layouts(layouts: &PanelLayouts) -> Result<()> {
     for (key, layout) in layouts {
         if !BREAKPOINT_KEYS.contains(&key.as_str()) {
-            return Err(ApiError::bad_request(format!("unknown breakpoint {key}")));
+            return Err(invalid(format!("unknown breakpoint {key}")));
         }
         if !(1..=24).contains(&layout.cols) {
-            return Err(ApiError::bad_request("cols must be between 1 and 24"));
+            return Err(invalid("cols must be between 1 and 24"));
         }
         if !(40..=400).contains(&layout.row_height) {
-            return Err(ApiError::bad_request(
-                "row height must be between 40 and 400",
-            ));
+            return Err(invalid("row height must be between 40 and 400"));
         }
         let mut seen = std::collections::HashSet::new();
         for item in &layout.items {
             if !PANEL_IDS.contains(&item.i.as_str()) {
-                return Err(ApiError::bad_request(format!("unknown panel {}", item.i)));
+                return Err(invalid(format!("unknown panel {}", item.i)));
             }
             if !seen.insert(item.i.as_str()) {
-                return Err(ApiError::bad_request(format!("{} listed twice", item.i)));
+                return Err(invalid(format!("{} listed twice", item.i)));
             }
             if item.w < 1 || item.h < 1 {
-                return Err(ApiError::bad_request("a tile must be at least 1x1"));
+                return Err(invalid("a tile must be at least 1x1"));
             }
             if item.x < 0 || item.y < 0 || item.x + item.w > layout.cols {
-                return Err(ApiError::bad_request(format!(
-                    "{} does not fit the {key} grid",
-                    item.i
-                )));
+                return Err(invalid(format!("{} does not fit the {key} grid", item.i)));
             }
         }
     }
     Ok(())
+}
+
+fn invalid(message: impl Into<String>) -> MapError {
+    MapError::Validation(message.into())
 }
 
 #[cfg(test)]
