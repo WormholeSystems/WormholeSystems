@@ -23,9 +23,9 @@
 	import { LIFETIME_OPTIONS, SIGNATURE_MASS_OPTIONS } from '$lib/map/connection-status';
 	import { CATEGORIES, categoryMeta, typeById } from '$lib/map/signatures';
 	import type { SignatureContext, SignaturePatch } from '$lib/map/signature-context';
-	import ConnectionInput from './ConnectionInput.svelte';
-	import TimeDetails from './TimeDetails.svelte';
-	import TypeInput from './TypeInput.svelte';
+	import ConnectionInput from './signature-row/ConnectionInput.svelte';
+	import TimeDetails from './signature-row/TimeDetails.svelte';
+	import TypeInput from './signature-row/TypeInput.svelte';
 
 	let {
 		ctx,

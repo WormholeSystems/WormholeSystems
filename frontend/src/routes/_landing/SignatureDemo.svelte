@@ -8,7 +8,7 @@
 	import MapPanelHeader from '$lib/components/map-panel/MapPanelHeader.svelte';
 	import SignatureColumns from '$lib/components/SignatureColumns.svelte';
 	import type { SignatureContext } from '$lib/map/signature-context';
-	import SignatureRow from './maps/[id]/components/signatures/SignatureRow.svelte';
+	import SignatureRow from '$lib/components/SignatureRow.svelte';
 	import { DEMO_CONNECTIONS, DEMO_SIGNATURES, DEMO_SYSTEMS, HOME_SYSTEM } from './demo-chain';
 
 	// No `actions`, so the rows cannot write anything even if something were clicked.

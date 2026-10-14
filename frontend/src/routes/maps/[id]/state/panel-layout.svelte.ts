@@ -4,8 +4,8 @@
 // belongs here: hiding a panel is a layout change like any other.
 
 import type { GridItem } from '$lib/layout/grid';
-import type { BreakpointKey, PanelId, PanelLayouts } from '../components/panels/registry';
-import { DEFAULT_LAYOUTS, placeAtBottom, resolveLayouts } from '../components/panels/registry';
+import type { BreakpointKey, PanelId, PanelLayouts } from './layout/registry';
+import { DEFAULT_LAYOUTS, placeAtBottom, resolveLayouts } from './layout/registry';
 
 export interface LayoutHost {
 	/** Null before the viewer's settings exist; hiding and showing are no-ops then. */

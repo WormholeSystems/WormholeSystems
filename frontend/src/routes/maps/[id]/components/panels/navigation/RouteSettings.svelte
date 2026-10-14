@@ -14,7 +14,7 @@
 		type RouteChoiceField,
 		type RouteOption,
 	} from '$lib/routing/options';
-	import type { MapState } from '../../state/map-state.svelte';
+	import type { MapState } from '../../../state/map-state.svelte';
 
 	let { map }: { map: MapState } = $props();
 

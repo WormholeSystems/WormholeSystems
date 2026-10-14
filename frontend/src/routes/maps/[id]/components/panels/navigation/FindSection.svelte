@@ -11,14 +11,14 @@
 	import * as Command from '$lib/components/ui/command';
 	import * as Popover from '$lib/components/ui/popover';
 	import * as Select from '$lib/components/ui/select';
-	import DestinationMenu from '$lib/components/system-menu/DestinationMenu.svelte';
-	import SystemMenu from '$lib/components/system-menu/SystemMenu.svelte';
+	import DestinationMenu from '../../system-menu/DestinationMenu.svelte';
+	import SystemMenu from '../../system-menu/SystemMenu.svelte';
 	import EveImage from '$lib/components/EveImage.svelte';
-	import SystemRow from '../pickers/SystemRow.svelte';
-	import { SYSTEM_CELLS_4, SYSTEM_LIST_ACTIONS, SYSTEM_ROW } from '../pickers/columns';
+	import SystemRow from '../../pickers/SystemRow.svelte';
+	import { SYSTEM_CELLS_4, SYSTEM_LIST_ACTIONS, SYSTEM_ROW } from '../../pickers/columns';
 	import { jumpTone as badgeTone, type RouteGraph } from '$lib/routing/algorithm';
 	import { findMatcher } from '$lib/routing/find-conditions';
-	import type { MapState } from '../../state/map-state.svelte';
+	import type { MapState } from '../../../state/map-state.svelte';
 	import {
 		byFaction,
 		factionOptions,
@@ -26,7 +26,7 @@
 		stationFilter,
 		type OwnerPick,
 	} from './find-stations';
-	import RoutePopover from './RoutePopover.svelte';
+	import RoutePopover from '../RoutePopover.svelte';
 
 	let { map, graph, origin }: { map: MapState; graph: RouteGraph | null; origin: number | null } =
 		$props();

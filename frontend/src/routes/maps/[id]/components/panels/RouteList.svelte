@@ -5,7 +5,7 @@
 
 	import { systemResolver } from '$lib/resolve-cache.svelte';
 	import SystemRow from '../pickers/SystemRow.svelte';
-	import SystemMenu from '$lib/components/system-menu/SystemMenu.svelte';
+	import SystemMenu from '../system-menu/SystemMenu.svelte';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 
 	let {

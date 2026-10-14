@@ -4,7 +4,7 @@
 	// away from it.
 	import { treeEdges } from '$lib/map/edges';
 	import { gridBackground } from '$lib/map/background';
-	import SystemNode from './maps/[id]/components/canvas/SystemNode.svelte';
+	import SystemNode from '$lib/components/SystemNode.svelte';
 	import { DEMO_CONNECTIONS, DEMO_PILOTS, DEMO_SYSTEMS } from './demo-chain';
 
 	const CELL = 20;

@@ -2,7 +2,7 @@
 // and a service, intersected at the station level so "Caldari Navy stations with repair"
 // is answerable from the groups the routing graph already carries.
 
-import type { StationGroup } from '../../state/route-planner.svelte';
+import type { StationGroup } from '../../../state/route-planner.svelte';
 
 export type OwnerPick = { kind: 'faction' | 'corp'; id: number } | null;
 

@@ -13,7 +13,7 @@
 	import { searchQuery } from '$lib/search-query.svelte';
 	import * as Command from '$lib/components/ui/command';
 	import * as Popover from '$lib/components/ui/popover';
-	import SystemMenu from '$lib/components/system-menu/SystemMenu.svelte';
+	import SystemMenu from '../system-menu/SystemMenu.svelte';
 	import ClassBadge from '$lib/components/ClassBadge.svelte';
 	import SystemRow from './SystemRow.svelte';
 	import { SYSTEM_CELLS_4, SYSTEM_LIST, SYSTEM_ROW } from './columns';

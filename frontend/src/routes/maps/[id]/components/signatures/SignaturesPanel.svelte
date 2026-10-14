@@ -44,7 +44,7 @@
 	import { makeSignatureContext } from '$lib/map/signature-context';
 	import { deletedByPaste, pasteStatus } from '$lib/signatures/paste-diff';
 	import SignatureColumns, { SORT_COLUMNS } from '$lib/components/SignatureColumns.svelte';
-	import SignatureRow from './SignatureRow.svelte';
+	import SignatureRow from '$lib/components/SignatureRow.svelte';
 	import SignaturesPastedAt from './SignaturesPastedAt.svelte';
 	import { solarSystemId, systemName } from '$lib/map/system';
 

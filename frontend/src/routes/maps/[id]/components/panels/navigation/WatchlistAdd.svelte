@@ -5,11 +5,11 @@
 	import { q } from '$lib/api/queries';
 	import * as Command from '$lib/components/ui/command';
 	import * as Popover from '$lib/components/ui/popover';
-	import SystemMenu from '$lib/components/system-menu/SystemMenu.svelte';
-	import SystemRow from '../pickers/SystemRow.svelte';
-	import { SYSTEM_CELLS_4, SYSTEM_LIST, SYSTEM_ROW } from '../pickers/columns';
+	import SystemMenu from '../../system-menu/SystemMenu.svelte';
+	import SystemRow from '../../pickers/SystemRow.svelte';
+	import { SYSTEM_CELLS_4, SYSTEM_LIST, SYSTEM_ROW } from '../../pickers/columns';
 	import { searchQuery } from '$lib/search-query.svelte';
-	import type { MapState } from '../../state/map-state.svelte';
+	import type { MapState } from '../../../state/map-state.svelte';
 
 	let { map }: { map: MapState } = $props();
 

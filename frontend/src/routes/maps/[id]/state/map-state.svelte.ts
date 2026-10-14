@@ -15,7 +15,7 @@ import type { UpdateMapUserSettings } from '$lib/api/types/UpdateMapUserSettings
 import type { SystemDetails } from '$lib/api/types/SystemDetails';
 import type { SystemSearchResult } from '$lib/api/types/SystemSearchResult';
 import type { SocketState } from '$lib/ws';
-import type { PanelId } from '../components/panels/registry';
+import type { PanelId } from './layout/registry';
 import type { RoutingSettings } from '$lib/routing/algorithm';
 import { NODE_W, clamp, type Vec2 } from '$lib/map/geometry';
 import { freeEdgeRouter, treeEdges, type EdgeGeometry } from '$lib/map/edges';

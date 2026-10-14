@@ -11,10 +11,10 @@
 	import { isWormholeClass } from '$lib/map/classes';
 	import { NODE_W } from '$lib/map/geometry';
 	import { statusColor } from '$lib/map/status';
-	import HeaderIcons from './node/HeaderIcons.svelte';
-	import PilotsRow from './node/PilotsRow.svelte';
-	import RegionRow from './node/RegionRow.svelte';
-	import StaticsRow from './node/StaticsRow.svelte';
+	import HeaderIcons from './system-node/HeaderIcons.svelte';
+	import PilotsRow from './system-node/PilotsRow.svelte';
+	import RegionRow from './system-node/RegionRow.svelte';
+	import StaticsRow from './system-node/StaticsRow.svelte';
 
 	let {
 		node,
