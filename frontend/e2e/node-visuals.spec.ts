@@ -138,7 +138,7 @@ test('status vocabulary drives border and icon', async ({ page, api }) => {
 
 	await node.click({ button: 'right' });
 	await page.getByTestId('status-subtrigger').hover();
-	await page.getByTestId('status-submenu').getByRole('button', { name: 'Empty' }).click();
+	await page.getByTestId('status-submenu').getByRole('menuitem', { name: 'Empty' }).click();
 	await expect(node).toHaveAttribute('data-status', 'empty');
 	await expect(node.getByLabel('empty')).toBeVisible();
 	// The status token must actually resolve to the emerald empty color at runtime
@@ -149,7 +149,7 @@ test('status vocabulary drives border and icon', async ({ page, api }) => {
 
 	await node.click({ button: 'right' });
 	await page.getByTestId('status-subtrigger').hover();
-	await page.getByTestId('status-submenu').getByRole('button', { name: 'Active' }).click();
+	await page.getByTestId('status-submenu').getByRole('menuitem', { name: 'Active' }).click();
 	await expect(node).toHaveAttribute('data-status', 'active');
 	await expect(node.getByLabel('active')).toBeVisible();
 });

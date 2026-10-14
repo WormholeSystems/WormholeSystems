@@ -1,6 +1,5 @@
 <script lang="ts">
 	// Right-clicking a connection: its degradable statuses, its kind, and removal.
-	import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
 	import CheckIcon from '@lucide/svelte/icons/check';
 	import ClockIcon from '@lucide/svelte/icons/clock';
 	import CopyIcon from '@lucide/svelte/icons/copy';
@@ -18,12 +17,12 @@
 	import type { TimeStatus } from '$lib/api/types/TimeStatus';
 	import type { WormholeSize } from '$lib/api/types/WormholeSize';
 	import { copyText } from '$lib/clipboard';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { LIFETIME_OPTIONS, MASS_OPTIONS, SIZE_OPTIONS } from '$lib/map/connection-status';
 	import { sizeForJumpMass } from '$lib/map/mass';
 	import { typeById } from '$lib/map/signatures';
 	import { connectionBookmarks, formatsFromNaming } from '$lib/naming/bookmark';
 	import type { MapState } from '../../state/map-state.svelte';
-	import { item, panel, sub } from './chrome';
 
 	let { map, connection }: { map: MapState; connection: MapConnection } = $props();
 
@@ -43,10 +42,6 @@
 		return null;
 	});
 
-	function close() {
-		map.closeMenu();
-	}
-
 	/** The bookmark for each end, as it would be written in game. */
 	const bookmarks = $derived(
 		connectionBookmarks(
@@ -60,32 +55,26 @@
 
 	function copyBookmark(text: string) {
 		void copyText(text, { success: 'Bookmark copied' });
-		close();
 	}
 
 	function setKind(kind: ConnectionType) {
 		map.connections.patch(cid, { kind });
-		close();
 	}
 
 	function setMass(mass: MassStatus) {
 		map.connections.patch(cid, { mass_status: mass });
-		close();
 	}
 
 	function setLifetime(time: TimeStatus) {
 		map.connections.patch(cid, { time_status: time });
-		close();
 	}
 
 	function setSize(size: WormholeSize | null) {
 		map.connections.patch(cid, { size });
-		close();
 	}
 
 	function removeConnection() {
 		map.connections.remove(cid);
-		close();
 	}
 </script>
 
@@ -103,25 +92,27 @@
 {/snippet}
 
 {#if bookmarks.length > 0}
-	<div class={sub} data-testid="copy-name-subtrigger">
-		<CopyIcon class="size-4" />
-		Copy name
-		<ChevronRightIcon class="ml-auto size-3" />
-		<div class={panel} data-testid="copy-name-submenu">
+	<DropdownMenu.Sub>
+		<DropdownMenu.SubTrigger data-testid="copy-name-subtrigger">
+			<CopyIcon class="size-4" />
+			Copy name
+		</DropdownMenu.SubTrigger>
+		<DropdownMenu.SubContent data-testid="copy-name-submenu">
 			{#each bookmarks as name, i (i)}
-				<button class={item} onclick={() => copyBookmark(name)}>{name}</button>
+				<DropdownMenu.Item onSelect={() => copyBookmark(name)}>{name}</DropdownMenu.Item>
 			{/each}
-		</div>
-	</div>
+		</DropdownMenu.SubContent>
+	</DropdownMenu.Sub>
 {/if}
 
-<div class={sub} data-testid="lifetime-subtrigger">
-	<ClockIcon class="size-4" />
-	Lifetime
-	<ChevronRightIcon class="ml-auto size-3" />
-	<div class={panel} data-testid="lifetime-submenu">
+<DropdownMenu.Sub>
+	<DropdownMenu.SubTrigger data-testid="lifetime-subtrigger">
+		<ClockIcon class="size-4" />
+		Lifetime
+	</DropdownMenu.SubTrigger>
+	<DropdownMenu.SubContent class="w-48" data-testid="lifetime-submenu">
 		{#each LIFETIME_OPTIONS as o (o.value)}
-			<button class={item} onclick={() => setLifetime(o.value)}>
+			<DropdownMenu.Item onSelect={() => setLifetime(o.value)}>
 				{@render dot(o.color, o.value === 'expired')}
 				{o.label}
 				<span class="ml-auto text-muted-foreground">{o.hint ?? ''}</span>
@@ -129,18 +120,19 @@
 					connection.time_status === o.value ||
 						(o.value === 'stable' && connection.time_status === null),
 				)}
-			</button>
+			</DropdownMenu.Item>
 		{/each}
-	</div>
-</div>
+	</DropdownMenu.SubContent>
+</DropdownMenu.Sub>
 
-<div class={sub} data-testid="mass-subtrigger">
-	<WeightIcon class="size-4" />
-	Mass Status
-	<ChevronRightIcon class="ml-auto size-3" />
-	<div class={panel} data-testid="mass-submenu">
+<DropdownMenu.Sub>
+	<DropdownMenu.SubTrigger data-testid="mass-subtrigger">
+		<WeightIcon class="size-4" />
+		Mass Status
+	</DropdownMenu.SubTrigger>
+	<DropdownMenu.SubContent class="w-48" data-testid="mass-submenu">
 		{#each MASS_OPTIONS as o (o.value)}
-			<button class={item} onclick={() => setMass(o.value)}>
+			<DropdownMenu.Item onSelect={() => setMass(o.value)}>
 				{@render dot(o.color)}
 				{o.label}
 				<span class="ml-auto text-muted-foreground">{o.hint ?? ''}</span>
@@ -148,62 +140,56 @@
 					connection.mass_status === o.value ||
 						(o.value === 'stable' && connection.mass_status === null),
 				)}
-			</button>
+			</DropdownMenu.Item>
 		{/each}
-	</div>
-</div>
+	</DropdownMenu.SubContent>
+</DropdownMenu.Sub>
 
-<div class={sub} data-testid="size-subtrigger">
-	<ShipIcon class="size-4" />
-	Ship Size
-	<ChevronRightIcon class="ml-auto size-3" />
-	<div class={panel} data-testid="size-submenu">
+<DropdownMenu.Sub>
+	<DropdownMenu.SubTrigger data-testid="size-subtrigger">
+		<ShipIcon class="size-4" />
+		Ship Size
+	</DropdownMenu.SubTrigger>
+	<DropdownMenu.SubContent class="w-48" data-testid="size-submenu">
 		{#if lockingType}
-			<div class="px-3 py-1 text-[10px] text-muted-foreground" data-testid="size-locked-hint">
+			<div class="px-2 py-1 text-[10px] text-muted-foreground" data-testid="size-locked-hint">
 				Set by {lockingType.signature}
 			</div>
 		{/if}
 		<!-- Nobody has read the hole yet, which is not the same as it taking a battleship. -->
-		<button
-			class="{item} disabled:cursor-default disabled:opacity-50 disabled:hover:bg-transparent"
-			disabled={lockingType !== null}
-			onclick={() => setSize(null)}
-		>
+		<DropdownMenu.Item disabled={lockingType !== null} onSelect={() => setSize(null)}>
 			<span class="inline-flex w-6 justify-center font-mono text-[10px] text-muted-foreground">
 				?
 			</span>
 			Unknown
 			<span class="ml-auto"></span>
 			{@render check(connection.size === null)}
-		</button>
+		</DropdownMenu.Item>
 		{#each SIZE_OPTIONS as o (o.value)}
-			<button
-				class="{item} disabled:cursor-default disabled:opacity-50 disabled:hover:bg-transparent"
-				disabled={lockingType !== null}
-				onclick={() => setSize(o.value)}
-			>
+			<DropdownMenu.Item disabled={lockingType !== null} onSelect={() => setSize(o.value)}>
 				<span class="inline-flex w-6 justify-center font-mono text-[10px] text-muted-foreground">
 					{o.letter}
 				</span>
 				{o.label}
 				<span class="ml-auto"></span>
 				{@render check(connection.size === o.value)}
-			</button>
+			</DropdownMenu.Item>
 		{/each}
-	</div>
-</div>
+	</DropdownMenu.SubContent>
+</DropdownMenu.Sub>
 
-<div class={sub} data-testid="type-subtrigger">
-	<WaypointsIcon class="size-4" />
-	Connection type
-	<ChevronRightIcon class="ml-auto size-3" />
-	<div class={panel} data-testid="type-submenu">
-		<button class={item} onclick={() => setKind('wormhole')}>
+<DropdownMenu.Sub>
+	<DropdownMenu.SubTrigger data-testid="type-subtrigger">
+		<WaypointsIcon class="size-4" />
+		Connection type
+	</DropdownMenu.SubTrigger>
+	<DropdownMenu.SubContent class="w-40" data-testid="type-submenu">
+		<DropdownMenu.Item onSelect={() => setKind('wormhole')}>
 			Wormhole
 			<span class="ml-auto"></span>
 			{@render check(connection.kind === 'wormhole')}
-		</button>
-		<button class={item} onclick={() => setKind('stargate')}>
+		</DropdownMenu.Item>
+		<DropdownMenu.Item onSelect={() => setKind('stargate')}>
 			Stargate
 			{#if connection.kind !== 'stargate'}
 				<TriangleAlertIcon class="ml-auto size-3.5 text-amber-500" />
@@ -211,12 +197,12 @@
 				<span class="ml-auto"></span>
 				{@render check(true)}
 			{/if}
-		</button>
-	</div>
-</div>
+		</DropdownMenu.Item>
+	</DropdownMenu.SubContent>
+</DropdownMenu.Sub>
 
-<div class="my-0.5 border-t border-border"></div>
-<button class="{item} text-destructive hover:text-destructive" onclick={removeConnection}>
+<DropdownMenu.Separator />
+<DropdownMenu.Item variant="destructive" onSelect={removeConnection}>
 	<Trash2Icon class="size-4" />
 	Remove
-</button>
+</DropdownMenu.Item>

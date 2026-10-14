@@ -15,7 +15,7 @@ test('search dialog adds a system to the map', async ({ page, api }) => {
 
 	const canvas = page.getByTestId('map-canvas');
 	await canvas.click({ button: 'right', position: { x: 500, y: 500 } });
-	await page.getByRole('button', { name: 'Add solar system' }).click();
+	await page.getByRole('menuitem', { name: 'Add solar system' }).click();
 
 	const input = page.getByPlaceholder('System, alias, occupier or notes…');
 	await expect(input).toBeVisible();
@@ -44,7 +44,7 @@ test('search rows show class letters, statics and the effect badge', async ({ pa
 
 	const canvas = page.getByTestId('map-canvas');
 	await canvas.click({ button: 'right', position: { x: 400, y: 400 } });
-	await page.getByRole('button', { name: 'Add solar system' }).click();
+	await page.getByRole('menuitem', { name: 'Add solar system' }).click();
 	const input = page.getByPlaceholder('System, alias, occupier or notes…');
 
 	// A wormhole row says what a map node says: its class, where its statics lead, and the
@@ -78,7 +78,7 @@ test('node context menu sets the system status', async ({ page, api }) => {
 	const node = page.getByTestId('system-node').filter({ hasText: 'Jita' });
 	await node.click({ button: 'right' });
 	await page.getByTestId('status-subtrigger').hover();
-	await page.getByTestId('status-submenu').getByRole('button', { name: 'Friendly' }).click();
+	await page.getByTestId('status-submenu').getByRole('menuitem', { name: 'Friendly' }).click();
 
 	// The friendly status recolors the node border via its data-status channel.
 	await expect(node).toHaveAttribute('data-status', 'friendly');
@@ -90,7 +90,7 @@ test('add connection searches from the palette and links what it places', async 
 
 	// Place Jita by right-clicking the canvas, which is now the palette too.
 	await page.getByTestId('map-canvas').click({ button: 'right', position: { x: 400, y: 300 } });
-	await page.getByRole('button', { name: 'Add solar system' }).click();
+	await page.getByRole('menuitem', { name: 'Add solar system' }).click();
 	await page.getByPlaceholder('System, alias, occupier or notes…').fill('jita');
 	await page.locator('[data-slot="command-item"]', { hasText: 'Jita' }).first().click();
 	const jita = page.getByTestId('system-node').filter({ hasText: 'Jita' });
@@ -98,7 +98,7 @@ test('add connection searches from the palette and links what it places', async 
 
 	// "Add connection" opens the same palette, saying what it is for.
 	await jita.click({ button: 'right' });
-	await page.getByRole('button', { name: 'Add connection' }).click();
+	await page.getByRole('menuitem', { name: 'Add connection' }).click();
 	const input = page.getByPlaceholder('Connect to…');
 	await expect(input).toBeVisible();
 

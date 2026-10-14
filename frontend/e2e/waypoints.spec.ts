@@ -30,7 +30,7 @@ test('waypoint submenus: k-space only, disabled without online characters', asyn
 	await gotoApp(page, `/maps/${mapId}`);
 	const jita = page.getByTestId('system-node').filter({ hasText: 'Jita' });
 	await jita.click({ button: 'right' });
-	await page.getByTestId('destination-subtrigger').hover();
+	await page.getByTestId('menu-set-destination').hover();
 	await expect(
 		page.getByTestId('destination-submenu').getByText('No characters online'),
 	).toBeVisible();
@@ -39,7 +39,7 @@ test('waypoint submenus: k-space only, disabled without online characters', asyn
 	// W-space node: no waypoint submenus at all.
 	const wh = page.getByTestId('system-node').filter({ hasText: 'J122515' });
 	await wh.click({ button: 'right' });
-	await expect(page.getByTestId('destination-subtrigger')).toHaveCount(0);
+	await expect(page.getByTestId('menu-set-destination')).toHaveCount(0);
 	await page.keyboard.press('Escape');
 
 	// Online: the character appears as a submenu entry.
@@ -47,9 +47,9 @@ test('waypoint submenus: k-space only, disabled without online characters', asyn
 	await page.reload();
 	await page.waitForSelector('html[data-hydrated="true"]');
 	await jita.click({ button: 'right' });
-	await page.getByTestId('destination-subtrigger').hover();
+	await page.getByTestId('menu-set-destination').hover();
 	await expect(
-		page.getByTestId('destination-submenu').getByRole('button', { name: 'E2E Pilot' }),
+		page.getByTestId('destination-submenu').getByRole('menuitem', { name: 'E2E Pilot' }),
 	).toBeVisible();
 });
 

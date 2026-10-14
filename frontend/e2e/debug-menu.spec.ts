@@ -13,7 +13,7 @@ test('the debug menu builds a chain worth stress-testing the canvas with', async
 	await gotoApp(page, `/maps/${mapId}`);
 	await page.getByTestId('map-canvas').click({ button: 'right', position: { x: 400, y: 300 } });
 	await page.getByTestId('debug-subtrigger').hover();
-	await page.getByRole('button', { name: 'Add a stress-test chain' }).click();
+	await page.getByRole('menuitem', { name: 'Add a stress-test chain' }).click();
 
 	// 3 roots, 2 children each, three levels deep. It builds a request at a time, so wait
 	// for the finished shape rather than for the first paint.

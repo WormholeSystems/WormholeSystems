@@ -1,6 +1,5 @@
 <script lang="ts">
-	// The External submenu in bits-ui chrome; the on-map node menu renders the same
-	// groups through its own chrome.
+	// The External submenu: every site that knows about this system, grouped by site.
 	import ExternalLinkIcon from '@lucide/svelte/icons/external-link';
 
 	import * as ContextMenu from '$lib/components/ui/context-menu';
@@ -16,7 +15,7 @@
 		<ExternalLinkIcon class="size-4" />
 		External
 	</ContextMenu.SubTrigger>
-	<ContextMenu.SubContent class="w-48">
+	<ContextMenu.SubContent class="w-48" data-testid="external-submenu">
 		{#each groups as group, i (group.label)}
 			{#if i > 0}
 				<ContextMenu.Separator />

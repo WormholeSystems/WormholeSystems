@@ -61,9 +61,9 @@ test('a pasted wormhole becomes a node, and assigning a system names it', async 
 
 	// The menu does not offer it either, from the node or from the API.
 	await ghost.click({ button: 'right' });
-	await expect(page.getByRole('button', { name: 'Assign a system' })).toBeVisible();
-	await expect(page.getByRole('button', { name: 'Add connection' })).toHaveCount(0);
-	await expect(page.getByRole('button', { name: 'Pin', exact: true })).toHaveCount(0);
+	await expect(page.getByRole('menuitem', { name: 'Assign a system' })).toBeVisible();
+	await expect(page.getByRole('menuitem', { name: 'Add connection' })).toHaveCount(0);
+	await expect(page.getByRole('menuitem', { name: 'Pin', exact: true })).toHaveCount(0);
 	await page.keyboard.press('Escape');
 
 	// And the API says the same, whichever end the connection is asked for.
@@ -88,7 +88,7 @@ test('a pasted wormhole becomes a node, and assigning a system names it', async 
 
 	// Saying what it leads to turns it into that system, where it already sits.
 	await ghost.click({ button: 'right' });
-	await page.getByRole('button', { name: 'Assign a system' }).click();
+	await page.getByRole('menuitem', { name: 'Assign a system' }).click();
 	await page.getByPlaceholder('This hole leads to…').fill('Jita');
 	// Off the map, so it comes from the add section; assigning takes either.
 	await page.getByTestId('palette-add').first().click();
@@ -111,7 +111,7 @@ test('a ghost that turns out to be on the map already is merged into it', async 
 	await expect(ghost).toHaveCount(1);
 
 	await ghost.click({ button: 'right' });
-	await page.getByRole('button', { name: 'Assign a system' }).click();
+	await page.getByRole('menuitem', { name: 'Assign a system' }).click();
 	await page.getByPlaceholder('This hole leads to…').fill('Jita');
 	await page.getByTestId('palette-hit').first().click();
 

@@ -2,7 +2,6 @@
 	// Right-clicking empty canvas: add, tidy, or wipe the map.
 	import BrushCleaningIcon from '@lucide/svelte/icons/brush-cleaning';
 	import BugIcon from '@lucide/svelte/icons/bug';
-	import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
 	import EraserIcon from '@lucide/svelte/icons/eraser';
 	import PlusIcon from '@lucide/svelte/icons/plus';
 	import Trash2Icon from '@lucide/svelte/icons/trash-2';
@@ -10,16 +9,12 @@
 	import { toast } from 'svelte-sonner';
 
 	import { errorMessage } from '$lib/api/client';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { confirmDanger } from '$lib/confirm.svelte';
 	import { NODE_W } from '$lib/map/geometry';
 	import type { MapState, Menu } from '../../state/map-state.svelte';
-	import { item, panel, sub } from './chrome';
 
 	let { map, menu }: { map: MapState; menu: Menu } = $props();
-
-	function close() {
-		map.closeMenu();
-	}
 
 	function addSystem() {
 		map.linkFrom = null;
@@ -27,24 +22,14 @@
 		const w = map.camera.toWorld(menu.x, menu.y);
 		map.searchAnchor = { x: w.x - NODE_W / 2, y: w.y - map.nodeH / 2 };
 		map.paletteOpen = true;
-		close();
-	}
-
-	function deleteSelection() {
-		const ids = [...map.selected];
-		map.selected = new Set();
-		map.systems.remove(ids);
-		close();
 	}
 
 	/** Ask first: what goes is a branch nobody is looking at. */
 	function cleanMap() {
 		map.cleanPrompt = true;
-		close();
 	}
 
 	async function clearMap() {
-		close();
 		const sure = await confirmDanger({
 			title: 'Clear the map?',
 			body: 'This removes all systems except home and pinned ones.',
@@ -57,7 +42,6 @@
 	const dev = import.meta.env.DEV;
 
 	function stressChain() {
-		close();
 		toast.promise(
 			import('../../state/debug').then((debug) => debug.seedStressChain(map)),
 			{
@@ -69,34 +53,35 @@
 	}
 </script>
 
-<button class={item} onclick={addSystem}>
+<DropdownMenu.Item onSelect={addSystem}>
 	<PlusIcon class="size-4" />
 	Add solar system
-</button>
+</DropdownMenu.Item>
 {#if map.selected.size > 0}
-	<button class={item} onclick={deleteSelection}>
+	<DropdownMenu.Item onSelect={() => map.removeSelection()}>
 		<Trash2Icon class="size-4" />
 		Delete selection
-	</button>
+	</DropdownMenu.Item>
 {/if}
 {#if map.systems.orphaned.length > 0}
-	<button class={item} onclick={cleanMap} data-testid="clean-map">
+	<DropdownMenu.Item onSelect={cleanMap} data-testid="clean-map">
 		<BrushCleaningIcon class="size-4" />
 		Clean map ({map.systems.orphaned.length})
-	</button>
+	</DropdownMenu.Item>
 {/if}
-<button class={item} onclick={clearMap}>
+<DropdownMenu.Item onSelect={clearMap}>
 	<EraserIcon class="size-4" />
 	Clear map
-</button>
+</DropdownMenu.Item>
 {#if dev}
-	<div class="my-0.5 border-t border-border"></div>
-	<div class={sub} data-testid="debug-subtrigger">
-		<BugIcon class="size-4" />
-		Debug
-		<ChevronRightIcon class="ml-auto size-3" />
-		<div class={panel} data-testid="debug-submenu">
-			<button class={item} onclick={stressChain}>Add a stress-test chain</button>
-		</div>
-	</div>
+	<DropdownMenu.Separator />
+	<DropdownMenu.Sub>
+		<DropdownMenu.SubTrigger data-testid="debug-subtrigger">
+			<BugIcon class="size-4" />
+			Debug
+		</DropdownMenu.SubTrigger>
+		<DropdownMenu.SubContent data-testid="debug-submenu">
+			<DropdownMenu.Item onSelect={stressChain}>Add a stress-test chain</DropdownMenu.Item>
+		</DropdownMenu.SubContent>
+	</DropdownMenu.Sub>
 {/if}
