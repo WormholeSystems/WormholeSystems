@@ -61,6 +61,7 @@ Every error is `{ "error": "..." }` with the matching status:
 | `404`  | No such thing, or not one the caller may know about. |
 | `409`  | The change contradicts the map's current state. |
 | `502`  | EVE's API refused or failed (waypoints). |
+| `500`  | Something failed on our side. The body says only that; the detail goes to the server log. |
 
 ## Conventions
 

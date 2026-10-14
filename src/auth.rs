@@ -251,11 +251,7 @@ pub async fn callback(
         .save(claims.character_id, &token)
         .await
     {
-        return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("could not store token: {err}"),
-        )
-            .into_response();
+        return server_error(err);
     }
 
     let session_id = match session::create_session(&state.db, user_id, claims.character_id).await {
@@ -296,10 +292,13 @@ pub async fn logout(State(state): State<AppState>, jar: CookieJar) -> Response {
         .into_response()
 }
 
-fn server_error(err: sqlx::Error) -> Response {
+/// A failure on our side. The detail is for the log: a database error describes the schema,
+/// and the person mid-login can do nothing with it.
+fn server_error(err: impl std::fmt::Display) -> Response {
+    eprintln!("login failed: {err}");
     (
         StatusCode::INTERNAL_SERVER_ERROR,
-        format!("database error: {err}"),
+        "login failed on our side, please try again",
     )
         .into_response()
 }

@@ -361,17 +361,6 @@ pub async fn delete_role(
     Ok(Json(()))
 }
 
-/// A save that fails its checks answers with the message alone: the form shows it under
-/// the field, where the "invalid:" the error type adds would only be noise.
-async fn check(state: &AppState, map_id: i64, body: &SaveAlert) -> Result<(), ApiError> {
-    store::check(&state.db, map_id, body)
-        .await
-        .map_err(|err| match err {
-            MapError::Validation(message) => ApiError::bad_request(message),
-            other => ApiError::from(other),
-        })
-}
-
 /// `POST /api/maps/{id}/alerts`, create one. Manager+.
 #[utoipa::path(
     post,
@@ -389,7 +378,7 @@ pub async fn create_alert(
     Json(body): Json<SaveAlert>,
 ) -> ApiResult<MapAlert> {
     let user_id = require_manager(&state, &creds, map_id).await?;
-    check(&state, map_id, &body).await?;
+    store::check(&state.db, map_id, &body).await?;
     Ok(Json(
         store::create(&state.db, map_id, user_id, &body).await?,
     ))
@@ -412,7 +401,7 @@ pub async fn update_alert(
     Json(body): Json<SaveAlert>,
 ) -> ApiResult<MapAlert> {
     let user_id = require_manager(&state, &creds, map_id).await?;
-    check(&state, map_id, &body).await?;
+    store::check(&state.db, map_id, &body).await?;
     Ok(Json(
         store::update(&state.db, map_id, alert_id, user_id, &body).await?,
     ))
