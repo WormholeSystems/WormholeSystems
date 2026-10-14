@@ -83,18 +83,23 @@ pub(super) async fn apply_restore_systems(tx: &mut Tx<'_>, cmd: RestoreSystems) 
     for c in &cmd.connections {
         connections::reinsert(tx, cmd.map_id, c).await?;
     }
+    let mut inserted = Vec::new();
     for s in &cmd.signatures {
-        signatures::reinsert(tx, cmd.map_id, s).await?;
+        if signatures::reinsert(tx, cmd.map_id, s).await? {
+            inserted.push(s.id);
+        }
     }
 
-    // Undoing a restore drops exactly what was put back, connections included: a stale-clean
-    // can restore edges whose endpoints were never removed, and cascading from the
-    // placements alone would leave those behind.
+    // Undoing a restore drops exactly what was put back, connections and signatures
+    // included: a stale-clean can restore edges whose endpoints were never removed, and a
+    // removal takes the scan on the far side of a dying hole from a system that stays, so
+    // cascading from the placements alone would leave those behind. A signature that was
+    // still there and only got its link back stays when the link goes again.
     let inverse = MapCommand::RemoveRestored(RemoveRestored {
         map_id: cmd.map_id,
         system_ids: cmd.systems.iter().map(|s| s.id).collect(),
         connection_ids: cmd.connections.iter().map(|c| c.id).collect(),
-        signature_ids: Vec::new(),
+        signature_ids: inserted,
     });
     if cmd.is_connection_only() {
         let events: Vec<MapEvent> = cmd
