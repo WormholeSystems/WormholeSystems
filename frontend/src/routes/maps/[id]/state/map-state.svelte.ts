@@ -470,18 +470,30 @@ export class MapState {
 	 * and the read is reactive, so it lands on its own.
 	 */
 	systemInfo(id: number): SystemSearchResult | null {
-		const placed = this.systemsView.find((s) => solarSystemId(s) === id);
-		if (placed?.kind === 'system') return searchResultOf(placed);
+		const placed = this.placedInfo.get(id);
+		if (placed) return placed;
 		const known = systemResolver.get(id);
 		if (known === undefined) systemResolver.ensure([id]);
 		return known ?? null;
 	}
 
+	/**
+	 * The placed systems by solar system id, already in the resolver's shape. Built once per
+	 * graph, since `systemInfo` is called from sort comparators and once per row.
+	 */
+	private placedInfo = $derived.by(() => {
+		const out = new Map<number, SystemSearchResult>();
+		for (const s of this.systemsView) {
+			if (s.kind === 'system' && !out.has(s.solar_system_id)) {
+				out.set(s.solar_system_id, searchResultOf(s));
+			}
+		}
+		return out;
+	});
+
 	/** Placed systems arrive with the graph; the resolver learns them so no panel refetches one. */
 	private shareResolved() {
-		systemResolver.seed(
-			this.systemsView.flatMap((s) => (s.kind === 'system' ? [searchResultOf(s)] : [])),
-		);
+		systemResolver.seed(this.placedInfo.values());
 	}
 
 	/** Refetch what one socket frame invalidated; the table lives in [`keysFor`]. */
