@@ -1,11 +1,18 @@
 import { describe, expect, it } from 'vitest';
 
+import type { MapConnection } from '$lib/api/types/MapConnection';
+import type { MapSystemView } from '$lib/api/types/MapSystemView';
+import type { Signature } from '$lib/api/types/Signature';
+import type { MappedSystem } from '$lib/map/system';
 import {
 	bookmarkClass,
+	bookmarkSystemOf,
+	connectionBookmarks,
 	formatBookmark,
 	isReturnBookmark,
 	renderBookmark,
 	shortSignatureId,
+	signatureBookmark,
 	type BookmarkContext,
 	type BookmarkSystem,
 } from './bookmark';
@@ -152,5 +159,138 @@ describe('an unmapped hole', () => {
 		expect(formatBookmark(unknownFarSide, context)).toBe('ABC');
 		// With a typed hole, the class it leads to is known even before it is mapped.
 		expect(formatBookmark({ ...unknownFarSide, wormholeClassId: 5 }, context)).toBe('ABC C5');
+	});
+});
+
+function placed(over: Partial<MappedSystem>): MappedSystem {
+	return {
+		kind: 'system',
+		alias: null,
+		region: null,
+		occupying_group: null,
+		...over,
+	} as MappedSystem;
+}
+
+function sig(over: Partial<Signature>): Signature {
+	return {
+		signature_id: 'AAA-000',
+		signature_type_id: null,
+		connection_id: null,
+		size: null,
+		mass_status: null,
+		time_status: null,
+		...over,
+	} as Signature;
+}
+
+// Jita (alias A) to a C5 (alias A1), the one hole scanned from both ends.
+const home = placed({
+	id: 1,
+	solar_system_id: 30000142,
+	name: 'Jita',
+	alias: 'A',
+	region: 'The Forge',
+	security_status: 0.95,
+	wormhole_class_id: null,
+});
+const c5 = placed({
+	id: 2,
+	solar_system_id: 31000005,
+	name: 'J122515',
+	alias: 'A1',
+	region: 'E-R00024',
+	security_status: -0.99,
+	wormhole_class_id: 5,
+});
+const hole = {
+	id: 7,
+	from_system: home.id,
+	to_system: c5.id,
+	size: null,
+	mass_status: null,
+	time_status: null,
+} as MapConnection;
+const scannedAtHome = sig({
+	signature_id: 'HOM-111',
+	solar_system_id: home.solar_system_id,
+	connection_id: hole.id,
+	signature_type_id: 1,
+});
+const scannedInC5 = sig({
+	signature_id: 'FAR-222',
+	solar_system_id: c5.solar_system_id,
+	connection_id: hole.id,
+	signature_type_id: 2,
+});
+const codes = (id: number | null) => (id === 1 ? 'H296' : id === 2 ? 'K162' : null);
+
+describe('bookmarkSystemOf', () => {
+	it('reads a placed system the way a bookmark names it', () => {
+		expect(bookmarkSystemOf(c5)).toEqual({
+			alias: 'A1',
+			name: 'J122515',
+			region: 'E-R00024',
+			wormholeClassId: 5,
+			security: -0.99,
+			occupier: null,
+		});
+	});
+});
+
+describe('connectionBookmarks', () => {
+	const formats = {
+		wormhole: '{alias} {sig} {wh}',
+		kspace: '{alias} {sig} {wh}',
+		return: '*{alias} {sig} {wh}',
+	};
+
+	it("names each end with the signature read on the other, the scanner's side", () => {
+		const [toHome, toC5] = connectionBookmarks(
+			hole,
+			[home, c5],
+			[scannedAtHome, scannedInC5],
+			codes,
+			formats,
+		);
+		// Standing in the C5, the way back to Jita carries the C5's own signature.
+		expect(toHome).toBe('*A FAR K162');
+		// Standing in Jita, the way into the C5 carries the one scanned in Jita.
+		expect(toC5).toBe('A1 HOM H296');
+	});
+
+	it('leaves the signature out while the near side has not been scanned', () => {
+		const names = connectionBookmarks(hole, [home, c5], [scannedInC5], codes, formats);
+		expect(names[1]).toBe('A1');
+	});
+
+	it('names no ghost, and nothing at all while an end is missing', () => {
+		const ghost = { kind: 'ghost', id: 3, alias: 'A2' } as MapSystemView;
+		// Only Jita has a system to name, and nothing can have been scanned in a ghost.
+		expect(
+			connectionBookmarks({ ...hole, to_system: 3 }, [home, ghost], [], codes, formats),
+		).toEqual(['*A']);
+		expect(connectionBookmarks(hole, [home], [], codes, formats)).toEqual([]);
+	});
+});
+
+describe('signatureBookmark', () => {
+	it('falls back to the class the type promises while the far side is unmapped', () => {
+		const text = signatureBookmark(
+			sig({ signature_id: 'XYZ-987' }),
+			{ signature: 'H296', target_class: 5 },
+			null,
+			'B',
+			'A',
+			{ wormhole: '{alias} {sig} {class} {name} {wh}' },
+		);
+		expect(text).toBe('B XYZ C5 H296');
+	});
+
+	it('names the far side once it is on the map', () => {
+		const text = signatureBookmark(sig({ signature_id: 'XYZ-987' }), null, c5, 'A1', 'A', {
+			wormhole: '{alias} {sig} {class} {name}',
+		});
+		expect(text).toBe('A1 XYZ C5 J122515');
 	});
 });
