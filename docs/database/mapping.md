@@ -184,8 +184,9 @@ catalogue of signature groups and known wormhole types is
   `created_at`. Rows missing from a scan are removed explicitly via the bulk delete.
 - **Delete cascade** (legacy): deleting a signature also deletes its linked connection
   unless another signature *in the same system* still references it. The bulk delete
-  additionally removes endpoint placements that are not pinned / home / rally and have
-  no remaining connections.
+  additionally removes the far end of each deleted connection when it is not pinned /
+  home / rally and has no remaining connections. The system the signatures were in
+  always stays.
 - **Expiry:** a background loop purges unlinked wormhole sigs older than 3 days and
   other sigs untouched for 7 days (a paste refreshes `updated_at`, keeping live sites
   alive). Linked sigs never expire.

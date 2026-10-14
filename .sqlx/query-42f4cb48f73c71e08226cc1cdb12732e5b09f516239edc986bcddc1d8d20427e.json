@@ -1,0 +1,31 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select id from map_solar_systems\n         where map_id = $1 and id in ($2, $3) and solar_system_id is distinct from $4",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "map_solar_systems",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "42f4cb48f73c71e08226cc1cdb12732e5b09f516239edc986bcddc1d8d20427e"
+}
