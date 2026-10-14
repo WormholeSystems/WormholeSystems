@@ -1,6 +1,6 @@
 <script lang="ts">
 	// The set-destination / add-waypoint submenu pair, shared by the system and
-	// destination menus.
+	// destination menus. One entry per online pilot, and all of them at once.
 	import MapPinIcon from '@lucide/svelte/icons/map-pin';
 	import NavigationIcon from '@lucide/svelte/icons/navigation';
 	import UsersIcon from '@lucide/svelte/icons/users';
@@ -20,7 +20,7 @@
 	{:else}
 		{#each online as c (c.character_id)}
 			<ContextMenu.Item
-				onclick={() => map.waypoints.set(destinationId, c.character_id, clearOthers)}
+				onSelect={() => map.waypoints.set(destinationId, c.character_id, clearOthers)}
 			>
 				<EveImage kind="character" id={c.character_id} size={32} class="size-5 rounded-lg" />
 				{c.name}
@@ -28,7 +28,7 @@
 		{/each}
 		{#if online.length > 1}
 			<ContextMenu.Separator />
-			<ContextMenu.Item onclick={() => map.waypoints.setAll(destinationId, clearOthers)}>
+			<ContextMenu.Item onSelect={() => map.waypoints.setAll(destinationId, clearOthers)}>
 				<UsersIcon class="size-4" />
 				All Characters
 			</ContextMenu.Item>
@@ -41,7 +41,7 @@
 		<NavigationIcon class="size-4" />
 		Set destination
 	</ContextMenu.SubTrigger>
-	<ContextMenu.SubContent class="w-48">
+	<ContextMenu.SubContent class="w-48" data-testid="destination-submenu">
 		{@render waypointItems(true)}
 	</ContextMenu.SubContent>
 </ContextMenu.Sub>
@@ -50,7 +50,7 @@
 		<MapPinIcon class="size-4" />
 		Add waypoint
 	</ContextMenu.SubTrigger>
-	<ContextMenu.SubContent class="w-48">
+	<ContextMenu.SubContent class="w-48" data-testid="waypoint-submenu">
 		{@render waypointItems(false)}
 	</ContextMenu.SubContent>
 </ContextMenu.Sub>

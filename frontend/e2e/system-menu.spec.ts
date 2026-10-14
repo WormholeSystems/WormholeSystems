@@ -81,7 +81,7 @@ test('search rows: add to map, then rally toggle once placed', async ({ page, ap
 
 	await gotoApp(page, `/maps/${mapId}`);
 	await page.getByTestId('map-canvas').click({ button: 'right', position: { x: 500, y: 400 } });
-	await page.getByRole('button', { name: 'Add solar system' }).click();
+	await page.getByRole('menuitem', { name: 'Add solar system' }).click();
 	await page.getByPlaceholder('System, alias, occupier or notes…').fill('amarr');
 	const row = page.locator('[data-slot="command-item"]', { hasText: 'Amarr' }).first();
 	await expect(row).toBeVisible();
@@ -111,7 +111,7 @@ test('wormhole rows hide Jump Range; route planner sets the origin', async ({ pa
 	const mapId = await createMap(api, 'E2E SysMenuWh');
 	await gotoApp(page, `/maps/${mapId}`);
 	await page.getByTestId('map-canvas').click({ button: 'right', position: { x: 500, y: 400 } });
-	await page.getByRole('button', { name: 'Add solar system' }).click();
+	await page.getByRole('menuitem', { name: 'Add solar system' }).click();
 	await page.getByPlaceholder('System, alias, occupier or notes…').fill('J122515');
 	const row = page.locator('[data-slot="command-item"]', { hasText: 'J122515' });
 	await expect(row).toBeVisible();
@@ -148,7 +148,7 @@ test('waypoint submenu is disabled without online characters', async ({ api, bro
 	await memberPage
 		.getByTestId('map-canvas')
 		.click({ button: 'right', position: { x: 500, y: 400 } });
-	await memberPage.getByRole('button', { name: 'Add solar system' }).click();
+	await memberPage.getByRole('menuitem', { name: 'Add solar system' }).click();
 	await memberPage.getByPlaceholder('System, alias, occupier or notes…').fill('perimeter');
 	const row = memberPage.locator('[data-slot="command-item"]', { hasText: 'Perimeter' }).first();
 	await row.click({ button: 'right' });

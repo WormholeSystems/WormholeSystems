@@ -36,15 +36,15 @@ test('gate route between adjacent systems via the context menu', async ({ page, 
 
 	const jita = page.getByTestId('system-node').filter({ hasText: 'Jita' });
 	await jita.click({ button: 'right' });
-	await page.getByTestId('route-subtrigger').hover();
-	await page.getByTestId('route-submenu').getByRole('button', { name: 'Set as origin' }).click();
+	await page.getByTestId('menu-route').hover();
+	await page.getByTestId('route-submenu').getByRole('menuitem', { name: 'Set as origin' }).click();
 
 	const peri = page.getByTestId('system-node').filter({ hasText: 'Perimeter' });
 	await peri.click({ button: 'right' });
-	await page.getByTestId('route-subtrigger').hover();
+	await page.getByTestId('menu-route').hover();
 	await page
 		.getByTestId('route-submenu')
-		.getByRole('button', { name: 'Set as destination' })
+		.getByRole('menuitem', { name: 'Set as destination' })
 		.click();
 
 	await expect(page.getByTestId('route-jumps')).toHaveText('1 jumps');
@@ -68,14 +68,14 @@ test('wormhole connection shortcuts the route and highlights the edge', async ({
 	// Set origin/destination through the pickers' quick path: context menu again.
 	const jita = page.getByTestId('system-node').filter({ hasText: 'Jita' });
 	await jita.click({ button: 'right' });
-	await page.getByTestId('route-subtrigger').hover();
-	await page.getByTestId('route-submenu').getByRole('button', { name: 'Set as origin' }).click();
+	await page.getByTestId('menu-route').hover();
+	await page.getByTestId('route-submenu').getByRole('menuitem', { name: 'Set as origin' }).click();
 	const amarr = page.getByTestId('system-node').filter({ hasText: 'Amarr' });
 	await amarr.click({ button: 'right' });
-	await page.getByTestId('route-subtrigger').hover();
+	await page.getByTestId('menu-route').hover();
 	await page
 		.getByTestId('route-submenu')
-		.getByRole('button', { name: 'Set as destination' })
+		.getByRole('menuitem', { name: 'Set as destination' })
 		.click();
 
 	// The wormhole makes it a single jump, marked as WH in the list.

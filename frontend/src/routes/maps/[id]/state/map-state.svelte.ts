@@ -564,6 +564,18 @@ export class MapState {
 		return clamp(y, 0, this.grid.world_height - this.nodeH);
 	}
 
+	/**
+	 * Take the marquee selection off the map, or just `fallbackId` when nothing is selected:
+	 * removing one node of a selection removes them all.
+	 */
+	removeSelection(fallbackId?: number) {
+		const ids =
+			this.selected.size > 0 ? [...this.selected] : fallbackId === undefined ? [] : [fallbackId];
+		if (ids.length === 0) return;
+		this.selected = new Set();
+		this.systems.remove(ids);
+	}
+
 	openMenu(x: number, y: number, target: MenuTarget) {
 		this.menu = { x, y, target };
 	}

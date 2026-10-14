@@ -36,41 +36,41 @@ test('menu structure: submenus, external links, remove gating', async ({ page, a
 	const menu = page.getByTestId('context-menu');
 
 	// Order and presence.
-	await expect(menu.getByRole('button', { name: 'Pin', exact: true })).toBeVisible();
+	await expect(menu.getByRole('menuitem', { name: 'Pin', exact: true })).toBeVisible();
 	await expect(menu.getByTestId('status-subtrigger')).toBeVisible();
-	await expect(menu.getByTestId('external-subtrigger')).toBeVisible();
-	await expect(menu.getByRole('button', { name: 'Set as Home System' })).toBeVisible();
-	await expect(menu.getByRole('button', { name: 'Set as Rally Point' })).toBeVisible();
-	await expect(menu.getByRole('button', { name: 'Remove' })).toBeVisible();
+	await expect(menu.getByTestId('menu-external')).toBeVisible();
+	await expect(menu.getByRole('menuitem', { name: 'Set as Home System' })).toBeVisible();
+	await expect(menu.getByRole('menuitem', { name: 'Set as Rally Point' })).toBeVisible();
+	await expect(menu.getByRole('menuitem', { name: 'Remove' })).toBeVisible();
 
 	// Status submenu opens on hover with icon entries.
 	await menu.getByTestId('status-subtrigger').hover();
 	await expect(
-		menu.getByTestId('status-submenu').getByRole('button', { name: 'Hostile' }),
+		page.getByTestId('status-submenu').getByRole('menuitem', { name: 'Hostile' }),
 	).toBeVisible();
 
 	// External submenu: k-space gets Dotlan Jump Range and correct zKillboard links.
-	await menu.getByTestId('external-subtrigger').hover();
-	const ext = menu.getByTestId('external-submenu');
-	await expect(ext.getByRole('link', { name: 'Jump Range' })).toHaveAttribute(
+	await menu.getByTestId('menu-external').hover();
+	const ext = page.getByTestId('external-submenu');
+	await expect(ext.getByRole('menuitem', { name: 'Jump Range' })).toHaveAttribute(
 		'href',
 		'https://evemaps.dotlan.net/range/Revelation,5/Jita',
 	);
-	await expect(ext.getByRole('link', { name: 'System' }).last()).toHaveAttribute(
+	await expect(ext.getByRole('menuitem', { name: 'System' }).last()).toHaveAttribute(
 		'href',
 		`https://zkillboard.com/system/${JITA}/`,
 	);
-	await expect(ext.getByRole('link', { name: 'Region', exact: true })).toHaveAttribute(
+	await expect(ext.getByRole('menuitem', { name: 'Region', exact: true })).toHaveAttribute(
 		'href',
 		'https://zkillboard.com/region/10000002/',
 	);
 
 	// Pin the system: Remove disappears (pinned systems are protected).
-	await menu.getByRole('button', { name: 'Pin', exact: true }).click();
+	await menu.getByRole('menuitem', { name: 'Pin', exact: true }).click();
 	await expect(node.getByTestId('drag-handle')).toHaveCount(0);
 	await node.click({ button: 'right' });
-	await expect(menu.getByRole('button', { name: 'Unpin' })).toBeVisible();
-	await expect(menu.getByRole('button', { name: 'Remove' })).toHaveCount(0);
+	await expect(menu.getByRole('menuitem', { name: 'Unpin' })).toBeVisible();
+	await expect(menu.getByRole('menuitem', { name: 'Remove' })).toHaveCount(0);
 	await page.keyboard.press('Escape');
 
 	// A wormhole node's External submenu has no Jump Range.
@@ -80,9 +80,9 @@ test('menu structure: submenus, external links, remove gating', async ({ page, a
 	await addSystem(api, mapId, J122515, 200, 400);
 	const wh = page.getByTestId('system-node').filter({ hasText: 'J122515' });
 	await wh.click({ button: 'right' });
-	await menu.getByTestId('external-subtrigger').hover();
+	await menu.getByTestId('menu-external').hover();
 	await expect(
-		menu.getByTestId('external-submenu').getByRole('link', { name: 'Jump Range' }),
+		page.getByTestId('external-submenu').getByRole('menuitem', { name: 'Jump Range' }),
 	).toHaveCount(0);
 });
 
@@ -109,7 +109,7 @@ test('marquee selects live and remove hijacks the selection', async ({ page, api
 
 	// Remove on one node deletes the whole selection.
 	await nodes.first().click({ button: 'right' });
-	await page.getByTestId('context-menu').getByRole('button', { name: 'Remove' }).click();
+	await page.getByTestId('context-menu').getByRole('menuitem', { name: 'Remove' }).click();
 	await expect(nodes).toHaveCount(0);
 });
 

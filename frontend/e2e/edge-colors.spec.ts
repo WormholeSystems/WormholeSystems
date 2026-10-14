@@ -45,23 +45,23 @@ test('edge colors and dashes per state', async ({ page, api }) => {
 	await page.waitForSelector('html[data-hydrated="true"]');
 	await page.locator('path[stroke="transparent"]').click({ button: 'right', force: true });
 	await page.getByTestId('lifetime-subtrigger').hover();
-	await page.getByTestId('lifetime-submenu').getByRole('button', { name: 'End of Life' }).click();
+	await page.getByTestId('lifetime-submenu').getByRole('menuitem', { name: 'End of Life' }).click();
 	await expect(edge).toHaveAttribute('stroke', '#a855f7'); // purple-500
 
 	// The menu marks the current state and warns on non-gate stargate marking.
 	await page.locator('path[stroke="transparent"]').click({ button: 'right', force: true });
 	await page.getByTestId('size-subtrigger').hover();
 	await expect(
-		page.getByTestId('size-submenu').getByRole('button', { name: 'Frigate' }),
+		page.getByTestId('size-submenu').getByRole('menuitem', { name: 'Frigate' }),
 	).toBeVisible();
 	// A size set by hand can be taken back off.
 	await expect(
-		page.getByTestId('size-submenu').getByRole('button', { name: 'Unknown' }),
+		page.getByTestId('size-submenu').getByRole('menuitem', { name: 'Unknown' }),
 	).toBeVisible();
 
 	// Both ends offer their in-game bookmark name, rendered with the map's formats.
 	await page.getByTestId('copy-name-subtrigger').hover();
-	const names = page.getByTestId('copy-name-submenu').getByRole('button');
+	const names = page.getByTestId('copy-name-submenu').getByRole('menuitem');
 	await expect(names).toHaveCount(2);
 	await expect(names.first()).toHaveText('HS Jita The Forge');
 });

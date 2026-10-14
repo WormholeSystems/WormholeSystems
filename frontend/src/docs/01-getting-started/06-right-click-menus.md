@@ -20,8 +20,9 @@ Here's what each menu offers.
 - **Status** — mark it Unknown, Friendly, Hostile, Active, Unscanned, or Empty.
 - **Set as Home System** and **Set as Rally Point** — the shared markers (see [Home & rally point](/documentation/navigation/home-and-rally-point)).
 - **Remove** — delete the system (unless it's pinned or your home).
-- **Set destination** / **Add waypoint** — push the system to your in-game autopilot, per character or for **All Characters**.
+- **Set destination** / **Add waypoint** — push the system to your in-game autopilot, per character or for **All Characters**. Known space only: the autopilot cannot route into a wormhole.
 - **Route planner** — set the system as the route origin or destination.
+- **Add to watchlist** — keep an eye on how far away it is.
 - **External** — jump out to Dotlan or zKillboard for the system or region.
 
 ## A connection
@@ -32,7 +33,7 @@ Here's what each menu offers.
 
 ## Characters, killmails, EVE Scout & skyhooks
 
-These all share a menu for acting on the system they sit in: **Set destination**, **Add waypoint**, **Route planner**, **Add to map** (if it isn't already), **External** links, and **Set as Rally Point**.
+These all share a menu for acting on the system they sit in, the same one a system on the map has without the map-only entries: **Add to map** (if it isn't already), **Add to watchlist**, **External** links, **Set destination**, **Add waypoint**, **Route planner**, and **Set as Rally Point**.
 
 ## A note on permissions
 

@@ -20,7 +20,7 @@
 	import { curveBetween } from '$lib/map/edges';
 	import CanvasControls from './canvas/CanvasControls.svelte';
 	import ConnectionPopover from './connection/ConnectionPopover.svelte';
-	import ContextMenu from './menus/ContextMenu.svelte';
+	import CanvasMenu from './menus/CanvasMenu.svelte';
 	import LoadingCover from './canvas/LoadingCover.svelte';
 	import MapEdge from './canvas/MapEdge.svelte';
 	import { MapGestures } from '../state/map-gestures.svelte';
@@ -194,13 +194,9 @@
 	});
 
 	function onKey(ev: KeyboardEvent) {
-		if (ev.key === 'Delete' || ev.key === 'Backspace') {
-			const ids = [...map.selected];
-			if (ids.length > 0) {
-				ev.preventDefault();
-				map.selected = new Set();
-				map.systems.remove(ids);
-			}
+		if ((ev.key === 'Delete' || ev.key === 'Backspace') && map.selected.size > 0) {
+			ev.preventDefault();
+			map.removeSelection();
 		}
 	}
 
@@ -374,6 +370,8 @@
 						onmenu={(ev) => {
 							ev.preventDefault();
 							ev.stopPropagation();
+							// A ghost offers only writes, so a viewer has nothing to open.
+							if (s.kind === 'ghost' && !canWrite) return;
 							map.openMenu(ev.clientX, ev.clientY, { kind: 'node', system: s });
 						}}
 					/>
@@ -388,7 +386,10 @@
 		<CanvasControls {map} />
 
 		{#if map.menu}
-			<ContextMenu {map} menu={map.menu} />
+			<!-- Keyed, so every right-click gets a fresh menu at its own point. -->
+			{#key map.menu}
+				<CanvasMenu {map} menu={map.menu} />
+			{/key}
 		{/if}
 		<ConnectionPopover {map} />
 	</div>

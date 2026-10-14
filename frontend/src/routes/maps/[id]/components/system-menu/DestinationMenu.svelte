@@ -20,7 +20,7 @@
 	} = $props();
 
 	const getMap = getMapContext();
-	const map = $derived(getMap?.());
+	const map = $derived(getMap());
 </script>
 
 <ContextMenu.Root>
@@ -28,10 +28,6 @@
 		{@render children()}
 	</ContextMenu.Trigger>
 	<ContextMenu.Content class="w-52" data-testid="destination-menu">
-		{#if map !== undefined}
-			<WaypointSubmenus {map} {destinationId} />
-		{:else}
-			<ContextMenu.Item disabled>No map context</ContextMenu.Item>
-		{/if}
+		<WaypointSubmenus {map} {destinationId} />
 	</ContextMenu.Content>
 </ContextMenu.Root>
