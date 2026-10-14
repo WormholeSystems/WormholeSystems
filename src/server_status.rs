@@ -13,7 +13,7 @@ use sqlx::PgPool;
 use tokio::sync::watch;
 use tokio::time::{MissedTickBehavior, interval};
 
-use crate::esi::EsiClient;
+use crate::esi::{EsiClient, EsiError};
 use crate::user_channel::{UserEvent, UserHub};
 
 /// A minute is well inside the downtime window and nowhere near ESI's rate limit.
@@ -130,7 +130,11 @@ pub fn start(pool: PgPool, esi: EsiClient, users: UserHub) -> ServerWatch {
         ticker.set_missed_tick_behavior(MissedTickBehavior::Skip);
         loop {
             ticker.tick().await;
-            let status = poll(&esi).await;
+            // Held back by our own ESI backoff, which says nothing about Tranquility: keep
+            // what we last knew rather than calling it unreachable.
+            let Some(status) = poll(&esi).await else {
+                continue;
+            };
             if let Err(err) = save(&pool, &status).await {
                 eprintln!("could not store the server status: {err}");
             }
@@ -149,9 +153,9 @@ pub fn start(pool: PgPool, esi: EsiClient, users: UserHub) -> ServerWatch {
     ServerWatch(rx)
 }
 
-async fn poll(esi: &EsiClient) -> ServerStatus {
+async fn poll(esi: &EsiClient) -> Option<ServerStatus> {
     let now = Utc::now();
-    match esi.server_status().await {
+    Some(match esi.server_status().await {
         Ok(tq) => ServerStatus {
             state: ServerState::classify(tq.vip, tq.players),
             players: tq.players,
@@ -159,6 +163,7 @@ async fn poll(esi: &EsiClient) -> ServerStatus {
             start_time: Some(tq.start_time),
             checked_at: Some(now),
         },
+        Err(EsiError::Backoff(_)) => return None,
         Err(_) => ServerStatus {
             state: ServerState::Unreachable,
             players: 0,
@@ -166,7 +171,7 @@ async fn poll(esi: &EsiClient) -> ServerStatus {
             start_time: None,
             checked_at: Some(now),
         },
-    }
+    })
 }
 
 pub async fn load(pool: &PgPool) -> sqlx::Result<Option<ServerStatus>> {

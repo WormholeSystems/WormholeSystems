@@ -6,6 +6,11 @@ pub enum EsiError {
     Http(#[from] reqwest::Error),
     #[error("ESI returned {status}: {body}")]
     Api { status: u16, body: String },
+    /// ESI said to slow down (or nearly did), so the request was not sent.
+    #[error("backing off from ESI for another {0}s")]
+    Backoff(u64),
+    #[error("could not read ESI's reply: {0}")]
+    Decode(#[from] serde_json::Error),
     #[error("SSO error: {0}")]
     Auth(String),
     #[error("token validation failed: {0}")]
