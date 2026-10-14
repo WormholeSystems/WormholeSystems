@@ -3,6 +3,8 @@
 
 mod common;
 
+use common::catalog::{C247, K162, seed_catalog};
+use common::map::place;
 use common::{SYS_A, SYS_B, member_with_role, world};
 use sqlx::PgPool;
 use wormholesystems::maps::connection::{
@@ -14,49 +16,9 @@ use wormholesystems::maps::signatures::{
     UpdateSignature, add_signature, link_signature, list_signatures, remove_signature,
     remove_signatures, unlink_signature, update_signature,
 };
-use wormholesystems::maps::solar_system::{AddSystem, add_system};
 use wormholesystems::maps::{
     Actor, MapError, MassStatus, Role, SignatureGroup, TimeStatus, WormholeSize,
 };
-
-const K162: i64 = 500;
-const C247: i64 = 510;
-
-/// A wormhole catalog of two types: C247 admits 300,000,000 kg per jump (medium), K162 is
-/// the unidentified far side and carries no jump mass of its own.
-async fn seed_wormhole_catalog(pool: &PgPool) {
-    for statement in [
-        "insert into signature_categories (id, name, code) values (1, 'Wormhole', 'wormhole')",
-        "insert into categories (id, name) values (2, 'Celestial')",
-        "insert into groups (id, category_id, name) values (988, 2, 'Wormhole')",
-        "insert into types (id, group_id, name)
-         values (30831, 988, 'Wormhole K162'), (30832, 988, 'Wormhole C247')",
-        "insert into wormhole_types (code, type_id, max_mass_per_jump)
-         values ('K162', 30831, null), ('C247', 30832, 300000000)",
-        "insert into signature_types (id, signature, name, signature_category_id)
-         values (500, 'K162', 'K162 - Unknown', 1), (510, 'C247', 'C247 - C3', 1)",
-    ] {
-        sqlx::query(statement).execute(pool).await.unwrap();
-    }
-}
-
-/// Place `system` on the map; return its `map_solar_systems` id.
-async fn place(pool: &PgPool, actor: Actor, map_id: i64, system: i64) -> i64 {
-    add_system(
-        pool,
-        actor,
-        AddSystem {
-            map_id,
-            solar_system_id: system,
-            x: 0.0,
-            y: 0.0,
-            alias: None,
-        },
-    )
-    .await
-    .unwrap()
-    .id
-}
 
 #[sqlx::test]
 async fn add_validates_and_persists(pool: PgPool) {
@@ -441,7 +403,7 @@ async fn link_validations_and_unlink(pool: PgPool) {
 #[sqlx::test]
 async fn identified_type_locks_size(pool: PgPool) {
     let w = world(&pool).await;
-    seed_wormhole_catalog(&pool).await;
+    seed_catalog(&pool).await;
     let a = place(&pool, w.owner, w.map_id, SYS_A).await;
     let b = place(&pool, w.owner, w.map_id, SYS_B).await;
     let conn = add_connection(

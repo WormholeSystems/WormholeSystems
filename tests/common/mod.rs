@@ -3,6 +3,8 @@
 #![allow(dead_code)]
 
 pub mod app;
+pub mod catalog;
+pub mod map;
 
 use sqlx::PgPool;
 use wormholesystems::allowlist::AffiliationAllowlist;

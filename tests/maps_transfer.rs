@@ -5,6 +5,7 @@ mod common;
 
 use std::collections::HashMap;
 
+use common::catalog::{K162, seed_catalog};
 use common::{SYS_A, SYS_B, SYS_C, world};
 use sqlx::PgPool;
 use wormholesystems::allowlist::AffiliationAllowlist;
@@ -33,23 +34,6 @@ fn all_sections() -> SectionSet {
         signatures: true,
         routes: true,
     }
-}
-
-/// The wormhole slice of the signature catalog, which the test database starts without.
-async fn seed_catalog(pool: &PgPool) {
-    sqlx::query(
-        "insert into signature_categories (id, name, code) values (1, 'Wormhole', 'wormhole')",
-    )
-    .execute(pool)
-    .await
-    .unwrap();
-    sqlx::query(
-        "insert into signature_types (id, signature, name, signature_category_id)
-         values (158, 'K162', 'K162 - C1', 1)",
-    )
-    .execute(pool)
-    .await
-    .unwrap();
 }
 
 /// A map with two placed systems, a linked wormhole between them, intel, and a home.
@@ -115,7 +99,7 @@ async fn populated_world(pool: &PgPool) -> common::World {
             solar_system_id: SYS_A,
             signature_id: "ABC-123".into(),
             group: SignatureGroup::Wormhole,
-            signature_type_id: Some(158),
+            signature_type_id: Some(K162),
             name: None,
             size: None,
             mass_status: Some(MassStatus::Reduced),
@@ -205,7 +189,7 @@ async fn a_round_trip_reproduces_the_map(pool: PgPool) {
     .await
     .unwrap();
     assert_eq!(sig.signature_id, "ABC-123");
-    assert_eq!(sig.signature_type_id, Some(158));
+    assert_eq!(sig.signature_type_id, Some(K162));
     assert_eq!(sig.connection_id, Some(conn.id));
     assert_eq!(sig.mass_status, Some(MassStatus::Reduced));
 
@@ -298,7 +282,7 @@ async fn a_legacy_file_imports_with_its_vocabulary_translated(pool: PgPool) {
             ],
             "signatures": [
                 {{"solarsystem_id": {SYS_B}, "signature_id": "XYZ-789", "category": "wormhole",
-                  "type_name": "K162 - C1", "raw_type_name": null, "wormhole": "K162",
+                  "type_name": "K162 - Unknown", "raw_type_name": null, "wormhole": "K162",
                   "connection_index": 0, "mass_status": "unknown", "ship_size": "frigate",
                   "lifetime": "eol", "lifetime_updated_at": "2026-08-20T09:00:00+00:00"}},
                 {{"solarsystem_id": {SYS_B}, "signature_id": null, "category": "faction-warfare",

@@ -3,6 +3,7 @@
 
 mod common;
 
+use common::map::place;
 use common::{SYS_A, SYS_B, SYS_C, world};
 use sqlx::PgPool;
 use wormholesystems::maps::MapSystemView;
@@ -17,29 +18,12 @@ use wormholesystems::maps::signatures::{
     unlink_signature, update_signature,
 };
 use wormholesystems::maps::solar_system::{
-    AddSystem, RemoveSystem, RemoveSystems, SetAlias, SetPinned, add_system, remove_system,
-    remove_systems, set_alias, set_pinned,
+    RemoveSystem, RemoveSystems, SetAlias, SetPinned, remove_system, remove_systems, set_alias,
+    set_pinned,
 };
 use wormholesystems::maps::{
     Actor, MapError, MapEvent, MassStatus, SignatureGroup, TimeStatus, WormholeSize,
 };
-
-async fn place(pool: &PgPool, actor: Actor, map_id: i64, system: i64) -> i64 {
-    add_system(
-        pool,
-        actor,
-        AddSystem {
-            map_id,
-            solar_system_id: system,
-            x: 0.0,
-            y: 0.0,
-            alias: None,
-        },
-    )
-    .await
-    .unwrap()
-    .id
-}
 
 async fn scan(pool: &PgPool, actor: Actor, map_id: i64, system: i64, sig: &str) -> i64 {
     add_signature(

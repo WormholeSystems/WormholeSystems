@@ -2,6 +2,8 @@
 
 mod common;
 
+use common::catalog::seed_wormhole_system;
+use common::map::{connect, connect_kind, place};
 use common::{SYS_A, SYS_B, member_with_role, world};
 use sqlx::PgPool;
 use wormholesystems::maps::connection::{
@@ -326,62 +328,6 @@ async fn set_status_marks_a_connection_without_a_signature(pool: PgPool) {
     ));
 }
 
-async fn place(pool: &PgPool, actor: wormholesystems::maps::Actor, map_id: i64, sys: i64) -> i64 {
-    add_system(
-        pool,
-        actor,
-        AddSystem {
-            map_id,
-            solar_system_id: sys,
-            x: 0.0,
-            y: 0.0,
-            alias: None,
-        },
-    )
-    .await
-    .unwrap()
-    .id
-}
-
-async fn connect(
-    pool: &PgPool,
-    actor: wormholesystems::maps::Actor,
-    map_id: i64,
-    from: i64,
-    to: i64,
-    kind: ConnectionType,
-) -> i64 {
-    add_connection(
-        pool,
-        actor,
-        AddConnection {
-            map_id,
-            from_system: from,
-            to_system: to,
-            kind,
-            size: None,
-        },
-    )
-    .await
-    .unwrap()
-    .id
-}
-
-/// A J-space system with the given class, in the seeded constellation.
-async fn seed_wormhole_system(pool: &PgPool, id: i64, class: i32) {
-    sqlx::query(
-        "insert into solar_systems
-             (id, constellation_id, region_id, name, security_status, wormhole_class_id)
-         values ($1, 20000001, 10000001, $2, -1.0, $3)",
-    )
-    .bind(id)
-    .bind(format!("J{id}"))
-    .bind(class)
-    .execute(pool)
-    .await
-    .unwrap();
-}
-
 async fn age_by(pool: &PgPool, connection_id: i64, hours: i32) {
     sqlx::query(
         "update map_connections set created_at = now() - make_interval(hours => $2) where id = $1",
@@ -438,7 +384,7 @@ async fn ageing_marks_a_hole_eol_then_critical(pool: PgPool) {
     seed_wormhole_system(&pool, 31000001, 3).await;
     let a = place(&pool, w.owner, w.map_id, SYS_A).await;
     let j = place(&pool, w.owner, w.map_id, 31000001).await;
-    let conn = connect(&pool, w.owner, w.map_id, a, j, ConnectionType::Wormhole).await;
+    let conn = connect(&pool, w.owner, w.map_id, a, j).await.id;
     let sig = link_signature_row(&pool, w.map_id, conn).await;
 
     age_by(&pool, conn, 19).await;
@@ -507,18 +453,12 @@ async fn ageing_uses_the_class_pair_and_never_downgrades(pool: PgPool) {
     let c6 = place(&pool, w.owner, w.map_id, 31000006).await;
     let drifter = place(&pool, w.owner, w.map_id, 31000015).await;
 
-    let to_c6 = connect(&pool, w.owner, w.map_id, a, c6, ConnectionType::Wormhole).await;
-    let to_drifter = connect(
-        &pool,
-        w.owner,
-        w.map_id,
-        drifter,
-        a,
-        ConnectionType::Wormhole,
-    )
-    .await;
-    let gate = connect(&pool, w.owner, w.map_id, a, b, ConnectionType::Stargate).await;
-    let marked = connect(&pool, w.owner, w.map_id, b, c6, ConnectionType::Wormhole).await;
+    let to_c6 = connect(&pool, w.owner, w.map_id, a, c6).await.id;
+    let to_drifter = connect(&pool, w.owner, w.map_id, drifter, a).await.id;
+    let gate = connect_kind(&pool, w.owner, w.map_id, a, b, ConnectionType::Stargate)
+        .await
+        .id;
+    let marked = connect(&pool, w.owner, w.map_id, b, c6).await.id;
     set_connection_status(
         &pool,
         w.owner,
@@ -565,7 +505,7 @@ async fn an_expired_hole_is_not_aged_and_goes_stale_after_an_hour(pool: PgPool) 
     seed_wormhole_system(&pool, 31000001, 3).await;
     let a = place(&pool, w.owner, w.map_id, SYS_A).await;
     let j = place(&pool, w.owner, w.map_id, 31000001).await;
-    let conn = connect(&pool, w.owner, w.map_id, a, j, ConnectionType::Wormhole).await;
+    let conn = connect(&pool, w.owner, w.map_id, a, j).await.id;
     set_connection_status(
         &pool,
         w.owner,
@@ -611,7 +551,7 @@ async fn an_expired_signature_wins_over_a_critical_connection(pool: PgPool) {
     seed_wormhole_system(&pool, 31000001, 3).await;
     let a = place(&pool, w.owner, w.map_id, SYS_A).await;
     let j = place(&pool, w.owner, w.map_id, 31000001).await;
-    let conn = connect(&pool, w.owner, w.map_id, a, j, ConnectionType::Wormhole).await;
+    let conn = connect(&pool, w.owner, w.map_id, a, j).await.id;
     set_connection_status(
         &pool,
         w.owner,
@@ -670,9 +610,11 @@ async fn expiry_removes_dead_wormholes_and_what_they_strand(pool: PgPool) {
     .await
     .unwrap();
 
-    let dead = connect(&pool, w.owner, w.map_id, a, j, ConnectionType::Wormhole).await;
-    let gate = connect(&pool, w.owner, w.map_id, a, b, ConnectionType::Stargate).await;
-    let young = connect(&pool, w.owner, w.map_id, b, c, ConnectionType::Wormhole).await;
+    let dead = connect(&pool, w.owner, w.map_id, a, j).await.id;
+    let gate = connect_kind(&pool, w.owner, w.map_id, a, b, ConnectionType::Stargate)
+        .await
+        .id;
+    let young = connect(&pool, w.owner, w.map_id, b, c).await.id;
     let sig = link_signature_row(&pool, w.map_id, dead).await;
     for id in [dead, gate] {
         age_by(&pool, id, 3 * 24 + 1).await;
@@ -746,7 +688,7 @@ async fn an_undone_removal_keeps_its_clocks(pool: PgPool) {
     let w = world(&pool).await;
     let a = place(&pool, w.owner, w.map_id, SYS_A).await;
     let b = place(&pool, w.owner, w.map_id, SYS_B).await;
-    let conn = connect(&pool, w.owner, w.map_id, a, b, ConnectionType::Wormhole).await;
+    let conn = connect(&pool, w.owner, w.map_id, a, b).await.id;
     sqlx::query("update map_connections set time_status = 'eol' where id = $1")
         .bind(conn)
         .execute(&pool)

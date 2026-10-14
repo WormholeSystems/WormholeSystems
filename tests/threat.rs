@@ -11,19 +11,7 @@ const WH_SYSTEM: i64 = 31000099;
 
 async fn seed_wormhole_system(pool: &PgPool) {
     common::seed_universe(pool).await;
-    sqlx::query(
-        "insert into solar_systems (id, constellation_id, region_id, name, security_status)
-         values ($1, 20000001, 10000001, 'J100001', -0.99)",
-    )
-    .bind(WH_SYSTEM)
-    .execute(pool)
-    .await
-    .unwrap();
-    sqlx::query("insert into wormhole_systems (solar_system_id, wormhole_class_id) values ($1, 5)")
-        .bind(WH_SYSTEM)
-        .execute(pool)
-        .await
-        .unwrap();
+    common::catalog::seed_wormhole_system(pool, WH_SYSTEM, 5).await;
     sqlx::query(
         "insert into alliances (id, name, ticker) values (99000001, 'Threat Alliance', 'THRT')",
     )
