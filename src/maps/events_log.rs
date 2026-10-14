@@ -160,7 +160,19 @@ async fn fetch_step(tx: &mut Tx<'_>, map_id: i64, id: i64) -> Result<Step> {
 }
 
 /// The chain from `node` up to its root, nearest first. Empty when `node` is `None`.
-async fn ancestors(tx: &mut Tx<'_>, map_id: i64, node: Option<i64>) -> Result<Vec<i64>> {
+///
+/// With a `floor`, the walk stops below that id. A parent is always older than its child,
+/// so ids only fall along the chain and nothing past the floor can turn up again: the
+/// history listing uses this to walk only as far as the oldest entry it shows.
+async fn ancestors<'e, E>(
+    executor: E,
+    map_id: i64,
+    node: Option<i64>,
+    floor: Option<i64>,
+) -> Result<Vec<i64>>
+where
+    E: sqlx::PgExecutor<'e>,
+{
     let Some(node) = node else {
         return Ok(Vec::new());
     };
@@ -173,12 +185,14 @@ async fn ancestors(tx: &mut Tx<'_>, map_id: i64, node: Option<i64>) -> Result<Ve
                from map_events e
                join chain on e.id = chain.parent_id
                where e.map_id = $2 and e.is_step
+                 and ($3::bigint is null or e.id >= $3)
            )
            select id as "id!" from chain order by depth"#,
         node,
         map_id,
+        floor,
     )
-    .fetch_all(&mut **tx)
+    .fetch_all(executor)
     .await?;
     Ok(ids)
 }
@@ -186,7 +200,10 @@ async fn ancestors(tx: &mut Tx<'_>, map_id: i64, node: Option<i64>) -> Result<Ve
 /// The child of `node` that redo moves to: the most recently applied one. Undoing and then
 /// making a new change therefore redoes into the *new* branch, and the abandoned branch is
 /// reached deliberately through [`goto`] instead of by accident.
-async fn newest_child(tx: &mut Tx<'_>, map_id: i64, node: Option<i64>) -> Result<Option<i64>> {
+async fn newest_child<'e, E>(executor: E, map_id: i64, node: Option<i64>) -> Result<Option<i64>>
+where
+    E: sqlx::PgExecutor<'e>,
+{
     let id = sqlx::query_scalar!(
         "select id from map_events
          where map_id = $1 and is_step and parent_id is not distinct from $2
@@ -194,7 +211,7 @@ async fn newest_child(tx: &mut Tx<'_>, map_id: i64, node: Option<i64>) -> Result
         map_id,
         node,
     )
-    .fetch_optional(&mut **tx)
+    .fetch_optional(executor)
     .await?;
     Ok(id)
 }
@@ -226,8 +243,8 @@ async fn goto_tx(
         fetch_step(tx, map_id, target).await?;
     }
 
-    let from = ancestors(tx, map_id, head).await?;
-    let to = ancestors(tx, map_id, target).await?;
+    let from = ancestors(&mut **tx, map_id, head, None).await?;
+    let to = ancestors(&mut **tx, map_id, target, None).await?;
     let common = from.iter().find(|id| to.contains(id)).copied();
 
     let rewind: Vec<i64> = from
@@ -328,7 +345,7 @@ pub async fn redo(pool: &PgPool, actor: Actor, cmd: MapIdBody) -> Result<()> {
     let mut tx = pool.begin().await?;
     require_role_tx(&mut tx, cmd.map_id, actor.user_id, Role::Member).await?;
     let head = head_of(&mut tx, cmd.map_id).await?;
-    let Some(child) = newest_child(&mut tx, cmd.map_id, head).await? else {
+    let Some(child) = newest_child(&mut *tx, cmd.map_id, head).await? else {
         return Err(MapError::Conflict("there is nothing to redo".into()));
     };
     goto_tx(&mut tx, actor, cmd.map_id, Some(child), head).await?;
@@ -346,29 +363,6 @@ pub async fn list_history(pool: &PgPool, actor: Actor, map_id: i64) -> Result<Ma
         .await?
         .ok_or(MapError::NotFound)?;
 
-    // Everything on the path from a root to the head is in effect; everything else is an
-    // undone branch.
-    let applied: std::collections::HashSet<i64> = match head {
-        None => std::collections::HashSet::new(),
-        Some(h) => sqlx::query_scalar!(
-            r#"with recursive chain as (
-                   select id, parent_id from map_events
-                   where id = $1 and map_id = $2 and is_step
-                   union all
-                   select e.id, e.parent_id from map_events e
-                   join chain on e.id = chain.parent_id
-                   where e.map_id = $2 and e.is_step
-               )
-               select id as "id!" from chain"#,
-            h,
-            map_id,
-        )
-        .fetch_all(pool)
-        .await?
-        .into_iter()
-        .collect(),
-    };
-
     let rows = sqlx::query!(
         r#"select e.id, e.map_id, e.character_id, c.name as "character_name?",
                   e.kind, e.label, e.entries_count, e.parent_id, e.is_step, e.created_at
@@ -382,6 +376,15 @@ pub async fn list_history(pool: &PgPool, actor: Actor, map_id: i64) -> Result<Ma
     )
     .fetch_all(pool)
     .await?;
+
+    // Everything on the path from a root to the head is in effect; everything else is an
+    // undone branch. Only the part of the path the page shows is walked: on a busy map the
+    // whole chain is a week of steps, and only the newest few are on screen.
+    let floor = rows.iter().map(|r| r.id).min();
+    let applied: std::collections::HashSet<i64> = ancestors(pool, map_id, head, floor)
+        .await?
+        .into_iter()
+        .collect();
 
     let entries: Vec<MapEventEntry> = rows
         .into_iter()
@@ -404,15 +407,7 @@ pub async fn list_history(pool: &PgPool, actor: Actor, map_id: i64) -> Result<Ma
     // (it rewinds the first step), so `can_undo` follows the head, not the target.
     let undo_target =
         head.and_then(|h| entries.iter().find(|e| e.id == h).and_then(|e| e.parent_id));
-    let redo_target = sqlx::query_scalar!(
-        "select id from map_events
-         where map_id = $1 and is_step and parent_id is not distinct from $2
-         order by id desc limit 1",
-        map_id,
-        head,
-    )
-    .fetch_optional(pool)
-    .await?;
+    let redo_target = newest_child(pool, map_id, head).await?;
 
     Ok(MapHistory {
         entries,
