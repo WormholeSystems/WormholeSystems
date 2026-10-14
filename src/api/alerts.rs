@@ -316,16 +316,7 @@ pub async fn create_role(
             "a Discord role id is a long number: right-click the role with developer mode on",
         ));
     }
-    let id = sqlx::query_scalar!(
-        "insert into map_webhook_roles (map_id, name, discord_role_id) values ($1, $2, $3)
-         on conflict (map_id, discord_role_id) do update set name = excluded.name
-         returning id",
-        map_id,
-        body.name.trim(),
-        role_id,
-    )
-    .fetch_one(&state.db)
-    .await?;
+    let id = store::register_role(&state.db, map_id, body.name.trim(), role_id).await?;
     Ok(Json(MapWebhookRole {
         id,
         name: body.name.trim().to_string(),
@@ -431,7 +422,7 @@ pub async fn set_alert_active(
 ) -> ApiResult<MapAlert> {
     let user_id = require_manager(&state, &creds, map_id).await?;
     Ok(Json(
-        store::set_active(&state.db, map_id, alert_id, user_id, body.is_active).await?,
+        store::set_active(&state.db, map_id, alert_id, user_id, body.is_active, None).await?,
     ))
 }
 

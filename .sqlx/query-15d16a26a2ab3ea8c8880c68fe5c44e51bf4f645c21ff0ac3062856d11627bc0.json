@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select detail from map_alert_events where map_alert_id = $1 and kind = 'disabled'",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "detail",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "map_alert_events",
+            "name": "detail"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "15d16a26a2ab3ea8c8880c68fe5c44e51bf4f645c21ff0ac3062856d11627bc0"
+}

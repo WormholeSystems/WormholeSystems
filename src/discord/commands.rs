@@ -400,18 +400,14 @@ async fn register_role(
     map_id: i64,
     discord_role_id: &str,
     name: Option<&str>,
-) -> Option<i64> {
-    sqlx::query_scalar!(
-        "insert into map_webhook_roles (map_id, name, discord_role_id) values ($1, $2, $3)
-         on conflict (map_id, discord_role_id) do update set name = excluded.name
-         returning id",
+) -> Result<i64, crate::maps::MapError> {
+    crate::maps::alerts::register_role(
+        &state.db,
         map_id,
         name.unwrap_or(discord_role_id),
         discord_role_id,
     )
-    .fetch_one(&state.db)
     .await
-    .ok()
 }
 
 /// What stands between a channel alert and the channel: the sender's own permissions
@@ -502,8 +498,11 @@ async fn create_alert(
     let role_id = match (request.role.as_deref(), mention) {
         (Some(role), AlertMention::Role) => {
             match register_role(state, map_id, role, data.role_name(role)).await {
-                Some(id) => Some(id),
-                None => return "I could not register that role just now.".into(),
+                Ok(id) => Some(id),
+                Err(err) => {
+                    eprintln!("discord: registering role {role} on map {map_id}: {err}");
+                    return "I could not register that role just now.".into();
+                }
             }
         }
         (Some(_), _) => return "Pick a role only when the mention is A role.".into(),
@@ -625,28 +624,19 @@ async fn set_active(state: &AppState, user_id: i64, alert: Option<i64>, active: 
     let Some((id, name, map_id)) = owned(state, user_id, alert_id).await else {
         return "That is not one of your alerts.".into();
     };
-    let _ = sqlx::query!(
-        "update map_alerts set
-             is_active = $2,
-             disabled_at = case when $2 then null else now() end,
-             disabled_reason = case when $2 then null else 'manual' end,
-             updated_at = now()
-         where id = $1",
-        id,
-        active,
-    )
-    .execute(&state.db)
-    .await;
-    crate::alerts::log(
+    match crate::maps::alerts::set_active(
         &state.db,
-        Some(id),
         map_id,
-        Some(user_id),
-        if active { "enabled" } else { "disabled" },
+        id,
+        user_id,
+        active,
         Some("via Discord"),
     )
-    .await;
-    format!("**{name}** is now {}.", if active { "on" } else { "off" })
+    .await
+    {
+        Ok(_) => format!("**{name}** is now {}.", if active { "on" } else { "off" }),
+        Err(err) => store_failed(&name, err),
+    }
 }
 
 async fn remove(state: &AppState, user_id: i64, alert: Option<i64>) -> String {
@@ -656,19 +646,22 @@ async fn remove(state: &AppState, user_id: i64, alert: Option<i64>) -> String {
     let Some((id, name, map_id)) = owned(state, user_id, alert_id).await else {
         return "That is not one of your alerts.".into();
     };
-    let _ = sqlx::query!("delete from map_alerts where id = $1", id)
-        .execute(&state.db)
-        .await;
-    crate::alerts::log(
-        &state.db,
-        None,
-        map_id,
-        Some(user_id),
-        "deleted",
-        Some(&name),
-    )
-    .await;
-    format!("Deleted **{name}**.")
+    match crate::maps::alerts::delete(&state.db, map_id, id, user_id).await {
+        Ok(()) => format!("Deleted **{name}**."),
+        Err(err) => store_failed(&name, err),
+    }
+}
+
+/// The reply when a change to an alert did not stick. The cause goes to the log rather
+/// than the channel: a database error means nothing to whoever typed the command.
+fn store_failed(name: &str, err: crate::maps::MapError) -> String {
+    match err {
+        crate::maps::MapError::NotFound => format!("**{name}** is gone already."),
+        err => {
+            eprintln!("discord: changing alert {name}: {err}");
+            format!("I could not change **{name}** just now. Try again in a moment.")
+        }
+    }
 }
 
 async fn route(state: &AppState, user_id: i64, map_id: i64, system_id: i64) -> String {
