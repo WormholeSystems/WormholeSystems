@@ -21,7 +21,6 @@
 	import { Switch } from '$lib/components/ui/switch';
 	import { cn } from '$lib/utils';
 	import type { MapState } from '../../state/map-state.svelte';
-	import { atLeast } from '$lib/map/roles';
 	import { ESI_SCOPES } from '$lib/esi/scopes';
 	import { INTRO_STEPS, INTRO_TIPS, introSummary, introToggles } from './introduction-content';
 	import { PLACEMENTS } from '$lib/map/placement';
