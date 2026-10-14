@@ -99,6 +99,9 @@ services:
       - "${HTTPS_PORT:-443}:443/udp"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Your additions, imported by the Caddyfile: caddy.d/*.site into this site,
+      # caddy.d/*.caddy as blocks of their own. Yours, so an update never touches them.
+      - ./caddy.d:/etc/caddy/conf.d:ro
       # Certificates live here. Losing this volume means asking Let's Encrypt for new ones,
       # which is rate limited, so it outlives the container on purpose.
       - caddy_data:/data

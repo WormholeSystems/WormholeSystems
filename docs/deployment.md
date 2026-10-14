@@ -248,6 +248,28 @@ The map is down from the `stop` until `setup` has the new stack up. `pg_restore`
 client that reaches the new database, for example one in a container on the same network.
 The `pgdata` volume stays until you remove it yourself.
 
+## Changes of your own
+
+Anything you change in a tracked file is in the way of the next pull, so `wsctl update`
+stops on it. Two places are yours instead, and survive every update:
+
+- `compose.override.yml` next to `docker-compose.yml`, for compose changes: labels for
+  your Traefik, another network, resource limits, an environment variable. Compose reads it
+  on its own while `COMPOSE_FILE` is unset; once it is set, wsctl adds the file to the end
+  of it, so it wins. Added after setup, it is picked up by the next `wsctl update` (or name
+  it in `COMPOSE_FILE` yourself).
+- `caddy.d/` for the bundled Caddy: `*.site` files are imported into the WormholeSystems
+  site block (a header, a redirect, a `handle` of your own), `*.caddy` files at the top
+  level (another site on the same Caddy). `docker compose restart caddy` reloads them.
+
+For example, `caddy.d/hsts.site`, once https is what you will always serve:
+
+```
+header Strict-Transport-Security "max-age=31536000"
+```
+
+Neither is tracked.
+
 ## Certificates
 
 Caddy gets them from Let's Encrypt on first start and renews them on its own. Two things

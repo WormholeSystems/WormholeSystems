@@ -1,0 +1,4 @@
+# Your Caddy additions: *.site files are imported into the WormholeSystems site,
+# *.caddy files at the top level. Nothing in here is committed.
+*
+!.gitignore

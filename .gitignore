@@ -15,6 +15,10 @@
 .env
 .env.local
 
+# An install's own compose changes (see docs/deployment.md)
+/compose.override.yml
+/docker-compose.override.yml
+
 # macOS
 .DS_Store
 /node_modules
