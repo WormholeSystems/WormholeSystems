@@ -325,3 +325,39 @@ async fn an_account_left_without_a_preference_gets_one_back(pool: PgPool) {
     assert!(is_preferred(&pool, 200).await);
     assert!(!is_preferred(&pool, 400).await);
 }
+
+#[sqlx::test]
+async fn a_saved_token_replaces_the_old_one_and_keeps_its_scopes(pool: PgPool) {
+    use std::time::{Duration, SystemTime};
+    use wormholesystems::db::PgTokenStore;
+    use wormholesystems::esi::{Token, TokenStore};
+
+    persist_identity(&pool, &claims(100, "h1"), corp(2001), None, None)
+        .await
+        .unwrap();
+    let store = PgTokenStore::new(pool.clone());
+    let token = |access: &str, scopes: &[&str]| Token {
+        access_token: access.into(),
+        refresh_token: "refresh".into(),
+        expires_at: SystemTime::now() + Duration::from_secs(1200),
+        scopes: scopes.iter().map(|s| s.to_string()).collect(),
+    };
+
+    store.save(100, &token("first", &["a", "b"])).await.unwrap();
+    // A scope named twice, one already known and one new: each stored once.
+    store
+        .save(100, &token("second", &["b", "c", "c"]))
+        .await
+        .unwrap();
+
+    let loaded = store.load(100).await.unwrap().unwrap();
+    assert_eq!(loaded.access_token, "second");
+    let mut scopes = loaded.scopes;
+    scopes.sort();
+    assert_eq!(scopes, ["b", "c"]);
+    let tokens: i64 = sqlx::query_scalar("select count(*) from esi_tokens")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(tokens, 1);
+}
