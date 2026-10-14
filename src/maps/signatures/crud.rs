@@ -11,8 +11,8 @@ use crate::maps::store::signatures::NewSignature;
 use crate::maps::{Actor, MapEvent, MassStatus, Role, SignatureGroup, TimeStatus, WormholeSize};
 
 use super::{
-    Signature, capture_signatures, ensure_system_placed, fetch_signature_tx, is_wormhole,
-    validate_signature_id, validate_type_for_group,
+    LinkSignature, Signature, capture_signatures, ensure_system_placed, fetch_signature_tx,
+    is_wormhole, validate_signature_id, validate_type_for_group,
 };
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema)]
@@ -274,7 +274,7 @@ pub(in crate::maps) async fn apply_update_signature(
     // Re-read: a linked signature's size follows its identified type, which the sync
     // trigger may have just enforced over the edit.
     let sig = fetch_signature_tx(tx, cmd.map_id, cmd.signature_pk).await?;
-    let inverse = MapCommand::UpdateSignature(UpdateSignature {
+    let restore = MapCommand::UpdateSignature(UpdateSignature {
         map_id: cmd.map_id,
         signature_pk: cmd.signature_pk,
         signature_id: Some(current.signature_id.clone()),
@@ -285,6 +285,24 @@ pub(in crate::maps) async fn apply_update_signature(
         mass_status: Some(current.mass_status),
         time_status: Some(current.time_status),
     });
+    // An edit that took the scan out of the wormhole group let its connection go, which no
+    // field of the edit names: the undo links it again once the group is back.
+    let inverse = match current.connection_id {
+        Some(old) if sig.connection_id != Some(old) => {
+            MapCommand::Sequence(crate::maps::command::Sequence {
+                map_id: cmd.map_id,
+                steps: vec![
+                    restore,
+                    MapCommand::LinkSignature(LinkSignature {
+                        map_id: cmd.map_id,
+                        signature_pk: cmd.signature_pk,
+                        connection_id: old,
+                    }),
+                ],
+            })
+        }
+        _ => restore,
+    };
     let mut events = vec![MapEvent::SignatureChanged {
         map_id: cmd.map_id,
         solar_system_id: sig.solar_system_id,

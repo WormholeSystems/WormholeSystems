@@ -386,10 +386,7 @@ async fn round_trip(pool: &PgPool, ghosting: bool, cases: &[Case]) {
 }
 
 /// Cases whose undo or redo does not yet put the map back, and what it gets wrong.
-const KNOWN_GAPS: &[(&str, &str)] = &[(
-    "update_signature away from a wormhole",
-    "undo brings the ghost back but not the scan's link to it",
-)];
+const KNOWN_GAPS: &[(&str, &str)] = &[];
 
 const CASES: &[Case] = &[
     ("add_system", |s| {
