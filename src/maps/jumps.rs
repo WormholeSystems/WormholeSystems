@@ -14,7 +14,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 
-use super::access::{effective_role, require_role};
+use super::access::require_role;
 use super::command::{CommandOutput, Effect, MapCommand, Tx, execute};
 use super::error::{MapError, Result};
 use super::{Actor, MapEvent, Role};
@@ -434,82 +434,71 @@ pub async fn record_transit(
         return Ok(());
     };
 
-    // Maps where this character's user shares their movements.
-    let map_ids = sqlx::query_scalar!(
-        "select map_id from map_user_settings where user_id = $1 and tracking_allowed",
+    // One statement for every map at once: those where this user shares their movements
+    // and is a member or better (`effective_role`'s rule, against the live grants), each
+    // with the edge this pair travelled on that map. The wormhole edge wins over a parallel
+    // stargate edge; a lone stargate edge means gate travel on that map, so nothing is
+    // recorded there. With no edge at all the hole is unmapped, and a pending row is kept
+    // only if the origin is on the map, so a connection created moments later can claim it.
+    let recorded = sqlx::query!(
+        r#"with maps as (
+               select mus.map_id
+               from map_user_settings mus
+               where mus.user_id = $1 and mus.tracking_allowed
+                 and exists (
+                     select 1 from map_access_live ma
+                     where ma.map_id = mus.map_id
+                       and ma.role <> 'viewer'
+                       and ma.subject_id in (
+                           select id from characters where user_id = $1
+                           union all
+                           select corporation_id from characters where user_id = $1
+                           union all
+                           select alliance_id from characters
+                           where user_id = $1 and alliance_id is not null
+                       )
+                 )
+           ),
+           found as (
+               select m.map_id, edge.id as connection_id, edge.type as kind
+               from maps m
+               left join lateral (
+                   select c.id, c.type
+                   from map_connections c
+                   join map_solar_systems f on f.id = c.from_system
+                   join map_solar_systems t on t.id = c.to_system
+                   where c.map_id = m.map_id
+                     and ((f.solar_system_id = $2 and t.solar_system_id = $3)
+                          or (f.solar_system_id = $3 and t.solar_system_id = $2))
+                   order by (c.type = 'wormhole') desc
+                   limit 1
+               ) edge on true
+           )
+           insert into map_connection_jumps
+               (map_id, connection_id, character_id, from_solar_system_id,
+                to_solar_system_id, ship_type_id, ship_name, mass)
+           select found.map_id, found.connection_id, $4, $2, $3, $5, $6, $7
+           from found
+           where found.kind = 'wormhole'
+              or (found.kind is null
+                  and exists (select 1 from map_solar_systems s
+                              where s.map_id = found.map_id and s.solar_system_id = $2))
+           returning map_id, connection_id"#,
         user_id,
+        from_solar_system_id,
+        to_solar_system_id,
+        character_id,
+        character.ship_type_id,
+        character.ship_name,
+        mass,
     )
     .fetch_all(pool)
     .await?;
 
-    for map_id in map_ids {
-        if effective_role(pool, map_id, user_id)
-            .await?
-            .is_none_or(|r| r < Role::Member)
-        {
-            continue;
-        }
-
-        // Prefer the wormhole edge when a parallel stargate edge exists; a lone
-        // stargate edge means this pair is gate travel on this map → skip.
-        let connection = sqlx::query!(
-            r#"select c.id, c.type as "kind"
-               from map_connections c
-               join map_solar_systems f on f.id = c.from_system
-               join map_solar_systems t on t.id = c.to_system
-               where c.map_id = $1
-                 and ((f.solar_system_id = $2 and t.solar_system_id = $3)
-                      or (f.solar_system_id = $3 and t.solar_system_id = $2))
-               order by (c.type = 'wormhole') desc
-               limit 1"#,
-            map_id,
-            from_solar_system_id,
-            to_solar_system_id,
-        )
-        .fetch_optional(pool)
-        .await?;
-
-        let connection_id = match &connection {
-            Some(c) if c.kind == super::ConnectionType::Wormhole => Some(c.id),
-            Some(_) => continue,
-            None => {
-                // Unmapped hole: keep a pending row only if the origin is on the map,
-                // so a connection created moments later can claim it.
-                let placed = sqlx::query_scalar!(
-                    "select exists(select 1 from map_solar_systems
-                                   where map_id = $1 and solar_system_id = $2)",
-                    map_id,
-                    from_solar_system_id,
-                )
-                .fetch_one(pool)
-                .await?
-                .unwrap_or(false);
-                if !placed {
-                    continue;
-                }
-                None
-            }
-        };
-
-        sqlx::query!(
-            "insert into map_connection_jumps
-                 (map_id, connection_id, character_id, from_solar_system_id,
-                  to_solar_system_id, ship_type_id, ship_name, mass)
-             values ($1, $2, $3, $4, $5, $6, $7, $8)",
-            map_id,
-            connection_id,
-            character_id,
-            from_solar_system_id,
-            to_solar_system_id,
-            character.ship_type_id,
-            character.ship_name,
-            mass,
-        )
-        .execute(pool)
-        .await?;
-        if let Some(connection_id) = connection_id {
+    for row in recorded {
+        if let Some(connection_id) = row.connection_id {
             super::hub().publish(MapEvent::ConnectionChanged {
-                map_id,
+                map_id: row.map_id,
                 connection_id,
             });
         }

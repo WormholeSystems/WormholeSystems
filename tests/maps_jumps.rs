@@ -319,6 +319,87 @@ async fn transit_capture_and_claiming(pool: PgPool) {
     assert_eq!(total, 2);
 }
 
+/// One transit is judged map by map: a map where the pilot is only a viewer records
+/// nothing, and neither does one that has the pair mapped as a stargate.
+#[sqlx::test]
+async fn transit_is_recorded_only_on_maps_that_take_it(pool: PgPool) {
+    let w = world(&pool).await;
+    allow_tracking(&pool, w.map_id, w.owner.user_id).await;
+    let a = place(&pool, w.owner, w.map_id, SYS_A).await;
+    let b = place(&pool, w.owner, w.map_id, SYS_B).await;
+    let hole = wormhole_between(&pool, w.owner, w.map_id, a, b).await;
+
+    // A second map with the same pair as a gate.
+    let gates = wormholesystems::maps::map::create_map(
+        &pool,
+        w.owner,
+        &Default::default(),
+        wormholesystems::maps::map::CreateMap {
+            name: "Gates".into(),
+            description: None,
+        },
+    )
+    .await
+    .unwrap()
+    .id;
+    allow_tracking(&pool, gates, w.owner.user_id).await;
+    let ga = place(&pool, w.owner, gates, SYS_A).await;
+    let gb = place(&pool, w.owner, gates, SYS_B).await;
+    add_connection(
+        &pool,
+        w.owner,
+        AddConnection {
+            map_id: gates,
+            from_system: ga,
+            to_system: gb,
+            kind: ConnectionType::Stargate,
+            size: None,
+        },
+    )
+    .await
+    .unwrap();
+
+    // A third the owner can only view, with the origin placed.
+    let other = member_with_role(&pool, w.owner, w.map_id, 1002, 2002, Role::Member).await;
+    let viewed = wormholesystems::maps::map::create_map(
+        &pool,
+        other,
+        &Default::default(),
+        wormholesystems::maps::map::CreateMap {
+            name: "Theirs".into(),
+            description: None,
+        },
+    )
+    .await
+    .unwrap()
+    .id;
+    place(&pool, other, viewed, SYS_A).await;
+    wormholesystems::maps::access::set_access(
+        &pool,
+        other,
+        wormholesystems::maps::access::SetAccess {
+            map_id: viewed,
+            subject_type: wormholesystems::maps::SubjectType::Character,
+            subject_id: w.owner.character_id,
+            role: Role::Viewer,
+            expires_at: None,
+        },
+    )
+    .await
+    .unwrap();
+    allow_tracking(&pool, viewed, w.owner.user_id).await;
+
+    record_transit(&pool, w.owner.character_id, SYS_A, SYS_B)
+        .await
+        .unwrap();
+    let rows: Vec<(i64, Option<i64>)> =
+        sqlx::query_as("select map_id, connection_id from map_connection_jumps")
+            .fetch_all(&pool)
+            .await
+            .unwrap();
+    assert_eq!(rows, [(w.map_id, Some(hole))]);
+}
+
 #[sqlx::test]
 async fn claim_window_and_prune(pool: PgPool) {
     let w = world(&pool).await;

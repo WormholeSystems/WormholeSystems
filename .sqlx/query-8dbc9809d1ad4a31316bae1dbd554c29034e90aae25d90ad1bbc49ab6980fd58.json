@@ -1,0 +1,46 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "with maps as (\n               select mus.map_id\n               from map_user_settings mus\n               where mus.user_id = $1 and mus.tracking_allowed\n                 and exists (\n                     select 1 from map_access_live ma\n                     where ma.map_id = mus.map_id\n                       and ma.role <> 'viewer'\n                       and ma.subject_id in (\n                           select id from characters where user_id = $1\n                           union all\n                           select corporation_id from characters where user_id = $1\n                           union all\n                           select alliance_id from characters\n                           where user_id = $1 and alliance_id is not null\n                       )\n                 )\n           ),\n           found as (\n               select m.map_id, edge.id as connection_id, edge.type as kind\n               from maps m\n               left join lateral (\n                   select c.id, c.type\n                   from map_connections c\n                   join map_solar_systems f on f.id = c.from_system\n                   join map_solar_systems t on t.id = c.to_system\n                   where c.map_id = m.map_id\n                     and ((f.solar_system_id = $2 and t.solar_system_id = $3)\n                          or (f.solar_system_id = $3 and t.solar_system_id = $2))\n                   order by (c.type = 'wormhole') desc\n                   limit 1\n               ) edge on true\n           )\n           insert into map_connection_jumps\n               (map_id, connection_id, character_id, from_solar_system_id,\n                to_solar_system_id, ship_type_id, ship_name, mass)\n           select found.map_id, found.connection_id, $4, $2, $3, $5, $6, $7\n           from found\n           where found.kind = 'wormhole'\n              or (found.kind is null\n                  and exists (select 1 from map_solar_systems s\n                              where s.map_id = found.map_id and s.solar_system_id = $2))\n           returning map_id, connection_id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "map_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "map_connection_jumps",
+            "name": "map_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "connection_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "map_connection_jumps",
+            "name": "connection_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int8",
+        "Int8",
+        "Int8",
+        "Text",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      true
+    ]
+  },
+  "hash": "8dbc9809d1ad4a31316bae1dbd554c29034e90aae25d90ad1bbc49ab6980fd58"
+}
