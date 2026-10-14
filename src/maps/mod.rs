@@ -26,7 +26,7 @@ pub mod transfer;
 pub mod view;
 pub mod watchlist;
 
-pub use command::{CommandOutput, EventActor, MapCommand, execute};
+pub use command::{Command, CommandOutput, EventActor, MapCommand, execute, run};
 
 /// The process-wide event hub, like [`GRID`] below: global so a committed command can
 /// announce itself without every caller threading the hub through. `main` clones this one

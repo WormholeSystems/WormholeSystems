@@ -10,7 +10,7 @@
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 
-use super::command::{CommandOutput, Effect, MapCommand, Sequence, Tx, execute};
+use super::command::{CommandOutput, Effect, MapCommand, Sequence, Tx, run};
 use super::connection::{AddConnection, SetConnectionStatus};
 use super::error::{MapError, Result};
 use super::restore::RemoveRestored;
@@ -64,9 +64,7 @@ pub async fn add_eve_scout_connections(
     actor: Actor,
     cmd: AddEveScoutConnections,
 ) -> Result<u64> {
-    execute(pool, actor, MapCommand::AddEveScoutConnections(cmd))
-        .await?
-        .count()
+    run(pool, actor, cmd).await
 }
 
 /// What one run put on the map, for the label, the undo and the events.
@@ -310,7 +308,7 @@ async fn place(tx: &mut Tx<'_>, map_id: i64, solar_system_id: i64, at: (f64, f64
         },
     )
     .await?;
-    Ok(effect.output.system()?.id)
+    Ok(effect.output.take::<super::MapSolarSystem>()?.id)
 }
 
 async fn existing_connection(tx: &mut Tx<'_>, map_id: i64, a: i64, b: i64) -> Result<Option<i64>> {
@@ -345,7 +343,7 @@ async fn connect(
         },
     )
     .await?;
-    let connection_id = effect.output.connection()?.id;
+    let connection_id = effect.output.take::<super::MapConnection>()?.id;
     super::connection::apply_set_connection_status(
         tx,
         SetConnectionStatus {
@@ -416,7 +414,7 @@ async fn ensure_signature(
             },
         )
         .await?;
-        let pk = effect.output.signature()?.id;
+        let pk = effect.output.take::<super::Signature>()?.id;
         super::tracking::link(tx, map_id, pk, connection_id).await?;
         outcome.signature_ids.push(pk);
         outcome.changed_systems.push(solar_system_id);

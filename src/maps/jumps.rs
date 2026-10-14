@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 
 use super::access::require_role;
-use super::command::{CommandOutput, Effect, MapCommand, Tx, execute};
+use super::command::{CommandOutput, Effect, MapCommand, Tx, run};
 use super::error::{MapError, Result};
 use super::{Actor, MapEvent, Role};
 
@@ -113,9 +113,7 @@ pub async fn add_jump(
     actor: Actor,
     cmd: AddConnectionJump,
 ) -> Result<ConnectionJump> {
-    execute(pool, actor, MapCommand::AddConnectionJump(cmd))
-        .await?
-        .jump()
+    run(pool, actor, cmd).await
 }
 
 pub(super) async fn apply_add_jump(tx: &mut Tx<'_>, cmd: AddConnectionJump) -> Result<Effect> {
@@ -194,9 +192,7 @@ pub async fn update_jump(
     actor: Actor,
     cmd: UpdateConnectionJump,
 ) -> Result<ConnectionJump> {
-    execute(pool, actor, MapCommand::UpdateConnectionJump(cmd))
-        .await?
-        .jump()
+    run(pool, actor, cmd).await
 }
 
 pub(super) async fn apply_update_jump(
@@ -287,9 +283,7 @@ pub async fn remove_jump(
     actor: Actor,
     cmd: RemoveConnectionJump,
 ) -> Result<Option<i64>> {
-    let removed = execute(pool, actor, MapCommand::RemoveConnectionJump(cmd))
-        .await?
-        .count()?;
+    let removed = run(pool, actor, cmd).await?;
     Ok((removed != 0).then_some(removed as i64))
 }
 

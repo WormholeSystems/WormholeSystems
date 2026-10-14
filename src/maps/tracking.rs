@@ -50,12 +50,8 @@ pub struct TrackJump {
 
 /// Record a jump: place the system if it is new, connect it, and link the signature.
 /// Member+.
-pub async fn track_jump(
-    pool: &sqlx::PgPool,
-    actor: super::Actor,
-    cmd: TrackJump,
-) -> Result<CommandOutput> {
-    super::command::execute(pool, actor, MapCommand::TrackJump(cmd)).await
+pub async fn track_jump(pool: &sqlx::PgPool, actor: super::Actor, cmd: TrackJump) -> Result<()> {
+    super::command::run(pool, actor, cmd).await
 }
 
 pub(super) async fn apply_track_jump(tx: &mut Tx<'_>, cmd: TrackJump) -> Result<Effect> {
@@ -199,7 +195,7 @@ pub(super) async fn apply_track_jump(tx: &mut Tx<'_>, cmd: TrackJump) -> Result<
                 },
             )
             .await?;
-            let system = effect.output.system()?;
+            let system = effect.output.take::<super::MapSolarSystem>()?;
             (system.id, Some(system.id))
         }
     };
@@ -215,7 +211,7 @@ pub(super) async fn apply_track_jump(tx: &mut Tx<'_>, cmd: TrackJump) -> Result<
         },
     )
     .await?;
-    let connection = effect.output.connection()?;
+    let connection = effect.output.take::<super::MapConnection>()?;
     let connection_id = connection.id;
 
     if cmd.mass_status.is_some() || cmd.time_status.is_some() {

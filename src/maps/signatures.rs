@@ -21,7 +21,7 @@ use super::{MassStatus, SignatureGroup, TimeStatus, WormholeSize};
 use sqlx::PgPool;
 
 use super::access::require_role;
-use super::command::{CommandOutput, Effect, MapCommand, Tx, execute};
+use super::command::{CommandOutput, Effect, MapCommand, Tx, run};
 use super::error::{MapError, Result};
 use super::store;
 use super::store::signatures::{NewSignature, SignatureRow};
@@ -144,9 +144,7 @@ impl AddSignature {
 /// duplicate `signature_id` in the same system → `Conflict`. Linking to a connection is a
 /// separate step ([`link_signature`]).
 pub async fn add_signature(pool: &PgPool, actor: Actor, cmd: AddSignature) -> Result<Signature> {
-    execute(pool, actor, MapCommand::AddSignature(cmd))
-        .await?
-        .signature()
+    run(pool, actor, cmd).await
 }
 
 pub(super) async fn apply_add_signature(tx: &mut Tx<'_>, cmd: AddSignature) -> Result<Effect> {
@@ -243,9 +241,7 @@ pub async fn update_signature(
     actor: Actor,
     cmd: UpdateSignature,
 ) -> Result<Signature> {
-    execute(pool, actor, MapCommand::UpdateSignature(cmd))
-        .await?
-        .signature()
+    run(pool, actor, cmd).await
 }
 
 /// What an update writes: the current row with the command's partial edit merged in, per
@@ -417,9 +413,7 @@ pub async fn remove_signature(
     actor: Actor,
     cmd: RemoveSignature,
 ) -> Result<RemovedSignature> {
-    execute(pool, actor, MapCommand::RemoveSignature(cmd))
-        .await?
-        .removal()
+    run(pool, actor, cmd).await
 }
 
 pub(super) async fn apply_remove_signature(
@@ -532,9 +526,7 @@ pub async fn remove_signatures(
     actor: Actor,
     cmd: RemoveSignatures,
 ) -> Result<BulkRemoveOutcome> {
-    execute(pool, actor, MapCommand::RemoveSignatures(cmd))
-        .await?
-        .bulk_removal()
+    run(pool, actor, cmd).await
 }
 
 pub(super) async fn apply_remove_signatures(
@@ -678,9 +670,7 @@ pub struct LinkSignature {
 /// `wormhole`, and the connection must be on this map and have an endpoint in the
 /// signature's system.
 pub async fn link_signature(pool: &PgPool, actor: Actor, cmd: LinkSignature) -> Result<Signature> {
-    execute(pool, actor, MapCommand::LinkSignature(cmd))
-        .await?
-        .signature()
+    run(pool, actor, cmd).await
 }
 
 pub(super) async fn apply_link_signature(tx: &mut Tx<'_>, cmd: LinkSignature) -> Result<Effect> {
@@ -794,9 +784,7 @@ pub async fn unlink_signature(
     actor: Actor,
     cmd: UnlinkSignature,
 ) -> Result<Signature> {
-    execute(pool, actor, MapCommand::UnlinkSignature(cmd))
-        .await?
-        .signature()
+    run(pool, actor, cmd).await
 }
 
 pub(super) async fn apply_unlink_signature(
@@ -866,8 +854,7 @@ pub struct PasteSignatures {
 /// - raw name: refreshed for sites, preserved for wormholes
 /// - `size` / `mass_status` / `time_status` / `created_at`: never touched
 pub async fn paste_signatures(pool: &PgPool, actor: Actor, cmd: PasteSignatures) -> Result<()> {
-    execute(pool, actor, MapCommand::PasteSignatures(cmd)).await?;
-    Ok(())
+    run(pool, actor, cmd).await
 }
 
 /// What one pasted row writes over an existing signature: the legacy merge rules listed on

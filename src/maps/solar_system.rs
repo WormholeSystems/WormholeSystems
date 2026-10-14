@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 
 use super::access::require_role;
-use super::command::{CommandOutput, Effect, MapCommand, Tx, execute};
+use super::command::{CommandOutput, Effect, MapCommand, Tx, run};
 use super::error::{MapError, Result};
 use super::restore::{capture_systems, remove_captured_signatures};
 use super::store::placements::{self, NewPlacement};
@@ -39,9 +39,7 @@ pub struct AddSystem {
 /// Place a solar system on a map. The system must exist in the SDE and not already be on
 /// the map. Adding a system does not touch its persisted details.
 pub async fn add_system(pool: &PgPool, actor: Actor, cmd: AddSystem) -> Result<MapSolarSystem> {
-    execute(pool, actor, MapCommand::AddSystem(cmd))
-        .await?
-        .system()
+    run(pool, actor, cmd).await
 }
 
 pub(super) async fn apply_add_system(tx: &mut Tx<'_>, cmd: AddSystem) -> Result<Effect> {
@@ -99,8 +97,7 @@ pub struct RemoveSystem {
 /// Remove a system from a map. Cascades the system's signatures and any connections it
 /// is an endpoint of; its persisted details survive.
 pub async fn remove_system(pool: &PgPool, actor: Actor, cmd: RemoveSystem) -> Result<()> {
-    execute(pool, actor, MapCommand::RemoveSystem(cmd)).await?;
-    Ok(())
+    run(pool, actor, cmd).await
 }
 
 /// An effect that changed nothing. No inverse, so it stays out of the undo history: pressing
@@ -157,9 +154,7 @@ pub struct RemoveSystems {
 /// Remove several placed systems at once (multi-select delete). Same cascade as
 /// [`remove_system`]. Returns the number actually removed; an empty id list is a no-op.
 pub async fn remove_systems(pool: &PgPool, actor: Actor, cmd: RemoveSystems) -> Result<u64> {
-    execute(pool, actor, MapCommand::RemoveSystems(cmd))
-        .await?
-        .count()
+    run(pool, actor, cmd).await
 }
 
 pub(super) async fn apply_remove_systems(tx: &mut Tx<'_>, cmd: RemoveSystems) -> Result<Effect> {
@@ -210,9 +205,7 @@ pub struct ClearMap {
 /// Remove every placed system on a map except the home system and any pinned systems.
 /// Connections to removed systems cascade. Returns the number removed.
 pub async fn clear_map(pool: &PgPool, actor: Actor, cmd: ClearMap) -> Result<u64> {
-    execute(pool, actor, MapCommand::ClearMap(cmd))
-        .await?
-        .count()
+    run(pool, actor, cmd).await
 }
 
 pub(super) async fn apply_clear_map(tx: &mut Tx<'_>, cmd: ClearMap) -> Result<Effect> {
@@ -246,8 +239,7 @@ pub struct MoveSystem {
 
 /// Move a placed system to a new position.
 pub async fn move_system(pool: &PgPool, actor: Actor, cmd: MoveSystem) -> Result<()> {
-    execute(pool, actor, MapCommand::MoveSystem(cmd)).await?;
-    Ok(())
+    run(pool, actor, cmd).await
 }
 
 pub(super) async fn apply_move_system(tx: &mut Tx<'_>, cmd: MoveSystem) -> Result<Effect> {
@@ -299,8 +291,7 @@ pub struct MoveSystems {
 
 /// Move several placed systems at once (multi-drag), in one transaction.
 pub async fn move_systems(pool: &PgPool, actor: Actor, cmd: MoveSystems) -> Result<()> {
-    execute(pool, actor, MapCommand::MoveSystems(cmd)).await?;
-    Ok(())
+    run(pool, actor, cmd).await
 }
 
 pub(super) async fn apply_move_systems(tx: &mut Tx<'_>, cmd: MoveSystems) -> Result<Effect> {
@@ -361,8 +352,7 @@ pub struct SetAlias {
 
 /// Set or clear a placement's ephemeral alias.
 pub async fn set_alias(pool: &PgPool, actor: Actor, cmd: SetAlias) -> Result<()> {
-    execute(pool, actor, MapCommand::SetAlias(cmd)).await?;
-    Ok(())
+    run(pool, actor, cmd).await
 }
 
 pub(super) async fn apply_set_alias(tx: &mut Tx<'_>, cmd: SetAlias) -> Result<Effect> {
@@ -410,8 +400,7 @@ pub struct SetStatus {
 /// Set a placed system's intel status. Upserts the persisted details row, keyed by the
 /// placement's `(map_id, solar_system_id)`.
 pub async fn set_status(pool: &PgPool, actor: Actor, cmd: SetStatus) -> Result<()> {
-    execute(pool, actor, MapCommand::SetStatus(cmd)).await?;
-    Ok(())
+    run(pool, actor, cmd).await
 }
 
 /// The system behind a placement, or a plain refusal when it is still a ghost. Intel is
@@ -484,8 +473,7 @@ pub struct SetOccupier {
 /// Set or clear who occupies a placed system (free text, like the alias). Upserts the
 /// persisted details row.
 pub async fn set_occupier(pool: &PgPool, actor: Actor, cmd: SetOccupier) -> Result<()> {
-    execute(pool, actor, MapCommand::SetOccupier(cmd)).await?;
-    Ok(())
+    run(pool, actor, cmd).await
 }
 
 pub(super) async fn apply_set_occupier(tx: &mut Tx<'_>, cmd: SetOccupier) -> Result<Effect> {
@@ -536,8 +524,7 @@ pub struct SetNotes {
 /// Set or clear a placed system's notes (markdown free text). Member+ only, like every
 /// other intel write; upserts the persisted details row.
 pub async fn set_notes(pool: &PgPool, actor: Actor, cmd: SetNotes) -> Result<()> {
-    execute(pool, actor, MapCommand::SetNotes(cmd)).await?;
-    Ok(())
+    run(pool, actor, cmd).await
 }
 
 pub(super) async fn apply_set_notes(tx: &mut Tx<'_>, cmd: SetNotes) -> Result<Effect> {
@@ -611,8 +598,7 @@ pub struct SetHome {
 /// Mark a placement as the map's home system (or clear it). A map has at most one home (a
 /// partial unique index enforces it), so setting a new home first clears the previous one.
 pub async fn set_home(pool: &PgPool, actor: Actor, cmd: SetHome) -> Result<()> {
-    execute(pool, actor, MapCommand::SetHome(cmd)).await?;
-    Ok(())
+    run(pool, actor, cmd).await
 }
 
 pub(super) async fn apply_set_home(tx: &mut Tx<'_>, cmd: SetHome) -> Result<Effect> {
@@ -692,8 +678,7 @@ pub struct SetRally {
 /// up to [`MAX_RALLY_POINTS`]: setting one more clears the oldest, and setting one that
 /// already is a rally point makes it the newest.
 pub async fn set_rally(pool: &PgPool, actor: Actor, cmd: SetRally) -> Result<()> {
-    execute(pool, actor, MapCommand::SetRally(cmd)).await?;
-    Ok(())
+    run(pool, actor, cmd).await
 }
 
 /// When a placement became a rally point, `None` when it is not one.
@@ -851,8 +836,7 @@ pub struct SetPinned {
 /// Pin or unpin a placement. Pinned systems are drag-locked client-side and survive
 /// "clear map". Any number of systems may be pinned.
 pub async fn set_pinned(pool: &PgPool, actor: Actor, cmd: SetPinned) -> Result<()> {
-    execute(pool, actor, MapCommand::SetPinned(cmd)).await?;
-    Ok(())
+    run(pool, actor, cmd).await
 }
 
 pub(super) async fn apply_set_pinned(tx: &mut Tx<'_>, cmd: SetPinned) -> Result<Effect> {

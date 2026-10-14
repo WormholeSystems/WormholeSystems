@@ -12,56 +12,6 @@ use wormholesystems::maps::MapCommand;
 
 const FIXTURE: &str = include_str!("fixtures/map_commands.json");
 
-/// Every tag the history can hold. A variant missing from here is one whose stored form
-/// nothing protects.
-const TAGS: [&str; 45] = [
-    "add_connection",
-    "add_connection_jump",
-    "add_eve_scout_connections",
-    "add_ghost_system",
-    "add_ignored_system",
-    "add_signature",
-    "add_system",
-    "add_watchlist_entry",
-    "age_connection",
-    "clean_stale_connections",
-    "clear_ignored_systems",
-    "clear_map",
-    "expire_connections",
-    "link_signature",
-    "move_system",
-    "move_systems",
-    "paste_signatures",
-    "remove_connection",
-    "remove_connection_jump",
-    "remove_ignored_system",
-    "remove_restored",
-    "remove_signature",
-    "remove_signatures",
-    "remove_system",
-    "remove_systems",
-    "remove_watchlist_entry",
-    "resolve_ghost_system",
-    "restore_ghost_system",
-    "restore_rallies",
-    "restore_signatures",
-    "restore_systems",
-    "sequence",
-    "set_alias",
-    "set_connection_status",
-    "set_home",
-    "set_notes",
-    "set_occupier",
-    "set_pinned",
-    "set_rally",
-    "set_status",
-    "set_watchlist_pinned",
-    "track_jump",
-    "unlink_signature",
-    "update_connection_jump",
-    "update_signature",
-];
-
 /// Whether everything the stored row says is still said the same way. A field the code has
 /// added since may appear in `now`; one the row holds may not go missing or change.
 fn still_says(stored: &Value, now: &Value, path: &str) -> Result<(), String> {
@@ -101,13 +51,28 @@ fn every_stored_command_still_loads_and_says_the_same() {
     }
 }
 
+/// The tag serde writes for a variant: its name in snake case.
+fn tag(variant: &str) -> String {
+    let mut tag = String::new();
+    for c in variant.chars() {
+        if c.is_ascii_uppercase() && !tag.is_empty() {
+            tag.push('_');
+        }
+        tag.push(c.to_ascii_lowercase());
+    }
+    tag
+}
+
+/// A variant without a sample is one whose stored form nothing protects.
 #[test]
 fn the_fixture_has_one_sample_per_variant() {
     let samples: Vec<Value> = serde_json::from_str(FIXTURE).unwrap();
-    let mut tags: Vec<&str> = samples
+    let mut stored: Vec<String> = samples
         .iter()
-        .map(|s| s["command"].as_str().unwrap())
+        .map(|s| s["command"].as_str().unwrap().to_string())
         .collect();
-    tags.sort();
-    assert_eq!(tags, TAGS);
+    stored.sort();
+    let mut variants: Vec<String> = MapCommand::VARIANTS.iter().map(|v| tag(v)).collect();
+    variants.sort();
+    assert_eq!(stored, variants);
 }
