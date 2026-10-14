@@ -344,6 +344,51 @@ async fn undoing_a_resolve_makes_it_a_ghost_again(pool: PgPool) {
     assert_eq!(back.solar_system_id(), None);
 }
 
+/// A pin set since the resolve by a write that is not a step of its own, an import say,
+/// sits on top of the undo stack without being in it. Stepping back over the resolve still
+/// works: a ghost cannot be pinned, so the pin goes the way home and rally already do.
+#[sqlx::test]
+async fn undoing_a_resolve_drops_a_pin_set_since(pool: PgPool) {
+    let w = world(&pool).await;
+    place(&pool, w.owner, w.map_id, SYS_A).await;
+    ghosting(&pool, w.owner, w.map_id).await;
+    let sig = scan(&pool, w.owner, w.map_id, SYS_A, "ABC-123").await;
+    let ghost = ghost_for(&pool, w.map_id, sig).await;
+    resolve_ghost_system(
+        &pool,
+        w.owner,
+        ResolveGhostSystem {
+            map_id: w.map_id,
+            map_solar_system_id: ghost,
+            solar_system_id: Some(SYS_B),
+            ..Default::default()
+        },
+    )
+    .await
+    .unwrap();
+    sqlx::query("update map_solar_systems set is_pinned = true where id = $1")
+        .bind(ghost)
+        .execute(&pool)
+        .await
+        .unwrap();
+
+    undo(&pool, w.owner, MapIdBody { map_id: w.map_id })
+        .await
+        .unwrap();
+
+    let view = get_map(&pool, w.owner, GetMap { map_id: w.map_id })
+        .await
+        .unwrap();
+    let back = view.systems.iter().find(|s| s.id() == ghost).unwrap();
+    assert!(matches!(
+        back,
+        MapSystemView::Ghost {
+            is_pinned: false,
+            ..
+        }
+    ));
+}
+
 #[sqlx::test]
 async fn a_pasted_scan_raises_the_holes_it_found(pool: PgPool) {
     let w = world(&pool).await;

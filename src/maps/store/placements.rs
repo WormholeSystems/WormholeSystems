@@ -309,8 +309,8 @@ pub(crate) async fn assign_system(
     .await?)
 }
 
-/// Turn a placement back into a ghost of this scan. A ghost may not be home or a rally
-/// point, so those marks are dropped in the same write; a new mark a ghost cannot carry
+/// Turn a placement back into a ghost of this scan. A ghost may not be home, a rally point
+/// or pinned, so those marks are dropped in the same write; a new mark a ghost cannot carry
 /// has to be cleared here too.
 pub(crate) async fn back_to_ghost(
     tx: &mut Tx<'_>,
@@ -322,7 +322,7 @@ pub(crate) async fn back_to_ghost(
     Ok(sqlx::query_as!(
         MapSolarSystem,
         "update map_solar_systems
-         set solar_system_id = null, is_home = false, rallied_at = null,
+         set solar_system_id = null, is_home = false, rallied_at = null, is_pinned = false,
              raised_by_signature_id = $3, hangs_off_id = $4
          where id = $1 and map_id = $2
          returning id, map_id, solar_system_id, position_x, position_y, alias, created_at",
