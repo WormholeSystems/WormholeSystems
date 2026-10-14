@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "update map_solar_systems\n         set solar_system_id = null, is_home = false, rallied_at = null,\n             raised_by_signature_id = $3, hangs_off_id = $4\n         where id = $1 and map_id = $2\n         returning id, map_id, solar_system_id, position_x, position_y, alias, created_at",
+  "query": "update map_solar_systems\n         set solar_system_id = null, is_home = false, rallied_at = null, is_pinned = false,\n             raised_by_signature_id = $3, hangs_off_id = $4\n         where id = $1 and map_id = $2\n         returning id, map_id, solar_system_id, position_x, position_y, alias, created_at",
   "describe": {
     "columns": [
       {
@@ -99,5 +99,5 @@
       false
     ]
   },
-  "hash": "4740dd9ddcfc48577f1d81f55c2ab8034bac92766d96caf9d3f69e0eff8a65e1"
+  "hash": "2a56fae18ba502a9b39bd0030c9ce1d2f9e2720ef3658f2846b6f1ffd8a6a753"
 }

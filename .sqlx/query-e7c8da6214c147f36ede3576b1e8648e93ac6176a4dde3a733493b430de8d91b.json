@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select id, from_system, to_system, type as kind,\n                  mass_status,\n                  time_status,\n                  size, preserve_mass\n           from map_connections where id = $1 and map_id = $2",
+  "query": "select id, from_system, to_system, type as kind,\n                  mass_status,\n                  time_status,\n                  size, preserve_mass, created_at as \"created_at?\", time_status_updated_at\n           from map_connections\n           where map_id = $1 and (from_system = any($2) or to_system = any($2))",
   "describe": {
     "columns": [
       {
@@ -135,12 +135,34 @@
             "name": "preserve_mass"
           }
         }
+      },
+      {
+        "ordinal": 8,
+        "name": "created_at?",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "map_connections",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "time_status_updated_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "map_connections",
+            "name": "time_status_updated_at"
+          }
+        }
       }
     ],
     "parameters": {
       "Left": [
         "Int8",
-        "Int8"
+        "Int8Array"
       ]
     },
     "nullable": [
@@ -151,8 +173,10 @@
       true,
       true,
       true,
-      false
+      false,
+      false,
+      true
     ]
   },
-  "hash": "4e504f8126885868da0a94ae8ec1060ca263879b4aa35c56daa549c4e275dbc5"
+  "hash": "e7c8da6214c147f36ede3576b1e8648e93ac6176a4dde3a733493b430de8d91b"
 }

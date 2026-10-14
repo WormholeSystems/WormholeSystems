@@ -1,0 +1,74 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select mss.solar_system_id,\n                  coalesce(d.status, 'unknown') as \"status!: super::SystemStatus\",\n                  d.occupying_group, d.notes\n           from map_solar_systems mss\n           left join map_solar_system_details d\n               on d.map_id = mss.map_id and d.solar_system_id = mss.solar_system_id\n           where mss.id = $1 and mss.map_id = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "solar_system_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "map_solar_systems",
+            "name": "solar_system_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "status!: super::SystemStatus",
+        "type_info": {
+          "Custom": {
+            "name": "system_status",
+            "kind": {
+              "Enum": [
+                "unknown",
+                "friendly",
+                "hostile",
+                "active",
+                "unscanned",
+                "empty"
+              ]
+            }
+          }
+        },
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 2,
+        "name": "occupying_group",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "map_solar_system_details",
+            "name": "occupying_group"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "notes",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "map_solar_system_details",
+            "name": "notes"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      true,
+      null,
+      true,
+      true
+    ]
+  },
+  "hash": "2c4e321b08e39729a372113b6d88c5050e643380efa4d294ffbbf71e202437e1"
+}

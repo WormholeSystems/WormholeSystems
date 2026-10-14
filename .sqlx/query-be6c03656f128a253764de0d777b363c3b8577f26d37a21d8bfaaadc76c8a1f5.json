@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select signatures_pasted_at from map_solar_systems\n             where map_id = $1 and solar_system_id = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "signatures_pasted_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "map_solar_systems",
+            "name": "signatures_pasted_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "be6c03656f128a253764de0d777b363c3b8577f26d37a21d8bfaaadc76c8a1f5"
+}

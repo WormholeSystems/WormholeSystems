@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from signatures\n             where map_id = $1 and solar_system_id = $2 and not (id = any($3))",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int8Array"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e160052fb72a821041c49b2bbbc7cbad37eb576c746a3fed01e93a7e3ba9e120"
+}
