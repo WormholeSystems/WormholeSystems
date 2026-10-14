@@ -5,6 +5,7 @@
 
 mod common;
 
+use common::catalog::{THERA, seed_catalog, seed_thera};
 use common::{SYS_A, SYS_B, SYS_C, world};
 use serde_json::{Value, json};
 use sqlx::PgPool;
@@ -369,6 +370,8 @@ async fn check(
 async fn round_trip(pool: &PgPool, ghosting: bool, cases: &[Case]) {
     let w = world(pool).await;
     seed_extra_systems(pool).await;
+    seed_catalog(pool).await;
+    seed_thera(pool).await;
     let mut failures = Vec::new();
     for (case, cmd) in cases {
         let found = check(pool, w.owner, ghosting, case, cmd).await;
@@ -430,6 +433,10 @@ const KNOWN_GAPS: &[(&str, &str)] = &[
         "records no inverse, so it cannot be undone",
     ),
     ("remove_watchlist_entry", "the entry comes back unpinned"),
+    (
+        "add_eve_scout_connections",
+        "undoing the redo leaves a scan it put on a system already on the map",
+    ),
     (
         "add_signature raising a ghost",
         "redo leaves the scan unlinked from its ghost",
@@ -593,6 +600,16 @@ const CASES: &[Case] = &[
     ("remove_ignored_system", |s| {
         json!({"command": "remove_ignored_system", "map_id": s.map_id,
                "solar_system_id": SYS_E})
+    }),
+    ("add_eve_scout_connections", |s| {
+        json!({"command": "add_eve_scout_connections", "map_id": s.map_id,
+               "hub_solar_system_id": THERA, "at": null, "holes": [
+                   {"solar_system_id": SYS_B, "hub_signature": "THE-001",
+                    "signature": "FAR-002", "wormhole_type": "C247",
+                    "mass_status": "reduced", "time_status": "eol", "size": "medium"},
+                   {"solar_system_id": SYS_C, "hub_signature": "THE-002",
+                    "signature": "OUT-003", "wormhole_type": "C247",
+                    "mass_status": "stable", "time_status": "stable", "size": null}]})
     }),
     (
         "clear_ignored_systems",
