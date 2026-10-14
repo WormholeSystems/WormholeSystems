@@ -24,8 +24,23 @@ pub fn build(runner: &mut dyn Runner, dir: &Path) -> Result<()> {
     runner.run(dir, "docker", &as_refs(&compose(&["build"])))
 }
 
+/// How long `up` waits for every container to report healthy. The first boot downloads the
+/// static data and seeds from it before the API answers, which is minutes on a small
+/// machine; every later start is seconds.
+const WAIT_SECS: &str = "1800";
+
+/// Start or recreate whatever changed, and wait until it is actually serving: a stack that
+/// started and then fell over is reported as the failure it is, not as "running".
 pub fn up(runner: &mut dyn Runner, dir: &Path) -> Result<()> {
-    runner.run(dir, "docker", &as_refs(&compose(&["up", "-d"])))
+    runner
+        .run(
+            dir,
+            "docker",
+            &as_refs(&compose(&["up", "-d", "--wait", "--wait-timeout", WAIT_SECS])),
+        )
+        .context(
+            "the stack did not come up healthy; `docker compose ps` says which container, and `docker compose logs <service>` why",
+        )
 }
 
 /// Drop the build cache and images a rebuild has just superseded. Every api build leaves
@@ -184,7 +199,10 @@ mod tests {
         build(&mut runner, Path::new(".")).unwrap();
         assert_eq!(
             runner.commands,
-            vec!["docker compose up -d", "docker compose build",]
+            vec![
+                "docker compose up -d --wait --wait-timeout 1800",
+                "docker compose build",
+            ]
         );
     }
 
