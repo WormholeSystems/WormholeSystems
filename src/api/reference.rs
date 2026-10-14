@@ -11,26 +11,8 @@ use utoipa_axum::routes;
 use super::extract::require_actor;
 use super::{ApiError, ApiResult};
 use crate::app::AppState;
-use crate::maps::view::{sovereignty_of, statics_for};
+use crate::maps::view::{SystemSearchResult, search_systems_named, systems_for};
 use crate::maps::{EffectModifier, GridConfig};
-
-/// A solar system matched by the "add system" search, with just enough to display and pick.
-#[derive(Clone, Debug, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema)]
-#[ts(export)]
-pub struct SystemSearchResult {
-    pub id: i64,
-    pub name: String,
-    pub security: f64,
-    pub region: String,
-    pub region_id: i64,
-    pub constellation_id: i64,
-    pub wormhole_class_id: Option<i32>,
-    /// Wormhole effect, for J-space rows (shown where k-space rows show sovereignty).
-    pub effect_name: Option<String>,
-    pub sovereignty: Option<crate::maps::view::Sovereignty>,
-    /// The statics a wormhole always has. Empty for k-space.
-    pub statics: Vec<crate::maps::view::Static>,
-}
 
 /// One organisation in a system's threat top list.
 #[derive(Clone, Debug, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema)]
@@ -196,8 +178,6 @@ pub struct SearchQuery {
 
 /// `GET /api/systems/search?q=`, search the SDE solar systems by name. Prefix matches rank
 /// first, then shorter names, then alphabetical. Returns nothing for queries under 2 chars.
-/// The ranking query only picks ids; [`systems_for`] builds the rows, so search and resolve
-/// cannot drift apart in what they return.
 #[utoipa::path(
     get,
     path = "/api/systems/search",
@@ -212,33 +192,7 @@ pub async fn search_systems(
     Query(query): Query<SearchQuery>,
 ) -> ApiResult<Vec<SystemSearchResult>> {
     require_actor(&state.db, &creds).await?;
-    let q = query.q.trim();
-    if q.len() < 2 {
-        return Ok(Json(Vec::new()));
-    }
-    let contains = format!("%{q}%");
-    let prefix = format!("{q}%");
-    let ranked_ids = sqlx::query_scalar!(
-        "select id from solar_systems
-         where name ilike $1
-         order by (name ilike $2) desc, length(name), name
-         limit 30",
-        contains,
-        prefix,
-    )
-    .fetch_all(&state.db)
-    .await?;
-    let mut by_id: std::collections::HashMap<i64, SystemSearchResult> =
-        systems_for(&state.db, &ranked_ids)
-            .await?
-            .into_iter()
-            .map(|s| (s.id, s))
-            .collect();
-    let results = ranked_ids
-        .iter()
-        .filter_map(|id| by_id.remove(id))
-        .collect();
-    Ok(Json(results))
+    Ok(Json(search_systems_named(&state.db, &query.q).await?))
 }
 
 /// The static half of the routing graph, typed and built once: k-space stargate
@@ -487,62 +441,6 @@ pub async fn resolve_systems(
         .take(200)
         .collect();
     Ok(Json(systems_for(&state.db, &ids).await?))
-}
-
-/// Display data for a set of solar systems, in the shape every picker renders.
-pub(super) async fn systems_for(
-    db: &sqlx::PgPool,
-    ids: &[i64],
-) -> Result<Vec<SystemSearchResult>, ApiError> {
-    let rows = sqlx::query!(
-        r#"
-        -- `!` on what the inner join makes certain: sqlx reads nullability out of the query
-        -- plan, which changes shape on a table with no rows, so without these the build
-        -- depends on whether the universe happens to be seeded yet.
-        select s.id              as "id!",
-               s.name            as "name!",
-               s.security_status as "security!",
-               r.name            as "region!",
-               s.region_id       as "region_id!",
-               s.constellation_id as "constellation_id!",
-               s.wormhole_class_id,
-               ws.effect_name,
-               sov.kind as "sov_kind?", sov.entity_id as "sov_id?",
-               sov.name as "sov_name?", sov.ticker as "sov_ticker?"
-        from solar_systems s
-        join regions r on r.id = s.region_id
-        left join wormhole_systems ws on ws.solar_system_id = s.id
-        left join system_sovereignty_resolved sov on sov.solar_system_id = s.id
-        where s.id = any($1)"#,
-        ids,
-    )
-    .fetch_all(db)
-    .await?;
-    let mut statics = statics_for(db, &rows.iter().map(|r| r.id).collect::<Vec<_>>()).await?;
-    let results = rows
-        .into_iter()
-        .map(|row| {
-            let sovereignty = sovereignty_of(
-                row.sov_kind.as_deref(),
-                row.sov_id,
-                row.sov_name,
-                row.sov_ticker,
-            );
-            SystemSearchResult {
-                statics: statics.remove(&row.id).unwrap_or_default(),
-                id: row.id,
-                name: row.name,
-                security: row.security,
-                region: row.region,
-                region_id: row.region_id,
-                constellation_id: row.constellation_id,
-                wormhole_class_id: row.wormhole_class_id,
-                effect_name: row.effect_name,
-                sovereignty,
-            }
-        })
-        .collect();
-    Ok(results)
 }
 
 #[derive(Deserialize, utoipa::IntoParams)]

@@ -18,6 +18,7 @@ pub mod jumps;
 pub mod map;
 pub mod presence;
 pub mod restore;
+pub mod search;
 pub mod signatures;
 pub mod solar_system;
 mod store;
