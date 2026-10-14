@@ -61,7 +61,7 @@ test('a share link shows the chain to somebody with no account', async ({ page, 
 
 	// Withdrawing the link shuts the door, remembered token or not.
 	await page.getByTestId('share-revoke').click();
-	await page.getByTestId('revoke-share-confirm').click();
+	await page.getByTestId('confirm-accept').click();
 	await expect(page.getByTestId('share-create')).toBeVisible();
 
 	await guestPage.reload();

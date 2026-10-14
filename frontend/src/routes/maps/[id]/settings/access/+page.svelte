@@ -9,13 +9,13 @@
 	import { api } from '$lib/api/client';
 	import { after, apiAction } from '$lib/api/mutations';
 	import { copyText } from '$lib/clipboard';
+	import { confirmDanger } from '$lib/confirm.svelte';
 	import { key, q } from '$lib/api/queries';
 	import type { AccessEntry } from '$lib/api/types/AccessEntry';
 	import type { MapView } from '$lib/api/types/MapView';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 
-	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 	import { Input } from '$lib/components/ui/input';
 	import AccessTable from '$lib/components/AccessTable.svelte';
 	import { sortState } from '$lib/sort-state.svelte';
@@ -73,13 +73,17 @@
 		);
 	});
 
-	/** The grant whose end date is being dropped, once it has been confirmed. */
-	let clearing = $state<AccessEntry | null>(null);
-
-	function keepForever() {
-		const entry = clearing;
-		clearing = null;
-		if (!entry) return;
+	async function keepForever(entry: AccessEntry) {
+		const until = entry.expires_at ? new Date(entry.expires_at).toLocaleString() : 'the date set';
+		const sure = await confirmDanger({
+			title: 'Drop the end date?',
+			body:
+				`${entry.name ?? 'They'} keeps ${ROLE_LABEL[entry.role].toLowerCase()} access until ` +
+				`somebody takes it away, instead of until ${until}.`,
+			action: 'Drop it',
+			cancel: 'Keep the date',
+		});
+		if (!sure) return;
 		act.mutate(() =>
 			api.setAccess({
 				map_id: mapId,
@@ -92,7 +96,6 @@
 	}
 
 	// Only a manager sees the link: the API withholds the token from anyone else.
-	let revoking = $state(false);
 	const shareUrl = $derived(
 		view.map.share_token ? `${page.url.origin}/share/${view.map.share_token}` : '',
 	);
@@ -104,8 +107,16 @@
 		);
 	}
 
-	function revokeShare() {
-		revoking = false;
+	async function revokeShare() {
+		const sure = await confirmDanger({
+			title: 'Withdraw the share link?',
+			body:
+				'Everyone watching through it loses the map at once. People with a grant are not ' +
+				'affected, and you can always make a new link.',
+			action: 'Withdraw it',
+			cancel: 'Keep it',
+		});
+		if (!sure) return;
 		after(
 			act.mutateAsync(() => api.unshareMap(mapId)),
 			() => toast.success('Share link withdrawn'),
@@ -162,7 +173,7 @@
 					),
 				revoke: (entry) =>
 					act.mutate(() => api.revokeAccess({ map_id: mapId, subject_id: entry.subject_id })),
-				clearExpiry: (entry) => (clearing = entry),
+				clearExpiry: (entry) => keepForever(entry),
 			}}
 		/>
 	</Card.Content>
@@ -200,7 +211,7 @@
 							<Button
 								variant="ghost"
 								class="text-destructive hover:text-destructive"
-								onclick={() => (revoking = true)}
+								onclick={revokeShare}
 								data-testid="share-revoke"
 							>
 								Revoke
@@ -232,40 +243,3 @@
 		</Card.Content>
 	</Card.Root>
 {/if}
-
-<AlertDialog.Root open={revoking} onOpenChange={(o) => (revoking = o)}>
-	<AlertDialog.Content data-testid="revoke-share-dialog">
-		<AlertDialog.Header>
-			<AlertDialog.Title>Withdraw the share link?</AlertDialog.Title>
-			<AlertDialog.Description>
-				Everyone watching through it loses the map at once. People with a grant are not affected,
-				and you can always make a new link.
-			</AlertDialog.Description>
-		</AlertDialog.Header>
-		<AlertDialog.Footer>
-			<AlertDialog.Cancel>Keep it</AlertDialog.Cancel>
-			<AlertDialog.Action onclick={revokeShare} data-testid="revoke-share-confirm">
-				Withdraw it
-			</AlertDialog.Action>
-		</AlertDialog.Footer>
-	</AlertDialog.Content>
-</AlertDialog.Root>
-
-<AlertDialog.Root open={clearing !== null} onOpenChange={(o) => !o && (clearing = null)}>
-	<AlertDialog.Content data-testid="clear-expiry-dialog">
-		<AlertDialog.Header>
-			<AlertDialog.Title>Drop the end date?</AlertDialog.Title>
-			<AlertDialog.Description>
-				{clearing?.name ?? 'They'} keeps {ROLE_LABEL[clearing?.role ?? 'viewer'].toLowerCase()} access
-				until somebody takes it away, instead of until
-				{clearing?.expires_at ? new Date(clearing.expires_at).toLocaleString() : 'the date set'}.
-			</AlertDialog.Description>
-		</AlertDialog.Header>
-		<AlertDialog.Footer>
-			<AlertDialog.Cancel>Keep the date</AlertDialog.Cancel>
-			<AlertDialog.Action onclick={keepForever} data-testid="clear-expiry-confirm">
-				Drop it
-			</AlertDialog.Action>
-		</AlertDialog.Footer>
-	</AlertDialog.Content>
-</AlertDialog.Root>
