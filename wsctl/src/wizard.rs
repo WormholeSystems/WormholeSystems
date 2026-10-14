@@ -7,8 +7,8 @@ use console::style;
 
 use crate::checks::{self, Verdict};
 use crate::config::{
-    self, Answers, DEFAULT_NETWORK, DEFAULT_ROUTER_PORT, Database, Deployment, Direct, Discord,
-    ExternalDb, Images, Proxy, Router, Site, Tls, generated_password,
+    self, Announcement, Answers, DEFAULT_NETWORK, DEFAULT_ROUTER_PORT, Database, Deployment,
+    Direct, Discord, ExternalDb, Images, Proxy, Router, Site, Tls, generated_password,
 };
 use crate::envfile;
 use crate::exec::Runner;
@@ -572,6 +572,8 @@ fn ask_everything(existing: &str, http: u16, https: u16) -> Result<Answers> {
     )?;
 
     answers.discord = ask_discord(existing, &answers.base_url())?;
+    answers.killmails = ask_killmails(existing)?;
+    answers.announcement = ask_announcement(existing)?;
     answers.images = ask_images(existing)?;
     answers.backups = ask_backups(existing)?;
     Ok(answers)
@@ -821,6 +823,69 @@ fn suggested_url(http_port: u16) -> String {
 
 fn tidy(input: &str) -> Result<String, String> {
     Ok(input.trim().to_string())
+}
+
+fn ask_killmails(existing: &str) -> Result<Option<u32>> {
+    let current = config::killmails_from_env(existing);
+    println!();
+    ui::note("The killmail ingest follows zKillboard's live feed and, on its first start, fills");
+    ui::note("in recent history from EVE Ref's archives. Kill alerts (to Discord or a webhook),");
+    ui::note("kills on the map and the threat view all read from it; without it they stay empty.");
+    if !ui::confirm("Ingest killmails?", current.is_some())? {
+        return Ok(None);
+    }
+    let days = current.unwrap_or(config::DEFAULT_BACKFILL_DAYS);
+    loop {
+        match ui::ask(
+            "Days of history to fill in (0 for none)",
+            Some(days.to_string()),
+        )?
+        .parse()
+        {
+            Ok(days) => return Ok(Some(days)),
+            Err(_) => ui::note("a number of days"),
+        }
+    }
+}
+
+fn ask_announcement(existing: &str) -> Result<Option<Announcement>> {
+    let current = Announcement::from_env(existing);
+    println!();
+    ui::note("A banner above every page, for downtime, a move, or anything people should read");
+    ui::note("first. Read when the API starts; change it later in .env and restart the API.");
+    if !ui::confirm("Show an announcement?", current.is_some())? {
+        return Ok(None);
+    }
+    let keep = |key: &str| envfile::get(existing, key).filter(|v| !v.is_empty());
+    let message = ui::ask("Message", keep("ANNOUNCEMENT_MESSAGE"))?;
+    let title = ui::ask_optional("Title (optional)", keep("ANNOUNCEMENT_TITLE"))?;
+    let level = current.as_ref().map_or("info", |a| a.level.as_str());
+    let level = Announcement::LEVELS[ui::choose(
+        "Level",
+        &Announcement::LEVELS,
+        Announcement::LEVELS
+            .iter()
+            .position(|l| *l == level)
+            .unwrap_or(0),
+    )?];
+    let link_url = ui::ask_optional("Link URL (optional)", keep("ANNOUNCEMENT_LINK_URL"))?;
+    let link_label = if link_url.is_empty() {
+        String::new()
+    } else {
+        ui::ask_optional("Link label (optional)", keep("ANNOUNCEMENT_LINK_LABEL"))?
+    };
+    let dismissible = ui::confirm(
+        "Can people close it?",
+        current.as_ref().is_none_or(|a| a.dismissible),
+    )?;
+    Ok(Some(Announcement {
+        level: level.to_string(),
+        title,
+        message,
+        link_url,
+        link_label,
+        dismissible,
+    }))
 }
 
 fn ask_backups(existing: &str) -> Result<bool> {

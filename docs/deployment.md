@@ -326,7 +326,12 @@ caddy`; a certificate file replaced in place needs `docker compose restart caddy
 [Who may use it](#who-may-use-it).
 
 Discord, the killmail ingest and the [announcement banner](#announcements) are optional and
-off unless configured; see `.env.example`.
+off unless configured; `setup` asks about each. The killmail ingest (`ZKB_LISTEN=1`) follows
+zKillboard's feed and fills in `KILLMAIL_BACKFILL_DAYS` (90) of history on its first start;
+kill alerts, kills on the map and the threat view all read from it and stay empty without
+it. `.env.example` lists the rest: `ZKB_BASE_URL`, `EVE_SCOUT_URL`,
+`DATABASE_MAX_CONNECTIONS`, `SERVER_STATUS_POLL_SECS`, `SKYHOOK_POLL_SECS`, none of which a
+normal install needs.
 `UPLOADS_DIR` (default `data/uploads`) is where uploaded background images land. In the
 container that path is the `uploads` volume, so leave it alone unless the API runs outside
 Docker.
@@ -377,8 +382,9 @@ everyone who can log in create maps.
 ## Announcements
 
 A banner above every page, the landing page included, for planned downtime, a move to a new
-address, or anything else people should read before they use the map. `setup` does not ask
-for it; set it in `.env` and restart the API (`docker compose up -d api`).
+address, or anything else people should read before they use the map. `setup` asks for it;
+it lives in `.env`, so changing it later is an edit there and a restart of the API
+(`docker compose up -d api`).
 
 | key | what |
 |---|---|
