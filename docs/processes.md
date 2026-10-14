@@ -158,8 +158,9 @@ place:
 
 - Access-token refresh from the stored refresh token
   ([`esi_tokens`](./database/authentication.md#esi_tokens)).
-- Expiry / cleanup of expired
-  [`oauth_login_flows`](./database/authentication.md#oauth_login_flows).
+- Cleanup of expired
+  [`oauth_login_flows`](./database/authentication.md#oauth_login_flows), done whenever a
+  new handshake starts rather than on a timer.
 - Signature expiry: unlinked wormhole signatures older than 3 days and other signatures
   untouched for 7 days are deleted (`maps::signatures::expire_signatures`).
 - Pruning of connection-jump observations no connection claimed within 10 minutes

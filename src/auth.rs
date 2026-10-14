@@ -6,12 +6,12 @@ use axum::response::{IntoResponse, Redirect, Response};
 use axum_extra::extract::CookieJar;
 use axum_extra::extract::cookie::{Cookie, SameSite};
 use serde::Deserialize;
-use uuid::Uuid;
 
 use crate::db::PgTokenStore;
 use crate::esi::scopes::Scope;
 use crate::esi::token::TokenStore;
 use crate::esi::{EsiClient, Sso};
+use crate::oauth_flow::{self, FlowKind};
 use crate::session;
 
 #[derive(Clone)]
@@ -121,23 +121,17 @@ pub async fn login(
     }
 
     let return_to = query.return_to.as_deref().and_then(safe_return_to);
-    let csrf = Uuid::new_v4().to_string();
-    if let Err(err) = sqlx::query!(
-        "insert into oauth_login_flows (state, link_user_id, redirect_to, expires_at)
-         values ($1, $2, $3, now() + interval '10 minutes')",
-        csrf,
+    let csrf = match oauth_flow::start(
+        &state.db,
+        FlowKind::EveLogin,
         link_user_id,
-        return_to,
+        return_to.as_deref(),
     )
-    .execute(&state.db)
     .await
     {
-        return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("could not start login: {err}"),
-        )
-            .into_response();
-    }
+        Ok(csrf) => csrf,
+        Err(err) => return server_error(err),
+    };
     let url = if scopes.is_empty() {
         state.auth.sso.authorize_url(&csrf)
     } else {
@@ -178,14 +172,7 @@ pub async fn callback(
     let auth = &state.auth;
 
     // The `state` is single-use and short-lived: consume it, rejecting unknown/expired.
-    let flow = match sqlx::query!(
-        "delete from oauth_login_flows where state = $1 and expires_at > now()
-         returning link_user_id, redirect_to",
-        query.state,
-    )
-    .fetch_optional(&state.db)
-    .await
-    {
+    let flow = match oauth_flow::consume(&state.db, FlowKind::EveLogin, &query.state).await {
         Ok(Some(flow)) => flow,
         Ok(None) => return (StatusCode::BAD_REQUEST, "invalid or expired state").into_response(),
         Err(err) => return server_error(err),

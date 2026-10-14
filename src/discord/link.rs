@@ -3,17 +3,18 @@
 //! Standard OAuth2 with the `identify` scope, which is all WormholeSystems needs to direct-message
 //! the right person and know who a slash command is speaking for.
 //!
-//! The handshake reuses `oauth_login_flows`, the same single-use state table the EVE login
-//! uses, so expiry and replay are handled in one place.
+//! The handshake goes through [`crate::oauth_flow`], the same single-use state the EVE login
+//! uses, so expiry and replay are handled in one place. Its states are marked as Discord
+//! ones, so the EVE callback will not take them and this one will not take EVE's.
 
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Redirect, Response};
 use axum_extra::extract::CookieJar;
 use serde::Deserialize;
-use uuid::Uuid;
 
 use crate::auth::AppState;
+use crate::oauth_flow::{self, FlowKind};
 use crate::session;
 
 use super::{API, DiscordUser};
@@ -31,21 +32,18 @@ pub async fn connect(State(state): State<AppState>, jar: CookieJar) -> Response 
         return Redirect::to("/").into_response();
     };
 
-    let csrf = Uuid::new_v4().to_string();
     // The flow row carries the user, so the callback links to whoever started it rather
     // than to whoever happens to hold a session when Discord redirects back.
-    if sqlx::query!(
-        "insert into oauth_login_flows (state, link_user_id, redirect_to, expires_at)
-         values ($1, $2, '/settings/discord', now() + interval '10 minutes')",
-        csrf,
-        actor.user_id,
+    let Ok(csrf) = oauth_flow::start(
+        &state.db,
+        FlowKind::DiscordLink,
+        Some(actor.user_id),
+        Some("/settings/discord"),
     )
-    .execute(&state.db)
     .await
-    .is_err()
-    {
+    else {
         return (StatusCode::INTERNAL_SERVER_ERROR, "could not start").into_response();
-    }
+    };
 
     let url = reqwest::Url::parse_with_params(
         "https://discord.com/oauth2/authorize",
@@ -76,13 +74,7 @@ pub async fn callback(
         return (StatusCode::NOT_FOUND, "Discord is not configured").into_response();
     };
     // Single-use: consume the row, rejecting an unknown or expired handshake.
-    let flow = sqlx::query!(
-        "delete from oauth_login_flows where state = $1 and expires_at > now()
-         returning link_user_id",
-        query.state,
-    )
-    .fetch_optional(&state.db)
-    .await;
+    let flow = oauth_flow::consume(&state.db, FlowKind::DiscordLink, &query.state).await;
     let Ok(Some(flow)) = flow else {
         return (StatusCode::BAD_REQUEST, "that link request expired").into_response();
     };

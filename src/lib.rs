@@ -10,6 +10,7 @@ pub mod entities;
 pub mod esi;
 pub mod killmails;
 pub mod maps;
+pub mod oauth_flow;
 pub mod sde;
 pub mod seed;
 pub mod server_status;
