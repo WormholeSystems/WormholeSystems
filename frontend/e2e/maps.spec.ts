@@ -50,7 +50,8 @@ test('archiving hides a map without losing it', async ({ page, api }) => {
 
 	// Still there, just out of the way, and it survives a reload because it is stored.
 	await page.reload();
-	await page.waitForSelector('[data-testid="toggle-archived"]');
+	// The toggle is in the server-rendered page before it answers clicks.
+	await page.waitForSelector('html[data-hydrated="true"]');
 	await page.getByTestId('toggle-archived').click();
 	const archived = page.getByTestId('map-card').filter({ hasText: name });
 	await expect(archived).toBeVisible();
