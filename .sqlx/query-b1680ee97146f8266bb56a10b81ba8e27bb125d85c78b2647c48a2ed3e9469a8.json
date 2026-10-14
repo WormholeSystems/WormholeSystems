@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into wormhole_system_threats (solar_system_id, entity_id, entity_type, name, kills)\n         select * from unnest($1::bigint[], $2::bigint[], $3::text[], $4::text[], $5::int[])",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8Array",
+        "Int8Array",
+        "TextArray",
+        "TextArray",
+        "Int4Array"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "b1680ee97146f8266bb56a10b81ba8e27bb125d85c78b2647c48a2ed3e9469a8"
+}

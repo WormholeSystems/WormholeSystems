@@ -1,0 +1,33 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update wormhole_systems w set threat_level = l.level\n         from unnest($1::bigint[], $2::threat_level[]) as l(solar_system_id, level)\n         where w.solar_system_id = l.solar_system_id",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8Array",
+        {
+          "Custom": {
+            "name": "threat_level[]",
+            "kind": {
+              "Array": {
+                "Custom": {
+                  "name": "threat_level",
+                  "kind": {
+                    "Enum": [
+                      "unknown",
+                      "high",
+                      "critical"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "2a15ac90c231482df0d4d062d0ebfa944aeff003358c84b2c07ebec41e56916b"
+}
