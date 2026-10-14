@@ -226,6 +226,7 @@ async fn main() {
         backgrounds: wormholesystems::maps::BackgroundStore::new(config.uploads_dir),
         allowed_logins: config.allowed_logins,
         map_creators: config.map_creators,
+        announcement: config.announcement.map(Arc::new),
     };
 
     let app = Router::new()

@@ -16,6 +16,7 @@ import { env } from '$env/dynamic/private';
 import type { RequestEvent } from '@sveltejs/kit';
 
 import type { CharacterSummary } from '$lib/api/types/CharacterSummary';
+import type { Instance } from '$lib/api/types/Instance';
 import type { ReferenceCounts } from '$lib/api/types/ReferenceCounts';
 import type { ServerStatus } from '$lib/api/types/ServerStatus';
 import type { MapEntry } from '$lib/api/types/MapEntry';
@@ -84,4 +85,12 @@ export function referenceCounts(event: RequestEvent): Promise<ReferenceCounts> {
  */
 export function serverStatus(event: RequestEvent): Promise<ServerStatus | null> {
 	return get<ServerStatus>(event, '/api/server-status').catch(() => null);
+}
+
+/**
+ * What this deployment has switched on, and its operator's banner. Null when the API does not
+ * answer: the page is better off without a banner than without a page.
+ */
+export function instance(event: RequestEvent): Promise<Instance | null> {
+	return get<Instance>(event, '/api/instance').catch(() => null);
 }

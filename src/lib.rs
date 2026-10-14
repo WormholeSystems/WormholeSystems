@@ -1,5 +1,6 @@
 pub mod alerts;
 pub mod allowlist;
+pub mod announcement;
 pub mod api;
 pub mod auth;
 pub mod config;

@@ -160,7 +160,7 @@
         "tags": [
           "reference"
         ],
-        "summary": "`GET /api/instance`: what this deployment has switched on. No actor check; it says\nnothing an anonymous visitor could not infer from which buttons appear.",
+        "summary": "`GET /api/instance`: what this deployment has switched on, and what its operator wants\neveryone to read. No actor check; it says nothing an anonymous visitor could not infer\nfrom the page.",
         "operationId": "instance",
         "responses": {
           "200": {
@@ -6222,6 +6222,72 @@
           "alphabetical"
         ]
       },
+      "Announcement": {
+        "type": "object",
+        "required": [
+          "id",
+          "level",
+          "message",
+          "dismissible"
+        ],
+        "properties": {
+          "dismissible": {
+            "type": "boolean",
+            "description": "Whether people may close it. One that cannot be closed ignores an old dismissal."
+          },
+          "id": {
+            "type": "string",
+            "description": "Identifies this exact announcement, derived from everything it says. A dismissal is\nremembered against it, so changing any of the content brings the banner back for\neveryone."
+          },
+          "level": {
+            "$ref": "#/components/schemas/AnnouncementLevel"
+          },
+          "link": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/AnnouncementLink"
+              }
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "AnnouncementLevel": {
+        "type": "string",
+        "description": "How loudly the banner is drawn.",
+        "enum": [
+          "info",
+          "warning",
+          "critical"
+        ]
+      },
+      "AnnouncementLink": {
+        "type": "object",
+        "required": [
+          "url",
+          "label"
+        ],
+        "properties": {
+          "label": {
+            "type": "string",
+            "description": "The url itself when no label was configured."
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      },
       "BTreeMap": {
         "type": "object",
         "additionalProperties": {
@@ -6956,6 +7022,17 @@
           "discord"
         ],
         "properties": {
+          "announcement": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Announcement",
+                "description": "The operator's site-wide banner, or `null`. Always the configured one: whether this\nvisitor already dismissed it is a cookie the frontend reads while rendering."
+              }
+            ]
+          },
           "discord": {
             "$ref": "#/components/schemas/DiscordCapability"
           }

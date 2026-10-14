@@ -206,7 +206,8 @@ Cloudflare's own certificate and put Caddy behind it.
 `ALLOWED_AFFILIATION_IDS` and `MAP_CREATOR_AFFILIATION_IDS` are asked for too; see
 [Who may use it](#who-may-use-it).
 
-Discord and the killmail ingest are optional and off unless configured; see `.env.example`.
+Discord, the killmail ingest and the [announcement banner](#announcements) are optional and
+off unless configured; see `.env.example`.
 `UPLOADS_DIR` (default `data/uploads`) is where uploaded background images land. In the
 container that path is the `uploads` volume, so leave it alone unless the API runs outside
 Docker.
@@ -253,6 +254,24 @@ maps. It covers importing a file as a new map too. Off the list, the maps page s
 no create or import buttons, and the API answers 403. Maps that already exist are not
 affected, and anyone given a role on one works on it as before. Empty, the default, lets
 everyone who can log in create maps.
+
+## Announcements
+
+A banner above every page, the landing page included, for planned downtime, a move to a new
+address, or anything else people should read before they use the map. `setup` does not ask
+for it; set it in `.env` and restart the API (`docker compose up -d api`).
+
+| key | what |
+|---|---|
+| `ANNOUNCEMENT_MESSAGE` | The text, in quotes. Empty turns the banner off. |
+| `ANNOUNCEMENT_TITLE` | A bold line above it, optional. |
+| `ANNOUNCEMENT_LEVEL` | `info` (the default), `warning` or `critical`; the colour. Anything else reads as `info`. |
+| `ANNOUNCEMENT_LINK_URL`, `ANNOUNCEMENT_LINK_LABEL` | A link under the text. The label defaults to the url; a label without a url shows nothing. |
+| `ANNOUNCEMENT_DISMISSIBLE` | `true` (the default) lets people close it; `false` keeps it up. |
+
+Closing it is remembered in a cookie against that exact announcement, so changing any of its
+text, its level or its link brings it back for everyone. The cookie is read while the page
+is rendered on the server, so a closed banner is never drawn and then taken away again.
 
 ## Discord
 

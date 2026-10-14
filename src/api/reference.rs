@@ -110,6 +110,9 @@ pub async fn reference_counts(State(state): State<AppState>) -> ApiResult<Refere
 #[ts(export)]
 pub struct Instance {
     pub discord: DiscordCapability,
+    /// The operator's site-wide banner, or `null`. Always the configured one: whether this
+    /// visitor already dismissed it is a cookie the frontend reads while rendering.
+    pub announcement: Option<crate::announcement::Announcement>,
 }
 
 #[derive(Serialize, ts_rs::TS, utoipa::ToSchema)]
@@ -122,8 +125,9 @@ pub struct DiscordCapability {
     pub bot: bool,
 }
 
-/// `GET /api/instance`: what this deployment has switched on. No actor check; it says
-/// nothing an anonymous visitor could not infer from which buttons appear.
+/// `GET /api/instance`: what this deployment has switched on, and what its operator wants
+/// everyone to read. No actor check; it says nothing an anonymous visitor could not infer
+/// from the page.
 #[utoipa::path(
     get,
     path = "/api/instance",
@@ -140,6 +144,7 @@ pub async fn instance(State(state): State<AppState>) -> ApiResult<Instance> {
                 .as_ref()
                 .is_some_and(|d| d.bot_token.is_some()),
         },
+        announcement: state.announcement.as_deref().cloned(),
     }))
 }
 

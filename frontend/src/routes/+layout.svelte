@@ -7,6 +7,7 @@
 	import { toast } from 'svelte-sonner';
 
 	import { errorMessage } from '$lib/api/client';
+	import AnnouncementBanner from '$lib/components/AnnouncementBanner.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import Nav from '$lib/components/Nav.svelte';
 	import Seo from '$lib/components/Seo.svelte';
@@ -53,6 +54,7 @@
 	<Toaster position="top-center" closeButton />
 	<ConfirmDialog />
 	<Nav me={data.me} maps={data.maps} status={data.status} />
+	<AnnouncementBanner announcement={data.announcement} />
 	<main class={flush ? '' : 'p-6'}>
 		{@render children()}
 	</main>
