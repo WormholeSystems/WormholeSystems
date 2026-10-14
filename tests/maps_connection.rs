@@ -717,3 +717,89 @@ async fn expiry_removes_dead_wormholes_and_what_they_strand(pool: PgPool) {
     assert_eq!(newest.kind, "connections.expired");
     assert_eq!(newest.character_id, None);
 }
+
+/// When a row was made and when its lifetime was last marked.
+async fn clocks_of(
+    pool: &PgPool,
+    table: &str,
+    id: i64,
+) -> (
+    chrono::DateTime<chrono::Utc>,
+    Option<chrono::DateTime<chrono::Utc>>,
+) {
+    let sql = match table {
+        "map_connections" => {
+            "select created_at, time_status_updated_at from map_connections where id = $1"
+        }
+        _ => "select created_at, time_status_updated_at from signatures where id = $1",
+    };
+    sqlx::query_as(sql).bind(id).fetch_one(pool).await.unwrap()
+}
+
+/// Undoing a removal puts the hole and the scan back as old as they were and EOL since when
+/// they were, so the ageing and the three-day expiry carry on rather than start over.
+#[sqlx::test]
+async fn an_undone_removal_keeps_its_clocks(pool: PgPool) {
+    use wormholesystems::maps::events_log::{MapIdBody, undo};
+    use wormholesystems::maps::signatures::{RemoveSignature, remove_signature};
+
+    let w = world(&pool).await;
+    let a = place(&pool, w.owner, w.map_id, SYS_A).await;
+    let b = place(&pool, w.owner, w.map_id, SYS_B).await;
+    let conn = connect(&pool, w.owner, w.map_id, a, b, ConnectionType::Wormhole).await;
+    sqlx::query("update map_connections set time_status = 'eol' where id = $1")
+        .bind(conn)
+        .execute(&pool)
+        .await
+        .unwrap();
+    age_by(&pool, conn, 30).await;
+    marked_ago(&pool, conn, 5).await;
+    let sig: i64 = sqlx::query_scalar(
+        r#"insert into signatures
+               (map_id, solar_system_id, signature_id, "group", time_status, created_at,
+                time_status_updated_at)
+           values ($1, $2, 'XYZ-987', 'wormhole', 'eol', now() - interval '2 days',
+                   now() - interval '3 hours')
+           returning id"#,
+    )
+    .bind(w.map_id)
+    .bind(SYS_B)
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    let connection_clocks = clocks_of(&pool, "map_connections", conn).await;
+    let signature_clocks = clocks_of(&pool, "signatures", sig).await;
+
+    remove_connection(
+        &pool,
+        w.owner,
+        RemoveConnection {
+            map_id: w.map_id,
+            connection_id: conn,
+        },
+    )
+    .await
+    .unwrap();
+    undo(&pool, w.owner, MapIdBody { map_id: w.map_id })
+        .await
+        .unwrap();
+    assert_eq!(
+        clocks_of(&pool, "map_connections", conn).await,
+        connection_clocks
+    );
+
+    remove_signature(
+        &pool,
+        w.owner,
+        RemoveSignature {
+            map_id: w.map_id,
+            signature_pk: sig,
+        },
+    )
+    .await
+    .unwrap();
+    undo(&pool, w.owner, MapIdBody { map_id: w.map_id })
+        .await
+        .unwrap();
+    assert_eq!(clocks_of(&pool, "signatures", sig).await, signature_clocks);
+}
