@@ -30,20 +30,17 @@ enum Scp {
     Many(Vec<String>),
 }
 
-/// Validate signature (via the SSO JWKS), issuer, audience, and expiry.
-pub async fn validate(
-    http: &reqwest::Client,
-    jwks_uri: &str,
-    issuer: &str,
-    client_id: &str,
-    token: &str,
-) -> Result<Claims> {
-    let header = decode_header(token).map_err(|e| EsiError::Jwt(e.to_string()))?;
-    let kid = header
+/// The id of the key that signed `token`, to pick it out of the SSO's key set.
+pub fn key_id(token: &str) -> Result<String> {
+    decode_header(token)
+        .map_err(|e| EsiError::Jwt(e.to_string()))?
         .kid
-        .ok_or_else(|| EsiError::Jwt("token has no `kid`".into()))?;
+        .ok_or_else(|| EsiError::Jwt("token has no `kid`".into()))
+}
 
-    let jwks: JwkSet = http.get(jwks_uri).send().await?.json().await?;
+/// Validate signature (against the SSO's key set), issuer, audience, and expiry.
+pub fn validate(jwks: &JwkSet, issuer: &str, client_id: &str, token: &str) -> Result<Claims> {
+    let kid = key_id(token)?;
     let jwk = jwks
         .find(&kid)
         .ok_or_else(|| EsiError::Jwt(format!("no JWK for kid {kid}")))?;
