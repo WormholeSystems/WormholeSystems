@@ -280,12 +280,16 @@ pub fn openapi() -> utoipa::openapi::OpenApi {
     api
 }
 
+/// The JSON API, compressed for clients that ask for gzip or zstd, so the standalone setup
+/// gets it without Caddy in front. The websockets are routed outside this, and the layer's
+/// default predicate leaves images and replies too small to bother with alone.
 pub fn router() -> Router<AppState> {
     let (router, api) = areas().split_for_parts();
     let spec = api.clone();
     router
         .route("/api/openapi.json", get(move || async move { Json(spec) }))
         .merge(Scalar::with_url("/api/docs", api))
+        .layer(tower_http::compression::CompressionLayer::new())
 }
 
 #[cfg(test)]
