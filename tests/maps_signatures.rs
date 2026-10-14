@@ -10,9 +10,9 @@ use wormholesystems::maps::connection::{
 };
 use wormholesystems::maps::map::{GetMap, get_map};
 use wormholesystems::maps::signatures::{
-    AddSignature, LinkSignature, RemoveSignature, Signature, UnlinkSignature, UpdateSignature,
-    add_signature, link_signature, list_signatures, remove_signature, unlink_signature,
-    update_signature,
+    AddSignature, LinkSignature, RemoveSignature, RemoveSignatures, Signature, UnlinkSignature,
+    UpdateSignature, add_signature, link_signature, list_signatures, remove_signature,
+    remove_signatures, unlink_signature, update_signature,
 };
 use wormholesystems::maps::solar_system::{AddSystem, add_system};
 use wormholesystems::maps::{
@@ -717,6 +717,81 @@ async fn a_connection_takes_one_signature_per_system(pool: PgPool) {
     let sigs = list_signatures(&pool, w.owner, w.map_id).await.unwrap();
     assert_eq!(scanned(&sigs, "AAA-111").connection_id, Some(first.id));
     assert_eq!(scanned(&sigs, "BBB-222").connection_id, None);
+}
+
+/// Bulk deleting the signature of a system's only connection takes the connection and the
+/// stranded far end, but never the system the signatures were in, even when that leaves it
+/// with no connections.
+#[sqlx::test]
+async fn bulk_remove_keeps_the_origin_system(pool: PgPool) {
+    let w = world(&pool).await;
+    let origin = place(&pool, w.owner, w.map_id, SYS_A).await;
+    let target = place(&pool, w.owner, w.map_id, SYS_B).await;
+    let conn = add_connection(
+        &pool,
+        w.owner,
+        AddConnection {
+            map_id: w.map_id,
+            from_system: origin,
+            to_system: target,
+            kind: wormholesystems::maps::ConnectionType::Wormhole,
+            size: None,
+        },
+    )
+    .await
+    .unwrap();
+    let scan = |id: &str| AddSignature {
+        map_id: w.map_id,
+        solar_system_id: SYS_A,
+        signature_id: id.into(),
+        group: SignatureGroup::Wormhole,
+        ..Default::default()
+    };
+    let connected = add_signature(&pool, w.owner, scan("AAA-111"))
+        .await
+        .unwrap();
+    let remaining = add_signature(&pool, w.owner, scan("BBB-222"))
+        .await
+        .unwrap();
+    link_signature(
+        &pool,
+        w.owner,
+        LinkSignature {
+            map_id: w.map_id,
+            signature_pk: connected.id,
+            connection_id: conn.id,
+        },
+    )
+    .await
+    .unwrap();
+
+    let out = remove_signatures(
+        &pool,
+        w.owner,
+        RemoveSignatures {
+            map_id: w.map_id,
+            signature_pks: vec![connected.id],
+        },
+    )
+    .await
+    .unwrap();
+    assert_eq!(out.removed_connection_ids, vec![conn.id]);
+    assert_eq!(out.removed_placement_ids, vec![target]);
+
+    let placed: Vec<i64> =
+        sqlx::query_scalar("select id from map_solar_systems where map_id = $1 order by id")
+            .bind(w.map_id)
+            .fetch_all(&pool)
+            .await
+            .unwrap();
+    assert_eq!(placed, vec![origin]);
+    let left: Vec<i64> = list_signatures(&pool, w.owner, w.map_id)
+        .await
+        .unwrap()
+        .iter()
+        .map(|s| s.id)
+        .collect();
+    assert_eq!(left, vec![remaining.id]);
 }
 
 /// Read the connection's current state back through `get_map`.

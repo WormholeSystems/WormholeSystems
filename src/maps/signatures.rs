@@ -536,8 +536,9 @@ pub struct BulkRemoveOutcome {
 
 /// Bulk delete (the panel's "delete missing signatures" path), with the full legacy
 /// cascade: each linked connection whose side is left without signatures is deleted, and
-/// endpoint placements that are not pinned / home / rally and have no remaining
-/// connections are removed from the map (taking their own signatures with them).
+/// its far-end placement, if not pinned / home / rally and left with no connections, is
+/// removed from the map (taking its own signatures with it). The system the signatures
+/// were in always stays.
 pub async fn remove_signatures(
     pool: &PgPool,
     actor: Actor,
@@ -579,18 +580,19 @@ pub(super) async fn apply_remove_signatures(
     let mut removed_connection_ids = Vec::new();
     let mut endpoint_candidates: Vec<i64> = Vec::new();
     for (conn_id, side_system) in sides {
-        if let Some(endpoints) =
+        if let Some(far_side) =
             delete_connection_if_side_empty(tx, cmd.map_id, conn_id, side_system).await?
         {
             removed_connection_ids.push(conn_id);
-            endpoint_candidates.extend(endpoints);
+            endpoint_candidates.extend(far_side);
         }
     }
     endpoint_candidates.sort_unstable();
     endpoint_candidates.dedup();
 
-    // Orphan cleanup: endpoints of the deleted connections that are unpinned, unmarked,
-    // and now connection-less disappear from the map.
+    // Orphan cleanup: the far ends of the deleted connections that are unpinned, unmarked,
+    // and now connection-less disappear from the map. Never the system the signatures were
+    // in: that is where the user is working, and losing its last hole doesn't make it stale.
     let mut removed_placement_ids = raised;
     for placement_id in endpoint_candidates {
         let deleted = sqlx::query!(
@@ -655,14 +657,14 @@ pub(super) async fn apply_remove_signatures(
 }
 
 /// Delete `conn_id` if no signature in `side_system` still references it (the legacy
-/// same-side survivor rule). Returns the connection's endpoint placement ids when it was
-/// deleted, `None` when a survivor kept it alive.
+/// same-side survivor rule). Returns `None` when a survivor kept it alive, otherwise the
+/// placement at the far end from `side_system`.
 async fn delete_connection_if_side_empty(
     tx: &mut Tx<'_>,
     map_id: i64,
     conn_id: i64,
     side_system: i64,
-) -> Result<Option<[i64; 2]>> {
+) -> Result<Option<Option<i64>>> {
     let survivors = sqlx::query_scalar!(
         "select count(*) from signatures
          where connection_id = $1 and solar_system_id = $2",
@@ -675,15 +677,29 @@ async fn delete_connection_if_side_empty(
     if survivors > 0 {
         return Ok(None);
     }
-    let endpoints = sqlx::query!(
+    let Some(endpoints) = sqlx::query!(
         "delete from map_connections where id = $1 and map_id = $2
          returning from_system, to_system",
         conn_id,
         map_id,
     )
     .fetch_optional(&mut **tx)
+    .await?
+    else {
+        return Ok(None);
+    };
+    // A ghost has no solar system, so it is always the far end.
+    let far_side = sqlx::query_scalar!(
+        "select id from map_solar_systems
+         where map_id = $1 and id in ($2, $3) and solar_system_id is distinct from $4",
+        map_id,
+        endpoints.from_system,
+        endpoints.to_system,
+        side_system,
+    )
+    .fetch_optional(&mut **tx)
     .await?;
-    Ok(endpoints.map(|e| [e.from_system, e.to_system]))
+    Ok(Some(far_side))
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema)]

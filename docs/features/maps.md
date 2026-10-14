@@ -413,8 +413,9 @@ when nothing matched.
 
 - **Auth:** `Member`. The panel's "delete missing signatures" path.
 - **Effect:** bulk delete with the full cascade: each linked connection whose side is
-  left without signatures is deleted, and endpoint placements that are not pinned /
-  home / rally and have no remaining connections are removed from the map.
+  left without signatures is deleted, and its far end is removed from the map when it
+  is not pinned / home / rally and has no remaining connections. The system the
+  signatures were in always stays, even once it has lost its last connection.
 
 ### `paste_signatures(actor, map_id, solar_system_id, signatures)`
 
