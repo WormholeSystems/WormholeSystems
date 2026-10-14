@@ -62,8 +62,12 @@ Install `wsctl`, the setup tool:
 curl --proto '=https' --tlsv1.2 -sSf https://install-next.wormhole.systems | sh
 ```
 
-It works out this machine's platform, drops the binary in `/usr/local/bin`, and offers to
-run the setup straight away. Pin a version with `WSCTL_VERSION=wsctl-v0.1.0`.
+It works out this machine's platform (Linux on x86_64 or arm64, macOS on Apple silicon or
+Intel), checks the download against the `SHA256SUMS` published with the release, and drops
+the binary in `/usr/local/bin`. Run inside a checkout, it offers to start the setup there;
+anywhere else, it offers to clone one first. Pin a version with
+`WSCTL_VERSION=wsctl-v0.6.0`; releases before 0.6 have no checksums and need
+`WSCTL_SKIP_VERIFY=1`.
 
 Then, in a checkout:
 

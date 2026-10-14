@@ -1,7 +1,8 @@
 name: Release wsctl
 
 # Cut a release by pushing a tag:  git tag wsctl-v0.1.0 && git push --tags
-# install.sh pulls the matching binary from the release this produces.
+# install.sh pulls the matching binary from the release this produces, and checks it
+# against the SHA256SUMS published beside it.
 on:
   push:
     tags: ["wsctl-v*"]
@@ -18,33 +19,39 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Native runners rather than cross-compiling: nothing here needs a cross
-          # toolchain, and a binary built on the platform it runs on is one less thing
-          # to be wrong about.
-          #
-          # No Intel macOS: the runner image for it is retired, and one queued job holds
-          # up the release of the Linux binaries this actually exists for. An Intel Mac
-          # builds it from source, which install.sh says.
+          # Native runners where there is one: a binary built on the platform it runs on
+          # is one less thing to be wrong about.
           - target: x86_64-unknown-linux-gnu
             runner: ubuntu-latest
           - target: aarch64-unknown-linux-gnu
             runner: ubuntu-24.04-arm
           - target: aarch64-apple-darwin
             runner: macos-latest
+          # Intel Macs are cross-compiled on the Apple silicon runner. GitHub's Intel
+          # images are being retired, and one queued job would hold up the release of the
+          # Linux binaries this exists for; Apple's toolchain builds for both from either.
+          - target: x86_64-apple-darwin
+            runner: macos-latest
+            cross: true
     steps:
       - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: ". -> target"
+          key: ${{ matrix.target }}
 
       - name: Build
-        run: cargo build --release -p wsctl
+        run: cargo build --release -p wsctl --target ${{ matrix.target }}
 
       - name: Name it after its target
-        run: |
-          mv target/release/wsctl "wsctl-${{ matrix.target }}"
-          ./wsctl-${{ matrix.target }} --version
+        run: mv "target/${{ matrix.target }}/release/wsctl" "wsctl-${{ matrix.target }}"
+
+      - name: Check it runs
+        if: ${{ !matrix.cross }}
+        run: ./wsctl-${{ matrix.target }} --version
 
       - uses: actions/upload-artifact@v4
         with:
@@ -61,13 +68,19 @@ jobs:
           path: dist
           merge-multiple: true
 
+      - name: Checksums
+        working-directory: dist
+        run: |
+          sha256sum wsctl-* > SHA256SUMS
+          cat SHA256SUMS
+
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
         run: |
           ls -la dist
-          gh release create "$TAG" dist/wsctl-* \
+          gh release create "$TAG" dist/wsctl-* dist/SHA256SUMS \
             --repo "$GITHUB_REPOSITORY" \
             --title "$TAG" \
             --generate-notes
