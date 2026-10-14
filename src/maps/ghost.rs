@@ -16,6 +16,7 @@ use super::command::{CommandOutput, Effect, MapCommand, Sequence, Tx, execute};
 use super::connection::{AddConnection, SetConnectionStatus};
 use super::error::{MapError, Result};
 use super::solar_system::{MapSolarSystem, SetAlias};
+use super::store::placements::{self, NewPlacement, PlacementRow};
 use super::{Actor, ConnectionType, MapEvent, MassStatus, TimeStatus, WormholeSize};
 
 /// Node width in world px, and the clear space kept between nodes, both mirroring
@@ -161,13 +162,7 @@ async fn drop_ghosts(tx: &mut Tx<'_>, map_id: i64, ids: &[i64]) -> Result<Vec<Ma
         })
         .collect();
 
-    sqlx::query!(
-        "delete from map_solar_systems where map_id = $1 and id = any($2)",
-        map_id,
-        ids,
-    )
-    .execute(&mut **tx)
-    .await?;
+    placements::delete(tx, map_id, ids).await?;
 
     let mut undo = vec![MapCommand::RestoreSystems(snapshot)];
     undo.extend(relink);
@@ -299,21 +294,17 @@ pub(super) async fn apply_add_ghost_system(tx: &mut Tx<'_>, cmd: AddGhostSystem)
             "an unmapped hole has to name the signature it was scanned as".into(),
         ));
     };
-    let ghost = sqlx::query_as!(
-        MapSolarSystem,
-        "insert into map_solar_systems
-             (map_id, solar_system_id, position_x, position_y, alias,
-              raised_by_signature_id, hangs_off_id)
-         values ($1, null, $2, $3, $4, $5, $6)
-         returning id, map_id, solar_system_id, position_x, position_y, alias, created_at",
+    let ghost = placements::insert(
+        tx,
         cmd.map_id,
-        cmd.x,
-        cmd.y,
-        cmd.alias.as_deref(),
-        signature_pk,
-        cmd.from_system,
+        &NewPlacement::ghost(
+            signature_pk,
+            cmd.from_system,
+            cmd.x,
+            cmd.y,
+            cmd.alias.as_deref(),
+        ),
     )
-    .fetch_one(&mut **tx)
     .await?;
 
     let effect = super::connection::apply_add_connection(
@@ -524,18 +515,9 @@ pub(super) async fn apply_resolve_ghost_system(
                 signature_pk: placement.raised_by_signature_id.ok_or(MapError::NotFound)?,
                 from_system: placement.hangs_off_id.ok_or(MapError::NotFound)?,
             };
-            let placed = sqlx::query_as!(
-                MapSolarSystem,
-                "update map_solar_systems
-                 set solar_system_id = $1, raised_by_signature_id = null, hangs_off_id = null
-                 where id = $2 and map_id = $3
-                 returning id, map_id, solar_system_id, position_x, position_y, alias, created_at",
-                solar_system_id,
-                cmd.map_solar_system_id,
-                cmd.map_id,
-            )
-            .fetch_one(&mut **tx)
-            .await?;
+            let placed =
+                placements::assign_system(tx, cmd.map_id, cmd.map_solar_system_id, solar_system_id)
+                    .await?;
             claim_pending_for(tx, cmd.map_id, cmd.map_solar_system_id, solar_system_id).await?;
             Ok(Effect::new(
                 "systems.details",
@@ -604,19 +586,13 @@ async fn unresolve(
         ));
     }
 
-    let placed = sqlx::query_as!(
-        MapSolarSystem,
-        "update map_solar_systems
-         set solar_system_id = null, is_home = false, rallied_at = null,
-             raised_by_signature_id = $3, hangs_off_id = $4
-         where id = $1 and map_id = $2
-         returning id, map_id, solar_system_id, position_x, position_y, alias, created_at",
-        cmd.map_solar_system_id,
+    let placed = placements::back_to_ghost(
+        tx,
         cmd.map_id,
+        cmd.map_solar_system_id,
         signature_pk,
         from_system,
     )
-    .fetch_one(&mut **tx)
     .await?;
 
     Ok(Effect::new(
@@ -761,22 +737,25 @@ pub(super) async fn apply_restore_ghost_system(
     tx: &mut Tx<'_>,
     cmd: RestoreGhostSystem,
 ) -> Result<Effect> {
-    sqlx::query!(
-        "insert into map_solar_systems
-             (id, map_id, solar_system_id, position_x, position_y, alias,
-              raised_by_signature_id, hangs_off_id)
-         overriding system value
-         values ($1, $2, null, $3, $4, $5, $6, $7)
-         on conflict (id) do nothing",
-        cmd.id,
+    // A ghost carries none of the marks a system earns, so the rest of the row is empty.
+    placements::reinsert(
+        tx,
         cmd.map_id,
-        cmd.position_x,
-        cmd.position_y,
-        cmd.alias.as_deref(),
-        cmd.raised_by_signature_id,
-        cmd.hangs_off_id,
+        &PlacementRow {
+            id: cmd.id,
+            solar_system_id: None,
+            position_x: cmd.position_x,
+            position_y: cmd.position_y,
+            alias: cmd.alias.clone(),
+            is_home: false,
+            is_rally: false,
+            rallied_at: None,
+            is_pinned: false,
+            raised_by_signature_id: Some(cmd.raised_by_signature_id),
+            hangs_off_id: Some(cmd.hangs_off_id),
+            signatures_pasted_at: None,
+        },
     )
-    .execute(&mut **tx)
     .await?;
     sqlx::query!(
         "update map_connections set from_system = $1 where map_id = $2 and id = any($3)",

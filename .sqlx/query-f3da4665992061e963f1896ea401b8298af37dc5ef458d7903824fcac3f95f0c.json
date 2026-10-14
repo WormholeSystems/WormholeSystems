@@ -1,11 +1,22 @@
 {
   "db_name": "PostgreSQL",
-  "query": "insert into map_connections\n                 (id, map_id, from_system, to_system, type, mass_status, time_status, size,\n                  preserve_mass)\n             overriding system value\n             values ($1, $2, $3, $4, $5, $6, $7, $8, $9)\n             on conflict (id) do nothing",
+  "query": "insert into map_connections\n             (map_id, from_system, to_system, type, mass_status, time_status, size,\n              time_status_updated_at, preserve_mass, created_at)\n         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, coalesce($10, now()))\n         returning id",
   "describe": {
-    "columns": [],
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "map_connections",
+            "name": "id"
+          }
+        }
+      }
+    ],
     "parameters": {
       "Left": [
-        "Int8",
         "Int8",
         "Int8",
         "Int8",
@@ -58,10 +69,14 @@
             }
           }
         },
-        "Bool"
+        "Timestamptz",
+        "Bool",
+        "Timestamptz"
       ]
     },
-    "nullable": []
+    "nullable": [
+      false
+    ]
   },
-  "hash": "bf71d521796e7550943d76404f17f1367516da15cba50043e9022afcb4925d2a"
+  "hash": "f3da4665992061e963f1896ea401b8298af37dc5ef458d7903824fcac3f95f0c"
 }

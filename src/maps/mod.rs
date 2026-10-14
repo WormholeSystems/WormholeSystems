@@ -20,6 +20,7 @@ pub mod map;
 pub mod restore;
 pub mod signatures;
 pub mod solar_system;
+mod store;
 pub mod tracking;
 pub mod transfer;
 pub mod view;

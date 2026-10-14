@@ -1,27 +1,27 @@
 {
   "db_name": "PostgreSQL",
-  "query": "delete from signatures where id = $1 and map_id = $2\n         returning solar_system_id, connection_id",
+  "query": "delete from map_connections where map_id = $1 and id = any($2)\n         returning from_system, to_system",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
-        "name": "solar_system_id",
+        "name": "from_system",
         "type_info": "Int8",
         "origin": {
           "Table": {
-            "table": "signatures",
-            "name": "solar_system_id"
+            "table": "map_connections",
+            "name": "from_system"
           }
         }
       },
       {
         "ordinal": 1,
-        "name": "connection_id",
+        "name": "to_system",
         "type_info": "Int8",
         "origin": {
           "Table": {
-            "table": "signatures",
-            "name": "connection_id"
+            "table": "map_connections",
+            "name": "to_system"
           }
         }
       }
@@ -29,13 +29,13 @@
     "parameters": {
       "Left": [
         "Int8",
-        "Int8"
+        "Int8Array"
       ]
     },
     "nullable": [
       false,
-      true
+      false
     ]
   },
-  "hash": "5dc055aebc795059e7728091710f81c08f06c7457e9a63e03ec6b2e06c2b6845"
+  "hash": "0829308622e3ca711266eb675d2b18f17d4d8d0082ef8e5d43a1287643c825a8"
 }

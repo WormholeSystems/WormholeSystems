@@ -22,6 +22,8 @@ use super::Role;
 use super::access::require_role;
 use super::command::{CommandOutput, Effect, EventActor, MapCommand, Tx, execute, execute_as};
 use super::error::{MapError, Result};
+use super::store::connections::{self, NewConnection};
+use super::store::placements;
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema)]
 #[ts(export)]
@@ -192,16 +194,11 @@ pub(super) async fn apply_add_connection(tx: &mut Tx<'_>, cmd: AddConnection) ->
         ));
     }
 
-    let id = sqlx::query_scalar!(
-        "insert into map_connections (map_id, from_system, to_system, type, size)
-         values ($1, $2, $3, $4, $5) returning id",
+    let id = connections::insert(
+        tx,
         cmd.map_id,
-        cmd.from_system,
-        cmd.to_system,
-        cmd.kind,
-        cmd.size,
+        &NewConnection::drawn(cmd.from_system, cmd.to_system, cmd.kind, cmd.size),
     )
-    .fetch_one(&mut **tx)
     .await?;
     let connection = fetch_connection_tx(tx, cmd.map_id, id).await?;
 
@@ -357,22 +354,10 @@ pub(super) async fn apply_remove_connection(
         restore.systems = super::restore::capture_systems(tx, cmd.map_id, &ghosts)
             .await?
             .systems;
-        sqlx::query!(
-            "delete from map_solar_systems where map_id = $1 and id = any($2)",
-            cmd.map_id,
-            &ghosts,
-        )
-        .execute(&mut **tx)
-        .await?;
+        placements::delete(tx, cmd.map_id, &ghosts).await?;
     }
 
-    sqlx::query!(
-        "delete from map_connections where id = $1 and map_id = $2",
-        cmd.connection_id,
-        cmd.map_id,
-    )
-    .execute(&mut **tx)
-    .await?;
+    connections::delete(tx, cmd.map_id, &[cmd.connection_id]).await?;
 
     let label = match ghosts.len() {
         0 => "removed a connection".to_string(),
@@ -528,13 +513,7 @@ async fn sweep(
         }
     }
     let ids: Vec<i64> = edges.iter().map(|e| e.id).collect();
-    sqlx::query!(
-        "delete from map_connections where map_id = $1 and id = any($2)",
-        map_id,
-        &ids,
-    )
-    .execute(&mut **tx)
-    .await?;
+    connections::delete(tx, map_id, &ids).await?;
 
     let mut endpoints: Vec<i64> = edges
         .iter()
@@ -544,31 +523,13 @@ async fn sweep(
     endpoints.dedup();
 
     // Same orphan rule as the signature cascade: unpinned, unmarked, and now edgeless.
-    let orphans = sqlx::query_scalar!(
-        r#"select id as "id!" from map_solar_systems mss
-           where mss.map_id = $1 and mss.id = any($2)
-             and not mss.is_pinned and not mss.is_home and not mss.is_rally
-             and not exists (
-                 select 1 from map_connections c
-                 where c.map_id = $1 and (c.from_system = mss.id or c.to_system = mss.id)
-             )"#,
-        map_id,
-        &endpoints,
-    )
-    .fetch_all(&mut **tx)
-    .await?;
+    let orphans = placements::orphans(tx, map_id, &endpoints).await?;
 
     if !orphans.is_empty() {
         let captured = super::restore::capture_systems(tx, map_id, &orphans).await?;
         snapshot.systems = captured.systems;
         snapshot.signatures = captured.signatures;
-        sqlx::query!(
-            "delete from map_solar_systems where map_id = $1 and id = any($2)",
-            map_id,
-            &orphans,
-        )
-        .execute(&mut **tx)
-        .await?;
+        placements::delete(tx, map_id, &orphans).await?;
     }
 
     let removed = ids.len() as u64;

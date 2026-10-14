@@ -1,0 +1,21 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into map_solar_systems\n             (map_id, solar_system_id, position_x, position_y, alias, is_pinned,\n              raised_by_signature_id, hangs_off_id)\n         values ($1, $2, $3, $4, $5, $6, $7, $8)\n         on conflict (map_id, solar_system_id)\n         do update set position_x = excluded.position_x, position_y = excluded.position_y,\n             alias = excluded.alias, is_pinned = excluded.is_pinned",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Float8",
+        "Float8",
+        "Text",
+        "Bool",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "5b9c67411dad42332e0d226c74f9291d73310da17f912f4cf7614e6d1dcf53f3"
+}

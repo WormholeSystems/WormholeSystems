@@ -26,6 +26,7 @@ use super::command::{CommandOutput, Effect, EventActor, Tx};
 use super::error::{MapError, Result};
 use super::map::Map;
 use super::solar_system::MAX_RALLY_POINTS;
+use super::store;
 use super::{
     Actor, AliasScheme, ConnectionType, MapLayout, MassStatus, Role, SignatureGroup, SubjectType,
     SystemStatus, TimeStatus, WormholeSize, events_log, ghost, signatures,
@@ -1201,22 +1202,11 @@ async fn import_solarsystems(
         .await?;
 
         let placed = if let (Some(x), Some(y)) = (entry.position_x, entry.position_y) {
-            sqlx::query!(
-                "insert into map_solar_systems
-                     (map_id, solar_system_id, position_x, position_y, alias, is_pinned)
-                 values ($1, $2, $3, $4, $5, $6)
-                 on conflict (map_id, solar_system_id)
-                 do update set position_x = excluded.position_x, position_y = excluded.position_y,
-                     alias = excluded.alias, is_pinned = excluded.is_pinned",
-                map_id,
-                id,
-                x,
-                y,
-                entry.alias.as_deref(),
-                entry.pinned.unwrap_or(false),
-            )
-            .execute(&mut **tx)
-            .await?;
+            let row = store::placements::NewPlacement {
+                is_pinned: entry.pinned.unwrap_or(false),
+                ..store::placements::NewPlacement::system(*id, x, y, entry.alias.as_deref())
+            };
+            store::placements::upsert_by_system(tx, map_id, &row).await?;
             true
         } else {
             false
@@ -1304,25 +1294,18 @@ async fn import_connections(
             ConnectionType::Stargate => (None, None, None),
         };
 
-        let id = sqlx::query_scalar!(
-            "insert into map_connections
-                 (map_id, from_system, to_system, type, mass_status, time_status, size,
-                  time_status_updated_at, preserve_mass, created_at)
-             values ($1, $2, $3, $4, $5, $6, $7, $8, $9, coalesce($10, now()))
-             returning id",
-            map_id,
-            from,
-            to,
-            entry.kind as ConnectionType,
-            mass as Option<MassStatus>,
-            time as Option<TimeStatus>,
-            size as Option<WormholeSize>,
-            entry.lifetime_updated_at,
-            entry.preserve_mass,
-            entry.connected_at,
-        )
-        .fetch_one(&mut **tx)
-        .await?;
+        let row = store::connections::NewConnection {
+            from_system: from,
+            to_system: to,
+            kind: entry.kind,
+            mass_status: mass,
+            time_status: time,
+            size,
+            preserve_mass: entry.preserve_mass,
+            time_status_updated_at: entry.lifetime_updated_at,
+            created_at: entry.connected_at,
+        };
+        let id = store::connections::insert(tx, map_id, &row).await?;
 
         existing.insert(pair, id);
         ids_by_index.insert(index as i64, id);
@@ -1447,33 +1430,18 @@ async fn import_signatures(
             (None, None, None, None)
         };
 
-        let id = sqlx::query_scalar!(
-            r#"insert into signatures
-                   (map_id, solar_system_id, signature_id, "group", signature_type_id, name,
-                    size, mass_status, time_status, connection_id,
-                    time_status_updated_at)
-               values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-                       case when $9::time_status is not null then now() end)
-               on conflict (map_id, solar_system_id, signature_id)
-               do update set "group" = excluded."group",
-                   signature_type_id = excluded.signature_type_id, name = excluded.name,
-                   size = excluded.size, mass_status = excluded.mass_status,
-                   time_status = excluded.time_status, connection_id = excluded.connection_id,
-                   updated_at = now()
-               returning id"#,
-            map_id,
-            entry.solarsystem_id,
+        let row = store::signatures::NewSignature {
+            solar_system_id: entry.solarsystem_id,
             signature_id,
-            group as SignatureGroup,
+            group,
             signature_type_id,
-            entry.raw_type_name.as_deref(),
-            size as Option<WormholeSize>,
-            mass as Option<MassStatus>,
-            time as Option<TimeStatus>,
+            name: entry.raw_type_name.as_deref(),
+            size,
+            mass_status: mass,
+            time_status: time,
             connection_id,
-        )
-        .fetch_one(&mut **tx)
-        .await?;
+        };
+        let id = store::signatures::upsert_by_scanner_id(tx, map_id, &row).await?;
 
         // The stamp trigger writes now() whenever the lifetime changes; the file knows
         // better, so its stamp is put back. Changing nothing else, this does not restamp.

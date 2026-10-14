@@ -1,11 +1,22 @@
 {
   "db_name": "PostgreSQL",
-  "query": "insert into signatures\n                   (id, map_id, solar_system_id, signature_id, \"group\", signature_type_id,\n                    name, size, mass_status, time_status, connection_id)\n               overriding system value\n               values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)\n               on conflict (id) do nothing",
+  "query": "insert into signatures\n               (map_id, solar_system_id, signature_id, \"group\", signature_type_id, name,\n                size, mass_status, time_status, connection_id,\n                time_status_updated_at)\n           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,\n                   case when $9::time_status is not null then now() end)\n           on conflict (map_id, solar_system_id, signature_id)\n           do update set \"group\" = excluded.\"group\",\n               signature_type_id = excluded.signature_type_id, name = excluded.name,\n               size = excluded.size, mass_status = excluded.mass_status,\n               time_status = excluded.time_status, connection_id = excluded.connection_id,\n               updated_at = now()\n           returning id",
   "describe": {
-    "columns": [],
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "signatures",
+            "name": "id"
+          }
+        }
+      }
+    ],
     "parameters": {
       "Left": [
-        "Int8",
         "Int8",
         "Int8",
         "Text",
@@ -70,7 +81,9 @@
         "Int8"
       ]
     },
-    "nullable": []
+    "nullable": [
+      false
+    ]
   },
-  "hash": "93d2f41cbc7e1baccde86b238696de1042c2222212dac625aceb3e8f6108080f"
+  "hash": "7dcd5220dab15387d524efc119cde67c0072ddc50c08a8e78d697c5e2d04556f"
 }
