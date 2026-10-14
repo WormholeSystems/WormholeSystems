@@ -389,40 +389,10 @@ async fn round_trip(pool: &PgPool, ghosting: bool, cases: &[Case]) {
 
 /// Cases whose undo or redo does not yet put the map back, and what it gets wrong.
 const KNOWN_GAPS: &[(&str, &str)] = &[
-    (
-        "remove_system",
-        "the jump log of a dying connection is not snapshotted",
-    ),
-    (
-        "remove_systems",
-        "the jump log of a dying connection is not snapshotted",
-    ),
-    (
-        "clear_map",
-        "the jump log of a dying connection is not snapshotted",
-    ),
-    ("remove_connection", "its jump log is not snapshotted"),
-    (
-        "remove_signature",
-        "the jump log of the connection it takes is not snapshotted",
-    ),
-    ("remove_signatures", "as remove_signature"),
-    (
-        "add_connection_jump",
-        "undoing it produces nothing to redo with",
-    ),
-    (
-        "remove_connection_jump",
-        "records no inverse, so it cannot be undone",
-    ),
     ("remove_watchlist_entry", "the entry comes back unpinned"),
     (
         "resolve_ghost_system onto a placed system",
         "undoing a merge yields an un-resolve rather than the merge, so redo refuses",
-    ),
-    (
-        "remove_system with its ghost",
-        "the jump log of a dying connection",
     ),
     (
         "update_signature away from a wormhole",
