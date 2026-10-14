@@ -50,10 +50,3 @@ export function searchQuery<T, K extends QueryKey>(opts: {
 		},
 	};
 }
-
-/** The standard empty-state line for a system search list. */
-export function searchEmptyCopy(settled: string, minChars = 2): string {
-	return settled.length < minChars
-		? 'Type at least two characters to search.'
-		: 'No systems found.';
-}

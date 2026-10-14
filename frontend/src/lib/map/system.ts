@@ -2,13 +2,11 @@ import type { MapSystemView } from '$lib/api/types/MapSystemView';
 import type { SystemSearchResult } from '$lib/api/types/SystemSearchResult';
 
 /**
- * The two halves of a map node, named, so a function can say which one it takes instead of
- * accepting either and checking again inside. Narrowed out of the wire union rather than
- * restated, so they cannot drift from what the server sends.
+ * The mapped half of a map node (the other is a ghost), named, so a function can say it
+ * takes one instead of accepting either and checking again inside. Narrowed out of the wire
+ * union rather than restated, so it cannot drift from what the server sends.
  */
 export type MappedSystem = Extract<MapSystemView, { kind: 'system' }>;
-
-export type GhostSystem = Extract<MapSystemView, { kind: 'ghost' }>;
 
 /** For the callers that only want the id and do not care which half they were handed. */
 export function solarSystemId(node: MapSystemView): number | null {

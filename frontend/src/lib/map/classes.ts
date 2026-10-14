@@ -1,7 +1,6 @@
 // Solar-system class metadata, ported from the legacy solarsystem_classes catalogue and
 // keyed by our numeric wormhole_class_id (k-space uses 7/8/9, Pochven 25).
 
-import type { SystemSearchResult } from '$lib/api/types/SystemSearchResult';
 import { ccpRoundSecurity } from '$lib/security';
 
 export interface ClassMeta {
@@ -83,18 +82,6 @@ export function destClassMeta(destClass: number | null): ClassMeta {
 
 export function isWormholeClass(wormholeClassId: number | null): boolean {
 	return wormholeClassId !== null && (CLASSES.get(wormholeClassId)?.isWormholeSpace ?? false);
-}
-
-/** How a system is labelled in a list: the short class, and the colour token for it. */
-export interface Classification {
-	badge: string;
-	token: string;
-}
-
-/** Search-dialog badge: class short label for w-space, otherwise the rounded security. */
-export function searchClassification(s: SystemSearchResult): Classification {
-	const m = classMeta(s.wormhole_class_id, s.security);
-	return { badge: m.short, token: m.token };
 }
 
 /** Text color for a wormhole effect, matched on keyword. */
