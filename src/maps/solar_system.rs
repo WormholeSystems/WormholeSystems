@@ -217,7 +217,9 @@ pub(super) async fn apply_clear_map(tx: &mut Tx<'_>, cmd: ClearMap) -> Result<Ef
     .fetch_all(&mut **tx)
     .await?;
     let snapshot = capture_systems(tx, cmd.map_id, &doomed).await?;
-    let deleted = placements::delete_all_unprotected(tx, cmd.map_id).await?;
+    // Exactly the rows the snapshot holds. Matching the condition again would also take a
+    // placement committed since the select, which the undo then could not bring back.
+    let deleted = placements::delete_unprotected(tx, cmd.map_id, &doomed).await?;
     Ok(Effect::new(
         "map.cleared",
         format!("cleared the map ({deleted} systems)"),
