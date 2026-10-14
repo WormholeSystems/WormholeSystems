@@ -55,6 +55,14 @@ import) a map, separately from who may log in. It is checked against the charact
 currently acting as. Everyone else can still work on the maps they are given access to; they
 just do not see the button to make one. Empty lets everyone create maps.
 
+## Announcing something
+
+To put a banner above every page, set `ANNOUNCEMENT_MESSAGE` in `.env` and restart the API.
+`ANNOUNCEMENT_TITLE`, `ANNOUNCEMENT_LEVEL` (`info`, `warning` or `critical`) and a link
+(`ANNOUNCEMENT_LINK_URL`, `ANNOUNCEMENT_LINK_LABEL`) are optional. People can close it, and
+it stays closed for them until you change what it says; `ANNOUNCEMENT_DISMISSIBLE=false`
+keeps it up for good. Empty the message to take it down.
+
 ## Looking after it
 
 | Command        | What it does                                                          |

@@ -37,6 +37,8 @@ pub struct AppState {
     /// Who may create maps, independent of who may log in: an instance can admit a whole
     /// alliance while only its leadership creates maps.
     pub map_creators: crate::allowlist::AffiliationAllowlist,
+    /// The site-wide banner, if the operator set one.
+    pub announcement: Option<Arc<crate::announcement::Announcement>>,
 }
 
 pub struct Auth {

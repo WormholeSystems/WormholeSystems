@@ -60,6 +60,7 @@ pub fn state(pool: &PgPool) -> AppState {
         ),
         allowed_logins: Default::default(),
         map_creators: Default::default(),
+        announcement: None,
     }
 }
 

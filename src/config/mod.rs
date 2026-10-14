@@ -1,6 +1,7 @@
 //! Application configuration, read from the environment (and a `.env` file in dev).
 
 use crate::allowlist::AffiliationAllowlist;
+use crate::announcement::{Announcement, AnnouncementVars};
 use crate::esi::{Scope, SsoConfig};
 use crate::maps::GridConfig;
 
@@ -34,6 +35,8 @@ pub struct Config {
     pub allowed_logins: AffiliationAllowlist,
     /// Who may create maps. Empty, the default, lets everyone who can log in create one.
     pub map_creators: AffiliationAllowlist,
+    /// The banner above every page, when the operator set one.
+    pub announcement: Option<Announcement>,
 }
 
 /// What the Discord half of the integration needs.
@@ -75,6 +78,7 @@ impl Config {
                 .unwrap_or_else(|| std::path::PathBuf::from("data/uploads")),
             allowed_logins: allowlist("ALLOWED_AFFILIATION_IDS")?,
             map_creators: allowlist("MAP_CREATOR_AFFILIATION_IDS")?,
+            announcement: announcement_from_env(),
         })
     }
 }
@@ -101,6 +105,26 @@ fn nonempty(key: &str) -> Option<String> {
 /// where the message names the variable, to wherever the value is first used.
 fn required(key: &'static str) -> Result<String, ConfigError> {
     nonempty(key).ok_or(ConfigError::Missing(key))
+}
+
+fn announcement_from_env() -> Option<Announcement> {
+    let var = |key: &str| std::env::var(key).ok();
+    let (level, title, message, link_url, link_label, dismissible) = (
+        var("ANNOUNCEMENT_LEVEL"),
+        var("ANNOUNCEMENT_TITLE"),
+        var("ANNOUNCEMENT_MESSAGE"),
+        var("ANNOUNCEMENT_LINK_URL"),
+        var("ANNOUNCEMENT_LINK_LABEL"),
+        var("ANNOUNCEMENT_DISMISSIBLE"),
+    );
+    Announcement::from_vars(AnnouncementVars {
+        level: level.as_deref(),
+        title: title.as_deref(),
+        message: message.as_deref(),
+        link_url: link_url.as_deref(),
+        link_label: link_label.as_deref(),
+        dismissible: dismissible.as_deref(),
+    })
 }
 
 /// A comma-separated list of EVE ids, empty when unset.
