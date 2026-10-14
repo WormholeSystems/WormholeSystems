@@ -90,6 +90,9 @@ export class MapGestures {
 			const d = map.drag;
 			const nx = map.clampNodeX(map.snap(w.x - d.offX));
 			const ny = map.clampNodeY(map.snap(w.y - d.offY));
+			// Most moves stay inside one grid cell. A fresh object would still count as a
+			// change and redraw every node and edge for nothing.
+			if (nx === d.x && ny === d.y) return;
 			map.drag = { ...d, x: nx, y: ny };
 		} else if (map.linking) {
 			map.linking = { ...map.linking, x: w.x, y: w.y };
@@ -147,6 +150,8 @@ export class MapGestures {
 	// press would retarget the upcoming contextmenu event away from the node under it.
 	onBackgroundDown(ev: PointerEvent) {
 		const map = this.map;
+		// Every gesture measures the canvas once at its start; the moves reuse that.
+		map.camera.remeasure();
 		map.closeMenu();
 		if (ev.button === 1) {
 			ev.preventDefault();
@@ -173,6 +178,7 @@ export class MapGestures {
 	/** Co-drags the whole (non-pinned) selection when the grabbed node is part of one. */
 	onNodeDown(ev: PointerEvent, s: MapSystemView) {
 		const map = this.map;
+		map.camera.remeasure();
 		if (ev.button !== 0 || map.layoutLocked || !map.canWrite) return;
 		ev.stopPropagation();
 		map.closeMenu();
@@ -201,6 +207,7 @@ export class MapGestures {
 
 	onLinkDown(ev: PointerEvent, id: number) {
 		const map = this.map;
+		map.camera.remeasure();
 		ev.stopPropagation();
 		if (!map.canWrite) return;
 		map.camera.viewportEl?.setPointerCapture(ev.pointerId);

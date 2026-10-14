@@ -39,13 +39,33 @@ export class MapCamera {
 		this.mapId = mapId;
 	}
 
+	// Where the canvas sits on screen, measured once and kept until something may have moved
+	// it. Reading it fresh on every pointer move would force a layout each time, right after
+	// the previous move's DOM writes.
+	private origin: { left: number; top: number } | null = null;
+
+	/**
+	 * Drop the measured screen position, so the next read measures again. Called where the
+	 * canvas can have moved: a page scroll, a resize, and the start of every gesture.
+	 */
+	remeasure() {
+		this.origin = null;
+	}
+
+	private screenOrigin(): { left: number; top: number } {
+		if (this.origin) return this.origin;
+		const el = this.viewportEl;
+		if (!el) return { left: 0, top: 0 };
+		const r = el.getBoundingClientRect();
+		this.origin = { left: r.left, top: r.top };
+		return this.origin;
+	}
+
 	viewportRect(): ViewportRect {
-		const r = this.viewportEl?.getBoundingClientRect();
+		const { left, top } = this.screenOrigin();
 		return {
-			// Position is read live: it only matters during a pointer event, and it moves
-			// with scrolling rather than with the element's own size.
-			left: r?.left ?? 0,
-			top: r?.top ?? 0,
+			left,
+			top,
 			// Size comes from the observer instead of the rect, because a rect read is not
 			// reactive: anything derived from it (the scrollbar thumbs) would keep the
 			// value it had when the canvas was first measured.
@@ -56,7 +76,7 @@ export class MapCamera {
 
 	/** Screen (client) point → world coords, accounting for pan + zoom. */
 	toWorld(clientX: number, clientY: number): Vec2 {
-		const r = this.viewportRect();
+		const r = this.screenOrigin();
 		return {
 			x: (clientX - r.left - this.pan.x) / this.zoom,
 			y: (clientY - r.top - this.pan.y) / this.zoom,

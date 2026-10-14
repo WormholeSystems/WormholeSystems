@@ -125,25 +125,59 @@ export function freeEdges(
 	positions: ReadonlyMap<number, Vec2>,
 	nodeH: number,
 ): Map<number, EdgeGeometry> {
-	const out = new Map<number, EdgeGeometry>();
-	const offsets = parallelOffsets(connections, nodeH);
-	for (const c of connections) {
-		const a = positions.get(c.from_system);
-		const b = positions.get(c.to_system);
-		if (!a || !b) continue;
-		const rail = nodeH / 2 + (offsets.get(c.id) ?? 0);
-		const from = railEndpoint(a.x, a.x + NODE_W, a.y + rail, b.x + NODE_W / 2);
-		const to = railEndpoint(b.x, b.x + NODE_W, b.y + rail, a.x + NODE_W / 2);
-		out.set(c.id, {
-			id: c.id,
-			kind: 'curve',
-			from,
-			to,
-			center: midpoint(from, to),
-			d: curveBetween(from, to),
-		});
-	}
-	return out;
+	return freeEdgeRouter()(connections, positions, nodeH);
+}
+
+/**
+ * [`freeEdges`] that remembers what it drew. A free edge depends on nothing but its two
+ * ends and its rail, so one whose ends are the same position objects as last time keeps
+ * its old geometry: dragging one node reroutes the few edges that touch it rather than the
+ * whole map, and an unchanged edge hands its component the same object, which then skips
+ * its update. When nothing changed at all the previous map comes back as it was.
+ */
+export function freeEdgeRouter() {
+	let drawn = new Map<number, { a: Vec2; b: Vec2; rail: number; geometry: EdgeGeometry }>();
+	let last: Map<number, EdgeGeometry> | null = null;
+
+	return (
+		connections: MapConnection[],
+		positions: ReadonlyMap<number, Vec2>,
+		nodeH: number,
+	): Map<number, EdgeGeometry> => {
+		const out = new Map<number, EdgeGeometry>();
+		const next: typeof drawn = new Map();
+		const offsets = parallelOffsets(connections, nodeH);
+		let reused = 0;
+		for (const c of connections) {
+			const a = positions.get(c.from_system);
+			const b = positions.get(c.to_system);
+			if (!a || !b) continue;
+			const rail = nodeH / 2 + (offsets.get(c.id) ?? 0);
+			const before = drawn.get(c.id);
+			if (before && before.a === a && before.b === b && before.rail === rail) {
+				next.set(c.id, before);
+				out.set(c.id, before.geometry);
+				reused++;
+				continue;
+			}
+			const from = railEndpoint(a.x, a.x + NODE_W, a.y + rail, b.x + NODE_W / 2);
+			const to = railEndpoint(b.x, b.x + NODE_W, b.y + rail, a.x + NODE_W / 2);
+			const geometry: EdgeGeometry = {
+				id: c.id,
+				kind: 'curve',
+				from,
+				to,
+				center: midpoint(from, to),
+				d: curveBetween(from, to),
+			};
+			next.set(c.id, { a, b, rail, geometry });
+			out.set(c.id, geometry);
+		}
+		drawn = next;
+		if (last && reused === out.size && out.size === last.size) return last;
+		last = out;
+		return out;
+	};
 }
 
 interface Routed {

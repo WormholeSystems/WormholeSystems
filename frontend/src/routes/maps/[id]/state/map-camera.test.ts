@@ -91,3 +91,35 @@ describe('viewportRect', () => {
 		expect(cam.viewportRect()).toEqual({ left: 0, top: 0, width: 800, height: 600 });
 	});
 });
+
+describe('screen origin', () => {
+	function attached(left: number, top: number) {
+		const cam = camera();
+		let reads = 0;
+		const rect = { left, top };
+		cam.viewportEl = {
+			getBoundingClientRect: () => {
+				reads++;
+				return rect;
+			},
+		} as unknown as HTMLElement;
+		return { cam, rect, reads: () => reads };
+	}
+
+	it('measures the canvas once and reuses it across moves', () => {
+		const { cam, reads } = attached(10, 20);
+		expect(cam.toWorld(110, 220)).toEqual({ x: 100, y: 200 });
+		cam.toWorld(0, 0);
+		cam.viewportRect();
+		expect(reads()).toBe(1);
+	});
+
+	it('measures again after being told the canvas may have moved', () => {
+		const { cam, rect, reads } = attached(10, 20);
+		cam.toWorld(0, 0);
+		rect.left = 50;
+		cam.remeasure();
+		expect(cam.toWorld(150, 20)).toEqual({ x: 100, y: 0 });
+		expect(reads()).toBe(2);
+	});
+});
