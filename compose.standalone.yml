@@ -23,6 +23,9 @@ services:
     extends:
       file: docker-compose.yml
       service: web
+    environment:
+      # Not plain `api`: on a shared network other stacks answer to that name too.
+      API_BASE: http://wormholesystems-api:3000
     networks:
       default:
       proxy:
