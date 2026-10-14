@@ -147,15 +147,30 @@ pub fn repo(runner: &mut dyn Runner, dir: &Path) -> Check {
             "Updates will have to be done by hand.",
         );
     }
+    // A branch that tracks nothing has nothing to be behind, and `update` cannot pull it.
+    let Ok(upstream) = runner.capture(
+        dir,
+        "git",
+        &["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"],
+    ) else {
+        return Check::warn(
+            "this branch tracks no remote branch",
+            "`wsctl update` pulls nothing until it does: git branch --set-upstream-to=origin/main",
+        );
+    };
     if runner.run(dir, "git", &["fetch", "--quiet"]).is_err() {
         return Check::warn("could not reach the remote", "Skipping the version check.");
     }
     match runner.capture(dir, "git", &["rev-list", "--count", "HEAD..@{u}"]) {
-        Ok(behind) if behind != "0" && !behind.is_empty() => Check::warn(
-            format!("{behind} commit(s) behind the remote"),
+        Ok(behind) if behind == "0" => Check::ok(format!("up to date with {upstream}")),
+        Ok(behind) if !behind.is_empty() => Check::warn(
+            format!("{behind} commit(s) behind {upstream}"),
             "`wsctl update` takes them.",
         ),
-        _ => Check::ok("up to date with the remote"),
+        _ => Check::warn(
+            format!("could not compare with {upstream}"),
+            "Skipping the version check.",
+        ),
     }
 }
 
@@ -477,6 +492,32 @@ mod tests {
         std::fs::write(dir.join(CERTS_DIR).join(DEFAULT_KEY), "").unwrap();
         assert_eq!(certificate_files(&dir).verdict, Verdict::Ok);
         std::fs::remove_dir_all(&dir).unwrap();
+    }
+
+    const UPSTREAM: &str = "git rev-parse --abbrev-ref --symbolic-full-name @{u}";
+    const BEHIND: &str = "git rev-list --count HEAD..@{u}";
+
+    #[test]
+    fn a_branch_without_an_upstream_is_not_up_to_date() {
+        let mut runner = crate::exec::Recording::default();
+        runner.failures.insert(UPSTREAM.into());
+        let check = repo(&mut runner, Path::new("."));
+        assert_eq!(check.verdict, Verdict::Warn);
+        assert!(!runner.commands.iter().any(|c| c.contains("fetch")));
+    }
+
+    #[test]
+    fn behind_and_current_are_counted_against_the_upstream() {
+        let mut runner = crate::exec::Recording::default();
+        runner.replies.insert(UPSTREAM.into(), "origin/main".into());
+        runner.replies.insert(BEHIND.into(), "0".into());
+        let check = repo(&mut runner, Path::new("."));
+        assert_eq!(check.verdict, Verdict::Ok);
+        assert_eq!(check.label, "up to date with origin/main");
+        runner.replies.insert(BEHIND.into(), "3".into());
+        assert_eq!(repo(&mut runner, Path::new(".")).verdict, Verdict::Warn);
+        runner.replies.insert(BEHIND.into(), String::new());
+        assert_eq!(repo(&mut runner, Path::new(".")).verdict, Verdict::Warn);
     }
 
     #[test]
