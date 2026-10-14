@@ -7,6 +7,7 @@ import type { AlertKind } from '$lib/api/types/AlertKind';
 import type { AlertMention } from '$lib/api/types/AlertMention';
 import type { DisabledReason } from '$lib/api/types/DisabledReason';
 import type { JumpShip } from '$lib/api/types/JumpShip';
+import type { MapAlert } from '$lib/api/types/MapAlert';
 import type { Side } from '$lib/api/types/Side';
 import type { Subject } from '$lib/api/types/Subject';
 
@@ -100,3 +101,23 @@ export const DISABLED_REASON = {
 	destination_gone: 'Discord rejected the destination: the webhook or channel is gone',
 	delivery_failed: 'Too many failed deliveries',
 } satisfies Record<DisabledReason, string>;
+
+/** One line saying what a saved alert watches for, for its row in the list. */
+export function alertSummary(alert: MapAlert): string {
+	const target = alert.target_system_name ?? 'a system';
+	if (alert.kind === 'jump_range') {
+		const ship = shipLabel(alert.ship_type ?? null) ?? 'a capital';
+		return `An exit within ${ship} range (JDC ${alert.jdc_level ?? 0}) of ${target}`;
+	}
+	const within = `within ${alert.max_jumps} ${alert.max_jumps === 1 ? 'jump' : 'jumps'}`;
+	if (alert.kind === 'killmail') {
+		const rules = alert.filters.length;
+		return rules === 0
+			? `Anything that dies ${within}`
+			: `${rules} ${rules === 1 ? 'filter' : 'filters'} (${alert.filter_match}), ${within}`;
+	}
+	if (alert.origin_system_name) {
+		return `${target} ${within} of ${alert.origin_system_name}, through the chain`;
+	}
+	return `${target} ${within}`;
+}

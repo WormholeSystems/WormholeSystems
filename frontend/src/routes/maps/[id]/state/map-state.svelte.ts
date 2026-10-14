@@ -21,7 +21,13 @@ import { NODE_W, clamp, type Vec2 } from '$lib/map/geometry';
 import { freeEdgeRouter, treeEdges, type EdgeGeometry } from '$lib/map/edges';
 import { draggedPositions, type Drag } from '$lib/map/gestures';
 import { compareForTree, computeTreeLayout } from '$lib/map/tree';
-import { edgeTopologyKey, reusePositions, treeShapeKey } from '$lib/map/positions';
+import {
+	edgeTopologyKey,
+	nodePositions,
+	reusePositions,
+	settlePending,
+	treeShapeKey,
+} from '$lib/map/positions';
 import { routeOrigin } from '$lib/routing/origin';
 import { ghostSignatureIds } from '$lib/map/ghosts';
 import { layoutMode } from '$lib/map/layout-mode';
@@ -281,18 +287,9 @@ export class MapState {
 	// optimistic override, then the server position. Entries keep their identity while
 	// their coordinates do, so only the nodes and edges that moved redraw.
 	positions = $derived.by(() => {
-		let out = this.treePositions;
-		if (!out) {
-			out = new Map<number, Vec2>();
-			const dragged = this.drag ? draggedPositions(this.drag) : new Map<number, Vec2>();
-			for (const s of this.systemsView) {
-				out.set(
-					s.id,
-					dragged.get(s.id) ?? this.pending[s.id] ?? { x: s.position_x, y: s.position_y },
-				);
-			}
-		}
-		const next = reusePositions(new Map(out), this.lastPositions);
+		const dragged = this.drag ? draggedPositions(this.drag) : new Map<number, Vec2>();
+		const out = nodePositions(this.systemsView, this.treePositions, dragged, this.pending);
+		const next = reusePositions(out, this.lastPositions);
 		this.lastPositions = next;
 		return next;
 	});
@@ -415,16 +412,11 @@ export class MapState {
 			const data = this.queries.graph.data;
 			if (!data) return;
 			this.shareResolved();
-			const pending = { ...untrack(() => this.pending) };
-			let changed = false;
-			for (const [id, p] of Object.entries(pending)) {
-				const s = data.systems.find((s) => s.id === Number(id));
-				if (!s || (Math.abs(s.position_x - p.x) <= 0.5 && Math.abs(s.position_y - p.y) <= 0.5)) {
-					delete pending[Number(id)];
-					changed = true;
-				}
-			}
-			if (changed) this.pending = pending;
+			const left = settlePending(
+				untrack(() => this.pending),
+				data.systems,
+			);
+			if (left) this.pending = left;
 		});
 	}
 

@@ -39,6 +39,54 @@ export function reusePositions(
 }
 
 /**
+ * Where each node is drawn. An automatic layout owns every position when there is one;
+ * otherwise a live drag wins, then a dropped move still waiting on the server, then the
+ * stored position.
+ */
+export function nodePositions(
+	systems: readonly MapSystemView[],
+	layout: ReadonlyMap<number, Vec2> | null,
+	dragged: ReadonlyMap<number, Vec2>,
+	pending: Readonly<Record<number, Vec2>>,
+): Map<number, Vec2> {
+	if (layout) return new Map(layout);
+	const out = new Map<number, Vec2>();
+	for (const s of systems) {
+		out.set(s.id, dragged.get(s.id) ?? pending[s.id] ?? { x: s.position_x, y: s.position_y });
+	}
+	return out;
+}
+
+/** How far a stored position may sit from a dropped one and still count as it landing. */
+const LANDED_TOLERANCE = 0.5;
+
+/**
+ * The moves still waiting on the server once a graph payload arrived, or null when none of
+ * them settled. A move settles when the server has it (ours landed) or the system is gone;
+ * one the server does not have yet keeps the node where it was dropped.
+ */
+export function settlePending(
+	pending: Readonly<Record<number, Vec2>>,
+	systems: readonly MapSystemView[],
+): Record<number, Vec2> | null {
+	const left = { ...pending };
+	let changed = false;
+	for (const [key, p] of Object.entries(pending)) {
+		const id = Number(key);
+		const s = systems.find((s) => s.id === id);
+		const landed =
+			s !== undefined &&
+			Math.abs(s.position_x - p.x) <= LANDED_TOLERANCE &&
+			Math.abs(s.position_y - p.y) <= LANDED_TOLERANCE;
+		if (!s || landed) {
+			delete left[id];
+			changed = true;
+		}
+	}
+	return changed ? left : null;
+}
+
+/**
  * Which connections exist and what they join: all the edge router reads off them. Mass,
  * lifetime and size changes leave it alone.
  */
