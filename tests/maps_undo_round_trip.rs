@@ -391,10 +391,6 @@ async fn round_trip(pool: &PgPool, ghosting: bool, cases: &[Case]) {
 const KNOWN_GAPS: &[(&str, &str)] = &[
     ("remove_watchlist_entry", "the entry comes back unpinned"),
     (
-        "resolve_ghost_system onto a placed system",
-        "undoing a merge yields an un-resolve rather than the merge, so redo refuses",
-    ),
-    (
         "update_signature away from a wormhole",
         "undo brings the ghost back but not the scan's link to it",
     ),

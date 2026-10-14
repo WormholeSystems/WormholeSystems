@@ -739,6 +739,23 @@ pub(super) async fn apply_restore_ghost_system(
     tx: &mut Tx<'_>,
     cmd: RestoreGhostSystem,
 ) -> Result<Effect> {
+    // The system the ghost was merged into, read off the edges it was handed before they go
+    // back: redoing the merge is resolving the ghost as that system again.
+    let merged_into = sqlx::query_scalar!(
+        "select p.solar_system_id
+         from map_connections c
+         join map_solar_systems p
+           on p.id = case when c.id = any($2) then c.from_system else c.to_system end
+         where c.map_id = $1 and (c.id = any($2) or c.id = any($3))
+         limit 1",
+        cmd.map_id,
+        &cmd.from_connection_ids,
+        &cmd.to_connection_ids,
+    )
+    .fetch_optional(&mut **tx)
+    .await?
+    .flatten();
+
     // A ghost carries none of the marks a system earns, so the rest of the row is empty.
     placements::reinsert(
         tx,
@@ -786,14 +803,23 @@ pub(super) async fn apply_restore_ghost_system(
     .fetch_one(&mut **tx)
     .await?;
 
-    let inverse = MapCommand::ResolveGhostSystem(ResolveGhostSystem::unresolve(
-        cmd.map_id,
-        cmd.id,
-        Raised {
-            signature_pk: cmd.raised_by_signature_id,
-            from_system: cmd.hangs_off_id,
+    let inverse = MapCommand::ResolveGhostSystem(match merged_into {
+        Some(solar_system_id) => ResolveGhostSystem {
+            map_id: cmd.map_id,
+            map_solar_system_id: cmd.id,
+            solar_system_id: Some(solar_system_id),
+            ..Default::default()
         },
-    ));
+        // No edge to say where it went, which a ghost always has: the old answer stands.
+        None => ResolveGhostSystem::unresolve(
+            cmd.map_id,
+            cmd.id,
+            Raised {
+                signature_pk: cmd.raised_by_signature_id,
+                from_system: cmd.hangs_off_id,
+            },
+        ),
+    });
     let mut events = vec![MapEvent::SystemAdded {
         map_id: cmd.map_id,
         map_solar_system_id: cmd.id,
