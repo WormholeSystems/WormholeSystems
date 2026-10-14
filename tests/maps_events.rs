@@ -142,6 +142,43 @@ async fn every_mutation_records_a_step_and_advances_the_cursor(pool: PgPool) {
 /// The bug this model replaced: undo used to append a new journal row, so after one undo
 /// the buttons could only ever offer "redo", which toggled the same change on and off for
 /// ever and grew the journal on every press.
+/// The listing walks the applied path only as far back as the page reaches, which must
+/// not change what it says about the entries on it.
+#[sqlx::test]
+async fn a_history_longer_than_the_page_still_marks_what_is_applied(pool: PgPool) {
+    let w = world(&pool).await;
+    let a = place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    for i in 0..60 {
+        set_alias(
+            &pool,
+            w.owner,
+            SetAlias {
+                map_id: w.map_id,
+                map_solar_system_id: a,
+                alias: Some(format!("A{i}")),
+            },
+        )
+        .await
+        .unwrap();
+    }
+    for _ in 0..5 {
+        step_back(&pool, w.owner, w.map_id).await;
+    }
+
+    let h = history(&pool, w.owner, w.map_id).await;
+    assert_eq!(h.entries.len(), 50, "one page, of 61 steps");
+    for (i, e) in h.entries.iter().enumerate() {
+        assert_eq!(
+            e.applied,
+            i >= 5,
+            "entry {i}: only the five newest are undone"
+        );
+    }
+    assert_eq!(h.head_event_id, Some(h.entries[5].id));
+    assert_eq!(h.undo_target, Some(h.entries[6].id));
+    assert_eq!(h.redo_target, Some(h.entries[4].id));
+}
+
 #[sqlx::test]
 async fn undo_and_redo_settle_instead_of_toggling_for_ever(pool: PgPool) {
     let w = world(&pool).await;
