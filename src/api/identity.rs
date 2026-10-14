@@ -258,10 +258,15 @@ impl From<CharacterError> for ApiError {
                 status: StatusCode::CONFLICT,
                 message: err.to_string(),
             },
-            CharacterError::Upstream(err) => ApiError {
-                status: StatusCode::BAD_GATEWAY,
-                message: err.to_string(),
-            },
+            // What ESI said goes to the log: it can name the token, the route and our own
+            // backoff state, none of which the caller can act on.
+            CharacterError::Upstream(err) => {
+                tracing::warn!("waypoint: ESI failed: {err}");
+                ApiError {
+                    status: StatusCode::BAD_GATEWAY,
+                    message: "EVE did not take the waypoint, try again in a moment".into(),
+                }
+            }
             CharacterError::Db(err) => ApiError::from(err),
         }
     }
@@ -326,4 +331,18 @@ pub async fn set_waypoint_all(
     )
     .await?;
     Ok(Json(()))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn an_esi_failure_does_not_reach_the_caller() {
+        let err = ApiError::from(CharacterError::Upstream(crate::esi::EsiError::Store(
+            "refresh token wst_secret rejected".into(),
+        )));
+        assert_eq!(err.status, axum::http::StatusCode::BAD_GATEWAY);
+        assert!(!err.message.contains("wst_secret"), "{}", err.message);
+    }
 }
