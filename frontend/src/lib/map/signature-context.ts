@@ -23,6 +23,9 @@ export type SignaturePatch = Omit<UpdateSignature, 'map_id' | 'signature_pk'>;
 export interface SignatureContext {
 	systems: MapSystemView[];
 	connections: MapConnection[];
+	/** The same placements and edges by id, built once, since every row looks its own up. */
+	systemById: ReadonlyMap<number, MapSystemView>;
+	connectionById: ReadonlyMap<number, MapConnection>;
 	sigs: Signature[];
 	/** How the chain is named, for the bookmark a row copies. */
 	naming: MapNaming | null;
@@ -45,10 +48,12 @@ interface SignatureHost {
 	readonly naming: MapNaming | null;
 	systems: {
 		readonly all: MapSystemView[];
+		readonly byId: ReadonlyMap<number, MapSystemView>;
 		rename(system: MapSystemView, alias: string | null, occupier: string | null): void;
 	};
 	connections: {
 		readonly all: MapConnection[];
+		readonly byId: ReadonlyMap<number, MapConnection>;
 		patch(connectionId: number, patch: { preserve_mass: boolean }): void;
 	};
 	signatures: { readonly all: Signature[] } & Omit<
@@ -69,6 +74,12 @@ export function makeSignatureContext(map: SignatureHost): SignatureContext {
 		},
 		get connections() {
 			return map.connections.all;
+		},
+		get systemById() {
+			return map.systems.byId;
+		},
+		get connectionById() {
+			return map.connections.byId;
 		},
 		get sigs() {
 			return map.signatures.all;

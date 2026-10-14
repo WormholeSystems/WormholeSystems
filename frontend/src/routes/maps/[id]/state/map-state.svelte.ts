@@ -182,6 +182,8 @@ export class MapState {
 
 	private systemsView = $derived(this.data?.systems ?? []);
 	private connectionsView = $derived(this.data?.connections ?? []);
+	private systemsById = $derived(new Map(this.systemsView.map((s) => [s.id, s])));
+	private connectionsById = $derived(new Map(this.connectionsView.map((c) => [c.id, c])));
 	activeSystem = $derived(this.systemsView.find((s) => s.id === this.activeId) ?? null);
 	routeOrigin = $derived.by(() =>
 		routeOrigin(
@@ -318,6 +320,7 @@ export class MapState {
 			mapId,
 			camera: this.camera,
 			all: () => this.systemsView,
+			byId: () => this.systemsById,
 			orphaned: () => this.orphaned,
 			grid: () => this.grid,
 			run,
@@ -330,6 +333,7 @@ export class MapState {
 		this.connections = new ConnectionsApi({
 			mapId,
 			all: () => this.connectionsView,
+			byId: () => this.connectionsById,
 			stale: () => this.queries.stale.data ?? [],
 			systems: () => this.systemsView,
 			run,

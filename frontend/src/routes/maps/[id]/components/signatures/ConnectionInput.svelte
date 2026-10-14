@@ -29,7 +29,7 @@
 
 	function target(c: MapConnection): MapSystemView | null {
 		const otherPid = c.from_system === system.id ? c.to_system : c.from_system;
-		return ctx.systems.find((s) => s.id === otherPid) ?? null;
+		return ctx.systemById.get(otherPid) ?? null;
 	}
 
 	const candidates = $derived.by(() => {

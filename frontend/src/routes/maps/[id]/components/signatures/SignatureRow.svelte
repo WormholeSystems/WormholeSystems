@@ -54,16 +54,14 @@
 	const cat = $derived(categoryMeta(sig.group));
 
 	const connection = $derived(
-		sig.connection_id === null
-			? null
-			: (ctx.connections.find((c) => c.id === sig.connection_id) ?? null),
+		sig.connection_id === null ? null : (ctx.connectionById.get(sig.connection_id) ?? null),
 	);
 	// The linked connection's far end, for type narrowing and the bookmark class.
 	const linkedTarget = $derived.by(() => {
 		if (!connection) return null;
 		const otherPid =
 			connection.from_system === system.id ? connection.to_system : connection.from_system;
-		return ctx.systems.find((s) => s.id === otherPid) ?? null;
+		return ctx.systemById.get(otherPid) ?? null;
 	});
 	/** The far end once it is a system: a hole nobody has been through has none of this. */
 	const linkedSystem = $derived(linkedTarget?.kind === 'system' ? linkedTarget : null);

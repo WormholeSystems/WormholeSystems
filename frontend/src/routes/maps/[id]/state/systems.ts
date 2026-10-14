@@ -15,6 +15,7 @@ export interface SystemsHost {
 	mapId: number;
 	camera: MapCamera;
 	all(): MapSystemView[];
+	byId(): ReadonlyMap<number, MapSystemView>;
 	/** The placements nothing connects back to the rest of the chain. */
 	orphaned(): MapSystemView[];
 	grid(): GridConfig;
@@ -29,6 +30,11 @@ export class SystemsApi {
 	/** Every node on the map, ghosts included. */
 	get all(): MapSystemView[] {
 		return this.host.all();
+	}
+
+	/** Every node by placement id, built once per graph. */
+	get byId(): ReadonlyMap<number, MapSystemView> {
+		return this.host.byId();
 	}
 
 	/** The dead branches: placements cut off from the rest of the chain. */
