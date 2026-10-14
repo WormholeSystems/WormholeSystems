@@ -165,6 +165,26 @@ The signatures it was linked to are unlinked, not deleted; the
 [signature expiry](#see-also--other-periodic-work) collects them on its own schedule,
 since a wormhole signature that old is past its 3 day cutoff too.
 
+## Discord alerts
+
+Evaluating an alert and sending its message are separate, so a slow or dead Discord
+costs messages and never holds up anything else (`src/alerts/mod.rs`).
+
+- Evaluation decides which alerts fire and claims each occasion in
+  `map_alert_deliveries` before anything is sent. Map changes are evaluated by a
+  subscriber to every map's events (a placement for proximity and jump range, a wormhole
+  for proximity); killmails by a worker the ingest hands them to.
+- The active alerts are cached in memory. Any change logged to `map_alert_events` (which
+  every write to an alert or its destination is) invalidates the copy at once, and it is
+  reloaded at least every minute regardless.
+- Messages go to a delivery queue of 256, sent four at a time. When it is full the new
+  message is dropped with a warning and its claim handed back: a backlog that deep means
+  Discord is down or throttling, and news that old is not worth sending late.
+- The event subscriber can still fall behind the 128-event channel. It logs that and
+  replays every placement and wormhole made since the last event it took (with 30 s of
+  slack, at most 10 minutes) on maps with a proximity or jump-range alert. The claims
+  make the replay harmless for what was already handled.
+
 ## See also — other periodic work
 
 Documented with their own tables; listed here so the background-work picture is in one

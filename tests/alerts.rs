@@ -186,7 +186,9 @@ async fn place(pool: &PgPool, runtime: &Runtime, actor: Actor, map_id: i64, sys:
     )
     .await
     .unwrap();
-    runtime.placed(pool, map_id, placed.id).await;
+    for out in runtime.placed(pool, map_id, placed.id).await {
+        runtime.send(pool, out).await;
+    }
     placed.id
 }
 
@@ -211,7 +213,9 @@ async fn connect(
     )
     .await
     .unwrap();
-    runtime.connected(pool, map_id, connection.id).await;
+    for out in runtime.connected(pool, map_id, connection.id).await {
+        runtime.send(pool, out).await;
+    }
     connection.id
 }
 
@@ -414,7 +418,9 @@ async fn a_connection_that_completes_the_route_fires_once(pool: PgPool) {
     assert!(sent[0].contains("1 jump away"), "{}", sent[0]);
 
     // A status change re-reports the connection; the route is the same, so nothing new.
-    runtime.connected(&pool, w.map_id, connection).await;
+    for out in runtime.connected(&pool, w.map_id, connection).await {
+        runtime.send(&pool, out).await;
+    }
     assert_eq!(inbox.descriptions().len(), 1);
 }
 
@@ -445,5 +451,122 @@ async fn without_a_starting_point_the_nearest_mapped_system_counts(pool: PgPool)
         inbox.descriptions().len(),
         1,
         "the connection is not a new occasion"
+    );
+}
+
+/// The runtime keeps the active alerts in memory, but a change made through the store is
+/// seen on the very next evaluation rather than once the copy expires.
+#[sqlx::test]
+async fn a_switched_off_alert_stops_firing_at_once(pool: PgPool) {
+    let w = world(&pool).await;
+    seed_gates(&pool).await;
+    let inbox = Inbox::start().await;
+    let alert = proximity_alert(&pool, w.map_id, &inbox, SYS_C, None, 1).await;
+    let runtime = Runtime::load(&pool, None).await.unwrap();
+
+    place(&pool, &runtime, w.owner, w.map_id, SYS_F).await;
+    assert!(inbox.descriptions().is_empty(), "F is three gates from C");
+
+    wormholesystems::maps::alerts::set_active(&pool, w.map_id, alert, w.owner.user_id, false, None)
+        .await
+        .unwrap();
+    place(&pool, &runtime, w.owner, w.map_id, SYS_B).await;
+    assert!(inbox.descriptions().is_empty(), "the alert is off");
+}
+
+fn kill_in(id: i64, solar_system_id: i64) -> alerts::killmail::Kill {
+    alerts::killmail::Kill {
+        id,
+        solar_system_id,
+        candidates: Candidates::default(),
+        victim_name: Some("Pilot".into()),
+        victim_ship: Some("a Loki".into()),
+        victim_ship_type_id: None,
+        attacker_name: None,
+        total_value: None,
+        attacker_count: Some(1),
+        is_solo: true,
+        is_npc: false,
+    }
+}
+
+/// A batch of kills is weighed against each map's chain, and a kill already claimed is
+/// not claimed again however often it comes round.
+#[sqlx::test]
+async fn kills_near_the_chain_are_claimed_once(pool: PgPool) {
+    let w = world(&pool).await;
+    seed_gates(&pool).await;
+    let inbox = Inbox::start().await;
+    let webhook = make_webhook(&pool, w.map_id, &inbox.url).await;
+    sqlx::query!(
+        "insert into map_alerts (map_id, name, kind, delivery, map_webhook_id, max_jumps)
+         values ($1, 'Kills', 'killmail', 'webhook', $2, 2)",
+        w.map_id,
+        webhook,
+    )
+    .execute(&pool)
+    .await
+    .unwrap();
+    let runtime = Runtime::load(&pool, None).await.unwrap();
+    place(&pool, &runtime, w.owner, w.map_id, SYS_A).await;
+
+    let batch = [kill_in(1, SYS_C), kill_in(2, SYS_F), kill_in(3, SYS_A)];
+    let out = runtime.killmails(&pool, &batch).await;
+    let keys: Vec<&str> = out.iter().map(|o| o.key.as_str()).collect();
+    assert_eq!(keys, ["killmail:1", "killmail:3"], "F is five gates out");
+    for message in out {
+        runtime.send(&pool, message).await;
+    }
+    let sent = inbox.descriptions();
+    assert_eq!(sent, ["in New Caldari, 2 jumps from Jita", "in Jita"]);
+
+    assert!(runtime.killmails(&pool, &batch).await.is_empty());
+}
+
+/// Placing through the map's own event stream reaches Discord by way of the delivery
+/// worker, without anyone waiting on it.
+#[sqlx::test]
+async fn the_subscriber_hands_messages_to_the_delivery_worker(pool: PgPool) {
+    let w = world(&pool).await;
+    seed_gates(&pool).await;
+    let inbox = Inbox::start().await;
+    proximity_alert(&pool, w.map_id, &inbox, SYS_C, None, 1).await;
+    let runtime = Arc::new(Runtime::load(&pool, None).await.unwrap());
+    // A hub of its own: the process-wide one carries other tests' maps.
+    let hub = wormholesystems::maps::MapHub::new();
+    alerts::start(pool.clone(), hub.clone(), runtime);
+    // Give the subscriber a moment to subscribe before anything is published.
+    tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+
+    let placed = add_system(
+        &pool,
+        w.owner,
+        AddSystem {
+            map_id: w.map_id,
+            solar_system_id: SYS_B,
+            x: 0.0,
+            y: 0.0,
+            alias: None,
+        },
+    )
+    .await
+    .unwrap();
+    hub.publish(wormholesystems::maps::MapEvent::SystemAdded {
+        map_id: w.map_id,
+        map_solar_system_id: placed.id,
+    });
+
+    for _ in 0..100 {
+        if !inbox.descriptions().is_empty() {
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+    }
+    let sent = inbox.descriptions();
+    assert_eq!(sent.len(), 1);
+    assert!(
+        sent[0].contains("**Perimeter** was just added"),
+        "{}",
+        sent[0]
     );
 }

@@ -166,7 +166,8 @@ async fn alert_on(
         is_solo: detail.is_solo,
         is_npc: detail.is_npc,
     };
-    alerts.killmail(pool, &kill).await;
+    let out = alerts.killmails(pool, std::slice::from_ref(&kill)).await;
+    alerts.enqueue(pool, out).await;
 }
 
 /// Tell every map holding this system that something died in it. The event carries no

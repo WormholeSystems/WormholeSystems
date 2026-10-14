@@ -3,14 +3,17 @@
 //! Every killmail the ingest stores is offered to every active killmail alert, which fires
 //! when its filters match the kill and the kill happened within its jump range of the map.
 //!
-//! Runs after the killmail is written and off the ingest's critical path: the stream is
-//! sequential, and a slow Discord must not stall it.
+//! Runs after the killmail is written and off the ingest's critical path: the ingest hands
+//! kills to a worker, which evaluates them and leaves Discord to the delivery worker.
+
+use std::collections::HashMap;
+use std::sync::Arc;
 
 use sqlx::PgPool;
 
 use super::delivery::{Embed, Field, Footer, Image, security_color};
 use super::proximity::{self, Universe};
-use super::{Alert, AlertKind, filters};
+use super::{Alert, Outgoing, filters};
 use crate::util::security::ccp_round_security;
 
 /// Everything a message needs to say about one kill.
@@ -28,34 +31,38 @@ pub struct Kill {
     pub is_npc: bool,
 }
 
-/// Offer a killmail to every alert watching for one.
+/// Offer a killmail to the killmail alerts, and claim the ones it fires. `chains` holds the
+/// maps already read in this batch, so a busy minute does not reread a chain per kill.
 pub async fn evaluate(
     pool: &PgPool,
-    http: &reqwest::Client,
-    bot_token: Option<&str>,
     universe: &Universe,
+    alerts: &[Alert],
     kill: &Kill,
-) {
-    let Ok(alerts) = super::active(pool, AlertKind::Killmail).await else {
-        return;
-    };
-    if alerts.is_empty() {
-        return;
-    }
+    chains: &mut HashMap<i64, Option<Arc<Chain>>>,
+) -> Vec<Outgoing> {
     // Filters are cheap and the route is not, so rule the alert out on its filters first.
     let interested: Vec<&Alert> = alerts
         .iter()
         .filter(|a| filters::matches(&a.filters, a.filter_match, &kill.candidates))
         .collect();
     if interested.is_empty() {
-        return;
+        return Vec::new();
     }
 
     let Ok(system) = system_name(pool, kill.solar_system_id).await else {
-        return;
+        return Vec::new();
     };
+    let mut out = Vec::new();
     for alert in interested {
-        let Some(chain) = chain_of(pool, alert.map_id).await else {
+        let chain = match chains.get(&alert.map_id) {
+            Some(chain) => chain.clone(),
+            None => {
+                let chain = chain_of(pool, alert.map_id).await.map(Arc::new);
+                chains.insert(alert.map_id, chain.clone());
+                chain
+            }
+        };
+        let Some(chain) = chain else {
             continue;
         };
         let Some(found) = proximity::nearest(
@@ -78,9 +85,13 @@ pub async fn evaluate(
             .await
             .map(|s| s.name)
             .unwrap_or_default();
-        let embed = build(kill, &system, &from, found.jumps);
-        super::fire(pool, http, bot_token, alert, &key, embed).await;
+        out.push(Outgoing {
+            alert: alert.clone(),
+            key,
+            embed: build(kill, &system, &from, found.jumps),
+        });
     }
+    out
 }
 
 fn build(kill: &Kill, system: &System, from: &str, jumps: i32) -> Embed {
