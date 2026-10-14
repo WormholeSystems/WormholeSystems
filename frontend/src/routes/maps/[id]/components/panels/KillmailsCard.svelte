@@ -7,8 +7,7 @@
 
 	import { createQuery } from '@tanstack/svelte-query';
 
-	import { api } from '$lib/api/client';
-	import { key } from '$lib/api/queries';
+	import { q } from '$lib/api/queries';
 	import { KILLMAIL_FILTERS } from '$lib/map/killmails';
 	import { ticking } from '$lib/now.svelte';
 	import type { MapKillmail } from '$lib/api/types/MapKillmail';
@@ -50,13 +49,10 @@
 	);
 	const awaitingSelection = $derived(followsSelection && selected === null);
 
-	// The list is scoped to the map's systems, so adding one is as much a change as a
-	// fresh kill arriving: both are part of the key. A kill frame off the socket
-	// invalidates the killmails prefix, which this key sits under, so a live kill refetches
-	// through the same filter rather than landing in the list as is.
+	// Adding a system is as much a change as a fresh kill arriving, so the systems are part
+	// of the key; a live kill refetches through the same filter rather than landing as is.
 	const killsQuery = createQuery(() => ({
-		queryKey: [...key.killmails(map.mapId), filter, selected, systemKey(map.systems.all)],
-		queryFn: ({ signal }) => api.mapKillmails(map.mapId, selected, signal),
+		...q.mapKillmails(map.mapId, filter, selected, systemKey(map.systems.all)),
 		// With nothing selected there is nothing to ask for.
 		enabled: !awaitingSelection,
 	}));

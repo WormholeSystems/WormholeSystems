@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/svelte-query';
 import { api } from './client';
+import type { KillmailScope } from './types/KillmailScope';
 
 // Every read goes through one of these, so the key hierarchy stays coherent in one place.
 // Convention: the map socket invalidates ['maps', mapId, ...] prefixes; no page invalidates
@@ -102,10 +103,13 @@ export const q = {
 		}),
 	listAccess: (id: number) =>
 		queryOptions({ queryKey: key.access(id), queryFn: ({ signal }) => api.listAccess(id, signal) }),
-	mapKillmails: (id: number) =>
+	// The list is scoped by the viewer's filter and the map's systems, so both are part of
+	// the key; a kill frame invalidates the killmails prefix every variant sits under.
+	// `selected` matters only to the filter that follows the selection.
+	mapKillmails: (id: number, filter: KillmailScope, selected: number | null, systems: string) =>
 		queryOptions({
-			queryKey: key.killmails(id),
-			queryFn: ({ signal }) => api.mapKillmails(id, null, signal),
+			queryKey: [...key.killmails(id), filter, selected, systems],
+			queryFn: ({ signal }) => api.mapKillmails(id, selected, signal),
 		}),
 	mapHistory: (id: number) =>
 		queryOptions({

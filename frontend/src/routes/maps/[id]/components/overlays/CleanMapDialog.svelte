@@ -9,7 +9,7 @@
 
 	let { map, open = $bindable() }: { map: MapState; open: boolean } = $props();
 
-	const going = $derived(map.orphaned);
+	const going = $derived(map.systems.orphaned);
 	const anchors = $derived(map.systems.all.filter((s) => s.is_pinned || s.is_home));
 	const signatures = $derived(
 		map.signatures.all.filter((sig) => going.some((s) => solarSystemId(s) === sig.solar_system_id))
@@ -17,7 +17,7 @@
 	);
 
 	function clean() {
-		map.cleanMap();
+		map.systems.removeOrphaned();
 		open = false;
 	}
 </script>

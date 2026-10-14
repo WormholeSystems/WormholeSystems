@@ -13,7 +13,7 @@ import type { MapView } from '$lib/api/types/MapView';
 import type { GridConfig } from '$lib/api/types/GridConfig';
 import type { Signature } from '$lib/api/types/Signature';
 import { MAP_ACTIONS, type MapAction } from '$lib/map/actions';
-import { createUserSettingsWriter } from '$lib/map/user-settings';
+import { createBackgroundImageWriter, createUserSettingsWriter } from '$lib/map/user-settings';
 import { createCoalescer } from './coalesce';
 import { keysFor } from './invalidations';
 
@@ -118,6 +118,7 @@ export function createMapQueries(
 	}));
 
 	const settingsWriter = createUserSettingsWriter();
+	const backgroundWriter = createBackgroundImageWriter();
 
 	return {
 		client,
@@ -134,6 +135,7 @@ export function createMapQueries(
 		myCharacters,
 		write,
 		settingsWriter,
+		backgroundWriter,
 		invalidateAll,
 		/** Refetch what one socket frame invalidated; [`keysFor`] holds the table. */
 		applyEvent(event: MapEvent | null) {

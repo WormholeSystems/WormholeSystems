@@ -6,7 +6,7 @@
 
 import { untrack } from 'svelte';
 
-import { api, errorMessage } from '$lib/api/client';
+import { errorMessage } from '$lib/api/client';
 import { key, q } from '$lib/api/queries';
 import type { GridConfig } from '$lib/api/types/GridConfig';
 import type { MapSystemView } from '$lib/api/types/MapSystemView';
@@ -26,7 +26,7 @@ import { routeOrigin } from '$lib/routing/origin';
 import { ghostSignatureIds } from '$lib/map/ghosts';
 import { layoutMode } from '$lib/map/layout-mode';
 import { orphanedSystems } from '$lib/map/orphans';
-import { type MapAction } from '$lib/map/actions';
+import type { MapAction, RunAction } from '$lib/map/actions';
 import { MapCamera } from './map-camera.svelte';
 import { HistoryStore } from './history.svelte';
 import { createMapQueries, type MapQueries, type MapSeed } from './map-queries.svelte';
@@ -45,6 +45,8 @@ import { SystemsApi } from './systems';
 import { IgnoredApi } from './ignored';
 import { WatchlistApi } from './watchlist';
 import { WaypointsApi } from './waypoints';
+import { PlacementApi } from './placement';
+import { BackgroundApi } from './background';
 
 export type { Drag };
 
@@ -103,6 +105,8 @@ export class MapState {
 	ignored: IgnoredApi;
 	characters: CharactersApi;
 	waypoints: WaypointsApi;
+	placement: PlacementApi;
+	background: BackgroundApi;
 
 	get data() {
 		return this.queries.graph.data ?? null;
@@ -309,12 +313,12 @@ export class MapState {
 		this.camera = new MapCamera(mapId);
 		this.signedIn = signedIn;
 		this.queries = createMapQueries(mapId, signedIn, seed, () => this.socket === 'open');
-		const run = (action: MapAction, promise: Promise<unknown>, detail?: string) =>
-			this.run(action, promise, detail);
+		const run: RunAction = (action, exec, detail) => this.run(action, exec, detail);
 		this.systems = new SystemsApi({
 			mapId,
 			camera: this.camera,
 			all: () => this.systemsView,
+			orphaned: () => this.orphaned,
 			grid: () => this.grid,
 			run,
 			notesLocal: (id, notes) =>
@@ -362,6 +366,14 @@ export class MapState {
 			},
 		});
 		this.waypoints = new WaypointsApi({ run });
+		this.placement = new PlacementApi({
+			mapId,
+			mapLayout: () => this.data?.map.layout ?? null,
+			run,
+			patchSettingsLocal: (update) => this.queries.patchSettingsLocal(update),
+			patchUserSettings: (patch) => this.patchUserSettings(patch),
+		});
+		this.background = new BackgroundApi({ mapId, writer: this.queries.backgroundWriter });
 		this.history = new HistoryStore({
 			mapId,
 			data: () => this.queries.history.data ?? null,
@@ -372,12 +384,12 @@ export class MapState {
 			setHiddenPanels: (panels) =>
 				this.queries.patchSettingsLocal((s) => ({ ...s, hidden_panels: panels })),
 			save: (layouts, hidden) => {
-				const write = this.saveUserSettings(
-					{ layout_breakpoints: layouts, hidden_panels: hidden },
-					{ quiet: true },
-				).then((saved) => saved.layout_breakpoints ?? null);
-				this.run('saveLayout', write);
-				return write;
+				return this.run('saveLayout', () =>
+					this.saveUserSettings(
+						{ layout_breakpoints: layouts, hidden_panels: hidden },
+						{ quiet: true },
+					).then((saved) => saved.layout_breakpoints ?? null),
+				);
 			},
 		});
 		this.route = new RoutePlanner(this.routeHost());
@@ -509,28 +521,13 @@ export class MapState {
 	 * at the call site; the refetch policy lives on the mutation, in [`createMapQueries`].
 	 * Private on purpose: components go through the domain namespaces.
 	 */
-	private run(action: MapAction, promise: Promise<unknown>, detail?: string) {
-		this.queries.write.mutate({ action, exec: () => promise, detail });
-	}
-
-	/** Take everything off the map. */
-	clear() {
-		this.run('clearMap', api.clearMap({ map_id: this.mapId }));
-	}
-
-	/**
-	 * Pick a placement for yourself. Choosing the map's own mode clears the override
-	 * rather than pinning the same value, so a later change to the map still reaches you.
-	 */
-	setLayoutOverride(mode: 'manual' | 'tree') {
-		const own = mode === this.data?.map.layout ? null : mode;
-		this.queries.patchSettingsLocal((s) => ({ ...s, layout_override: own ?? undefined }));
-		this.patchUserSettings({ layout_override: own });
-	}
-
-	/** The map's own placement mode, set from the introduction. */
-	setPlacement(layout: 'manual' | 'tree') {
-		this.run('setPlacement', api.updateMap({ map_id: this.mapId, layout }));
+	private run<T>(action: MapAction, exec: () => Promise<T>, detail?: string): Promise<T> {
+		// The shared mutation hands back whatever `exec` resolved to.
+		const write = this.queries.write.mutateAsync({ action, exec, detail }) as Promise<T>;
+		// Already toasted by the mutation; this only keeps a dropped promise from being
+		// reported as unhandled. A caller that waits still sees the rejection.
+		write.catch(() => {});
+		return write;
 	}
 
 	/**
@@ -549,18 +546,7 @@ export class MapState {
 		return this.queries.settingsWriter.saveAsync(this.mapId, patch, opts);
 	}
 
-	orphaned = $derived(orphanedSystems(this.systemsView, this.connectionsView));
-
-	/** Take the dead branches off the map. */
-	cleanMap() {
-		const ids = this.orphaned.map((s) => s.id);
-		if (ids.length === 0) return;
-		this.run(
-			'cleanMap',
-			api.removeSystems({ map_id: this.mapId, map_solar_system_ids: ids }),
-			`${ids.length} ${ids.length === 1 ? 'system' : 'systems'}`,
-		);
-	}
+	private orphaned = $derived(orphanedSystems(this.systemsView, this.connectionsView));
 
 	snap(v: number): number {
 		return Math.round(v / this.grid.cell_size) * this.grid.cell_size;

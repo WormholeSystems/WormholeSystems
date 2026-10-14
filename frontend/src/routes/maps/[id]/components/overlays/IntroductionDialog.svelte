@@ -56,9 +56,6 @@
 	// everyone else would meet a choice they cannot make.
 	const isOwner = $derived(map.data?.role === 'owner');
 	const placement = $derived(map.data?.map.layout === 'tree' ? 'tree' : 'manual');
-	function setPlacement(layout: 'manual' | 'tree') {
-		map.setPlacement(layout);
-	}
 
 	function update(patch: UpdateMapUserSettings) {
 		map.patchUserSettings(patch);
@@ -176,7 +173,7 @@
 										)}
 										aria-pressed={chosen}
 										data-testid="setup-placement-{option.value}"
-										onclick={() => setPlacement(option.value)}
+										onclick={() => map.placement.setForMap(option.value)}
 									>
 										<span class="flex w-full items-center gap-2">
 											<span

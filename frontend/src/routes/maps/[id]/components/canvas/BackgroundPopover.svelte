@@ -6,16 +6,12 @@
 	import ImageUpIcon from '@lucide/svelte/icons/image-up';
 	import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
 	import Trash2Icon from '@lucide/svelte/icons/trash-2';
-	import { toast } from 'svelte-sonner';
 
-	import { api } from '$lib/api/client';
-	import { apiAction } from '$lib/api/mutations';
-	import { key } from '$lib/api/queries';
 	import type { BackgroundMode } from '$lib/api/types/BackgroundMode';
 	import { Button } from '$lib/components/ui/button';
 	import * as Popover from '$lib/components/ui/popover';
 	import * as Tooltip from '$lib/components/ui/tooltip';
-	import { ACCEPTED_IMAGE_TYPES, BACKGROUND_MODES, rejectImage } from '$lib/map/background';
+	import { ACCEPTED_IMAGE_TYPES, BACKGROUND_MODES, takePickedFile } from '$lib/map/background';
 	import { cn } from '$lib/utils';
 	import type { MapState } from '../../state/map-state.svelte';
 
@@ -26,33 +22,20 @@
 	const image = $derived(map.userSettings?.background_image_url ?? null);
 	const mode = $derived(map.userSettings?.background_image_mode ?? 'grid');
 
-	const imageAction = apiAction(() => [key.userSettings(map.mapId)]);
 	let fileInput = $state<HTMLInputElement | null>(null);
 	let dragging = $state(false);
 
-	function send(file: File) {
-		const reason = rejectImage(file);
-		if (reason) {
-			toast.error(reason);
-			return;
-		}
-		imageAction.mutate(() => api.uploadBackgroundImage(map.mapId, file));
-	}
-
 	function onFilePicked(event: Event) {
-		const input = event.currentTarget as HTMLInputElement;
-		const file = input.files?.[0];
-		// Cleared so picking the same file again after a removal fires change again.
-		input.value = '';
-		if (file) send(file);
+		const file = takePickedFile(event);
+		if (file) map.background.upload(file);
 	}
 
 	function onDrop(event: DragEvent) {
 		event.preventDefault();
 		dragging = false;
-		if (imageAction.isPending) return;
+		if (map.background.pending) return;
 		const file = event.dataTransfer?.files?.[0];
-		if (file) send(file);
+		if (file) map.background.upload(file);
 	}
 
 	function setMode(next: BackgroundMode) {
@@ -87,8 +70,8 @@
 							variant="ghost"
 							size="sm"
 							class="h-6 gap-1 px-2 text-xs text-muted-foreground hover:text-destructive"
-							disabled={imageAction.isPending}
-							onclick={() => imageAction.mutate(() => api.removeBackgroundImage(map.mapId))}
+							disabled={map.background.pending}
+							onclick={() => map.background.remove()}
 							data-testid="background-remove"
 						>
 							<Trash2Icon class="size-3.5" />
@@ -118,7 +101,7 @@
 						tabindex="0"
 						aria-label={image ? 'Replace background image' : 'Choose background image'}
 						data-testid="background-dropzone"
-						onclick={() => !imageAction.isPending && fileInput?.click()}
+						onclick={() => !map.background.pending && fileInput?.click()}
 						onkeydown={(e) => e.key === 'Enter' && fileInput?.click()}
 						ondragover={(e) => {
 							e.preventDefault();
@@ -147,7 +130,7 @@
 								<span class="text-[10px]">PNG, JPG, GIF or WebP, up to 8 MiB</span>
 							</div>
 						{/if}
-						{#if imageAction.isPending}
+						{#if map.background.pending}
 							<div class="absolute inset-0 flex items-center justify-center bg-background/70">
 								<LoaderCircleIcon class="size-5 animate-spin" />
 							</div>

@@ -50,7 +50,7 @@
 			body: 'This removes all systems except home and pinned ones.',
 			action: 'Clear map',
 		});
-		if (sure) map.clear();
+		if (sure) map.systems.clearAll();
 	}
 
 	// Loaded on demand, so none of it reaches a built app.
@@ -79,10 +79,10 @@
 		Delete selection
 	</button>
 {/if}
-{#if map.orphaned.length > 0}
+{#if map.systems.orphaned.length > 0}
 	<button class={item} onclick={cleanMap} data-testid="clean-map">
 		<BrushCleaningIcon class="size-4" />
-		Clean map ({map.orphaned.length})
+		Clean map ({map.systems.orphaned.length})
 	</button>
 {/if}
 <button class={item} onclick={clearMap}>

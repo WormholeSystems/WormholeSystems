@@ -25,6 +25,17 @@ export const BACKGROUND_MODES: readonly {
 
 export const BACKGROUND_MODE_VALUES = BACKGROUND_MODES.map((m) => m.value);
 
+/**
+ * The file a picker's change event carries. The input is cleared on the way, so picking the
+ * same file again after a removal fires change again.
+ */
+export function takePickedFile(event: Event): File | null {
+	const input = event.currentTarget as HTMLInputElement;
+	const file = input.files?.[0] ?? null;
+	input.value = '';
+	return file;
+}
+
 /** Why a picked file cannot be sent, or null when it can. */
 export function rejectImage(file: File): string | null {
 	if (!file.type.startsWith('image/')) return 'That is not an image.';

@@ -160,7 +160,7 @@
 				</Tooltip.Root>
 			{/if}
 
-			{#if map.orphaned.length > 0 && canWrite}
+			{#if map.systems.orphaned.length > 0 && canWrite}
 				<!-- What a collapsed hole leaves behind: a branch nothing reaches any more. -->
 				<Badge
 					variant="outline"
@@ -169,7 +169,7 @@
 					onclick={() => (map.cleanPrompt = true)}
 				>
 					<BrushCleaningIcon />
-					{map.orphaned.length} adrift
+					{map.systems.orphaned.length} adrift
 				</Badge>
 			{/if}
 

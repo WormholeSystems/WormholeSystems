@@ -2,12 +2,12 @@
 
 import { api } from '$lib/api/client';
 import type { WatchlistEntry } from '$lib/api/types/WatchlistEntry';
-import type { MapAction } from '$lib/map/actions';
+import type { RunAction } from '$lib/map/actions';
 
 export interface WatchlistHost {
 	mapId: number;
 	all(): WatchlistEntry[];
-	run(action: MapAction, promise: Promise<unknown>, detail?: string): void;
+	run: RunAction;
 }
 
 export class WatchlistApi {
@@ -18,23 +18,20 @@ export class WatchlistApi {
 	}
 
 	add(solarSystemId: number) {
-		this.host.run(
-			'watch',
+		this.host.run('watch', () =>
 			api.addWatchlistEntry({ map_id: this.host.mapId, solar_system_id: solarSystemId }),
 		);
 	}
 
 	remove(entryId: number) {
-		this.host.run(
-			'unwatch',
+		this.host.run('unwatch', () =>
 			api.removeWatchlistEntry({ map_id: this.host.mapId, entry_id: entryId }),
 		);
 	}
 
 	/** Pinned entries surface as route quick-picks. */
 	setPinned(entryId: number, value: boolean) {
-		this.host.run(
-			'setPinned',
+		this.host.run('setPinned', () =>
 			api.setWatchlistPinned({ map_id: this.host.mapId, entry_id: entryId, value }),
 		);
 	}

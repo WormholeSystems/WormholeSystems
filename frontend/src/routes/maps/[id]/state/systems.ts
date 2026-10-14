@@ -6,7 +6,7 @@ import type { GridConfig } from '$lib/api/types/GridConfig';
 import type { ResolveGhostSystem } from '$lib/api/types/ResolveGhostSystem';
 import type { MapSystemView } from '$lib/api/types/MapSystemView';
 import type { SystemStatus } from '$lib/api/types/SystemStatus';
-import type { MapAction } from '$lib/map/actions';
+import type { RunAction } from '$lib/map/actions';
 import { centerWorld, freePosition, type Vec2 } from '$lib/map/geometry';
 import { heuristicSize } from '$lib/map/mass';
 import type { MapCamera } from './map-camera.svelte';
@@ -15,8 +15,10 @@ export interface SystemsHost {
 	mapId: number;
 	camera: MapCamera;
 	all(): MapSystemView[];
+	/** The placements nothing connects back to the rest of the chain. */
+	orphaned(): MapSystemView[];
 	grid(): GridConfig;
-	run(action: MapAction, promise: Promise<unknown>, detail?: string): void;
+	run: RunAction;
 	/** The local echo for a saved note, so it reads back before the server confirms it. */
 	notesLocal(mapSolarSystemId: number, notes: string | null): void;
 }
@@ -29,6 +31,11 @@ export class SystemsApi {
 		return this.host.all();
 	}
 
+	/** The dead branches: placements cut off from the rest of the chain. */
+	get orphaned(): MapSystemView[] {
+		return this.host.orphaned();
+	}
+
 	/**
 	 * Place a system at a free spot near `anchor` (default: the middle of the view);
 	 * `connectFrom` also links the new placement to an existing node in the same action.
@@ -39,27 +46,24 @@ export class SystemsApi {
 			centerWorld(this.host.camera.pan, this.host.camera.zoom, this.host.camera.viewportRect());
 		const at = freePosition(this.all, base, this.host.grid());
 		const from = opts.connectFrom ?? null;
-		this.host.run(
-			'addSystem',
-			(async () => {
-				const placed = await api.addSystem({
+		this.host.run('addSystem', async () => {
+			const placed = await api.addSystem({
+				map_id: this.host.mapId,
+				solar_system_id: solarSystemId,
+				x: at.x,
+				y: at.y,
+				alias: null,
+			});
+			if (from !== null && from !== placed.id) {
+				await api.addConnection({
 					map_id: this.host.mapId,
-					solar_system_id: solarSystemId,
-					x: at.x,
-					y: at.y,
-					alias: null,
+					from_system: from,
+					to_system: placed.id,
+					kind: 'wormhole',
+					size: heuristicSize(this.all, from, placed.id),
 				});
-				if (from !== null && from !== placed.id) {
-					await api.addConnection({
-						map_id: this.host.mapId,
-						from_system: from,
-						to_system: placed.id,
-						kind: 'wormhole',
-						size: heuristicSize(this.all, from, placed.id),
-					});
-				}
-			})(),
-		);
+			}
+		});
 	}
 
 	/**
@@ -72,8 +76,7 @@ export class SystemsApi {
 			this.host.camera.zoom,
 			this.host.camera.viewportRect(),
 		);
-		this.host.run(
-			'addEveScout',
+		this.host.run('addEveScout', () =>
 			api.addEveScoutToMap({
 				map_id: this.host.mapId,
 				hub_solar_system_id: hubSolarSystemId,
@@ -85,66 +88,76 @@ export class SystemsApi {
 
 	/** Move placements to where a drag dropped them; the optimistic override is the caller's. */
 	move(moves: { map_solar_system_id: number; x: number; y: number }[]) {
-		this.host.run('moveSystems', api.moveSystems({ map_id: this.host.mapId, moves }));
+		this.host.run('moveSystems', () => api.moveSystems({ map_id: this.host.mapId, moves }));
 	}
 
 	remove(mapSolarSystemIds: number[]) {
-		this.host.run(
-			'removeSystems',
+		this.host.run('removeSystems', () =>
 			api.removeSystems({ map_id: this.host.mapId, map_solar_system_ids: mapSolarSystemIds }),
+		);
+	}
+
+	/** Take everything off the map. */
+	clearAll() {
+		this.host.run('clearMap', () => api.clearMap({ map_id: this.host.mapId }));
+	}
+
+	/** Take the dead branches off the map. */
+	removeOrphaned() {
+		const ids = this.orphaned.map((s) => s.id);
+		if (ids.length === 0) return;
+		this.host.run(
+			'cleanMap',
+			() => api.removeSystems({ map_id: this.host.mapId, map_solar_system_ids: ids }),
+			`${ids.length} ${ids.length === 1 ? 'system' : 'systems'}`,
 		);
 	}
 
 	/** Say which system a ghost placement turned out to be, and what else the jump learned. */
 	assignGhost(cmd: Omit<ResolveGhostSystem, 'map_id'>) {
-		this.host.run('assignSystem', api.resolveGhostSystem({ ...cmd, map_id: this.host.mapId }));
+		this.host.run('assignSystem', () =>
+			api.resolveGhostSystem({ ...cmd, map_id: this.host.mapId }),
+		);
 	}
 
 	/** The alias, and for a real system who holds it; a ghost owns only the alias. */
 	rename(system: MapSystemView, alias: string | null, occupier: string | null) {
-		const writes = [
-			api.setAlias({ map_id: this.host.mapId, map_solar_system_id: system.id, alias }),
-		];
-		if (system.kind === 'system') {
-			writes.push(
-				api.setOccupier({ map_id: this.host.mapId, map_solar_system_id: system.id, occupier }),
-			);
-		}
-		this.host.run('setAlias', Promise.all(writes));
+		const target = { map_id: this.host.mapId, map_solar_system_id: system.id };
+		this.host.run('setAlias', () =>
+			Promise.all([
+				api.setAlias({ ...target, alias }),
+				system.kind === 'system' ? api.setOccupier({ ...target, occupier }) : null,
+			]),
+		);
 	}
 
 	saveNotes(mapSolarSystemId: number, notes: string | null) {
-		this.host.run(
-			'setNotes',
+		this.host.run('setNotes', () =>
 			api.setNotes({ map_id: this.host.mapId, map_solar_system_id: mapSolarSystemId, notes }),
 		);
 		this.host.notesLocal(mapSolarSystemId, notes);
 	}
 
 	setStatus(mapSolarSystemId: number, status: SystemStatus) {
-		this.host.run(
-			'setStatus',
+		this.host.run('setStatus', () =>
 			api.setStatus({ map_id: this.host.mapId, map_solar_system_id: mapSolarSystemId, status }),
 		);
 	}
 
 	setPinned(mapSolarSystemId: number, value: boolean) {
-		this.host.run(
-			'setPinned',
+		this.host.run('setPinned', () =>
 			api.setPinned({ map_id: this.host.mapId, map_solar_system_id: mapSolarSystemId, value }),
 		);
 	}
 
 	setHome(mapSolarSystemId: number, value: boolean) {
-		this.host.run(
-			'setHome',
+		this.host.run('setHome', () =>
 			api.setHome({ map_id: this.host.mapId, map_solar_system_id: mapSolarSystemId, value }),
 		);
 	}
 
 	setRally(mapSolarSystemId: number, value: boolean) {
-		this.host.run(
-			'setRally',
+		this.host.run('setRally', () =>
 			api.setRally({ map_id: this.host.mapId, map_solar_system_id: mapSolarSystemId, value }),
 		);
 	}
