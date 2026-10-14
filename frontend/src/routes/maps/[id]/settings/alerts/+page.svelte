@@ -15,7 +15,7 @@
 		DISABLED_REASON,
 		kindLabel,
 		mentionSummary,
-		shipLabel,
+		alertSummary,
 	} from '$lib/alerts/vocabulary';
 	import { key, q } from '$lib/api/queries';
 	import type { MapAlert } from '$lib/api/types/MapAlert';
@@ -71,25 +71,6 @@
 	async function remove(alert: MapAlert) {
 		if (!(await confirmDanger({ title: `Delete "${alert.name}"?` }))) return;
 		act.mutate(() => api.deleteAlert(mapId, alert.id));
-	}
-
-	function summary(alert: MapAlert): string {
-		const target = alert.target_system_name ?? 'a system';
-		if (alert.kind === 'jump_range') {
-			const ship = shipLabel(alert.ship_type ?? null) ?? 'a capital';
-			return `An exit within ${ship} range (JDC ${alert.jdc_level ?? 0}) of ${target}`;
-		}
-		const within = `within ${alert.max_jumps} ${alert.max_jumps === 1 ? 'jump' : 'jumps'}`;
-		if (alert.kind === 'killmail') {
-			const rules = alert.filters.length;
-			return rules === 0
-				? `Anything that dies ${within}`
-				: `${rules} ${rules === 1 ? 'filter' : 'filters'} (${alert.filter_match}), ${within}`;
-		}
-		if (alert.origin_system_name) {
-			return `${target} ${within} of ${alert.origin_system_name}, through the chain`;
-		}
-		return `${target} ${within}`;
 	}
 </script>
 
@@ -170,7 +151,7 @@
 								<span class="truncate text-sm font-medium">{alert.name}</span>
 								<Badge variant="outline" class="shrink-0">{kindLabel(alert.kind)}</Badge>
 							</span>
-							<span class="text-xs text-muted-foreground">{summary(alert)}</span>
+							<span class="text-xs text-muted-foreground">{alertSummary(alert)}</span>
 							<span
 								class="flex flex-wrap items-center gap-x-2 text-[11px] text-muted-foreground/70"
 							>
