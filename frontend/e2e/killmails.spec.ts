@@ -1,4 +1,5 @@
-import { createdId, expect, gotoApp, test } from './fixtures';
+import { expect, gotoApp, reloadApp, test } from './fixtures';
+import { addSystem, createMap } from './arrange';
 import { clearKillmails, seedAggressor, seedKillmail } from './db';
 
 // The killmails card: what died in the mapped systems, newest first, with the expensive
@@ -21,29 +22,14 @@ const ELSEWHERE = 900000003;
 const KSPACE = 900000004;
 const SEEDED = [RECENT, OLD, ELSEWHERE, KSPACE];
 
-type Api = import('@playwright/test').APIRequestContext;
-
-async function createMap(api: Api, name: string) {
-	const res = await api.post('/api/maps', { data: { name } });
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
-}
-
-async function addSystem(api: Api, mapId: number, solarSystemId: number, x: number) {
-	const res = await api.post(`/api/maps/${mapId}/systems/add`, {
-		data: { map_id: mapId, solar_system_id: solarSystemId, x, y: 200, alias: null },
-	});
-	expect(res.ok()).toBe(true);
-}
-
 test.afterEach(async () => {
 	await clearKillmails(SEEDED);
 });
 
 test('recent kills in mapped systems are listed, and nothing else is', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E Kills');
-	await addSystem(api, mapId, J122515, 200);
-	await addSystem(api, mapId, JITA, 500);
+	await addSystem(api, mapId, J122515, { x: 200 });
+	await addSystem(api, mapId, JITA, { x: 500 });
 
 	await seedKillmail({
 		id: RECENT,
@@ -95,8 +81,8 @@ test('a solo kill is marked, and the filter narrows to one half of the chain', a
 	api,
 }) => {
 	const mapId = await createMap(api, 'E2E KillsFilter');
-	await addSystem(api, mapId, J122515, 200);
-	await addSystem(api, mapId, JITA, 500);
+	await addSystem(api, mapId, J122515, { x: 200 });
+	await addSystem(api, mapId, JITA, { x: 500 });
 
 	await seedKillmail({
 		id: RECENT,
@@ -133,8 +119,7 @@ test('a solo kill is marked, and the filter narrows to one half of the chain', a
 	await expect(card.locator(`[data-kill="${RECENT}"]`)).toBeVisible();
 
 	// And it survives a reload, because it is stored against the user.
-	await page.reload();
-	await page.waitForSelector('[data-testid="panel-grid"]');
+	await reloadApp(page);
 	await expect(card.locator(`[data-kill="${RECENT}"]`)).toBeVisible({ timeout: 10_000 });
 	await expect(card.locator(`[data-kill="${KSPACE}"]`)).toHaveCount(0);
 
@@ -146,8 +131,8 @@ test('a solo kill is marked, and the filter narrows to one half of the chain', a
 
 test('the selected system filter follows the selection', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E KillsSelected');
-	await addSystem(api, mapId, J122515, 200);
-	await addSystem(api, mapId, JITA, 500);
+	await addSystem(api, mapId, J122515, { x: 200 });
+	await addSystem(api, mapId, JITA, { x: 500 });
 
 	await seedKillmail({
 		id: RECENT,
@@ -192,7 +177,7 @@ test('the selected system filter follows the selection', async ({ page, api }) =
 
 test('adding a system pulls in its kills straight away', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E KillsAdd');
-	await addSystem(api, mapId, J122515, 200);
+	await addSystem(api, mapId, J122515, { x: 200 });
 
 	// A kill in a system that is not on the map yet.
 	await seedKillmail({
@@ -211,13 +196,13 @@ test('adding a system pulls in its kills straight away', async ({ page, api }) =
 
 	// Putting the system on the map brings its history with it. The list is scoped to the
 	// map's systems, so changing that set has to refetch, not wait for the next kill.
-	await addSystem(api, mapId, JITA, 500);
+	await addSystem(api, mapId, JITA, { x: 500 });
 	await expect(card.locator(`[data-kill="${KSPACE}"]`)).toBeVisible({ timeout: 15_000 });
 });
 
 test('a killmail row right-clicks to the system menu', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E KillsMenu');
-	await addSystem(api, mapId, J122515, 200);
+	await addSystem(api, mapId, J122515, { x: 200 });
 	await seedKillmail({
 		id: RECENT,
 		solarSystemId: J122515,
@@ -244,7 +229,7 @@ const HUNTER_ALLIANCE = 900000103;
 
 test('a wide card names the aggressor, a narrow one keeps the count', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E Aggressor');
-	await addSystem(api, mapId, J122515, 200);
+	await addSystem(api, mapId, J122515, { x: 200 });
 	await seedAggressor({
 		characterId: HUNTER,
 		name: 'Zvi Sarok',

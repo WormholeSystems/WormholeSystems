@@ -1,4 +1,5 @@
-import { createdId, expect, gotoApp, test } from './fixtures';
+import { expect, gotoApp, test } from './fixtures';
+import { addSystem, createMap } from './arrange';
 
 // Cleaning the map: the branches nothing reaches any more, once a hole has collapsed and
 // taken the way to them with it.
@@ -7,31 +8,14 @@ const J122515 = 31001882;
 const JITA = 30000142;
 const PERIMETER = 30000144;
 
-async function createMap(api: import('@playwright/test').APIRequestContext, name: string) {
-	const res = await api.post('/api/maps', { data: { name } });
-	return await createdId(res);
-}
-
-async function addSystem(
-	api: import('@playwright/test').APIRequestContext,
-	mapId: number,
-	solarSystemId: number,
-	x: number,
-) {
-	const res = await api.post(`/api/maps/${mapId}/systems/add`, {
-		data: { map_id: mapId, solar_system_id: solarSystemId, x, y: 300, alias: null },
-	});
-	return await createdId(res);
-}
-
 test('the map says when a branch is adrift, and says what cleaning takes', async ({
 	page,
 	api,
 }) => {
 	const mapId = await createMap(api, 'E2E Clean');
-	const home = await addSystem(api, mapId, J122515, 200);
-	const attached = await addSystem(api, mapId, JITA, 500);
-	await addSystem(api, mapId, PERIMETER, 800);
+	const home = await addSystem(api, mapId, J122515, { x: 200, y: 300 });
+	const attached = await addSystem(api, mapId, JITA, { x: 500, y: 300 });
+	await addSystem(api, mapId, PERIMETER, { x: 800, y: 300 });
 	await api.post(`/api/maps/${mapId}/connections/add`, {
 		data: { map_id: mapId, from_system: home, to_system: attached, kind: 'wormhole' },
 	});
@@ -63,8 +47,8 @@ test('the map says when a branch is adrift, and says what cleaning takes', async
 
 test('a map with nothing anchored is never adrift', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E CleanNoAnchor');
-	await addSystem(api, mapId, J122515, 200);
-	await addSystem(api, mapId, JITA, 500);
+	await addSystem(api, mapId, J122515, { x: 200, y: 300 });
+	await addSystem(api, mapId, JITA, { x: 500, y: 300 });
 
 	await gotoApp(page, `/maps/${mapId}`);
 	await expect(page.getByTestId('system-node')).toHaveCount(2);

@@ -1,4 +1,5 @@
 import { createdId, expect, gotoApp, test } from './fixtures';
+import { createMap } from './arrange';
 import { ageStaleConnections, createIdentity, grantAccess } from './db';
 
 // The map status bar: identity, the live-feed dot, the view toggles, and the undo/redo
@@ -8,12 +9,6 @@ const J122515 = 31001882; // C5, Wolf-Rayet Star
 const JITA = 30000142;
 const AMARR = 30002187;
 const DODIXIE = 30002659;
-
-async function createMap(api: import('@playwright/test').APIRequestContext, name: string) {
-	const res = await api.post('/api/maps', { data: { name } });
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
-}
 
 test('shows the map name and a live socket once connected', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E Status');

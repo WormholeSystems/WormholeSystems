@@ -1,4 +1,4 @@
-import { createdId, expect, gotoApp, test } from './fixtures';
+import { createdId, expect, gotoApp, reloadApp, test } from './fixtures';
 
 // Watching a map without an account: a share link, and a public map.
 
@@ -64,8 +64,7 @@ test('a share link shows the chain to somebody with no account', async ({ page, 
 	await page.getByTestId('confirm-accept').click();
 	await expect(page.getByTestId('share-create')).toBeVisible();
 
-	await guestPage.reload();
-	await guestPage.waitForSelector('html[data-hydrated="true"]');
+	await reloadApp(guestPage);
 	await expect(guestPage.getByTestId('map-error')).toBeVisible();
 
 	const shut = await guest.newPage();

@@ -1,4 +1,5 @@
 import { createdId, expect, gotoApp, test } from './fixtures';
+import { addSystem, createMap } from './arrange';
 
 // Route planner: origin/destination via the context menu, jump counts, wormhole
 // shortcuts, and the on-route connection highlight.
@@ -7,30 +8,10 @@ const JITA = 30000142;
 const PERIMETER = 30000144; // one gate from Jita
 const AMARR = 30002187; // many gates from Jita
 
-async function createMap(api: import('@playwright/test').APIRequestContext, name: string) {
-	const res = await api.post('/api/maps', { data: { name } });
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
-}
-
-async function addSystem(
-	api: import('@playwright/test').APIRequestContext,
-	mapId: number,
-	solarSystemId: number,
-	x: number,
-	y: number,
-) {
-	const res = await api.post(`/api/maps/${mapId}/systems/add`, {
-		data: { map_id: mapId, solar_system_id: solarSystemId, x, y, alias: null },
-	});
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
-}
-
 test('gate route between adjacent systems via the context menu', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E Route');
-	await addSystem(api, mapId, JITA, 200, 200);
-	await addSystem(api, mapId, PERIMETER, 500, 200);
+	await addSystem(api, mapId, JITA, { x: 200, y: 200 });
+	await addSystem(api, mapId, PERIMETER, { x: 500, y: 200 });
 
 	await gotoApp(page, `/maps/${mapId}`);
 
@@ -57,8 +38,8 @@ test('gate route between adjacent systems via the context menu', async ({ page, 
 
 test('wormhole connection shortcuts the route and highlights the edge', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E WH Route');
-	const a = await addSystem(api, mapId, JITA, 200, 200);
-	const b = await addSystem(api, mapId, AMARR, 600, 200);
+	const a = await addSystem(api, mapId, JITA, { x: 200, y: 200 });
+	const b = await addSystem(api, mapId, AMARR, { x: 600, y: 200 });
 	await api.post(`/api/maps/${mapId}/connections/add`, {
 		data: { map_id: mapId, from_system: a, to_system: b, kind: 'wormhole' },
 	});

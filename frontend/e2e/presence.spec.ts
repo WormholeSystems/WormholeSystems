@@ -1,16 +1,11 @@
-import { createdId, expect, gotoApp, test } from './fixtures';
+import { expect, gotoApp, reloadApp, test } from './fixtures';
+import { createMap } from './arrange';
 import { createIdentity, grantAccess, setCharacterPresence, setTrackingAllowed } from './db';
 
 // Pilot presence: online, tracking-scoped, opted-in characters of member+ users show on
 // the node; opting out hides them; viewers get nothing.
 
 const JITA = 30000142;
-
-async function createMap(api: import('@playwright/test').APIRequestContext, name: string) {
-	const res = await api.post('/api/maps', { data: { name } });
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
-}
 
 test('pilots row shows opted-in online characters and hides on opt-out', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E Presence');
@@ -35,8 +30,7 @@ test('pilots row shows opted-in online characters and hides on opt-out', async (
 
 	// Opt-out hides the pilot after the next fetch (reload forces it).
 	await setTrackingAllowed(mapId, pilot.userId, false);
-	await page.reload();
-	await page.waitForSelector('html[data-hydrated="true"]');
+	await reloadApp(page);
 	await expect(node.getByTestId('pilots-row')).toHaveCount(0);
 });
 

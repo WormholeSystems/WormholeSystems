@@ -1,4 +1,5 @@
-import { createdId, expect, gotoApp, test } from './fixtures';
+import { expect, gotoApp, test } from './fixtures';
+import { addSystem, createMap } from './arrange';
 
 // Legacy node parity: displayed information, colors, tooltips, and the alias editor.
 
@@ -7,35 +8,14 @@ const J122515 = 31001882; // C5, Wolf-Rayet Star, static H296 (to C5)
 const J005482 = 31002515; // C2, shattered
 const THERA = 31000005; // class 12
 
-async function createMap(api: import('@playwright/test').APIRequestContext, name: string) {
-	const res = await api.post('/api/maps', { data: { name } });
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
-}
-
-async function addSystem(
-	api: import('@playwright/test').APIRequestContext,
-	mapId: number,
-	solarSystemId: number,
-	x: number,
-	y: number,
-	alias: string | null = null,
-) {
-	const res = await api.post(`/api/maps/${mapId}/systems/add`, {
-		data: { map_id: mapId, solar_system_id: solarSystemId, x, y, alias },
-	});
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
-}
-
 test('node shows class, alias, occupier, statics, effect, and region per space kind', async ({
 	page,
 	api,
 }) => {
 	const mapId = await createMap(api, 'E2E Visuals');
-	const wh = await addSystem(api, mapId, J122515, 200, 200, 'Home');
-	await addSystem(api, mapId, JITA, 200, 400);
-	await addSystem(api, mapId, THERA, 200, 600);
+	const wh = await addSystem(api, mapId, J122515, { x: 200, y: 200, alias: 'Home' });
+	await addSystem(api, mapId, JITA, { x: 200, y: 400 });
+	await addSystem(api, mapId, THERA, { x: 200, y: 600 });
 	await api.post(`/api/maps/${mapId}/systems/set-occupier`, {
 		data: { map_id: mapId, map_solar_system_id: wh, occupier: 'LZHX' },
 	});
@@ -86,7 +66,7 @@ test('icon cluster: shattered, signatures, unmapped wormholes, home, pin', async
 	api,
 }) => {
 	const mapId = await createMap(api, 'E2E Icons');
-	const shattered = await addSystem(api, mapId, J005482, 200, 200);
+	const shattered = await addSystem(api, mapId, J005482, { x: 200, y: 200 });
 	await api.post(`/api/maps/${mapId}/systems/set-home`, {
 		data: { map_id: mapId, map_solar_system_id: shattered, value: true },
 	});
@@ -127,7 +107,7 @@ test('icon cluster: shattered, signatures, unmapped wormholes, home, pin', async
 
 test('status vocabulary drives border and icon', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E Status');
-	await addSystem(api, mapId, JITA, 200, 200);
+	await addSystem(api, mapId, JITA, { x: 200, y: 200 });
 
 	await gotoApp(page, `/maps/${mapId}`);
 	const node = page.getByTestId('system-node').filter({ hasText: 'Jita' });
@@ -156,7 +136,7 @@ test('status vocabulary drives border and icon', async ({ page, api }) => {
 
 test('double click opens the alias editor and saves', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E Alias');
-	await addSystem(api, mapId, JITA, 200, 200);
+	await addSystem(api, mapId, JITA, { x: 200, y: 200 });
 
 	await gotoApp(page, `/maps/${mapId}`);
 	const node = page.getByTestId('system-node').filter({ hasText: 'Jita' });

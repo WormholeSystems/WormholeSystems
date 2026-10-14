@@ -1,4 +1,5 @@
 import { createdId, expect, gotoApp, test } from './fixtures';
+import { addSystem, createMap } from './arrange';
 
 // Legacy context-menu parity and interaction polish.
 
@@ -6,29 +7,9 @@ const JITA = 30000142; // highsec k-space
 const J171828 = 31002580; // C13 (frigate shattered)
 const J122515 = 31001882; // C5 wormhole
 
-async function createMap(api: import('@playwright/test').APIRequestContext, name: string) {
-	const res = await api.post('/api/maps', { data: { name } });
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
-}
-
-async function addSystem(
-	api: import('@playwright/test').APIRequestContext,
-	mapId: number,
-	solarSystemId: number,
-	x: number,
-	y: number,
-) {
-	const res = await api.post(`/api/maps/${mapId}/systems/add`, {
-		data: { map_id: mapId, solar_system_id: solarSystemId, x, y, alias: null },
-	});
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
-}
-
 test('menu structure: submenus, external links, remove gating', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E Menu');
-	const jita = await addSystem(api, mapId, JITA, 200, 200);
+	const jita = await addSystem(api, mapId, JITA, { x: 200, y: 200 });
 
 	await gotoApp(page, `/maps/${mapId}`);
 	const node = page.getByTestId('system-node').filter({ hasText: 'Jita' });
@@ -77,7 +58,7 @@ test('menu structure: submenus, external links, remove gating', async ({ page, a
 	await api.post(`/api/maps/${mapId}/systems/set-pinned`, {
 		data: { map_id: mapId, map_solar_system_id: jita, value: false },
 	});
-	await addSystem(api, mapId, J122515, 200, 400);
+	await addSystem(api, mapId, J122515, { x: 200, y: 400 });
 	const wh = page.getByTestId('system-node').filter({ hasText: 'J122515' });
 	await wh.click({ button: 'right' });
 	await menu.getByTestId('menu-external').hover();
@@ -88,8 +69,8 @@ test('menu structure: submenus, external links, remove gating', async ({ page, a
 
 test('marquee selects live and remove hijacks the selection', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E Marquee');
-	await addSystem(api, mapId, JITA, 200, 200);
-	await addSystem(api, mapId, J122515, 200, 320);
+	await addSystem(api, mapId, JITA, { x: 200, y: 200 });
+	await addSystem(api, mapId, J122515, { x: 200, y: 320 });
 
 	await gotoApp(page, `/maps/${mapId}`);
 	const canvas = page.getByTestId('map-canvas');
@@ -116,7 +97,7 @@ test('marquee selects live and remove hijacks the selection', async ({ page, api
 test('connection from a C13 system defaults to frigate size', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E ShipSize');
 	// Find a C13 via search is unreliable; use the API map view to assert the size flows.
-	const from = await addSystem(api, mapId, JITA, 200, 200);
+	const from = await addSystem(api, mapId, JITA, { x: 200, y: 200 });
 	const c13 = await api.post(`/api/maps/${mapId}/systems/add`, {
 		data: { map_id: mapId, solar_system_id: J171828, x: 200, y: 400, alias: null },
 	});

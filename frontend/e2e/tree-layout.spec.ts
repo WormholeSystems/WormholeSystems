@@ -1,4 +1,5 @@
-import { createdId, expect, gotoApp, test } from './fixtures';
+import { expect, gotoApp, reloadApp, test } from './fixtures';
+import { addSystem, connect, createMap } from './arrange';
 
 // Automatic placement: the chain drawn as a tree from its connections, instead of from
 // wherever people dragged the systems.
@@ -7,44 +8,12 @@ const J122515 = 31001882;
 const JITA = 30000142;
 const PERIMETER = 30000144;
 
-async function createMap(api: import('@playwright/test').APIRequestContext, name: string) {
-	const res = await api.post('/api/maps', { data: { name } });
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
-}
-
-async function addSystem(
-	api: import('@playwright/test').APIRequestContext,
-	mapId: number,
-	solarSystemId: number,
-	x: number,
-	y: number,
-) {
-	const res = await api.post(`/api/maps/${mapId}/systems/add`, {
-		data: { map_id: mapId, solar_system_id: solarSystemId, x, y, alias: null },
-	});
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
-}
-
-async function connect(
-	api: import('@playwright/test').APIRequestContext,
-	mapId: number,
-	from: number,
-	to: number,
-) {
-	const res = await api.post(`/api/maps/${mapId}/connections/add`, {
-		data: { map_id: mapId, from_system: from, to_system: to, kind: 'wormhole' },
-	});
-	expect(res.ok()).toBe(true);
-}
-
 /** A chain of three, deliberately placed in a heap so the layout has work to do. */
 async function seedChain(api: import('@playwright/test').APIRequestContext, name: string) {
 	const mapId = await createMap(api, name);
-	const home = await addSystem(api, mapId, J122515, 900, 700);
-	const second = await addSystem(api, mapId, JITA, 900, 800);
-	const third = await addSystem(api, mapId, PERIMETER, 900, 900);
+	const home = await addSystem(api, mapId, J122515, { x: 900, y: 700 });
+	const second = await addSystem(api, mapId, JITA, { x: 900, y: 800 });
+	const third = await addSystem(api, mapId, PERIMETER, { x: 900, y: 900 });
 	await connect(api, mapId, home, second);
 	await connect(api, mapId, home, third);
 	await api.post(`/api/maps/${mapId}/systems/set-home`, {
@@ -108,8 +77,7 @@ test('a viewer can pick their own placement when the map allows it', async ({ pa
 				(await (await api.get(`/api/maps/${mapId}/settings/user`)).json()).layout_override,
 		)
 		.toBe('tree');
-	await page.reload();
-	await page.waitForSelector('html[data-hydrated="true"]');
+	await reloadApp(page);
 	await expect(page.getByTestId('system-node')).toHaveCount(3);
 	await expect.poll(async () => (await nodePosition(page, 'Jita')).left).toBe(340);
 

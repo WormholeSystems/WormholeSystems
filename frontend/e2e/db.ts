@@ -20,25 +20,33 @@ export async function withDb<T>(f: (client: Client) => Promise<T>): Promise<T> {
 	}
 }
 
-/**
- * Create (or refresh) an extra throwaway identity for multi-user tests. Ids are derived
- * from `slot` (0-9); global teardown does not know about these, so callers should clean
- * up maps they create, and the rows themselves are reused across runs.
- */
-export async function createIdentity(slot: number): Promise<{
+export interface Identity {
 	characterId: number;
 	session: string;
 	userId: number;
-}> {
-	const characterId = 91999900 + slot;
-	const session = `e2e-extra-${slot}`;
+	name: string;
+}
+
+/**
+ * Create (or refresh) an identity: corp, user, character and a session. Idempotent, so
+ * repeated runs reuse the same rows. The `users` id comes from the identity sequence, never
+ * forced, so real logins are unaffected.
+ */
+export async function ensureIdentity(spec: {
+	characterId: number;
+	session: string;
+	name: string;
+	ownerHash: string;
+}): Promise<Identity> {
 	const userId = await withDb(async (db) => {
 		await db.query(
 			`insert into corporations (id, name, ticker) values ($1, 'E2E Corp', 'E2E')
 			 on conflict do nothing`,
 			[E2E_CORPORATION_ID],
 		);
-		const existing = await db.query('select user_id from characters where id = $1', [characterId]);
+		const existing = await db.query('select user_id from characters where id = $1', [
+			spec.characterId,
+		]);
 		let userId: number = existing.rows[0]?.user_id;
 		if (userId === undefined) {
 			const user = await db.query('insert into users default values returning id');
@@ -46,18 +54,41 @@ export async function createIdentity(slot: number): Promise<{
 			await db.query(
 				`insert into characters (id, user_id, name, owner_hash, corporation_id)
 				 values ($1, $2, $3, $4, $5)`,
-				[characterId, userId, `E2E Extra ${slot}`, `e2e-extra-hash-${slot}`, E2E_CORPORATION_ID],
+				[spec.characterId, userId, spec.name, spec.ownerHash, E2E_CORPORATION_ID],
 			);
 		}
 		await db.query(
 			`insert into sessions (id, user_id, active_character_id, expires_at)
 			 values ($1, $2, $3, now() + interval '2 hours')
 			 on conflict (id) do update set expires_at = now() + interval '2 hours'`,
-			[session, userId, characterId],
+			[spec.session, userId, spec.characterId],
 		);
 		return userId;
 	});
-	return { characterId, session, userId };
+	return { characterId: spec.characterId, session: spec.session, userId, name: spec.name };
+}
+
+/** The first character id of the extra identities; `slot` counts up from here. */
+export const EXTRA_CHARACTER_BASE = 91999900;
+
+/**
+ * Where the per-worker identities of `ownAccountTest` start, clear of the slots specs pick
+ * for themselves. Ten of them, one per parallel worker.
+ */
+export const OWN_ACCOUNT_SLOT = 60;
+
+/**
+ * An extra throwaway identity for multi-user tests. Ids are derived from `slot` (0-99);
+ * global teardown does not know about most of these, so callers should clean up maps they
+ * create, and the rows themselves are reused across runs.
+ */
+export function createIdentity(slot: number): Promise<Identity> {
+	return ensureIdentity({
+		characterId: EXTRA_CHARACTER_BASE + slot,
+		session: `e2e-extra-${slot}`,
+		name: `E2E Extra ${slot}`,
+		ownerHash: `e2e-extra-hash-${slot}`,
+	});
 }
 
 /** Grant a character access to a map directly (no invite flow exists yet). */

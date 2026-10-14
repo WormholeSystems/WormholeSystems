@@ -1,4 +1,4 @@
-import { expect, gotoApp, test } from './fixtures';
+import { expect, gotoApp, reloadApp, test } from './fixtures';
 
 test('nav shows the signed-in character', async ({ page }) => {
 	await gotoApp(page, '/');
@@ -49,9 +49,7 @@ test('archiving hides a map without losing it', async ({ page, api }) => {
 	await expect(page.getByTestId('map-card').filter({ hasText: name })).toHaveCount(0);
 
 	// Still there, just out of the way, and it survives a reload because it is stored.
-	await page.reload();
-	// The toggle is in the server-rendered page before it answers clicks.
-	await page.waitForSelector('html[data-hydrated="true"]');
+	await reloadApp(page);
 	await page.getByTestId('toggle-archived').click();
 	const archived = page.getByTestId('map-card').filter({ hasText: name });
 	await expect(archived).toBeVisible();

@@ -1,4 +1,5 @@
 import { createdId, expect, gotoApp, test } from './fixtures';
+import { staysHidden } from './arrange';
 import { setCharacterPresence } from './db';
 
 const JITA = 30000142;
@@ -47,8 +48,7 @@ test('the list starts right under the header', async ({ page, api }) => {
 // trigger in the list and pop a tooltip nobody asked for.
 test('opening it pops no tooltip', async ({ page, api }) => {
 	await openRoute(page, api);
-	await page.waitForTimeout(600);
-	await expect(page.locator('[data-slot="tooltip-content"]')).toHaveCount(0);
+	await staysHidden(page.locator('[data-slot="tooltip-content"]'), 1_000);
 });
 
 test('a hop names the holder of the system on hover', async ({ page, api }) => {

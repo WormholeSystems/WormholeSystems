@@ -1,13 +1,8 @@
-import { createdId, expect, gotoApp, test } from './fixtures';
+import { expect, gotoApp, reloadApp, test } from './fixtures';
+import { createMap } from './arrange';
 
 // The interactive map canvas. Each test arranges its own map through the API and
 // navigates straight to it; global teardown removes everything the e2e user owns.
-
-async function createMap(api: import('@playwright/test').APIRequestContext, name: string) {
-	const res = await api.post('/api/maps', { data: { name } });
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
-}
 
 test('search dialog adds a system to the map', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E Search Map');
@@ -136,8 +131,7 @@ test('zoom steps in tenths, sticks to the map, and answers the wheel', async ({ 
 
 	// It is where you left it after a reload: zoom belongs to the screen you are at.
 	await zoomIn.click();
-	await page.reload();
-	await page.waitForSelector('html[data-hydrated="true"]');
+	await reloadApp(page);
 	await expect(page.getByTestId('zoom-level')).toHaveText('60%');
 
 	// Shift+wheel pans rather than scrolling the page; the wheel never zooms.

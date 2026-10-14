@@ -1,4 +1,5 @@
-import { createdId, expect, test } from './fixtures';
+import { expect, test } from './fixtures';
+import { addSystem, createMap, holds } from './arrange';
 import {
 	E2E_CORPORATION_ID,
 	createIdentity,
@@ -22,20 +23,6 @@ const PERIMETER = 30000144; // one gate from Jita
 
 type Api = import('@playwright/test').APIRequestContext;
 type Page = import('@playwright/test').Page;
-
-async function createMap(api: Api, name: string) {
-	const res = await api.post('/api/maps', { data: { name } });
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
-}
-
-async function addSystem(api: Api, mapId: number, solarSystemId: number, alias: string | null) {
-	const res = await api.post(`/api/maps/${mapId}/systems/add`, {
-		data: { map_id: mapId, solar_system_id: solarSystemId, x: 200, y: 200, alias },
-	});
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
-}
 
 /** A pilot with their own session, map access, tracking on, and a starting location. */
 async function openAsPilot(
@@ -116,7 +103,7 @@ test('a jump through a scanned hole places the system, connects it and links the
 	playwright,
 }) => {
 	const mapId = await createMap(api, 'E2E Tracking');
-	await addSystem(api, mapId, J122515, null);
+	await addSystem(api, mapId, J122515, { alias: null });
 	const pilot = await openAsPilot(browser, playwright, 9, mapId, J122515, {
 		preselect_signature: true,
 	});
@@ -165,7 +152,7 @@ test('a jump through a scanned hole places the system, connects it and links the
 
 test('without preselection the prompt opens on Unknown', async ({ api, browser, playwright }) => {
 	const mapId = await createMap(api, 'E2E Tracking Unchosen');
-	await addSystem(api, mapId, J122515, null);
+	await addSystem(api, mapId, J122515, { alias: null });
 	const pilot = await openAsPilot(browser, playwright, 9, mapId, J122515);
 
 	await paste(pilot.page, 'WHX-401\tCosmic Signature\tWormhole\t\t100%\t1 AU');
@@ -190,21 +177,20 @@ test('without preselection the prompt opens on Unknown', async ({ api, browser, 
 
 test('a gate hop builds nothing', async ({ api, browser, playwright }) => {
 	const mapId = await createMap(api, 'E2E TrackingGate');
-	await addSystem(api, mapId, JITA, null);
+	await addSystem(api, mapId, JITA, { alias: null });
 	const pilot = await openAsPilot(browser, playwright, 10, mapId, JITA);
 
 	// Taking a gate is travel, not a discovery: no prompt, and nothing added.
 	await jumpTo(pilot.page, pilot.identity.characterId, PERIMETER);
 	await expect(pilot.page.getByTestId('tracking-dialog')).toBeHidden();
-	await pilot.page.waitForTimeout(500);
-	expect((await graph(api, mapId)).systems).toHaveLength(1);
+	await holds(async () => (await graph(api, mapId)).systems.length, 1, 1_500);
 
 	await pilot.close();
 });
 
 test('an unscanned hole is mapped without asking', async ({ api, browser, playwright }) => {
 	const mapId = await createMap(api, 'E2E TrackingUnscanned');
-	await addSystem(api, mapId, JITA, null);
+	await addSystem(api, mapId, JITA, { alias: null });
 	const pilot = await openAsPilot(browser, playwright, 14, mapId, JITA);
 
 	// Nothing was scanned here, so there is no signature to offer and nothing to ask: the
@@ -221,7 +207,7 @@ test('an unscanned hole is mapped without asking', async ({ api, browser, playwr
 
 test('switching character is not a jump', async ({ api, browser, playwright }) => {
 	const mapId = await createMap(api, 'E2E TrackingSwitch');
-	await addSystem(api, mapId, J122515, null);
+	await addSystem(api, mapId, J122515, { alias: null });
 	const pilot = await openAsPilot(browser, playwright, 11, mapId, J122515);
 
 	// A second character on the same account, sitting somewhere else entirely.
@@ -242,8 +228,7 @@ test('switching character is not a jump', async ({ api, browser, playwright }) =
 	await pilot.page.evaluate(() => window.dispatchEvent(new Event('focus')));
 
 	await expect(pilot.page.getByTestId('tracking-dialog')).toBeHidden();
-	await pilot.page.waitForTimeout(500);
-	expect((await graph(api, mapId)).systems).toHaveLength(1);
+	await holds(async () => (await graph(api, mapId)).systems.length, 1, 1_500);
 
 	await setCharacterPresence(altId, JITA, false);
 	await pilot.close();

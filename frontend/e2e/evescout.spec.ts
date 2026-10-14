@@ -1,4 +1,5 @@
-import { createdId, expect, gotoApp, test } from './fixtures';
+import { expect, gotoApp, test } from './fixtures';
+import { addSystem, createMap } from './arrange';
 
 // The EVE Scout card: public wormholes out of Thera and Turnur, one hub at a time, sorted
 // by how far away they are through your own chain.
@@ -8,14 +9,6 @@ import { createdId, expect, gotoApp, test } from './fixtures';
 
 const J122515 = 31001882;
 const JITA = 30000142;
-
-type Api = import('@playwright/test').APIRequestContext;
-
-async function createMap(api: Api, name: string) {
-	const res = await api.post('/api/maps', { data: { name } });
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
-}
 
 /**
  * These assert exact rows, so they need the stubbed upstream (EVE_SCOUT_URL in
@@ -32,16 +25,9 @@ test.beforeEach(async ({ api }) => {
 	);
 });
 
-async function addSystem(api: Api, mapId: number, solarSystemId: number, x: number) {
-	const res = await api.post(`/api/maps/${mapId}/systems/add`, {
-		data: { map_id: mapId, solar_system_id: solarSystemId, x, y: 200, alias: null },
-	});
-	expect(res.ok()).toBe(true);
-}
-
 test('the card lists a hub at a time, resolved and sorted', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E Scout');
-	await addSystem(api, mapId, JITA, 200);
+	await addSystem(api, mapId, JITA, { x: 200 });
 	await gotoApp(page, `/maps/${mapId}?system=${JITA}`);
 
 	const card = page.getByTestId('evescout-card');
@@ -74,7 +60,7 @@ test('jumps are measured through the map, and the row opens the system menu', as
 	api,
 }) => {
 	const mapId = await createMap(api, 'E2E ScoutJumps');
-	await addSystem(api, mapId, JITA, 200);
+	await addSystem(api, mapId, JITA, { x: 200 });
 	await gotoApp(page, `/maps/${mapId}?system=${JITA}`);
 
 	const card = page.getByTestId('evescout-card');
@@ -98,7 +84,7 @@ test('jumps are measured through the map, and the row opens the system menu', as
 
 test('columns sort, and clicking the same one again reverses it', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E ScoutSort');
-	await addSystem(api, mapId, J122515, 200);
+	await addSystem(api, mapId, J122515, { x: 200 });
 	await gotoApp(page, `/maps/${mapId}?system=${J122515}`);
 
 	const card = page.getByTestId('evescout-card');

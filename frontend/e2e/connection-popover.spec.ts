@@ -1,4 +1,5 @@
-import { createdId, expect, gotoApp, test } from './fixtures';
+import { expect, gotoApp, test } from './fixtures';
+import { addSystem, connect, createMap } from './arrange';
 import { createIdentity, grantAccess } from './db';
 
 // The connection details popover: left-click an edge → signatures, status, wormhole
@@ -6,40 +7,6 @@ import { createIdentity, grantAccess } from './db';
 
 const J122515 = 31001882; // C5 wormhole, static H296
 const JITA = 30000142;
-
-async function createMap(api: import('@playwright/test').APIRequestContext, name: string) {
-	const res = await api.post('/api/maps', { data: { name } });
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
-}
-
-async function addSystem(
-	api: import('@playwright/test').APIRequestContext,
-	mapId: number,
-	solarSystemId: number,
-	x: number,
-	y: number,
-) {
-	const res = await api.post(`/api/maps/${mapId}/systems/add`, {
-		data: { map_id: mapId, solar_system_id: solarSystemId, x, y, alias: null },
-	});
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
-}
-
-async function connect(
-	api: import('@playwright/test').APIRequestContext,
-	mapId: number,
-	from: number,
-	to: number,
-	kind: 'wormhole' | 'stargate' = 'wormhole',
-) {
-	const res = await api.post(`/api/maps/${mapId}/connections/add`, {
-		data: { map_id: mapId, from_system: from, to_system: to, kind },
-	});
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
-}
 
 async function pasteSig(
 	api: import('@playwright/test').APIRequestContext,
@@ -79,8 +46,8 @@ test('click opens the popover: status, no signatures, empty mass section', async
 	api,
 }) => {
 	const mapId = await createMap(api, 'E2E ConnPopover');
-	const a = await addSystem(api, mapId, J122515, 200, 200);
-	const b = await addSystem(api, mapId, JITA, 560, 200);
+	const a = await addSystem(api, mapId, J122515, { x: 200, y: 200 });
+	const b = await addSystem(api, mapId, JITA, { x: 560, y: 200 });
 	await connect(api, mapId, a, b);
 
 	await gotoApp(page, `/maps/${mapId}`);
@@ -117,8 +84,8 @@ test('typed signatures drive Out/In sections, properties, and the mass bar', asy
 	api,
 }) => {
 	const mapId = await createMap(api, 'E2E ConnPhysics');
-	const a = await addSystem(api, mapId, J122515, 200, 200);
-	const b = await addSystem(api, mapId, JITA, 560, 200);
+	const a = await addSystem(api, mapId, J122515, { x: 200, y: 200 });
+	const b = await addSystem(api, mapId, JITA, { x: 560, y: 200 });
 	const conn = await connect(api, mapId, a, b);
 
 	const catalog = await (await api.get('/api/signature-types')).json();
@@ -165,9 +132,9 @@ test('typed signatures drive Out/In sections, properties, and the mass bar', asy
 
 test('stargate connections hide mass tracking', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E ConnGate');
-	const a = await addSystem(api, mapId, JITA, 200, 200);
-	const b = await addSystem(api, mapId, 30000144, 560, 200); // Perimeter
-	await connect(api, mapId, a, b, 'stargate');
+	const a = await addSystem(api, mapId, JITA, { x: 200, y: 200 });
+	const b = await addSystem(api, mapId, 30000144, { x: 560, y: 200 }); // Perimeter
+	await connect(api, mapId, a, b, { kind: 'stargate' });
 
 	await gotoApp(page, `/maps/${mapId}`);
 	const popover = await openPopover(page);
@@ -177,8 +144,8 @@ test('stargate connections hide mass tracking', async ({ page, api }) => {
 
 test('EOL and preserve-mass surface in the status section', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E ConnStatus');
-	const a = await addSystem(api, mapId, J122515, 200, 200);
-	const b = await addSystem(api, mapId, JITA, 560, 200);
+	const a = await addSystem(api, mapId, J122515, { x: 200, y: 200 });
+	const b = await addSystem(api, mapId, JITA, { x: 560, y: 200 });
 	const conn = await connect(api, mapId, a, b);
 	const res = await api.post(`/api/maps/${mapId}/connections/set-status`, {
 		data: { map_id: mapId, connection_id: conn, time_status: 'eol', preserve_mass: true },
@@ -193,8 +160,8 @@ test('EOL and preserve-mass surface in the status section', async ({ page, api }
 
 test('manual jump flow: log, edit direction, delete', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E ConnJumps');
-	const a = await addSystem(api, mapId, J122515, 200, 200);
-	const b = await addSystem(api, mapId, JITA, 560, 200);
+	const a = await addSystem(api, mapId, J122515, { x: 200, y: 200 });
+	const b = await addSystem(api, mapId, JITA, { x: 560, y: 200 });
 	const conn = await connect(api, mapId, a, b);
 
 	await gotoApp(page, `/maps/${mapId}`);
@@ -248,8 +215,8 @@ test('manual jump flow: log, edit direction, delete', async ({ page, api }) => {
 
 test('viewers get a read-only popover', async ({ page, api, browser }) => {
 	const mapId = await createMap(api, 'E2E ConnViewer');
-	const a = await addSystem(api, mapId, J122515, 200, 200);
-	const b = await addSystem(api, mapId, JITA, 560, 200);
+	const a = await addSystem(api, mapId, J122515, { x: 200, y: 200 });
+	const b = await addSystem(api, mapId, JITA, { x: 560, y: 200 });
 	await connect(api, mapId, a, b);
 	const viewer = await createIdentity(7);
 	await grantAccess(mapId, viewer.characterId, 'viewer');

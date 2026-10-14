@@ -1,15 +1,10 @@
-import { createdId, expect, gotoApp, test } from './fixtures';
+import { expect, gotoApp, reloadApp, test } from './fixtures';
+import { createMap } from './arrange';
 
 // Arranging the map page. The layout is per user per map, so everything here has to
 // survive a reload, and the map canvas is a tile like any other.
 
 const J122515 = 31001882;
-
-async function createMap(api: import('@playwright/test').APIRequestContext, name: string) {
-	const res = await api.post('/api/maps', { data: { name } });
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
-}
 
 /** Position and size of a tile, read off the DOM. */
 async function box(page: import('@playwright/test').Page, panel: string) {
@@ -335,8 +330,7 @@ test('leaving with unsaved changes offers to save, from either control', async (
 	await page.getByTestId('layout-save-exit').click();
 	await expect(page.getByTestId('layout-toolbar')).toHaveCount(0);
 
-	await page.reload();
-	await page.waitForSelector('[data-testid="panel-grid"]');
+	await reloadApp(page);
 	expect((await box(page, 'notes')).x).toBe(moved.x);
 });
 
@@ -439,8 +433,11 @@ test('tiles are painted in place rather than gliding there', async ({ page, api 
 
 	await page.addInitScript(() => {
 		const seen: number[] = [];
-		(window as unknown as { __tileX: number[] }).__tileX = seen;
+		const w = window as unknown as { __tileX: number[]; __frames: number };
+		w.__tileX = seen;
+		w.__frames = 0;
 		const sample = () => {
+			w.__frames += 1;
 			const el = document.querySelector('[data-testid="panel-tile"][data-panel="signatures"]');
 			if (el) {
 				const x = Math.round(el.getBoundingClientRect().x);
@@ -452,7 +449,10 @@ test('tiles are painted in place rather than gliding there', async ({ page, api 
 	});
 
 	await gotoApp(page, `/maps/${mapId}`);
-	await page.waitForTimeout(1000);
+	// Watch a second's worth of frames after load, however long that takes to render.
+	await expect
+		.poll(() => page.evaluate(() => (window as unknown as { __frames: number }).__frames))
+		.toBeGreaterThan(60);
 	const positions = await page.evaluate(() => (window as unknown as { __tileX: number[] }).__tileX);
 	expect(positions).toHaveLength(1);
 });
