@@ -51,15 +51,14 @@ async fn sync_once(pool: &PgPool, esi: &EsiClient) {
     // Resolve holder entities first so the per-system upserts below don't trip the FKs.
     resolve_entities(pool, esi, &systems).await;
 
-    for system in &systems {
-        if let Err(err) = upsert_system(pool, system).await {
-            // A system we don't have in the SDE, or an entity that failed to resolve. Skip
-            // it; the next tick retries.
-            eprintln!(
-                "sovereignty upsert for system {} skipped: {err}",
-                system.solar_system_id
-            );
+    match store(pool, &systems).await {
+        // A system we don't have in the SDE, or an entity that failed to resolve. The
+        // next tick retries it.
+        Ok(skipped) if skipped > 0 => {
+            eprintln!("sovereignty: {skipped} claim(s) skipped, unknown system or holder")
         }
+        Ok(_) => {}
+        Err(err) => eprintln!("sovereignty store failed: {err}"),
     }
 }
 
@@ -78,47 +77,94 @@ async fn resolve_entities(pool: &PgPool, esi: &EsiClient, systems: &[Sovereignty
     entities::ensure(pool, esi, EntityKind::Corporation, &corporation_ids).await;
 }
 
-/// Upsert one system's holder: alliance, faction, or none (unclaimed → remove any row).
-async fn upsert_system(pool: &PgPool, system: &SovereigntySystem) -> Result<(), sqlx::Error> {
-    let claim = &system.claim;
-    if let Some(alliance) = &claim.alliance {
-        let claimed_since = alliance.claimed_since.as_deref().and_then(parse_timestamp);
-        sqlx::query!(
-            "insert into system_sovereignty
-                 (solar_system_id, alliance_id, corporation_id, claimed_since, is_capital_system)
-             values ($1, $2, $3, $4, $5)
-             on conflict (solar_system_id) do update set
-                 alliance_id = excluded.alliance_id, corporation_id = excluded.corporation_id,
-                 faction_id = null, claimed_since = excluded.claimed_since,
-                 is_capital_system = excluded.is_capital_system, updated_at = now()",
-            system.solar_system_id,
-            alliance.alliance_id,
-            alliance.corporation_id,
-            claimed_since,
-            alliance.is_capital_system,
-        )
-        .execute(pool)
-        .await?;
-    } else if let Some(faction) = &claim.faction {
-        sqlx::query!(
-            "insert into system_sovereignty (solar_system_id, faction_id) values ($1, $2)
-             on conflict (solar_system_id) do update set
-                 faction_id = excluded.faction_id, alliance_id = null, corporation_id = null,
-                 claimed_since = null, is_capital_system = null, updated_at = now()",
-            system.solar_system_id,
-            faction.faction_id,
-        )
-        .execute(pool)
-        .await?;
-    } else {
-        sqlx::query!(
-            "delete from system_sovereignty where solar_system_id = $1",
-            system.solar_system_id,
-        )
-        .execute(pool)
-        .await?;
+/// Write every system's holder: alliance, faction, or none (unclaimed removes the row). Two
+/// statements for the whole map rather than one per system, and a row is only rewritten
+/// when its holder actually changed, which on most runs is almost none of them. Claims
+/// naming a system or holder we do not have are left out and counted.
+pub async fn store(pool: &PgPool, systems: &[SovereigntySystem]) -> Result<i64, sqlx::Error> {
+    let mut ids = Vec::new();
+    let mut alliances = Vec::new();
+    let mut corporations = Vec::new();
+    let mut factions = Vec::new();
+    let mut since = Vec::new();
+    let mut capitals = Vec::new();
+    let mut unclaimed = Vec::new();
+    for system in systems {
+        let claim = &system.claim;
+        if let Some(alliance) = &claim.alliance {
+            ids.push(system.solar_system_id);
+            alliances.push(Some(alliance.alliance_id));
+            corporations.push(Some(alliance.corporation_id));
+            factions.push(None);
+            since.push(alliance.claimed_since.as_deref().and_then(parse_timestamp));
+            capitals.push(alliance.is_capital_system);
+        } else if let Some(faction) = &claim.faction {
+            ids.push(system.solar_system_id);
+            alliances.push(None);
+            corporations.push(None);
+            factions.push(Some(faction.faction_id));
+            since.push(None);
+            capitals.push(None);
+        } else {
+            unclaimed.push(system.solar_system_id);
+        }
     }
-    Ok(())
+
+    let mut tx = pool.begin().await?;
+    let skipped = sqlx::query_scalar!(
+        r#"with claims as (
+               select * from unnest($1::bigint[], $2::bigint[], $3::bigint[], $4::bigint[],
+                                    $5::timestamptz[], $6::boolean[])
+                   as c(solar_system_id, alliance_id, corporation_id, faction_id,
+                        claimed_since, is_capital_system)
+           ),
+           known as (
+               select c.* from claims c
+               where exists (select 1 from solar_systems s where s.id = c.solar_system_id)
+                 and (c.alliance_id is null
+                      or exists (select 1 from alliances a where a.id = c.alliance_id))
+                 and (c.corporation_id is null
+                      or exists (select 1 from corporations co where co.id = c.corporation_id))
+                 and (c.faction_id is null
+                      or exists (select 1 from factions f where f.id = c.faction_id))
+           ),
+           written as (
+               insert into system_sovereignty as sov
+                   (solar_system_id, alliance_id, corporation_id, faction_id, claimed_since,
+                    is_capital_system)
+               select * from known
+               on conflict (solar_system_id) do update set
+                   alliance_id = excluded.alliance_id,
+                   corporation_id = excluded.corporation_id,
+                   faction_id = excluded.faction_id,
+                   claimed_since = excluded.claimed_since,
+                   is_capital_system = excluded.is_capital_system,
+                   updated_at = now()
+               where (sov.alliance_id, sov.corporation_id, sov.faction_id, sov.claimed_since,
+                      sov.is_capital_system)
+                     is distinct from
+                     (excluded.alliance_id, excluded.corporation_id, excluded.faction_id,
+                      excluded.claimed_since, excluded.is_capital_system)
+           )
+           select (select count(*) from claims) - (select count(*) from known)
+               as "skipped!""#,
+        &ids,
+        &alliances as &[Option<i64>],
+        &corporations as &[Option<i64>],
+        &factions as &[Option<i64>],
+        &since as &[Option<DateTime<Utc>>],
+        &capitals as &[Option<bool>],
+    )
+    .fetch_one(&mut *tx)
+    .await?;
+    sqlx::query!(
+        "delete from system_sovereignty where solar_system_id = any($1)",
+        &unclaimed,
+    )
+    .execute(&mut *tx)
+    .await?;
+    tx.commit().await?;
+    Ok(skipped)
 }
 
 /// ESI timestamps are RFC 3339; drop any that don't parse rather than failing the row.
