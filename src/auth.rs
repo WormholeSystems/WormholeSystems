@@ -60,7 +60,9 @@ pub async fn login(
     // would revoke them.
     let mut scopes: Vec<Scope> = Vec::new();
     if let (Some(requested), Some(actor)) = (query.scopes.as_deref(), actor.as_ref()) {
-        for scope in granted_scopes(&state.db, actor.character_id).await {
+        for scope in
+            crate::identity::characters::granted_scopes(&state.db, actor.character_id).await
+        {
             scopes.push(scope);
         }
         for name in requested.split(',') {
@@ -90,22 +92,6 @@ pub async fn login(
         state.sso.authorize_url_for(&csrf, &scopes)
     };
     Redirect::to(&url).into_response()
-}
-
-/// The ESI scopes a character has consented to, across every token we hold for them.
-pub async fn granted_scopes(db: &sqlx::PgPool, character_id: i64) -> Vec<Scope> {
-    let names = sqlx::query_scalar!(
-        "select distinct s.name
-         from esi_tokens t
-         join esi_token_scopes ts on ts.token_id = t.id
-         join esi_scopes s on s.id = ts.scope_id
-         where t.character_id = $1",
-        character_id,
-    )
-    .fetch_all(db)
-    .await
-    .unwrap_or_default();
-    names.iter().filter_map(|n| Scope::parse(n)).collect()
 }
 
 #[derive(Deserialize)]

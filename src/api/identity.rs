@@ -1,61 +1,19 @@
 //! Who is signed in, which character they are flying, and the ESI calls that act on
-//! that character alone (autopilot waypoints). Nothing here is about a map.
+//! that character alone (autopilot waypoints). The work is [`crate::identity`]'s.
 
 use super::extract::Credentials;
 use axum::Json;
 use axum::extract::State;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
 
 use super::extract::{require_actor, session_actor, session_id};
 use super::{ApiError, ApiResult};
 use crate::app::AppState;
-
-/// The signed-in character, for the UI's auth state.
-#[derive(Clone, Debug, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema)]
-#[ts(export)]
-pub struct CharacterSummary {
-    pub character_id: i64,
-    pub name: String,
-    /// Whether this character may create a map here. An instance can limit that to named
-    /// affiliations, and a button that only produces a 403 is worse than no button.
-    pub can_create_map: bool,
-}
-
-/// Live status of the active character, for the navbar readout.
-#[derive(Clone, Debug, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema)]
-#[ts(export)]
-pub struct CharacterStatus {
-    pub online: bool,
-    pub solar_system: Option<String>,
-    pub ship_type_id: Option<i64>,
-    pub ship_name: Option<String>,
-    pub ship_type: Option<String>,
-}
-
-/// One of the user's characters, for the switcher.
-#[derive(Clone, Debug, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema)]
-#[ts(export)]
-pub struct CharacterRef {
-    pub character_id: i64,
-    pub name: String,
-    pub is_active: bool,
-    /// The one new sessions start as, chosen on the characters page.
-    pub is_preferred: bool,
-    pub online: bool,
-    /// Where the character is right now, when online and tracked. Drives the paste
-    /// system-mismatch warning.
-    pub solar_system_id: Option<i64>,
-}
-
-/// One ESI permission and whether the acting character has consented to it.
-#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema)]
-#[ts(export)]
-pub struct ScopeStatus {
-    pub scope: String,
-    pub granted: bool,
-}
+use crate::identity::characters::{
+    self, CharacterError, CharacterRef, CharacterStatus, CharacterSummary, ScopeStatus, Waypoint,
+};
 
 pub fn routes() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
@@ -87,22 +45,9 @@ pub async fn me(
     let Some(actor) = session_actor(&state.db, &creds).await? else {
         return Ok(Json(None));
     };
-    let row = sqlx::query!(
-        "select name from characters where id = $1",
-        actor.character_id
-    )
-    .fetch_optional(&state.db)
-    .await?;
-    let Some(row) = row else {
-        return Ok(Json(None));
-    };
-    let can_create_map =
-        crate::maps::map::may_create_map(&state.db, actor, &state.map_creators).await?;
-    Ok(Json(Some(CharacterSummary {
-        character_id: actor.character_id,
-        name: row.name,
-        can_create_map,
-    })))
+    Ok(Json(
+        characters::summary(&state.db, actor, &state.map_creators).await?,
+    ))
 }
 
 /// `GET /api/me/status`, live status of the active character (online / system / ship).
@@ -120,27 +65,9 @@ pub async fn me_status(
     let Some(actor) = session_actor(&state.db, &creds).await? else {
         return Ok(Json(None));
     };
-    let row = sqlx::query!(
-        r#"select s.online,
-                  s.ship_type_id,
-                  ss.name as "solar_system?",
-                  s.ship_name,
-                  t.name as "ship_type?"
-           from character_status s
-           left join solar_systems ss on ss.id = s.solar_system_id
-           left join types t on t.id = s.ship_type_id
-           where s.character_id = $1"#,
-        actor.character_id,
-    )
-    .fetch_optional(&state.db)
-    .await?;
-    Ok(Json(row.map(|r| CharacterStatus {
-        online: r.online,
-        solar_system: r.solar_system,
-        ship_type_id: r.ship_type_id,
-        ship_name: r.ship_name,
-        ship_type: r.ship_type,
-    })))
+    Ok(Json(
+        characters::status(&state.db, actor.character_id).await?,
+    ))
 }
 
 /// `GET /api/me/discord`: the linked Discord account, if any.
@@ -181,23 +108,16 @@ pub async fn unlink_discord(State(state): State<AppState>, creds: Credentials) -
     get,
     path = "/api/me/scopes",
     tag = "identity",
-    responses((status = 200, body = Vec<crate::api::ScopeStatus>, description = "OK"), (status = 401, response = super::Unauthorized)),
+    responses((status = 200, body = Vec<ScopeStatus>, description = "OK"), (status = 401, response = super::Unauthorized)),
     security(("bearer" = []), ("session" = [])),
 )]
 pub async fn my_scopes(
     State(state): State<AppState>,
     creds: Credentials,
-) -> ApiResult<Vec<crate::api::ScopeStatus>> {
+) -> ApiResult<Vec<ScopeStatus>> {
     let actor = require_actor(&state.db, &creds).await?;
-    let granted = crate::auth::granted_scopes(&state.db, actor.character_id).await;
     Ok(Json(
-        crate::esi::scopes::Scope::ALL
-            .iter()
-            .map(|scope| crate::api::ScopeStatus {
-                scope: scope.as_str().to_string(),
-                granted: granted.contains(scope),
-            })
-            .collect(),
+        characters::scopes(&state.db, actor.character_id).await,
     ))
 }
 
@@ -214,28 +134,7 @@ pub async fn my_characters(
     creds: Credentials,
 ) -> ApiResult<Vec<CharacterRef>> {
     let actor = require_actor(&state.db, &creds).await?;
-    let rows = sqlx::query!(
-        r#"select c.id, c.name, c.is_preferred, coalesce(s.online, false) as "online!",
-                  case when s.online then s.solar_system_id end as "solar_system_id?"
-           from characters c
-           left join character_status s on s.character_id = c.id
-           where c.user_id = $1 order by c.name"#,
-        actor.user_id,
-    )
-    .fetch_all(&state.db)
-    .await?;
-    Ok(Json(
-        rows.into_iter()
-            .map(|r| CharacterRef {
-                character_id: r.id,
-                name: r.name,
-                is_active: r.id == actor.character_id,
-                is_preferred: r.is_preferred,
-                online: r.online,
-                solar_system_id: r.solar_system_id,
-            })
-            .collect(),
-    ))
+    Ok(Json(characters::list(&state.db, actor).await?))
 }
 
 #[derive(Deserialize, ts_rs::TS, utoipa::ToSchema)]
@@ -312,55 +211,7 @@ pub async fn remove_character(
         return Err(ApiError::unauthorized());
     };
     let actor = require_actor(&state.db, &creds).await?;
-    let character_id = body.character_id;
-
-    let count = sqlx::query_scalar!(
-        "select count(*) from characters where user_id = $1",
-        actor.user_id,
-    )
-    .fetch_one(&state.db)
-    .await?
-    .unwrap_or(0);
-    if count <= 1 {
-        return Err(ApiError::bad_request("can't remove your only character"));
-    }
-
-    let owns = sqlx::query_scalar!(
-        "select exists(select 1 from characters where id = $1 and user_id = $2)",
-        character_id,
-        actor.user_id,
-    )
-    .fetch_one(&state.db)
-    .await?
-    .unwrap_or(false);
-    if !owns {
-        return Err(ApiError::bad_request("that character isn't yours"));
-    }
-
-    // Switch away before deleting the active one (sessions FK-cascade on the character).
-    if character_id == actor.character_id
-        && let Some(other) = sqlx::query_scalar!(
-            "select id from characters where user_id = $1 and id <> $2
-             order by is_preferred desc, id limit 1",
-            actor.user_id,
-            character_id,
-        )
-        .fetch_optional(&state.db)
-        .await?
-    {
-        crate::session::set_active_character(&state.db, &session_id, other).await?;
-    }
-
-    sqlx::query!(
-        "delete from characters where id = $1 and user_id = $2",
-        character_id,
-        actor.user_id,
-    )
-    .execute(&state.db)
-    .await?;
-
-    // Removing the preferred character leaves the account without one, so hand the flag on.
-    crate::session::ensure_preferred_character(&state.db, actor.user_id).await?;
+    characters::remove(&state.db, &session_id, actor, body.character_id).await?;
     Ok(Json(()))
 }
 
@@ -389,65 +240,30 @@ pub struct SetWaypointAllBody {
     pub clear_other_waypoints: Option<bool>,
 }
 
-/// Set an in-game autopilot waypoint for one character via ESI. Maps a missing waypoint
-/// scope to 409 (the character must re-consent) and other ESI failures to 502.
-async fn esi_waypoint(
-    state: &AppState,
-    character_id: i64,
-    destination_id: i64,
-    add_to_beginning: bool,
-    clear_other_waypoints: bool,
-) -> Result<(), ApiError> {
-    use axum::http::StatusCode;
-    let store = crate::db::PgTokenStore::new(state.db.clone());
-    let token = state
-        .sso
-        .access_token(&store, character_id, crate::esi::Scope::WriteWaypoint)
-        .await
-        .map_err(|err| match err {
-            crate::esi::EsiError::MissingScope(_) => ApiError {
-                status: StatusCode::CONFLICT,
-                message: "that character has not granted the waypoint scope".into(),
-            },
-            other => ApiError {
-                status: StatusCode::BAD_GATEWAY,
-                message: other.to_string(),
-            },
-        })?;
-    state
-        .esi
-        .set_waypoint(
-            &token,
-            destination_id,
-            add_to_beginning,
-            clear_other_waypoints,
-        )
-        .await
-        .map_err(|err| ApiError {
-            status: StatusCode::BAD_GATEWAY,
-            message: err.to_string(),
-        })
+fn esi(state: &AppState) -> characters::Esi<'_> {
+    characters::Esi {
+        sso: &state.sso,
+        esi: &state.esi,
+    }
 }
 
-/// ESI accepts a solar system, station, or structure id as a waypoint destination.
-/// We can only vouch for the first two (structures are per-character ACL'd and not
-/// seeded), so unknown ids are passed through to ESI rather than rejected here.
-async fn validate_waypoint_destination(
-    state: &AppState,
-    destination_id: i64,
-) -> Result<(), ApiError> {
-    let exists = sqlx::query_scalar!(
-        "select exists(select 1 from solar_systems where id = $1)
-             or exists(select 1 from stations where id = $1)",
-        destination_id,
-    )
-    .fetch_one(&state.db)
-    .await?
-    .unwrap_or(false);
-    if exists {
-        Ok(())
-    } else {
-        Err(ApiError::bad_request("unknown destination"))
+/// Something the user can fix is a 400, a missing waypoint scope a 409 (the character
+/// has to re-consent), and ESI failing a 502.
+impl From<CharacterError> for ApiError {
+    fn from(err: CharacterError) -> Self {
+        use axum::http::StatusCode;
+        match err {
+            CharacterError::Invalid(message) => ApiError::bad_request(message),
+            CharacterError::MissingScope => ApiError {
+                status: StatusCode::CONFLICT,
+                message: err.to_string(),
+            },
+            CharacterError::Upstream(err) => ApiError {
+                status: StatusCode::BAD_GATEWAY,
+                message: err.to_string(),
+            },
+            CharacterError::Db(err) => ApiError::from(err),
+        }
     }
 }
 
@@ -466,24 +282,16 @@ pub async fn set_waypoint(
     Json(body): Json<SetWaypointBody>,
 ) -> ApiResult<()> {
     let actor = require_actor(&state.db, &creds).await?;
-    let owns = sqlx::query_scalar!(
-        "select exists(select 1 from characters where id = $1 and user_id = $2)",
-        body.character_id,
+    characters::set_waypoint(
+        &state.db,
+        esi(&state),
         actor.user_id,
-    )
-    .fetch_one(&state.db)
-    .await?
-    .unwrap_or(false);
-    if !owns {
-        return Err(ApiError::bad_request("that character isn't yours"));
-    }
-    validate_waypoint_destination(&state, body.destination_id).await?;
-    esi_waypoint(
-        &state,
         body.character_id,
-        body.destination_id,
-        body.add_to_beginning.unwrap_or(false),
-        body.clear_other_waypoints.unwrap_or(true),
+        Waypoint {
+            destination_id: body.destination_id,
+            add_to_beginning: body.add_to_beginning.unwrap_or(false),
+            clear_other_waypoints: body.clear_other_waypoints.unwrap_or(true),
+        },
     )
     .await?;
     Ok(Json(()))
@@ -506,36 +314,16 @@ pub async fn set_waypoint_all(
     Json(body): Json<SetWaypointAllBody>,
 ) -> ApiResult<()> {
     let actor = require_actor(&state.db, &creds).await?;
-    validate_waypoint_destination(&state, body.destination_id).await?;
-    let ids = sqlx::query_scalar!(
-        "select c.id from characters c
-         join character_status s on s.character_id = c.id and s.online
-         where c.user_id = $1",
+    characters::set_waypoint_all(
+        &state.db,
+        esi(&state),
         actor.user_id,
+        Waypoint {
+            destination_id: body.destination_id,
+            add_to_beginning: body.add_to_beginning.unwrap_or(false),
+            clear_other_waypoints: body.clear_other_waypoints.unwrap_or(true),
+        },
     )
-    .fetch_all(&state.db)
     .await?;
-    if ids.is_empty() {
-        return Err(ApiError::bad_request("no characters online"));
-    }
-    let mut ok = 0usize;
-    let mut last_err = None;
-    for id in ids {
-        match esi_waypoint(
-            &state,
-            id,
-            body.destination_id,
-            body.add_to_beginning.unwrap_or(false),
-            body.clear_other_waypoints.unwrap_or(true),
-        )
-        .await
-        {
-            Ok(()) => ok += 1,
-            Err(err) => last_err = Some(err),
-        }
-    }
-    if ok == 0 {
-        return Err(last_err.expect("at least one attempt"));
-    }
     Ok(Json(()))
 }

@@ -12,6 +12,7 @@ pub mod db;
 pub mod discord;
 pub mod entities;
 pub mod esi;
+pub mod identity;
 pub mod integrations;
 pub mod killmails;
 pub mod maps;
