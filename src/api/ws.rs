@@ -2,7 +2,7 @@
 //! channel / activity heartbeat.
 
 use crate::api::extract::Credentials;
-use axum::extract::ws::{Message, WebSocket, WebSocketUpgrade};
+use axum::extract::ws::{CloseFrame, Message, WebSocket, WebSocketUpgrade, close_code};
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
@@ -68,6 +68,10 @@ async fn user_heartbeat(mut socket: WebSocket, pool: sqlx::PgPool, users: UserHu
 
     loop {
         tokio::select! {
+            _ = crate::background::stopped() => {
+                going_away(socket).await;
+                break;
+            }
             _ = ping.tick() => {
                 if socket.send(Message::Ping(Vec::new().into())).await.is_err() {
                     break; // client gone
@@ -104,7 +108,14 @@ async fn user_heartbeat(mut socket: WebSocket, pool: sqlx::PgPool, users: UserHu
 async fn stream_map_events(mut socket: WebSocket, hub: MapHub, map_id: i64) {
     let mut rx = hub.subscribe(map_id);
     loop {
-        let text = match rx.recv().await {
+        let received = tokio::select! {
+            _ = crate::background::stopped() => {
+                going_away(socket).await;
+                return;
+            }
+            received = rx.recv() => received,
+        };
+        let text = match received {
             Ok(event) => serde_json::to_string(&event).unwrap_or_default(),
             Err(RecvError::Lagged(_)) => r#"{"type":"lagged"}"#.to_string(),
             Err(RecvError::Closed) => break,
@@ -113,4 +124,14 @@ async fn stream_map_events(mut socket: WebSocket, hub: MapHub, map_id: i64) {
             break;
         }
     }
+}
+
+/// The server is shutting down: 1001 tells the client to reconnect, which lands it on the
+/// process that replaces this one, rather than leaving it to notice a dead connection.
+async fn going_away(mut socket: WebSocket) {
+    let frame = CloseFrame {
+        code: close_code::AWAY,
+        reason: "server restarting".into(),
+    };
+    let _ = socket.send(Message::Close(Some(frame))).await;
 }

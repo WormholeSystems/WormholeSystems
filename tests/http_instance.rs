@@ -73,3 +73,16 @@ async fn the_announcement_is_served_to_everyone(pool: PgPool) {
     assert_eq!(a["dismissible"], false);
     assert_eq!(a["id"].as_str().map(str::len), Some(12));
 }
+
+// What Docker's healthcheck asks: up while the database answers, and 503 once it does not.
+#[sqlx::test]
+async fn healthz_follows_the_database(pool: PgPool) {
+    use axum::extract::State;
+
+    let (status, _) = wormholesystems::app::healthz(State(state(&pool))).await;
+    assert_eq!(status, StatusCode::OK);
+
+    pool.close().await;
+    let (status, _) = wormholesystems::app::healthz(State(state(&pool))).await;
+    assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
+}

@@ -3,6 +3,7 @@ pub mod alerts;
 pub mod allowlist;
 pub mod announcement;
 pub mod api;
+pub mod app;
 pub mod auth;
 pub mod background;
 pub mod config;

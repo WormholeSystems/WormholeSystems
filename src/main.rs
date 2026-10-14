@@ -241,6 +241,9 @@ async fn main() {
     };
 
     let app = Router::new()
+        // Outside the API router, so it is not compressed, not in the OpenAPI document,
+        // and answers without a session.
+        .route("/healthz", get(wormholesystems::app::healthz))
         .route("/auth/login", get(auth::login))
         .route("/auth/callback", get(auth::callback))
         .route("/auth/logout", get(auth::logout))
@@ -268,8 +271,41 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
     tracing::info!("listening on http://{addr}");
     axum::serve(listener, app.into_make_service())
+        .with_graceful_shutdown(shutdown_signal())
         .await
         .unwrap();
+    // Requests have drained; let a sweep that is mid-pass finish, inside the time `docker
+    // stop` allows before it kills the process.
+    wormholesystems::background::shutdown(std::time::Duration::from_secs(5)).await;
+    tracing::info!("stopped");
+}
+
+/// SIGTERM is what `docker stop` sends, Ctrl-C (SIGINT) what a terminal does. Either one
+/// stops accepting connections, closes the open WebSockets and lets in-flight requests
+/// finish, rather than waiting out Docker's ten seconds and being killed.
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        tokio::signal::ctrl_c().await.ok();
+    };
+    #[cfg(unix)]
+    let terminate = async {
+        match tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate()) {
+            Ok(mut signal) => {
+                signal.recv().await;
+            }
+            Err(_) => std::future::pending().await,
+        }
+    };
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+    tokio::select! {
+        _ = ctrl_c => {}
+        _ = terminate => {}
+    }
+    tracing::info!("shutting down");
+    // WebSockets outlive the request that opened them, so the server would wait on them
+    // forever; they watch this and close themselves.
+    wormholesystems::background::begin_shutdown();
 }
 
 /// Logs go to stderr, so the few subcommands whose stdout is read by a script (`sde-status`)
