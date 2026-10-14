@@ -422,14 +422,6 @@ const KNOWN_GAPS: &[(&str, &str)] = &[
     ),
     ("remove_watchlist_entry", "the entry comes back unpinned"),
     (
-        "add_eve_scout_connections",
-        "undoing the redo leaves a scan it put on a system already on the map",
-    ),
-    (
-        "add_signature raising a ghost",
-        "redo leaves the scan unlinked from its ghost",
-    ),
-    (
         "resolve_ghost_system onto a placed system",
         "undoing a merge yields an un-resolve rather than the merge, so redo refuses",
     ),

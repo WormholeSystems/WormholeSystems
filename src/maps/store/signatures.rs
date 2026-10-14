@@ -165,17 +165,21 @@ pub(crate) async fn snapshot_around(
     .await?)
 }
 
-/// Put a snapshotted signature back under its own id. A row that is still there is left
-/// alone: this is the undo of something that took it away.
-pub(crate) async fn reinsert(tx: &mut Tx<'_>, map_id: i64, row: &SignatureRow) -> Result<()> {
-    sqlx::query!(
+/// Put a snapshotted signature back under its own id: this is the undo of something that
+/// took it away. A row that is still there keeps what it holds, but for a link it lost
+/// when its connection went: the connection is being put back with it, so the link is too.
+/// Returns whether the row had to be inserted.
+pub(crate) async fn reinsert(tx: &mut Tx<'_>, map_id: i64, row: &SignatureRow) -> Result<bool> {
+    let inserted = sqlx::query_scalar!(
         r#"insert into signatures
                (id, map_id, solar_system_id, signature_id, "group", signature_type_id,
                 name, size, mass_status, time_status, connection_id, created_at,
                 time_status_updated_at)
            overriding system value
            values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, coalesce($12, now()), $13)
-           on conflict (id) do nothing"#,
+           on conflict (id) do update set connection_id = excluded.connection_id
+               where signatures.connection_id is null and excluded.connection_id is not null
+           returning (xmax = 0) as "inserted!""#,
         row.id,
         map_id,
         row.solar_system_id,
@@ -190,9 +194,9 @@ pub(crate) async fn reinsert(tx: &mut Tx<'_>, map_id: i64, row: &SignatureRow) -
         row.created_at,
         row.time_status_updated_at,
     )
-    .execute(&mut **tx)
+    .fetch_optional(&mut **tx)
     .await?;
-    Ok(())
+    Ok(inserted == Some(true))
 }
 
 /// Put a snapshotted signature back under its own id, and if it is still there, put its
