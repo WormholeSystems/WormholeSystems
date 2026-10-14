@@ -1,4 +1,5 @@
 import { createdId, expect, gotoApp, test } from './fixtures';
+import { createMap } from './arrange';
 import { clearThreats, createIdentity, grantAccess, seedThreat } from './db';
 
 // The Cmd+K palette: jump to a system already on the map, or add one that is not.
@@ -6,12 +7,6 @@ import { clearThreats, createIdentity, grantAccess, seedThreat } from './db';
 const J122515 = 31001882; // C5, Wolf-Rayet Star
 const JITA = 30000142;
 const AMARR = 30002187;
-
-async function createMap(api: import('@playwright/test').APIRequestContext, name: string) {
-	const res = await api.post('/api/maps', { data: { name } });
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
-}
 
 test('Cmd+K opens the palette and jumps to a placed system', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E Palette');

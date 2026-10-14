@@ -1,14 +1,9 @@
-import { createdId, expect, gotoApp, test } from './fixtures';
+import { expect, gotoApp, reloadApp, test } from './fixtures';
+import { createMap } from './arrange';
 import { createIdentity, deleteMapRow, grantAccess } from './db';
 
 // Map settings: renaming on the General section, the names the map hands out under
 // Naming, and the Access section that decides who sees the chain.
-
-async function createMap(api: import('@playwright/test').APIRequestContext, name: string) {
-	const res = await api.post('/api/maps', { data: { name } });
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
-}
 
 test('renaming the map shows up on the map itself', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E Before');
@@ -206,7 +201,7 @@ test('chain naming previews as you type and survives a reload', async ({ page, a
 	await page.getByTestId('save-naming').click();
 	await expect(page.getByTestId('save-naming')).toBeDisabled();
 
-	await page.reload();
+	await reloadApp(page);
 	await expect(page.getByTestId('bookmark_wormhole')).toHaveValue(
 		'{alias} {sig} {class} {wh} {life}',
 	);

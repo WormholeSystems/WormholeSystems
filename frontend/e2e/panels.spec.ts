@@ -1,15 +1,10 @@
-import { createdId, expect, gotoApp, test } from './fixtures';
+import { expect, gotoApp, reloadApp, test } from './fixtures';
+import { createMap } from './arrange';
 import { createIdentity, grantAccess } from './db';
 
 // The active-system model and the side panels (System Info, Signatures, Notes).
 
 const J122515 = 31001882; // C5, Wolf-Rayet Star, static H296
-
-async function createMap(api: import('@playwright/test').APIRequestContext, name: string) {
-	const res = await api.post('/api/maps', { data: { name } });
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
-}
 
 test('clicking a node activates it: ring, URL, and System Info', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E Active');
@@ -80,7 +75,7 @@ test('notes round-trip with markdown rendering', async ({ page, api }) => {
 	await saved;
 
 	// Survives a reload (persisted server-side).
-	await page.reload();
+	await reloadApp(page);
 	await expect(card.locator('strong', { hasText: 'Danger' })).toBeVisible();
 });
 

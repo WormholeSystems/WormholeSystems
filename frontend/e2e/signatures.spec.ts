@@ -1,4 +1,5 @@
-import { createdId, expect, gotoApp, test } from './fixtures';
+import { createdId, expect, gotoApp, reloadApp, test } from './fixtures';
+import { addSystem, createMap } from './arrange';
 import { createIdentity, grantAccess, setCharacterPresence } from './db';
 
 // The full signatures panel (legacy parity): catalog-backed selects, paste diff with
@@ -6,26 +7,6 @@ import { createIdentity, grantAccess, setCharacterPresence } from './db';
 
 const J122515 = 31001882; // C5 wormhole, static H296
 const JITA = 30000142;
-
-async function createMap(api: import('@playwright/test').APIRequestContext, name: string) {
-	const res = await api.post('/api/maps', { data: { name } });
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
-}
-
-async function addSystem(
-	api: import('@playwright/test').APIRequestContext,
-	mapId: number,
-	solarSystemId: number,
-	x: number,
-	y: number,
-) {
-	const res = await api.post(`/api/maps/${mapId}/systems/add`, {
-		data: { map_id: mapId, solar_system_id: solarSystemId, x, y, alias: null },
-	});
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
-}
 
 /**
  * Open the map as a dedicated member identity (slot 6). The main e2e character's
@@ -64,7 +45,7 @@ test('wormhole type select: statics first, K162 group, chosen type survives repa
 	api,
 }) => {
 	const mapId = await createMap(api, 'E2E SigTypes');
-	await addSystem(api, mapId, J122515, 200, 200);
+	await addSystem(api, mapId, J122515, { x: 200, y: 200 });
 
 	const { page, ctx } = await openAsMember(browser, mapId, `?system=${J122515}`);
 	await page.getByTestId('statics-first-toggle').click();
@@ -95,8 +76,8 @@ test('paste diff tints and lazy delete cascade to connection and orphan endpoint
 	api,
 }) => {
 	const mapId = await createMap(api, 'E2E SigDiff');
-	const near = await addSystem(api, mapId, J122515, 200, 200);
-	const far = await addSystem(api, mapId, JITA, 500, 200);
+	const near = await addSystem(api, mapId, J122515, { x: 200, y: 200 });
+	const far = await addSystem(api, mapId, JITA, { x: 500, y: 200 });
 	// Keep the scanned system: only the far endpoint is orphan-eligible.
 	await api.post(`/api/maps/${mapId}/systems/set-pinned`, {
 		data: { map_id: mapId, map_solar_system_id: near, value: true },
@@ -144,8 +125,8 @@ test('paste diff tints and lazy delete cascade to connection and orphan endpoint
 
 test('category change clears the connection link', async ({ browser, api }) => {
 	const mapId = await createMap(api, 'E2E SigRecat');
-	const near = await addSystem(api, mapId, J122515, 200, 200);
-	const far = await addSystem(api, mapId, JITA, 500, 200);
+	const near = await addSystem(api, mapId, J122515, { x: 200, y: 200 });
+	const far = await addSystem(api, mapId, JITA, { x: 500, y: 200 });
 	await api.post(`/api/maps/${mapId}/connections/add`, {
 		data: { map_id: mapId, from_system: near, to_system: far, kind: 'wormhole' },
 	});
@@ -169,8 +150,8 @@ test('category change clears the connection link', async ({ browser, api }) => {
 
 test('wormhole type and connection can be unset back to Unknown', async ({ browser, api }) => {
 	const mapId = await createMap(api, 'E2E SigUnset');
-	const near = await addSystem(api, mapId, J122515, 200, 200);
-	const far = await addSystem(api, mapId, JITA, 500, 200);
+	const near = await addSystem(api, mapId, J122515, { x: 200, y: 200 });
+	const far = await addSystem(api, mapId, JITA, { x: 500, y: 200 });
 	await api.post(`/api/maps/${mapId}/connections/add`, {
 		data: { map_id: mapId, from_system: near, to_system: far, kind: 'wormhole' },
 	});
@@ -207,7 +188,7 @@ test('wormhole type and connection can be unset back to Unknown', async ({ brows
 
 test('sorting and category filters with hidden count', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E SigSort');
-	await addSystem(api, mapId, J122515, 200, 200);
+	await addSystem(api, mapId, J122515, { x: 200, y: 200 });
 	await api.post(`/api/maps/${mapId}/signatures/paste`, {
 		data: {
 			map_id: mapId,
@@ -241,20 +222,19 @@ test('sorting and category filters with hidden count', async ({ page, api }) => 
 
 test('compact toggle persists via map user settings', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E SigCompact');
-	await addSystem(api, mapId, J122515, 200, 200);
+	await addSystem(api, mapId, J122515, { x: 200, y: 200 });
 
 	await gotoApp(page, `/maps/${mapId}?system=${J122515}`);
 	await page.getByTestId('compact-toggle').click();
 	await expect(page.getByTestId('compact-toggle')).toHaveAttribute('aria-pressed', 'true');
-	await page.reload();
-	await page.waitForSelector('html[data-hydrated="true"]');
+	await reloadApp(page);
 	await expect(page.getByTestId('compact-toggle')).toHaveAttribute('aria-pressed', 'true');
 });
 
 test('row actions: EOL color, preserve mass, copy bookmark', async ({ browser, api }) => {
 	const mapId = await createMap(api, 'E2E SigActions');
-	const near = await addSystem(api, mapId, J122515, 200, 200);
-	const far = await addSystem(api, mapId, JITA, 500, 200);
+	const near = await addSystem(api, mapId, J122515, { x: 200, y: 200 });
+	const far = await addSystem(api, mapId, JITA, { x: 500, y: 200 });
 	await api.post(`/api/maps/${mapId}/connections/add`, {
 		data: { map_id: mapId, from_system: near, to_system: far, kind: 'wormhole' },
 	});
@@ -302,7 +282,7 @@ test('row actions: EOL color, preserve mass, copy bookmark', async ({ browser, a
 
 test('viewer sees a read-only panel', async ({ page, api, browser }) => {
 	const mapId = await createMap(api, 'E2E SigViewer');
-	await addSystem(api, mapId, J122515, 200, 200);
+	await addSystem(api, mapId, J122515, { x: 200, y: 200 });
 	await api.post(`/api/maps/${mapId}/signatures/paste`, {
 		data: {
 			map_id: mapId,
@@ -335,7 +315,7 @@ test('viewer sees a read-only panel', async ({ page, api, browser }) => {
 
 test('pasting into a system the character is not in warns first', async ({ api, browser }) => {
 	const mapId = await createMap(api, 'E2E SigMismatch');
-	await addSystem(api, mapId, J122515, 200, 200);
+	await addSystem(api, mapId, J122515, { x: 200, y: 200 });
 	// A separate identity so the presence doesn't disturb parallel tests.
 	const member = await createIdentity(5);
 	await grantAccess(mapId, member.characterId, 'member');

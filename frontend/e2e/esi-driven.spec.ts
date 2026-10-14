@@ -1,4 +1,5 @@
-import { createdId, expect, gotoApp, test } from './fixtures';
+import { createdId, expect, gotoApp, reloadApp, test } from './fixtures';
+import { addSystem, createMap, holds } from './arrange';
 import {
 	createIdentity,
 	grantAccess,
@@ -174,8 +175,7 @@ test('nothing is polled while the server is down, and it resumes when it returns
 		await stubCtx.put(`${STUB}/_stub/characters/${identity.characterId}`, {
 			data: { online: true, solar_system_id: J005482 },
 		});
-		await page.waitForTimeout(8_000);
-		expect(await position()).toBe(J122515);
+		await holds(position, J122515, 8_000, 1_000);
 
 		// Back up, and the same move is picked up without anything else changing.
 		await setServer(playwright, { players: 18_000 });
@@ -236,19 +236,6 @@ async function polledPosition(api: Api, characterId: number) {
 	return mine.find((c) => c.character_id === characterId)?.solar_system_id ?? null;
 }
 
-async function createMap(api: Api, name: string) {
-	const res = await api.post('/api/maps', { data: { name } });
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
-}
-
-async function addSystem(api: Api, mapId: number, solarSystemId: number, x = 200) {
-	const res = await api.post(`/api/maps/${mapId}/systems/add`, {
-		data: { map_id: mapId, solar_system_id: solarSystemId, x, y: 200, alias: null },
-	});
-	expect(res.ok()).toBe(true);
-}
-
 async function paste(page: import('@playwright/test').Page, text: string) {
 	await expect(page.getByTestId('signatures-card')).toBeVisible();
 	await page.evaluate((t) => {
@@ -275,7 +262,7 @@ test('a pilot moving shows up on everyone else\u2019s map, not just their own', 
 
 	const mapId = await createMap(api, 'E2E PilotsLive');
 	await addSystem(api, mapId, J122515);
-	await addSystem(api, mapId, JITA, 500);
+	await addSystem(api, mapId, JITA, { x: 500 });
 
 	// The pilot who flies, and a second member who is only watching.
 	const flyer = await createIdentity(15);
@@ -399,8 +386,7 @@ test('skyhook windows are read the way a raider reads them', async ({ page, api,
 			timeout: 20_000,
 		})
 		.toBe(0);
-	await page.reload();
-	await page.waitForSelector('[data-testid="panel-grid"]');
+	await reloadApp(page);
 	await expect(card.getByTestId('skyhooks-empty')).toBeVisible();
 });
 

@@ -1,4 +1,5 @@
-import { createdId, expect, gotoApp, test } from './fixtures';
+import { expect, gotoApp, test } from './fixtures';
+import { addSystem, createMap } from './arrange';
 
 // The rally badges: where the fleet is forming up, and how far that is from the staging
 // system. The count is the map's own, home to rally, so everyone reads the same number.
@@ -8,30 +9,10 @@ const PERIMETER = 30000144; // one gate from Jita
 const AMARR = 30002187;
 const DODIXIE = 30002659;
 
-async function createMap(api: import('@playwright/test').APIRequestContext, name: string) {
-	const res = await api.post('/api/maps', { data: { name } });
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
-}
-
-async function addSystem(
-	api: import('@playwright/test').APIRequestContext,
-	mapId: number,
-	solarSystemId: number,
-	x: number,
-	y: number,
-) {
-	const res = await api.post(`/api/maps/${mapId}/systems/add`, {
-		data: { map_id: mapId, solar_system_id: solarSystemId, x, y, alias: null },
-	});
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
-}
-
 test('the rally badge names the system and counts the jumps home', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E Rally');
-	const home = await addSystem(api, mapId, JITA, 200, 200);
-	const rally = await addSystem(api, mapId, PERIMETER, 500, 200);
+	const home = await addSystem(api, mapId, JITA, { x: 200, y: 200 });
+	const rally = await addSystem(api, mapId, PERIMETER, { x: 500, y: 200 });
 
 	await gotoApp(page, `/maps/${mapId}`);
 	// Nothing to form up on yet, so nothing is drawn.
@@ -71,9 +52,9 @@ test('two rally points each get a badge, and a third replaces the oldest', async
 	api,
 }) => {
 	const mapId = await createMap(api, 'E2E Two Rallies');
-	const perimeter = await addSystem(api, mapId, PERIMETER, 200, 200);
-	const amarr = await addSystem(api, mapId, AMARR, 500, 200);
-	const dodixie = await addSystem(api, mapId, DODIXIE, 800, 200);
+	const perimeter = await addSystem(api, mapId, PERIMETER, { x: 200, y: 200 });
+	const amarr = await addSystem(api, mapId, AMARR, { x: 500, y: 200 });
+	const dodixie = await addSystem(api, mapId, DODIXIE, { x: 800, y: 200 });
 
 	async function rally(id: number, value: boolean) {
 		const res = await api.post(`/api/maps/${mapId}/systems/set-rally`, {

@@ -1,4 +1,5 @@
-import { createdId, expect, gotoApp, test } from './fixtures';
+import { expect, gotoApp, test } from './fixtures';
+import { addSystem, createMap } from './arrange';
 import { createIdentity, grantAccess, setCharacterPresence, withDb } from './db';
 
 // The pilots card: who is sharing their location on this map, ordered by who can act, and
@@ -13,26 +14,6 @@ const MACHARIEL = 17738;
 const BUZZARD = 11192; // Covert Ops
 
 type Api = import('@playwright/test').APIRequestContext;
-
-async function createMap(api: Api, name: string) {
-	const res = await api.post('/api/maps', { data: { name } });
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
-}
-
-async function addSystem(
-	api: Api,
-	mapId: number,
-	solarSystemId: number,
-	alias: string | null,
-	x = 200,
-) {
-	const res = await api.post(`/api/maps/${mapId}/systems/add`, {
-		data: { map_id: mapId, solar_system_id: solarSystemId, x, y: 200, alias },
-	});
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
-}
 
 /** Another member of the map, sharing their location, flying a named hull. */
 async function addPilot(
@@ -65,7 +46,7 @@ async function addPilot(
 
 test('pilots are listed with the ones who can act first', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E Pilots');
-	await addSystem(api, mapId, J122515, 'HOME');
+	await addSystem(api, mapId, J122515, { alias: 'HOME' });
 
 	await addPilot(api, mapId, 20, J122515, { typeId: CAPSULE });
 	await addPilot(api, mapId, 21, J122515, { typeId: MACHARIEL, docked: true });
@@ -97,8 +78,8 @@ test('pilots are listed with the ones who can act first', async ({ page, api }) 
 
 test('distance is measured from the system you are looking at', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E PilotsDistance');
-	const home = await addSystem(api, mapId, J122515, 'HOME');
-	const next = await addSystem(api, mapId, J005482, '1', 500);
+	const home = await addSystem(api, mapId, J122515, { alias: 'HOME' });
+	const next = await addSystem(api, mapId, J005482, { alias: '1', x: 500 });
 	await api.post(`/api/maps/${mapId}/connections/add`, {
 		data: { map_id: mapId, from_system: home, to_system: next, kind: 'wormhole' },
 	});
@@ -119,7 +100,7 @@ test('distance is measured from the system you are looking at', async ({ page, a
 
 test('a pilot outside the chain still shows where they are', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E PilotsOffMap');
-	await addSystem(api, mapId, J122515, 'HOME');
+	await addSystem(api, mapId, J122515, { alias: 'HOME' });
 	await addPilot(api, mapId, 25, JITA, { typeId: MACHARIEL });
 
 	await gotoApp(page, `/maps/${mapId}?system=${J122515}`);
@@ -131,7 +112,7 @@ test('a pilot outside the chain still shows where they are', async ({ page, api 
 
 test('a pilot row right-clicks to the system menu', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E PilotsMenu');
-	await addSystem(api, mapId, J122515, 'HOME');
+	await addSystem(api, mapId, J122515, { alias: 'HOME' });
 	// In known space, so the row's system is one the map does not hold: the menu still has
 	// to work, which means the system was resolved rather than read off a placement.
 	await addPilot(api, mapId, 28, JITA, { typeId: MACHARIEL });
@@ -152,7 +133,7 @@ test('a pilot row right-clicks to the system menu', async ({ page, api }) => {
 
 test('viewers do not get a pilot list at all', async ({ api, browser }) => {
 	const mapId = await createMap(api, 'E2E PilotsViewer');
-	await addSystem(api, mapId, J122515, 'HOME');
+	await addSystem(api, mapId, J122515, { alias: 'HOME' });
 	await addPilot(api, mapId, 26, J122515, { typeId: MACHARIEL });
 
 	const viewer = await createIdentity(27);

@@ -1,4 +1,5 @@
-import { createdId, expect, test } from './fixtures';
+import { expect, reloadApp, test } from './fixtures';
+import { createMap } from './arrange';
 import { createIdentity, grantAccess, setScopes, showIntroduction } from './db';
 
 // The one-time walkthrough a map opens with: ESI permissions, the preferences those
@@ -25,12 +26,6 @@ function saved(page: import('@playwright/test').Page) {
 	return page.waitForResponse(
 		(r) => r.url().includes('/settings/user') && r.request().method() === 'POST',
 	);
-}
-
-async function createMap(api: Api, name: string) {
-	const res = await api.post('/api/maps', { data: { name } });
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
 }
 
 /** A map the given identity is a member of, with the walkthrough still to come. */
@@ -90,8 +85,7 @@ test('a new map walks you through permissions and preferences, once', async ({ b
 	await expect(dialog).toHaveCount(0);
 
 	// And it stays gone: a walkthrough, not a greeting.
-	await page.reload();
-	await page.waitForSelector('[data-testid="panel-grid"]');
+	await reloadApp(page);
 	await expect(page.getByTestId('introduction')).toHaveCount(0);
 	await ctx.close();
 });
@@ -134,8 +128,7 @@ test('without the location scope, sharing cannot be turned on at all', async ({ 
 	// Reaching the end still counts as done, even with nothing granted and nothing enabled.
 	await dialog.getByTestId('introduction-next').click();
 	await Promise.all([saved(page), dialog.getByTestId('introduction-done').click()]);
-	await page.reload();
-	await page.waitForSelector('[data-testid="panel-grid"]');
+	await reloadApp(page);
 	await expect(page.getByTestId('introduction')).toHaveCount(0);
 	await ctx.close();
 });

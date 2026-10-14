@@ -1,4 +1,5 @@
-import { createdId, expect, gotoApp, test } from './fixtures';
+import { createdId, expect, gotoApp, reloadApp, test } from './fixtures';
+import { addSystem, createMap } from './arrange';
 import { createIdentity, grantAccess } from './db';
 
 // The redesigned navigation panel: always-visible A→B route, the shared watchlist
@@ -8,26 +9,6 @@ const JITA = 30000142;
 const AMARR = 30002187;
 const PERIMETER = 30000144;
 const J122515 = 31001882;
-
-async function createMap(api: import('@playwright/test').APIRequestContext, name: string) {
-	const res = await api.post('/api/maps', { data: { name } });
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
-}
-
-async function addSystem(
-	api: import('@playwright/test').APIRequestContext,
-	mapId: number,
-	solarSystemId: number,
-	x: number,
-	y: number,
-) {
-	const res = await api.post(`/api/maps/${mapId}/systems/add`, {
-		data: { map_id: mapId, solar_system_id: solarSystemId, x, y, alias: null },
-	});
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
-}
 
 async function pickSystem(
 	page: import('@playwright/test').Page,
@@ -54,7 +35,7 @@ test('watchlist: defaults, add, unified origin badge, pin, remove, reload persis
 	api,
 }) => {
 	const mapId = await createMap(api, 'E2E NavWatch');
-	await addSystem(api, mapId, JITA, 200, 200);
+	await addSystem(api, mapId, JITA, { x: 200, y: 200 });
 	await gotoApp(page, `/maps/${mapId}`);
 
 	// Every new map arrives with the five trade hubs watched.
@@ -94,8 +75,7 @@ test('watchlist: defaults, add, unified origin badge, pin, remove, reload persis
 			return list.every((e: { is_pinned: boolean }) => e.is_pinned);
 		})
 		.toBe(true);
-	await page.reload();
-	await page.waitForSelector('html[data-hydrated="true"]');
+	await reloadApp(page);
 	await expect(rows).toHaveCount(6);
 
 	// Removing every row shows the empty state.
@@ -126,8 +106,8 @@ test('route settings: preference persists; lifetime tolerance drops EOL holes', 
 	api,
 }) => {
 	const mapId = await createMap(api, 'E2E NavSettings');
-	const a = await addSystem(api, mapId, JITA, 200, 200);
-	const b = await addSystem(api, mapId, AMARR, 560, 200);
+	const a = await addSystem(api, mapId, JITA, { x: 200, y: 200 });
+	const b = await addSystem(api, mapId, AMARR, { x: 560, y: 200 });
 	const conn = await api.post(`/api/maps/${mapId}/connections/add`, {
 		data: { map_id: mapId, from_system: a, to_system: b, kind: 'wormhole' },
 	});
@@ -154,16 +134,15 @@ test('route settings: preference persists; lifetime tolerance drops EOL holes', 
 	// The header only reads 'Safer' once the server has confirmed the setting, so this is
 	// what makes the reload below a real test of persistence rather than a race with it.
 	await expect(page.getByTestId('navigation-card').getByText('Safer')).toBeVisible();
-	await page.reload();
-	await page.waitForSelector('html[data-hydrated="true"]');
+	await reloadApp(page);
 	await expect(page.getByTestId('navigation-card').getByText('Safer')).toBeVisible();
 });
 
 test('find: closest systems from the unified origin', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E NavFind');
-	const jita = await addSystem(api, mapId, JITA, 200, 200);
+	const jita = await addSystem(api, mapId, JITA, { x: 200, y: 200 });
 	// A mapped neighbour, so route highlighting has an edge to light up.
-	const perimeter = await addSystem(api, mapId, PERIMETER, 560, 200);
+	const perimeter = await addSystem(api, mapId, PERIMETER, { x: 560, y: 200 });
 	await api.post(`/api/maps/${mapId}/connections/add`, {
 		data: { map_id: mapId, from_system: jita, to_system: perimeter, kind: 'wormhole' },
 	});
@@ -262,7 +241,7 @@ test('the pickers suggest systems already in play, before anything is typed', as
 	api,
 }) => {
 	const mapId = await createMap(api, 'E2E NavPicks');
-	await addSystem(api, mapId, J122515, 200, 200);
+	await addSystem(api, mapId, J122515, { x: 200, y: 200 });
 	await gotoApp(page, `/maps/${mapId}`);
 	await page.getByTestId('system-node').filter({ hasText: 'J122515' }).click();
 
@@ -285,7 +264,7 @@ test('the pickers suggest systems already in play, before anything is typed', as
 
 test('typing in a picker replaces the suggestions with search results', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E NavSearch');
-	await addSystem(api, mapId, J122515, 200, 200);
+	await addSystem(api, mapId, J122515, { x: 200, y: 200 });
 	await gotoApp(page, `/maps/${mapId}`);
 	await page.getByTestId('system-node').filter({ hasText: 'J122515' }).click();
 
@@ -300,7 +279,7 @@ test('typing in a picker replaces the suggestions with search results', async ({
 
 test('unreachable watchlist rows stay the same height as reachable ones', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E WatchHeight');
-	await addSystem(api, mapId, JITA, 200, 200);
+	await addSystem(api, mapId, JITA, { x: 200, y: 200 });
 	// Amarr is gate-reachable from Jita (and already there as a default hub); the wormhole
 	// system is not reachable at all.
 	for (const sys of [AMARR, J122515]) {
@@ -330,8 +309,8 @@ test('unreachable watchlist rows stay the same height as reachable ones', async 
 
 test('a wormhole hop names the signature to warp to', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E RouteWH');
-	const a = await addSystem(api, mapId, J122515, 200, 200);
-	const b = await addSystem(api, mapId, JITA, 560, 200);
+	const a = await addSystem(api, mapId, J122515, { x: 200, y: 200 });
+	const b = await addSystem(api, mapId, JITA, { x: 560, y: 200 });
 	const conn = await api.post(`/api/maps/${mapId}/connections/add`, {
 		data: { map_id: mapId, from_system: a, to_system: b, kind: 'wormhole' },
 	});
@@ -367,7 +346,7 @@ test('a wormhole hop names the signature to warp to', async ({ page, api }) => {
 
 test('viewers see the watchlist read-only', async ({ page, api, browser }) => {
 	const mapId = await createMap(api, 'E2E NavViewer');
-	await addSystem(api, mapId, JITA, 200, 200);
+	await addSystem(api, mapId, JITA, { x: 200, y: 200 });
 	const owner = await api.post(`/api/maps/${mapId}/watchlist/add`, {
 		data: { map_id: mapId, solar_system_id: AMARR },
 	});

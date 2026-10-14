@@ -1,15 +1,10 @@
-import { createdId, expect, gotoApp, test } from './fixtures';
+import { expect, gotoApp, test } from './fixtures';
+import { createMap } from './arrange';
 import { setThreat } from './db';
 
 // Threat rings on nodes (setting-gated, suppressed when active) and the Threat card.
 
 const J122515 = 31001882; // C5 wormhole
-
-async function createMap(api: import('@playwright/test').APIRequestContext, name: string) {
-	const res = await api.post('/api/maps', { data: { name } });
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
-}
 
 test.afterEach(async () => {
 	// Threat lives on the shared wormhole_systems row; reset it for other tests.

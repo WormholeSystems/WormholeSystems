@@ -1,4 +1,4 @@
-import { createdId, expect, gotoApp, test } from './fixtures';
+import { createdId, expect, gotoApp, reloadApp, test } from './fixtures';
 
 // Connection stroke colors follow the legacy model: sky stargates, orange reduced,
 // purple EOL, red critical, neutral otherwise; degraded states dash.
@@ -32,8 +32,7 @@ test('edge colors and dashes per state', async ({ page, api }) => {
 	await api.post(`/api/maps/${mapId}/connections/set-status`, {
 		data: { map_id: mapId, connection_id: cid, kind: 'wormhole', mass_status: 'reduced' },
 	});
-	await page.reload();
-	await page.waitForSelector('html[data-hydrated="true"]');
+	await reloadApp(page);
 	await expect(edge).toHaveAttribute('stroke', '#f97316'); // orange-500
 	await expect(edge).toHaveAttribute('stroke-dasharray', '2 6');
 
@@ -41,8 +40,7 @@ test('edge colors and dashes per state', async ({ page, api }) => {
 	await api.post(`/api/maps/${mapId}/connections/set-status`, {
 		data: { map_id: mapId, connection_id: cid, mass_status: 'stable' },
 	});
-	await page.reload();
-	await page.waitForSelector('html[data-hydrated="true"]');
+	await reloadApp(page);
 	await page.locator('path[stroke="transparent"]').click({ button: 'right', force: true });
 	await page.getByTestId('lifetime-subtrigger').hover();
 	await page.getByTestId('lifetime-submenu').getByRole('menuitem', { name: 'End of Life' }).click();

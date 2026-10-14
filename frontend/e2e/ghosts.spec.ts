@@ -1,28 +1,11 @@
-import { createdId, expect, gotoApp, test } from './fixtures';
+import { expect, gotoApp, test } from './fixtures';
+import { addSystem, createMap } from './arrange';
 
 // Ghost nodes: a scanned wormhole nobody has flown, drawn so the chain can be laid out
 // and named before anyone does, and merged away once its system is known.
 
 const J122515 = 31001882; // C5 wormhole, static H296
 const JITA = 30000142;
-
-async function createMap(api: import('@playwright/test').APIRequestContext, name: string) {
-	const res = await api.post('/api/maps', { data: { name } });
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
-}
-
-async function addSystem(
-	api: import('@playwright/test').APIRequestContext,
-	mapId: number,
-	solarSystemId: number,
-) {
-	const res = await api.post(`/api/maps/${mapId}/systems/add`, {
-		data: { map_id: mapId, solar_system_id: solarSystemId, x: 200, y: 200, alias: null },
-	});
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
-}
 
 /** Turn on the map-wide setting that makes a pasted wormhole a node. */
 async function enableGhosting(api: import('@playwright/test').APIRequestContext, mapId: number) {

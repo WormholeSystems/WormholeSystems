@@ -1,4 +1,5 @@
-import { createdId, expect, gotoApp, test } from './fixtures';
+import { expect, gotoApp, test } from './fixtures';
+import { addSystem, createMap } from './arrange';
 import { createIdentity, grantAccess } from './db';
 
 // The app-wide solar-system context menu: right-click any system reference (route
@@ -8,30 +9,10 @@ import { createIdentity, grantAccess } from './db';
 const JITA = 30000142;
 const PERIMETER = 30000144;
 
-async function createMap(api: import('@playwright/test').APIRequestContext, name: string) {
-	const res = await api.post('/api/maps', { data: { name } });
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
-}
-
-async function addSystem(
-	api: import('@playwright/test').APIRequestContext,
-	mapId: number,
-	solarSystemId: number,
-	x: number,
-	y: number,
-) {
-	const res = await api.post(`/api/maps/${mapId}/systems/add`, {
-		data: { map_id: mapId, solar_system_id: solarSystemId, x, y, alias: null },
-	});
-	expect(res.ok()).toBe(true);
-	return await createdId(res);
-}
-
 test('route rows open the system menu with external links', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E SysMenuRoute');
-	const a = await addSystem(api, mapId, JITA, 200, 200);
-	const b = await addSystem(api, mapId, PERIMETER, 560, 200);
+	const a = await addSystem(api, mapId, JITA, { x: 200, y: 200 });
+	const b = await addSystem(api, mapId, PERIMETER, { x: 560, y: 200 });
 	await api.post(`/api/maps/${mapId}/connections/add`, {
 		data: { map_id: mapId, from_system: a, to_system: b, kind: 'wormhole' },
 	});
@@ -77,7 +58,7 @@ test('route rows open the system menu with external links', async ({ page, api }
 
 test('search rows: add to map, then rally toggle once placed', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E SysMenuAdd');
-	await addSystem(api, mapId, JITA, 200, 200);
+	await addSystem(api, mapId, JITA, { x: 200, y: 200 });
 
 	await gotoApp(page, `/maps/${mapId}`);
 	await page.getByTestId('map-canvas').click({ button: 'right', position: { x: 500, y: 400 } });
@@ -131,7 +112,7 @@ test('wormhole rows hide Jump Range; route planner sets the origin', async ({ pa
 
 test('waypoint submenu is disabled without online characters', async ({ api, browser }) => {
 	const mapId = await createMap(api, 'E2E SysMenuWp');
-	await addSystem(api, mapId, JITA, 200, 200);
+	await addSystem(api, mapId, JITA, { x: 200, y: 200 });
 	// A dedicated identity: the shared main character's presence is toggled by other
 	// spec files.
 	const member = await createIdentity(8);
@@ -159,7 +140,7 @@ test('waypoint submenu is disabled without online characters', async ({ api, bro
 
 test('viewers get no write items', async ({ page, api, browser }) => {
 	const mapId = await createMap(api, 'E2E SysMenuViewer');
-	await addSystem(api, mapId, JITA, 200, 200);
+	await addSystem(api, mapId, JITA, { x: 200, y: 200 });
 	const viewer = await createIdentity(9);
 	await grantAccess(mapId, viewer.characterId, 'viewer');
 
