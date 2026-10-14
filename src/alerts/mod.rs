@@ -12,27 +12,87 @@ pub mod place;
 pub mod proximity;
 pub mod ships;
 
-use sqlx::PgPool;
+use std::collections::HashMap;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::{Arc, Mutex};
+use std::time::{Duration, Instant};
 
-/// The stargate graph and HTTP client, held for the life of the process so neither is
-/// rebuilt per killmail.
+use sqlx::PgPool;
+use tokio::sync::{Semaphore, mpsc};
+
+/// How many messages may wait for Discord. Past this, Discord is down or throttling us,
+/// and queueing more would only deliver stale news later.
+const OUTBOX_CAPACITY: usize = 256;
+
+/// Messages in flight at once, so one webhook that takes its full timeout to fail does not
+/// hold up every other map's alerts behind it.
+const SENDERS: usize = 4;
+
+/// How long the cached alert list is trusted without a known change. Every write through
+/// this crate invalidates it at once; this is the backstop for one that does not.
+const CACHE_TTL: Duration = Duration::from_secs(60);
+
+/// How far back a lagged map-event subscriber looks to catch up on what it missed: from
+/// the last event it took, plus some slack, but never more than the cap.
+const LAG_REPLAY_SLACK: Duration = Duration::from_secs(30);
+const LAG_REPLAY_CAP: Duration = Duration::from_secs(10 * 60);
+
+/// Bumped by every change to an alert or its destination, so the cache knows to reload.
+static GENERATION: AtomicU64 = AtomicU64::new(0);
+
+/// Mark the cached alerts as stale. Called by [`log`], which every alert write goes
+/// through, so a new alert is live on the next kill rather than the next minute.
+pub fn changed() {
+    GENERATION.fetch_add(1, Ordering::Relaxed);
+}
+
+/// One message, evaluated and claimed, waiting to be sent.
+pub struct Outgoing {
+    pub alert: Alert,
+    pub key: String,
+    pub embed: delivery::Embed,
+}
+
+struct Snapshot {
+    loaded_at: Instant,
+    generation: u64,
+    alerts: Arc<Vec<Alert>>,
+}
+
+/// The stargate graph, the HTTP client and the active alerts, held for the life of the
+/// process so none of them is rebuilt per killmail.
 pub struct Runtime {
     universe: proximity::Universe,
     http: reqwest::Client,
     /// Absent unless a bot is configured; only channel and direct-message delivery need it.
     bot_token: Option<String>,
+    cache: Mutex<Option<Snapshot>>,
+    /// The delivery worker. Evaluation only ever hands it messages, so a slow Discord
+    /// holds up messages and nothing else.
+    outbox: mpsc::Sender<Outgoing>,
 }
 
 impl Runtime {
+    /// Load the graph and start the delivery worker.
     pub async fn load(pool: &PgPool, bot_token: Option<String>) -> sqlx::Result<Runtime> {
+        let http = reqwest::Client::builder()
+            .user_agent(crate::user_agent::get())
+            .timeout(Duration::from_secs(15))
+            .build()
+            .unwrap_or_default();
+        let (outbox, inbox) = mpsc::channel(OUTBOX_CAPACITY);
+        tokio::spawn(deliver_loop(
+            pool.clone(),
+            http.clone(),
+            bot_token.clone(),
+            inbox,
+        ));
         Ok(Runtime {
             bot_token,
             universe: proximity::Universe::load(pool).await?,
-            http: reqwest::Client::builder()
-                .user_agent(crate::user_agent::get())
-                .timeout(std::time::Duration::from_secs(15))
-                .build()
-                .unwrap_or_default(),
+            http,
+            cache: Mutex::new(None),
+            outbox,
         })
     }
 
@@ -40,30 +100,93 @@ impl Runtime {
         self.bot_token.as_deref()
     }
 
-    /// Offer a kill to every alert watching for one.
-    pub async fn killmail(&self, pool: &PgPool, kill: &killmail::Kill) {
-        killmail::evaluate(pool, &self.http, self.token(), &self.universe, kill).await;
+    /// Every active alert, from memory unless something changed or the copy is old.
+    async fn alerts(&self, pool: &PgPool) -> Arc<Vec<Alert>> {
+        let generation = GENERATION.load(Ordering::Relaxed);
+        if let Some(snapshot) = self.cache.lock().expect("alert cache poisoned").as_ref()
+            && snapshot.generation == generation
+            && snapshot.loaded_at.elapsed() < CACHE_TTL
+        {
+            return snapshot.alerts.clone();
+        }
+        // Loaded outside the lock: two callers racing here both load, which is harmless.
+        let alerts = match fetch_active(pool, None).await {
+            Ok(alerts) => Arc::new(alerts),
+            Err(err) => {
+                eprintln!("alerts: could not load the active alerts: {err}");
+                return Arc::default();
+            }
+        };
+        *self.cache.lock().expect("alert cache poisoned") = Some(Snapshot {
+            loaded_at: Instant::now(),
+            generation,
+            alerts: alerts.clone(),
+        });
+        alerts
+    }
+
+    /// The active alerts of a kind, optionally on one map only.
+    async fn of_kind(&self, pool: &PgPool, kind: AlertKind, map_id: Option<i64>) -> Vec<Alert> {
+        self.alerts(pool)
+            .await
+            .iter()
+            .filter(|a| a.kind == kind && map_id.is_none_or(|m| a.map_id == m))
+            .cloned()
+            .collect()
+    }
+
+    /// Offer a batch of kills to every alert watching for one. Each map's chain is read
+    /// once per batch, however many kills land near it.
+    pub async fn killmails(&self, pool: &PgPool, kills: &[killmail::Kill]) -> Vec<Outgoing> {
+        let alerts = self.of_kind(pool, AlertKind::Killmail, None).await;
+        if alerts.is_empty() {
+            return Vec::new();
+        }
+        let mut chains = HashMap::new();
+        let mut out = Vec::new();
+        for kill in kills {
+            out.extend(killmail::evaluate(pool, &self.universe, &alerts, kill, &mut chains).await);
+        }
+        out
     }
 
     /// Re-evaluate a map's alerts after its shape changed. A new system can put a target
     /// within gate range, within jump range, or neither, so both kinds fire from here.
-    pub async fn placed(&self, pool: &PgPool, map_id: i64, map_solar_system_id: i64) {
-        place::evaluate(
-            pool,
-            &self.http,
-            self.token(),
-            &self.universe,
-            map_id,
-            place::Occasion::Placed(map_solar_system_id),
-        )
-        .await;
-        jump_range::evaluate(pool, &self.http, self.token(), map_id, map_solar_system_id).await;
+    pub async fn placed(
+        &self,
+        pool: &PgPool,
+        map_id: i64,
+        map_solar_system_id: i64,
+    ) -> Vec<Outgoing> {
+        let mut out = Vec::new();
+        let proximity = self.of_kind(pool, AlertKind::Proximity, Some(map_id)).await;
+        if !proximity.is_empty() {
+            out.extend(
+                place::evaluate(
+                    pool,
+                    &self.universe,
+                    &proximity,
+                    map_id,
+                    place::Occasion::Placed(map_solar_system_id),
+                )
+                .await,
+            );
+        }
+        let jump_range = self.of_kind(pool, AlertKind::JumpRange, Some(map_id)).await;
+        if !jump_range.is_empty() {
+            out.extend(jump_range::evaluate(pool, &jump_range, map_solar_system_id).await);
+        }
+        out
     }
 
     /// Re-evaluate a map's proximity alerts after a wormhole joined two of its systems. The
     /// edge can complete a route from an alert's starting point even though nothing was
     /// placed, so both ends count as if they had just landed.
-    pub async fn connected(&self, pool: &PgPool, map_id: i64, connection_id: i64) {
+    pub async fn connected(&self, pool: &PgPool, map_id: i64, connection_id: i64) -> Vec<Outgoing> {
+        let proximity = self.of_kind(pool, AlertKind::Proximity, Some(map_id)).await;
+        if proximity.is_empty() {
+            return Vec::new();
+        }
         let Ok(Some(ends)) = sqlx::query!(
             "select from_system, to_system from map_connections
              where id = $1 and map_id = $2 and type = 'wormhole'",
@@ -73,45 +196,176 @@ impl Runtime {
         .fetch_optional(pool)
         .await
         else {
-            return;
+            return Vec::new();
         };
         place::evaluate(
             pool,
-            &self.http,
-            self.token(),
             &self.universe,
+            &proximity,
             map_id,
             place::Occasion::Connected(ends.from_system, ends.to_system),
         )
+        .await
+    }
+
+    /// Send one message now, waiting for Discord.
+    pub async fn send(&self, pool: &PgPool, out: Outgoing) {
+        fire(
+            pool,
+            &self.http,
+            self.token(),
+            &out.alert,
+            &out.key,
+            out.embed,
+        )
         .await;
+    }
+
+    /// Hand messages to the delivery worker without waiting for Discord.
+    ///
+    /// A full queue drops the message rather than waiting: whatever is evaluating must not
+    /// stall behind Discord, and by the time a backlog that deep drained, the news would be
+    /// stale. The claim is handed back, so the next occasion is free to try again.
+    pub async fn enqueue(&self, pool: &PgPool, messages: Vec<Outgoing>) {
+        for out in messages {
+            if let Err(err) = self.outbox.try_send(out) {
+                let out = match err {
+                    mpsc::error::TrySendError::Full(out) => {
+                        eprintln!(
+                            "alerts: delivery queue full, dropping alert {} ({})",
+                            out.alert.id, out.key
+                        );
+                        out
+                    }
+                    mpsc::error::TrySendError::Closed(out) => out,
+                };
+                unclaim(pool, out.alert.id, &out.key).await;
+            }
+        }
+    }
+
+    /// Catch up after the map-event subscriber fell behind. The events themselves are
+    /// gone, so every placement and wormhole made in the gap, on a map with an alert that
+    /// cares, is evaluated again. The claims make that harmless for the ones that were
+    /// handled before the gap.
+    async fn replay(&self, pool: &PgPool, since: Duration) -> Vec<Outgoing> {
+        let alerts = self.alerts(pool).await;
+        let mut maps: Vec<i64> = alerts
+            .iter()
+            .filter(|a| matches!(a.kind, AlertKind::Proximity | AlertKind::JumpRange))
+            .map(|a| a.map_id)
+            .collect();
+        maps.sort_unstable();
+        maps.dedup();
+        if maps.is_empty() {
+            return Vec::new();
+        }
+        let secs = since.min(LAG_REPLAY_CAP).as_secs_f64();
+        let placed = sqlx::query!(
+            "select map_id, id from map_solar_systems
+             where map_id = any($1) and created_at > now() - make_interval(secs => $2)
+             order by id",
+            &maps,
+            secs,
+        )
+        .fetch_all(pool)
+        .await
+        .unwrap_or_default();
+        let connected = sqlx::query!(
+            "select map_id, id from map_connections
+             where map_id = any($1) and type = 'wormhole'
+               and created_at > now() - make_interval(secs => $2)
+             order by id",
+            &maps,
+            secs,
+        )
+        .fetch_all(pool)
+        .await
+        .unwrap_or_default();
+        let mut out = Vec::new();
+        for row in placed {
+            out.extend(self.placed(pool, row.map_id, row.id).await);
+        }
+        for row in connected {
+            out.extend(self.connected(pool, row.map_id, row.id).await);
+        }
+        out
+    }
+}
+
+/// Send what evaluation queued, a few at a time.
+async fn deliver_loop(
+    pool: PgPool,
+    http: reqwest::Client,
+    bot_token: Option<String>,
+    mut inbox: mpsc::Receiver<Outgoing>,
+) {
+    let senders = Arc::new(Semaphore::new(SENDERS));
+    while let Some(out) = inbox.recv().await {
+        let permit = senders
+            .clone()
+            .acquire_owned()
+            .await
+            .expect("semaphore open");
+        let (pool, http, bot_token) = (pool.clone(), http.clone(), bot_token.clone());
+        tokio::spawn(async move {
+            fire(
+                &pool,
+                &http,
+                bot_token.as_deref(),
+                &out.alert,
+                &out.key,
+                out.embed,
+            )
+            .await;
+            drop(permit);
+        });
     }
 }
 
 /// Watch every map for the changes alerts care about.
 ///
-/// A subscriber rather than a hook in the command dispatcher, and lagged events are simply
-/// dropped: nothing here should be able to fail a placement.
-pub fn start(pool: PgPool, hub: crate::maps::MapHub, runtime: std::sync::Arc<Runtime>) {
+/// A subscriber rather than a hook in the command dispatcher, so nothing here can fail a
+/// placement. It only evaluates, which is a few queries on a map with alerts and nothing
+/// on one without, and leaves Discord to the delivery worker; that keeps it ahead of a big
+/// paste. If it does fall behind, it replays the gap from the tables.
+pub fn start(pool: PgPool, hub: crate::maps::MapHub, runtime: Arc<Runtime>) {
     tokio::spawn(async move {
         let mut events = hub.subscribe_all();
+        // When the last event came off the channel. What was missed was published after
+        // it, though not necessarily after it was received: it may have waited behind
+        // others. Hence the slack on the replay.
+        let mut received = Instant::now();
         loop {
-            match events.recv().await {
+            let event = events.recv().await;
+            let out = match event {
                 Ok(crate::maps::MapEvent::SystemAdded {
                     map_id,
                     map_solar_system_id,
                 }) => {
-                    runtime.placed(&pool, map_id, map_solar_system_id).await;
+                    received = Instant::now();
+                    runtime.placed(&pool, map_id, map_solar_system_id).await
                 }
                 Ok(crate::maps::MapEvent::ConnectionChanged {
                     map_id,
                     connection_id,
                 }) => {
-                    runtime.connected(&pool, map_id, connection_id).await;
+                    received = Instant::now();
+                    runtime.connected(&pool, map_id, connection_id).await
                 }
-                Ok(_) => {}
-                Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => {}
+                Ok(_) => {
+                    received = Instant::now();
+                    Vec::new()
+                }
+                Err(tokio::sync::broadcast::error::RecvError::Lagged(missed)) => {
+                    eprintln!("alerts: map events lagged, {missed} missed; replaying the gap");
+                    let since = received.elapsed() + LAG_REPLAY_SLACK;
+                    received = Instant::now();
+                    runtime.replay(&pool, since).await
+                }
                 Err(tokio::sync::broadcast::error::RecvError::Closed) => return,
-            }
+            };
+            runtime.enqueue(&pool, out).await;
         }
     });
 }
@@ -204,8 +458,13 @@ pub struct Alert {
 /// Every active alert of a kind, across every map. Loaded whole rather than per map: a
 /// killmail arrives without knowing which maps care, and there are tens of alerts in total.
 pub async fn active(pool: &PgPool, kind: AlertKind) -> sqlx::Result<Vec<Alert>> {
+    fetch_active(pool, Some(kind)).await
+}
+
+/// Every active alert, of one kind or of all of them.
+async fn fetch_active(pool: &PgPool, kind: Option<AlertKind>) -> sqlx::Result<Vec<Alert>> {
     let rows = sqlx::query!(
-        r#"select a.id, a.map_id, a.created_by_user_id, a.name, a.delivery,
+        r#"select a.id, a.map_id, a.created_by_user_id, a.name, a.kind, a.delivery,
                   w.url as "webhook_url?",
                   a.discord_guild_id, a.discord_channel_id,
                   r.discord_role_id as "discord_role_id?",
@@ -215,9 +474,9 @@ pub async fn active(pool: &PgPool, kind: AlertKind) -> sqlx::Result<Vec<Alert>> 
            from map_alerts a
            left join map_webhooks w on w.id = a.map_webhook_id
            left join map_webhook_roles r on r.id = a.map_webhook_role_id
-           where a.kind = $1 and a.is_active
+           where ($1::text is null or a.kind = $1) and a.is_active
            order by a.id"#,
-        kind.as_str(),
+        kind.map(AlertKind::as_str),
     )
     .fetch_all(pool)
     .await?;
@@ -227,7 +486,8 @@ pub async fn active(pool: &PgPool, kind: AlertKind) -> sqlx::Result<Vec<Alert>> 
             // A row that no longer decodes is skipped loudly rather than coerced into a
             // default: a corrupt `delivery` must not quietly become a webhook post, and
             // corrupt `filters` must not become "match every kill".
-            let (Some(delivery), Some(mention), Some(filter_match), Ok(filters)) = (
+            let (Some(kind), Some(delivery), Some(mention), Some(filter_match), Ok(filters)) = (
+                AlertKind::from_db(&row.kind),
                 AlertDelivery::from_db(&row.delivery),
                 AlertMention::from_db(&row.mention),
                 filters::Match::from_db(&row.filter_match),
@@ -426,6 +686,9 @@ pub async fn log(
     kind: &str,
     detail: Option<&str>,
 ) {
+    // Every write to an alert or its destination is logged, so this is where the cached
+    // alerts learn they are stale. A delivery failure reloads them needlessly; that is cheap.
+    changed();
     let _ = sqlx::query!(
         "insert into map_alert_events (map_alert_id, map_id, actor_user_id, kind, detail)
          values ($1, $2, $3, $4, $5)",

@@ -9,7 +9,7 @@ use sqlx::PgPool;
 
 use super::delivery::{Embed, Field, security_color};
 use super::ships::{self, JumpShip};
-use super::{Alert, AlertKind};
+use super::{Alert, Outgoing};
 use crate::util::security::ccp_round_security;
 
 /// A system with the coordinates jump range is measured from.
@@ -40,21 +40,9 @@ async fn locate(pool: &PgPool, id: i64) -> Option<Located> {
     })
 }
 
-/// Evaluate a map's jump-range alerts after a system landed on it.
-pub async fn evaluate(
-    pool: &PgPool,
-    http: &reqwest::Client,
-    bot_token: Option<&str>,
-    map_id: i64,
-    map_solar_system_id: i64,
-) {
-    let Ok(alerts) = super::active(pool, AlertKind::JumpRange).await else {
-        return;
-    };
-    let mine: Vec<&Alert> = alerts.iter().filter(|a| a.map_id == map_id).collect();
-    if mine.is_empty() {
-        return;
-    }
+/// Evaluate a map's jump-range alerts after a system landed on it, and claim the ones that
+/// fire.
+pub async fn evaluate(pool: &PgPool, alerts: &[Alert], map_solar_system_id: i64) -> Vec<Outgoing> {
     // A ghost placement has no system to measure a jump range from.
     let Ok(Some(Some(placed_id))) = sqlx::query_scalar!(
         "select solar_system_id from map_solar_systems where id = $1",
@@ -63,16 +51,17 @@ pub async fn evaluate(
     .fetch_optional(pool)
     .await
     else {
-        return;
+        return Vec::new();
     };
     let Some(exit) = locate(pool, placed_id).await else {
-        return;
+        return Vec::new();
     };
     if exit.is_wormhole {
-        return;
+        return Vec::new();
     }
 
-    for alert in mine {
+    let mut out = Vec::new();
+    for alert in alerts {
         let (Some(target_id), Some(ship), Some(jdc)) = (
             alert.target_solar_system_id,
             alert.ship_type,
@@ -91,9 +80,13 @@ pub async fn evaluate(
         if !super::claim(pool, alert.id, &key).await {
             continue;
         }
-        let embed = build(&exit, &target, ship, jdc, distance);
-        super::fire(pool, http, bot_token, alert, &key, embed).await;
+        out.push(Outgoing {
+            alert: alert.clone(),
+            key,
+            embed: build(&exit, &target, ship, jdc, distance),
+        });
     }
+    out
 }
 
 fn build(exit: &Located, target: &Located, ship: JumpShip, jdc: i32, distance: f64) -> Embed {

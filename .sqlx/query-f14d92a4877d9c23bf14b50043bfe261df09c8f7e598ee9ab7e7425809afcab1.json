@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into map_alerts (map_id, name, kind, delivery, map_webhook_id, max_jumps)\n         values ($1, 'Kills', 'killmail', 'webhook', $2, 2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f14d92a4877d9c23bf14b50043bfe261df09c8f7e598ee9ab7e7425809afcab1"
+}

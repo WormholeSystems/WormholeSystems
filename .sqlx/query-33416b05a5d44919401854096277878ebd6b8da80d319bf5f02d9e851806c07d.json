@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select a.id, a.map_id, a.created_by_user_id, a.name, a.delivery,\n                  w.url as \"webhook_url?\",\n                  a.discord_guild_id, a.discord_channel_id,\n                  r.discord_role_id as \"discord_role_id?\",\n                  a.mention, a.target_solar_system_id, a.origin_solar_system_id,\n                  a.max_jumps, a.ship_type, a.jdc_level,\n                  a.filters, a.filter_match, a.is_active\n           from map_alerts a\n           left join map_webhooks w on w.id = a.map_webhook_id\n           left join map_webhook_roles r on r.id = a.map_webhook_role_id\n           where a.kind = $1 and a.is_active\n           order by a.id",
+  "query": "select a.id, a.map_id, a.created_by_user_id, a.name, a.kind, a.delivery,\n                  w.url as \"webhook_url?\",\n                  a.discord_guild_id, a.discord_channel_id,\n                  r.discord_role_id as \"discord_role_id?\",\n                  a.mention, a.target_solar_system_id, a.origin_solar_system_id,\n                  a.max_jumps, a.ship_type, a.jdc_level,\n                  a.filters, a.filter_match, a.is_active\n           from map_alerts a\n           left join map_webhooks w on w.id = a.map_webhook_id\n           left join map_webhook_roles r on r.id = a.map_webhook_role_id\n           where ($1::text is null or a.kind = $1) and a.is_active\n           order by a.id",
   "describe": {
     "columns": [
       {
@@ -49,6 +49,17 @@
       },
       {
         "ordinal": 4,
+        "name": "kind",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "map_alerts",
+            "name": "kind"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
         "name": "delivery",
         "type_info": "Text",
         "origin": {
@@ -59,7 +70,7 @@
         }
       },
       {
-        "ordinal": 5,
+        "ordinal": 6,
         "name": "webhook_url?",
         "type_info": "Text",
         "origin": {
@@ -70,7 +81,7 @@
         }
       },
       {
-        "ordinal": 6,
+        "ordinal": 7,
         "name": "discord_guild_id",
         "type_info": "Text",
         "origin": {
@@ -81,7 +92,7 @@
         }
       },
       {
-        "ordinal": 7,
+        "ordinal": 8,
         "name": "discord_channel_id",
         "type_info": "Text",
         "origin": {
@@ -92,7 +103,7 @@
         }
       },
       {
-        "ordinal": 8,
+        "ordinal": 9,
         "name": "discord_role_id?",
         "type_info": "Text",
         "origin": {
@@ -103,7 +114,7 @@
         }
       },
       {
-        "ordinal": 9,
+        "ordinal": 10,
         "name": "mention",
         "type_info": "Text",
         "origin": {
@@ -114,7 +125,7 @@
         }
       },
       {
-        "ordinal": 10,
+        "ordinal": 11,
         "name": "target_solar_system_id",
         "type_info": "Int8",
         "origin": {
@@ -125,7 +136,7 @@
         }
       },
       {
-        "ordinal": 11,
+        "ordinal": 12,
         "name": "origin_solar_system_id",
         "type_info": "Int8",
         "origin": {
@@ -136,7 +147,7 @@
         }
       },
       {
-        "ordinal": 12,
+        "ordinal": 13,
         "name": "max_jumps",
         "type_info": "Int4",
         "origin": {
@@ -147,7 +158,7 @@
         }
       },
       {
-        "ordinal": 13,
+        "ordinal": 14,
         "name": "ship_type",
         "type_info": "Text",
         "origin": {
@@ -158,7 +169,7 @@
         }
       },
       {
-        "ordinal": 14,
+        "ordinal": 15,
         "name": "jdc_level",
         "type_info": "Int4",
         "origin": {
@@ -169,7 +180,7 @@
         }
       },
       {
-        "ordinal": 15,
+        "ordinal": 16,
         "name": "filters",
         "type_info": "Jsonb",
         "origin": {
@@ -180,7 +191,7 @@
         }
       },
       {
-        "ordinal": 16,
+        "ordinal": 17,
         "name": "filter_match",
         "type_info": "Text",
         "origin": {
@@ -191,7 +202,7 @@
         }
       },
       {
-        "ordinal": 17,
+        "ordinal": 18,
         "name": "is_active",
         "type_info": "Bool",
         "origin": {
@@ -214,6 +225,7 @@
       false,
       false,
       false,
+      false,
       true,
       true,
       false,
@@ -228,5 +240,5 @@
       false
     ]
   },
-  "hash": "3d3b088178d10154aaf8b6c2a87cb97fccf850550923cf031200d624cabfdf25"
+  "hash": "33416b05a5d44919401854096277878ebd6b8da80d319bf5f02d9e851806c07d"
 }

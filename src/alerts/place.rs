@@ -15,7 +15,7 @@ use sqlx::PgPool;
 use super::delivery::{Embed, Field, security_color};
 use super::killmail::chain_of;
 use super::proximity::{self, Universe};
-use super::{Alert, AlertKind};
+use super::{Alert, Outgoing};
 use crate::util::security::ccp_round_security;
 
 /// What just changed on the map, by `map_solar_systems` id.
@@ -35,24 +35,16 @@ impl Occasion {
     }
 }
 
-/// Evaluate every proximity alert on a map after its shape changed.
+/// Evaluate a map's proximity alerts after its shape changed, and claim the ones that fire.
 pub async fn evaluate(
     pool: &PgPool,
-    http: &reqwest::Client,
-    bot_token: Option<&str>,
     universe: &Universe,
+    alerts: &[Alert],
     map_id: i64,
     occasion: Occasion,
-) {
-    let Ok(alerts) = super::active(pool, AlertKind::Proximity).await else {
-        return;
-    };
-    let mine: Vec<&Alert> = alerts.iter().filter(|a| a.map_id == map_id).collect();
-    if mine.is_empty() {
-        return;
-    }
+) -> Vec<Outgoing> {
     let Some(chain) = chain_of(pool, map_id).await else {
-        return;
+        return Vec::new();
     };
     let changed_ids = occasion.systems();
     // What just changed, so the message can say what happened rather than only what is
@@ -68,7 +60,8 @@ pub async fn evaluate(
     .unwrap_or_default();
     let changed_names: Vec<&str> = changed.iter().map(|row| row.name.as_str()).collect();
 
-    for alert in mine {
+    let mut out = Vec::new();
+    for alert in alerts {
         let Some(target_id) = alert.target_solar_system_id else {
             continue;
         };
@@ -119,9 +112,13 @@ pub async fn evaluate(
             super::unclaim(pool, alert.id, &key).await;
             continue;
         };
-        let embed = build(&names, &found, &changed_names, map_id);
-        super::fire(pool, http, bot_token, alert, &key, embed).await;
+        out.push(Outgoing {
+            alert: alert.clone(),
+            key,
+            embed: build(&names, &found, &changed_names, map_id),
+        });
     }
+    out
 }
 
 /// The `map_solar_systems` ids of the route's systems that are on the map, in route order.
