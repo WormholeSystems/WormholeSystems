@@ -4,6 +4,7 @@ use std::time::Duration;
 
 use serde::Deserialize;
 use sqlx::PgPool;
+use tokio::sync::mpsc;
 
 use super::{Detail, EsiKillmail, KillmailRow, extract_detail, extract_orgs, http_client};
 use crate::entities::EntityKind;
@@ -27,6 +28,21 @@ struct R2Z2Killmail {
     zkb: serde_json::Value,
 }
 
+/// How long to wait after the stream had nothing new. zKillboard asks for 6 seconds: a kill
+/// arrives every 5.5 on average, so polling faster gains nothing.
+const IDLE: Duration = Duration::from_secs(6);
+
+/// The least time between two fetches while there is a backlog. R2Z2 bans an address for an
+/// hour past 15 requests a second, so catching up stays well under that.
+const PACE: Duration = Duration::from_millis(100);
+
+/// Kills waiting for alert evaluation. Past this, evaluation is minutes behind (the
+/// database is struggling), and an alert about a kill that old is not worth queueing.
+const ALERT_QUEUE: usize = 1024;
+
+/// Kills evaluated together, so a burst reads each map's chain once.
+const ALERT_BATCH: usize = 100;
+
 pub(super) async fn listen(
     pool: PgPool,
     maps: crate::maps::MapHub,
@@ -34,10 +50,34 @@ pub(super) async fn listen(
 ) {
     let base = std::env::var("ZKB_BASE_URL").unwrap_or_else(|_| DEFAULT_BASE.to_string());
     let http = http_client();
+    let alerts = alerts.map(|runtime| {
+        let (tx, rx) = mpsc::channel(ALERT_QUEUE);
+        tokio::spawn(alert_loop(pool.clone(), runtime, rx));
+        tx
+    });
+    // Read from the table once, then kept here: the table is only for the next boot.
+    let mut cursor: Option<i64> = None;
     loop {
-        match ingest_next(&pool, &http, &base, &maps, alerts.as_deref()).await {
-            Ok(true) => tokio::time::sleep(Duration::from_millis(500)).await,
-            Ok(false) => tokio::time::sleep(Duration::from_secs(10)).await,
+        let last = match cursor {
+            Some(seq) => seq,
+            None => match start_at(&pool, &http, &base).await {
+                Ok(seq) => {
+                    cursor = Some(seq);
+                    seq
+                }
+                Err(err) => {
+                    eprintln!("killmail ingest error: {err}");
+                    tokio::time::sleep(Duration::from_secs(30)).await;
+                    continue;
+                }
+            },
+        };
+        match ingest(&pool, &http, &base, &maps, alerts.as_ref(), last + 1).await {
+            Ok(true) => {
+                cursor = Some(last + 1);
+                tokio::time::sleep(PACE).await;
+            }
+            Ok(false) => tokio::time::sleep(IDLE).await,
             Err(err) => {
                 eprintln!("killmail ingest error: {err}");
                 tokio::time::sleep(Duration::from_secs(30)).await;
@@ -46,38 +86,43 @@ pub(super) async fn listen(
     }
 }
 
-/// Fetch and persist the next killmail in the sequence. Returns whether one was found.
-async fn ingest_next(
+/// Where the stream left off, or the live head of it on the very first run.
+async fn start_at(
+    pool: &PgPool,
+    http: &reqwest::Client,
+    base: &str,
+) -> Result<i64, Box<dyn std::error::Error + Send + Sync>> {
+    let cursor: Option<i64> = sqlx::query_scalar!("select sequence_id from zkb_state")
+        .fetch_optional(pool)
+        .await?;
+    if let Some(seq) = cursor {
+        return Ok(seq);
+    }
+    let head: R2Z2Sequence = http
+        .get(format!("{base}/ephemeral/sequence.json"))
+        .send()
+        .await?
+        .error_for_status()?
+        .json()
+        .await?;
+    sqlx::query!(
+        "insert into zkb_state (id, sequence_id) values (true, $1)",
+        head.sequence
+    )
+    .execute(pool)
+    .await?;
+    Ok(head.sequence)
+}
+
+/// Fetch and persist killmail `next` in the sequence. Returns whether there was one.
+async fn ingest(
     pool: &PgPool,
     http: &reqwest::Client,
     base: &str,
     maps: &crate::maps::MapHub,
-    alerts: Option<&crate::alerts::Runtime>,
+    alerts: Option<&mpsc::Sender<Pending>>,
+    next: i64,
 ) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
-    let cursor: Option<i64> = sqlx::query_scalar!("select sequence_id from zkb_state")
-        .fetch_optional(pool)
-        .await?;
-    let next = match cursor {
-        Some(seq) => seq + 1,
-        None => {
-            // First run: start at the live head of the stream.
-            let head: R2Z2Sequence = http
-                .get(format!("{base}/ephemeral/sequence.json"))
-                .send()
-                .await?
-                .error_for_status()?
-                .json()
-                .await?;
-            sqlx::query!(
-                "insert into zkb_state (id, sequence_id) values (true, $1)",
-                head.sequence
-            )
-            .execute(pool)
-            .await?;
-            head.sequence + 1
-        }
-    };
-
     let res = http
         .get(format!("{base}/ephemeral/{next}.json"))
         .send()
@@ -106,22 +151,62 @@ async fn ingest_next(
         super::insert_rows(pool, std::slice::from_ref(&row)).await?;
         announce(pool, maps, solar_system_id).await;
         if let Some(alerts) = alerts {
-            alert_on(pool, alerts, km.killmail_id, solar_system_id, &row.detail).await;
+            offer(alerts, row);
         }
     }
     advance(pool, next).await?;
     Ok(true)
 }
 
-/// Offer the kill to the Discord alerts watching for one. Names come from what is already
-/// stored, since "Someone lost a Loki" now beats a complete message a minute later.
-async fn alert_on(
+/// A stored kill on its way to the alerts.
+struct Pending {
+    killmail_id: i64,
+    solar_system_id: i64,
+    detail: Detail,
+}
+
+/// Hand a kill to the alert worker without waiting for it. A full queue drops the kill's
+/// alerts, not the kill: it is stored either way, and ingest must never wait on Discord or
+/// on a slow evaluation.
+fn offer(alerts: &mpsc::Sender<Pending>, row: KillmailRow) {
+    let pending = Pending {
+        killmail_id: row.id,
+        solar_system_id: row.solar_system_id,
+        detail: row.detail,
+    };
+    if let Err(mpsc::error::TrySendError::Full(pending)) = alerts.try_send(pending) {
+        eprintln!(
+            "killmail alerts: queue full, no alerts for killmail {}",
+            pending.killmail_id
+        );
+    }
+}
+
+/// Evaluate queued kills against the alerts, in batches of whatever has piled up.
+async fn alert_loop(
+    pool: PgPool,
+    alerts: std::sync::Arc<crate::alerts::Runtime>,
+    mut queue: mpsc::Receiver<Pending>,
+) {
+    let mut pending = Vec::with_capacity(ALERT_BATCH);
+    while queue.recv_many(&mut pending, ALERT_BATCH).await > 0 {
+        let mut kills = Vec::with_capacity(pending.len());
+        for p in pending.drain(..) {
+            kills.push(kill_for(&pool, p.killmail_id, p.solar_system_id, &p.detail).await);
+        }
+        let out = alerts.killmails(&pool, &kills).await;
+        alerts.enqueue(&pool, out).await;
+    }
+}
+
+/// A kill as the alerts read it. Names come from what is already stored, since "Someone
+/// lost a Loki" now beats a complete message a minute later.
+async fn kill_for(
     pool: &PgPool,
-    alerts: &crate::alerts::Runtime,
     killmail_id: i64,
     solar_system_id: i64,
     detail: &Detail,
-) {
+) -> crate::alerts::killmail::Kill {
     use crate::alerts::filters::Candidates;
     let named = sqlx::query!(
         r#"select vc.name as "victim_name?", vt.name as "victim_ship?",
@@ -142,7 +227,7 @@ async fn alert_on(
     .ok()
     .flatten();
 
-    let kill = crate::alerts::killmail::Kill {
+    crate::alerts::killmail::Kill {
         id: killmail_id,
         solar_system_id,
         candidates: Candidates {
@@ -165,9 +250,7 @@ async fn alert_on(
         attacker_count: detail.attacker_count,
         is_solo: detail.is_solo,
         is_npc: detail.is_npc,
-    };
-    let out = alerts.killmails(pool, std::slice::from_ref(&kill)).await;
-    alerts.enqueue(pool, out).await;
+    }
 }
 
 /// Tell every map holding this system that something died in it. The event carries no

@@ -10,7 +10,12 @@ then `/ephemeral/{seq}.json`) and persists a **minimal** row per killmail: id, h
 solar system, time, and the participating organisations (victim + every attacker,
 alliance preferred over corporation, each org at most once per killmail). The full ESI
 payload is not stored. Retention is 730 days (daily purge). The cursor lives in
-`zkb_state`.
+`zkb_state`: read once at boot, kept in memory after that, and written after every kill.
+
+A backlog is read back to back, at most ten requests a second (R2Z2 bans past 15). Only
+a 404, meaning nothing new yet, waits: 6 seconds, as zKillboard asks. Each stored kill is
+offered to a queue of 1024 for the killmail alerts, which a worker evaluates in batches;
+when it is full the kill is still stored, only its alerts are skipped, with a warning.
 
 Both loops are gated behind `ZKB_LISTEN=1` so dev machines don't poll zKillboard by
 default. All requests send a descriptive User-Agent; zKillboard rejects anonymous
