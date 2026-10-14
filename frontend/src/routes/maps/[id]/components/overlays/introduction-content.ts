@@ -1,13 +1,18 @@
 // The introduction walkthrough's content and derivations, out of the dialog so the
 // component is wiring and markup.
 
-import EyeIcon from '@lucide/svelte/icons/eye';
 import MousePointerClickIcon from '@lucide/svelte/icons/mouse-pointer-click';
 import SignatureIcon from '@lucide/svelte/icons/scan-line';
-import TagIcon from '@lucide/svelte/icons/tag';
 import type { Component } from 'svelte';
 
 import type { MapUserSettings } from '$lib/api/types/MapUserSettings';
+import {
+	AUTOMATION,
+	settingBlocker,
+	settingOn,
+	settingValue,
+	type AutomationSetting,
+} from '$lib/map/user-settings';
 
 export const INTRO_STEPS = [
 	{
@@ -34,72 +39,38 @@ export function introSummary(
 	granted: number,
 	total: number,
 ): { label: string; value: string; good: boolean }[] {
+	const sharing = settingValue(settings, 'tracking_allowed');
+	const prompting = settingOn(settings, 'prompt_for_signature');
 	return [
 		{
 			label: 'Permissions',
 			value: granted === total ? 'All granted' : `${granted} of ${total} granted`,
 			good: granted === total,
 		},
-		{
-			label: 'Location sharing',
-			value: settings?.tracking_allowed ? 'On' : 'Off',
-			good: settings?.tracking_allowed ?? false,
-		},
-		{
-			label: 'Signature prompt',
-			value: settings?.tracking_allowed && settings?.prompt_for_signature ? 'On' : 'Off',
-			good: (settings?.tracking_allowed && settings?.prompt_for_signature) ?? false,
-		},
+		{ label: 'Location sharing', value: sharing ? 'On' : 'Off', good: sharing },
+		{ label: 'Signature prompt', value: prompting ? 'On' : 'Off', good: prompting },
 	];
 }
 
 export interface IntroToggle {
-	key: 'tracking_allowed' | 'prompt_for_signature' | 'suggest_alias';
-	icon: Component;
-	name: string;
-	body: string;
+	setting: AutomationSetting;
 	value: boolean;
 	enabled: boolean;
-	blocked: string;
+	blocked: string | null;
 }
 
+/** The automation the introduction offers, read off the one settings table. */
 export function introToggles(
 	settings: MapUserSettings | null,
 	hasLocation: boolean,
 ): IntroToggle[] {
-	return [
-		{
-			key: 'tracking_allowed',
-			icon: EyeIcon,
-			name: 'Share my location on this map',
-			body:
-				'The map follows you between systems, shows you to everyone else here, and measures ' +
-				'distances from where you are. Revocable at any time.',
-			value: settings?.tracking_allowed ?? false,
-			enabled: hasLocation,
-			blocked: 'Needs the character location permission.',
-		},
-		{
-			key: 'prompt_for_signature',
-			icon: SignatureIcon,
-			name: 'Ask which signature I jumped',
-			body:
-				'When you arrive somewhere new, the map asks which signature the hole was and links ' +
-				'it, instead of leaving an unnamed connection behind.',
-			value: settings?.prompt_for_signature ?? true,
-			enabled: settings?.tracking_allowed ?? false,
-			blocked: 'Needs location sharing.',
-		},
-		{
-			key: 'suggest_alias',
-			icon: TagIcon,
-			name: 'Name new systems for me',
-			body:
-				"Fills in the next alias from the chain's naming scheme, so holes are named the " +
-				'same way by everyone.',
-			value: settings?.suggest_alias ?? true,
-			enabled: settings?.tracking_allowed ?? false,
-			blocked: 'Needs location sharing.',
-		},
-	];
+	return (['tracking_allowed', 'prompt_for_signature', 'suggest_alias'] as const).map((key) => {
+		const blocked = settingBlocker(settings, key, hasLocation);
+		return {
+			setting: AUTOMATION[key],
+			value: settingValue(settings, key),
+			enabled: blocked === null,
+			blocked,
+		};
+	});
 }

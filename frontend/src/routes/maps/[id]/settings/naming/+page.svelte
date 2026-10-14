@@ -5,7 +5,12 @@
 	// Non-managers still see the names read-only.
 	import { createQuery } from '@tanstack/svelte-query';
 	import { page } from '$app/state';
-	import { createUserSettingsWriter } from '$lib/map/user-settings';
+	import {
+		AUTOMATION,
+		createUserSettingsWriter,
+		settingBlocker,
+		settingOn,
+	} from '$lib/map/user-settings';
 	import { api } from '$lib/api/client';
 	import { apiAction } from '$lib/api/mutations';
 	import { key, q } from '$lib/api/queries';
@@ -26,7 +31,8 @@
 	const settings = $derived(settingsQuery.data ?? null);
 
 	const canManage = $derived(atLeast(viewQuery.data.role, 'manager'));
-	const tracking = $derived(settings?.tracking_allowed ?? false);
+	const copy = AUTOMATION.copy_bookmark;
+	const copyBlocked = $derived(settingBlocker(settings, 'copy_bookmark'));
 
 	const settingsWriter = createUserSettingsWriter();
 	const saveUserSettings = (patch: UpdateMapUserSettings) => settingsWriter.save(mapId, patch);
@@ -48,16 +54,16 @@
 		<Card.Content class="flex flex-col py-0">
 			<SettingRow
 				id="copy-bookmark"
-				label="Copy a bookmark when I map a hole"
-				description="Puts the new connection's bookmark name on the clipboard, ready to paste into the in-game bookmark dialog."
-				disabled={!tracking}
-				blocked={tracking ? undefined : 'Needs location sharing, under Mapping.'}
+				label={copy.label}
+				description={copy.body}
+				disabled={copyBlocked !== null}
+				blocked={copyBlocked ? `${copyBlocked} It is under Mapping.` : undefined}
 			>
 				{#snippet control()}
 					<Switch
-						checked={(settings?.copy_bookmark ?? false) && tracking}
-						disabled={!tracking}
-						aria-label="Copy a bookmark when I map a hole"
+						checked={settingOn(settings, 'copy_bookmark')}
+						disabled={copyBlocked !== null}
+						aria-label={copy.label}
 						onCheckedChange={(v) => saveUserSettings({ copy_bookmark: v })}
 					/>
 				{/snippet}

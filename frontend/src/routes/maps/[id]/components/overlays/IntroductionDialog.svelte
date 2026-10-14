@@ -25,6 +25,7 @@
 	import { ESI_SCOPES } from '$lib/esi/scopes';
 	import { INTRO_STEPS, INTRO_TIPS, introSummary, introToggles } from './introduction-content';
 	import { PLACEMENTS } from '$lib/map/placement';
+	import { automationPatch } from '$lib/map/user-settings';
 
 	let { map, onfinished }: { map: MapState; onfinished?: () => void } = $props();
 
@@ -204,11 +205,11 @@
 						<span class="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
 							Automation
 						</span>
-						{#each toggles as row (row.key)}
-							{@const Icon = row.icon}
+						{#each toggles as row (row.setting.key)}
+							{@const Icon = row.setting.icon}
 							<div
 								class={cn('border border-border/60 p-2.5', !row.enabled && 'opacity-60')}
-								data-setting={row.key}
+								data-setting={row.setting.key}
 							>
 								<div class="flex items-center gap-3">
 									<span
@@ -222,21 +223,19 @@
 										<Icon class="size-4" />
 									</span>
 									<span class="min-w-0 flex-1">
-										<span class="text-sm font-medium">{row.name}</span>
-										<p class="mt-0.5 text-xs leading-relaxed text-muted-foreground">{row.body}</p>
-										{#if !row.enabled}
+										<span class="text-sm font-medium">{row.setting.label}</span>
+										<p class="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+											{row.setting.body}
+										</p>
+										{#if row.blocked}
 											<p class="mt-1 text-xs text-amber-500">{row.blocked}</p>
 										{/if}
 									</span>
 									<Switch
 										checked={row.value && row.enabled}
 										disabled={!row.enabled}
-										aria-label={row.name}
-										onCheckedChange={(v) => {
-											const patch: UpdateMapUserSettings = {};
-											patch[row.key] = v;
-											update(patch);
-										}}
+										aria-label={row.setting.label}
+										onCheckedChange={(v) => update(automationPatch(row.setting.key, v))}
 									/>
 								</div>
 							</div>
