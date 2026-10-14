@@ -7,7 +7,7 @@ use common::{SYS_A, SYS_B, SYS_C, world};
 use sqlx::PgPool;
 use wormholesystems::maps::MapSystemView;
 use wormholesystems::maps::connection::{RemoveConnection, remove_connection};
-use wormholesystems::maps::events_log::{MapIdBody, undo};
+use wormholesystems::maps::events_log::{MapIdBody, list_history, redo, undo};
 use wormholesystems::maps::ghost::{ResolveGhostSystem, resolve_ghost_system};
 use wormholesystems::maps::map::{GetMap, get_map};
 use wormholesystems::maps::map::{UpdateMap, update_map};
@@ -21,7 +21,7 @@ use wormholesystems::maps::solar_system::{
     remove_systems, set_alias, set_pinned,
 };
 use wormholesystems::maps::{
-    Actor, MapError, MassStatus, SignatureGroup, TimeStatus, WormholeSize,
+    Actor, MapError, MapEvent, MassStatus, SignatureGroup, TimeStatus, WormholeSize,
 };
 
 async fn place(pool: &PgPool, actor: Actor, map_id: i64, system: i64) -> i64 {
@@ -990,6 +990,96 @@ async fn the_setting_draws_and_undraws_the_holes_already_scanned(pool: PgPool) {
     assert_eq!(sigs.len(), 1);
     assert_eq!(sigs[0].id, sig);
     assert_eq!(sigs[0].connection_id, None);
+}
+
+/// Everything an open client has seen so far on this map's channel.
+fn seen(events: &mut tokio::sync::broadcast::Receiver<MapEvent>) -> Vec<MapEvent> {
+    std::iter::from_fn(|| events.try_recv().ok()).collect()
+}
+
+/// The nodes a settings change draws or takes away are a change to the chain like any
+/// other: open clients hear about them and the history says who did it. They stay out of
+/// the undo path, so stepping back still walks the changes made before.
+#[sqlx::test]
+async fn the_setting_announces_and_records_the_nodes_it_changes(pool: PgPool) {
+    let w = world(&pool).await;
+    let home = place(&pool, w.owner, w.map_id, SYS_A).await;
+    let sig = scan(&pool, w.owner, w.map_id, SYS_A, "ABC-123").await;
+    let mut events = wormholesystems::maps::hub().subscribe(w.map_id);
+
+    ghosting(&pool, w.owner, w.map_id).await;
+    let ghost = ghost_for(&pool, w.map_id, sig).await;
+    assert!(seen(&mut events).contains(&MapEvent::SystemAdded {
+        map_id: w.map_id,
+        map_solar_system_id: ghost,
+    }));
+    let history = list_history(&pool, w.owner, w.map_id).await.unwrap();
+    let newest = &history.entries[0];
+    assert_eq!(newest.kind, "map.ghosts");
+    assert_eq!(newest.label, "drew the unmapped holes");
+    assert!(!newest.is_step);
+
+    update_map(
+        &pool,
+        w.owner,
+        UpdateMap {
+            map_id: w.map_id,
+            ghost_unlinked_wormholes: Some(false),
+            ..Default::default()
+        },
+    )
+    .await
+    .unwrap();
+    assert!(seen(&mut events).contains(&MapEvent::SystemRemoved {
+        map_id: w.map_id,
+        map_solar_system_id: ghost,
+    }));
+    let history = list_history(&pool, w.owner, w.map_id).await.unwrap();
+    assert_eq!(
+        history.entries[0].label,
+        "took the unmapped holes off the map"
+    );
+
+    // A settings change that moves no node leaves the history alone.
+    update_map(
+        &pool,
+        w.owner,
+        UpdateMap {
+            map_id: w.map_id,
+            name: Some("Renamed".into()),
+            ..Default::default()
+        },
+    )
+    .await
+    .unwrap();
+    let after = list_history(&pool, w.owner, w.map_id).await.unwrap();
+    assert_eq!(after.entries.len(), history.entries.len());
+
+    // Undo steps back over the scan and then the placement, and redo brings both back.
+    let body = MapIdBody { map_id: w.map_id };
+    undo(&pool, w.owner, body.clone()).await.unwrap();
+    assert!(
+        list_signatures(&pool, w.owner, w.map_id)
+            .await
+            .unwrap()
+            .is_empty()
+    );
+    undo(&pool, w.owner, body.clone()).await.unwrap();
+    let view = get_map(&pool, w.owner, GetMap { map_id: w.map_id })
+        .await
+        .unwrap();
+    assert!(view.systems.is_empty());
+    redo(&pool, w.owner, body.clone()).await.unwrap();
+    redo(&pool, w.owner, body).await.unwrap();
+    let view = get_map(&pool, w.owner, GetMap { map_id: w.map_id })
+        .await
+        .unwrap();
+    assert_eq!(view.systems.len(), 1);
+    assert_eq!(view.systems[0].id(), home);
+    assert_eq!(
+        list_signatures(&pool, w.owner, w.map_id).await.unwrap()[0].id,
+        sig
+    );
 }
 
 /// Saying a signature was never a wormhole after all takes its node with it: the hole it
