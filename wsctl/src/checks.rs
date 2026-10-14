@@ -94,15 +94,27 @@ pub fn disk(path: &Path) -> Check {
 pub fn ports(ports: &[u16], ours: bool) -> Vec<Check> {
     ports
         .iter()
-        .map(|&port| match (port_is_free(port), ours) {
-            (true, _) => Check::ok(format!("port {port} is free")),
-            (false, true) => Check::ok(format!("port {port} is held by this stack")),
-            (false, false) => Check::fatal(
+        .map(|&port| match (port_state(port), ours) {
+            (Port::Free, _) => Check::ok(format!("port {port} is free")),
+            (Port::NothingAnswers, _) => Check::ok(format!(
+                "nothing answers on port {port} (only root can bind it to be sure; Docker will)"
+            )),
+            (Port::Busy, true) => Check::ok(format!("port {port} is held by this stack")),
+            (Port::Busy, false) => Check::fatal(
                 format!("port {port} is already in use"),
                 "Stop whatever is on it, or pick another port in `wsctl setup`.",
             ),
         })
         .collect()
+}
+
+#[derive(Debug, PartialEq, Eq)]
+enum Port {
+    Free,
+    Busy,
+    /// Not ours to bind (a port below 1024 without root), and nothing listening on it
+    /// either. Docker binds it as root, so this is as free as can be told from here.
+    NothingAnswers,
 }
 
 /// Whether the name points here. Certificates cannot be issued for a name that does not
@@ -283,8 +295,19 @@ fn resolve(domain: &str) -> Vec<IpAddr> {
         .unwrap_or_default()
 }
 
-fn port_is_free(port: u16) -> bool {
-    std::net::TcpListener::bind(("0.0.0.0", port)).is_ok()
+fn port_state(port: u16) -> Port {
+    match std::net::TcpListener::bind(("0.0.0.0", port)) {
+        Ok(_) => Port::Free,
+        Err(err) if err.kind() == std::io::ErrorKind::PermissionDenied => {
+            let address = std::net::SocketAddr::from(([127, 0, 0, 1], port));
+            match std::net::TcpStream::connect_timeout(&address, std::time::Duration::from_secs(1))
+            {
+                Ok(_) => Port::Busy,
+                Err(_) => Port::NothingAnswers,
+            }
+        }
+        Err(_) => Port::Busy,
+    }
 }
 
 pub fn free_gb(path: &Path) -> Option<u64> {
@@ -410,6 +433,17 @@ mod tests {
         let held = std::net::TcpListener::bind(("0.0.0.0", 0)).unwrap();
         let port = held.local_addr().unwrap().port();
         assert_eq!(ports(&[port], false)[0].verdict, Verdict::Fatal);
+    }
+
+    // A non-root user cannot bind below 1024 at all, which is not the same as the port
+    // being taken. Only meaningful where that holds, so it checks before asserting.
+    #[test]
+    fn a_privileged_port_is_not_mistaken_for_a_busy_one() {
+        if std::net::TcpListener::bind(("0.0.0.0", 1)).is_ok() {
+            return; // root, or unprivileged ports lowered: nothing to tell apart here
+        }
+        assert_eq!(port_state(1), Port::NothingAnswers);
+        assert_eq!(ports(&[1], false)[0].verdict, Verdict::Ok);
     }
 
     // An install that is already serving holds its own ports, and telling its operator to
