@@ -24,13 +24,13 @@
 	import LoadingCover from './canvas/LoadingCover.svelte';
 	import MapEdge from './canvas/MapEdge.svelte';
 	import { MapGestures } from '../state/map-gestures.svelte';
-	import { setMapContext } from '$lib/components/system-menu/context';
+	import { setMapContext } from './system-menu/context';
 	import { connectMapSession } from '../state/map-session.svelte';
 	import { MapState } from '../state/map-state.svelte';
 	import type { MapSeed } from '../state/map-queries.svelte';
 	import Scrollbars from './canvas/Scrollbars.svelte';
 	import RallyBadge from './canvas/RallyBadge.svelte';
-	import SystemNode from './canvas/SystemNode.svelte';
+	import SystemNode from '$lib/components/SystemNode.svelte';
 	import CommandPalette from './overlays/CommandPalette.svelte';
 	import LayoutToolbar from './panels/LayoutToolbar.svelte';
 	import PanelGrid from './panels/PanelGrid.svelte';

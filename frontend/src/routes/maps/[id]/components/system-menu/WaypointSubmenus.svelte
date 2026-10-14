@@ -7,9 +7,9 @@
 
 	import * as ContextMenu from '$lib/components/ui/context-menu';
 	import EveImage from '$lib/components/EveImage.svelte';
-	import type { MapContext } from './context';
+	import type { MapState } from '../../state/map-state.svelte';
 
-	let { map, destinationId }: { map: MapContext; destinationId: number } = $props();
+	let { map, destinationId }: { map: MapState; destinationId: number } = $props();
 
 	const online = $derived(map.characters.online);
 </script>

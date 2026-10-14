@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { StationGroup } from '../../state/route-planner.svelte';
+import type { StationGroup } from '../../../state/route-planner.svelte';
 import { byFaction, factionOptions, matchesOwner, stationFilter } from './find-stations';
 
 const CALDARI = { id: 500001, name: 'Caldari State' };

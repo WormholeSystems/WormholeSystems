@@ -23,8 +23,13 @@
 	import { Separator } from '$lib/components/ui/separator';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { cn } from '$lib/utils';
-	import { decodeLayout, encodeLayout } from './layout-codec';
-	import { BREAKPOINTS, PANELS, type BreakpointKey, resolveLayouts } from './registry';
+	import { decodeLayout, encodeLayout } from '../../state/layout/layout-codec';
+	import {
+		BREAKPOINTS,
+		PANELS,
+		type BreakpointKey,
+		resolveLayouts,
+	} from '../../state/layout/registry';
 	import type { MapState } from '../../state/map-state.svelte';
 
 	let { map }: { map: MapState } = $props();

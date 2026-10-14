@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { PanelLayoutStore } from './panel-layout.svelte';
-import { DEFAULT_LAYOUTS, resolveLayouts, type PanelLayouts } from '../components/panels/registry';
+import { DEFAULT_LAYOUTS, resolveLayouts, type PanelLayouts } from './layout/registry';
 
 function harness(saved: PanelLayouts | null = null) {
 	const calls: { layouts: PanelLayouts; hidden: string[] }[] = [];

@@ -6,11 +6,11 @@
 	import MapPanelContent from '$lib/components/map-panel/MapPanelContent.svelte';
 	import MapPanelHeader from '$lib/components/map-panel/MapPanelHeader.svelte';
 	import type { MapState } from '../../state/map-state.svelte';
-	import FindSection from './FindSection.svelte';
-	import RoutePlannerSection from './RoutePlannerSection.svelte';
-	import RouteSettings from './RouteSettings.svelte';
-	import WatchlistAdd from './WatchlistAdd.svelte';
-	import WatchlistSection from './WatchlistSection.svelte';
+	import FindSection from './navigation/FindSection.svelte';
+	import RoutePlannerSection from './navigation/RoutePlannerSection.svelte';
+	import RouteSettings from './navigation/RouteSettings.svelte';
+	import WatchlistAdd from './navigation/WatchlistAdd.svelte';
+	import WatchlistSection from './navigation/WatchlistSection.svelte';
 
 	let { map }: { map: MapState } = $props();
 

@@ -17,7 +17,7 @@
 	import MapPanelHeader from '$lib/components/map-panel/MapPanelHeader.svelte';
 	import SortHeader from '$lib/components/SortHeader.svelte';
 	import RouteOriginBadge from './RouteOriginBadge.svelte';
-	import SystemMenu from '$lib/components/system-menu/SystemMenu.svelte';
+	import SystemMenu from '../system-menu/SystemMenu.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Tabs from '$lib/components/ui/tabs';
 	import * as Tooltip from '$lib/components/ui/tooltip';

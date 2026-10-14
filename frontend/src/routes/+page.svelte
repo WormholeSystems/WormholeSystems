@@ -13,13 +13,13 @@
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import MapPanelHeader from '$lib/components/map-panel/MapPanelHeader.svelte';
 	import MassBar from '$lib/components/MassBar.svelte';
-	import AccessDemo from './AccessDemo.svelte';
-	import CountUp from './CountUp.svelte';
-	import LandingChain from './LandingChain.svelte';
-	import Reveal from './Reveal.svelte';
-	import Section from './Section.svelte';
-	import SelfHost from './SelfHost.svelte';
-	import SignatureDemo from './SignatureDemo.svelte';
+	import AccessDemo from './_landing/AccessDemo.svelte';
+	import CountUp from './_landing/CountUp.svelte';
+	import LandingChain from './_landing/LandingChain.svelte';
+	import Reveal from './_landing/Reveal.svelte';
+	import Section from './_landing/Section.svelte';
+	import SelfHost from './_landing/SelfHost.svelte';
+	import SignatureDemo from './_landing/SignatureDemo.svelte';
 
 	let { data } = $props();
 

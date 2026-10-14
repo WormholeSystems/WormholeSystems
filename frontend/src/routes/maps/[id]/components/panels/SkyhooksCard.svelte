@@ -46,7 +46,7 @@
 	} from './skyhook-rows';
 	import { routeBatch } from '../../state/route-batch.svelte';
 	import type { MapState } from '../../state/map-state.svelte';
-	import SystemMenu from '$lib/components/system-menu/SystemMenu.svelte';
+	import SystemMenu from '../system-menu/SystemMenu.svelte';
 	import RoutePopover from './RoutePopover.svelte';
 
 	let { map }: { map: MapState } = $props();

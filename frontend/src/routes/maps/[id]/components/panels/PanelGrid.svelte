@@ -27,7 +27,7 @@
 		breakpointFor,
 		panelMeta,
 		resolveLayouts,
-	} from './registry';
+	} from '../../state/layout/registry';
 	import {
 		beginGesture,
 		floatingBox,
@@ -35,7 +35,7 @@
 		moveGesture,
 		type GridMetrics,
 		type PanelGesture,
-	} from './panel-gestures';
+	} from '../../state/layout/panel-gestures';
 	import type { MapState } from '../../state/map-state.svelte';
 	import type { Snippet } from 'svelte';
 
