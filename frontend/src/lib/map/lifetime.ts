@@ -7,6 +7,12 @@ const HOUR_MS = 3_600_000;
 /** EOL means under four hours left and critical under one: a mark starts that countdown. */
 const LEFT_AFTER_MARK_MS = { eol: 4 * HOUR_MS, critical: HOUR_MS } as const;
 
+/**
+ * The server sends every hole's lifetime from its class pair. Should it be missing, the
+ * ordinary day stands in, which is also what the server uses for a shape it cannot read.
+ */
+const FALLBACK_LIFETIME_HOURS = 24;
+
 export interface LifetimeDeadline {
 	/** Epoch milliseconds. */
 	at: number;
@@ -17,7 +23,11 @@ export interface LifetimeDeadline {
 	estimated: boolean;
 }
 
-/** When the hole should be gone, or null when nothing says: a stargate, or an unmarked hole of unknown lifetime. */
+/**
+ * When the hole should be gone, or null for a stargate. Follows the background ageing: a
+ * mark is timed from when it was made, since someone read it off the hole itself, and
+ * anything else from the hole's age against the lifetime its class pair gives it.
+ */
 export function lifetimeDeadline(
 	c: Pick<
 		MapConnection,
@@ -31,8 +41,8 @@ export function lifetimeDeadline(
 			estimated: false,
 		};
 	}
-	if (c.lifetime_hours === null) return null;
-	return { at: Date.parse(c.created_at) + c.lifetime_hours * HOUR_MS, estimated: true };
+	const hours = c.lifetime_hours ?? FALLBACK_LIFETIME_HOURS;
+	return { at: Date.parse(c.created_at) + hours * HOUR_MS, estimated: true };
 }
 
 /** "2h 13m", "45m", and "0m" once it has run out. */
@@ -41,4 +51,12 @@ export function formatRemaining(deadlineMs: number, nowMs: number): string {
 	const hours = Math.floor(minutes / 60);
 	const rest = minutes % 60;
 	return hours === 0 ? `${rest}m` : `${hours}h ${rest}m`;
+}
+
+/**
+ * The same for a readout with room to talk: a hole past its deadline is closing any moment
+ * rather than sitting at zero.
+ */
+export function describeRemaining(deadlineMs: number, nowMs: number): string {
+	return deadlineMs <= nowMs ? 'any moment now' : formatRemaining(deadlineMs, nowMs);
 }

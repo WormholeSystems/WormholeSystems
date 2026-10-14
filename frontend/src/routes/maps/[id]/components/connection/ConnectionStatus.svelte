@@ -8,7 +8,7 @@
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { timeAgo, utcShort } from '$lib/format';
 	import { LIFETIME_OPTIONS, MASS_OPTIONS } from '$lib/map/connection-status';
-	import { formatRemaining, lifetimeDeadline } from '$lib/map/lifetime';
+	import { describeRemaining, lifetimeDeadline } from '$lib/map/lifetime';
 	import { tickingMs } from '$lib/now.svelte';
 
 	let { connection, sigs }: { connection: MapConnection; sigs: Signature[] } = $props();
@@ -36,18 +36,19 @@
 				return { label, text: 'text-green-500', dot: 'bg-green-500' };
 		}
 	});
-	// A mark's countdown replaces the threshold it stands for; before one, the class
-	// lifetime bounds what is left, and without even that the status's own hint stands in.
+	// Every wormhole gets a countdown: a mark's replaces the threshold it stands for, and
+	// before one the class lifetime bounds what is left.
 	const deadline = $derived(lifetimeDeadline(connection));
 	const lifetimeLeft = $derived.by(() => {
-		if (deadline === null) {
-			const hint = LIFETIME_OPTIONS.find((o) => o.value === connection.time_status)?.hint;
-			return hint ? { label: hint, text: lifetimeMeta.text } : null;
-		}
-		const left = formatRemaining(deadline.at, clock.current);
+		if (deadline === null) return null;
+		const left = describeRemaining(deadline.at, clock.current);
+		const overdue = deadline.at <= clock.current;
 		return {
-			label: deadline.estimated ? `≈ ${left}` : left,
+			label: deadline.estimated && !overdue ? `≈ ${left}` : left,
 			text: lifetimeTone(deadline.at - clock.current),
+			source: deadline.estimated
+				? "Estimated from the hole's age, which starts when it reached the map."
+				: 'Counted from when the hole was marked.',
 		};
 	});
 	// The same thresholds a mark stands for, so an estimate reads in the mark's colour once
@@ -123,12 +124,15 @@
 		{#if lifetimeLeft}
 			<div class="col-span-full grid grid-cols-subgrid">
 				<span>Lifetime left</span>
-				<span
-					class="text-right tabular-nums {lifetimeLeft.text}"
-					data-testid="popover-lifetime-detail"
-				>
-					{lifetimeLeft.label}
-				</span>
+				<Tooltip.Root>
+					<Tooltip.Trigger
+						class="cursor-help text-right tabular-nums {lifetimeLeft.text}"
+						data-testid="popover-lifetime-detail"
+					>
+						{lifetimeLeft.label}
+					</Tooltip.Trigger>
+					<Tooltip.Content>{lifetimeLeft.source}</Tooltip.Content>
+				</Tooltip.Root>
 			</div>
 		{/if}
 		<div class="col-span-full grid grid-cols-subgrid">
