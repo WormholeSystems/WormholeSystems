@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into oauth_login_flows (state, kind, link_user_id, redirect_to, expires_at)\n         values ($1, $2, $3, $4, now() + interval '10 minutes')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "84755548c4be7d76962ceb573917d8dbb69817f20e3200facb40a7dd00cae493"
+}

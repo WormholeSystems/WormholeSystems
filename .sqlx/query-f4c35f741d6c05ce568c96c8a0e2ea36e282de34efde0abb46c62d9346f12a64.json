@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "delete from oauth_login_flows where state = $1 and expires_at > now()\n         returning link_user_id, redirect_to",
+  "query": "delete from oauth_login_flows\n         where state = $1 and kind = $2 and expires_at > now()\n         returning link_user_id, redirect_to",
   "describe": {
     "columns": [
       {
@@ -28,6 +28,7 @@
     ],
     "parameters": {
       "Left": [
+        "Text",
         "Text"
       ]
     },
@@ -36,5 +37,5 @@
       true
     ]
   },
-  "hash": "5b5de879e436374dc08ac42b538020a2284f8283ed2a7b75b40f1ef0b4b65617"
+  "hash": "f4c35f741d6c05ce568c96c8a0e2ea36e282de34efde0abb46c62d9346f12a64"
 }

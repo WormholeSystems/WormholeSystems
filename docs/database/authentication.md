@@ -188,6 +188,7 @@ redirect until the callback. Single-use.
 | Column          | Type           | Notes                                                 |
 |-----------------|----------------|-------------------------------------------------------|
 | `state`         | text, pk       | random CSRF token, echoed back by the SSO             |
+| `kind`          | text           | `eve_login` or `discord_link`: which handshake made it |
 | `code_verifier` | text, null     | PKCE verifier (only if we use PKCE)                   |
 | `link_user_id`  | fk users, null | set when linking a new character to a signed-in user  |
 | `redirect_to`   | text, null     | where to send the user after a successful login       |
@@ -199,6 +200,9 @@ redirect until the callback. Single-use.
 - `state` is unique and **single-use**: consumed (deleted) on a successful callback;
   replaying the same `state` must fail.
 - The callback rejects if `state` is unknown or `expires_at` has passed.
+- A `state` is only good for the callback of its own `kind`: the Discord callback refuses
+  one the EVE login started, and the other way round. Both go through `oauth_flow`.
+- Starting a handshake deletes the expired rows, so abandoned ones do not pile up.
 - If `link_user_id` is set, the authenticated character is attached to that user;
   otherwise the login resolves or creates a user from the character.
 
