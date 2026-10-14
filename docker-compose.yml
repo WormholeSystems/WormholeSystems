@@ -113,6 +113,29 @@ services:
       - web
     logging: *logging
 
+  # Scheduled dumps of the database into WS_BACKUP_DIR, on when COMPOSE_PROFILES has
+  # `backup`. wsctl also runs one-off containers of it for `backup`, `restore` and the dump
+  # before an update, so it is the same client either way.
+  backup:
+    # The client has to be at least as new as the server it dumps. The bundled one is 16;
+    # wsctl raises this for a newer database of your own.
+    image: postgres:${WS_BACKUP_PG_VERSION:-16}
+    profiles: [backup]
+    restart: unless-stopped
+    entrypoint: ["sh", "/usr/local/bin/ws-backup"]
+    command: ["schedule"]
+    environment:
+      DATABASE_URL: postgres://wormholesystems:${POSTGRES_PASSWORD:-wormholesystems}@db:5432/wormholesystems
+      WS_BACKUP_EVERY_HOURS: ${WS_BACKUP_EVERY_HOURS:-24}
+      WS_BACKUP_KEEP_DAYS: ${WS_BACKUP_KEEP_DAYS:-14}
+    volumes:
+      - ./deploy/backup.sh:/usr/local/bin/ws-backup:ro
+      - ${WS_BACKUP_DIR:-./backups}:/backups
+    depends_on:
+      db:
+        condition: service_healthy
+    logging: *logging
+
 volumes:
   pgdata:
   sde:

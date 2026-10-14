@@ -20,6 +20,13 @@ services:
       proxy:
         aliases: [wormholesystems-web]
 
+  # A database of your own on this network is reached from here too, so the backup client
+  # comes along.
+  backup:
+    networks:
+      default:
+      proxy:
+
 networks:
   # Made by `wsctl setup` when it does not exist yet, so a proxy container can join it.
   proxy:

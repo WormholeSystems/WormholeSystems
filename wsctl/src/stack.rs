@@ -77,6 +77,47 @@ pub fn prune(runner: &mut dyn Runner, dir: &Path) -> Result<()> {
     runner.run(dir, "docker", &["image", "prune", "-f"])
 }
 
+pub fn stop(runner: &mut dyn Runner, dir: &Path, service: &str) -> Result<()> {
+    runner.run(dir, "docker", &as_refs(&compose(&["stop", service])))
+}
+
+/// Stop and remove a service's container, for one an overlay or a profile has taken out of
+/// the stack: compose no longer touches it on its own.
+pub fn remove(runner: &mut dyn Runner, dir: &Path, service: &str) -> Result<()> {
+    runner.run(dir, "docker", &as_refs(&compose(&["rm", "-sf", service])))
+}
+
+/// `docker compose run` of the backup service with these arguments: the client, the
+/// connection and the backup directory, the same as the scheduled dumps use. Not
+/// `--no-deps`, so a bundled database that is down is started for it. `mounts` are extra
+/// `-v` bind mounts.
+fn backup_args<'a>(args: &[&'a str], mounts: &'a [String]) -> Vec<&'a str> {
+    let mut full = vec!["compose", "run", "--rm", "-T"];
+    for mount in mounts {
+        full.extend(["-v", mount.as_str()]);
+    }
+    full.push("backup");
+    full.extend_from_slice(args);
+    full
+}
+
+/// A one-off backup command whose output is read.
+pub fn backup(runner: &mut dyn Runner, dir: &Path, args: &[&str]) -> Result<String> {
+    runner.capture(dir, "docker", &backup_args(args, &[]))
+}
+
+/// Dump the database now, labelled. Answers with the dump's file name.
+pub fn dump(runner: &mut dyn Runner, dir: &Path, label: &str) -> Result<String> {
+    let out = backup(runner, dir, &["dump", label])?;
+    Ok(out.lines().last().unwrap_or_default().trim().to_string())
+}
+
+/// Replace the database with the dump at `inside`, a path in the backup container.
+/// Streamed, since a large restore takes a while and its errors are what matters.
+pub fn restore(runner: &mut dyn Runner, dir: &Path, inside: &str, mounts: &[String]) -> Result<()> {
+    runner.run(dir, "docker", &backup_args(&["restore", inside], mounts))
+}
+
 pub fn restart(runner: &mut dyn Runner, dir: &Path, service: &str) -> Result<()> {
     runner.run(dir, "docker", &as_refs(&compose(&["restart", service])))
 }
@@ -262,6 +303,31 @@ mod tests {
         assert_eq!(
             runner.commands,
             vec!["docker compose run --rm --no-deps -T api wormholesystems sde-status"]
+        );
+    }
+
+    #[test]
+    fn a_dump_runs_in_the_backup_service_and_names_its_file() {
+        let mut runner = Recording::default();
+        runner.replies.insert(
+            "docker compose run --rm -T backup dump manual".into(),
+            "Container wormholesystems-db-1 Running\nwormholesystems-20261014-110139-manual.dump"
+                .into(),
+        );
+        assert_eq!(
+            dump(&mut runner, Path::new("."), "manual").unwrap(),
+            "wormholesystems-20261014-110139-manual.dump"
+        );
+        restore(
+            &mut runner,
+            Path::new("."),
+            "/restore/x.dump",
+            &["/tmp/dumps:/restore:ro".into()],
+        )
+        .unwrap();
+        assert_eq!(
+            runner.commands[1],
+            "docker compose run --rm -T -v /tmp/dumps:/restore:ro backup restore /restore/x.dump"
         );
     }
 
