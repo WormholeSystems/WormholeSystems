@@ -1,5 +1,5 @@
-//! The server<->client wire contract. Server functions pass these types across the
-//! ssr/wasm boundary, so they must serde round-trip — including the partial-update
+//! The server<->client wire contract. The JSON API and the WebSocket frames carry these
+//! types to the frontend, so they must serde round-trip, including the partial-update
 //! `Option<Option<_>>` fields and the tagged `MapEvent` representation the WS client parses.
 
 use chrono::{DateTime, Utc};
