@@ -19,6 +19,9 @@ const METADATA_URL: &str = "https://login.eveonline.com/.well-known/oauth-author
 /// key we have not seen yet fetches them early regardless.
 const JWKS_TTL: Duration = Duration::from_secs(60 * 60);
 
+/// A token this close to expiry is refreshed before use rather than sent and refused.
+pub const REFRESH_LEEWAY: Duration = Duration::from_secs(30);
+
 #[derive(Clone)]
 pub struct SsoConfig {
     pub client_id: String,
@@ -142,19 +145,25 @@ impl Sso {
         character_id: i64,
         scope: Scope,
     ) -> Result<String> {
+        let token = self.stored_token(store, character_id).await?;
+        if !token.has_scope(scope) {
+            return Err(EsiError::MissingScope(scope.as_str().to_string()));
+        }
+        Ok(token.access_token)
+    }
+
+    /// Load `character_id`'s token, refreshing and saving it first if it is expiring.
+    pub async fn stored_token<S: TokenStore>(&self, store: &S, character_id: i64) -> Result<Token> {
         let mut token = store
             .load(character_id)
             .await?
             .ok_or_else(|| EsiError::Auth(format!("no token for character {character_id}")))?;
 
-        if token.expires_within(Duration::from_secs(30)) {
+        if token.expires_within(REFRESH_LEEWAY) {
             (token, _) = self.refresh(&token.refresh_token).await?;
             store.save(character_id, &token).await?;
         }
-        if !token.has_scope(scope) {
-            return Err(EsiError::MissingScope(scope.as_str().to_string()));
-        }
-        Ok(token.access_token)
+        Ok(token)
     }
 
     async fn token_request(&self, form: &[(&str, &str)]) -> Result<TokenResponse> {

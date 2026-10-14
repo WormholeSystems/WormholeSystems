@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into character_status (character_id, online, last_online_at)\n             values ($1, $2, case when $2 then now() else null end)\n             on conflict (character_id) do update set\n                 online = excluded.online,\n                 last_online_at = now(),\n                 updated_at = now()\n             where character_status.online is distinct from excluded.online\n             returning character_id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "character_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "character_status",
+            "name": "character_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Bool"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "b34d1d9483af00f17a48ebdf100340812c6851e421c0067dff00f70fb0ea4ea8"
+}
