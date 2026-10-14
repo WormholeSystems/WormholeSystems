@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { RoutingGraph } from '$lib/api/types/RoutingGraph';
+import type { RoutingSettings } from '$lib/routing/algorithm';
 import { RoutePlanner, type RouteHost } from './route-planner.svelte';
 
 const TABLES: RoutingGraph = {
@@ -10,6 +11,13 @@ const TABLES: RoutingGraph = {
 	stations: [100],
 	services: [{ id: 1, name: 'Cloning', stations: [{ id: 5, name: 'Home', solar_system_id: 100 }] }],
 	corporations: [],
+};
+
+const SETTINGS: RoutingSettings = {
+	preference: 'shorter',
+	securityPenalty: 50,
+	allowTimeStatus: 'critical',
+	allowMassStatus: 'reduced',
 };
 
 function host(over: Partial<RouteHost> = {}): RouteHost {
@@ -22,6 +30,7 @@ function host(over: Partial<RouteHost> = {}): RouteHost {
 		useEveScout: () => false,
 		useWormholes: () => true,
 		mapIgnored: () => new Set<number>(),
+		settings: () => SETTINGS,
 		loadTables: () => Promise.resolve(TABLES),
 		...over,
 	};
@@ -74,5 +83,17 @@ describe('RoutePlanner', () => {
 		expect(planner.avoided).toEqual(new Set([100, 300]));
 		planner.clearIgnored();
 		expect(planner.avoided).toEqual(new Set([300]));
+	});
+
+	it('shares one search between everyone asking about the same origin', async () => {
+		const planner = new RoutePlanner(host());
+		expect(planner.search(100)).toBeNull();
+		await planner.load();
+		const search = planner.search(100);
+		expect(search?.routeTo(200)?.jumps).toBe(1);
+		expect(planner.search(100)).toBe(search);
+		expect(planner.search(200)).not.toBe(search);
+		expect(planner.search(100, [200])).not.toBe(search);
+		expect(planner.search(100, [200])?.routeTo(200)?.jumps).toBe(1);
 	});
 });

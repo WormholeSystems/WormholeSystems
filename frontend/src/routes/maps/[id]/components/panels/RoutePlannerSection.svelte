@@ -8,20 +8,16 @@
 	import { Button } from '$lib/components/ui/button';
 	import RouteList from './RouteList.svelte';
 	import SystemCombobox from '../pickers/SystemCombobox.svelte';
-	import { findRoute, jumpTone as badgeTone, type RouteGraph } from '$lib/routing/algorithm';
+	import { jumpTone as badgeTone, type RouteGraph } from '$lib/routing/algorithm';
 	import type { MapState } from '../../state/map-state.svelte';
 
 	let { map, graph }: { map: MapState; graph: RouteGraph | null } = $props();
 
 	const abResult = $derived.by(() => {
 		if (!graph || map.route.fromId === null || map.route.toId === null) return null;
-		return findRoute(
-			graph,
-			map.route.fromId,
-			map.route.toId,
-			map.routingSettings,
-			map.route.avoided,
-		);
+		// From is also the shared origin whenever it is set, so this is the search the
+		// watchlist and Find already ran.
+		return map.route.search(map.route.fromId)?.routeTo(map.route.toId) ?? null;
 	});
 	const abPath = $derived(abResult?.route.map((s) => s.id) ?? []);
 	// A hovered row anywhere on the page temporarily overrides the pinned A→B highlight.

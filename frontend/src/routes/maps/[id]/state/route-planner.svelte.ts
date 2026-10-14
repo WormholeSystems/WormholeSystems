@@ -6,8 +6,15 @@ import type { EveScoutConnection } from '$lib/api/types/EveScoutConnection';
 import type { MapConnection } from '$lib/api/types/MapConnection';
 import type { MapSystemView } from '$lib/api/types/MapSystemView';
 import type { Signature } from '$lib/api/types/Signature';
-import type { RouteGraph, RouteStep } from '$lib/routing/algorithm';
+import type {
+	DynamicEdge,
+	RouteGraph,
+	RouteSearch,
+	RouteStep,
+	RoutingSettings,
+} from '$lib/routing/algorithm';
 import { buildDynamicAdjacency } from '$lib/routing/algorithm';
+import { RouteSearchCache } from '$lib/routing/search-cache';
 import * as graphBuild from '$lib/routing/graph-build';
 import * as routeSignatures from '$lib/routing/signatures';
 import * as v from 'valibot';
@@ -60,6 +67,8 @@ export interface RouteHost {
 	useWormholes(): boolean;
 	/** The map's own ignore list, which every viewer routes around. */
 	mapIgnored(): Set<number>;
+	/** The viewer's route preference and tolerances. */
+	settings(): RoutingSettings;
 	loadTables(): Promise<RoutingTables>;
 }
 
@@ -96,18 +105,59 @@ export class RoutePlanner {
 		this.map = map;
 	}
 
-	/** Stargates plus the chain's own edges. `null` until the static data has arrived. */
+	// The last graph handed out and what it was built from. A memo, not state.
+	private built: {
+		stargates: Map<number, number[]>;
+		security: Map<number, number>;
+		edges: DynamicEdge[];
+		graph: RouteGraph;
+	} | null = null;
+
+	/**
+	 * Stargates plus the chain's own edges. `null` until the static data has arrived. Almost
+	 * every refetch of the map hands over new arrays with the same edges in them (a renamed
+	 * node, a moved one, a pasted scan), so the graph is only rebuilt when the edges it
+	 * produces really differ; the same object otherwise, and every route search on it holds.
+	 */
 	graph = $derived.by<RouteGraph | null>(() => {
 		const stargates = this.stargates;
 		if (!stargates) return null;
+		const security = this.security;
 		const edges = graphBuild.chainEdges(
 			this.map.systems(),
 			this.map.connections(),
 			this.map.useEveScout() ? this.map.eveScout() : null,
 			this.map.useWormholes(),
 		);
-		return { stargates, dynamic: buildDynamicAdjacency(edges), security: this.security };
+		const built = this.built;
+		if (
+			built &&
+			built.stargates === stargates &&
+			built.security === security &&
+			graphBuild.sameEdges(built.edges, edges)
+		) {
+			return built.graph;
+		}
+		const graph = { stargates, dynamic: buildDynamicAdjacency(edges), security };
+		this.built = { stargates, security, edges, graph };
+		return graph;
 	});
+
+	private searches = new RouteSearchCache();
+
+	/**
+	 * Every route out of `origin` under the viewer's settings, avoiding what they avoid plus
+	 * `extraIgnored`. Shared: every panel asking about the same origin gets the same search,
+	 * run once. Reading it inside a derived tracks the graph, the settings and the avoided
+	 * systems, so the derived reruns when any of them changes. Null until the tables are in.
+	 */
+	search(origin: number, extraIgnored: readonly number[] = []): RouteSearch | null {
+		const graph = this.graph;
+		if (!graph) return null;
+		const avoided = this.avoided;
+		const ignored = extraIgnored.length ? new Set([...avoided, ...extraIgnored]) : avoided;
+		return this.searches.get(graph, origin, this.map.settings(), ignored);
+	}
 
 	connectionIds = $derived.by(() =>
 		graphBuild.routeConnectionIds(this.path, this.map.systems(), this.map.connections()),

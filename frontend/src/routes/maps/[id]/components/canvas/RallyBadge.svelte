@@ -7,7 +7,6 @@
 	import * as Popover from '$lib/components/ui/popover';
 	import ClassBadge from '$lib/components/ClassBadge.svelte';
 	import RouteList from '../panels/RouteList.svelte';
-	import { findRoute } from '$lib/routing/algorithm';
 	import { solarSystemId } from '$lib/map/system';
 	import type { MapSystemView } from '$lib/api/types/MapSystemView';
 	import type { MapState } from '../../state/map-state.svelte';
@@ -27,17 +26,10 @@
 		map.systems.all
 			.filter((s): s is RallySystem => s.is_rally && s.kind === 'system')
 			.map((rally) => {
-				const graph = map.route.graph;
 				const result =
-					!graph || homeId === null || homeId === rally.solar_system_id
+					homeId === null || homeId === rally.solar_system_id
 						? null
-						: findRoute(
-								graph,
-								homeId,
-								rally.solar_system_id,
-								map.routingSettings,
-								map.route.avoided,
-							);
+						: (map.route.search(homeId)?.routeTo(rally.solar_system_id) ?? null);
 				return { rally, result };
 			}),
 	);

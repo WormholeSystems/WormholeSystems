@@ -9,12 +9,7 @@
 	import SystemRow from '../pickers/SystemRow.svelte';
 	import { SYSTEM_CELLS_4, SYSTEM_LIST_ACTIONS, SYSTEM_ROW } from '../pickers/columns';
 	import { compareWatchlistEntries } from '$lib/map/watchlist';
-	import {
-		findRoutes,
-		jumpTone as badgeTone,
-		type RouteGraph,
-		type RouteResult,
-	} from '$lib/routing/algorithm';
+	import { jumpTone as badgeTone, type RouteGraph, type RouteResult } from '$lib/routing/algorithm';
 	import { sortState } from '$lib/sort-state.svelte';
 	import type { MapState } from '../../state/map-state.svelte';
 	import RoutePopover from './RoutePopover.svelte';
@@ -26,12 +21,10 @@
 	const originName = $derived(origin === null ? null : (map.systemInfo(origin)?.name ?? '…'));
 	const watchRoutes = $derived.by(() => {
 		if (!graph || origin === null) return new Map<number, RouteResult>();
-		return findRoutes(
-			graph,
-			origin,
-			map.watchlist.all.map((w) => w.solar_system_id),
-			map.routingSettings,
-			map.route.avoided,
+		const search = map.route.search(origin);
+		return (
+			search?.routesTo(map.watchlist.all.map((w) => w.solar_system_id)) ??
+			new Map<number, RouteResult>()
 		);
 	});
 
