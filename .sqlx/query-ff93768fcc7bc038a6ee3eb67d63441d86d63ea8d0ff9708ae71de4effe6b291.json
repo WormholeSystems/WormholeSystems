@@ -1,0 +1,137 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select id, connection_id, character_id, from_solar_system_id, to_solar_system_id,\n                ship_type_id, ship_name, mass, is_manual, created_at\n         from map_connection_jumps where map_id = $1 and connection_id = any($2)\n         order by id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "map_connection_jumps",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "connection_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "map_connection_jumps",
+            "name": "connection_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "character_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "map_connection_jumps",
+            "name": "character_id"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "from_solar_system_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "map_connection_jumps",
+            "name": "from_solar_system_id"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "to_solar_system_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "map_connection_jumps",
+            "name": "to_solar_system_id"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "ship_type_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "map_connection_jumps",
+            "name": "ship_type_id"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "ship_name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "map_connection_jumps",
+            "name": "ship_name"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "mass",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "map_connection_jumps",
+            "name": "mass"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "is_manual",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "map_connection_jumps",
+            "name": "is_manual"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "map_connection_jumps",
+            "name": "created_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8Array"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "ff93768fcc7bc038a6ee3eb67d63441d86d63ea8d0ff9708ae71de4effe6b291"
+}

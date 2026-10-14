@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into map_watchlist (id, map_id, solar_system_id, is_pinned, created_at)\n         overriding system value\n         values ($1, $2, $3, $4, $5)\n         on conflict do nothing",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int8",
+        "Bool",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "4a9a849a76cec48f62816c263016b7a441c755e769c44186dbc5853898ea8d33"
+}

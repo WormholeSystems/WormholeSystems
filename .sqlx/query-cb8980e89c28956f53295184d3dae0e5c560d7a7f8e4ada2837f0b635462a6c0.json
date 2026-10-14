@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "insert into signatures\n               (id, map_id, solar_system_id, signature_id, \"group\", signature_type_id,\n                name, size, mass_status, time_status, connection_id)\n           overriding system value\n           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)\n           on conflict (id) do update set\n               \"group\" = excluded.\"group\",\n               signature_type_id = excluded.signature_type_id,\n               name = excluded.name,\n               size = excluded.size,\n               mass_status = excluded.mass_status,\n               time_status = excluded.time_status,\n               connection_id = excluded.connection_id",
+  "query": "insert into signatures\n               (id, map_id, solar_system_id, signature_id, \"group\", signature_type_id,\n                name, size, mass_status, time_status, connection_id, created_at,\n                time_status_updated_at)\n           overriding system value\n           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, coalesce($12, now()), $13)\n           on conflict (id) do update set\n               \"group\" = excluded.\"group\",\n               signature_type_id = excluded.signature_type_id,\n               name = excluded.name,\n               size = excluded.size,\n               mass_status = excluded.mass_status,\n               time_status = excluded.time_status,\n               connection_id = excluded.connection_id",
   "describe": {
     "columns": [],
     "parameters": {
@@ -67,10 +67,12 @@
             }
           }
         },
-        "Int8"
+        "Int8",
+        "Timestamptz",
+        "Timestamptz"
       ]
     },
     "nullable": []
   },
-  "hash": "a245a06a66587333d3a62270af851dbbcb04c6a137953fb2098d5738d709b35d"
+  "hash": "cb8980e89c28956f53295184d3dae0e5c560d7a7f8e4ada2837f0b635462a6c0"
 }

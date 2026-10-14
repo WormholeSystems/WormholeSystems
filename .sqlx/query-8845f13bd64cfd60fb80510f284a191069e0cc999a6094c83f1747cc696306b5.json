@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "delete from map_solar_systems where id = $1 and map_id = $2\n           returning position_x, position_y, alias,\n               raised_by_signature_id as \"raised_by_signature_id!\",\n               hangs_off_id as \"hangs_off_id!\"",
+  "query": "delete from map_solar_systems where id = $1 and map_id = $2\n           returning position_x, position_y, alias, created_at,\n               raised_by_signature_id as \"raised_by_signature_id!\",\n               hangs_off_id as \"hangs_off_id!\"",
   "describe": {
     "columns": [
       {
@@ -38,6 +38,17 @@
       },
       {
         "ordinal": 3,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "map_solar_systems",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
         "name": "raised_by_signature_id!",
         "type_info": "Int8",
         "origin": {
@@ -48,7 +59,7 @@
         }
       },
       {
-        "ordinal": 4,
+        "ordinal": 5,
         "name": "hangs_off_id!",
         "type_info": "Int8",
         "origin": {
@@ -69,9 +80,10 @@
       false,
       false,
       true,
+      false,
       true,
       true
     ]
   },
-  "hash": "6e66546aab40bd36a22338678939d372423615b7bab455bc83be5dfe42bf48ef"
+  "hash": "8845f13bd64cfd60fb80510f284a191069e0cc999a6094c83f1747cc696306b5"
 }

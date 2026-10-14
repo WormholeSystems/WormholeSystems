@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "delete from signatures where map_id = $1 and solar_system_id = $2",
+  "query": "delete from map_connection_jumps where id = $1 and map_id = $2",
   "describe": {
     "columns": [],
     "parameters": {
@@ -11,5 +11,5 @@
     },
     "nullable": []
   },
-  "hash": "4c7d69702952a5eb9d351fae866ac91928f9f60183e555a5b782c92fa44ada4f"
+  "hash": "4d57ca56b115586bee9a4a82951818d1798fe83029d739f37542f9e667d1d178"
 }

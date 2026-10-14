@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select id, solar_system_id, signature_id, \"group\",\n                  signature_type_id, name, size,\n                  mass_status,\n                  time_status, connection_id\n           from signatures\n           where map_id = $1\n             and (solar_system_id = any($2) or connection_id = any($3))",
+  "query": "select id, solar_system_id, signature_id, \"group\",\n                  signature_type_id, name, size,\n                  mass_status,\n                  time_status, connection_id, created_at as \"created_at?\",\n                  time_status_updated_at\n           from signatures\n           where map_id = $1\n             and (solar_system_id = any($2) or connection_id = any($3))",
   "describe": {
     "columns": [
       {
@@ -164,6 +164,28 @@
             "name": "connection_id"
           }
         }
+      },
+      {
+        "ordinal": 10,
+        "name": "created_at?",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "signatures",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "time_status_updated_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "signatures",
+            "name": "time_status_updated_at"
+          }
+        }
       }
     ],
     "parameters": {
@@ -183,8 +205,10 @@
       true,
       true,
       true,
+      true,
+      false,
       true
     ]
   },
-  "hash": "bf0287b598fb27a0d35de714e6799bc17e86e7f1e29543aa34b4d1c3417aec97"
+  "hash": "a133466833e55fc6e5bfc3a450adab6237898fc10e0cb95479cc18b0d4b8f06e"
 }

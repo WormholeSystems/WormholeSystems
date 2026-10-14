@@ -1,0 +1,34 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into map_solar_system_details\n             (map_id, solar_system_id, status, occupying_group, notes)\n         select map_id, solar_system_id, coalesce($3, 'unknown'::system_status), $5, $7\n         from map_solar_systems where id = $2 and map_id = $1\n         on conflict (map_id, solar_system_id) do update set\n             status = coalesce($3, map_solar_system_details.status),\n             occupying_group = case when $4 then excluded.occupying_group\n                                    else map_solar_system_details.occupying_group end,\n             notes = case when $6 then excluded.notes else map_solar_system_details.notes end,\n             updated_at = now()",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        {
+          "Custom": {
+            "name": "system_status",
+            "kind": {
+              "Enum": [
+                "unknown",
+                "friendly",
+                "hostile",
+                "active",
+                "unscanned",
+                "empty"
+              ]
+            }
+          }
+        },
+        "Bool",
+        "Text",
+        "Bool",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c4b1c009cbd8b9e0297320c23f58e075459c03e5c3ab15d71b960eb0cb2568b5"
+}

@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update signatures set connection_id = $1, updated_at = now()\n         where id = $2 and map_id = $3",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "7210b76a5e2d6d6cee0d3124bd8e6cb64f3d14ea3d1e3c1387f07b7386f7d0ac"
+}
