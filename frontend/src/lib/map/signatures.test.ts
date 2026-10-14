@@ -1,8 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseScan } from './signatures';
+import { parseScan as parseWith } from './signatures';
 import type { SignatureCatalog } from '$lib/api/types/SignatureCatalog';
 import type { SignatureTypeInfo } from '$lib/api/types/SignatureTypeInfo';
+import translations from '$lib/signatures/translations.json';
+
+/** The parser with the shipped names, which the app loads on the first paste. */
+function parseScan(text: string, catalog: SignatureCatalog) {
+	return parseWith(text, catalog, translations);
+}
 
 function type(
 	partial: Partial<SignatureTypeInfo> &
