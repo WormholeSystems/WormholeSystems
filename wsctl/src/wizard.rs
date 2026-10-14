@@ -105,7 +105,13 @@ pub fn setup(runner: &mut dyn Runner, dir: &Path) -> Result<()> {
     }
     report_renamed(&renamed);
     ui::heading("Starting");
+    if existing.is_empty() {
+        ui::note("The first boot downloads CCP's static data (~550MB) and seeds from it before");
+        ui::note("the API answers. This waits for that, which takes a few minutes; follow it");
+        ui::note("from another shell with:  docker compose logs -f api");
+    }
     stack::up(runner, dir)?;
+    ui::done("running and healthy");
 
     after_boot(&answers);
     if leftovers {
@@ -212,7 +218,7 @@ pub fn update(runner: &mut dyn Runner, dir: &Path, force_sde: bool) -> Result<()
     }
     report_renamed(&renamed);
     stack::up(runner, dir)?;
-    ui::done("running");
+    ui::done("running and healthy");
     // Before the static data, which wants the space a stale cache is sitting on.
     match stack::prune(runner, dir) {
         Ok(()) => ui::done("old build cache pruned"),
@@ -567,12 +573,9 @@ fn ask_discord(existing: &str, base: &str) -> Result<Option<Discord>> {
 }
 
 fn after_boot(answers: &Answers) {
-    ui::heading("After the first boot");
-    ui::note("The API downloads CCP's static data and seeds from it, which takes a few");
-    ui::note("minutes. Follow it with:  docker compose logs -f api");
     if answers.discord.is_some() {
-        println!();
-        ui::note("Then finish Discord, which needs this running to verify itself:");
+        ui::heading("Finishing Discord");
+        ui::note("It needs the stack running to verify itself, which it now is:");
         ui::note(&format!(
             "  1. Set the Interactions Endpoint URL to {}/discord/interactions.",
             answers.base_url()
@@ -585,10 +588,7 @@ fn after_boot(answers: &Answers) {
         println!();
         ui::note("This is printed again by:  wsctl integrate");
     }
-    println!(
-        "\n  Then open {}",
-        style(answers.base_url()).cyan().underlined()
-    );
+    println!("\n  Open {}", style(answers.base_url()).cyan().underlined());
 }
 
 /// What is already configured. Only a real `.env` counts: the example file is a template

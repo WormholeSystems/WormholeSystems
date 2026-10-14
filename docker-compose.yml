@@ -1,3 +1,11 @@
+# Every service logs through Docker's json-file driver, which keeps everything forever by
+# default. Capped here, so a chatty week cannot fill the disk.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: ${WS_LOG_MAX_SIZE:-10m}
+    max-file: "${WS_LOG_MAX_FILES:-5}"
+
 services:
   db:
     image: postgres:16
@@ -17,6 +25,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    logging: *logging
 
   # The rest of the stack (Caddy + API + frontend). `docker compose up -d --build` runs all
   # of it; `docker compose up -d db` still starts the database alone for host-side dev.
@@ -37,6 +46,18 @@ services:
       # Background images people upload for their maps. Small, but theirs: a rebuild must
       # not lose them.
       - uploads:/app/data/uploads
+    # The one place that says what "up" means for the API; everything that waits on it
+    # (`wsctl`, `docker compose up --wait`) asks Docker rather than the URL. /api/instance
+    # needs no database, so this says the server is answering, not that every job is.
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:3000/api/instance"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      # The first boot downloads the static data and seeds from it before it listens, which
+      # takes minutes. Failures inside this window do not count against it.
+      start_period: 20m
+    logging: *logging
 
   web:
     build: frontend
@@ -44,8 +65,18 @@ services:
     environment:
       API_BASE: http://api:3000
       PORT: 3001
+    # Started with the API rather than after it is healthy: the first boot seeds for minutes
+    # before the API listens, and the frontend is better up and saying so meanwhile.
     depends_on:
       - api
+    # A static file, so the check does not depend on the API answering too.
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3001/robots.txt"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    logging: *logging
 
   caddy:
     image: caddy:2
@@ -66,6 +97,7 @@ services:
     depends_on:
       - api
       - web
+    logging: *logging
 
 volumes:
   pgdata:

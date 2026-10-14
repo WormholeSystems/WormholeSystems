@@ -86,8 +86,8 @@ docker compose logs -f api
 wsctl update
 ```
 
-Fast-forwards the checkout, rebuilds, restarts, and takes CCP's static data when a newer
-build is out. Migrations run on boot, so there is no separate step for those either.
+Fast-forwards the checkout, rebuilds, restarts, waits for the new containers to report
+healthy, and takes CCP's static data when a newer build is out. Migrations run on boot, so there is no separate step for those either.
 
 An install from before wsctl 0.5 ran under its directory's name with a database role called
 `vector`. Update wsctl first (the install one-liner again), then `wsctl update` moves it:
@@ -116,6 +116,16 @@ wsctl status
 
 Containers, how far behind origin the checkout is, which SDE build is loaded and whether
 CCP has a newer one, and whether the public URL answers.
+
+The API and the frontend have healthchecks, so `docker compose ps` says `healthy` rather
+than only `running`. The API's is a request to `/api/instance`; it is defined once, on the
+`api` service in `docker-compose.yml`. `setup` and `update` start the stack with
+`docker compose up -d --wait` and fail when something does not come up healthy, instead of
+reporting a stack that started and then fell over. The first boot is allowed 20 minutes,
+since the API seeds the static data before it answers.
+
+Every container logs through Docker's `json-file` driver, capped at five files of 10MB
+each. `WS_LOG_MAX_SIZE` and `WS_LOG_MAX_FILES` in `.env` change that.
 
 ## Standalone
 
