@@ -49,12 +49,9 @@ macro_rules! bulk {
 }
 
 /// CLI entry point (`wormholesystems seed`): always re-seeds, regardless of the loaded build.
-pub async fn run() -> Result<(), BoxError> {
-    dotenvy::dotenv().ok();
-    let url = std::env::var("DATABASE_URL")?;
-    let pool = crate::db::connect(&url).await?;
+pub async fn run(pool: &PgPool) -> Result<(), BoxError> {
     ensure_sde_present().await?;
-    seed_all(&pool).await
+    seed_all(pool).await
 }
 
 /// Make sure the unpacked SDE exists under `data/sde`, downloading it on first run.

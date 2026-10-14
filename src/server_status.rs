@@ -16,16 +16,6 @@ use tokio::sync::watch;
 use crate::esi::{EsiClient, EsiError};
 use crate::user_channel::{UserEvent, UserHub};
 
-/// A minute is well inside the downtime window and nowhere near ESI's rate limit.
-/// `SERVER_STATUS_POLL_SECS` tightens it for the e2e stack.
-fn poll_interval() -> Duration {
-    let secs = std::env::var("SERVER_STATUS_POLL_SECS")
-        .ok()
-        .and_then(|v| v.parse().ok())
-        .unwrap_or(60);
-    Duration::from_secs(secs.max(1))
-}
-
 /// What the server is doing, as one word for the client to render.
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema,
@@ -116,8 +106,10 @@ impl ServerWatch {
     }
 }
 
-/// Spawn the status loop. Returns the handle the other pollers gate on.
-pub fn start(pool: PgPool, esi: EsiClient, users: UserHub) -> ServerWatch {
+/// Spawn the status loop. Returns the handle the other pollers gate on. A minute
+/// (`SERVER_STATUS_POLL_SECS`) is well inside the downtime window and nowhere near ESI's
+/// rate limit.
+pub fn start(pool: PgPool, esi: EsiClient, users: UserHub, every: Duration) -> ServerWatch {
     let (tx, rx) = watch::channel(ServerStatus::unknown());
     let tx = Arc::new(tx);
     tokio::spawn(async move {
@@ -126,7 +118,7 @@ pub fn start(pool: PgPool, esi: EsiClient, users: UserHub) -> ServerWatch {
         if let Ok(Some(stored)) = load(&pool).await {
             let _ = tx.send(stored);
         }
-        crate::background::spawn_every("server status poll", poll_interval(), move || {
+        crate::background::spawn_every("server status poll", every, move || {
             let (pool, esi, users, tx) = (pool.clone(), esi.clone(), users.clone(), tx.clone());
             async move {
                 // Held back by our own ESI backoff, which says nothing about Tranquility:

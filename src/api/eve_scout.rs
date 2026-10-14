@@ -109,11 +109,11 @@ pub(crate) fn eve_scout_connection(sig: &serde_json::Value) -> Option<EveScoutCo
     responses((status = 200, body = Vec<EveScoutConnection>, description = "OK")),
     security(()),
 )]
-pub async fn eve_scout(State(_state): State<AppState>) -> ApiResult<Vec<EveScoutConnection>> {
-    Ok(Json(cached_connections().await))
+pub async fn eve_scout(State(state): State<AppState>) -> ApiResult<Vec<EveScoutConnection>> {
+    Ok(Json(cached_connections(&state.eve_scout_url).await))
 }
 
-async fn cached_connections() -> Vec<EveScoutConnection> {
+async fn cached_connections(url: &str) -> Vec<EveScoutConnection> {
     use std::sync::{Mutex, OnceLock};
     use std::time::{Duration, Instant};
     type Cached = Option<(Instant, Vec<EveScoutConnection>)>;
@@ -126,7 +126,7 @@ async fn cached_connections() -> Vec<EveScoutConnection> {
         return edges.clone();
     }
 
-    let edges = fetch_eve_scout().await.unwrap_or_default();
+    let edges = fetch_eve_scout(url).await.unwrap_or_default();
     *cache.lock().expect("cache lock") = Some((Instant::now(), edges.clone()));
     edges
 }
@@ -165,7 +165,7 @@ pub async fn add_to_map(
     Json(body): Json<AddEveScoutToMap>,
 ) -> ApiResult<u64> {
     let actor = acting_on(&state.db, &creds, map_id, body.map_id).await?;
-    let holes = cached_connections()
+    let holes = cached_connections(&state.eve_scout_url)
         .await
         .iter()
         .filter(|c| c.hub_solar_system_id == body.hub_solar_system_id)
@@ -199,18 +199,14 @@ fn hole_from_connection(c: &EveScoutConnection) -> EveScoutHole {
     }
 }
 
-async fn fetch_eve_scout() -> Option<Vec<EveScoutConnection>> {
+async fn fetch_eve_scout(url: &str) -> Option<Vec<EveScoutConnection>> {
     let client = reqwest::Client::builder()
         .user_agent(crate::user_agent::get())
         .timeout(std::time::Duration::from_secs(10))
         .build()
         .ok()?;
-    // Overridable so the e2e suite can serve a fixed set: the real list is scouted by hand
-    // and changes under the tests.
-    let url = std::env::var("EVE_SCOUT_URL")
-        .unwrap_or_else(|_| "https://api.eve-scout.com/v2/public/signatures".to_string());
     let body: serde_json::Value = client
-        .get(&url)
+        .get(url)
         .send()
         .await
         .ok()?

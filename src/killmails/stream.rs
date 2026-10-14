@@ -10,8 +10,6 @@ use super::{Detail, EsiKillmail, KillmailRow, extract_detail, extract_orgs, http
 use crate::entities::EntityKind;
 use crate::esi::EsiClient;
 
-const DEFAULT_BASE: &str = "https://r2z2.zkillboard.com";
-
 #[derive(Deserialize)]
 struct R2Z2Sequence {
     sequence: i64,
@@ -47,8 +45,8 @@ pub(super) async fn listen(
     pool: PgPool,
     maps: crate::maps::MapHub,
     alerts: Option<std::sync::Arc<crate::alerts::Runtime>>,
+    base: String,
 ) {
-    let base = std::env::var("ZKB_BASE_URL").unwrap_or_else(|_| DEFAULT_BASE.to_string());
     let http = http_client();
     let alerts = alerts.map(|runtime| {
         let (tx, rx) = mpsc::channel(ALERT_QUEUE);

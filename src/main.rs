@@ -2,117 +2,14 @@
 async fn main() {
     init_logging();
 
-    // `wormholesystems seed` populates the reference tables from the SDE + data/static, then exits.
-    let args: Vec<String> = std::env::args().collect();
-    if args.iter().any(|a| a == "seed") {
-        wormholesystems::seed::run().await.expect("seeding failed");
-        return;
-    }
-    // `wormholesystems killmails-backfill [days]` imports EVE Ref daily archives, then exits.
-    if let Some(pos) = args.iter().position(|a| a == "killmails-backfill") {
-        let days: u32 = args.get(pos + 1).and_then(|d| d.parse().ok()).unwrap_or(30);
-        dotenvy::dotenv().ok();
-        let url = std::env::var("DATABASE_URL").expect("DATABASE_URL not set");
-        let db = wormholesystems::db::connect(&url)
-            .await
-            .expect("db connect failed");
-        wormholesystems::killmails::backfill(&db, &wormholesystems::esi::EsiClient::new(), days)
-            .await
-            .expect("backfill failed");
-        return;
-    }
-
-    // `wormholesystems discord-register` uploads the slash commands, then exits. Run it once per
-    // deploy that changes them; Discord takes a few minutes to roll a change out.
-    if args.iter().any(|a| a == "discord-register") {
-        dotenvy::dotenv().ok();
-        let application_id =
-            std::env::var("DISCORD_APPLICATION_ID").expect("DISCORD_APPLICATION_ID not set");
-        let token = std::env::var("DISCORD_BOT_TOKEN").expect("DISCORD_BOT_TOKEN not set");
-        match wormholesystems::discord::commands::register(&application_id, &token).await {
-            Ok(()) => tracing::info!("registered the /wh command."),
-            Err(err) => panic!("could not register commands: {err}"),
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    match wormholesystems::cli::Command::parse(&args) {
+        Ok(wormholesystems::cli::Command::Serve) => {}
+        Ok(command) => return wormholesystems::cli::run(command).await,
+        Err(usage) => {
+            eprintln!("{usage}");
+            std::process::exit(2);
         }
-        return;
-    }
-
-    // `wormholesystems sde-fetch` unpacks the SDE into data/sde if it is not already there, then
-    // exits. Needs no database: CI runs it to give the parse tests their files.
-    // `--force` replaces what is there with the current build.
-    if args.iter().any(|a| a == "sde-fetch") {
-        dotenvy::dotenv().ok();
-        let force = args.iter().any(|a| a == "--force");
-        match tokio::task::spawn_blocking(move || wormholesystems::sde::fetch(force))
-            .await
-            .expect("join failed")
-        {
-            Ok(true) => tracing::info!(
-                "SDE downloaded and unpacked into {}",
-                wormholesystems::sde::SDE_DIR
-            ),
-            Ok(false) => {
-                tracing::info!("SDE already unpacked in {}", wormholesystems::sde::SDE_DIR)
-            }
-            Err(err) => panic!("could not fetch the SDE: {err}"),
-        }
-        return;
-    }
-
-    // `wormholesystems sde-status` says which SDE build is loaded and whether CCP has a newer one.
-    // The deploy CLI reads this to decide whether an update is worth pulling.
-    if args.iter().any(|a| a == "sde-status") {
-        dotenvy::dotenv().ok();
-        let url = std::env::var("DATABASE_URL").expect("DATABASE_URL not set");
-        let db = wormholesystems::db::connect(&url)
-            .await
-            .expect("db connect failed");
-        // `query!` rather than `query_as`: the row is built from the real schema at compile
-        // time, so a renamed column or a changed type stops the build instead of this.
-        let loaded = sqlx::query!("select build_number, release_date from sde_build")
-            .fetch_optional(&db)
-            .await
-            .expect("could not read sde_build")
-            .map(|r| (r.build_number, r.release_date));
-        let latest = tokio::task::spawn_blocking(|| {
-            wormholesystems::sde::download::Downloader::new().latest_build()
-        })
-        .await
-        .expect("join failed");
-
-        match &loaded {
-            Some((build, released)) => println!(
-                "loaded={build}{}",
-                released
-                    .map(|d| format!(" released={}", d.format("%Y-%m-%d")))
-                    .unwrap_or_default()
-            ),
-            None => println!("loaded=none"),
-        }
-        match latest {
-            Ok(latest) => {
-                println!("latest={}", latest.build_number);
-                let stale = loaded.map(|(b, _)| b < latest.build_number).unwrap_or(true);
-                println!("update_available={}", if stale { "yes" } else { "no" });
-            }
-            // A deploy should not fail because CCP's endpoint is having a moment.
-            Err(err) => println!("latest=unknown ({err})"),
-        }
-        return;
-    }
-
-    // `wormholesystems threat-analysis` recomputes every wormhole system's threat from the killmails
-    // already stored, then exits. The server does this daily anyway.
-    if args.iter().any(|a| a == "threat-analysis") {
-        dotenvy::dotenv().ok();
-        let url = std::env::var("DATABASE_URL").expect("DATABASE_URL not set");
-        let db = wormholesystems::db::connect(&url)
-            .await
-            .expect("db connect failed");
-        wormholesystems::killmails::analyze(&db, &wormholesystems::esi::EsiClient::new())
-            .await
-            .expect("threat analysis failed");
-        tracing::info!("threat analysis complete.");
-        return;
     }
 
     use std::sync::Arc;
@@ -130,11 +27,10 @@ async fn main() {
         }
         ConfigError::Invalid(..) => panic!("invalid configuration, {err}"),
     });
-    let db = wormholesystems::db::connect(&config.database_url)
-        .await
-        .expect(
-            "could not connect to Postgres. Is it running? start it with `docker compose up -d`",
-        );
+    wormholesystems::user_agent::init(&config.contact);
+    let db = wormholesystems::db::connect(&config.database).await.expect(
+        "could not connect to Postgres. Is it running? start it with `docker compose up -d`",
+    );
     // Keep the reference tables in sync with the bundled SDE. Runs only on first boot
     // or when data/sde holds a newer build; otherwise it's a single cheap query.
     match wormholesystems::seed::ensure_seeded(&db).await {
@@ -165,7 +61,12 @@ async fn main() {
 
     // Background: is Tranquility up? Everything below that talks to ESI gates on it, so it
     // is started first.
-    let server = wormholesystems::server_status::start(db.clone(), esi.clone(), user_hub.clone());
+    let server = wormholesystems::server_status::start(
+        db.clone(),
+        esi.clone(),
+        user_hub.clone(),
+        config.polling.server_status,
+    );
 
     // Background: poll live character status for active users, pinging each user's private
     // channel on a change.
@@ -186,7 +87,12 @@ async fn main() {
     wormholesystems::sovereignty::start(db.clone(), esi.clone(), server.clone());
 
     // Background: mirror the raidable skyhooks CCP is currently advertising.
-    wormholesystems::skyhooks::start(db.clone(), esi.clone(), server.clone());
+    wormholesystems::skyhooks::start(
+        db.clone(),
+        esi.clone(),
+        server.clone(),
+        config.polling.skyhooks,
+    );
     wormholesystems::maps::access::spawn_expiry_sweep(db.clone());
 
     // Background: Discord alerts. One runtime shared by everything that can fire one, since
@@ -204,7 +110,13 @@ async fn main() {
     }
 
     // Background: killmail ingest + daily threat analysis (gated by ZKB_LISTEN=1).
-    wormholesystems::killmails::start(db.clone(), esi.clone(), hub.clone(), alerts);
+    wormholesystems::killmails::start(
+        db.clone(),
+        esi.clone(),
+        hub.clone(),
+        alerts,
+        &config.killmails,
+    );
 
     // Background: purge stale signatures (legacy expiry: 3d wormholes, 7d sites).
     wormholesystems::maps::signatures::start_expiry(db.clone(), hub.clone());
@@ -238,6 +150,7 @@ async fn main() {
         allowed_logins: config.allowed_logins,
         map_creators: config.map_creators,
         announcement: config.announcement.map(Arc::new),
+        eve_scout_url: config.eve_scout_url.into(),
     };
 
     let app = Router::new()
@@ -267,7 +180,7 @@ async fn main() {
         .merge(wormholesystems::api::router())
         .with_state(state);
 
-    let addr = std::env::var("LISTEN_ADDR").unwrap_or_else(|_| "127.0.0.1:3000".to_string());
+    let addr = config.listen_addr;
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
     tracing::info!("listening on http://{addr}");
     axum::serve(listener, app.into_make_service())

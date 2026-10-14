@@ -39,6 +39,8 @@ pub struct AppState {
     pub map_creators: crate::allowlist::AffiliationAllowlist,
     /// The site-wide banner, if the operator set one.
     pub announcement: Option<Arc<crate::announcement::Announcement>>,
+    /// Where EVE Scout's public signatures are read from.
+    pub eve_scout_url: Arc<str>,
 }
 
 pub struct Auth {

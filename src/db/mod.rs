@@ -4,14 +4,9 @@ use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use sqlx::postgres::PgPoolOptions;
 
+use crate::config::DatabaseConfig;
 use crate::esi::token::{Token, TokenStore};
 use crate::esi::{EsiError, Result as EsiResult};
-
-/// How many Postgres connections to hold open. The default is not sqlx's five: the API,
-/// every open websocket, the tracking poller, killmail ingest and the alert lifecycle all
-/// draw on one pool, and the poller alone asks for more than five at a time — so five means
-/// requests queue behind background work rather than being served.
-const DEFAULT_MAX_CONNECTIONS: u32 = 20;
 
 /// How long anything waits for a free connection before giving up with an error. sqlx's
 /// default is 30 seconds, which turns a saturated pool into requests that hang rather than
@@ -19,15 +14,11 @@ const DEFAULT_MAX_CONNECTIONS: u32 = 20;
 const ACQUIRE_TIMEOUT: Duration = Duration::from_secs(10);
 
 /// Connect to Postgres and run any pending migrations.
-pub async fn connect(database_url: &str) -> Result<PgPool, sqlx::Error> {
-    let max = std::env::var("DATABASE_MAX_CONNECTIONS")
-        .ok()
-        .and_then(|v| v.parse().ok())
-        .unwrap_or(DEFAULT_MAX_CONNECTIONS);
+pub async fn connect(config: &DatabaseConfig) -> Result<PgPool, sqlx::Error> {
     let pool = PgPoolOptions::new()
-        .max_connections(max)
+        .max_connections(config.max_connections)
         .acquire_timeout(ACQUIRE_TIMEOUT)
-        .connect(database_url)
+        .connect(&config.url)
         .await?;
     sqlx::migrate!("./migrations").run(&pool).await?;
     Ok(pool)

@@ -17,16 +17,6 @@ use crate::maps::Sovereignty;
 use crate::maps::view::sovereignty_of;
 use crate::server_status::ServerWatch;
 
-/// Windows are two hours long and ESI advertises them ahead of time, so five minutes never
-/// misses one. `SKYHOOK_POLL_SECS` tightens it for the e2e stack.
-fn interval_secs() -> Duration {
-    let secs = std::env::var("SKYHOOK_POLL_SECS")
-        .ok()
-        .and_then(|v| v.parse().ok())
-        .unwrap_or(5 * 60);
-    Duration::from_secs(secs.max(1))
-}
-
 /// Which reagent a skyhook's planet yields, the only reason anyone sorts them. Derived from
 /// the type name rather than a list of type ids, so a new variant classifies itself.
 #[derive(
@@ -77,9 +67,10 @@ pub struct Skyhook {
     pub vulnerable_until: DateTime<Utc>,
 }
 
-/// Spawn the sync loop. Returns immediately; the loop runs for the process lifetime.
-pub fn start(pool: PgPool, esi: EsiClient, server: ServerWatch) {
-    crate::background::spawn_every("skyhook sync", interval_secs(), move || {
+/// Spawn the sync loop. Windows are two hours long and ESI advertises them ahead of time,
+/// so the default five minutes (`SKYHOOK_POLL_SECS`) never misses one.
+pub fn start(pool: PgPool, esi: EsiClient, server: ServerWatch, every: Duration) {
+    crate::background::spawn_every("skyhook sync", every, move || {
         let (pool, esi, server) = (pool.clone(), esi.clone(), server.clone());
         async move {
             // Nobody is raiding while the server is down, and the call would fail anyway.
