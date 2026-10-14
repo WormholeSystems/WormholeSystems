@@ -42,13 +42,23 @@
 	const now = $derived(clock.current);
 
 	const filter = $derived(map.userSettings?.killmail_filter ?? 'all');
+	// Only a card that follows the selection cares what is selected. Any other filter
+	// leaves it out of the key, so clicking around the map doesn't refetch the list.
+	const followsSelection = $derived(filter === 'selected_system');
+	const selected = $derived(
+		followsSelection && map.activeSystem ? solarSystemId(map.activeSystem) : null,
+	);
+	const awaitingSelection = $derived(followsSelection && selected === null);
 
 	// The list is scoped to the map's systems, so adding one is as much a change as a
 	// fresh kill arriving: both are part of the key. A kill frame off the socket
-	// invalidates the killmails prefix, which this key sits under.
+	// invalidates the killmails prefix, which this key sits under, so a live kill refetches
+	// through the same filter rather than landing in the list as is.
 	const killsQuery = createQuery(() => ({
-		queryKey: [...key.killmails(map.mapId), filter, systemKey(map.systems.all)],
-		queryFn: () => api.mapKillmails(map.mapId),
+		queryKey: [...key.killmails(map.mapId), filter, selected, systemKey(map.systems.all)],
+		queryFn: () => api.mapKillmails(map.mapId, selected),
+		// With nothing selected there is nothing to ask for.
+		enabled: !awaitingSelection,
 	}));
 	const kills = $derived(killsQuery.data ?? []);
 
@@ -123,9 +133,15 @@
 		</MapPanelHeader>
 
 		<MapPanelContent>
-			{#if kills.length === 0}
+			{#if awaitingSelection}
+				<p class="px-3 py-4 text-xs text-muted-foreground" data-testid="killmails-select-hint">
+					Select a system on the map to see its killmails.
+				</p>
+			{:else if kills.length === 0}
 				<p class="px-3 py-4 text-xs text-muted-foreground" data-testid="killmails-empty">
-					Nothing has died in these systems in the last week.
+					{followsSelection
+						? 'Nothing has died in this system in the last week.'
+						: 'Nothing has died in these systems in the last week.'}
 				</p>
 			{:else}
 				<div class="@container flex flex-col">

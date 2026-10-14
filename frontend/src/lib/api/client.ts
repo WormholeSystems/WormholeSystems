@@ -223,7 +223,14 @@ export const api = {
 
 	serverStatus: () => get<ServerStatus>('/api/server-status'),
 	skyhooks: () => get<Skyhook[]>('/api/skyhooks'),
-	mapKillmails: (mapId: number) => get<MapKillmail[]>(`/api/maps/${mapId}/killmails`),
+	// The selected system only matters to a card that follows the selection; the server
+	// ignores it otherwise.
+	mapKillmails: (mapId: number, solarSystemId: number | null = null) =>
+		get<MapKillmail[]>(
+			solarSystemId === null
+				? `/api/maps/${mapId}/killmails`
+				: `/api/maps/${mapId}/killmails?solar_system_id=${solarSystemId}`,
+		),
 
 	// Places the system, connects it, and links the signature in one undoable step. The
 	// response is empty, the socket drives the refetch.

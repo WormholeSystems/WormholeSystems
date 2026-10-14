@@ -55,24 +55,29 @@ pub struct MapKillmail {
     pub is_solo: bool,
 }
 
-/// Which half of the chain a map's killmail card is showing.
+/// Which part of the chain a map's killmail card is showing.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum KillmailFilter {
     All,
     Wormhole,
     KnownSpace,
+    /// One solar system. Still only while it is on the map, like every other filter.
+    System(i64),
 }
 
-/// The stored preference, as the query builder wants it. Two names for one idea, because
-/// the setting is a column and this is what the query does about it; the conversion is
-/// total, so a scope that grew a variant would stop compiling here.
-impl From<crate::maps::KillmailScope> for KillmailFilter {
-    fn from(scope: crate::maps::KillmailScope) -> Self {
-        match scope {
+impl KillmailFilter {
+    /// The stored preference, as the query builder wants it, with the solar system the
+    /// viewer has selected. Two names for one idea, because the setting is a column and
+    /// this is what the query does about it; the match is total, so a scope that grew a
+    /// variant would stop compiling here. `None` when the card follows the selection and
+    /// nothing is selected: that shows nothing, not everything.
+    pub fn new(scope: crate::maps::KillmailScope, selected: Option<i64>) -> Option<Self> {
+        Some(match scope {
             crate::maps::KillmailScope::All => KillmailFilter::All,
             crate::maps::KillmailScope::Jspace => KillmailFilter::Wormhole,
             crate::maps::KillmailScope::Kspace => KillmailFilter::KnownSpace,
-        }
+            crate::maps::KillmailScope::SelectedSystem => KillmailFilter::System(selected?),
+        })
     }
 }
 
@@ -86,6 +91,10 @@ pub async fn list_for_map(
 ) -> sqlx::Result<Vec<MapKillmail>> {
     let wormholes_only = matches!(filter, KillmailFilter::Wormhole);
     let kspace_only = matches!(filter, KillmailFilter::KnownSpace);
+    let only_system = match filter {
+        KillmailFilter::System(id) => Some(id),
+        _ => None,
+    };
     let rows = sqlx::query!(
         r#"select k.id, k.solar_system_id, k.time, k.total_value,
                   coalesce(k.attacker_count, 0) as "attacker_count!",
@@ -124,12 +133,16 @@ pub async fn list_for_map(
              and k.victim_ship_type_id is not null
              and (not $3 or ws.solar_system_id is not null)
              and (not $4 or ws.solar_system_id is null)
+             -- The join above already holds this to the map, so a system that is not on
+             -- it matches nothing.
+             and ($5::bigint is null or k.solar_system_id = $5)
            order by k.time desc
-           limit $5"#,
+           limit $6"#,
         map_id,
         CARD_WINDOW_DAYS,
         wormholes_only,
         kspace_only,
+        only_system,
         limit,
     )
     .fetch_all(pool)

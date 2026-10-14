@@ -2413,6 +2413,16 @@
             }
           },
           {
+            "name": "solar_system_id",
+            "in": "query",
+            "description": "The solar system selected on the map. Only read when the card is set to follow the\nselection; the server keeps no idea of what a viewer has selected.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
             "name": "share",
             "in": "query",
             "description": "A share token, for reading a map that was opened with a link rather than a grant.",
@@ -7034,11 +7044,12 @@
       },
       "KillmailScope": {
         "type": "string",
-        "description": "Which half of the chain the killmails card shows.",
+        "description": "Which part of the chain the killmails card shows.",
         "enum": [
           "all",
           "jspace",
-          "kspace"
+          "kspace",
+          "selected_system"
         ]
       },
       "LayoutItem": {
