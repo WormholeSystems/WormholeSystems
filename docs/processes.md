@@ -52,8 +52,9 @@ ESI's cache, then our next run.
   affiliation-derived access at the next run — bounded staleness equals the interval.
 - **Direct character-id grants are unaffected** by affiliation changes; they persist
   until explicitly removed.
-- Map WebSockets check access when they connect, so an open map stays open until it
-  reconnects; every request it makes is checked again.
+- Map WebSockets check access when they connect, again whenever the map's grants or
+  sharing change, and once a minute besides, so an open map that lost its access is
+  closed (code `4403`) within a minute of the refresh that took it away.
 
 ## Character status polling
 
