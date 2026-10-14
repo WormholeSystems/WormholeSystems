@@ -144,6 +144,52 @@ test('a solo kill is marked, and the filter narrows to one half of the chain', a
 	await expect(card.locator(`[data-kill="${KSPACE}"]`)).toBeVisible({ timeout: 10_000 });
 });
 
+test('the selected system filter follows the selection', async ({ page, api }) => {
+	const mapId = await createMap(api, 'E2E KillsSelected');
+	await addSystem(api, mapId, J122515, 200);
+	await addSystem(api, mapId, JITA, 500);
+
+	await seedKillmail({
+		id: RECENT,
+		solarSystemId: J122515,
+		minutesAgo: 5,
+		victimShipTypeId: SLASHER,
+		totalValue: 12_000_000,
+		attackerCount: 2,
+	});
+	await seedKillmail({
+		id: KSPACE,
+		solarSystemId: JITA,
+		minutesAgo: 6,
+		victimShipTypeId: SLASHER,
+		totalValue: 8_000_000,
+		attackerCount: 3,
+	});
+
+	await gotoApp(page, `/maps/${mapId}`);
+	const card = page.getByTestId('killmails-card');
+	await expect(card.locator(`[data-kill="${KSPACE}"]`)).toBeVisible({ timeout: 10_000 });
+
+	// Nothing is selected yet, so the card asks for a system rather than showing them all.
+	await card.getByTestId('killmail-filter').click();
+	await page.getByTestId('killmail-filter-selected_system').click();
+	await expect(card.getByTestId('killmails-select-hint')).toBeVisible({ timeout: 10_000 });
+	await expect(card.getByTestId('killmail-row')).toHaveCount(0);
+
+	await page.getByTestId('system-node').filter({ hasText: 'J122515' }).click();
+	await expect(card.locator(`[data-kill="${RECENT}"]`)).toBeVisible({ timeout: 10_000 });
+	await expect(card.locator(`[data-kill="${KSPACE}"]`)).toHaveCount(0);
+
+	await page.getByTestId('system-node').filter({ hasText: 'Jita' }).click();
+	await expect(card.locator(`[data-kill="${KSPACE}"]`)).toBeVisible({ timeout: 10_000 });
+	await expect(card.locator(`[data-kill="${RECENT}"]`)).toHaveCount(0);
+
+	// Put it back, so the next test starts from the default.
+	await card.getByTestId('killmail-filter').click();
+	await page.getByTestId('killmail-filter-all').click();
+	await expect(card.locator(`[data-kill="${RECENT}"]`)).toBeVisible({ timeout: 10_000 });
+});
+
 test('adding a system pulls in its kills straight away', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E KillsAdd');
 	await addSystem(api, mapId, J122515, 200);

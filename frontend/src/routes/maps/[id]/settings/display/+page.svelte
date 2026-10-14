@@ -239,7 +239,7 @@
 		<SettingRow
 			id="killmail-filter"
 			label="Killmails to show"
-			description="The card lists kills in the systems on this map. Narrow it to one half of the chain when the other half is drowning it out."
+			description="The card lists kills in the systems on this map. Narrow it to one half of the chain when the other half is drowning it out, or to whichever system you have selected."
 		>
 			{#snippet control()}
 				<Select.Root

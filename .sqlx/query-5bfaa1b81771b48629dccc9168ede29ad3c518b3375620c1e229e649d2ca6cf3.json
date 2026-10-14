@@ -59,7 +59,8 @@
               "Enum": [
                 "all",
                 "jspace",
-                "kspace"
+                "kspace",
+                "selected_system"
               ]
             }
           }

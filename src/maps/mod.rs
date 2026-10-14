@@ -155,11 +155,13 @@ text_enum! {
 }
 
 text_enum! {
-    /// Which half of the chain the killmails card shows.
+    /// Which part of the chain the killmails card shows.
     pub enum KillmailScope as "killmail_scope" {
         All => "all",
         Jspace => "jspace",
         Kspace => "kspace",
+        /// Only the system selected on the map, which the card sends with each request.
+        SelectedSystem => "selected_system",
     }
 }
 

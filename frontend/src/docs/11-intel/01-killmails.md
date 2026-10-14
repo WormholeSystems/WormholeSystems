@@ -8,11 +8,14 @@ The map surfaces recent **killmails** in and around your chain so you can read t
 
 ## Filtering the feed
 
-The **Killmails** panel has three filters:
+The **Killmails** panel has four filters:
 
 - **All killmails** — everything in and around the chain.
 - **J-Space killmails** — wormhole systems only.
 - **K-Space killmails** — known-space systems only.
+- **Selected system** — only the system you have selected on the map. The list follows your selection as you click around, and asks you to pick a system when none is selected.
+
+The filter is yours alone, and you can also change it under **Settings → Display**.
 
 Each kill links out to zKillboard for the full details.
 
