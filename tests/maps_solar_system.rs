@@ -6,10 +6,10 @@ use common::{SYS_A, SYS_B, SYS_C, member_with_role, world};
 use sqlx::PgPool;
 use wormholesystems::maps::events_log::{MapIdBody, redo, undo};
 use wormholesystems::maps::solar_system::{
-    AddSystem, MoveSystem, MoveSystems, RemoveSystem, RemoveSystems, SetAlias, SetHome, SetNotes,
-    SetOccupier, SetPinned, SetRally, SetStatus, SystemMove, add_system, move_system, move_systems,
-    remove_system, remove_systems, set_alias, set_home, set_notes, set_occupier, set_pinned,
-    set_rally, set_status,
+    AddSystem, ClearMap, MoveSystem, MoveSystems, RemoveSystem, RemoveSystems, SetAlias, SetHome,
+    SetNotes, SetOccupier, SetPinned, SetRally, SetStatus, SystemMove, add_system, clear_map,
+    move_system, move_systems, remove_system, remove_systems, set_alias, set_home, set_notes,
+    set_occupier, set_pinned, set_rally, set_status,
 };
 use wormholesystems::maps::{MapError, Role, SystemStatus};
 
@@ -754,4 +754,55 @@ async fn each_intel_write_sets_its_own_column_and_undoes_alone(pool: PgPool) {
         intel_of(&pool, map_id).await,
         Some(("hostile".to_string(), None, None))
     );
+}
+
+/// Clearing deletes the placements it snapshotted and nothing else. One placed by somebody
+/// else between the clear's read and its delete is not in the snapshot, so taking it too
+/// would be a removal that undo cannot put back.
+#[sqlx::test]
+async fn clearing_leaves_a_placement_it_did_not_snapshot(pool: PgPool) {
+    let w = world(&pool).await;
+    place(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    place(&pool, w.owner, w.map_id, SYS_B, 100.0).await;
+
+    // Somebody else's placement, not committed yet. Their lock on the connections stalls
+    // the clear's snapshot after it has read which placements to take.
+    let mut other = pool.begin().await.unwrap();
+    let late: i64 = sqlx::query_scalar(
+        "insert into map_solar_systems (map_id, solar_system_id, position_x, position_y)
+         values ($1, $2, 200, 0) returning id",
+    )
+    .bind(w.map_id)
+    .bind(SYS_C)
+    .fetch_one(&mut *other)
+    .await
+    .unwrap();
+    sqlx::query("lock table map_connections in access exclusive mode")
+        .execute(&mut *other)
+        .await
+        .unwrap();
+
+    let clearing = tokio::spawn({
+        let pool = pool.clone();
+        let (owner, map_id) = (w.owner, w.map_id);
+        async move { clear_map(&pool, owner, ClearMap { map_id }).await }
+    });
+    // Wait until the clear is the one waiting on the lock.
+    loop {
+        let waiting: i64 = sqlx::query_scalar(
+            "select count(*) from pg_stat_activity
+             where datname = current_database() and wait_event_type = 'Lock'",
+        )
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+        if waiting > 0 {
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+    }
+    other.commit().await.unwrap();
+
+    assert_eq!(clearing.await.unwrap().unwrap(), 2);
+    assert_eq!(placed_ids(&pool, w.owner, w.map_id).await, vec![late]);
 }

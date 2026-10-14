@@ -238,17 +238,6 @@ pub(crate) async fn delete_unprotected(tx: &mut Tx<'_>, map_id: i64, ids: &[i64]
     .rows_affected())
 }
 
-/// Everything on the map but home and the pinned systems. Returns how many went.
-pub(crate) async fn delete_all_unprotected(tx: &mut Tx<'_>, map_id: i64) -> Result<u64> {
-    Ok(sqlx::query!(
-        "delete from map_solar_systems where map_id = $1 and not is_home and not is_pinned",
-        map_id,
-    )
-    .execute(&mut **tx)
-    .await?
-    .rows_affected())
-}
-
 /// Which of these placements are orphans: unpinned, unmarked, and without a connection
 /// left. Asked by a sweep that snapshots them before they go.
 pub(crate) async fn orphans(tx: &mut Tx<'_>, map_id: i64, ids: &[i64]) -> Result<Vec<i64>> {
