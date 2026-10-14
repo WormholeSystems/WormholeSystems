@@ -8,7 +8,7 @@ use console::style;
 use crate::checks::{self, Verdict};
 use crate::config::{
     self, Answers, DEFAULT_NETWORK, DEFAULT_ROUTER_PORT, Database, Deployment, Direct, Discord,
-    ExternalDb, Images, Proxy, Router, Site, generated_password,
+    ExternalDb, Images, Proxy, Router, Site, Tls, generated_password,
 };
 use crate::envfile;
 use crate::exec::Runner;
@@ -526,12 +526,25 @@ fn ask_site(existing: &str, http: u16, https: u16) -> Result<Site> {
     ui::note("Leave the domain blank to serve plain http on this machine.");
     let domain = normalise_domain(&ui::ask_optional("Public domain", keep("WS_DOMAIN"))?);
     if !domain.is_empty() {
-        // Let's Encrypt only ever looks at 80 and 443.
+        let tls = ask_tls(existing)?;
+        // Let's Encrypt only ever looks at 80 and 443. A certificate from anywhere else
+        // can be served wherever this install already serves it.
+        let (http_port, https_port) = if tls == Tls::Acme {
+            (80, 443)
+        } else {
+            let read = |key, fallback| {
+                envfile::get(existing, key)
+                    .and_then(|v| v.parse().ok())
+                    .unwrap_or(fallback)
+            };
+            (read("HTTP_PORT", 80), read("HTTPS_PORT", 443))
+        };
         return Ok(Site {
             domain,
-            http_port: 80,
-            https_port: 443,
+            http_port,
+            https_port,
             public_url: String::new(),
+            tls,
         });
     }
 
@@ -545,7 +558,29 @@ fn ask_site(existing: &str, http: u16, https: u16) -> Result<Site> {
         http_port: http,
         https_port: https,
         public_url,
+        tls: Tls::Acme,
     })
+}
+
+fn ask_tls(existing: &str) -> Result<Tls> {
+    let current = envfile::get(existing, "WS_TLS")
+        .and_then(|v| Tls::parse(&v))
+        .unwrap_or_default();
+    println!();
+    ui::note("Where the certificate comes from. Let's Encrypt needs the name to resolve here");
+    ui::note("and ports 80 and 443 open to the internet. Your own goes in certs/ in this");
+    ui::note("checkout, as fullchain.pem and privkey.pem.");
+    let choice = ui::choose(
+        "Certificate",
+        &[
+            "Let's Encrypt",
+            "My own, from certs/",
+            "Caddy's internal CA (browsers warn; for a private network)",
+            "None: plain http, something in front does TLS",
+        ],
+        Tls::ALL.iter().position(|t| *t == current).unwrap_or(0),
+    )?;
+    Ok(Tls::ALL[choice])
 }
 
 fn ask_router(public_url: Option<String>, previous: &Proxy) -> Result<Router> {

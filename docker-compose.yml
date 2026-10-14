@@ -89,6 +89,10 @@ services:
     environment:
       # Empty means no domain, which Caddy reads as plain http on :80.
       WS_DOMAIN: ${WS_DOMAIN:-:80}
+      # acme, files, internal or off; the Caddyfile says what each does.
+      WS_TLS: ${WS_TLS:-acme}
+      WS_TLS_CERT: ${WS_TLS_CERT:-fullchain.pem}
+      WS_TLS_KEY: ${WS_TLS_KEY:-privkey.pem}
     ports:
       - "${HTTP_PORT:-80}:80"
       - "${HTTPS_PORT:-443}:443"
@@ -99,6 +103,8 @@ services:
       # which is rate limited, so it outlives the container on purpose.
       - caddy_data:/data
       - caddy_config:/config
+      # Your own certificate and key, for WS_TLS=files.
+      - ./certs:/certs:ro
     depends_on:
       - api
       - web

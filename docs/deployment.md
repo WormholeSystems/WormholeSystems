@@ -257,7 +257,21 @@ it means re-issuing, and Let's Encrypt rate-limits that.
 
 Behind Cloudflare's proxy, DNS resolves to Cloudflare rather than the server, so `setup`
 warns rather than refuses. Either turn the proxy off while the certificate is issued, or use
-Cloudflare's own certificate and put Caddy behind it.
+Cloudflare's origin certificate as your own (below).
+
+Let's Encrypt is the default, not the only choice. `WS_TLS` says where the bundled Caddy's
+certificate comes from, and `wsctl setup` asks when there is a domain:
+
+| `WS_TLS` | what |
+|---|---|
+| `acme` | Let's Encrypt, as above. The default. |
+| `files` | Your own: `certs/fullchain.pem` (the certificate with its chain) and `certs/privkey.pem` in the checkout, PEM encoded. `WS_TLS_CERT` and `WS_TLS_KEY` name other files in `certs/`. Nothing in `certs/` is committed. |
+| `internal` | Caddy's own CA. Browsers warn until they are told to trust it; for a private network. |
+| `off` | Plain http on `HTTP_PORT`, for something in front that does TLS. |
+
+With anything but `acme` the ports can be other than 80 and 443, and the name only has to
+resolve wherever the browsers are. Change it in `.env` and run `docker compose up -d
+caddy`; a certificate file replaced in place needs `docker compose restart caddy`.
 
 ## What is in `.env`
 
@@ -267,6 +281,7 @@ Cloudflare's own certificate and put Caddy behind it.
 |---|---|
 | `WS_DOMAIN` | Caddy's site address. Blank serves plain http on `HTTP_PORT`. |
 | `HTTP_PORT`, `HTTPS_PORT` | What Caddy publishes. 80 and 443 in production. |
+| `WS_TLS` | Where Caddy's certificate comes from: `acme`, `files`, `internal` or `off`. See [Certificates](#certificates). |
 | `WS_CONTACT_NAME`, `WS_CONTACT_EMAIL` | Who runs this install. Every request to ESI, zKillboard and EVE Ref carries them, which is how those services tell operators apart and reach you. The server refuses to start without them. |
 | `EVE_CLIENT_ID`, `EVE_CLIENT_SECRET` | The SSO application. |
 | `EVE_REDIRECT_URI` | Derived from the domain; must match the application exactly. |

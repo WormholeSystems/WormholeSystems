@@ -1,10 +1,14 @@
 # Single origin: backend paths go to Axum, everything else to SvelteKit.
 # WebSocket upgrades pass through reverse_proxy automatically.
 #
-# The site address comes from WS_DOMAIN. Set it to a real domain and Caddy gets a
-# certificate for it and redirects http to https on its own; leave it unset and this serves
-# plain http on :80, which is what local full-stack testing wants. Behind your own proxy
-# (deploy/router-*.yml) it is always plain http on :80.
+# The site address comes from WS_DOMAIN, and how it gets a certificate from WS_TLS:
+#   acme      Let's Encrypt, for a domain that resolves here with 80 and 443 reachable.
+#             Caddy redirects http to https on its own. The default.
+#   files     your own, mounted from certs/ (WS_TLS_CERT and WS_TLS_KEY name the files).
+#   internal  Caddy's own CA, which browsers warn about; for a private network.
+#   off       plain http, for something in front of it that does TLS.
+# Without a domain it is plain http on :80, which is what local full-stack testing wants.
+# Behind your own proxy (deploy/router-*.yml) it is always plain http on :80.
 {
 	servers {
 		# Whose X-Forwarded-For and -Proto to believe. Only the router overlays set this,
@@ -14,7 +18,7 @@
 	}
 }
 
-{$WS_DOMAIN::80} {
+(app) {
 	handle /api/* {
 		reverse_proxy api:3000
 	}
@@ -32,3 +36,33 @@
 		reverse_proxy web:3001
 	}
 }
+
+# One per WS_TLS, picked by name at the bottom, so a value that is none of these stops
+# Caddy naming the snippet it could not find.
+(tls-acme) {
+	{$WS_DOMAIN::80} {
+		import app
+	}
+}
+
+(tls-files) {
+	{$WS_DOMAIN::80} {
+		tls /certs/{$WS_TLS_CERT:fullchain.pem} /certs/{$WS_TLS_KEY:privkey.pem}
+		import app
+	}
+}
+
+(tls-internal) {
+	{$WS_DOMAIN::80} {
+		tls internal
+		import app
+	}
+}
+
+(tls-off) {
+	http://{$WS_DOMAIN::80} {
+		import app
+	}
+}
+
+import tls-{$WS_TLS:acme}
