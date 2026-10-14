@@ -561,28 +561,38 @@ pub fn status(runner: &mut dyn Runner, dir: &Path) -> Result<()> {
     let env = read_env(dir);
     if let Some(url) = Deployment::from_env(&env).public_url() {
         ui::heading("Public URL");
-        match runner.capture(
-            dir,
-            "curl",
-            &[
-                "-fsS",
-                "-o",
-                "/dev/null",
-                "-w",
-                "%{http_code}",
-                "--max-time",
-                "10",
-                &url,
-            ],
-        ) {
-            Ok(code) if code.starts_with('2') || code.starts_with('3') => {
-                ui::done(&format!("{url} answers ({code})"))
-            }
-            Ok(code) => println!("  {} {url} answered {code}", style("!").yellow()),
-            Err(_) => println!("  {} {url} did not answer", style("✗").red()),
-        }
+        ui::report(&probe_url(runner, dir, &url));
     }
     Ok(())
+}
+
+/// Whether the install answers at its address, and with what. No `-f`: with it curl
+/// fails on a 502 as it does on a refused connection, and the two mean different things
+/// (the proxy is up and the app behind it is not, against nothing listening at all).
+fn probe_url(runner: &mut dyn Runner, dir: &Path, url: &str) -> checks::Check {
+    let args = [
+        "-sS",
+        "-o",
+        "/dev/null",
+        "-w",
+        "%{http_code}",
+        "--max-time",
+        "10",
+        url,
+    ];
+    match runner.capture(dir, "curl", &args) {
+        Ok(code) if code.starts_with('2') || code.starts_with('3') => {
+            checks::Check::ok(format!("{url} answers ({code})"))
+        }
+        Ok(code) => checks::Check::warn(
+            format!("{url} answered {code}"),
+            "Something answers, but not the app: `docker compose ps` and the logs say which part.",
+        ),
+        Err(_) => checks::Check::fatal(
+            format!("{url} did not answer"),
+            "Nothing there, or nothing reachable from this machine.",
+        ),
+    }
 }
 
 pub fn discord_register(runner: &mut dyn Runner, dir: &Path) -> Result<()> {
@@ -1345,6 +1355,28 @@ mod tests {
             Some(
                 "docker-compose.yml:deploy/external-db.yml:deploy/app-network.yml:compose.override.yml"
             )
+        );
+    }
+
+    #[test]
+    fn a_url_that_answers_with_an_error_is_told_apart_from_one_that_does_not() {
+        const CURL: &str =
+            "curl -sS -o /dev/null -w %{http_code} --max-time 10 https://map.example.com";
+        let mut runner = Recording::default();
+        runner.replies.insert(CURL.into(), "200".into());
+        let url = "https://map.example.com";
+        assert_eq!(
+            probe_url(&mut runner, Path::new("."), url).verdict,
+            Verdict::Ok
+        );
+        runner.replies.insert(CURL.into(), "502".into());
+        let check = probe_url(&mut runner, Path::new("."), url);
+        assert_eq!(check.verdict, Verdict::Warn);
+        assert!(check.label.contains("502"));
+        runner.failures.insert(CURL.into());
+        assert_eq!(
+            probe_url(&mut runner, Path::new("."), url).verdict,
+            Verdict::Fatal
         );
     }
 
