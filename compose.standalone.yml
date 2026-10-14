@@ -2,9 +2,10 @@
 # a reverse proxy. No `db` and no `caddy` here; the app joins an existing Docker network
 # under fixed names, and whatever proxies the domain sends traffic to them there.
 #
-# `wsctl setup` picks this by writing COMPOSE_FILE to .env, so every plain `docker compose`
-# command reads it too. The project name and the volumes are the full stack's, so switching
-# between the two setups keeps the static data and the uploads.
+# What wsctl 0.5 wrote into COMPOSE_FILE for a standalone install. wsctl 0.6 spells the same
+# stack as docker-compose.yml with deploy/external-db.yml and deploy/app-network.yml, and
+# `wsctl update` moves .env over; this stays so an install that still names it (or an
+# older wsctl) keeps working until then.
 services:
   api:
     extends:

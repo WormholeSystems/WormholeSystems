@@ -1,0 +1,27 @@
+# Your proxy runs in Docker and reaches the API and the frontend itself, on a network it
+# shares with them, as wormholesystems-api:3000 and wormholesystems-web:3001. No bundled
+# Caddy. Picked by WS_PROXY=network.
+services:
+  caddy:
+    profiles: [bundled-caddy]
+
+  api:
+    networks:
+      default:
+      proxy:
+        aliases: [wormholesystems-api]
+
+  web:
+    environment:
+      # Not plain `api`: on a shared network other stacks answer to that name too.
+      API_BASE: http://wormholesystems-api:3000
+    networks:
+      default:
+      proxy:
+        aliases: [wormholesystems-web]
+
+networks:
+  # Made by `wsctl setup` when it does not exist yet, so a proxy container can join it.
+  proxy:
+    name: ${WS_PROXY_NETWORK:-wormholesystems}
+    external: true

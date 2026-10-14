@@ -1,0 +1,23 @@
+# The bundled Caddy behind your proxy, as nothing but the path router: plain http on port
+# 80, no certificate, nothing published. Your proxy sends the whole site to one upstream,
+# wormholesystems-router:80 on the network they share, and Caddy splits it between the API
+# and the frontend. Picked by WS_PROXY=router.
+services:
+  caddy:
+    ports: !reset []
+    environment:
+      # The public address is whatever your proxy serves (WS_PUBLIC_URL); this Caddy
+      # answers for any host.
+      WS_DOMAIN: ":80"
+      # Your proxy is the client here, so its X-Forwarded-For and -Proto are believed and
+      # the API sees the visitor's address rather than the proxy's.
+      WS_TRUSTED_PROXIES: ${WS_TRUSTED_PROXIES:-private_ranges}
+    networks:
+      default:
+      proxy:
+        aliases: [wormholesystems-router]
+
+networks:
+  proxy:
+    name: ${WS_PROXY_NETWORK:-wormholesystems}
+    external: true

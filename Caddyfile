@@ -3,7 +3,17 @@
 #
 # The site address comes from WS_DOMAIN. Set it to a real domain and Caddy gets a
 # certificate for it and redirects http to https on its own; leave it unset and this serves
-# plain http on :80, which is what local full-stack testing wants.
+# plain http on :80, which is what local full-stack testing wants. Behind your own proxy
+# (deploy/router-*.yml) it is always plain http on :80.
+{
+	servers {
+		# Whose X-Forwarded-For and -Proto to believe. Only the router overlays set this,
+		# to the private ranges your proxy connects from; facing the internet, nobody's
+		# (the loopback is this container, which never proxies to itself).
+		trusted_proxies static {$WS_TRUSTED_PROXIES:127.0.0.1/32}
+	}
+}
+
 {$WS_DOMAIN::80} {
 	handle /api/* {
 		reverse_proxy api:3000

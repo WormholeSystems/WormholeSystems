@@ -1,12 +1,19 @@
 # Deploying WormholeSystems
 
-One machine, Docker, and a domain. There are two setups, and `wsctl setup` asks which:
+One machine, Docker, and a domain. `wsctl setup` asks two things about how the install is
+put together, independently:
 
-- Full: everything on this machine, Postgres and Caddy included. Caddy gets the
-  certificate. This is what a fresh server wants, and what everything below assumes unless
-  it says otherwise.
-- Standalone: only the API and the frontend, for a machine that already runs a Postgres and
-  a reverse proxy for other things. See [Standalone](#standalone).
+- The database: a Postgres container here (bundled), or one you already run.
+- What faces the internet:
+  - Caddy here, on ports 80 and 443, getting its own certificate. The default.
+  - Caddy here behind your own proxy, as a plain-http path router: your proxy sends it the
+    whole site over a Docker network or a loopback port.
+  - Your proxy in Docker, reaching the API and the frontend on a network it shares with
+    them.
+  - Your proxy on this machine (nginx, a host Caddy), reaching them on loopback ports.
+
+Everything below assumes both bundled unless it says otherwise. The other choices are in
+[Choosing the pieces](#choosing-the-pieces).
 
 ## What runs
 
@@ -82,10 +89,14 @@ root-owned files behind. With Rust already installed, `cargo run -p wsctl -- set
 the same thing without the container.
 
 It checks the machine before asking for anything: Docker present and running, compose v2,
-disk space, and whether this checkout is behind origin. Then it asks for the domain and the
-EVE SSO credentials, checks that the domain resolves to this machine and that ports 80 and
-443 are free, generates a database password, writes `.env` with `chmod 600`, and brings the
-stack up.
+disk space, and whether this checkout is behind origin. Then it asks which database and
+which proxy, the domain and the EVE SSO credentials, checks that the domain resolves to
+this machine and that ports 80 and 443 are free, generates a database password, writes
+`.env` with `chmod 600`, and brings the stack up.
+
+Without a domain, Caddy serves plain http, and the callbacks need the address people open
+it at. `setup` asks for it, offering `http://localhost` on the machine itself and the
+server's own address when you are logged in over SSH.
 
 The EVE application's callback URL has to match exactly what the CLI prints:
 `https://your-domain/auth/callback`. Register it at
@@ -145,23 +156,38 @@ since the API seeds the static data before it answers.
 Every container logs through Docker's `json-file` driver, capped at five files of 10MB
 each. `WS_LOG_MAX_SIZE` and `WS_LOG_MAX_FILES` in `.env` change that.
 
-## Standalone
+## Choosing the pieces
 
-For a machine that already has a Postgres and a reverse proxy, where a second database and
-a second thing on ports 80 and 443 would be in the way. Two containers run, from
-`compose.standalone.yml`:
+`docker-compose.yml` is the whole stack with everything bundled, and what compose reads
+when nothing says otherwise. Every other choice is an overlay in `deploy/` on top of it,
+and `wsctl setup` writes the ones an install needs into `COMPOSE_FILE` in `.env`, so plain
+`docker compose` commands, `wsctl update` and `wsctl status` all run the same stack:
 
-| container | what it is | reachable from |
+| file | when | what it does |
 |---|---|---|
-| `web` | the SvelteKit server | the Docker network you name, as `wormholesystems-web:3001` |
-| `api` | the Axum API and every background job | the same network, as `wormholesystems-api:3000` |
+| `deploy/external-db.yml` | `WS_DATABASE=external` | no `db` container; the API connects to `WS_DATABASE_URL` |
+| `deploy/db-network.yml` | the database is a container on another network | the API joins `WS_DATABASE_NETWORK` |
+| `deploy/router-network.yml` | `WS_PROXY=router`, proxy in Docker | Caddy publishes nothing and joins `WS_PROXY_NETWORK` as `wormholesystems-router:80` |
+| `deploy/router-port.yml` | `WS_PROXY=router`, proxy on the host | Caddy is published on `127.0.0.1:WS_ROUTER_PORT` (8080) |
+| `deploy/app-network.yml` | `WS_PROXY=network` | no Caddy; the API and the frontend join `WS_PROXY_NETWORK` as `wormholesystems-api:3000` and `wormholesystems-web:3001` |
+| `deploy/app-ports.yml` | `WS_PROXY=ports`, or alongside the network | no Caddy; the two are published on `127.0.0.1:3000` and `:3001` |
 
-`wsctl setup` asks for the public URL (whatever your proxy serves, scheme included), the
-database URL, and the Docker network to join, which it creates if it is missing. It writes
-`COMPOSE_FILE` to `.env`, so plain `docker compose` commands, `wsctl update` and
-`wsctl status` all run the standalone stack from then on. A proxy that runs on the machine
-itself rather than in Docker can also have the two published on `127.0.0.1`
-(`compose.standalone.ports.yml`, ports 3000 and 3001 unless you pick others).
+An overlay that drops `db` or `caddy` does it with a profile nothing turns on, so a
+container left from before keeps running until you remove it: `wsctl setup` says so and
+prints `docker compose rm -sf db caddy`. Files you add to `COMPOSE_FILE` yourself are kept
+after wsctl's own.
+
+The `sde` and `uploads` volumes are the same whichever pieces are picked, so switching
+keeps the static data and the uploads. The database is the one thing that has to be moved;
+see [Moving the database out](#moving-the-database-out).
+
+### Your own Postgres
+
+`wsctl setup` asks for the URL, as the containers reach it: the database's name on a
+shared Docker network, or the machine's address. Never `localhost`, which inside a
+container is the container. When the database is a container on a network of its own, name
+that network too and the API joins it. `setup` and `doctor` check that it answers from
+where the API will look.
 
 The database has to exist, with a role that owns it; the API creates its tables on boot.
 On a shared Postgres, for example:
@@ -172,41 +198,55 @@ CREATE DATABASE wormholesystems OWNER wormholesystems;
 REVOKE CONNECT ON DATABASE wormholesystems FROM PUBLIC;
 ```
 
-The URL is how the containers reach it: the database's name on the shared Docker network,
-or the machine's address. Never `localhost`, which inside a container is the container.
-`setup` and `doctor` check that it answers from the network.
+### Behind your own proxy
 
-Then point the proxy at it. `/api`, `/auth`, `/ws` and `/discord` go to the API with
-WebSocket upgrades passed through, everything else to the frontend:
+All of them need the public URL, the address your proxy serves, scheme included. The EVE
+and Discord callbacks are built from it and must match it exactly. `wsctl setup` creates
+the Docker network when it is missing.
+
+With Caddy as the router, your proxy sends everything to one upstream and Caddy splits the
+paths, so nothing about the app's routes has to live in your proxy's config. Caddy believes
+the `X-Forwarded-For` and `-Proto` your proxy sets when it connects from a private address
+(`WS_TRUSTED_PROXIES` changes that), so the API sees the visitor's address.
+
+Without it, `/api`, `/auth`, `/ws` and `/discord` go to the API with WebSocket upgrades
+passed through, everything else to the frontend.
 
 ```sh
 wsctl integrate
 ```
 
-prints that, with a Caddy site block for a Caddy on the same network and an nginx server
-block for the loopback ports. The EVE and Discord callbacks are built from the public URL
-and must match it exactly, as in the full setup.
+prints what your proxy needs for the choice this install made: a Caddy site block, a
+Traefik (or Coolify) label set to put in `compose.override.yml`, and an nginx server block,
+whichever apply.
 
-### From full to standalone
+### From wsctl 0.5
+
+An install set up by wsctl 0.5 has `WS_SETUP=full` or `WS_SETUP=standalone` in `.env`.
+Full is both bundled, and standalone an external database behind your proxy on the
+network (plus the loopback ports when its `COMPOSE_FILE` had
+`compose.standalone.ports.yml`). The first `wsctl update` from 0.6 rewrites `.env` to
+`WS_DATABASE` and `WS_PROXY` and points `COMPOSE_FILE` at the overlays, which run the same
+containers under the same names on the same networks. `compose.standalone.yml` stays in
+the checkout, so an older wsctl, or a `.env` that still names it, keeps working.
+
+### Moving the database out
 
 The data moves with a dump, into the new database while it is still empty: the API creates
 its tables on boot, so restore before the switch, not after. From the checkout, still on
-the full setup:
+the bundled database:
 
 ```sh
 docker compose stop api
 docker compose exec -T db pg_dump -U wormholesystems -Fc wormholesystems > wormholesystems.dump
 pg_restore --no-owner --role=wormholesystems -d "postgres://wormholesystems:...@host/wormholesystems" wormholesystems.dump
-wsctl setup                          # pick standalone; starts the app on the restored data
-docker compose up -d --remove-orphans
+wsctl setup                          # pick your own Postgres; starts the app on the restored data
+docker compose rm -sf db
 ```
 
 The map is down from the `stop` until `setup` has the new stack up. `pg_restore` is any
 client that reaches the new database, for example one in a container on the same network.
-After the switch compose no longer counts the full stack's `db` and `caddy` as part of the
-project, so they keep running until `--remove-orphans` takes them away; the `pgdata` volume
-stays until you remove it yourself. The `sde` and `uploads` volumes are shared by both
-setups and carry over as they are.
+The `pgdata` volume stays until you remove it yourself.
 
 ## Certificates
 
@@ -225,20 +265,24 @@ Cloudflare's own certificate and put Caddy behind it.
 
 | key | why |
 |---|---|
-| `WS_DOMAIN` | Caddy's site address. Blank serves plain http, which is only useful locally. |
+| `WS_DOMAIN` | Caddy's site address. Blank serves plain http on `HTTP_PORT`. |
 | `HTTP_PORT`, `HTTPS_PORT` | What Caddy publishes. 80 and 443 in production. |
 | `WS_CONTACT_NAME`, `WS_CONTACT_EMAIL` | Who runs this install. Every request to ESI, zKillboard and EVE Ref carries them, which is how those services tell operators apart and reach you. The server refuses to start without them. |
 | `EVE_CLIENT_ID`, `EVE_CLIENT_SECRET` | The SSO application. |
 | `EVE_REDIRECT_URI` | Derived from the domain; must match the application exactly. |
-| `POSTGRES_PASSWORD` | Full only. Generated once. Changing it means changing it in Postgres too. |
+| `POSTGRES_PASSWORD` | Bundled database only. Generated once. Changing it means changing it in Postgres too. |
 | `WS_IMAGES` | `pull` the published images or `build` them here. Missing means build. |
 | `WS_VERSION`, `WS_IMAGE_PREFIX` | Which published images: the tag (`main`) and where they live. |
-| `WS_SETUP` | `full` or `standalone`. Missing means full. |
-| `COMPOSE_FILE` | Standalone only: the compose files to run instead of `docker-compose.yml`. |
-| `WS_PUBLIC_URL` | Standalone only: the address your proxy serves; the callbacks derive from it. |
-| `WS_DATABASE_URL` | Standalone only: the Postgres to use, as the containers reach it. |
-| `WS_PROXY_NETWORK` | Standalone only: the Docker network the proxy finds the app on. |
-| `WS_API_PORT`, `WS_WEB_PORT` | Standalone only, when published on the loopback. |
+| `WS_DATABASE` | `bundled` or `external`. |
+| `WS_DATABASE_URL` | External only: the Postgres to use, as the containers reach it. |
+| `WS_DATABASE_NETWORK` | External only, optional: the Docker network the database is on. |
+| `WS_PROXY` | `caddy`, `router`, `network` or `ports`. |
+| `WS_PUBLIC_URL` | The address people open, when it is not `https://WS_DOMAIN`; the callbacks derive from it. |
+| `WS_PROXY_NETWORK` | `router` and `network`: the Docker network your proxy finds the app on. |
+| `WS_ROUTER_PORT` | `router` on the host: Caddy's loopback port. |
+| `WS_API_PORT`, `WS_WEB_PORT` | `ports`: the API's and the frontend's loopback ports. |
+| `WS_TRUSTED_PROXIES` | `router` only, optional: whose forwarded headers Caddy believes. `private_ranges` unless set. |
+| `COMPOSE_FILE` | The compose files to run, when anything is not bundled. wsctl keeps it in step with the above. |
 
 `ALLOWED_AFFILIATION_IDS` and `MAP_CREATOR_AFFILIATION_IDS` are asked for too; see
 [Who may use it](#who-may-use-it).

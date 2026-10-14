@@ -1,0 +1,10 @@
+# The bundled Caddy as the path router (see router-network.yml), reached on a loopback
+# port instead, for a proxy that runs on this machine rather than in Docker. Comes after
+# router-network.yml when both are used.
+services:
+  caddy:
+    ports: !override
+      - "127.0.0.1:${WS_ROUTER_PORT:-8080}:80"
+    environment:
+      WS_DOMAIN: ":80"
+      WS_TRUSTED_PROXIES: ${WS_TRUSTED_PROXIES:-private_ranges}

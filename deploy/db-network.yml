@@ -1,0 +1,14 @@
+# With external-db.yml, for a database that is a container on a Docker network of its own
+# (a Postgres another stack runs): the API joins that network to reach it by name.
+# WS_DATABASE_NETWORK names it. Not needed when it is the network your proxy finds the app
+# on, which the API is on already.
+services:
+  api:
+    networks:
+      default:
+      database:
+
+networks:
+  database:
+    name: ${WS_DATABASE_NETWORK:?WS_DATABASE_NETWORK is not set, run wsctl setup}
+    external: true
