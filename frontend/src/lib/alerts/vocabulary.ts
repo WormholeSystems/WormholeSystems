@@ -5,6 +5,7 @@
 import type { AlertDelivery } from '$lib/api/types/AlertDelivery';
 import type { AlertKind } from '$lib/api/types/AlertKind';
 import type { AlertMention } from '$lib/api/types/AlertMention';
+import type { DisabledReason } from '$lib/api/types/DisabledReason';
 import type { JumpShip } from '$lib/api/types/JumpShip';
 import type { Side } from '$lib/api/types/Side';
 import type { Subject } from '$lib/api/types/Subject';
@@ -92,10 +93,10 @@ export const RULE_SIDES: { value: Side; label: string }[] = [
 ];
 
 /** Why an alert was switched off, when it was not by hand. */
-export const DISABLED_REASON: Record<string, string> = {
+export const DISABLED_REASON = {
 	manual: 'Turned off by hand',
 	discord_unlinked: 'The creator unlinked their Discord account',
 	access_revoked: 'The creator lost access to this map',
 	destination_gone: 'Discord rejected the destination: the webhook or channel is gone',
 	delivery_failed: 'Too many failed deliveries',
-};
+} satisfies Record<DisabledReason, string>;

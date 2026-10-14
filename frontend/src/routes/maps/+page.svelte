@@ -16,10 +16,11 @@
 	import { goto } from '$app/navigation';
 	import { toast } from 'svelte-sonner';
 
-	import { api, errorMessage } from '$lib/api/client';
+	import { api, errorMessage, type TransferSectionId } from '$lib/api/client';
 	import { after, apiAction } from '$lib/api/mutations';
 	import { key, q } from '$lib/api/queries';
 	import type { CharacterSummary } from '$lib/api/types/CharacterSummary';
+	import type { CreateMapBody } from '$lib/api/types/CreateMapBody';
 	import type { MapEntry } from '$lib/api/types/MapEntry';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
@@ -29,6 +30,8 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { timeAgo } from '$lib/format';
+	import { lookup } from '$lib/lookup';
+	import { ROLE_TONE } from '$lib/map/roles';
 	import { TRANSFER_SECTIONS, readExportFile, type ExportFilePeek } from '$lib/map/transfer';
 	import { ticking } from '$lib/now.svelte';
 	import { filterMaps, splitArchived, totalsOf } from './page-model';
@@ -62,7 +65,7 @@
 	let importFileInput = $state<HTMLInputElement | null>(null);
 	let importPicked = $state<ExportFilePeek | null>(null);
 	let importName = $state('');
-	let importSections = $state<Record<string, boolean>>({});
+	let importSections = $state<Partial<Record<TransferSectionId, boolean>>>({});
 
 	const split = $derived(splitArchived(filterMaps(maps, query)));
 	const active = $derived(split.active);
@@ -72,8 +75,7 @@
 	// Needs the created map's id for the navigation, so it is its own mutation rather
 	// than an apiAction.
 	const createMut = createMutation(() => ({
-		mutationFn: (vars: { name: string; description?: string }) =>
-			api.createMap(vars.name, vars.description),
+		mutationFn: (vars: CreateMapBody) => api.createMap(vars),
 		onSuccess: async (map) => {
 			creating = false;
 			newName = '';
@@ -106,7 +108,7 @@
 
 	// Connections and signatures hang off placed systems, so a fresh map cannot take them
 	// without the systems section.
-	const needsSystems = (id: string) => id === 'connections' || id === 'signatures';
+	const needsSystems = (id: TransferSectionId) => id === 'connections' || id === 'signatures';
 	const importChosen = $derived.by(() => {
 		if (!importPicked) return [];
 		const chosen = importPicked.sections.filter((id) => importSections[id]);
@@ -114,7 +116,7 @@
 	});
 
 	const importMut = createMutation(() => ({
-		mutationFn: (vars: { name?: string; sections: string[]; content: string }) =>
+		mutationFn: (vars: { name?: string; sections: TransferSectionId[]; content: string }) =>
 			api.importMapAsNew(vars),
 		onSuccess: async (map) => {
 			importing = false;
@@ -155,13 +157,6 @@
 		deleting = null;
 		act.mutate(() => api.deleteMap(map.id));
 	}
-
-	const ROLE_TONE: Record<string, string> = {
-		owner: 'text-amber-500',
-		manager: 'text-purple-400',
-		member: 'text-emerald-500',
-		viewer: 'text-muted-foreground',
-	};
 </script>
 
 {#snippet card(map: MapEntry)}
@@ -198,7 +193,10 @@
 
 		<div class="flex items-center justify-between border-t border-border/50 px-3 py-1.5">
 			<span class="flex items-center gap-2">
-				<Badge variant="outline" class={cn('h-4 px-1 text-[10px] uppercase', ROLE_TONE[map.role])}>
+				<Badge
+					variant="outline"
+					class={cn('h-4 px-1 text-[10px] uppercase', lookup(ROLE_TONE, map.role))}
+				>
 					{map.role}
 				</Badge>
 				{#if map.pilots_online > 0}

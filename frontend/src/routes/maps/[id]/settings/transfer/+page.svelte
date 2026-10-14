@@ -72,7 +72,7 @@
 
 	let fileInput = $state<HTMLInputElement | null>(null);
 	let picked = $state<ExportFilePeek | null>(null);
-	let importSections = $state<Record<string, boolean>>({});
+	let importSections = $state<Partial<Record<TransferSectionId, boolean>>>({});
 	let summary = $state<ImportSummary | null>(null);
 
 	async function pickFile(files: FileList | null) {

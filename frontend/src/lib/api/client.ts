@@ -6,7 +6,9 @@ import type { AddConnectionJump } from './types/AddConnectionJump';
 import type { AddSignature } from './types/AddSignature';
 import type { AddSystem } from './types/AddSystem';
 import type { ResolveGhostSystem } from './types/ResolveGhostSystem';
+import type { CharacterIdBody } from './types/CharacterIdBody';
 import type { CharacterRef } from './types/CharacterRef';
+import type { CreateMapBody } from './types/CreateMapBody';
 import type { CreateToken } from './types/CreateToken';
 import type { CreatedToken } from './types/CreatedToken';
 import type { PersonalAccessToken } from './types/PersonalAccessToken';
@@ -40,6 +42,8 @@ import type { RemoveConnectionJump } from './types/RemoveConnectionJump';
 import type { RemoveSignature } from './types/RemoveSignature';
 import type { RemoveSignatures } from './types/RemoveSignatures';
 import type { RemoveSystems } from './types/RemoveSystems';
+import type { Sections } from './types/Sections';
+import type { SetAlertActive } from './types/SetAlertActive';
 import type { SetAlias } from './types/SetAlias';
 import type { SetConnectionStatus } from './types/SetConnectionStatus';
 import type { SetHome } from './types/SetHome';
@@ -147,6 +151,9 @@ function put<T>(path: string, body: unknown): Promise<T> {
 	});
 }
 
+/** The sections a map export can carry, as the server names them. */
+export type TransferSectionId = keyof Sections;
+
 function del<T>(path: string): Promise<T> {
 	return request<T>(path, { method: 'DELETE' });
 }
@@ -161,11 +168,13 @@ export const api = {
 	createToken: (cmd: CreateToken) => post<CreatedToken>('/api/me/tokens', cmd),
 	revokeToken: (id: number) => del<null>(`/api/me/tokens/${id}`),
 	switchCharacter: (characterId: number) =>
-		post<null>('/api/me/switch-character', { character_id: characterId }),
+		post<null>('/api/me/switch-character', { character_id: characterId } satisfies CharacterIdBody),
 	removeCharacter: (characterId: number) =>
-		post<null>('/api/me/remove-character', { character_id: characterId }),
+		post<null>('/api/me/remove-character', { character_id: characterId } satisfies CharacterIdBody),
 	setPreferredCharacter: (characterId: number) =>
-		post<null>('/api/me/preferred-character', { character_id: characterId }),
+		post<null>('/api/me/preferred-character', {
+			character_id: characterId,
+		} satisfies CharacterIdBody),
 
 	// ESI waypoints
 	setWaypoint: (body: SetWaypointBody) => post<null>('/api/waypoints', body),
@@ -190,7 +199,7 @@ export const api = {
 
 	// Maps
 	myMaps: (signal?: AbortSignal) => get<MapEntry[]>('/api/maps', signal),
-	createMap: (name: string, description?: string) => post<Map>('/api/maps', { name, description }),
+	createMap: (body: CreateMapBody) => post<Map>('/api/maps', body),
 	deleteMap: (mapId: number) => del<null>(`/api/maps/${mapId}`),
 	fetchMap: (mapId: number, signal?: AbortSignal) => get<MapView>(`/api/maps/${mapId}`, signal),
 	listSignatures: (mapId: number, signal?: AbortSignal) =>
@@ -292,11 +301,11 @@ export const api = {
 	transferCounts: (mapId: number, signal?: AbortSignal) =>
 		get<TransferCounts>(`/api/maps/${mapId}/transfer/counts`, signal),
 	// A plain URL rather than a call: the browser follows it and saves the download itself.
-	exportMapUrl: (mapId: number, sections: string[]) =>
+	exportMapUrl: (mapId: number, sections: TransferSectionId[]) =>
 		`/api/maps/${mapId}/transfer/export?sections=${sections.join(',')}`,
-	importMap: (mapId: number, sections: string[], content: string) =>
+	importMap: (mapId: number, sections: TransferSectionId[], content: string) =>
 		post<ImportSummary>(`/api/maps/${mapId}/transfer/import`, { sections, content }),
-	importMapAsNew: (body: { name?: string; sections: string[]; content: string }) =>
+	importMapAsNew: (body: { name?: string; sections: TransferSectionId[]; content: string }) =>
 		post<Map>('/api/maps/transfer/import-new', body),
 
 	// Access / settings
@@ -326,7 +335,9 @@ export const api = {
 	updateAlert: (mapId: number, alertId: number, body: SaveAlert) =>
 		put<MapAlert>(`/api/maps/${mapId}/alerts/${alertId}`, body),
 	setAlertActive: (mapId: number, alertId: number, isActive: boolean) =>
-		post<MapAlert>(`/api/maps/${mapId}/alerts/${alertId}/active`, { is_active: isActive }),
+		post<MapAlert>(`/api/maps/${mapId}/alerts/${alertId}/active`, {
+			is_active: isActive,
+		} satisfies SetAlertActive),
 	deleteAlert: (mapId: number, alertId: number) =>
 		del<null>(`/api/maps/${mapId}/alerts/${alertId}`),
 	searchAccessSubjects: (query: string, signal?: AbortSignal) =>
