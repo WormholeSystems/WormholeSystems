@@ -204,7 +204,8 @@ pub async fn remove_connection_jump(
     Ok(Json(()))
 }
 
-/// `GET /api/maps/{id}/connections/stale`, edges that have been critical for over an hour.
+/// `GET /api/maps/{id}/connections/stale`, edges that have been critical or expired for
+/// over an hour.
 #[utoipa::path(
     get,
     path = "/api/maps/{id}/connections/stale",

@@ -90,7 +90,8 @@
               "Enum": [
                 "stable",
                 "eol",
-                "critical"
+                "critical",
+                "expired"
               ]
             }
           }

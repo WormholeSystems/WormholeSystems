@@ -412,10 +412,12 @@ pub struct StaleConnection {
     pub connection_id: i64,
     pub from_name: String,
     pub to_name: String,
+    /// When it was marked critical or expired, whichever it is now.
     pub critical_since: DateTime<Utc>,
 }
 
-/// Every connection that has been critical for longer than [`STALE_AFTER_MINUTES`]. Viewer+.
+/// Every connection that has been critical or expired for longer than
+/// [`STALE_AFTER_MINUTES`]. Viewer+.
 pub async fn list_stale_connections(
     pool: &PgPool,
     actor: Actor,
@@ -433,7 +435,7 @@ pub async fn list_stale_connections(
            join map_solar_systems tm on tm.id = c.to_system
            join solar_systems ts on ts.id = tm.solar_system_id
            where c.map_id = $1
-             and c.time_status = 'critical'
+             and c.time_status in ('critical', 'expired')
              and c.time_status_updated_at < now() - make_interval(mins => $2)
            order by c.time_status_updated_at"#,
         map_id,
@@ -464,7 +466,7 @@ pub(super) async fn apply_clean_stale(
         r#"select id as "id!", from_system as "from_system!", to_system as "to_system!"
            from map_connections
            where map_id = $1
-             and time_status = 'critical'
+             and time_status in ('critical', 'expired')
              and time_status_updated_at < now() - make_interval(mins => $2)"#,
         cmd.map_id,
         STALE_AFTER_MINUTES as i32,
@@ -636,7 +638,8 @@ fn lifetime_hours(from_class: Option<i32>, to_class: Option<i32>) -> i64 {
 
 /// The lifetime mark a hole's age has earned, or `None` when its current mark is already as
 /// bad or worse. Only ever escalates: a pilot's own mark is better information than the
-/// clock, and an unknown hole is left unknown rather than declared stable. A hole sitting
+/// clock, and an unknown hole is left unknown rather than declared stable. The clock stops
+/// at critical: expired is only ever read off the hole in game, never inferred from age. A hole sitting
 /// at EOL is judged from when it was marked, not from its age, since the mark may have
 /// come from a scan of a hole older than the map knows.
 pub fn aged_time_status(
@@ -721,7 +724,8 @@ pub async fn age_connections(pool: &PgPool) -> Result<u64> {
            join map_solar_systems tm on tm.id = c.to_system
            left join solar_systems ts on ts.id = tm.solar_system_id
            where c.type = 'wormhole'
-             and c.time_status is distinct from 'critical'"#,
+             and c.time_status is distinct from 'critical'
+             and c.time_status is distinct from 'expired'"#,
     )
     .fetch_all(pool)
     .await?;
@@ -926,7 +930,27 @@ mod age_tests {
     }
 
     #[test]
+    fn the_clock_never_declares_a_hole_expired() {
+        assert_eq!(
+            aged_time_status(Some(TimeStatus::Critical), 200, Some(100), C3, KSPACE),
+            None
+        );
+        assert_eq!(
+            aged_time_status(None, 200, None, C6, KSPACE),
+            Some(TimeStatus::Critical)
+        );
+    }
+
+    #[test]
     fn the_clock_never_downgrades_a_mark() {
+        assert_eq!(
+            aged_time_status(Some(TimeStatus::Expired), 30, Some(5), C3, KSPACE),
+            None
+        );
+        assert_eq!(
+            aged_time_status(Some(TimeStatus::Expired), 0, Some(0), C3, KSPACE),
+            None
+        );
         assert_eq!(
             aged_time_status(Some(TimeStatus::Critical), 1, Some(0), C3, KSPACE),
             None

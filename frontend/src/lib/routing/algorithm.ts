@@ -85,7 +85,10 @@ export function buildDynamicAdjacency(edges: DynamicEdge[]): DynamicAdjacency {
 	return adj;
 }
 
-const TIME_RANK = { stable: 0, eol: 1, critical: 2 } satisfies Record<TimeStatus, number>;
+const TIME_RANK = { stable: 0, eol: 1, critical: 2, expired: 3 } satisfies Record<
+	TimeStatus,
+	number
+>;
 const MASS_RANK = { stable: 0, reduced: 1, critical: 2 } satisfies Record<MassStatus, number>;
 
 /** Whether a wormhole/EVE Scout edge passes the tolerance settings (null = healthy). */

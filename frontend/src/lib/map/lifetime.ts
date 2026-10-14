@@ -4,8 +4,11 @@ import type { MapConnection } from '$lib/api/types/MapConnection';
 
 const HOUR_MS = 3_600_000;
 
-/** EOL means under four hours left and critical under one: a mark starts that countdown. */
-const LEFT_AFTER_MARK_MS = { eol: 4 * HOUR_MS, critical: HOUR_MS } as const;
+/**
+ * EOL means under four hours left and critical under one: a mark starts that countdown.
+ * Expired promises nothing at all, so it is due the moment it is marked.
+ */
+const LEFT_AFTER_MARK_MS = { eol: 4 * HOUR_MS, critical: HOUR_MS, expired: 0 } as const;
 
 /**
  * The server sends every hole's lifetime from its class pair. Should it be missing, the
@@ -35,7 +38,7 @@ export function lifetimeDeadline(
 	>,
 ): LifetimeDeadline | null {
 	if (c.kind !== 'wormhole') return null;
-	if ((c.time_status === 'eol' || c.time_status === 'critical') && c.time_status_updated_at) {
+	if (c.time_status && c.time_status !== 'stable' && c.time_status_updated_at) {
 		return {
 			at: Date.parse(c.time_status_updated_at) + LEFT_AFTER_MARK_MS[c.time_status],
 			estimated: false,

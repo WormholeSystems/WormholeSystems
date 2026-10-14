@@ -127,6 +127,8 @@ older than the map knows, so the mark beats the age.
 
 - Only escalates. `stable`, `eol` and `critical` marks set by a pilot are never lowered,
   and an unknown (`null`) hole stays unknown until it earns `eol`.
+- Stops at `critical`. `expired` (in game "Expired, closure imminent") is only ever set
+  by a pilot, and an expired hole is left alone.
 - The mark lands on the edge; the `map_conn_sync` trigger carries it to the linked
   signatures and stamps `time_status_updated_at`.
 - Stargate edges never age.

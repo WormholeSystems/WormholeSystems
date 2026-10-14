@@ -11,6 +11,8 @@ export type { Vec2 };
 export interface EdgeDecorations {
 	/** Degraded wormholes dash. */
 	dashed: boolean;
+	/** An expired hole pulses, line and badge, since it can go between two glances. */
+	pulsing: boolean;
 	massColor: string | null;
 	timeColor: string | null;
 	/** The known size, or null while nobody has said. A gate carries no size to show. */
@@ -25,8 +27,8 @@ export function edgeDecorations(c: MapConnection): EdgeDecorations {
 		c.kind === 'wormhole' &&
 		(c.mass_status === 'reduced' ||
 			c.mass_status === 'critical' ||
-			c.time_status === 'eol' ||
-			c.time_status === 'critical');
+			(c.time_status !== null && c.time_status !== 'stable'));
+	const pulsing = c.kind === 'wormhole' && c.time_status === 'expired';
 	const massColor = massBadgeColor(c.mass_status);
 	const timeColor = timeBadgeColor(c.time_status);
 	const sizeLabel = c.kind === 'wormhole' && c.size !== null ? sizeLetter(c.size) : null;
@@ -35,7 +37,15 @@ export function edgeDecorations(c: MapConnection): EdgeDecorations {
 		(sizeLabel ? 1 : 0) +
 		(massColor ? 1 : 0) +
 		(timeColor ? 1 : 0);
-	return { dashed, massColor, timeColor, sizeLabel, badgeCount, badgeWidth: badgeCount * 18 + 8 };
+	return {
+		dashed,
+		pulsing,
+		massColor,
+		timeColor,
+		sizeLabel,
+		badgeCount,
+		badgeWidth: badgeCount * 18 + 8,
+	};
 }
 
 export interface EdgeGeometry {

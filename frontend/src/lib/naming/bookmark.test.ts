@@ -105,6 +105,14 @@ describe('formatBookmark', () => {
 		expect(formatBookmark(wormhole, fresh, format)).toBe('D2 ABC');
 		expect(formatBookmark(wormhole, dying, format)).toBe('D2 ABC crit EOL');
 	});
+
+	it.each([
+		['critical', 'D2 ABC EOL!'],
+		['expired', 'D2 ABC EOL!!'],
+	] as const)('marks a %s hole as "%s"', (timeStatus, expected) => {
+		const format = { wormhole: '{alias} {sig} {life}' };
+		expect(formatBookmark(wormhole, { ...context, timeStatus }, format)).toBe(expected);
+	});
 });
 
 describe('isReturnBookmark', () => {

@@ -734,3 +734,49 @@ async fn rally_systems(pool: &PgPool, map_id: i64) -> Vec<i64> {
     .await
     .unwrap()
 }
+
+/// Legacy writes the in-game "closure imminent" state as `expired`; it has to survive the
+/// trip out and back in.
+#[sqlx::test]
+async fn an_expired_hole_round_trips_as_expired(pool: PgPool) {
+    use wormholesystems::maps::connection::{SetConnectionStatus, set_connection_status};
+
+    let w = populated_world(&pool).await;
+    let connection_id =
+        sqlx::query_scalar!("select id from map_connections where map_id = $1", w.map_id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    set_connection_status(
+        &pool,
+        w.owner,
+        SetConnectionStatus {
+            map_id: w.map_id,
+            connection_id,
+            time_status: Some(Some(TimeStatus::Expired)),
+            ..Default::default()
+        },
+    )
+    .await
+    .unwrap();
+
+    let file = export_map(&pool, w.owner, w.map_id, all_sections())
+        .await
+        .unwrap();
+    let content = serde_json::to_string(&file).unwrap();
+    assert!(content.contains(r#""lifetime":"expired""#));
+
+    let parsed = parse_export(&content, all_sections(), true).unwrap();
+    let map = import_map_as_new(&pool, w.owner, parsed, None)
+        .await
+        .unwrap();
+    let status = sqlx::query_scalar!(
+        r#"select time_status as "time_status: TimeStatus" from map_connections
+           where map_id = $1"#,
+        map.id,
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    assert_eq!(status, Some(TimeStatus::Expired));
+}

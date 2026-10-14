@@ -30,6 +30,13 @@ describe('lifetimeDeadline', () => {
 		).toEqual({ at: T0 + 3 * HOUR, estimated: false });
 	});
 
+	it('has an expired hole due the moment it was marked', () => {
+		const marked = new Date(T0 + 2 * HOUR).toISOString();
+		expect(
+			lifetimeDeadline(hole({ time_status: 'expired', time_status_updated_at: marked })),
+		).toEqual({ at: T0 + 2 * HOUR, estimated: false });
+	});
+
 	it('estimates from the class lifetime before any mark', () => {
 		expect(lifetimeDeadline(hole())).toEqual({ at: T0 + 24 * HOUR, estimated: true });
 		expect(lifetimeDeadline(hole({ lifetime_hours: 48 }))).toEqual({

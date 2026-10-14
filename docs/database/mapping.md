@@ -165,7 +165,7 @@ catalogue of signature groups and known wormhole types is
 | `name`            | text, null       | raw scanner type name when no catalog type matched          |
 | `size`            | enum, null       | `xl`, `large`, `medium`, `small` (wormholes)                |
 | `mass_status`     | enum, null       | `stable`, `reduced`, `critical` ("massed")                  |
-| `time_status`     | enum, null       | `stable`, `eol`, `critical` (≈ < 1h, "super EOL")           |
+| `time_status`     | enum, null       | `stable`, `eol`, `critical` (≈ < 1h, "super EOL"), `expired` (closure imminent) |
 | `time_status_updated_at` | timestamptz, null | when `time_status` last changed (trigger-maintained) |
 | `connection_id`   | fk map_connections, null | set when this sig is linked as one end of a hole      |
 | `created_at`      | timestamptz      |                                                             |
@@ -216,7 +216,7 @@ Three rules:
 
 - **Merge on link** — when a signature is linked to a connection (`connection_id` set),
   the group reconciles to the **worst (most-severe) non-null value per field**:
-  `mass` `stable < reduced < critical`; `time` `stable < eol < critical`; `size`
+  `mass` `stable < reduced < critical`; `time` `stable < eol < critical < expired`; `size`
   `xl < large < medium < small` (smallest = most restrictive). A connection marked `eol`
   (<4h) linked to a sig scanned `critical` (<1h) becomes `critical`. Worst-wins is the
   safe, order-independent choice: the map never looks healthier than any observation of it.
@@ -330,7 +330,7 @@ above; a stargate edge is just a known gate.
 | `to_system`     | fk map_solar_systems |                                                          |
 | `type`          | enum                 | `wormhole`, `stargate`                                   |
 | `mass_status`   | enum, null           | `stable`, `reduced` ("massed"), `critical`               |
-| `time_status`   | enum, null           | `stable`, `eol` (≈ <4h), `critical` (≈ <1h, "super EOL") |
+| `time_status`   | enum, null           | `stable`, `eol` (≈ <4h), `critical` (≈ <1h, "super EOL"), `expired` (closure imminent) |
 | `size`          | enum, null           | `xl`, `large`, `medium`, `small` (max-jumpable class)    |
 | `preserve_mass` | bool                 | exclude from mass bookkeeping (legacy flag; stored only) |
 | `time_status_updated_at` | timestamptz, null | when `time_status` last changed (trigger-maintained) |

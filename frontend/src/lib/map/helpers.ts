@@ -224,7 +224,7 @@ export function edgeColor(
 ): string {
 	if (onRoute) return '#f59e0b'; // amber-500
 	if (kind === 'stargate') return '#0ea5e9'; // sky-500
-	if (mass === 'critical' || time === 'critical') return '#ef4444'; // red-500
+	if (mass === 'critical' || time === 'critical' || time === 'expired') return '#ef4444'; // red-500
 	if (mass === 'reduced') return '#f97316'; // orange-500
 	if (time === 'eol') return '#a855f7'; // purple-500
 	return 'var(--color-edge)';

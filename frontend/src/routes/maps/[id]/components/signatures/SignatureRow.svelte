@@ -169,7 +169,7 @@
 
 	/** The same for lifetime, where "healthy" means no status. */
 	function timeFrom(value: string): TimeStatus | null {
-		return value === 'eol' || value === 'critical' ? value : null;
+		return value === 'eol' || value === 'critical' || value === 'expired' ? value : null;
 	}
 </script>
 

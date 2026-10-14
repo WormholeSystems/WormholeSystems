@@ -17,6 +17,7 @@ Above both sits **Use chain connections**. Turn it off and the router ignores yo
 | **Healthy Only** | &gt; 4 hours | healthy only             |
 | **End of Life**  | &lt; 4 hours | healthy + EOL            |
 | **Critical**     | &lt; 1 hour  | healthy + EOL + critical |
+| **Expired**      | imminent     | every wormhole           |
 
 ## Mass filter
 

@@ -22,10 +22,11 @@
 	const onRoute = $derived(map.route.connectionIds.has(c.id));
 	const stroke = $derived(edgeColor(c.kind, c.mass_status, c.time_status, onRoute));
 	const deco = $derived(edgeDecorations(c));
-	// Only a mark's countdown earns ink on the line; the estimate stays in the popover.
+	// Only a mark's countdown earns ink on the line; the estimate stays in the popover. An
+	// expired hole has nothing left to count, and its pulse already says so.
 	const deadline = $derived(lifetimeDeadline(c));
 	const timeLeft = $derived(
-		deadline && !deadline.estimated ? formatRemaining(deadline.at, now) : null,
+		deadline && !deadline.estimated && !deco.pulsing ? formatRemaining(deadline.at, now) : null,
 	);
 	const badgeWidth = $derived(deco.badgeWidth + (timeLeft ? timeLeft.length * 6 + 4 : 0));
 </script>
@@ -39,7 +40,9 @@
 		stroke-linecap="round"
 		stroke-linejoin="round"
 		stroke-dasharray={deco.dashed ? '2 6' : '0'}
-		class="transition-opacity group-hover/edge:opacity-70"
+		class="transition-opacity group-hover/edge:opacity-70 {deco.pulsing
+			? 'motion-safe:animate-pulse'
+			: ''}"
 		data-on-route={onRoute}
 	/>
 	<!-- The curve stops short of the node on its rail; an elbow already lands on
@@ -71,7 +74,10 @@
 					<WeightIcon class="size-3.5" style="color: {deco.massColor}" />
 				{/if}
 				{#if deco.timeColor}
-					<ClockIcon class="size-3.5" style="color: {deco.timeColor}" />
+					<ClockIcon
+						class="size-3.5 {deco.pulsing ? 'motion-safe:animate-pulse' : ''}"
+						style="color: {deco.timeColor}"
+					/>
 					{#if timeLeft}
 						<span
 							class="text-[10px] leading-none font-semibold tabular-nums"

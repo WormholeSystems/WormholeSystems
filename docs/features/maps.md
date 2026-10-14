@@ -488,8 +488,8 @@ map's live wormhole edges, and optionally EVE Scout's public Thera/Turnur edges 
   Viewer+ reads). Jump counts, colors, and route popovers are client-side.
 - **Route settings** live on `map_user_settings` per user per map:
   `route_preference` (`shorter`/`safer`/`less_secure`), `security_penalty` (0-100),
-  `route_allow_time_status` (`stable`/`eol`/`critical` = worst lifetime still
-  traversed), `route_allow_mass_status` (`stable`/`reduced`/`critical`), and
+  `route_allow_time_status` (`stable`/`eol`/`critical`/`expired` = worst lifetime still
+  traversed; the default `critical` keeps expired holes out), `route_allow_mass_status` (`stable`/`reduced`/`critical`), and
   `route_use_evescout`.
 - Two ignore lists. The viewer's own route-around list is client-side per map,
   deliberately not server state: it is a scratch decision for one trip. The map's

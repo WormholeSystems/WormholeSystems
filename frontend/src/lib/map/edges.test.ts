@@ -28,6 +28,7 @@ describe('edgeDecorations', () => {
 	it('draws a fresh wormhole plain: solid, no badges', () => {
 		expect(edgeDecorations(wormhole({}))).toEqual({
 			dashed: false,
+			pulsing: false,
 			massColor: null,
 			timeColor: null,
 			sizeLabel: null,
@@ -47,6 +48,14 @@ describe('edgeDecorations', () => {
 		expect(edgeDecorations(wormhole({ mass_status: 'critical' })).dashed).toBe(true);
 		expect(edgeDecorations(wormhole({ time_status: 'eol' })).dashed).toBe(true);
 		expect(edgeDecorations(wormhole({ time_status: 'critical' })).dashed).toBe(true);
+		expect(edgeDecorations(wormhole({ time_status: 'expired' })).dashed).toBe(true);
+	});
+
+	it('pulses an expired hole, and only that, in red', () => {
+		const expired = edgeDecorations(wormhole({ time_status: 'expired' }));
+		expect(expired.pulsing).toBe(true);
+		expect(expired.timeColor).toBe(timeColor('critical'));
+		expect(edgeDecorations(wormhole({ time_status: 'critical' })).pulsing).toBe(false);
 	});
 
 	it('never dashes a stargate, whatever its statuses say', () => {

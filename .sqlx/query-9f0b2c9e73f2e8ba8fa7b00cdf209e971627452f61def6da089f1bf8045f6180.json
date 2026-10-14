@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select time_status as \"time_status: TimeStatus\" from map_connections\n           where map_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "time_status: TimeStatus",
+        "type_info": {
+          "Custom": {
+            "name": "time_status",
+            "kind": {
+              "Enum": [
+                "stable",
+                "eol",
+                "critical",
+                "expired"
+              ]
+            }
+          }
+        },
+        "origin": {
+          "Table": {
+            "table": "map_connections",
+            "name": "time_status"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "9f0b2c9e73f2e8ba8fa7b00cdf209e971627452f61def6da089f1bf8045f6180"
+}

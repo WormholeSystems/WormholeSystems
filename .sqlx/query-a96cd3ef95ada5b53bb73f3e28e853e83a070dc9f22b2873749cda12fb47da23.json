@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select c.id as \"connection_id!\",\n                  fs.name as \"from_name!\", ts.name as \"to_name!\",\n                  c.time_status_updated_at as \"critical_since!\"\n           from map_connections c\n           join map_solar_systems fm on fm.id = c.from_system\n           join solar_systems fs on fs.id = fm.solar_system_id\n           join map_solar_systems tm on tm.id = c.to_system\n           join solar_systems ts on ts.id = tm.solar_system_id\n           where c.map_id = $1\n             and c.time_status = 'critical'\n             and c.time_status_updated_at < now() - make_interval(mins => $2)\n           order by c.time_status_updated_at",
+  "query": "select c.id as \"connection_id!\",\n                  fs.name as \"from_name!\", ts.name as \"to_name!\",\n                  c.time_status_updated_at as \"critical_since!\"\n           from map_connections c\n           join map_solar_systems fm on fm.id = c.from_system\n           join solar_systems fs on fs.id = fm.solar_system_id\n           join map_solar_systems tm on tm.id = c.to_system\n           join solar_systems ts on ts.id = tm.solar_system_id\n           where c.map_id = $1\n             and c.time_status in ('critical', 'expired')\n             and c.time_status_updated_at < now() - make_interval(mins => $2)\n           order by c.time_status_updated_at",
   "describe": {
     "columns": [
       {
@@ -61,5 +61,5 @@
       true
     ]
   },
-  "hash": "cde0c7a099bf073970d70774c01234663167a0657f8560c55029311d7c4f53da"
+  "hash": "a96cd3ef95ada5b53bb73f3e28e853e83a070dc9f22b2873749cda12fb47da23"
 }
