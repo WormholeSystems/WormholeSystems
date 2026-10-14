@@ -10,10 +10,11 @@ use axum::response::{IntoResponse, Response};
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
 
-use super::{ApiError, ApiResult, user_settings};
-use crate::auth::AppState;
+use super::{ApiError, ApiResult};
+use crate::app::AppState;
 use crate::maps::Role;
 use crate::maps::background::MAX_IMAGE_BYTES;
+use crate::maps::user_settings::{self, MapUserSettings};
 
 /// Room for the multipart framing around an image at the size limit; the image itself is
 /// checked against the real limit once it is out of the envelope.
@@ -32,8 +33,7 @@ pub fn routes() -> OpenApiRouter<AppState> {
     path = "/api/maps/{id}/background-image",
     tag = "background image",
     params(("id" = i64, Path, description = "The map")),
-    responses((status = 200, description = "The image bytes", content_type = "image/*"), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "The image bytes", content_type = "image/*"), super::MapReadErrors),
 )]
 async fn show(
     State(state): State<AppState>,
@@ -41,10 +41,10 @@ async fn show(
     Path(map_id): Path<i64>,
 ) -> Result<Response, ApiError> {
     let actor = super::extract::require_role_on_map(&state, &creds, map_id, Role::Viewer).await?;
-    let stored = match current_path(&state, map_id, actor.user_id).await? {
-        Some(path) => state.backgrounds.read(&path).await?,
-        None => None,
-    };
+    let stored = state
+        .backgrounds
+        .image_for(&state.db, map_id, actor.user_id)
+        .await?;
     let Some((format, bytes)) = stored else {
         return Err(ApiError {
             status: StatusCode::NOT_FOUND,
@@ -83,15 +83,14 @@ struct BackgroundImageUpload {
     tag = "background image",
     params(("id" = i64, Path, description = "The map")),
     request_body(content = BackgroundImageUpload, content_type = "multipart/form-data"),
-    responses((status = 200, body = user_settings::MapUserSettings, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = MapUserSettings, description = "OK"), super::MapWriteErrors),
 )]
 async fn upload(
     State(state): State<AppState>,
     creds: Credentials,
     Path(map_id): Path<i64>,
     mut multipart: Multipart,
-) -> ApiResult<user_settings::MapUserSettings> {
+) -> ApiResult<MapUserSettings> {
     let actor = super::extract::require_role_on_map(&state, &creds, map_id, Role::Viewer).await?;
 
     let mut image = None;
@@ -107,14 +106,10 @@ async fn upload(
         ));
     };
 
-    let stored = state
+    state
         .backgrounds
-        .save(map_id, actor.user_id, &bytes)
+        .replace(&state.db, map_id, actor.user_id, &bytes)
         .await?;
-    let previous = replace_path(&state, map_id, actor.user_id, Some(&stored)).await?;
-    if let Some(old) = previous.filter(|old| old != &stored) {
-        state.backgrounds.remove(&old).await?;
-    }
     Ok(Json(
         user_settings::load(&state.db, map_id, actor.user_id).await?,
     ))
@@ -126,70 +121,21 @@ async fn upload(
     path = "/api/maps/{id}/background-image",
     tag = "background image",
     params(("id" = i64, Path, description = "The map")),
-    responses((status = 200, body = user_settings::MapUserSettings, description = "OK"), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = MapUserSettings, description = "OK"), super::MapReadErrors),
 )]
 async fn remove(
     State(state): State<AppState>,
     creds: Credentials,
     Path(map_id): Path<i64>,
-) -> ApiResult<user_settings::MapUserSettings> {
+) -> ApiResult<MapUserSettings> {
     let actor = super::extract::require_role_on_map(&state, &creds, map_id, Role::Viewer).await?;
-    if let Some(old) = replace_path(&state, map_id, actor.user_id, None).await? {
-        state.backgrounds.remove(&old).await?;
-    }
+    state
+        .backgrounds
+        .clear(&state.db, map_id, actor.user_id)
+        .await?;
     Ok(Json(
         user_settings::load(&state.db, map_id, actor.user_id).await?,
     ))
-}
-
-async fn current_path(
-    state: &AppState,
-    map_id: i64,
-    user_id: i64,
-) -> Result<Option<String>, sqlx::Error> {
-    sqlx::query_scalar!(
-        "select background_image_path from map_user_settings where map_id = $1 and user_id = $2",
-        map_id,
-        user_id,
-    )
-    .fetch_optional(&state.db)
-    .await
-    .map(Option::flatten)
-}
-
-/// Point the row at `path` (or at nothing) and hand back what it pointed at before, so the
-/// caller can clear the old file once the row no longer refers to it.
-async fn replace_path(
-    state: &AppState,
-    map_id: i64,
-    user_id: i64,
-    path: Option<&str>,
-) -> Result<Option<String>, sqlx::Error> {
-    let mut tx = state.db.begin().await?;
-    let previous = sqlx::query_scalar!(
-        "select background_image_path from map_user_settings
-         where map_id = $1 and user_id = $2 for update",
-        map_id,
-        user_id,
-    )
-    .fetch_optional(&mut *tx)
-    .await?
-    .flatten();
-    sqlx::query!(
-        "insert into map_user_settings (map_id, user_id, background_image_path)
-         values ($1, $2, $3)
-         on conflict (map_id, user_id) do update set
-             background_image_path = $3,
-             updated_at = now()",
-        map_id,
-        user_id,
-        path,
-    )
-    .execute(&mut *tx)
-    .await?;
-    tx.commit().await?;
-    Ok(previous)
 }
 
 fn multipart_error(err: axum::extract::multipart::MultipartError) -> ApiError {

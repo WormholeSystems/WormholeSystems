@@ -1,5 +1,5 @@
-//! The server<->client wire contract. Server functions pass these types across the
-//! ssr/wasm boundary, so they must serde round-trip — including the partial-update
+//! The server<->client wire contract. The JSON API and the WebSocket frames carry these
+//! types to the frontend, so they must serde round-trip, including the partial-update
 //! `Option<Option<_>>` fields and the tagged `MapEvent` representation the WS client parses.
 
 use chrono::{DateTime, Utc};
@@ -7,9 +7,10 @@ use chrono::{DateTime, Utc};
 use wormholesystems::maps::connection::SetConnectionStatus;
 use wormholesystems::maps::signatures::AddSignature;
 use wormholesystems::maps::{
-    AliasScheme, ConnectionType, Map, MapConnection, MapEvent, MapLayout, MapSystemView, MapView,
-    MassStatus, SignatureGroup, Static, SystemStatus, ThreatLevel, TimeStatus, WormholeSize,
+    AliasScheme, ConnectionType, Map, MapConnection, MapLayout, MapSystemView, MapView, MassStatus,
+    SignatureGroup, Static, SystemStatus, ThreatLevel, TimeStatus, WormholeSize,
 };
+use wormholesystems::realtime::MapEvent;
 
 /// A fixed timestamp (chrono's `clock` feature is off — no `Utc::now()`).
 fn ts() -> DateTime<Utc> {

@@ -1,0 +1,106 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update map_user_settings set\n             tracking_allowed = coalesce($3, tracking_allowed),\n             show_threat_level = coalesce($4, show_threat_level),\n             compact_signature_list = coalesce($5, compact_signature_list),\n             show_statics_first = coalesce($6, show_statics_first),\n             route_preference = coalesce($7, route_preference),\n             security_penalty = coalesce($8, security_penalty),\n             route_allow_time_status = coalesce($9, route_allow_time_status),\n             route_allow_mass_status = coalesce($10, route_allow_mass_status),\n             route_use_evescout = coalesce($11, route_use_evescout),\n             prompt_for_signature = coalesce($12, prompt_for_signature),\n             suggest_alias = coalesce($13, suggest_alias),\n             copy_bookmark = coalesce($14, copy_bookmark),\n             killmail_filter = coalesce($15, killmail_filter),\n             is_archived = coalesce($16, is_archived),\n             -- Absent leaves it; true stamps now; false clears it and shows it again.\n             introduction_confirmed_at = case\n                 when $17::boolean is null then introduction_confirmed_at\n                 when $17 then now()\n             end,\n             hidden_panels = coalesce($18, hidden_panels),\n             layout_breakpoints = coalesce($19, layout_breakpoints),\n             -- Absent leaves it; null is a real value here (follow the map again), so it\n             -- cannot go through coalesce.\n             layout_override = case when $21 then $20 else layout_override end,\n             is_pinned = coalesce($22, is_pinned),\n             follow_character = coalesce($23, follow_character),\n             tracked_character_ids = coalesce($24, tracked_character_ids),\n             background_image_mode = coalesce($25, background_image_mode),\n             preselect_signature = coalesce($26, preselect_signature),\n             route_use_wormholes = coalesce($27, route_use_wormholes),\n             updated_at = now()\n           where map_id = $1 and user_id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Bool",
+        "Bool",
+        "Bool",
+        "Bool",
+        {
+          "Custom": {
+            "name": "route_preference",
+            "kind": {
+              "Enum": [
+                "shorter",
+                "safer",
+                "less_secure"
+              ]
+            }
+          }
+        },
+        "Int4",
+        {
+          "Custom": {
+            "name": "time_status",
+            "kind": {
+              "Enum": [
+                "stable",
+                "eol",
+                "critical",
+                "expired"
+              ]
+            }
+          }
+        },
+        {
+          "Custom": {
+            "name": "mass_status",
+            "kind": {
+              "Enum": [
+                "stable",
+                "reduced",
+                "critical"
+              ]
+            }
+          }
+        },
+        "Bool",
+        "Bool",
+        "Bool",
+        "Bool",
+        {
+          "Custom": {
+            "name": "killmail_scope",
+            "kind": {
+              "Enum": [
+                "all",
+                "jspace",
+                "kspace",
+                "selected_system"
+              ]
+            }
+          }
+        },
+        "Bool",
+        "Bool",
+        "TextArray",
+        "Jsonb",
+        {
+          "Custom": {
+            "name": "map_layout",
+            "kind": {
+              "Enum": [
+                "manual",
+                "tree"
+              ]
+            }
+          }
+        },
+        "Bool",
+        "Bool",
+        "Bool",
+        "Int8Array",
+        {
+          "Custom": {
+            "name": "map_background_mode",
+            "kind": {
+              "Enum": [
+                "grid",
+                "viewport"
+              ]
+            }
+          }
+        },
+        "Bool",
+        "Bool"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c14c1116055cba6fac943cb2ec0647a7953b582436f9bf3726d798431eacd435"
+}

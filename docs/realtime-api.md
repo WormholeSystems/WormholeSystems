@@ -21,6 +21,13 @@ OpenAPI document, since it cannot describe a stream.
 Authenticate the upgrade request the way you authenticate any other request: the session
 cookie, or `Authorization: Bearer wst_...` with a personal access token.
 
+A map socket keeps checking. Whenever the map's grants or sharing change, and once a
+minute besides (a grant can run out, a character can leave the corporation it was granted
+through), the server asks again whether the reader may still see the map. Once they may
+not, it closes the socket with code `4403` and nothing more is sent. Do not reconnect on
+`4403`: the upgrade would be refused with `404`. Code `1001` means the server is
+restarting; reconnect on that as on any other close.
+
 The user socket doubles as the activity heartbeat. The server pings every 30 seconds; any
 frame from the client (the pong will do) counts as activity and keeps the user's
 `last_active_at` fresh, which is what lets the tracking poller follow their characters. A

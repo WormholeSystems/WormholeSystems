@@ -14,7 +14,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use sqlx::PgPool;
 
 use crate::esi::{EsiClient, EsiError};
-use crate::tracking::run_bounded;
+use crate::pilots::poller::run_bounded;
 
 /// Entries older than this are re-fetched: pilots change corp, corps change alliance.
 const FRESH_FOR: &str = "7 days";
@@ -122,7 +122,7 @@ async fn unresolved_and_noted(
                 }
             }
         }
-        Err(err) => eprintln!("unresolvable check failed: {err}"),
+        Err(err) => tracing::error!("unresolvable check failed: {err}"),
     }
     // One query per kind rather than a dynamic table name: `query!` checks these at
     // compile time, and there are only three.
@@ -158,7 +158,7 @@ async fn unresolved_and_noted(
     let fresh: HashSet<i64> = match fresh {
         Ok(rows) => rows.into_iter().collect(),
         Err(err) => {
-            eprintln!("entity freshness check failed: {err}");
+            tracing::error!("entity freshness check failed: {err}");
             return (Vec::new(), HashSet::new());
         }
     };

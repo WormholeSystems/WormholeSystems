@@ -13,12 +13,13 @@
 use serde::{Deserialize, Serialize};
 
 use super::command::{CommandOutput, Effect, MapCommand, Sequence, Tx};
-use super::connection::{AddConnection, SetConnectionStatus, apply_add_connection};
+use super::connection::{AddConnection, SetConnectionStatus, connect};
 use super::error::{MapError, Result};
 use super::restore::RemoveRestored;
 use super::signatures::{LinkSignature, UnlinkSignature, UpdateSignature};
 use super::solar_system::{AddSystem, SetAlias};
-use super::{ConnectionType, MapEvent, MassStatus, SignatureGroup, TimeStatus, WormholeSize};
+use super::{ConnectionType, MassStatus, SignatureGroup, TimeStatus, WormholeSize};
+use crate::realtime::MapEvent;
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema)]
 #[ts(export)]
@@ -200,7 +201,7 @@ pub(super) async fn apply_track_jump(tx: &mut Tx<'_>, cmd: TrackJump) -> Result<
         }
     };
 
-    let effect = apply_add_connection(
+    let effect = connect(
         tx,
         AddConnection {
             map_id: cmd.map_id,

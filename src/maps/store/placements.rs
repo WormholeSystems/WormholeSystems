@@ -20,6 +20,12 @@ pub struct PlacementRow {
     pub is_home: bool,
     /// Only read from snapshots taken before rally points carried a timestamp; restoring
     /// one of those makes the system the newest rally point.
+    ///
+    /// Can go once no stored history predates migration 0030 on any install. The purge
+    /// drops events after `history::RETENTION_DAYS`, but never a map's head, so a map
+    /// nobody has touched since keeps an old snapshot indefinitely: check
+    /// `select count(*) from map_events e, _sqlx_migrations m where m.version = 30 and
+    /// e.created_at < m.installed_on` is zero first, or rewrite those rows.
     #[serde(default)]
     pub is_rally: bool,
     /// When the system became a rally point, kept so a restored one is as old as it was.

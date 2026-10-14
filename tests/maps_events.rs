@@ -9,7 +9,7 @@ use common::{SYS_A, SYS_B, SYS_C, member_with_role, world};
 use sqlx::PgPool;
 use wormholesystems::maps::connection::{RemoveConnection, remove_connection};
 use wormholesystems::maps::connection::{SetConnectionStatus, set_connection_status};
-use wormholesystems::maps::events_log::{
+use wormholesystems::maps::history::{
     GotoMapEvent, MapEventEntry, MapHistory, MapIdBody, goto, list_history, redo, undo,
 };
 use wormholesystems::maps::map::{GetMap, get_map};

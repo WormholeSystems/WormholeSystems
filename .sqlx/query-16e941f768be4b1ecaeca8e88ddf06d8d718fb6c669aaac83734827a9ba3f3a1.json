@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select distinct m.id, m.name from maps m\n         join map_access_live ma on ma.map_id = m.id\n         where m.name ilike $2 and ma.subject_id in (\n             select id from characters where user_id = $1\n             union all select corporation_id from characters where user_id = $1\n             union all select alliance_id from characters where user_id = $1 and alliance_id is not null\n         )\n         order by m.name\n         limit $3",
+  "query": "select m.id, m.name from maps m\n         join map_user_roles r on r.map_id = m.id\n         where r.user_id = $1 and m.name ilike $2\n         order by m.name\n         limit $3",
   "describe": {
     "columns": [
       {
@@ -38,5 +38,5 @@
       false
     ]
   },
-  "hash": "dda9996146ff06ecd8af06dfc77982ba4fdc62deff5a126bf987a7d2a127a407"
+  "hash": "16e941f768be4b1ecaeca8e88ddf06d8d718fb6c669aaac83734827a9ba3f3a1"
 }

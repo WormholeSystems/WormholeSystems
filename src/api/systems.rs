@@ -9,7 +9,7 @@ use utoipa_axum::routes;
 
 use super::ApiResult;
 use super::extract::{acting_on, require_actor};
-use crate::auth::AppState;
+use crate::app::AppState;
 use crate::maps::MapSolarSystem;
 use crate::maps::solar_system::{
     AddSystem, ClearMap, MoveSystem, MoveSystems, RemoveSystem, RemoveSystems, SetAlias, SetHome,
@@ -43,8 +43,7 @@ pub fn routes() -> OpenApiRouter<AppState> {
     tag = "systems",
     params(("id" = i64, Path, description = "The map")),
     request_body = crate::maps::ghost::ResolveGhostSystem,
-    responses((status = 200, body = MapSolarSystem, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = MapSolarSystem, description = "OK"), super::MapWriteErrors),
 )]
 pub async fn resolve_ghost_system(
     State(state): State<AppState>,
@@ -53,7 +52,7 @@ pub async fn resolve_ghost_system(
     Json(cmd): Json<crate::maps::ghost::ResolveGhostSystem>,
 ) -> ApiResult<MapSolarSystem> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    let placed = crate::maps::ghost::resolve_ghost_system(&state.db, actor, cmd).await?;
+    let placed = crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(placed))
 }
 
@@ -63,8 +62,7 @@ pub async fn resolve_ghost_system(
     tag = "systems",
     params(("id" = i64, Path, description = "The map")),
     request_body = AddSystem,
-    responses((status = 200, body = MapSolarSystem, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = MapSolarSystem, description = "OK"), super::MapWriteErrors),
 )]
 pub async fn add_system(
     State(state): State<AppState>,
@@ -73,7 +71,7 @@ pub async fn add_system(
     Json(cmd): Json<AddSystem>,
 ) -> ApiResult<MapSolarSystem> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    let placed = crate::maps::solar_system::add_system(&state.db, actor, cmd).await?;
+    let placed = crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(placed))
 }
 
@@ -83,8 +81,7 @@ pub async fn add_system(
     tag = "systems",
     params(("id" = i64, Path, description = "The map")),
     request_body = MoveSystem,
-    responses((status = 200, description = "Done; the body is `null`"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), super::MapWriteErrors),
 )]
 pub async fn move_system(
     State(state): State<AppState>,
@@ -93,7 +90,7 @@ pub async fn move_system(
     Json(cmd): Json<MoveSystem>,
 ) -> ApiResult<()> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    crate::maps::solar_system::move_system(&state.db, actor, cmd).await?;
+    crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(()))
 }
 
@@ -103,8 +100,7 @@ pub async fn move_system(
     tag = "systems",
     params(("id" = i64, Path, description = "The map")),
     request_body = MoveSystems,
-    responses((status = 200, description = "Done; the body is `null`"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), super::MapWriteErrors),
 )]
 pub async fn move_systems(
     State(state): State<AppState>,
@@ -113,7 +109,7 @@ pub async fn move_systems(
     Json(cmd): Json<MoveSystems>,
 ) -> ApiResult<()> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    crate::maps::solar_system::move_systems(&state.db, actor, cmd).await?;
+    crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(()))
 }
 
@@ -123,8 +119,7 @@ pub async fn move_systems(
     tag = "systems",
     params(("id" = i64, Path, description = "The map")),
     request_body = RemoveSystem,
-    responses((status = 200, description = "Done; the body is `null`"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), super::MapWriteErrors),
 )]
 pub async fn remove_system(
     State(state): State<AppState>,
@@ -133,7 +128,7 @@ pub async fn remove_system(
     Json(cmd): Json<RemoveSystem>,
 ) -> ApiResult<()> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    crate::maps::solar_system::remove_system(&state.db, actor, cmd).await?;
+    crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(()))
 }
 
@@ -143,8 +138,7 @@ pub async fn remove_system(
     tag = "systems",
     params(("id" = i64, Path, description = "The map")),
     request_body = RemoveSystems,
-    responses((status = 200, description = "Done; the body is `null`"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), super::MapWriteErrors),
 )]
 pub async fn remove_systems(
     State(state): State<AppState>,
@@ -153,7 +147,7 @@ pub async fn remove_systems(
     Json(cmd): Json<RemoveSystems>,
 ) -> ApiResult<()> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    crate::maps::solar_system::remove_systems(&state.db, actor, cmd).await?;
+    crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(()))
 }
 
@@ -163,8 +157,7 @@ pub async fn remove_systems(
     tag = "systems",
     params(("id" = i64, Path, description = "The map")),
     request_body = ClearMap,
-    responses((status = 200, description = "Done; the body is `null`"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), super::MapWriteErrors),
 )]
 pub async fn clear_map(
     State(state): State<AppState>,
@@ -173,7 +166,7 @@ pub async fn clear_map(
     Json(cmd): Json<ClearMap>,
 ) -> ApiResult<()> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    crate::maps::solar_system::clear_map(&state.db, actor, cmd).await?;
+    crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(()))
 }
 
@@ -188,13 +181,8 @@ macro_rules! detail_handler {
             request_body = $cmd,
             responses(
                 (status = 200, description = "Done; the body is `null`"),
-                (status = 400, response = super::BadRequest),
-                (status = 401, response = super::Unauthorized),
-                (status = 403, response = super::Forbidden),
-                (status = 404, response = super::NotFound),
-                (status = 409, response = super::Conflict),
+                super::MapWriteErrors,
             ),
-            security(("bearer" = []), ("session" = [])),
         )]
         pub async fn $name(
             State(state): State<AppState>,
@@ -264,8 +252,7 @@ detail_handler!(
     path = "/api/maps/{id}/systems/{mss}/details",
     tag = "systems",
     params(("id" = i64, Path, description = "The map"), ("mss" = i64, Path, description = "The placement (map solar system id)")),
-    responses((status = 200, body = SystemDetails, description = "OK"), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = SystemDetails, description = "OK"), super::MapReadErrors),
 )]
 pub async fn system_details(
     State(state): State<AppState>,

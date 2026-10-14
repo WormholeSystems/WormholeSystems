@@ -132,9 +132,10 @@ impl AlertRow {
             filters::Match::from_db(&self.filter_match),
             serde_json::from_value(self.filters),
         ) else {
-            eprintln!(
+            tracing::warn!(
                 "alerts: hiding alert {} ({}): row does not decode",
-                self.id, self.name
+                self.id,
+                self.name
             );
             return None;
         };
@@ -467,4 +468,270 @@ pub async fn register_role(
     )
     .fetch_one(pool)
     .await?)
+}
+
+/// One line of an alert's history.
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema)]
+#[ts(export)]
+pub struct MapAlertEvent {
+    pub id: i64,
+    #[ts(optional)]
+    pub map_alert_id: Option<i64>,
+    #[ts(optional)]
+    pub alert_name: Option<String>,
+    #[ts(optional)]
+    pub actor: Option<String>,
+    pub kind: String,
+    #[ts(optional)]
+    pub detail: Option<String>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+/// A registered destination, named once and pointed at by any number of alerts.
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema)]
+#[ts(export)]
+pub struct MapWebhook {
+    pub id: i64,
+    pub name: String,
+    /// Enough of the URL to tell two destinations apart, never enough to use one: the URL is
+    /// a bearer token for somebody's channel, and every manager reads this list.
+    pub summary: String,
+    /// How many alerts would stop working if this were deleted.
+    pub alert_count: i64,
+}
+
+/// A registered role, so alerts ping "Scouts" rather than 1189734502938472.
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema)]
+#[ts(export)]
+pub struct MapWebhookRole {
+    pub id: i64,
+    pub name: String,
+    pub discord_role_id: String,
+}
+
+fn webhook_summary(url: &str) -> String {
+    let rest = url
+        .trim_start_matches("https://")
+        .trim_start_matches("http://");
+    let host = rest.split('/').next().unwrap_or(rest);
+    // The id is stable and public-ish; the token after it is the secret.
+    let id = rest
+        .split('/')
+        .nth(3)
+        .filter(|part| !part.is_empty() && part.chars().all(|c| c.is_ascii_digit()));
+    match id {
+        Some(id) => format!("{host}/…/{id}"),
+        None => host.to_string(),
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ts_rs::TS, utoipa::ToSchema)]
+#[ts(export)]
+pub struct SaveWebhook {
+    pub name: String,
+    /// Write-only. Absent on an update keeps the stored one.
+    #[serde(default)]
+    #[ts(optional)]
+    pub url: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ts_rs::TS, utoipa::ToSchema)]
+#[ts(export)]
+pub struct SaveRole {
+    pub name: String,
+    pub discord_role_id: String,
+}
+
+/// The map's destinations, each with how many alerts point at it.
+pub async fn list_webhooks(pool: &PgPool, map_id: i64) -> Result<Vec<MapWebhook>> {
+    let rows = sqlx::query!(
+        r#"select w.id, w.name, w.url,
+                  (select count(*) from map_alerts a where a.map_webhook_id = w.id) as "alert_count!"
+           from map_webhooks w where w.map_id = $1 order by w.name"#,
+        map_id,
+    )
+    .fetch_all(pool)
+    .await?;
+    Ok(rows
+        .into_iter()
+        .map(|row| MapWebhook {
+            id: row.id,
+            name: row.name,
+            summary: webhook_summary(&row.url),
+            alert_count: row.alert_count,
+        })
+        .collect())
+}
+
+/// Register a destination, or point an existing name at a new URL.
+pub async fn create_webhook(
+    pool: &PgPool,
+    map_id: i64,
+    user_id: i64,
+    body: &SaveWebhook,
+) -> Result<MapWebhook> {
+    let name = body.name.trim();
+    if name.is_empty() {
+        return Err(MapError::Validation("give the destination a name".into()));
+    }
+    let Some(url) = body.url.as_deref().map(str::trim).filter(|u| !u.is_empty()) else {
+        return Err(MapError::Validation(
+            "paste the channel's webhook URL".into(),
+        ));
+    };
+    if !url.starts_with("https://discord.com/api/webhooks/") {
+        return Err(MapError::Validation(
+            "that is not a Discord webhook URL".into(),
+        ));
+    }
+    let id = sqlx::query_scalar!(
+        "insert into map_webhooks (map_id, name, url) values ($1, $2, $3)
+         on conflict (map_id, name) do update set url = excluded.url, updated_at = now()
+         returning id",
+        map_id,
+        name,
+        url,
+    )
+    .fetch_one(pool)
+    .await?;
+    crate::alerts::log(pool, None, map_id, Some(user_id), "destination", Some(name)).await;
+    Ok(MapWebhook {
+        id,
+        name: name.to_string(),
+        summary: webhook_summary(url),
+        alert_count: 0,
+    })
+}
+
+/// Delete a destination. Alerts pointing at it go with it, rather than staying enabled
+/// with nowhere to post.
+pub async fn delete_webhook(
+    pool: &PgPool,
+    map_id: i64,
+    webhook_id: i64,
+    user_id: i64,
+) -> Result<()> {
+    let name = sqlx::query_scalar!(
+        "delete from map_webhooks where id = $1 and map_id = $2 returning name",
+        webhook_id,
+        map_id,
+    )
+    .fetch_optional(pool)
+    .await?
+    .ok_or(MapError::NotFound)?;
+    crate::alerts::log(
+        pool,
+        None,
+        map_id,
+        Some(user_id),
+        "destination_deleted",
+        Some(&name),
+    )
+    .await;
+    Ok(())
+}
+
+/// The map's named Discord roles.
+pub async fn list_roles(pool: &PgPool, map_id: i64) -> Result<Vec<MapWebhookRole>> {
+    let rows = sqlx::query!(
+        "select id, name, discord_role_id from map_webhook_roles
+         where map_id = $1 order by name",
+        map_id,
+    )
+    .fetch_all(pool)
+    .await?;
+    Ok(rows
+        .into_iter()
+        .map(|row| MapWebhookRole {
+            id: row.id,
+            name: row.name,
+            discord_role_id: row.discord_role_id,
+        })
+        .collect())
+}
+
+/// Name a role so alerts can ping it.
+pub async fn create_role(pool: &PgPool, map_id: i64, body: &SaveRole) -> Result<MapWebhookRole> {
+    let name = body.name.trim();
+    let role_id = body.discord_role_id.trim();
+    if name.is_empty() {
+        return Err(MapError::Validation("give the role a name".into()));
+    }
+    // Discord ids are snowflakes: decimal, and long. Anything else is a copy-paste slip.
+    if role_id.len() < 5 || !role_id.chars().all(|c| c.is_ascii_digit()) {
+        return Err(MapError::Validation(
+            "a Discord role id is a long number: right-click the role with developer mode on"
+                .into(),
+        ));
+    }
+    let id = register_role(pool, map_id, name, role_id).await?;
+    Ok(MapWebhookRole {
+        id,
+        name: name.to_string(),
+        discord_role_id: role_id.to_string(),
+    })
+}
+
+pub async fn delete_role(pool: &PgPool, map_id: i64, role_id: i64) -> Result<()> {
+    let deleted = sqlx::query!(
+        "delete from map_webhook_roles where id = $1 and map_id = $2",
+        role_id,
+        map_id,
+    )
+    .execute(pool)
+    .await?;
+    if deleted.rows_affected() == 0 {
+        return Err(MapError::NotFound);
+    }
+    Ok(())
+}
+
+/// The newest lines of the map's alert audit trail, 50 unless asked for more (at most 200).
+pub async fn list_events(
+    pool: &PgPool,
+    map_id: i64,
+    limit: Option<i64>,
+) -> Result<Vec<MapAlertEvent>> {
+    let limit = limit.unwrap_or(50).clamp(1, 200);
+    let rows = sqlx::query!(
+        r#"select e.id, e.map_alert_id, a.name as "alert_name?", e.kind, e.detail, e.created_at,
+                  (select c.name from characters c
+                    where c.user_id = e.actor_user_id
+                    order by c.id limit 1) as "actor?"
+           from map_alert_events e
+           left join map_alerts a on a.id = e.map_alert_id
+           where e.map_id = $1
+           order by e.id desc
+           limit $2"#,
+        map_id,
+        limit,
+    )
+    .fetch_all(pool)
+    .await?;
+    Ok(rows
+        .into_iter()
+        .map(|row| MapAlertEvent {
+            id: row.id,
+            map_alert_id: row.map_alert_id,
+            alert_name: row.alert_name,
+            actor: row.actor,
+            kind: row.kind,
+            detail: row.detail,
+            created_at: row.created_at,
+        })
+        .collect())
+}
+
+#[cfg(test)]
+mod webhook_tests {
+    use super::*;
+
+    #[test]
+    fn a_webhook_is_summarised_without_its_token() {
+        let url = "https://discord.com/api/webhooks/123456/verysecrettoken";
+        let shown = webhook_summary(url);
+        assert!(shown.contains("discord.com"));
+        assert!(shown.contains("123456"));
+        assert!(!shown.contains("verysecrettoken"));
+    }
 }

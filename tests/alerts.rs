@@ -507,13 +507,13 @@ async fn the_subscriber_hands_messages_to_the_delivery_worker(pool: PgPool) {
     proximity_alert(&pool, w.map_id, &inbox, SYS_C, None, 1).await;
     let runtime = Arc::new(Runtime::load(&pool, None).await.unwrap());
     // A hub of its own: the process-wide one carries other tests' maps.
-    let hub = wormholesystems::maps::MapHub::new();
-    alerts::start(pool.clone(), hub.clone(), runtime);
+    let hub = wormholesystems::realtime::MapHub::new();
+    alerts::start_on(pool.clone(), hub.clone(), runtime);
     // Give the subscriber a moment to subscribe before anything is published.
     tokio::time::sleep(std::time::Duration::from_millis(50)).await;
 
     let placed = common::map::place(&pool, w.owner, w.map_id, SYS_B).await;
-    hub.publish(wormholesystems::maps::MapEvent::SystemAdded {
+    hub.publish(wormholesystems::realtime::MapEvent::SystemAdded {
         map_id: w.map_id,
         map_solar_system_id: placed,
     });

@@ -8,8 +8,8 @@ use common::{SYS_A, SYS_B, SYS_C, world};
 use sqlx::PgPool;
 use wormholesystems::maps::MapSystemView;
 use wormholesystems::maps::connection::{RemoveConnection, remove_connection};
-use wormholesystems::maps::events_log::{MapIdBody, list_history, redo, undo};
 use wormholesystems::maps::ghost::{ResolveGhostSystem, resolve_ghost_system};
+use wormholesystems::maps::history::{MapIdBody, list_history, redo, undo};
 use wormholesystems::maps::map::{GetMap, get_map};
 use wormholesystems::maps::map::{UpdateMap, update_map};
 use wormholesystems::maps::signatures::{
@@ -22,8 +22,9 @@ use wormholesystems::maps::solar_system::{
     set_pinned,
 };
 use wormholesystems::maps::{
-    Actor, MapError, MapEvent, MassStatus, SignatureGroup, TimeStatus, WormholeSize,
+    Actor, MapError, MassStatus, SignatureGroup, TimeStatus, WormholeSize,
 };
+use wormholesystems::realtime::MapEvent;
 
 async fn scan(pool: &PgPool, actor: Actor, map_id: i64, system: i64, sig: &str) -> i64 {
     add_signature(
@@ -1034,7 +1035,7 @@ async fn the_setting_announces_and_records_the_nodes_it_changes(pool: PgPool) {
     let w = world(&pool).await;
     let home = place(&pool, w.owner, w.map_id, SYS_A).await;
     let sig = scan(&pool, w.owner, w.map_id, SYS_A, "ABC-123").await;
-    let mut events = wormholesystems::maps::hub().subscribe(w.map_id);
+    let mut events = wormholesystems::realtime::hub().subscribe(w.map_id);
 
     ghosting(&pool, w.owner, w.map_id).await;
     let ghost = ghost_for(&pool, w.map_id, sig).await;
@@ -1217,4 +1218,34 @@ async fn undoing_a_signature_delete_brings_its_node_back(pool: PgPool) {
         Some(view.connections[0].id),
         "and still linked to the edge it raised"
     );
+}
+
+// The command refuses an edge to a ghost however it is reached, not only from the API: what
+// is beyond an unmapped hole is the one thing nobody knows yet.
+#[sqlx::test]
+async fn nothing_connects_to_a_ghost_but_the_scan_that_raised_it(pool: PgPool) {
+    use wormholesystems::maps::ConnectionType;
+    use wormholesystems::maps::connection::AddConnection;
+
+    let w = world(&pool).await;
+    place(&pool, w.owner, w.map_id, SYS_A).await;
+    let other = place(&pool, w.owner, w.map_id, SYS_B).await;
+    ghosting(&pool, w.owner, w.map_id).await;
+    let sig = scan(&pool, w.owner, w.map_id, SYS_A, "ABC-123").await;
+    let ghost = ghost_for(&pool, w.map_id, sig).await;
+
+    let err = wormholesystems::maps::run(
+        &pool,
+        w.owner,
+        AddConnection {
+            map_id: w.map_id,
+            from_system: other,
+            to_system: ghost,
+            kind: ConnectionType::Wormhole,
+            size: None,
+        },
+    )
+    .await
+    .unwrap_err();
+    assert!(matches!(err, MapError::Validation(_)), "{err:?}");
 }

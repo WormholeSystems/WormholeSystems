@@ -4,6 +4,8 @@
 
 use std::path::{Path, PathBuf};
 
+use sqlx::PgPool;
+
 use super::MapError;
 
 /// The largest image accepted. Bigger than any sensible backdrop; the limit is there so a
@@ -136,6 +138,88 @@ impl BackgroundStore {
             Err(e) => Err(io_error(e)),
         }
     }
+
+    /// This user's image on this map, if they have one and it is still on disk.
+    pub async fn image_for(
+        &self,
+        pool: &PgPool,
+        map_id: i64,
+        user_id: i64,
+    ) -> super::Result<Option<(ImageFormat, Vec<u8>)>> {
+        let path = sqlx::query_scalar!(
+            "select background_image_path from map_user_settings
+             where map_id = $1 and user_id = $2",
+            map_id,
+            user_id,
+        )
+        .fetch_optional(pool)
+        .await?
+        .flatten();
+        match path {
+            Some(path) => self.read(&path).await,
+            None => Ok(None),
+        }
+    }
+
+    /// Make `bytes` this user's image on this map. The new file is written before the row
+    /// points at it, and the old one removed only after, so a failure halfway leaves a
+    /// stray file rather than a row pointing at nothing.
+    pub async fn replace(
+        &self,
+        pool: &PgPool,
+        map_id: i64,
+        user_id: i64,
+        bytes: &[u8],
+    ) -> super::Result<()> {
+        let stored = self.save(map_id, user_id, bytes).await?;
+        let previous = point_at(pool, map_id, user_id, Some(&stored)).await?;
+        if let Some(old) = previous.filter(|old| old != &stored) {
+            self.remove(&old).await?;
+        }
+        Ok(())
+    }
+
+    /// Take this user's image off this map, file and all.
+    pub async fn clear(&self, pool: &PgPool, map_id: i64, user_id: i64) -> super::Result<()> {
+        if let Some(old) = point_at(pool, map_id, user_id, None).await? {
+            self.remove(&old).await?;
+        }
+        Ok(())
+    }
+}
+
+/// Point the settings row at `path` (or at nothing) and hand back what it pointed at
+/// before, so the caller can clear the old file once the row no longer refers to it.
+async fn point_at(
+    pool: &PgPool,
+    map_id: i64,
+    user_id: i64,
+    path: Option<&str>,
+) -> super::Result<Option<String>> {
+    let mut tx = pool.begin().await?;
+    let previous = sqlx::query_scalar!(
+        "select background_image_path from map_user_settings
+         where map_id = $1 and user_id = $2 for update",
+        map_id,
+        user_id,
+    )
+    .fetch_optional(&mut *tx)
+    .await?
+    .flatten();
+    sqlx::query!(
+        "insert into map_user_settings (map_id, user_id, background_image_path)
+         values ($1, $2, $3)
+         on conflict (map_id, user_id) do update set
+             background_image_path = $3,
+             updated_at = now()",
+        map_id,
+        user_id,
+        path,
+    )
+    .execute(&mut *tx)
+    .await?;
+    tx.commit().await?;
+    Ok(previous)
 }
 
 fn format_of(relative: &str) -> Option<ImageFormat> {

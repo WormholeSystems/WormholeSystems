@@ -1,4 +1,10 @@
 //! Application configuration, read from the environment (and a `.env` file in dev).
+//!
+//! Every variable the server reads is read here, once, at startup. The subcommands that
+//! need only a part of it (a database, the contact for outbound requests) read just that
+//! section, through the same function the full [`Config`] uses.
+
+use std::time::Duration;
 
 use crate::allowlist::AffiliationAllowlist;
 use crate::announcement::{Announcement, AnnouncementVars};
@@ -15,11 +21,10 @@ pub enum ConfigError {
 
 #[derive(Debug, Clone)]
 pub struct Config {
-    pub database_url: String,
-    /// Who is running this install, for the user agent every outbound request carries.
-    /// Required: see [`crate::user_agent`].
-    pub contact_name: String,
-    pub contact_email: String,
+    pub database: DatabaseConfig,
+    /// Where the HTTP server listens. Loopback by default; the container sets `0.0.0.0`.
+    pub listen_addr: String,
+    pub contact: Contact,
     pub sso: SsoConfig,
     pub grid: GridConfig,
     /// Where ESI lives. Overridable so the e2e suite can point the whole stack at a stub
@@ -37,6 +42,53 @@ pub struct Config {
     pub map_creators: AffiliationAllowlist,
     /// The banner above every page, when the operator set one.
     pub announcement: Option<Announcement>,
+    pub polling: PollingConfig,
+    pub killmails: KillmailConfig,
+    /// Where EVE Scout's public signatures are read from. Overridable so the e2e suite can
+    /// serve a fixed set: the real list is scouted by hand and changes under the tests.
+    pub eve_scout_url: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct DatabaseConfig {
+    pub url: String,
+    /// How many connections the pool holds open at most.
+    pub max_connections: u32,
+}
+
+/// Who is running this install, for the user agent every outbound request carries.
+/// Required: see [`crate::user_agent`].
+#[derive(Debug, Clone)]
+pub struct Contact {
+    pub name: String,
+    pub email: String,
+}
+
+/// How often the ESI mirrors ask. The e2e stack tightens both so a test does not wait a
+/// minute for a status change.
+#[derive(Debug, Clone)]
+pub struct PollingConfig {
+    pub server_status: Duration,
+    pub skyhooks: Duration,
+}
+
+/// The zKillboard feed and the archive backfill that goes with it.
+#[derive(Debug, Clone)]
+pub struct KillmailConfig {
+    /// Off unless `ZKB_LISTEN=1`: the ingest, the name resolver, the backfill and the daily
+    /// analysis all hang off it.
+    pub listen: bool,
+    pub base_url: String,
+    /// How much history a boot fills in from EVE Ref's archives; 0 turns it off.
+    pub backfill_days: u32,
+}
+
+/// What `discord-register` needs, which is not what the running bot needs: the application
+/// id is only used to upload the commands.
+#[derive(Debug, Clone)]
+pub struct DiscordRegistration {
+    pub application_id: String,
+    pub bot_token: String,
 }
 
 /// What the Discord half of the integration needs.
@@ -60,9 +112,9 @@ impl Config {
         dotenvy::dotenv().ok();
 
         Ok(Config {
-            database_url: required("DATABASE_URL")?,
-            contact_name: required(crate::user_agent::NAME_VAR)?,
-            contact_email: required(crate::user_agent::EMAIL_VAR)?,
+            database: DatabaseConfig::from_env()?,
+            listen_addr: nonempty("LISTEN_ADDR").unwrap_or_else(|| "127.0.0.1:3000".to_string()),
+            contact: Contact::from_env()?,
             sso: SsoConfig {
                 client_id: required("EVE_CLIENT_ID")?,
                 client_secret: required("EVE_CLIENT_SECRET")?,
@@ -79,8 +131,74 @@ impl Config {
             allowed_logins: allowlist("ALLOWED_AFFILIATION_IDS")?,
             map_creators: allowlist("MAP_CREATOR_AFFILIATION_IDS")?,
             announcement: announcement_from_env(),
+            polling: PollingConfig {
+                server_status: seconds("SERVER_STATUS_POLL_SECS", 60),
+                skyhooks: seconds("SKYHOOK_POLL_SECS", 5 * 60),
+            },
+            killmails: KillmailConfig {
+                listen: std::env::var("ZKB_LISTEN").as_deref() == Ok("1"),
+                base_url: nonempty("ZKB_BASE_URL")
+                    .unwrap_or_else(|| crate::killmails::ZKB_BASE_URL.to_string()),
+                backfill_days: std::env::var("KILLMAIL_BACKFILL_DAYS")
+                    .ok()
+                    .and_then(|d| d.parse().ok())
+                    .unwrap_or(crate::killmails::BACKFILL_DAYS),
+            },
+            eve_scout_url: nonempty("EVE_SCOUT_URL")
+                .unwrap_or_else(|| "https://api.eve-scout.com/v2/public/signatures".to_string()),
         })
     }
+}
+
+impl DatabaseConfig {
+    /// The default is not sqlx's five: the API, every open websocket, the tracking poller,
+    /// killmail ingest and the alert lifecycle all draw on one pool, and the poller alone
+    /// asks for more than five at a time, so five means requests queue behind background
+    /// work rather than being served.
+    pub const DEFAULT_MAX_CONNECTIONS: u32 = 20;
+
+    pub fn from_env() -> Result<DatabaseConfig, ConfigError> {
+        dotenvy::dotenv().ok();
+        Ok(DatabaseConfig {
+            url: required("DATABASE_URL")?,
+            max_connections: std::env::var("DATABASE_MAX_CONNECTIONS")
+                .ok()
+                .and_then(|v| v.parse().ok())
+                .unwrap_or(Self::DEFAULT_MAX_CONNECTIONS),
+        })
+    }
+}
+
+impl Contact {
+    pub const NAME_VAR: &str = "WS_CONTACT_NAME";
+    pub const EMAIL_VAR: &str = "WS_CONTACT_EMAIL";
+
+    pub fn from_env() -> Result<Contact, ConfigError> {
+        dotenvy::dotenv().ok();
+        Ok(Contact {
+            name: required(Self::NAME_VAR)?,
+            email: required(Self::EMAIL_VAR)?,
+        })
+    }
+}
+
+impl DiscordRegistration {
+    pub fn from_env() -> Result<DiscordRegistration, ConfigError> {
+        dotenvy::dotenv().ok();
+        Ok(DiscordRegistration {
+            application_id: required("DISCORD_APPLICATION_ID")?,
+            bot_token: required("DISCORD_BOT_TOKEN")?,
+        })
+    }
+}
+
+/// A period in whole seconds, at least one.
+fn seconds(key: &str, default: u64) -> Duration {
+    let secs = std::env::var(key)
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(default);
+    Duration::from_secs(secs.max(1))
 }
 
 fn discord_from_env() -> Option<DiscordConfig> {

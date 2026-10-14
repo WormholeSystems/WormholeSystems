@@ -4,7 +4,7 @@ mod common;
 
 use common::{SYS_A, SYS_B, SYS_C, member_with_role, world};
 use sqlx::PgPool;
-use wormholesystems::maps::events_log::{MapIdBody, undo};
+use wormholesystems::maps::history::{MapIdBody, undo};
 use wormholesystems::maps::ignored::{
     AddIgnoredSystem, ClearIgnoredSystems, RemoveIgnoredSystem, add_ignored_system,
     clear_ignored_systems, ignored_ids, list_ignored_systems, remove_ignored_system,

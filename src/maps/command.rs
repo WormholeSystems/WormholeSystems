@@ -4,7 +4,7 @@
 //! transaction, authorizes, applies, and records a `map_events` row before committing. The
 //! `apply_*` functions stay `pub(super)` so a mutation without an audit entry is
 //! unrepresentable outside this module. An [`Effect`]'s `inverse` is itself a
-//! `MapCommand`, so undo is just another execution (see [`super::events_log`]) and redo is
+//! `MapCommand`, so undo is just another execution (see [`super::history`]) and redo is
 //! undoing the undo row.
 
 use serde::{Deserialize, Serialize};
@@ -17,8 +17,8 @@ use super::connection::{
 };
 use super::error::{MapError, Result};
 use super::eve_scout::AddEveScoutConnections;
-use super::events_log;
 use super::ghost::{AddGhostSystem, ResolveGhostSystem, RestoreGhostSystem};
+use super::history;
 use super::ignored::{AddIgnoredSystem, ClearIgnoredSystems, RemoveIgnoredSystem};
 use super::jumps::{
     AddConnectionJump, RemoveConnectionJump, RestoreConnectionJump, UpdateConnectionJump,
@@ -293,7 +293,7 @@ pub(super) struct Effect {
     /// What open clients should refetch. Each `apply_*` declares its own, and [`execute_as`]
     /// publishes them after commit: a handler can no longer forget one, and a command
     /// applied from the background or as an undo step announces itself the same way.
-    pub events: Vec<super::MapEvent>,
+    pub events: Vec<crate::realtime::MapEvent>,
 }
 
 impl Effect {
@@ -318,12 +318,15 @@ impl Effect {
         self
     }
 
-    pub(super) fn emit(mut self, event: super::MapEvent) -> Self {
+    pub(super) fn emit(mut self, event: crate::realtime::MapEvent) -> Self {
         self.events.push(event);
         self
     }
 
-    pub(super) fn emit_all(mut self, events: impl IntoIterator<Item = super::MapEvent>) -> Self {
+    pub(super) fn emit_all(
+        mut self,
+        events: impl IntoIterator<Item = crate::realtime::MapEvent>,
+    ) -> Self {
         self.events.extend(events);
         self
     }
@@ -416,7 +419,10 @@ pub(super) struct MapTx {
     tx: Tx<'static>,
     map_id: i64,
     actor: EventActor,
-    events: Vec<super::MapEvent>,
+    /// The role [`MapTx::begin`] found, for the writes that also need it as a ceiling.
+    /// `None` for a background task, which is not checked.
+    role: Option<Role>,
+    events: Vec<crate::realtime::MapEvent>,
 }
 
 impl MapTx {
@@ -429,10 +435,20 @@ impl MapTx {
         role: Role,
     ) -> Result<Self> {
         let mut tx = pool.begin().await?;
-        if let EventActor::Character(character) = actor {
-            require_role_tx(&mut tx, map_id, character.user_id, role).await?;
-        }
-        Ok(Self::adopt(tx, map_id, actor))
+        let found = match actor {
+            EventActor::Character(character) => {
+                Some(require_role_tx(&mut tx, map_id, character.user_id, role).await?)
+            }
+            EventActor::System => None,
+        };
+        let mut map_tx = Self::adopt(tx, map_id, actor);
+        map_tx.role = found;
+        Ok(map_tx)
+    }
+
+    /// The actor's role on the map, as checked when the transaction opened.
+    pub(super) fn role(&self) -> Option<Role> {
+        self.role
     }
 
     /// Carry on in a transaction that created the map itself. Its creator owns it, so
@@ -442,12 +458,13 @@ impl MapTx {
             tx,
             map_id,
             actor,
+            role: None,
             events: Vec::new(),
         }
     }
 
     /// Queue an event to publish once the write commits.
-    pub(super) fn emit(&mut self, event: super::MapEvent) {
+    pub(super) fn emit(&mut self, event: crate::realtime::MapEvent) {
         self.events.push(event);
     }
 
@@ -462,7 +479,7 @@ impl MapTx {
 
     /// Write the history row for an effect and queue its events. Hands back its output.
     pub(super) async fn record(&mut self, effect: Effect) -> Result<CommandOutput> {
-        events_log::record(&mut self.tx, self.map_id, self.actor, &effect).await?;
+        history::record(&mut self.tx, self.map_id, self.actor, &effect).await?;
         self.events.extend(effect.events);
         Ok(effect.output)
     }
@@ -478,7 +495,7 @@ impl MapTx {
     /// Commit, then announce.
     pub(super) async fn commit(self) -> Result<()> {
         self.tx.commit().await?;
-        let hub = super::hub();
+        let hub = crate::realtime::hub();
         for event in self.events {
             hub.publish(event);
         }

@@ -6,7 +6,7 @@ mod common;
 use common::map::place_at;
 use common::{SYS_A, SYS_B, SYS_C, member_with_role, world};
 use sqlx::PgPool;
-use wormholesystems::maps::events_log::{MapIdBody, list_history, redo, undo};
+use wormholesystems::maps::history::{MapIdBody, list_history, redo, undo};
 use wormholesystems::maps::map::{GetMap, get_map};
 use wormholesystems::maps::signatures::{AddSignature, add_signature, list_signatures};
 use wormholesystems::maps::tracking::{TrackJump, track_jump};

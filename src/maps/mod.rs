@@ -11,37 +11,28 @@ pub mod command;
 pub mod connection;
 pub mod error;
 pub mod eve_scout;
-pub mod events;
-pub mod events_log;
 pub mod ghost;
+pub mod history;
 pub mod ignored;
 pub mod jumps;
 pub mod map;
+pub mod presence;
 pub mod restore;
+pub mod search;
 pub mod signatures;
 pub mod solar_system;
 mod store;
 pub mod tracking;
 pub mod transfer;
+pub mod user_settings;
 pub mod view;
 pub mod watchlist;
 
 pub use command::{Command, CommandOutput, EventActor, MapCommand, execute, run};
 
-/// The process-wide event hub, like [`GRID`] below: global so a committed command can
-/// announce itself without every caller threading the hub through. `main` clones this one
-/// into the app state and the background loops; tests publish into it with no subscribers,
-/// which is a no-op.
-static HUB: std::sync::OnceLock<events::MapHub> = std::sync::OnceLock::new();
-
-pub fn hub() -> &'static events::MapHub {
-    HUB.get_or_init(events::MapHub::default)
-}
 pub use background::{BackgroundMode, BackgroundStore};
 pub use connection::MapConnection;
 pub use error::{MapError, Result};
-pub use events::MapEvent;
-pub use events::MapHub;
 pub use map::Map;
 pub use signatures::Signature;
 pub use solar_system::MapSolarSystem;

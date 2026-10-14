@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select background_image_path from map_user_settings where map_id = $1 and user_id = $2",
+  "query": "select background_image_path from map_user_settings\n             where map_id = $1 and user_id = $2",
   "describe": {
     "columns": [
       {
@@ -25,5 +25,5 @@
       true
     ]
   },
-  "hash": "078e264f26c65d083f1abab5742ea1d8f3c75c9ae1a50ae9eea392f3bfd77a1c"
+  "hash": "49824788f6f23afadd8f954af31caff78babb3287750d822ce3b158b1b805e4f"
 }

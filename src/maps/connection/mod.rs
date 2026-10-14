@@ -13,7 +13,8 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use super::{ConnectionType, MapEvent, MassStatus, TimeStatus, WormholeSize};
+use super::{ConnectionType, MassStatus, TimeStatus, WormholeSize};
+use crate::realtime::MapEvent;
 
 use sqlx::PgPool;
 
@@ -154,9 +155,14 @@ pub async fn add_connection(
     actor: Actor,
     cmd: AddConnection,
 ) -> Result<MapConnection> {
-    // Drawing an edge out of an unmapped hole claims the system on its far side leads
-    // somewhere, which is the one thing nobody knows yet. Checked here rather than in the
-    // apply, which raising a ghost goes through to make the hole's own edge.
+    run(pool, actor, cmd).await
+}
+
+/// The command as a pilot draws it. Drawing an edge out of an unmapped hole claims the
+/// system on its far side leads somewhere, which is the one thing nobody knows yet, so
+/// neither end may be a ghost. Raising a ghost makes the hole's own edge through
+/// [`connect`], which is why the check is here and not there.
+pub(super) async fn apply_add_connection(tx: &mut Tx<'_>, cmd: AddConnection) -> Result<Effect> {
     let ghosts = sqlx::query_scalar!(
         "select count(*) from map_solar_systems
          where map_id = $1 and (id = $2 or id = $3) and solar_system_id is null",
@@ -164,19 +170,20 @@ pub async fn add_connection(
         cmd.from_system,
         cmd.to_system,
     )
-    .fetch_one(pool)
+    .fetch_one(&mut **tx)
     .await?
     .unwrap_or(0);
     if ghosts > 0 {
         return Err(MapError::Validation(
-            "nobody has been through that hole yet, so nothing can be connected to it".into(),
+            "assign a system to that hole before connecting anything to it".into(),
         ));
     }
-
-    run(pool, actor, cmd).await
+    connect(tx, cmd).await
 }
 
-pub(super) async fn apply_add_connection(tx: &mut Tx<'_>, cmd: AddConnection) -> Result<Effect> {
+/// Insert the connection, for the writes that place an edge as part of something larger:
+/// a raised ghost, an observed transit, an EVE Scout hole.
+pub(super) async fn connect(tx: &mut Tx<'_>, cmd: AddConnection) -> Result<Effect> {
     cmd.validate()?;
 
     let on_map = sqlx::query_scalar!(

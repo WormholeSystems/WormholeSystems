@@ -18,7 +18,8 @@ use super::connection::{AddConnection, SetConnectionStatus};
 use super::error::{MapError, Result};
 use super::solar_system::{MapSolarSystem, SetAlias};
 use super::store::placements::{self, NewPlacement, PlacementRow};
-use super::{Actor, ConnectionType, MapEvent, MassStatus, TimeStatus, WormholeSize};
+use super::{Actor, ConnectionType, MassStatus, TimeStatus, WormholeSize};
+use crate::realtime::MapEvent;
 
 /// Node width in world px, and the clear space kept between nodes, both mirroring
 /// `frontend/src/lib/map/helpers.ts` so a server-placed node lands on the same lattice.
@@ -238,17 +239,6 @@ pub struct AddGhostSystem {
     pub size: Option<WormholeSize>,
 }
 
-/// Put the far side of a wormhole signature on the map, before anyone knows what it is.
-/// Member+. Reached through the signature writes ([`ghost_unmapped_holes`]) rather than
-/// directly: a hole exists because a scan says so.
-pub async fn add_ghost_system(
-    pool: &PgPool,
-    actor: Actor,
-    cmd: AddGhostSystem,
-) -> Result<MapSolarSystem> {
-    run(pool, actor, cmd).await
-}
-
 pub(super) async fn apply_add_ghost_system(tx: &mut Tx<'_>, cmd: AddGhostSystem) -> Result<Effect> {
     let source = sqlx::query!(
         "select solar_system_id from map_solar_systems where id = $1 and map_id = $2",
@@ -306,7 +296,7 @@ pub(super) async fn apply_add_ghost_system(tx: &mut Tx<'_>, cmd: AddGhostSystem)
     )
     .await?;
 
-    let effect = super::connection::apply_add_connection(
+    let effect = super::connection::connect(
         tx,
         AddConnection {
             map_id: cmd.map_id,

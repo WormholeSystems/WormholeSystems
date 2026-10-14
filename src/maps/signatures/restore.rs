@@ -3,11 +3,11 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::maps::MapEvent;
 use crate::maps::command::{CommandOutput, Effect, MapCommand, Tx};
 use crate::maps::error::Result;
 use crate::maps::store;
 use crate::maps::store::signatures::SignatureRow;
+use crate::realtime::MapEvent;
 
 use super::RemoveSignatures;
 

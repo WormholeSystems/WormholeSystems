@@ -8,7 +8,7 @@ use utoipa_axum::routes;
 
 use super::ApiResult;
 use super::extract::{Credentials, require_session_actor};
-use crate::auth::AppState;
+use crate::app::AppState;
 use crate::tokens::{CreateToken, CreatedToken, PersonalAccessToken};
 
 pub fn routes() -> OpenApiRouter<AppState> {
@@ -22,7 +22,7 @@ pub fn routes() -> OpenApiRouter<AppState> {
     get,
     path = "/api/me/tokens",
     tag = "tokens",
-    responses((status = 200, body = Vec<PersonalAccessToken>, description = "OK"), (status = 401, response = super::Unauthorized)),
+    responses((status = 200, body = Vec<PersonalAccessToken>, description = "OK"), super::AuthedErrors),
     security(("session" = [])),
 )]
 pub async fn my_tokens(
@@ -39,7 +39,7 @@ pub async fn my_tokens(
     path = "/api/me/tokens",
     tag = "tokens",
     request_body = CreateToken,
-    responses((status = 200, body = CreatedToken, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized)),
+    responses((status = 200, body = CreatedToken, description = "OK"), (status = 400, response = super::BadRequest), super::AuthedErrors),
     security(("session" = [])),
 )]
 pub async fn create_token(
@@ -59,7 +59,7 @@ pub async fn create_token(
     path = "/api/me/tokens/{id}",
     tag = "tokens",
     params(("id" = i64, Path, description = "The token")),
-    responses((status = 200, description = "Done; the body is `null`"), (status = 401, response = super::Unauthorized), (status = 404, response = super::NotFound)),
+    responses((status = 200, description = "Done; the body is `null`"), super::SharedReadErrors),
     security(("session" = [])),
 )]
 pub async fn revoke_token(

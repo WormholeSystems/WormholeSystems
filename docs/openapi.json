@@ -1292,7 +1292,6 @@
           "connections"
         ],
         "summary": "`POST /api/maps/{id}/connections/add`",
-        "description": "The ghost guard sits here, not in the command: raising a ghost creates the one connection\nan unmapped hole may have, and that goes through the same command from the inside.",
         "operationId": "add_connection",
         "parameters": [
           {
@@ -2645,7 +2644,7 @@
         "tags": [
           "search"
         ],
-        "summary": "`GET /api/maps/{id}/search?q=`: the map command palette. Matches placed systems by\nname, alias, occupier and (for members) notes, then falls back to off-map systems the\npalette can offer to add. Hits come back ranked by what matched ([`match_rank`]): a\nsystem named like the query always beats one whose intel merely mentions it. Viewer+.",
+        "summary": "`GET /api/maps/{id}/search?q=`: the map command palette. Matches placed systems by\nname, alias, occupier and (for members) notes, then falls back to off-map systems the\npalette can offer to add, ranked by what matched. Viewer+.",
         "operationId": "search_map",
         "parameters": [
           {
@@ -5666,7 +5665,7 @@
         "tags": [
           "reference"
         ],
-        "summary": "`GET /api/systems/search?q=`, search the SDE solar systems by name. Prefix matches rank\nfirst, then shorter names, then alphabetical. Returns nothing for queries under 2 chars.\nThe ranking query only picks ids; [`systems_for`] builds the rows, so search and resolve\ncannot drift apart in what they return.",
+        "summary": "`GET /api/systems/search?q=`, search the SDE solar systems by name. Prefix matches rank\nfirst, then shorter names, then alphabetical. Returns nothing for queries under 2 chars.",
         "operationId": "search_systems",
         "parameters": [
           {
@@ -6771,7 +6770,7 @@
             "format": "int64"
           },
           "mass_status": {
-            "type": "string"
+            "$ref": "#/components/schemas/MassStatus"
           },
           "max_ship_size": {
             "type": [
@@ -6795,7 +6794,7 @@
             "format": "int64"
           },
           "time_status": {
-            "type": "string"
+            "$ref": "#/components/schemas/TimeStatus"
           },
           "updated_at": {
             "type": [

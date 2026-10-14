@@ -10,8 +10,6 @@ use super::{Detail, EsiKillmail, KillmailRow, extract_detail, extract_orgs, http
 use crate::entities::EntityKind;
 use crate::esi::EsiClient;
 
-const DEFAULT_BASE: &str = "https://r2z2.zkillboard.com";
-
 #[derive(Deserialize)]
 struct R2Z2Sequence {
     sequence: i64,
@@ -45,10 +43,9 @@ const ALERT_BATCH: usize = 100;
 
 pub(super) async fn listen(
     pool: PgPool,
-    maps: crate::maps::MapHub,
     alerts: Option<std::sync::Arc<crate::alerts::Runtime>>,
+    base: String,
 ) {
-    let base = std::env::var("ZKB_BASE_URL").unwrap_or_else(|_| DEFAULT_BASE.to_string());
     let http = http_client();
     let alerts = alerts.map(|runtime| {
         let (tx, rx) = mpsc::channel(ALERT_QUEUE);
@@ -66,20 +63,20 @@ pub(super) async fn listen(
                     seq
                 }
                 Err(err) => {
-                    eprintln!("killmail ingest error: {err}");
+                    tracing::error!("killmail ingest error: {err}");
                     tokio::time::sleep(Duration::from_secs(30)).await;
                     continue;
                 }
             },
         };
-        match ingest(&pool, &http, &base, &maps, alerts.as_ref(), last + 1).await {
+        match ingest(&pool, &http, &base, alerts.as_ref(), last + 1).await {
             Ok(true) => {
                 cursor = Some(last + 1);
                 tokio::time::sleep(PACE).await;
             }
             Ok(false) => tokio::time::sleep(IDLE).await,
             Err(err) => {
-                eprintln!("killmail ingest error: {err}");
+                tracing::error!("killmail ingest error: {err}");
                 tokio::time::sleep(Duration::from_secs(30)).await;
             }
         }
@@ -119,7 +116,6 @@ async fn ingest(
     pool: &PgPool,
     http: &reqwest::Client,
     base: &str,
-    maps: &crate::maps::MapHub,
     alerts: Option<&mpsc::Sender<Pending>>,
     next: i64,
 ) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
@@ -149,7 +145,7 @@ async fn ingest(
             detail: extract_detail(&km.esi, &km.zkb),
         };
         super::insert_rows(pool, std::slice::from_ref(&row), true).await?;
-        announce(pool, maps, solar_system_id).await;
+        announce(pool, solar_system_id).await;
         if let Some(alerts) = alerts {
             offer(alerts, row);
         }
@@ -175,7 +171,7 @@ fn offer(alerts: &mpsc::Sender<Pending>, row: KillmailRow) {
         detail: row.detail,
     };
     if let Err(mpsc::error::TrySendError::Full(pending)) = alerts.try_send(pending) {
-        eprintln!(
+        tracing::warn!(
             "killmail alerts: queue full, no alerts for killmail {}",
             pending.killmail_id
         );
@@ -255,7 +251,7 @@ async fn kill_for(
 
 /// Tell every map holding this system that something died in it. The event carries no
 /// payload: what a client shows depends on its own filter, so it refetches.
-async fn announce(pool: &PgPool, maps: &crate::maps::MapHub, solar_system_id: i64) {
+async fn announce(pool: &PgPool, solar_system_id: i64) {
     let Ok(map_ids) = sqlx::query_scalar!(
         "select distinct map_id from map_solar_systems where solar_system_id = $1",
         solar_system_id,
@@ -266,7 +262,7 @@ async fn announce(pool: &PgPool, maps: &crate::maps::MapHub, solar_system_id: i6
         return;
     };
     for map_id in map_ids {
-        maps.publish(crate::maps::MapEvent::KillmailReceived { map_id });
+        crate::realtime::hub().publish(crate::realtime::MapEvent::KillmailReceived { map_id });
     }
 }
 
@@ -293,12 +289,15 @@ const NAME_RETRIES: u32 = 3;
 /// its last week of kills should read as names right then. The same names also serve the
 /// killmail alerts (which reach beyond the chain), the access search, and the threat
 /// analysis. With the bulk endpoint that is a call or two a minute, so not worth narrowing.
-pub(super) async fn resolve_loop(pool: PgPool, esi: EsiClient) {
-    let mut resolver = NameResolver::default();
-    loop {
-        resolver.pass(&pool, &esi).await;
-        tokio::time::sleep(Duration::from_secs(60)).await;
-    }
+pub(super) fn start_resolver(pool: PgPool, esi: EsiClient) {
+    let resolver = std::sync::Arc::new(tokio::sync::Mutex::new(NameResolver::default()));
+    crate::background::spawn_every("killmail names", Duration::from_secs(60), move || {
+        let (pool, esi, resolver) = (pool.clone(), esi.clone(), resolver.clone());
+        async move {
+            resolver.lock().await.pass(&pool, &esi).await;
+            Ok::<_, std::convert::Infallible>(())
+        }
+    });
 }
 
 /// Where the name resolver has got to: the last `ingest_seq` it is done with, read from
@@ -318,7 +317,7 @@ impl NameResolver {
                 .fetch_optional(pool)
                 .await
                 .map(|seq| seq.unwrap_or(0))
-                .inspect_err(|err| eprintln!("killmail names: {err}"))
+                .inspect_err(|err| tracing::warn!("killmail names: {err}"))
                 .ok();
         }
         if let Some(from) = self.mark {
@@ -352,7 +351,7 @@ async fn resolve_new(pool: &PgPool, esi: &EsiClient, from: i64, held: &mut u32) 
         {
             Ok(rows) => rows,
             Err(err) => {
-                eprintln!("killmail names: {err}");
+                tracing::warn!("killmail names: {err}");
                 return mark;
             }
         };
@@ -389,7 +388,9 @@ async fn resolve_new(pool: &PgPool, esi: &EsiClient, from: i64, held: &mut u32) 
             return mark;
         }
         if failed > 0 {
-            eprintln!("killmail names: giving up on {failed} names after {NAME_RETRIES} tries");
+            tracing::warn!(
+                "killmail names: giving up on {failed} names after {NAME_RETRIES} tries"
+            );
         }
         *held = 0;
         mark = last;
@@ -397,7 +398,7 @@ async fn resolve_new(pool: &PgPool, esi: &EsiClient, from: i64, held: &mut u32) 
             .execute(pool)
             .await
         {
-            eprintln!("killmail names: {err}");
+            tracing::warn!("killmail names: {err}");
         }
         if !full {
             return mark;

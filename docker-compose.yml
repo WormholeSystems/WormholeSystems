@@ -51,10 +51,11 @@ services:
       # not lose them.
       - uploads:/app/data/uploads
     # The one place that says what "up" means for the API; everything that waits on it
-    # (`wsctl`, `docker compose up --wait`) asks Docker rather than the URL. /api/instance
-    # needs no database, so this says the server is answering, not that every job is.
+    # (`wsctl`, `docker compose up --wait`) asks Docker rather than the URL. /healthz
+    # answers 200 while the server is up and its database answers, so this says requests
+    # can be served, not that every background job is well.
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:3000/api/instance"]
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:3000/healthz"]
       interval: 15s
       timeout: 5s
       retries: 3

@@ -27,6 +27,9 @@ use crate::esi::EsiClient;
 
 const RETENTION_DAYS: i32 = 730;
 
+/// zKillboard's own R2Z2 stream; `ZKB_BASE_URL` points elsewhere for a mirror or a stub.
+pub const ZKB_BASE_URL: &str = "https://r2z2.zkillboard.com";
+
 /// The compact per-killmail org record persisted in `killmails.orgs`.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, Deserialize)]
 pub struct Org {
@@ -241,27 +244,27 @@ fn http_client() -> reqwest::Client {
     crate::user_agent::client()
 }
 
-/// Spawn the ingest, backfill and analysis loops (gated by `ZKB_LISTEN=1`).
-/// `KILLMAIL_BACKFILL_DAYS` overrides how much history a boot fills in; 0 turns it off.
+/// Spawn the ingest, backfill and analysis loops, when the config turns them on.
 pub fn start(
     pool: PgPool,
     esi: EsiClient,
-    maps: crate::maps::MapHub,
     alerts: Option<std::sync::Arc<crate::alerts::Runtime>>,
+    config: &crate::config::KillmailConfig,
 ) {
-    if std::env::var("ZKB_LISTEN").as_deref() != Ok("1") {
+    if !config.listen {
         return;
     }
-    let days = std::env::var("KILLMAIL_BACKFILL_DAYS")
-        .ok()
-        .and_then(|d| d.parse().ok())
-        .unwrap_or(BACKFILL_DAYS);
-    tokio::spawn(stream::listen(pool.clone(), maps, alerts));
-    tokio::spawn(stream::resolve_loop(pool.clone(), esi.clone()));
+    let days = config.backfill_days;
+    tokio::spawn(stream::listen(
+        pool.clone(),
+        alerts,
+        config.base_url.clone(),
+    ));
+    stream::start_resolver(pool.clone(), esi.clone());
     if days > 0 {
         tokio::spawn(archive::backfill_loop(pool.clone(), esi.clone(), days));
     }
-    tokio::spawn(analysis::analysis_loop(pool, esi));
+    analysis::start(pool, esi);
 }
 
 #[cfg(test)]

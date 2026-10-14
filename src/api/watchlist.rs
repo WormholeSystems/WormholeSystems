@@ -8,7 +8,7 @@ use utoipa_axum::routes;
 
 use super::ApiResult;
 use super::extract::{ShareQuery, acting_on, read_map_as};
-use crate::auth::AppState;
+use crate::app::AppState;
 use crate::maps::watchlist::{
     AddWatchlistEntry, RemoveWatchlistEntry, SetWatchlistPinned, WatchlistEntry,
 };
@@ -27,7 +27,7 @@ pub fn routes() -> OpenApiRouter<AppState> {
     path = "/api/maps/{id}/watchlist",
     tag = "watchlist",
     params(("id" = i64, Path, description = "The map"), ShareQuery),
-    responses((status = 200, body = Vec<WatchlistEntry>, description = "OK"), (status = 401, response = super::Unauthorized), (status = 404, response = super::NotFound)),
+    responses((status = 200, body = Vec<WatchlistEntry>, description = "OK"), super::SharedReadErrors),
     security((), ("bearer" = []), ("session" = [])),
 )]
 pub async fn list_watchlist(
@@ -47,8 +47,7 @@ pub async fn list_watchlist(
     tag = "watchlist",
     params(("id" = i64, Path, description = "The map")),
     request_body = AddWatchlistEntry,
-    responses((status = 200, body = WatchlistEntry, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = WatchlistEntry, description = "OK"), super::MapWriteErrors),
 )]
 pub async fn add_watchlist_entry(
     State(state): State<AppState>,
@@ -57,7 +56,7 @@ pub async fn add_watchlist_entry(
     Json(cmd): Json<AddWatchlistEntry>,
 ) -> ApiResult<WatchlistEntry> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    let entry = crate::maps::watchlist::add_watchlist_entry(&state.db, actor, cmd).await?;
+    let entry = crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(entry))
 }
 
@@ -67,8 +66,7 @@ pub async fn add_watchlist_entry(
     tag = "watchlist",
     params(("id" = i64, Path, description = "The map")),
     request_body = SetWatchlistPinned,
-    responses((status = 200, body = WatchlistEntry, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = WatchlistEntry, description = "OK"), super::MapWriteErrors),
 )]
 pub async fn set_watchlist_pinned(
     State(state): State<AppState>,
@@ -77,7 +75,7 @@ pub async fn set_watchlist_pinned(
     Json(cmd): Json<SetWatchlistPinned>,
 ) -> ApiResult<WatchlistEntry> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    let entry = crate::maps::watchlist::set_watchlist_pinned(&state.db, actor, cmd).await?;
+    let entry = crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(entry))
 }
 
@@ -87,8 +85,7 @@ pub async fn set_watchlist_pinned(
     tag = "watchlist",
     params(("id" = i64, Path, description = "The map")),
     request_body = RemoveWatchlistEntry,
-    responses((status = 200, description = "Done; the body is `null`"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), super::MapWriteErrors),
 )]
 pub async fn remove_watchlist_entry(
     State(state): State<AppState>,
@@ -97,6 +94,6 @@ pub async fn remove_watchlist_entry(
     Json(cmd): Json<RemoveWatchlistEntry>,
 ) -> ApiResult<()> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    crate::maps::watchlist::remove_watchlist_entry(&state.db, actor, cmd).await?;
+    crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(()))
 }

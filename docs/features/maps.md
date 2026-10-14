@@ -92,8 +92,10 @@ This mirrors the capability table in [access.md](../database/access.md#roles--ca
 
 1. Collect the user's characters and each one's `(id, corporation_id, alliance_id)`.
 2. Gather the EVE ids into one set.
-3. Return the **max** `role` over `map_access` rows for this map whose `subject_id` is
-   in that set, or `None` if no row matches.
+3. Return the **max** `role` over the live `map_access` rows for this map whose
+   `subject_id` is in that set, or `None` if no row matches.
+
+The `map_user_roles` view does all three; `effective_role` reads one row of it.
 
 `None` means "no access at all" and is reported as **`NotFound`** (we do not reveal that
 a map the user can't see exists). Having *some* access but too low a role for the action

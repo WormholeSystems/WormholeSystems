@@ -9,7 +9,8 @@ use sqlx::PgPool;
 use super::access::require_role;
 use super::command::{CommandOutput, Effect, MapCommand, Tx, run};
 use super::error::{MapError, Result};
-use super::{Actor, MapEvent, Role};
+use super::{Actor, Role};
+use crate::realtime::MapEvent;
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema)]
 #[ts(export)]

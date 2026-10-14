@@ -1,11 +1,11 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select subject_type from map_access\n           where map_id = $1 and subject_id = $2\n             and (expires_at is null or expires_at > now())",
+  "query": "select subject_type as \"subject_type!: SubjectType\" from map_access_live\n           where map_id = $1 and subject_id = $2",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
-        "name": "subject_type",
+        "name": "subject_type!: SubjectType",
         "type_info": {
           "Custom": {
             "name": "subject_type",
@@ -20,7 +20,7 @@
         },
         "origin": {
           "Table": {
-            "table": "map_access",
+            "table": "map_access_live",
             "name": "subject_type"
           }
         }
@@ -33,8 +33,8 @@
       ]
     },
     "nullable": [
-      false
+      true
     ]
   },
-  "hash": "36d20b60693ca5ed566dd83b83b17ee317263817f884b4f28638cd6b028fef81"
+  "hash": "0bd0ac70ca9c0f28b9db6945bb78cfc036b94b86638bd90fb62046ad8a0a4876"
 }

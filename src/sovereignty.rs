@@ -9,7 +9,6 @@ use std::time::Duration;
 
 use chrono::{DateTime, Utc};
 use sqlx::PgPool;
-use tokio::time::{MissedTickBehavior, interval};
 
 use crate::entities::{self, EntityKind};
 use crate::esi::EsiClient;
@@ -22,28 +21,24 @@ const INTERVAL: Duration = Duration::from_secs(60 * 60);
 
 /// Spawn the sync loop. Returns immediately; the loop runs for the process lifetime.
 pub fn start(pool: PgPool, esi: EsiClient, server: ServerWatch) {
-    tokio::spawn(sync_loop(pool, esi, server));
-}
-
-async fn sync_loop(pool: PgPool, esi: EsiClient, server: ServerWatch) {
-    let mut ticker = interval(INTERVAL);
-    ticker.set_missed_tick_behavior(MissedTickBehavior::Skip);
-    loop {
-        ticker.tick().await;
-        // Sovereignty does not move while nobody is playing, and the call would fail
-        // anyway. The next tick picks it up once Tranquility is back.
-        if !server.should_poll() {
-            continue;
+    crate::background::spawn_every("sovereignty sync", INTERVAL, move || {
+        let (pool, esi, server) = (pool.clone(), esi.clone(), server.clone());
+        async move {
+            // Sovereignty does not move while nobody is playing, and the call would fail
+            // anyway. The next tick picks it up once Tranquility is back.
+            if server.should_poll() {
+                sync_once(&pool, &esi).await;
+            }
+            Ok::<_, std::convert::Infallible>(())
         }
-        sync_once(&pool, &esi).await;
-    }
+    });
 }
 
 async fn sync_once(pool: &PgPool, esi: &EsiClient) {
     let systems = match esi.sovereignty_systems().await {
         Ok(systems) => systems,
         Err(err) => {
-            eprintln!("sovereignty fetch failed: {err}");
+            tracing::error!("sovereignty fetch failed: {err}");
             return;
         }
     };
@@ -55,10 +50,10 @@ async fn sync_once(pool: &PgPool, esi: &EsiClient) {
         // A system we don't have in the SDE, or an entity that failed to resolve. The
         // next tick retries it.
         Ok(skipped) if skipped > 0 => {
-            eprintln!("sovereignty: {skipped} claim(s) skipped, unknown system or holder")
+            tracing::warn!("sovereignty: {skipped} claim(s) skipped, unknown system or holder")
         }
         Ok(_) => {}
-        Err(err) => eprintln!("sovereignty store failed: {err}"),
+        Err(err) => tracing::error!("sovereignty store failed: {err}"),
     }
 }
 

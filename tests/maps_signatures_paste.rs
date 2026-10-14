@@ -729,10 +729,10 @@ async fn paste_one(pool: &PgPool, actor: Actor, map_id: i64, sid: &str) {
 }
 
 async fn undo(pool: &PgPool, actor: Actor, map_id: i64) {
-    wormholesystems::maps::events_log::undo(
+    wormholesystems::maps::history::undo(
         pool,
         actor,
-        wormholesystems::maps::events_log::MapIdBody { map_id },
+        wormholesystems::maps::history::MapIdBody { map_id },
     )
     .await
     .unwrap();

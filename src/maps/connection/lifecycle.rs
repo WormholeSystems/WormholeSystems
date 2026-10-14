@@ -11,7 +11,8 @@ use crate::maps::command::{CommandOutput, Effect, EventActor, MapCommand, Tx, ru
 use crate::maps::error::{MapError, Result};
 use crate::maps::store::connections;
 use crate::maps::store::placements;
-use crate::maps::{Actor, ConnectionType, MapEvent, Role, TimeStatus};
+use crate::maps::{Actor, ConnectionType, Role, TimeStatus};
+use crate::realtime::MapEvent;
 
 use super::fetch_connection_tx;
 
@@ -432,24 +433,27 @@ pub async fn expire_connections(pool: &PgPool) -> Result<u64> {
 /// rest. Each change goes through the command layer, so open maps hear about it the same
 /// way they hear about a pilot's edit.
 pub fn start_lifecycle(pool: PgPool) {
-    tokio::spawn(async move {
-        let mut ticker =
-            tokio::time::interval(std::time::Duration::from_secs(LIFECYCLE_INTERVAL_SECONDS));
-        ticker.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
-        loop {
-            ticker.tick().await;
-            match expire_connections(&pool).await {
-                Ok(0) => {}
-                Ok(n) => println!("connections: {n} dead connection(s) removed"),
-                Err(err) => eprintln!("connection expiry failed: {err}"),
+    crate::background::spawn_every(
+        "connection ageing",
+        std::time::Duration::from_secs(LIFECYCLE_INTERVAL_SECONDS),
+        move || {
+            let pool = pool.clone();
+            async move {
+                // A failed expiry should not hold up the ageing, so it is logged here and
+                // the pass carries on.
+                match expire_connections(&pool).await {
+                    Ok(0) => {}
+                    Ok(n) => tracing::info!("connections: {n} dead connection(s) removed"),
+                    Err(err) => tracing::error!("connection expiry failed: {err}"),
+                }
+                let aged = age_connections(&pool).await?;
+                if aged > 0 {
+                    tracing::info!("connections: {aged} connection(s) aged");
+                }
+                Ok::<_, crate::maps::MapError>(())
             }
-            match age_connections(&pool).await {
-                Ok(0) => {}
-                Ok(n) => println!("connections: {n} connection(s) aged"),
-                Err(err) => eprintln!("connection ageing failed: {err}"),
-            }
-        }
-    });
+        },
+    );
 }
 
 #[cfg(test)]

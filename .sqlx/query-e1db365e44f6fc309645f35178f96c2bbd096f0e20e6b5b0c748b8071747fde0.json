@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into map_user_settings (map_id, user_id) values ($1, $2)\n         on conflict (map_id, user_id) do nothing",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e1db365e44f6fc309645f35178f96c2bbd096f0e20e6b5b0c748b8071747fde0"
+}

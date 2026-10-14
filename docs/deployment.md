@@ -197,14 +197,17 @@ Containers, how far behind origin the checkout is, which SDE build is loaded and
 CCP has a newer one, and whether the public URL answers.
 
 The API and the frontend have healthchecks, so `docker compose ps` says `healthy` rather
-than only `running`. The API's is a request to `/api/instance`; it is defined once, on the
-`api` service in `docker-compose.yml`. `setup` and `update` start the stack with
+than only `running`. The API's is a request to `/healthz`, which answers 200 while the
+server is up and its database answers and 503 otherwise; it is defined once, on the `api`
+service in `docker-compose.yml`. `setup` and `update` start the stack with
 `docker compose up -d --wait` and fail when something does not come up healthy, instead of
 reporting a stack that started and then fell over. The first boot is allowed 20 minutes,
 since the API seeds the static data before it answers.
 
 Every container logs through Docker's `json-file` driver, capped at five files of 10MB
-each. `WS_LOG_MAX_SIZE` and `WS_LOG_MAX_FILES` in `.env` change that.
+each. `WS_LOG_MAX_SIZE` and `WS_LOG_MAX_FILES` in `.env` change that. The API logs at
+`info` by default; `RUST_LOG` in `.env` changes the level, for everything (`warn`) or per
+module (`info,wormholesystems::killmails=debug`).
 
 ## Choosing the pieces
 

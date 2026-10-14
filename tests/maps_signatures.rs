@@ -670,10 +670,10 @@ async fn a_connection_takes_one_signature_per_system(pool: PgPool) {
 
     // Undoing that hands the connection back rather than leaving it on the new claimant,
     // and the claimant goes back to the hole it was on before.
-    wormholesystems::maps::events_log::undo(
+    wormholesystems::maps::history::undo(
         &pool,
         w.owner,
-        wormholesystems::maps::events_log::MapIdBody { map_id: w.map_id },
+        wormholesystems::maps::history::MapIdBody { map_id: w.map_id },
     )
     .await
     .unwrap();
@@ -865,7 +865,7 @@ async fn linking_and_unlinking_touch_the_signature(pool: PgPool) {
 /// the hole back before the scan, and the scan on the other side has to get its link back.
 #[sqlx::test]
 async fn undoing_the_removal_of_a_holes_last_scan_brings_the_hole_back(pool: PgPool) {
-    use wormholesystems::maps::events_log::{MapIdBody, redo, undo};
+    use wormholesystems::maps::history::{MapIdBody, redo, undo};
 
     let w = world(&pool).await;
     let a = place(&pool, w.owner, w.map_id, SYS_A).await;

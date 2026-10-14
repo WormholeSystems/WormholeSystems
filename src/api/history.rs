@@ -8,8 +8,8 @@ use utoipa_axum::routes;
 
 use super::ApiResult;
 use super::extract::{acting_on, require_actor};
-use crate::auth::AppState;
-use crate::maps::events_log::{GotoMapEvent, MapHistory, MapIdBody};
+use crate::app::AppState;
+use crate::maps::history::{GotoMapEvent, MapHistory, MapIdBody};
 
 pub fn routes() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
@@ -25,8 +25,7 @@ pub fn routes() -> OpenApiRouter<AppState> {
     path = "/api/maps/{id}/events",
     tag = "history",
     params(("id" = i64, Path, description = "The map")),
-    responses((status = 200, body = MapHistory, description = "OK"), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = MapHistory, description = "OK"), super::MapReadErrors),
 )]
 pub async fn list_map_events(
     State(state): State<AppState>,
@@ -34,7 +33,7 @@ pub async fn list_map_events(
     Path(map_id): Path<i64>,
 ) -> ApiResult<MapHistory> {
     let actor = require_actor(&state.db, &creds).await?;
-    let history = crate::maps::events_log::list_history(&state.db, actor, map_id).await?;
+    let history = crate::maps::history::list_history(&state.db, actor, map_id).await?;
     Ok(Json(history))
 }
 
@@ -47,8 +46,7 @@ pub async fn list_map_events(
     tag = "history",
     params(("id" = i64, Path, description = "The map")),
     request_body = MapIdBody,
-    responses((status = 200, description = "Done; the body is `null`"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), super::MapWriteErrors),
 )]
 pub async fn undo_map_event(
     State(state): State<AppState>,
@@ -57,7 +55,7 @@ pub async fn undo_map_event(
     Json(cmd): Json<MapIdBody>,
 ) -> ApiResult<()> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    crate::maps::events_log::undo(&state.db, actor, cmd).await?;
+    crate::maps::history::undo(&state.db, actor, cmd).await?;
     Ok(Json(()))
 }
 
@@ -68,8 +66,7 @@ pub async fn undo_map_event(
     tag = "history",
     params(("id" = i64, Path, description = "The map")),
     request_body = MapIdBody,
-    responses((status = 200, description = "Done; the body is `null`"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), super::MapWriteErrors),
 )]
 pub async fn redo_map_event(
     State(state): State<AppState>,
@@ -78,7 +75,7 @@ pub async fn redo_map_event(
     Json(cmd): Json<MapIdBody>,
 ) -> ApiResult<()> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    crate::maps::events_log::redo(&state.db, actor, cmd).await?;
+    crate::maps::history::redo(&state.db, actor, cmd).await?;
     Ok(Json(()))
 }
 
@@ -90,8 +87,7 @@ pub async fn redo_map_event(
     tag = "history",
     params(("id" = i64, Path, description = "The map")),
     request_body = GotoMapEvent,
-    responses((status = 200, description = "Done; the body is `null`"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), super::MapWriteErrors),
 )]
 pub async fn goto_map_event(
     State(state): State<AppState>,
@@ -100,6 +96,6 @@ pub async fn goto_map_event(
     Json(cmd): Json<GotoMapEvent>,
 ) -> ApiResult<()> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    crate::maps::events_log::goto(&state.db, actor, cmd).await?;
+    crate::maps::history::goto(&state.db, actor, cmd).await?;
     Ok(Json(()))
 }

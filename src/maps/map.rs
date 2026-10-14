@@ -15,7 +15,8 @@ use super::command::{CommandOutput, Effect, EventActor, MapTx};
 use super::error::{MapError, Result};
 
 use super::view::{MapSystemView, sovereignty_of};
-use super::{Actor, AliasScheme, MapEvent, MapLayout, MapView, Role, SubjectType};
+use super::{Actor, AliasScheme, MapLayout, MapView, Role, SubjectType};
+use crate::realtime::MapEvent;
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema)]
 #[ts(export)]
@@ -392,32 +393,23 @@ pub async fn list_maps(pool: &PgPool, user_id: i64) -> Result<Vec<(Map, Role)>> 
                   -- The view cannot promise not-null the way the table does.
                   ma.role as "role!: Role"
            from maps m
-           join map_access_live ma on ma.map_id = m.id
-           where ma.subject_id in (
-                 select id from characters where user_id = $1
-                 union all
-                 select corporation_id from characters where user_id = $1
-                 union all
-                 select alliance_id from characters where user_id = $1 and alliance_id is not null
-           )
+           join map_user_roles ma on ma.map_id = m.id
+           where ma.user_id = $1
            order by m.created_at"#,
         user_id,
     )
     .fetch_all(pool)
     .await?;
 
-    // A map can match more than once (e.g. via a character and its corp); keep the
-    // highest role per map.
-    let mut out: Vec<(Map, Role)> = Vec::new();
-    for r in rows {
-        let role = r.role;
-        let map = map_from_row!(r);
-        match out.iter_mut().find(|(m, _)| m.id == map.id) {
-            Some((_, existing)) => *existing = (*existing).max(role),
-            None => out.push((map, role)),
-        }
-    }
-    Ok(out)
+    // The view has already settled a map matched more than once (a character and its
+    // corp, say) on the highest role, so each map comes back once.
+    Ok(rows
+        .into_iter()
+        .map(|r| {
+            let role = r.role;
+            (map_from_row!(r), role)
+        })
+        .collect())
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema)]
@@ -620,4 +612,104 @@ pub async fn revoke_share_token(pool: &PgPool, actor: Actor, map_id: i64) -> Res
         .await?;
     tx.emit(MapEvent::MapUpdated { map_id });
     tx.commit().await
+}
+
+/// A map in the user's list, with their role on it.
+#[derive(Clone, Debug, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema)]
+#[ts(export)]
+pub struct MapEntry {
+    pub id: i64,
+    pub name: String,
+    #[ts(optional)]
+    pub description: Option<String>,
+    pub role: String,
+    pub system_count: i64,
+    pub connection_count: i64,
+    /// How many people can see it, counting every grant however it was made.
+    pub member_count: i64,
+    /// Tracked pilots currently online in one of its systems.
+    pub pilots_online: i64,
+    /// Whether this user keeps it in the top bar.
+    pub is_pinned: bool,
+    /// When the chain last changed. `None` for a map nobody has touched yet.
+    #[ts(optional)]
+    pub last_activity: Option<chrono::DateTime<chrono::Utc>>,
+    /// Hidden from this user's list. Per-user, so archiving does not touch anyone else.
+    pub is_archived: bool,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+/// The signed-in user's maps, each with the counts its card shows.
+pub async fn list_entries(pool: &PgPool, user_id: i64) -> Result<Vec<MapEntry>> {
+    let maps = list_maps(pool, user_id).await?;
+    let ids: Vec<i64> = maps.iter().map(|(m, _)| m.id).collect();
+
+    // The counts in one pass rather than a query per card. Each is a scalar subquery so a
+    // map with nothing on it still comes back as a zero rather than falling out of a join.
+    let stats = sqlx::query!(
+        r#"select m.id,
+                  (select count(*) from map_solar_systems s where s.map_id = m.id)
+                      as "systems!",
+                  (select count(*) from map_connections c where c.map_id = m.id)
+                      as "connections!",
+                  (select count(*) from map_access a where a.map_id = m.id) as "members!",
+                  coalesce((select mus.is_archived from map_user_settings mus
+                             where mus.map_id = m.id and mus.user_id = $2), false)
+                      as "archived!",
+                  coalesce((select mus.is_pinned from map_user_settings mus
+                             where mus.map_id = m.id and mus.user_id = $2), false)
+                      as "pinned!",
+                  (select max(e.created_at) from map_events e where e.map_id = m.id)
+                      as "last_activity?",
+                  (select count(*)
+                     from map_user_settings mus
+                     join characters c on c.user_id = mus.user_id
+                     join character_status cs on cs.character_id = c.id and cs.online
+                     join map_solar_systems ms
+                          on ms.map_id = m.id and ms.solar_system_id = cs.solar_system_id
+                    where mus.map_id = m.id and mus.tracking_allowed) as "pilots!"
+           from maps m
+           where m.id = any($1)"#,
+        &ids,
+        user_id,
+    )
+    .fetch_all(pool)
+    .await?;
+
+    let by_id: std::collections::HashMap<i64, _> = stats.into_iter().map(|r| (r.id, r)).collect();
+    Ok(maps
+        .into_iter()
+        .map(|(m, role)| {
+            let s = by_id.get(&m.id);
+            MapEntry {
+                id: m.id,
+                name: m.name,
+                description: m.description,
+                role: role.as_str().to_string(),
+                system_count: s.map_or(0, |s| s.systems),
+                connection_count: s.map_or(0, |s| s.connections),
+                member_count: s.map_or(0, |s| s.members),
+                pilots_online: s.map_or(0, |s| s.pilots),
+                last_activity: s.and_then(|s| s.last_activity),
+                is_archived: s.is_some_and(|s| s.archived),
+                is_pinned: s.is_some_and(|s| s.pinned),
+                created_at: m.created_at,
+            }
+        })
+        .collect())
+}
+
+/// The map a share link leads to, for whoever holds it, signed in or not. A token that
+/// matches nothing, a withdrawn one and a never-shared map all answer `NotFound`, so a
+/// guesser learns nothing from the reply.
+pub async fn read_shared_map(pool: &PgPool, token: &str, actor: Option<Actor>) -> Result<MapView> {
+    if token.is_empty() {
+        return Err(MapError::NotFound);
+    }
+    let map_id = sqlx::query_scalar!("select id from maps where share_token = $1", token)
+        .fetch_optional(pool)
+        .await?
+        .ok_or(MapError::NotFound)?;
+    let reader = super::access::reader_for(pool, map_id, actor, Some(token)).await?;
+    read_map(pool, reader, GetMap { map_id }).await
 }

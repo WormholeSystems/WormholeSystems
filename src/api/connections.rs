@@ -8,9 +8,9 @@ use serde::{Deserialize, Serialize};
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
 
+use super::ApiResult;
 use super::extract::{ShareQuery, acting_on, read_map_as, require_actor};
-use super::{ApiError, ApiResult};
-use crate::auth::AppState;
+use crate::app::AppState;
 use crate::maps::MapConnection;
 use crate::maps::connection::{
     AddConnection, CleanStaleConnections, RemoveConnection, SetConnectionStatus, StaleConnection,
@@ -45,17 +45,13 @@ pub fn routes() -> OpenApiRouter<AppState> {
 }
 
 /// `POST /api/maps/{id}/connections/add`
-///
-/// The ghost guard sits here, not in the command: raising a ghost creates the one connection
-/// an unmapped hole may have, and that goes through the same command from the inside.
 #[utoipa::path(
     post,
     path = "/api/maps/{id}/connections/add",
     tag = "connections",
     params(("id" = i64, Path, description = "The map")),
     request_body = AddConnection,
-    responses((status = 200, body = MapConnection, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = MapConnection, description = "OK"), super::MapWriteErrors),
 )]
 pub async fn add_connection(
     State(state): State<AppState>,
@@ -64,24 +60,7 @@ pub async fn add_connection(
     Json(cmd): Json<AddConnection>,
 ) -> ApiResult<MapConnection> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    let ghost_endpoint = sqlx::query_scalar!(
-        r#"select exists(
-               select 1 from map_solar_systems
-               where map_id = $1 and id in ($2, $3) and solar_system_id is null
-           ) as "ghost!""#,
-        map_id,
-        cmd.from_system,
-        cmd.to_system,
-    )
-    .fetch_one(&state.db)
-    .await?;
-    if ghost_endpoint {
-        return Err(ApiError::bad_request(
-            "assign a system to that hole before connecting anything to it",
-        ));
-    }
-    let conn = crate::maps::connection::add_connection(&state.db, actor, cmd).await?;
-    Ok(Json(conn))
+    Ok(Json(crate::maps::run(&state.db, actor, cmd).await?))
 }
 
 #[utoipa::path(
@@ -90,8 +69,7 @@ pub async fn add_connection(
     tag = "connections",
     params(("id" = i64, Path, description = "The map")),
     request_body = SetConnectionStatus,
-    responses((status = 200, body = MapConnection, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = MapConnection, description = "OK"), super::MapWriteErrors),
 )]
 pub async fn set_connection_status(
     State(state): State<AppState>,
@@ -100,7 +78,7 @@ pub async fn set_connection_status(
     Json(cmd): Json<SetConnectionStatus>,
 ) -> ApiResult<MapConnection> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    let conn = crate::maps::connection::set_connection_status(&state.db, actor, cmd).await?;
+    let conn = crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(conn))
 }
 
@@ -110,8 +88,7 @@ pub async fn set_connection_status(
     tag = "connections",
     params(("id" = i64, Path, description = "The map")),
     request_body = RemoveConnection,
-    responses((status = 200, description = "Done; the body is `null`"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), super::MapWriteErrors),
 )]
 pub async fn remove_connection(
     State(state): State<AppState>,
@@ -120,7 +97,7 @@ pub async fn remove_connection(
     Json(cmd): Json<RemoveConnection>,
 ) -> ApiResult<()> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    crate::maps::connection::remove_connection(&state.db, actor, cmd).await?;
+    crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(()))
 }
 
@@ -130,7 +107,7 @@ pub async fn remove_connection(
     path = "/api/maps/{id}/connections/{cid}/jumps",
     tag = "connections",
     params(("id" = i64, Path, description = "The map"), ("cid" = i64, Path, description = "The connection"), ShareQuery),
-    responses((status = 200, body = Vec<ConnectionJump>, description = "OK"), (status = 401, response = super::Unauthorized), (status = 404, response = super::NotFound)),
+    responses((status = 200, body = Vec<ConnectionJump>, description = "OK"), super::SharedReadErrors),
     security((), ("bearer" = []), ("session" = [])),
 )]
 pub async fn list_connection_jumps(
@@ -150,8 +127,7 @@ pub async fn list_connection_jumps(
     tag = "connections",
     params(("id" = i64, Path, description = "The map")),
     request_body = AddConnectionJump,
-    responses((status = 200, body = ConnectionJump, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = ConnectionJump, description = "OK"), super::MapWriteErrors),
 )]
 pub async fn add_connection_jump(
     State(state): State<AppState>,
@@ -160,7 +136,7 @@ pub async fn add_connection_jump(
     Json(cmd): Json<AddConnectionJump>,
 ) -> ApiResult<ConnectionJump> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    let jump = crate::maps::jumps::add_jump(&state.db, actor, cmd).await?;
+    let jump = crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(jump))
 }
 
@@ -170,8 +146,7 @@ pub async fn add_connection_jump(
     tag = "connections",
     params(("id" = i64, Path, description = "The map")),
     request_body = UpdateConnectionJump,
-    responses((status = 200, body = ConnectionJump, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = ConnectionJump, description = "OK"), super::MapWriteErrors),
 )]
 pub async fn update_connection_jump(
     State(state): State<AppState>,
@@ -180,7 +155,7 @@ pub async fn update_connection_jump(
     Json(cmd): Json<UpdateConnectionJump>,
 ) -> ApiResult<ConnectionJump> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    let jump = crate::maps::jumps::update_jump(&state.db, actor, cmd).await?;
+    let jump = crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(jump))
 }
 
@@ -190,8 +165,7 @@ pub async fn update_connection_jump(
     tag = "connections",
     params(("id" = i64, Path, description = "The map")),
     request_body = RemoveConnectionJump,
-    responses((status = 200, description = "Done; the body is `null`"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), super::MapWriteErrors),
 )]
 pub async fn remove_connection_jump(
     State(state): State<AppState>,
@@ -211,8 +185,7 @@ pub async fn remove_connection_jump(
     path = "/api/maps/{id}/connections/stale",
     tag = "connections",
     params(("id" = i64, Path, description = "The map")),
-    responses((status = 200, body = Vec<StaleConnection>, description = "OK"), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = Vec<StaleConnection>, description = "OK"), super::MapReadErrors),
 )]
 pub async fn list_stale_connections(
     State(state): State<AppState>,
@@ -232,8 +205,7 @@ pub async fn list_stale_connections(
     tag = "connections",
     params(("id" = i64, Path, description = "The map")),
     request_body = CleanStaleConnections,
-    responses((status = 200, body = u64, description = "How many connections were removed"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = u64, description = "How many connections were removed"), super::MapWriteErrors),
 )]
 pub async fn clean_stale_connections(
     State(state): State<AppState>,
@@ -242,7 +214,7 @@ pub async fn clean_stale_connections(
     Json(cmd): Json<CleanStaleConnections>,
 ) -> ApiResult<u64> {
     let actor = acting_on(&state.db, &creds, map_id, cmd.map_id).await?;
-    let removed = crate::maps::connection::clean_stale_connections(&state.db, actor, cmd).await?;
+    let removed = crate::maps::run(&state.db, actor, cmd).await?;
     Ok(Json(removed))
 }
 

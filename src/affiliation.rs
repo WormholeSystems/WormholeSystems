@@ -14,7 +14,6 @@
 use std::time::Duration;
 
 use sqlx::PgPool;
-use tokio::time::{MissedTickBehavior, interval};
 
 use crate::entities::{self, EntityKind};
 use crate::esi::{Affiliation, EsiClient};
@@ -30,21 +29,21 @@ const BATCH: usize = 1000;
 
 /// Spawn the refresh loop. Returns immediately; the loop runs for the process lifetime.
 pub fn start(pool: PgPool, esi: EsiClient, server: ServerWatch) {
-    tokio::spawn(async move {
-        let mut ticker = interval(INTERVAL);
-        ticker.set_missed_tick_behavior(MissedTickBehavior::Skip);
-        loop {
-            ticker.tick().await;
+    crate::background::spawn_every("affiliation refresh", INTERVAL, move || {
+        let (pool, esi, server) = (pool.clone(), esi.clone(), server.clone());
+        async move {
             // Nobody changes corp while Tranquility is down, and the call would fail. The
             // next tick picks it up.
             if !server.should_poll() {
-                continue;
+                return Ok(());
             }
-            match refresh(&pool, &esi).await {
-                Ok(0) => {}
-                Ok(n) => println!("affiliation: {n} character(s) changed corporation or alliance"),
-                Err(err) => eprintln!("affiliation refresh failed: {err}"),
+            let changed = refresh(&pool, &esi).await?;
+            if changed > 0 {
+                tracing::info!(
+                    "affiliation: {changed} character(s) changed corporation or alliance"
+                );
             }
+            Ok::<_, sqlx::Error>(())
         }
     });
 }
@@ -64,7 +63,7 @@ pub async fn refresh(pool: &PgPool, esi: &EsiClient) -> sqlx::Result<u64> {
         let affiliations = match esi.affiliation(chunk).await {
             Ok(affiliations) => affiliations,
             Err(err) => {
-                eprintln!("affiliation batch of {} skipped: {err}", chunk.len());
+                tracing::warn!("affiliation batch of {} skipped: {err}", chunk.len());
                 continue;
             }
         };

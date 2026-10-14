@@ -75,11 +75,7 @@ pub struct Runtime {
 impl Runtime {
     /// Load the graph and start the delivery worker.
     pub async fn load(pool: &PgPool, bot_token: Option<String>) -> sqlx::Result<Runtime> {
-        let http = reqwest::Client::builder()
-            .user_agent(crate::user_agent::get())
-            .timeout(Duration::from_secs(15))
-            .build()
-            .unwrap_or_default();
+        let http = crate::user_agent::client();
         let (outbox, inbox) = mpsc::channel(OUTBOX_CAPACITY);
         tokio::spawn(deliver_loop(
             pool.clone(),
@@ -113,7 +109,7 @@ impl Runtime {
         let alerts = match fetch_active(pool, None).await {
             Ok(alerts) => Arc::new(alerts),
             Err(err) => {
-                eprintln!("alerts: could not load the active alerts: {err}");
+                tracing::error!("alerts: could not load the active alerts: {err}");
                 return Arc::default();
             }
         };
@@ -231,9 +227,10 @@ impl Runtime {
             if let Err(err) = self.outbox.try_send(out) {
                 let out = match err {
                     mpsc::error::TrySendError::Full(out) => {
-                        eprintln!(
+                        tracing::warn!(
                             "alerts: delivery queue full, dropping alert {} ({})",
-                            out.alert.id, out.key
+                            out.alert.id,
+                            out.key
                         );
                         out
                     }
@@ -329,7 +326,14 @@ async fn deliver_loop(
 /// placement. It only evaluates, which is a few queries on a map with alerts and nothing
 /// on one without, and leaves Discord to the delivery worker; that keeps it ahead of a big
 /// paste. If it does fall behind, it replays the gap from the tables.
-pub fn start(pool: PgPool, hub: crate::maps::MapHub, runtime: Arc<Runtime>) {
+pub fn start(pool: PgPool, runtime: Arc<Runtime>) {
+    start_on(pool, crate::realtime::hub().clone(), runtime);
+}
+
+/// [`start`] on a hub of the caller's. For tests: the process-wide hub carries every other
+/// test's maps, whose ids collide with this one's across test databases.
+#[doc(hidden)]
+pub fn start_on(pool: PgPool, hub: crate::realtime::MapHub, runtime: Arc<Runtime>) {
     tokio::spawn(async move {
         let mut events = hub.subscribe_all();
         // When the last event came off the channel. What was missed was published after
@@ -339,14 +343,14 @@ pub fn start(pool: PgPool, hub: crate::maps::MapHub, runtime: Arc<Runtime>) {
         loop {
             let event = events.recv().await;
             let out = match event {
-                Ok(crate::maps::MapEvent::SystemAdded {
+                Ok(crate::realtime::MapEvent::SystemAdded {
                     map_id,
                     map_solar_system_id,
                 }) => {
                     received = Instant::now();
                     runtime.placed(&pool, map_id, map_solar_system_id).await
                 }
-                Ok(crate::maps::MapEvent::ConnectionChanged {
+                Ok(crate::realtime::MapEvent::ConnectionChanged {
                     map_id,
                     connection_id,
                 }) => {
@@ -358,7 +362,7 @@ pub fn start(pool: PgPool, hub: crate::maps::MapHub, runtime: Arc<Runtime>) {
                     Vec::new()
                 }
                 Err(tokio::sync::broadcast::error::RecvError::Lagged(missed)) => {
-                    eprintln!("alerts: map events lagged, {missed} missed; replaying the gap");
+                    tracing::warn!("alerts: map events lagged, {missed} missed; replaying the gap");
                     let since = received.elapsed() + LAG_REPLAY_SLACK;
                     received = Instant::now();
                     runtime.replay(&pool, since).await
@@ -493,9 +497,10 @@ async fn fetch_active(pool: &PgPool, kind: Option<AlertKind>) -> sqlx::Result<Ve
                 filters::Match::from_db(&row.filter_match),
                 serde_json::from_value(row.filters),
             ) else {
-                eprintln!(
+                tracing::warn!(
                     "alerts: skipping alert {} ({}): row does not decode",
-                    row.id, row.name
+                    row.id,
+                    row.name
                 );
                 return None;
             };

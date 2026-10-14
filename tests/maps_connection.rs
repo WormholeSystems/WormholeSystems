@@ -378,7 +378,7 @@ async fn status_of(pool: &PgPool, connection_id: i64) -> Option<TimeStatus> {
 #[sqlx::test]
 async fn ageing_marks_a_hole_eol_then_critical(pool: PgPool) {
     use wormholesystems::maps::connection::age_connections;
-    use wormholesystems::maps::events_log::list_history;
+    use wormholesystems::maps::history::list_history;
 
     let w = world(&pool).await;
     seed_wormhole_system(&pool, 31000001, 3).await;
@@ -589,7 +589,7 @@ async fn an_expired_signature_wins_over_a_critical_connection(pool: PgPool) {
 #[sqlx::test]
 async fn expiry_removes_dead_wormholes_and_what_they_strand(pool: PgPool) {
     use wormholesystems::maps::connection::expire_connections;
-    use wormholesystems::maps::events_log::list_history;
+    use wormholesystems::maps::history::list_history;
     use wormholesystems::maps::solar_system::{SetPinned, set_pinned};
 
     let w = world(&pool).await;
@@ -682,7 +682,7 @@ async fn clocks_of(
 /// they were, so the ageing and the three-day expiry carry on rather than start over.
 #[sqlx::test]
 async fn an_undone_removal_keeps_its_clocks(pool: PgPool) {
-    use wormholesystems::maps::events_log::{MapIdBody, undo};
+    use wormholesystems::maps::history::{MapIdBody, undo};
     use wormholesystems::maps::signatures::{RemoveSignature, remove_signature};
 
     let w = world(&pool).await;

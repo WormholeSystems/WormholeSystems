@@ -5,36 +5,26 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 
+use super::command::{EventActor, MapTx};
 use super::error::{MapError, Result};
 use super::{Actor, Role, SubjectType};
+use crate::realtime::MapEvent;
 
 /// The user's effective role on a map: the highest role they match across *all* their
-/// characters (a character's own id, its corporation, or its alliance). `None` means no
-/// access at all. Generic over the executor so the same predicate serves both a pool and
-/// an open transaction.
+/// characters (a character's own id, its corporation, or its alliance), as the
+/// `map_user_roles` view works it out. `None` means no access at all. Generic over the
+/// executor so the same predicate serves both a pool and an open transaction.
 pub async fn effective_role<'e, E>(executor: E, map_id: i64, user_id: i64) -> Result<Option<Role>>
 where
     E: sqlx::PgExecutor<'e>,
 {
-    let roles = sqlx::query_scalar!(
-        r#"select role
-           from map_access
-           where map_id = $1
-             and (expires_at is null or expires_at > now())
-             and subject_id in (
-                 select id from characters where user_id = $2
-                 union all
-                 select corporation_id from characters where user_id = $2
-                 union all
-                 select alliance_id from characters where user_id = $2 and alliance_id is not null
-             )"#,
+    Ok(sqlx::query_scalar!(
+        r#"select role as "role!: Role" from map_user_roles where map_id = $1 and user_id = $2"#,
         map_id,
         user_id,
     )
-    .fetch_all(executor)
-    .await?;
-
-    Ok(roles.into_iter().max())
+    .fetch_optional(executor)
+    .await?)
 }
 
 /// The role gap as the canonical errors: no access at all is `NotFound` so a map is not
@@ -63,16 +53,20 @@ pub async fn sweep_expired(pool: &PgPool) -> Result<u64> {
 /// row somebody meant to be gone, and rather than per-minute because the view already makes
 /// it stop counting — this is tidying, not enforcement.
 pub fn spawn_expiry_sweep(pool: PgPool) {
-    tokio::spawn(async move {
-        loop {
-            match sweep_expired(&pool).await {
-                Ok(0) => {}
-                Ok(n) => println!("access: {n} expired grant(s) removed"),
-                Err(err) => eprintln!("access expiry sweep failed: {err}"),
+    crate::background::spawn_every(
+        "access expiry sweep",
+        std::time::Duration::from_secs(60 * 60),
+        move || {
+            let pool = pool.clone();
+            async move {
+                let removed = sweep_expired(&pool).await?;
+                if removed > 0 {
+                    tracing::info!("access: {removed} expired grant(s) removed");
+                }
+                Ok::<_, crate::maps::MapError>(())
             }
-            tokio::time::sleep(std::time::Duration::from_secs(60 * 60)).await;
-        }
-    });
+        },
+    );
 }
 
 /// Whether this user can see the map at all. The yes/no form of [`effective_role`], for the
@@ -193,12 +187,13 @@ pub async fn list_access(pool: &PgPool, actor: Actor, map_id: i64) -> Result<Vec
     require_role(pool, map_id, actor.user_id, Role::Viewer).await?;
     let entries = sqlx::query_as!(
         AccessEntry,
-        r#"select a.subject_type,
-                  a.subject_id,
+        // The view widens every column to nullable; the table it reads does not.
+        r#"select a.subject_type as "subject_type!: SubjectType",
+                  a.subject_id as "subject_id!",
                   coalesce(c.name, corp.name, al.name) as "name?",
-                  a.role,
+                  a.role as "role!: Role",
                   a.expires_at
-           from map_access a
+           from map_access_live a
            left join characters c
              on a.subject_type = 'character' and c.id = a.subject_id
            left join corporations corp
@@ -206,7 +201,6 @@ pub async fn list_access(pool: &PgPool, actor: Actor, map_id: i64) -> Result<Vec
            left join alliances al
              on a.subject_type = 'alliance' and al.id = a.subject_id
            where a.map_id = $1
-             and (a.expires_at is null or a.expires_at > now())
            order by
              case a.role
                when 'owner' then 0 when 'manager' then 1
@@ -237,8 +231,14 @@ pub struct SetAccess {
 /// Grant `role` to a subject, or change an existing subject's role. Manager+, and you
 /// may not grant a role above your own. Never leaves the map without an owner.
 pub async fn set_access(pool: &PgPool, actor: Actor, cmd: SetAccess) -> Result<()> {
-    let actor_role = require_role(pool, cmd.map_id, actor.user_id, Role::Manager).await?;
-    if cmd.role > actor_role {
+    let mut tx = MapTx::begin(
+        pool,
+        cmd.map_id,
+        EventActor::Character(actor),
+        Role::Manager,
+    )
+    .await?;
+    if Some(cmd.role) > tx.role() {
         return Err(MapError::Forbidden);
     }
     // A map has exactly one owner; moving it is `transfer_ownership`, not a grant.
@@ -247,8 +247,6 @@ pub async fn set_access(pool: &PgPool, actor: Actor, cmd: SetAccess) -> Result<(
             "ownership is transferred, not granted".into(),
         ));
     }
-
-    let mut tx = pool.begin().await?;
     sqlx::query!(
         "insert into map_access (map_id, subject_type, subject_id, role, expires_at)
          values ($1, $2, $3, $4, $5)
@@ -264,13 +262,11 @@ pub async fn set_access(pool: &PgPool, actor: Actor, cmd: SetAccess) -> Result<(
         cmd.expires_at.flatten(),
         cmd.expires_at.is_some(),
     )
-    .execute(&mut *tx)
+    .execute(&mut **tx)
     .await?;
     ensure_has_owner(&mut tx, cmd.map_id).await?;
-    tx.commit().await?;
-    // Published here, not in the handler, so no caller can forget the event.
-    super::hub().publish(super::events::MapEvent::AccessChanged { map_id: cmd.map_id });
-    Ok(())
+    tx.emit(MapEvent::AccessChanged { map_id: cmd.map_id });
+    tx.commit().await
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema)]
@@ -282,25 +278,27 @@ pub struct RevokeAccess {
 
 /// Remove a subject's grant. Manager+. Revoking the last owner is rejected.
 pub async fn revoke_access(pool: &PgPool, actor: Actor, cmd: RevokeAccess) -> Result<()> {
-    require_role(pool, cmd.map_id, actor.user_id, Role::Manager).await?;
-
-    let mut tx = pool.begin().await?;
+    let mut tx = MapTx::begin(
+        pool,
+        cmd.map_id,
+        EventActor::Character(actor),
+        Role::Manager,
+    )
+    .await?;
     let deleted = sqlx::query!(
         "delete from map_access where map_id = $1 and subject_id = $2",
         cmd.map_id,
         cmd.subject_id,
     )
-    .execute(&mut *tx)
+    .execute(&mut **tx)
     .await?
     .rows_affected();
     if deleted == 0 {
         return Err(MapError::NotFound);
     }
     ensure_has_owner(&mut tx, cmd.map_id).await?;
-    tx.commit().await?;
-    // Published here, not in the handler, so no caller can forget the event.
-    super::hub().publish(super::events::MapEvent::AccessChanged { map_id: cmd.map_id });
-    Ok(())
+    tx.emit(MapEvent::AccessChanged { map_id: cmd.map_id });
+    tx.commit().await
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema)]
@@ -314,17 +312,14 @@ pub struct TransferOwnership {
 /// Hand the map to someone else. Owner only. The new owner must already be a character
 /// with a grant on the map, and the old owner stays on as a manager.
 pub async fn transfer_ownership(pool: &PgPool, actor: Actor, cmd: TransferOwnership) -> Result<()> {
-    require_role(pool, cmd.map_id, actor.user_id, Role::Owner).await?;
-
-    let mut tx = pool.begin().await?;
+    let mut tx = MapTx::begin(pool, cmd.map_id, EventActor::Character(actor), Role::Owner).await?;
     let target = sqlx::query_scalar!(
-        r#"select subject_type from map_access
-           where map_id = $1 and subject_id = $2
-             and (expires_at is null or expires_at > now())"#,
+        r#"select subject_type as "subject_type!: SubjectType" from map_access_live
+           where map_id = $1 and subject_id = $2"#,
         cmd.map_id,
         cmd.subject_id,
     )
-    .fetch_optional(&mut *tx)
+    .fetch_optional(&mut **tx)
     .await?;
     match target {
         Some(SubjectType::Character) => {}
@@ -342,7 +337,7 @@ pub async fn transfer_ownership(pool: &PgPool, actor: Actor, cmd: TransferOwners
         cmd.map_id,
         cmd.subject_id,
     )
-    .execute(&mut *tx)
+    .execute(&mut **tx)
     .await?;
     sqlx::query!(
         "update map_access set role = 'owner', expires_at = null
@@ -350,13 +345,11 @@ pub async fn transfer_ownership(pool: &PgPool, actor: Actor, cmd: TransferOwners
         cmd.map_id,
         cmd.subject_id,
     )
-    .execute(&mut *tx)
+    .execute(&mut **tx)
     .await?;
     ensure_has_owner(&mut tx, cmd.map_id).await?;
-    tx.commit().await?;
-    // Published here, not in the handler, so no caller can forget the event.
-    super::hub().publish(super::events::MapEvent::AccessChanged { map_id: cmd.map_id });
-    Ok(())
+    tx.emit(MapEvent::AccessChanged { map_id: cmd.map_id });
+    tx.commit().await
 }
 
 /// Fail (rolling back the transaction) if the map has no owner left.

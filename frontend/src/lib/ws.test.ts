@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { parseFrame } from './ws';
+import { ACCESS_REVOKED, openMapSocket, parseFrame, type SocketState } from './ws';
 
 describe('parseFrame', () => {
 	it('accepts an event-shaped frame', () => {
@@ -15,5 +15,58 @@ describe('parseFrame', () => {
 		expect(parseFrame('42')).toBeNull();
 		expect(parseFrame('null')).toBeNull();
 		expect(parseFrame('{"kind":"other"}')).toBeNull();
+	});
+});
+
+class FakeSocket {
+	static all: FakeSocket[] = [];
+	onopen: (() => void) | null = null;
+	onmessage: ((frame: { data: string }) => void) | null = null;
+	onclose: ((event: { code: number }) => void) | null = null;
+	onerror: (() => void) | null = null;
+	constructor(public url: string) {
+		FakeSocket.all.push(this);
+	}
+	close() {}
+}
+
+describe('openMapSocket', () => {
+	afterEach(() => {
+		vi.useRealTimers();
+		vi.unstubAllGlobals();
+		FakeSocket.all = [];
+	});
+
+	function open() {
+		vi.useFakeTimers();
+		vi.stubGlobal('WebSocket', FakeSocket);
+		vi.stubGlobal('location', { protocol: 'http:', host: 'localhost' });
+		const events: unknown[] = [];
+		const states: SocketState[] = [];
+		const close = openMapSocket(
+			7,
+			(event) => events.push(event),
+			(state) => states.push(state),
+		);
+		return { events, states, close };
+	}
+
+	it('reconnects after an ordinary close and asks for a catch-up', () => {
+		const { events, states } = open();
+		FakeSocket.all[0].onclose?.({ code: 1006 });
+		vi.advanceTimersByTime(1_000);
+		FakeSocket.all[1].onopen?.();
+		expect(FakeSocket.all).toHaveLength(2);
+		expect(states).toEqual(['connecting', 'reconnecting', 'reconnecting', 'open']);
+		expect(events).toEqual([null]);
+	});
+
+	it('stops for good once access is revoked', () => {
+		const { events, states } = open();
+		FakeSocket.all[0].onclose?.({ code: ACCESS_REVOKED });
+		vi.advanceTimersByTime(60_000);
+		expect(FakeSocket.all).toHaveLength(1);
+		expect(states).toEqual(['connecting', 'revoked']);
+		expect(events).toEqual([null]);
 	});
 });

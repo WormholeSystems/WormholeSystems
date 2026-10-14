@@ -1,5 +1,5 @@
 //! Two-tier character-status polling, see
-//! [processes.md](../docs/processes.md#character-status-polling).
+//! [processes.md](../../docs/processes.md#character-status-polling).
 //!
 //! Tier 1 polls online state for the characters of active users every 60s; tier 2 polls
 //! location and ship for the online ones every 5s. Both are bounded by a [`Semaphore`] so we
@@ -21,14 +21,14 @@ use std::time::Duration;
 use sqlx::PgPool;
 use tokio::sync::{Semaphore, SemaphorePermit};
 use tokio::task::JoinSet;
-use tokio::time::{MissedTickBehavior, interval, timeout};
+use tokio::time::timeout;
 
+use crate::background::spawn_every;
 use crate::db::PgTokenStore;
 use crate::esi::scopes::Scope;
 use crate::esi::{EsiClient, Result as EsiResult, Sso, Token, TokenCache, TokenStore};
-use crate::maps::MapHub;
+use crate::realtime::{UserEvent, UserHub};
 use crate::server_status::ServerWatch;
-use crate::user_channel::{UserEvent, UserHub};
 
 /// Max ESI requests in flight per tick, the one tuning knob. Raise to fit more characters
 /// in the 5s tier-2 budget; lower to stay further under ESI's error limit.
@@ -54,7 +54,6 @@ struct Poller {
     sso: Arc<Sso>,
     esi: EsiClient,
     users: UserHub,
-    maps: MapHub,
     store: PgTokenStore,
     tokens: TokenCache,
     /// The poller's share of the pool. [`CONCURRENCY`] polls can be in flight and each
@@ -95,15 +94,7 @@ impl TokenStore for Throttled<'_> {
 }
 
 /// Spawn the polling loops. Returns immediately; the loops run for the process lifetime.
-/// `maps` receives `ConnectionChanged` events when a transit lands on a mapped hole.
-pub fn start(
-    pool: PgPool,
-    sso: Arc<Sso>,
-    esi: EsiClient,
-    users: UserHub,
-    maps: MapHub,
-    server: ServerWatch,
-) {
+pub fn start(pool: PgPool, sso: Arc<Sso>, esi: EsiClient, users: UserHub, server: ServerWatch) {
     // Half the pool, leaving the rest to requests and the other background work.
     let db = (pool.options().get_max_connections() as usize / 2).max(1);
     let poller = Arc::new(Poller {
@@ -112,52 +103,42 @@ pub fn start(
         sso,
         esi,
         users,
-        maps,
         tokens: TokenCache::new(),
         db: Semaphore::new(db),
     });
-    tokio::spawn(tier_one(poller.clone(), server.clone()));
-    tokio::spawn(tier_two(poller, server));
+    let (one, one_server) = (poller.clone(), server.clone());
+    spawn_every("tracking tier-1", Duration::from_secs(60), move || {
+        tier_one(one.clone(), one_server.clone())
+    });
+    spawn_every("tracking tier-2", Duration::from_secs(5), move || {
+        tier_two(poller.clone(), server.clone())
+    });
 }
 
 /// Tier 1: online state, every 60s, for every character of an active user.
-async fn tier_one(poller: Arc<Poller>, server: ServerWatch) {
-    let mut ticker = interval(Duration::from_secs(60));
-    ticker.set_missed_tick_behavior(MissedTickBehavior::Skip);
-    loop {
-        ticker.tick().await;
-        // Nobody can be online while the server is not, and every call would fail against
-        // the error limit. See [`crate::server_status`].
-        if !server.should_poll() {
-            continue;
-        }
-        match active_characters(&poller.pool, false).await {
-            Ok(due) => {
-                // Everyone tier 2 polls is in this set too, so this is where tokens for
-                // characters that dropped out of polling are let go.
-                let ids: HashSet<i64> = due.iter().map(|d| d.character_id).collect();
-                poller.tokens.retain(|id| ids.contains(&id));
-                run_polls("tier-1", &due, |d| poll_online(poller.clone(), d)).await
-            }
-            Err(err) => eprintln!("tracking tier-1 select failed: {err}"),
-        }
+async fn tier_one(poller: Arc<Poller>, server: ServerWatch) -> Result<(), sqlx::Error> {
+    // Nobody can be online while the server is not, and every call would fail against the
+    // error limit. See [`crate::server_status`].
+    if !server.should_poll() {
+        return Ok(());
     }
+    let due = active_characters(&poller.pool, false).await?;
+    // Everyone tier 2 polls is in this set too, so this is where tokens for characters that
+    // dropped out of polling are let go.
+    let ids: HashSet<i64> = due.iter().map(|d| d.character_id).collect();
+    poller.tokens.retain(|id| ids.contains(&id));
+    run_polls("tier-1", &due, |d| poll_online(poller.clone(), d)).await;
+    Ok(())
 }
 
 /// Tier 2: location + ship, every 5s, for currently-online characters of active users.
-async fn tier_two(poller: Arc<Poller>, server: ServerWatch) {
-    let mut ticker = interval(Duration::from_secs(5));
-    ticker.set_missed_tick_behavior(MissedTickBehavior::Skip);
-    loop {
-        ticker.tick().await;
-        if !server.should_poll() {
-            continue;
-        }
-        match active_characters(&poller.pool, true).await {
-            Ok(due) => run_polls("tier-2", &due, |d| poll_location_ship(poller.clone(), d)).await,
-            Err(err) => eprintln!("tracking tier-2 select failed: {err}"),
-        }
+async fn tier_two(poller: Arc<Poller>, server: ServerWatch) -> Result<(), sqlx::Error> {
+    if !server.should_poll() {
+        return Ok(());
     }
+    let due = active_characters(&poller.pool, true).await?;
+    run_polls("tier-2", &due, |d| poll_location_ship(poller.clone(), d)).await;
+    Ok(())
 }
 
 /// Characters whose user has been active within the last 5 minutes. With `online_only`, also
@@ -251,7 +232,7 @@ where
     .await;
     let (count, sample) = std::mem::take(&mut *failed.lock().expect("poll failures lock"));
     if let Some(sample) = sample {
-        eprintln!(
+        tracing::error!(
             "tracking {tier}: {count} of {} poll(s) failed, e.g. {sample}",
             due.len()
         );
@@ -376,7 +357,7 @@ async fn poll_location(poller: &Poller, token: &str, id: i64) -> Result<bool, St
             crate::maps::jumps::record_transit(&poller.pool, id, prev, location.solar_system_id)
                 .await
         {
-            eprintln!("jump capture failed for character {id}: {err}");
+            tracing::error!("jump capture failed for character {id}: {err}");
         }
     }
     Ok(true)
@@ -439,8 +420,6 @@ async fn announce_presence(poller: &Poller, user_id: i64) {
         return;
     };
     for map_id in map_ids {
-        poller
-            .maps
-            .publish(crate::maps::MapEvent::CharactersChanged { map_id });
+        crate::realtime::hub().publish(crate::realtime::MapEvent::CharactersChanged { map_id });
     }
 }

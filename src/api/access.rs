@@ -11,7 +11,7 @@ use utoipa_axum::routes;
 use super::ApiResult;
 use super::extract::{acting_on, require_actor};
 use super::reference::SearchQuery;
-use crate::auth::AppState;
+use crate::app::AppState;
 use crate::maps::access::{AccessEntry, RevokeAccess, SetAccess};
 
 /// A grantable subject from the access-subject search.
@@ -43,8 +43,7 @@ pub fn routes() -> OpenApiRouter<AppState> {
     path = "/api/access-subjects/search",
     tag = "access",
     params(SearchQuery),
-    responses((status = 200, body = Vec<AccessSubject>, description = "OK"), (status = 401, response = super::Unauthorized)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = Vec<AccessSubject>, description = "OK"), super::AuthedErrors),
 )]
 pub async fn search_access_subjects(
     State(state): State<AppState>,
@@ -96,8 +95,7 @@ pub async fn search_access_subjects(
     path = "/api/maps/{id}/access",
     tag = "access",
     params(("id" = i64, Path, description = "The map")),
-    responses((status = 200, body = Vec<AccessEntry>, description = "OK"), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = Vec<AccessEntry>, description = "OK"), super::MapReadErrors),
 )]
 pub async fn list_access(
     State(state): State<AppState>,
@@ -115,8 +113,7 @@ pub async fn list_access(
     tag = "access",
     params(("id" = i64, Path, description = "The map")),
     request_body = SetAccess,
-    responses((status = 200, description = "Done; the body is `null`"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), super::MapWriteErrors),
 )]
 pub async fn set_access(
     State(state): State<AppState>,
@@ -135,8 +132,7 @@ pub async fn set_access(
     tag = "access",
     params(("id" = i64, Path, description = "The map")),
     request_body = RevokeAccess,
-    responses((status = 200, description = "Done; the body is `null`"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), super::MapWriteErrors),
 )]
 pub async fn revoke_access(
     State(state): State<AppState>,
@@ -156,8 +152,7 @@ pub async fn revoke_access(
     tag = "access",
     params(("id" = i64, Path, description = "The map")),
     request_body = crate::maps::access::TransferOwnership,
-    responses((status = 200, description = "Done; the body is `null`"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound), (status = 409, response = super::Conflict)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), super::MapWriteErrors),
 )]
 pub async fn transfer_ownership(
     State(state): State<AppState>,
@@ -176,8 +171,7 @@ pub async fn transfer_ownership(
     path = "/api/maps/{id}/share",
     tag = "access",
     params(("id" = i64, Path, description = "The map")),
-    responses((status = 200, body = String, description = "The new share token"), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, body = String, description = "The new share token"), super::MapReadErrors),
 )]
 pub async fn rotate_share_token(
     State(state): State<AppState>,
@@ -195,8 +189,7 @@ pub async fn rotate_share_token(
     path = "/api/maps/{id}/share",
     tag = "access",
     params(("id" = i64, Path, description = "The map")),
-    responses((status = 200, description = "Done; the body is `null`"), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden), (status = 404, response = super::NotFound)),
-    security(("bearer" = []), ("session" = [])),
+    responses((status = 200, description = "Done; the body is `null`"), super::MapReadErrors),
 )]
 pub async fn revoke_share_token(
     State(state): State<AppState>,

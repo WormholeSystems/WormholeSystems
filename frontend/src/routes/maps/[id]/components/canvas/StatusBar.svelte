@@ -46,6 +46,7 @@
 		connecting: 'Connecting to the live feed',
 		open: 'Live: changes from other pilots arrive automatically',
 		reconnecting: 'Disconnected. Retrying, the map may be out of date',
+		revoked: 'You no longer have access to this map',
 	} satisfies Record<typeof map.socket, string>;
 
 	function toggleSetting(key: 'tracking_allowed' | 'show_threat_level') {
@@ -202,6 +203,7 @@
 							map.socket === 'open' && 'bg-emerald-500',
 							map.socket === 'connecting' && 'bg-amber-500',
 							map.socket === 'reconnecting' && 'animate-pulse bg-red-500',
+							map.socket === 'revoked' && 'bg-red-500',
 						)}
 					></span>
 				{/snippet}
