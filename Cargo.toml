@@ -15,6 +15,8 @@ default-members = ["."]
 # Web server
 axum = { version = "0.8", features = ["ws", "multipart"] }
 axum-extra = { version = "0.10", features = ["cookie"] }
+# Compressing API responses. A map read is tens of kilobytes of repetitive JSON.
+tower-http = { version = "0.6", features = ["compression-gzip", "compression-zstd"] }
 tokio = { version = "1", features = ["fs", "macros", "rt-multi-thread", "net", "sync", "time"] }
 
 # Domain

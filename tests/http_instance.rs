@@ -9,6 +9,38 @@ use common::app::{get, state};
 use sqlx::PgPool;
 use wormholesystems::announcement::{Announcement, AnnouncementVars};
 
+// Compression is for the whole API; the OpenAPI document is just a reply big enough to get it.
+#[sqlx::test]
+async fn replies_are_compressed_when_the_client_asks(pool: PgPool) {
+    use axum::body::Body;
+    use axum::http::{Request, header};
+    use tower::ServiceExt;
+
+    let request = |encoding: Option<&str>| {
+        let mut req = Request::get("/api/openapi.json");
+        if let Some(encoding) = encoding {
+            req = req.header(header::ACCEPT_ENCODING, encoding);
+        }
+        req.body(Body::empty()).unwrap()
+    };
+    let app = common::app::app(&pool);
+
+    for (asked, got) in [
+        (Some("gzip"), Some("gzip")),
+        (Some("zstd"), Some("zstd")),
+        (None, None),
+    ] {
+        let res = app.clone().oneshot(request(asked)).await.unwrap();
+        assert_eq!(res.status(), StatusCode::OK);
+        assert_eq!(
+            res.headers()
+                .get(header::CONTENT_ENCODING)
+                .map(|v| v.to_str().unwrap()),
+            got,
+        );
+    }
+}
+
 #[sqlx::test]
 async fn no_announcement_is_null(pool: PgPool) {
     let res = get(common::app::app(&pool), "/api/instance", None).await;
