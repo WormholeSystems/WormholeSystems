@@ -7,7 +7,7 @@ use std::net::{IpAddr, ToSocketAddrs};
 use std::path::Path;
 use std::process::{Command, Stdio};
 
-use crate::config::{Database, Deployment, Proxy};
+use crate::config::{CERTS_DIR, DEFAULT_CERT, DEFAULT_KEY, Database, Deployment, Proxy, Tls};
 use crate::exec::Runner;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -184,6 +184,32 @@ pub fn database(runner: &mut dyn Runner, dir: &Path, network: &str, url: &str) -
     }
 }
 
+/// The certificate and key WS_TLS=files mounts into Caddy. Missing, Caddy refuses to start.
+pub fn certificate_files(dir: &Path) -> Check {
+    let env = std::fs::read_to_string(dir.join(".env")).unwrap_or_default();
+    let name = |key: &str, fallback: &str| {
+        crate::envfile::get(&env, key)
+            .filter(|v| !v.is_empty())
+            .unwrap_or_else(|| fallback.to_string())
+    };
+    let missing: Vec<String> = [
+        name("WS_TLS_CERT", DEFAULT_CERT),
+        name("WS_TLS_KEY", DEFAULT_KEY),
+    ]
+    .into_iter()
+    .filter(|file| !dir.join(CERTS_DIR).join(file).is_file())
+    .map(|file| format!("{CERTS_DIR}/{file}"))
+    .collect();
+    if missing.is_empty() {
+        Check::ok(format!("the certificate and key are in {CERTS_DIR}/"))
+    } else {
+        Check::fatal(
+            format!("{} missing", missing.join(" and ")),
+            "Put the certificate (with its chain) and the key there, PEM encoded; WS_TLS_CERT and WS_TLS_KEY name other files.",
+        )
+    }
+}
+
 pub fn network(runner: &mut dyn Runner, dir: &Path, name: &str) -> Check {
     if crate::stack::network_exists(runner, dir, name) {
         Check::ok(format!("the Docker network {name} exists"))
@@ -315,7 +341,16 @@ pub fn deployment(runner: &mut dyn Runner, dir: &Path, deployment: &Deployment) 
         Proxy::Caddy(site) => {
             let ours = crate::stack::proxy_running(runner, dir);
             checks.extend(ports(&[site.http_port, site.https_port], ours));
-            checks.push(dns(&site.domain, public_ip()));
+            let mut name = dns(&site.domain, public_ip());
+            // Only Let's Encrypt has to reach this machine by the name. With a certificate
+            // of your own, or Caddy's, a name that resolves on the private network will do.
+            if site.tls != Tls::Acme && name.verdict == Verdict::Fatal {
+                name.verdict = Verdict::Warn;
+            }
+            checks.push(name);
+            if site.tls == Tls::Files && !site.domain.is_empty() {
+                checks.push(certificate_files(dir));
+            }
         }
         Proxy::Router(router) => {
             if let Some(port) = router.port {
@@ -431,6 +466,17 @@ mod tests {
                 .commands
                 .contains(&"docker network inspect --format {{.Name}} pg".to_string())
         );
+    }
+
+    #[test]
+    fn own_certificates_have_to_be_there() {
+        let dir = std::env::temp_dir().join(format!("wsctl-certs-{}", std::process::id()));
+        std::fs::create_dir_all(dir.join(CERTS_DIR)).unwrap();
+        assert_eq!(certificate_files(&dir).verdict, Verdict::Fatal);
+        std::fs::write(dir.join(CERTS_DIR).join(DEFAULT_CERT), "").unwrap();
+        std::fs::write(dir.join(CERTS_DIR).join(DEFAULT_KEY), "").unwrap();
+        assert_eq!(certificate_files(&dir).verdict, Verdict::Ok);
+        std::fs::remove_dir_all(&dir).unwrap();
     }
 
     #[test]

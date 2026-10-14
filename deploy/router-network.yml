@@ -9,6 +9,7 @@ services:
       # The public address is whatever your proxy serves (WS_PUBLIC_URL); this Caddy
       # answers for any host.
       WS_DOMAIN: ":80"
+      WS_TLS: "off"
       # Your proxy is the client here, so its X-Forwarded-For and -Proto are believed and
       # the API sees the visitor's address rather than the proxy's.
       WS_TRUSTED_PROXIES: ${WS_TRUSTED_PROXIES:-private_ranges}

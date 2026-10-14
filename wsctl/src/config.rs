@@ -111,6 +111,8 @@ pub struct Site {
     /// Without a domain, where people open it, since only they know whether that is this
     /// machine's address, a tunnel or localhost. Empty for a domain, which says it already.
     pub public_url: String,
+    /// Where the certificate for the domain comes from. Nothing without one.
+    pub tls: Tls,
 }
 
 impl Default for Site {
@@ -120,9 +122,48 @@ impl Default for Site {
             http_port: 80,
             https_port: 443,
             public_url: String::new(),
+            tls: Tls::Acme,
         }
     }
 }
+
+/// How the bundled Caddy gets a certificate for its domain. Each is a snippet in the
+/// Caddyfile, picked by WS_TLS.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum Tls {
+    /// Let's Encrypt, which needs the name to resolve here and ports 80 and 443 open.
+    #[default]
+    Acme,
+    /// The operator's own, from `certs/`.
+    Files,
+    /// Caddy's own CA, for a private network where browsers can be told to trust it.
+    Internal,
+    /// None: plain http, for something in front that does TLS.
+    Off,
+}
+
+impl Tls {
+    pub const ALL: [Tls; 4] = [Tls::Acme, Tls::Files, Tls::Internal, Tls::Off];
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Tls::Acme => "acme",
+            Tls::Files => "files",
+            Tls::Internal => "internal",
+            Tls::Off => "off",
+        }
+    }
+
+    pub fn parse(value: &str) -> Option<Self> {
+        Self::ALL.into_iter().find(|tls| tls.as_str() == value)
+    }
+}
+
+/// Where WS_TLS=files reads the certificate and key, as the checkout and the Caddy
+/// container both see them.
+pub const CERTS_DIR: &str = "certs";
+pub const DEFAULT_CERT: &str = "fullchain.pem";
+pub const DEFAULT_KEY: &str = "privkey.pem";
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Router {
@@ -249,6 +290,7 @@ impl Deployment {
                     domain,
                     http_port,
                     https_port,
+                    tls: Tls::parse(&get("WS_TLS")).unwrap_or_default(),
                 })
             }
         };
@@ -338,7 +380,17 @@ impl Deployment {
                     site.public_url.trim_end_matches('/').to_string()
                 }
             }
-            Proxy::Caddy(site) => format!("https://{}", site.domain),
+            Proxy::Caddy(site) => {
+                let (scheme, port, standard) = match site.tls {
+                    Tls::Off => ("http", site.http_port, 80),
+                    _ => ("https", site.https_port, 443),
+                };
+                if port == standard {
+                    format!("{scheme}://{}", site.domain)
+                } else {
+                    format!("{scheme}://{}:{port}", site.domain)
+                }
+            }
             Proxy::Router(Router { public_url, .. }) | Proxy::Direct(Direct { public_url, .. }) => {
                 public_url.trim_end_matches('/').to_string()
             }
@@ -386,6 +438,7 @@ impl Deployment {
                 set("WS_DOMAIN", site.domain.clone());
                 set("HTTP_PORT", site.http_port.to_string());
                 set("HTTPS_PORT", site.https_port.to_string());
+                set("WS_TLS", site.tls.as_str().into());
                 if site.domain.is_empty() && !site.public_url.is_empty() {
                     set("WS_PUBLIC_URL", self.base_url());
                 } else {
@@ -640,6 +693,32 @@ mod tests {
         );
         assert_eq!(local.base_url(), "http://localhost:8080");
         assert_eq!(local.public_url(), None);
+    }
+
+    // Each certificate source reads back, and the URL follows the scheme it serves.
+    #[test]
+    fn the_certificate_source_decides_the_scheme() {
+        for tls in Tls::ALL {
+            let d = deployment(
+                Database::Bundled,
+                Proxy::Caddy(Site {
+                    domain: "map.example.com".into(),
+                    tls,
+                    ..Default::default()
+                }),
+            );
+            let env = d.apply("");
+            assert_eq!(get(&env, "WS_TLS").as_deref(), Some(tls.as_str()));
+            assert_eq!(Deployment::from_env(&env), d);
+        }
+        let plain = Deployment::from_env("WS_DOMAIN=map.example.com\nWS_TLS=off\n");
+        assert_eq!(plain.base_url(), "http://map.example.com");
+        let own_port =
+            Deployment::from_env("WS_DOMAIN=map.example.com\nWS_TLS=internal\nHTTPS_PORT=8443\n");
+        assert_eq!(own_port.base_url(), "https://map.example.com:8443");
+        // Unset is what compose falls back to.
+        let unset = Deployment::from_env("WS_DOMAIN=map.example.com\n");
+        assert_eq!(unset.base_url(), "https://map.example.com");
     }
 
     // A server reached over SSH is not localhost to the browser that logs in to it.

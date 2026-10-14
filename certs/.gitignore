@@ -1,0 +1,3 @@
+# Your certificate and key for WS_TLS=files go here; nothing in it is committed.
+*
+!.gitignore
