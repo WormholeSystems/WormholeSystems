@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from unresolvable_entities where kind = $1 and id = any($2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Int8Array"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e9823fa7669ee6927d78c0b9fe5afe2b7cc75251ce94d386579fd19f8ea60637"
+}

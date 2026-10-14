@@ -148,7 +148,7 @@ async fn ingest(
             orgs: serde_json::to_value(extract_orgs(&km.esi))?,
             detail: extract_detail(&km.esi, &km.zkb),
         };
-        super::insert_rows(pool, std::slice::from_ref(&row)).await?;
+        super::insert_rows(pool, std::slice::from_ref(&row), true).await?;
         announce(pool, maps, solar_system_id).await;
         if let Some(alerts) = alerts {
             offer(alerts, row);
@@ -277,44 +277,130 @@ async fn advance(pool: &PgPool, seq: i64) -> Result<(), sqlx::Error> {
     Ok(())
 }
 
-/// Put names to the ids on recent killmails. A separate loop from the ingest: a killmail
+/// Killmails looked at per query. A busy minute is around a thousand.
+const NAME_BATCH: i64 = 2_000;
+
+/// Passes a batch is held back for while ESI fails on some of it, before the resolver gives
+/// up on those names and moves on. Each pass is a minute apart.
+const NAME_RETRIES: u32 = 3;
+
+/// Put names to the ids on new killmails. A separate loop from the ingest: a killmail
 /// must be recorded whether or not ESI is answering, and the names are only wanted by the
 /// time someone opens the card.
+///
+/// Every kill in EVE is named, not only those in mapped systems. The card is the obvious
+/// reader and only shows mapped systems, but a hole is mapped minutes after it is found and
+/// its last week of kills should read as names right then. The same names also serve the
+/// killmail alerts (which reach beyond the chain), the access search, and the threat
+/// analysis. With the bulk endpoint that is a call or two a minute, so not worth narrowing.
 pub(super) async fn resolve_loop(pool: PgPool, esi: EsiClient) {
+    let mut resolver = NameResolver::default();
     loop {
-        resolve_recent(&pool, &esi).await;
+        resolver.pass(&pool, &esi).await;
         tokio::time::sleep(Duration::from_secs(60)).await;
     }
 }
 
-async fn resolve_recent(pool: &PgPool, esi: &EsiClient) {
-    // Windowed to what the card can show; `distinct` because a busy system repeats orgs.
-    let Ok(rows) = sqlx::query!(
-        r#"select distinct victim_character_id, victim_corporation_id, victim_alliance_id,
-                  final_blow_character_id, final_blow_corporation_id, final_blow_alliance_id
-           from killmails
-           where time >= now() - make_interval(days => $1)"#,
-        super::CARD_WINDOW_DAYS,
-    )
-    .fetch_all(pool)
-    .await
-    else {
-        return;
-    };
+/// Where the name resolver has got to: the last `ingest_seq` it is done with, read from
+/// `zkb_state` once and kept here after, and how many passes the current batch has been
+/// held back for.
+#[derive(Default)]
+pub struct NameResolver {
+    mark: Option<i64>,
+    held: u32,
+}
 
-    let mut characters = Vec::new();
-    let mut corporations = Vec::new();
-    let mut alliances = Vec::new();
-    for row in rows {
-        characters.extend(row.victim_character_id);
-        characters.extend(row.final_blow_character_id);
-        corporations.extend(row.victim_corporation_id);
-        corporations.extend(row.final_blow_corporation_id);
-        alliances.extend(row.victim_alliance_id);
-        alliances.extend(row.final_blow_alliance_id);
+impl NameResolver {
+    /// Name everything stored since the last pass.
+    pub async fn pass(&mut self, pool: &PgPool, esi: &EsiClient) {
+        if self.mark.is_none() {
+            self.mark = sqlx::query_scalar!("select named_seq from zkb_state")
+                .fetch_optional(pool)
+                .await
+                .map(|seq| seq.unwrap_or(0))
+                .inspect_err(|err| eprintln!("killmail names: {err}"))
+                .ok();
+        }
+        if let Some(from) = self.mark {
+            self.mark = Some(resolve_new(pool, esi, from, &mut self.held).await);
+        }
     }
-    // Organisations first: most rows named per fetch if a rate limit cuts the run short.
-    crate::entities::ensure(pool, esi, EntityKind::Alliance, &alliances).await;
-    crate::entities::ensure(pool, esi, EntityKind::Corporation, &corporations).await;
-    crate::entities::ensure(pool, esi, EntityKind::Character, &characters).await;
+}
+
+/// Name everything stored since `from`, and return how far that got. The mark only moves
+/// past a batch once it is named, or once ESI has failed on it [`NAME_RETRIES`] times.
+async fn resolve_new(pool: &PgPool, esi: &EsiClient, from: i64, held: &mut u32) -> i64 {
+    let mut mark = from;
+    loop {
+        // Windowed to what the card can show: a kill zKillboard delivers late enough to be
+        // past it is never on a card.
+        let rows = match sqlx::query!(
+            r#"select ingest_seq as "ingest_seq!",
+                      victim_character_id, victim_corporation_id, victim_alliance_id,
+                      final_blow_character_id, final_blow_corporation_id,
+                      final_blow_alliance_id
+               from killmails
+               where ingest_seq > $1 and time >= now() - make_interval(days => $2)
+               order by ingest_seq
+               limit $3"#,
+            mark,
+            super::CARD_WINDOW_DAYS,
+            NAME_BATCH,
+        )
+        .fetch_all(pool)
+        .await
+        {
+            Ok(rows) => rows,
+            Err(err) => {
+                eprintln!("killmail names: {err}");
+                return mark;
+            }
+        };
+        let Some(last) = rows.last().map(|row| row.ingest_seq) else {
+            return mark;
+        };
+        let full = rows.len() as i64 == NAME_BATCH;
+
+        let mut characters = Vec::new();
+        let mut corporations = Vec::new();
+        let mut alliances = Vec::new();
+        for row in rows {
+            characters.extend(row.victim_character_id);
+            characters.extend(row.final_blow_character_id);
+            corporations.extend(row.victim_corporation_id);
+            corporations.extend(row.final_blow_corporation_id);
+            alliances.extend(row.victim_alliance_id);
+            alliances.extend(row.final_blow_alliance_id);
+        }
+        // Organisations first: most rows named per fetch if a rate limit cuts the run
+        // short. They go one at a time, because the ticker the card shows only comes from
+        // the per-entity endpoint; characters need only a name.
+        let failed = crate::entities::ensure(pool, esi, EntityKind::Alliance, &alliances)
+            .await
+            .failed
+            + crate::entities::ensure(pool, esi, EntityKind::Corporation, &corporations)
+                .await
+                .failed
+            + crate::entities::ensure_character_names(pool, esi, &characters)
+                .await
+                .failed;
+        if failed > 0 && *held < NAME_RETRIES {
+            *held += 1;
+            return mark;
+        }
+        if failed > 0 {
+            eprintln!("killmail names: giving up on {failed} names after {NAME_RETRIES} tries");
+        }
+        *held = 0;
+        mark = last;
+        if let Err(err) = sqlx::query!("update zkb_state set named_seq = $1", mark)
+            .execute(pool)
+            .await
+        {
+            eprintln!("killmail names: {err}");
+        }
+        if !full {
+            return mark;
+        }
+    }
 }

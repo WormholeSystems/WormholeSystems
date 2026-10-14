@@ -1,10 +1,21 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select distinct victim_character_id, victim_corporation_id, victim_alliance_id,\n                  final_blow_character_id, final_blow_corporation_id, final_blow_alliance_id\n           from killmails\n           where time >= now() - make_interval(days => $1)",
+  "query": "select ingest_seq as \"ingest_seq!\",\n                      victim_character_id, victim_corporation_id, victim_alliance_id,\n                      final_blow_character_id, final_blow_corporation_id,\n                      final_blow_alliance_id\n               from killmails\n               where ingest_seq > $1 and time >= now() - make_interval(days => $2)\n               order by ingest_seq\n               limit $3",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
+        "name": "ingest_seq!",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "killmails",
+            "name": "ingest_seq"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
         "name": "victim_character_id",
         "type_info": "Int8",
         "origin": {
@@ -15,7 +26,7 @@
         }
       },
       {
-        "ordinal": 1,
+        "ordinal": 2,
         "name": "victim_corporation_id",
         "type_info": "Int8",
         "origin": {
@@ -26,7 +37,7 @@
         }
       },
       {
-        "ordinal": 2,
+        "ordinal": 3,
         "name": "victim_alliance_id",
         "type_info": "Int8",
         "origin": {
@@ -37,7 +48,7 @@
         }
       },
       {
-        "ordinal": 3,
+        "ordinal": 4,
         "name": "final_blow_character_id",
         "type_info": "Int8",
         "origin": {
@@ -48,7 +59,7 @@
         }
       },
       {
-        "ordinal": 4,
+        "ordinal": 5,
         "name": "final_blow_corporation_id",
         "type_info": "Int8",
         "origin": {
@@ -59,7 +70,7 @@
         }
       },
       {
-        "ordinal": 5,
+        "ordinal": 6,
         "name": "final_blow_alliance_id",
         "type_info": "Int8",
         "origin": {
@@ -72,7 +83,9 @@
     ],
     "parameters": {
       "Left": [
-        "Int4"
+        "Int8",
+        "Int4",
+        "Int8"
       ]
     },
     "nullable": [
@@ -81,8 +94,9 @@
       true,
       true,
       true,
+      true,
       true
     ]
   },
-  "hash": "7cc0b56512363a8dd0dd80bd9c0ca02cffda1554fe6caeafaca6a5fa050446c7"
+  "hash": "eafa94fd5cb141b71899302779204e2c1dc357c56b5e885c8c590f75edb34581"
 }

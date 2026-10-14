@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update zkb_state set named_seq = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "3103f5d4e0a892d9a7f2993f0dccf6f7409877e5e6cafd817f09f06d987044ad"
+}

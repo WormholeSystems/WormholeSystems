@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select id from unresolvable_entities\n         where kind = $1 and id = any($2) and noted_at > now() - interval '30 days'",
+  "query": "select id, noted_at > now() - interval '30 days' as \"recent!\"\n           from unresolvable_entities where kind = $1 and id = any($2)",
   "describe": {
     "columns": [
       {
@@ -13,6 +13,12 @@
             "name": "id"
           }
         }
+      },
+      {
+        "ordinal": 1,
+        "name": "recent!",
+        "type_info": "Bool",
+        "origin": "Expression"
       }
     ],
     "parameters": {
@@ -22,8 +28,9 @@
       ]
     },
     "nullable": [
-      false
+      false,
+      null
     ]
   },
-  "hash": "b33c5e4533fc89cc31d56ae4cc8aa9d801098b0b8cecec030f60de2da737f5bb"
+  "hash": "08f269e859bf48cf111dde3890484ed3e2b840fec4bdc61033532cfdeed95b98"
 }

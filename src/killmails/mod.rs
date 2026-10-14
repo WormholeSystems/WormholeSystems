@@ -18,6 +18,7 @@ pub use archive::{BACKFILL_DAYS, backfill};
 pub use card::{
     CARD_LIMIT, CARD_WINDOW_DAYS, KillParty, KillmailFilter, MapKillmail, list_for_map,
 };
+pub use stream::NameResolver;
 
 use serde::Deserialize;
 use sqlx::PgPool;
@@ -141,7 +142,11 @@ struct KillmailRow {
 /// Insert killmail rows, skipping anything older than the retention window and anything
 /// already stored. Returns how many were new. The one insert statement for both the live
 /// stream and the archive import, batched with `unnest` so a whole archived day fits.
-async fn insert_rows(pool: &PgPool, rows: &[KillmailRow]) -> sqlx::Result<u64> {
+///
+/// `live` rows get an `ingest_seq`, which is how the name resolver finds what is new. The
+/// stream is the only live writer and inserts one kill at a time, so the numbers commit in
+/// order and the resolver's high-water mark cannot step over one still in flight.
+async fn insert_rows(pool: &PgPool, rows: &[KillmailRow], live: bool) -> sqlx::Result<u64> {
     let mut inserted = 0u64;
     // Fixed arrays rather than one placeholder per value, so the batch is bounded by
     // memory rather than by Postgres's parameter limit.
@@ -187,9 +192,10 @@ async fn insert_rows(pool: &PgPool, rows: &[KillmailRow]) -> sqlx::Result<u64> {
                  victim_character_id, victim_corporation_id, victim_alliance_id,
                  victim_ship_type_id, total_value, attacker_count, is_npc, is_solo,
                  final_blow_character_id, final_blow_corporation_id,
-                 final_blow_alliance_id, final_blow_ship_type_id
+                 final_blow_alliance_id, final_blow_ship_type_id, ingest_seq
              )
-             select * from unnest($1::bigint[], $2::text[], $3::bigint[],
+             select t.*, case when $19 then nextval('killmails_ingest_seq') end
+             from unnest($1::bigint[], $2::text[], $3::bigint[],
                                   $4::text[]::timestamptz[], $5::jsonb[],
                                   $6::bigint[], $7::bigint[], $8::bigint[], $9::bigint[],
                                   $10::double precision[], $11::int[], $12::boolean[],
@@ -221,6 +227,7 @@ async fn insert_rows(pool: &PgPool, rows: &[KillmailRow]) -> sqlx::Result<u64> {
         .bind(&fb_allis)
         .bind(&fb_ships)
         .bind(RETENTION_DAYS)
+        .bind(live)
         .execute(pool)
         .await?
         .rows_affected();

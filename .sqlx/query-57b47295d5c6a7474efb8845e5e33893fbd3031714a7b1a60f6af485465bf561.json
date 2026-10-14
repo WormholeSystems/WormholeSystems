@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select named_seq from zkb_state",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "named_seq",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "zkb_state",
+            "name": "named_seq"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "57b47295d5c6a7474efb8845e5e33893fbd3031714a7b1a60f6af485465bf561"
+}
