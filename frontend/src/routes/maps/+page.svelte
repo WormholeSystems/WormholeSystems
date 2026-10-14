@@ -19,6 +19,7 @@
 	import { api, errorMessage } from '$lib/api/client';
 	import { after, apiAction } from '$lib/api/mutations';
 	import { key, q } from '$lib/api/queries';
+	import type { CharacterSummary } from '$lib/api/types/CharacterSummary';
 	import type { MapEntry } from '$lib/api/types/MapEntry';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
@@ -33,7 +34,11 @@
 	import { filterMaps, splitArchived, totalsOf } from './page-model';
 	import { cn } from '$lib/utils';
 
-	let { data }: { data: { maps: MapEntry[] } } = $props();
+	let { data }: { data: { maps: MapEntry[]; me: CharacterSummary | null } } = $props();
+
+	// An instance can limit map creation to named affiliations. Off the list, the create and
+	// import buttons are left out rather than answering with a 403.
+	const canCreate = $derived(data.me?.can_create_map ?? false);
 
 	// The load's list is the first frame; after that the cache owns it, and the top bar's
 	// pinned shortcuts read the same entry.
@@ -283,16 +288,18 @@
 				Every chain you can reach, most recently flown first.
 			</p>
 		</div>
-		<div class="flex items-center gap-2">
-			<Button variant="outline" onclick={() => (importing = true)} data-testid="import-new-map">
-				<UploadIcon data-icon="inline-start" />
-				Import
-			</Button>
-			<Button onclick={() => (creating = true)} data-testid="new-map">
-				<PlusIcon data-icon="inline-start" />
-				New map
-			</Button>
-		</div>
+		{#if canCreate}
+			<div class="flex items-center gap-2">
+				<Button variant="outline" onclick={() => (importing = true)} data-testid="import-new-map">
+					<UploadIcon data-icon="inline-start" />
+					Import
+				</Button>
+				<Button onclick={() => (creating = true)} data-testid="new-map">
+					<PlusIcon data-icon="inline-start" />
+					New map
+				</Button>
+			</div>
+		{/if}
 	</div>
 
 	{#if maps.length > 0}
@@ -326,13 +333,20 @@
 
 	{#if maps.length === 0}
 		<div class="flex flex-col items-start gap-3 border border-dashed border-border p-8">
-			<p class="text-sm text-muted-foreground" data-testid="maps-empty">
-				No maps yet. A map is one chain: create one and start scanning.
-			</p>
-			<Button onclick={() => (creating = true)}>
-				<PlusIcon data-icon="inline-start" />
-				Create your first map
-			</Button>
+			{#if canCreate}
+				<p class="text-sm text-muted-foreground" data-testid="maps-empty">
+					No maps yet. A map is one chain: create one and start scanning.
+				</p>
+				<Button onclick={() => (creating = true)}>
+					<PlusIcon data-icon="inline-start" />
+					Create your first map
+				</Button>
+			{:else}
+				<p class="text-sm text-muted-foreground" data-testid="maps-empty">
+					No maps yet. On this instance only certain characters, corporations or alliances create
+					maps; once one of them adds you to theirs, it shows up here.
+				</p>
+			{/if}
 		</div>
 	{:else if active.length === 0}
 		<!-- Told apart from having no maps at all, because the fix is different. -->

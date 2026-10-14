@@ -371,6 +371,13 @@ fn ask_everything(existing: &str, http: u16, https: u16) -> Result<Answers> {
         &envfile::get(existing, "ALLOWED_AFFILIATION_IDS").unwrap_or_default(),
         config::affiliation_ids,
     )?;
+    ui::note("Who may create maps, the same way, checked against the character a map is");
+    ui::note("created as. Empty lets everyone who can log in.");
+    answers.map_creators = ui::edit(
+        "Map creator ids",
+        &envfile::get(existing, "MAP_CREATOR_AFFILIATION_IDS").unwrap_or_default(),
+        config::affiliation_ids,
+    )?;
 
     answers.discord = ask_discord(existing, &answers.base_url())?;
     Ok(answers)

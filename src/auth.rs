@@ -34,6 +34,9 @@ pub struct AppState {
     /// Who may sign in. Checked at the SSO callback only, so it decides who gets a session
     /// and whose characters join an account; a session already open runs out as usual.
     pub allowed_logins: crate::allowlist::AffiliationAllowlist,
+    /// Who may create maps, independent of who may log in: an instance can admit a whole
+    /// alliance while only its leadership creates maps.
+    pub map_creators: crate::allowlist::AffiliationAllowlist,
 }
 
 pub struct Auth {

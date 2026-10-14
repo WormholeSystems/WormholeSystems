@@ -3,4 +3,9 @@
 /**
  * The signed-in character, for the UI's auth state.
  */
-export type CharacterSummary = { character_id: number, name: string, };
+export type CharacterSummary = { character_id: number, name: string, 
+/**
+ * Whether this character may create a map here. An instance can limit that to named
+ * affiliations, and a button that only produces a 403 is worse than no button.
+ */
+can_create_map: boolean, };

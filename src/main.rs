@@ -225,6 +225,7 @@ async fn main() {
         secure_cookies,
         backgrounds: wormholesystems::maps::BackgroundStore::new(config.uploads_dir),
         allowed_logins: config.allowed_logins,
+        map_creators: config.map_creators,
     };
 
     let app = Router::new()

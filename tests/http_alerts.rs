@@ -8,6 +8,7 @@ use common::app::{app, get, request_json, session_cookie};
 use common::world;
 use serde_json::json;
 use sqlx::PgPool;
+use wormholesystems::allowlist::AffiliationAllowlist;
 
 fn killmail_alert(name: &str, webhook_id: i64) -> serde_json::Value {
     json!({
@@ -129,6 +130,7 @@ async fn a_destination_from_another_map_is_refused(pool: PgPool) {
     let other_map = wormholesystems::maps::map::create_map(
         &pool,
         w.owner,
+        &AffiliationAllowlist::default(),
         wormholesystems::maps::map::CreateMap {
             name: "other".into(),
             description: None,

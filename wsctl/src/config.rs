@@ -20,6 +20,9 @@ pub struct Answers {
     pub discord: Option<Discord>,
     /// Who may log in, as `ALLOWED_AFFILIATION_IDS` takes it. Empty lets everyone in.
     pub allowed_logins: String,
+    /// Who may create maps, as `MAP_CREATOR_AFFILIATION_IDS` takes it. Empty lets everyone
+    /// who can log in.
+    pub map_creators: String,
 }
 
 /// How the install meets the world.
@@ -155,6 +158,7 @@ impl Answers {
         );
         // Written even when empty: emptying it is how an instance is opened up again.
         set("ALLOWED_AFFILIATION_IDS", self.allowed_logins.clone());
+        set("MAP_CREATOR_AFFILIATION_IDS", self.map_creators.clone());
         if let Some(discord) = &self.discord {
             set("DISCORD_APPLICATION_ID", discord.application_id.clone());
             set("DISCORD_PUBLIC_KEY", discord.public_key.clone());
@@ -242,6 +246,7 @@ mod tests {
             eve_client_secret: "shh".into(),
             discord: None,
             allowed_logins: String::new(),
+            map_creators: String::new(),
         }
     }
 
@@ -257,8 +262,9 @@ mod tests {
 
     // An empty list has to be written as such, or a list emptied in the wizard would stay.
     #[test]
-    fn the_login_allowlist_is_written_even_when_empty() {
+    fn the_allowlists_are_written_even_when_empty() {
         assert_eq!(answers().env_values()["ALLOWED_AFFILIATION_IDS"], "");
+        assert_eq!(answers().env_values()["MAP_CREATOR_AFFILIATION_IDS"], "");
     }
 
     #[test]

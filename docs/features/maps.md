@@ -125,7 +125,10 @@ invariant. Single-statement actions don't need an explicit transaction.
 
 ### `create_map(actor, name, description?) -> Map`
 
-- **Auth:** any authenticated user.
+- **Auth:** any authenticated user, unless `MAP_CREATOR_AFFILIATION_IDS` is set: then the
+  acting character, its corporation or its alliance has to be on that list, or it is
+  `Forbidden`. `may_create_map` answers the same question for `/api/me`'s
+  `can_create_map`, and `import_map_as_new` applies the same rule.
 - **Validates:** `name` is trimmed and non-empty; `character_id` belongs to `user_id`.
 - **Effect (one transaction):** insert the `maps` row, then insert a `map_access` row
   `(subject_type = character, subject_id = actor.character_id, role = owner)`.

@@ -1,0 +1,41 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select corporation_id, alliance_id from characters where id = $1 and user_id = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "corporation_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "characters",
+            "name": "corporation_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "alliance_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "characters",
+            "name": "alliance_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      true,
+      true
+    ]
+  },
+  "hash": "d4783e5f6602ef2d8b8a06b0ec426bd4f2b94c04489e47232cd5fa59cb16510b"
+}

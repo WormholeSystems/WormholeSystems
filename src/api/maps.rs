@@ -158,7 +158,7 @@ pub struct CreateMapBody {
     path = "/api/maps",
     tag = "maps",
     request_body = CreateMapBody,
-    responses((status = 200, body = Map, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized)),
+    responses((status = 200, body = Map, description = "OK"), (status = 400, response = super::BadRequest), (status = 401, response = super::Unauthorized), (status = 403, response = super::Forbidden)),
     security(("bearer" = []), ("session" = [])),
 )]
 pub async fn create_map(
@@ -170,6 +170,7 @@ pub async fn create_map(
     let map = crate::maps::map::create_map(
         &state.db,
         actor,
+        &state.map_creators,
         crate::maps::map::CreateMap {
             name: body.name,
             description: body.description.filter(|d| !d.trim().is_empty()),

@@ -59,6 +59,7 @@ pub fn state(pool: &PgPool) -> AppState {
             std::env::temp_dir().join("ws-test-uploads"),
         ),
         allowed_logins: Default::default(),
+        map_creators: Default::default(),
     }
 }
 
