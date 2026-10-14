@@ -190,7 +190,8 @@ test('arranging never gives the window a horizontal scrollbar', async ({ page, a
 test('a tile is not a containing block for the map context menu', async ({ page, api }) => {
 	// Tiles are placed with left/top rather than a transform on purpose: a transform makes
 	// the tile the containing block for `position: fixed` descendants, which silently threw
-	// the map's context menus off by the tile's own offset.
+	// the map's context menus off by the tile's own offset. Whatever the menu is built from,
+	// it has to open exactly where the canvas was clicked.
 	const mapId = await createMap(api, 'E2E Fixed');
 	await api.post(`/api/maps/${mapId}/systems/add`, {
 		data: { map_id: mapId, solar_system_id: J122515, x: 300, y: 200, alias: null },
@@ -202,11 +203,15 @@ test('a tile is not a containing block for the map context menu', async ({ page,
 	const at = { x: Math.round(canvas.x + 400), y: Math.round(canvas.y + 300) };
 	await page.mouse.click(at.x, at.y, { button: 'right' });
 
-	const menu = page.locator('.fixed.z-30').first();
+	const menu = page.getByTestId('context-menu');
 	await expect(menu).toBeVisible();
-	const box = (await menu.boundingBox())!;
-	expect(Math.round(box.x)).toBe(at.x);
-	expect(Math.round(box.y)).toBe(at.y);
+	// Positioned on the next frame, so wait for it to settle on the click.
+	await expect
+		.poll(async () => {
+			const box = (await menu.boundingBox())!;
+			return { x: Math.round(box.x), y: Math.round(box.y) };
+		})
+		.toEqual(at);
 });
 
 test('arranging leaves room to drag a tile past the bottom', async ({ page, api }) => {
