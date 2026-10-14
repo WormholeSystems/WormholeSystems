@@ -41,13 +41,22 @@ test('edge colors and dashes per state', async ({ page, api }) => {
 		data: { map_id: mapId, connection_id: cid, mass_status: 'stable' },
 	});
 	await reloadApp(page);
-	await page.locator('path[stroke="transparent"]').click({ button: 'right', force: true });
+	// Forced, since the hit path is an invisible stroke. Brought to the middle of the view
+	// first: picking from a submenu can leave the page scrolled (the entry is scrolled to
+	// while it still animates in), and a forced click does not look for what is on top.
+	const openEdgeMenu = async () => {
+		const hit = page.getByTestId('edge-hit');
+		await hit.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+		await hit.click({ button: 'right', force: true });
+		await expect(page.getByTestId('context-menu')).toBeVisible();
+	};
+	await openEdgeMenu();
 	await page.getByTestId('lifetime-subtrigger').hover();
 	await page.getByTestId('lifetime-submenu').getByRole('menuitem', { name: 'End of Life' }).click();
 	await expect(edge).toHaveAttribute('stroke', '#a855f7'); // purple-500
 
 	// The menu marks the current state and warns on non-gate stargate marking.
-	await page.locator('path[stroke="transparent"]').click({ button: 'right', force: true });
+	await openEdgeMenu();
 	await page.getByTestId('size-subtrigger').hover();
 	await expect(
 		page.getByTestId('size-submenu').getByRole('menuitem', { name: 'Frigate' }),

@@ -217,9 +217,12 @@ test('a killmail row right-clicks to the system menu', async ({ page, api }) => 
 	await expect(row).toBeVisible({ timeout: 10_000 });
 
 	await row.click({ button: 'right' });
-	const menu = page.getByRole('menu');
+	const menu = page.getByTestId('system-menu');
 	await expect(menu).toBeVisible();
-	await expect(menu.getByText('Set destination')).toBeVisible();
+	await expect(menu.getByTestId('menu-route')).toBeVisible();
+	// J122515 is wormhole space, where the autopilot cannot take anyone, so the menu offers
+	// no destination there, the same as the system's own node.
+	await expect(menu.getByTestId('menu-set-destination')).toHaveCount(0);
 });
 
 // Ids that will never collide with anything zKillboard hands us.

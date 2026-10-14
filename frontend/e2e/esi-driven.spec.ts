@@ -413,8 +413,10 @@ test('the poller drives the whole jump, from ESI to the prompt', async ({
 		baseURL: 'http://127.0.0.1:3000',
 		extraHTTPHeaders: { cookie: `ws_session=${identity.session}` },
 	});
+	// Preselected, so confirming the prompt links the one scanned hole: without it the prompt
+	// opens on Unknown (the default since preselection became a setting) and maps it unlinked.
 	await pilotApi.post(`/api/maps/${mapId}/settings/user`, {
-		data: { tracking_allowed: true, prompt_for_signature: true },
+		data: { tracking_allowed: true, prompt_for_signature: true, preselect_signature: true },
 	});
 
 	const ctx = await browser.newContext();
