@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "insert into signatures\n               (map_id, solar_system_id, signature_id, \"group\", signature_type_id, name,\n                size, mass_status, time_status, time_status_updated_at)\n           values ($1, $2, $3, $4, $5, $6, $7, $8, $9,\n                   case when $9::time_status is not null then now() end)\n           returning id, map_id, solar_system_id, signature_id, \"group\",\n                     signature_type_id, name, size,\n                     mass_status,\n                     time_status,\n                     time_status_updated_at, connection_id, created_at, updated_at",
+  "query": "insert into signatures\n               (map_id, solar_system_id, signature_id, \"group\", signature_type_id, name,\n                size, mass_status, time_status, connection_id, time_status_updated_at)\n           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,\n                   case when $9::time_status is not null then now() end)\n           returning id, map_id, solar_system_id, signature_id, \"group\",\n                     signature_type_id, name, size,\n                     mass_status,\n                     time_status,\n                     time_status_updated_at, connection_id, created_at, updated_at",
   "describe": {
     "columns": [
       {
@@ -272,7 +272,8 @@
               ]
             }
           }
-        }
+        },
+        "Int8"
       ]
     },
     "nullable": [
@@ -292,5 +293,5 @@
       false
     ]
   },
-  "hash": "5543df6bd5080bd2cab0f6603ef3b6e81d095b6fabf9dd86d07db8119503aa0a"
+  "hash": "2ee4fd41b5b9ee8318d1580a02058b60a28ce3241d6566f62a222ba8928cd42e"
 }

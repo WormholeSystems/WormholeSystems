@@ -23,6 +23,8 @@ use sqlx::PgPool;
 use super::access::require_role;
 use super::command::{CommandOutput, Effect, MapCommand, Tx, execute};
 use super::error::{MapError, Result};
+use super::store;
+use super::store::signatures::{NewSignature, SignatureRow};
 use super::{Actor, MapEvent, MapHub, Role};
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema)]
@@ -170,30 +172,21 @@ pub(super) async fn apply_add_signature(tx: &mut Tx<'_>, cmd: AddSignature) -> R
         return Err(MapError::Conflict("signature already scanned here".into()));
     }
 
-    // The stamp trigger only fires on update, so an initial time_status stamps here.
-    let sig = sqlx::query_as!(
-        Signature,
-        r#"insert into signatures
-               (map_id, solar_system_id, signature_id, "group", signature_type_id, name,
-                size, mass_status, time_status, time_status_updated_at)
-           values ($1, $2, $3, $4, $5, $6, $7, $8, $9,
-                   case when $9::time_status is not null then now() end)
-           returning id, map_id, solar_system_id, signature_id, "group",
-                     signature_type_id, name, size,
-                     mass_status,
-                     time_status,
-                     time_status_updated_at, connection_id, created_at, updated_at"#,
+    let sig = store::signatures::insert(
+        tx,
         cmd.map_id,
-        cmd.solar_system_id,
-        cmd.signature_id.trim(),
-        cmd.group,
-        cmd.signature_type_id,
-        cmd.name.as_deref(),
-        cmd.size,
-        cmd.mass_status,
-        cmd.time_status,
+        &NewSignature {
+            solar_system_id: cmd.solar_system_id,
+            signature_id: cmd.signature_id.trim(),
+            group: cmd.group,
+            signature_type_id: cmd.signature_type_id,
+            name: cmd.name.as_deref(),
+            size: cmd.size,
+            mass_status: cmd.mass_status,
+            time_status: cmd.time_status,
+            connection_id: None,
+        },
     )
-    .fetch_one(&mut **tx)
     .await?;
     let inverse = MapCommand::RemoveSignature(RemoveSignature {
         map_id: cmd.map_id,
@@ -439,15 +432,10 @@ pub(super) async fn apply_remove_signature(
     let raised = super::ghost::raised_by(tx, cmd.map_id, &[cmd.signature_pk]).await?;
     let raised_snapshot = capture_raised(tx, cmd.map_id, &raised).await?;
 
-    let sig = sqlx::query!(
-        "delete from signatures where id = $1 and map_id = $2
-         returning solar_system_id, connection_id",
-        cmd.signature_pk,
-        cmd.map_id,
-    )
-    .fetch_optional(&mut **tx)
-    .await?
-    .ok_or(MapError::NotFound)?;
+    let sig = store::signatures::delete(tx, cmd.map_id, &[cmd.signature_pk])
+        .await?
+        .pop()
+        .ok_or(MapError::NotFound)?;
 
     let mut removed_connection_id = None;
     if let Some(conn_id) = sig.connection_id
@@ -556,14 +544,7 @@ pub(super) async fn apply_remove_signatures(
     let restore = capture_signatures(tx, cmd.map_id, &cmd.signature_pks).await?;
     let raised = super::ghost::raised_by(tx, cmd.map_id, &cmd.signature_pks).await?;
     let raised_snapshot = capture_raised(tx, cmd.map_id, &raised).await?;
-    let removed = sqlx::query!(
-        "delete from signatures where map_id = $1 and id = any($2)
-         returning solar_system_id, connection_id",
-        cmd.map_id,
-        &cmd.signature_pks,
-    )
-    .fetch_all(&mut **tx)
-    .await?;
+    let removed = store::signatures::delete(tx, cmd.map_id, &cmd.signature_pks).await?;
 
     let mut systems: Vec<i64> = removed.iter().map(|r| r.solar_system_id).collect();
     systems.sort_unstable();
@@ -595,21 +576,7 @@ pub(super) async fn apply_remove_signatures(
     // in: that is where the user is working, and losing its last hole doesn't make it stale.
     let mut removed_placement_ids = raised;
     for placement_id in endpoint_candidates {
-        let deleted = sqlx::query!(
-            "delete from map_solar_systems mss
-             where mss.id = $1 and mss.map_id = $2
-               and not mss.is_pinned and not mss.is_home and not mss.is_rally
-               and not exists (
-                   select 1 from map_connections c
-                   where c.map_id = $2 and (c.from_system = $1 or c.to_system = $1)
-               )",
-            placement_id,
-            cmd.map_id,
-        )
-        .execute(&mut **tx)
-        .await?
-        .rows_affected();
-        if deleted > 0 {
+        if store::placements::delete_if_orphan(tx, cmd.map_id, placement_id).await? {
             removed_placement_ids.push(placement_id);
         }
     }
@@ -677,14 +644,9 @@ async fn delete_connection_if_side_empty(
     if survivors > 0 {
         return Ok(None);
     }
-    let Some(endpoints) = sqlx::query!(
-        "delete from map_connections where id = $1 and map_id = $2
-         returning from_system, to_system",
-        conn_id,
-        map_id,
-    )
-    .fetch_optional(&mut **tx)
-    .await?
+    let Some(endpoints) = store::connections::delete(tx, map_id, &[conn_id])
+        .await?
+        .pop()
     else {
         return Ok(None);
     };
@@ -767,14 +729,8 @@ pub(super) async fn apply_link_signature(tx: &mut Tx<'_>, cmd: LinkSignature) ->
     .fetch_optional(&mut **tx)
     .await?;
 
-    sqlx::query!(
-        "update signatures set connection_id = $1 where id = $2 and map_id = $3",
-        cmd.connection_id,
-        cmd.signature_pk,
-        cmd.map_id,
-    )
-    .execute(&mut **tx)
-    .await?;
+    store::signatures::set_connection(tx, cmd.map_id, cmd.signature_pk, Some(cmd.connection_id))
+        .await?;
 
     // Re-read: the merge trigger may have changed this row's state after the UPDATE.
     let linked = fetch_signature_tx(tx, cmd.map_id, cmd.signature_pk).await?;
@@ -848,13 +804,7 @@ pub(super) async fn apply_unlink_signature(
     cmd: UnlinkSignature,
 ) -> Result<Effect> {
     let before = fetch_signature_tx(tx, cmd.map_id, cmd.signature_pk).await?;
-    sqlx::query!(
-        "update signatures set connection_id = null where id = $1 and map_id = $2",
-        cmd.signature_pk,
-        cmd.map_id,
-    )
-    .execute(&mut **tx)
-    .await?;
+    store::signatures::set_connection(tx, cmd.map_id, cmd.signature_pk, None).await?;
     let sig = fetch_signature_tx(tx, cmd.map_id, cmd.signature_pk).await?;
     // Unlinking something that was never linked has nothing to restore.
     let inverse = before.connection_id.map(|connection_id| {
@@ -1029,18 +979,23 @@ pub(super) async fn apply_paste_signatures(
         .await?;
 
         let Some(existing) = existing else {
-            sqlx::query!(
-                r#"insert into signatures
-                       (map_id, solar_system_id, signature_id, "group", signature_type_id, name)
-                   values ($1, $2, $3, $4, $5, $6)"#,
+            // A paste only names what the scanner shows; the hole's state is for somebody
+            // to fill in.
+            store::signatures::insert(
+                tx,
                 cmd.map_id,
-                cmd.solar_system_id,
-                sid,
-                s.group.unwrap_or_default(),
-                pasted_type,
-                s.name.as_deref(),
+                &NewSignature {
+                    solar_system_id: cmd.solar_system_id,
+                    signature_id: sid,
+                    group: s.group.unwrap_or_default(),
+                    signature_type_id: pasted_type,
+                    name: s.name.as_deref(),
+                    size: None,
+                    mass_status: None,
+                    time_status: None,
+                    connection_id: None,
+                },
             )
-            .execute(&mut **tx)
             .await?;
             continue;
         };
@@ -1132,7 +1087,7 @@ pub async fn read_signatures(pool: &PgPool, map_id: i64) -> Result<Vec<Signature
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RestoreSignatures {
     pub map_id: i64,
-    pub signatures: Vec<super::restore::RestoredSignature>,
+    pub signatures: Vec<SignatureRow>,
     /// When set, the system is reset to exactly this snapshot (used by paste undo, which
     /// must also drop rows the paste created).
     pub replaces_system: Option<i64>,
@@ -1147,18 +1102,7 @@ pub(super) async fn capture_signatures(
     map_id: i64,
     ids: &[i64],
 ) -> Result<RestoreSignatures> {
-    let signatures = sqlx::query_as!(
-        super::restore::RestoredSignature,
-        r#"select id, solar_system_id, signature_id, "group",
-                  signature_type_id, name, size,
-                  mass_status,
-                  time_status, connection_id
-           from signatures where map_id = $1 and id = any($2)"#,
-        map_id,
-        ids,
-    )
-    .fetch_all(&mut **tx)
-    .await?;
+    let signatures = store::signatures::snapshot(tx, map_id, ids).await?;
     Ok(RestoreSignatures {
         map_id,
         signatures,
@@ -1199,34 +1143,7 @@ pub(super) async fn apply_restore_signatures(
         );
     }
     for s in &cmd.signatures {
-        sqlx::query!(
-            r#"insert into signatures
-                   (id, map_id, solar_system_id, signature_id, "group", signature_type_id,
-                    name, size, mass_status, time_status, connection_id)
-               overriding system value
-               values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-               on conflict (id) do update set
-                   "group" = excluded."group",
-                   signature_type_id = excluded.signature_type_id,
-                   name = excluded.name,
-                   size = excluded.size,
-                   mass_status = excluded.mass_status,
-                   time_status = excluded.time_status,
-                   connection_id = excluded.connection_id"#,
-            s.id,
-            cmd.map_id,
-            s.solar_system_id,
-            s.signature_id,
-            s.group,
-            s.signature_type_id,
-            s.name.as_deref(),
-            s.size,
-            s.mass_status,
-            s.time_status,
-            s.connection_id,
-        )
-        .execute(&mut **tx)
-        .await?;
+        store::signatures::reinsert_overwriting(tx, cmd.map_id, s).await?;
     }
     let count = cmd.signatures.len() as i64;
     let ids: Vec<i64> = cmd.signatures.iter().map(|s| s.id).collect();

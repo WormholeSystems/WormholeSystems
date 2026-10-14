@@ -10,6 +10,7 @@ use super::access::require_role;
 use super::command::{CommandOutput, Effect, MapCommand, Tx, execute};
 use super::error::{MapError, Result};
 use super::restore::{capture_systems, remove_captured_signatures};
+use super::store::placements::{self, NewPlacement};
 use super::{Actor, MapEvent, Role};
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS, utoipa::ToSchema)]
@@ -64,18 +65,11 @@ pub(super) async fn apply_add_system(tx: &mut Tx<'_>, cmd: AddSystem) -> Result<
         return Err(MapError::Conflict("system already on the map".into()));
     }
 
-    let placed = sqlx::query_as!(
-        MapSolarSystem,
-        "insert into map_solar_systems (map_id, solar_system_id, position_x, position_y, alias)
-         values ($1, $2, $3, $4, $5)
-         returning id, map_id, solar_system_id, position_x, position_y, alias, created_at",
+    let placed = placements::insert(
+        tx,
         cmd.map_id,
-        cmd.solar_system_id,
-        cmd.x,
-        cmd.y,
-        cmd.alias.as_deref(),
+        &NewPlacement::system(cmd.solar_system_id, cmd.x, cmd.y, cmd.alias.as_deref()),
     )
-    .fetch_one(&mut **tx)
     .await?;
 
     let inverse = MapCommand::RemoveSystems(RemoveSystems {
@@ -135,16 +129,7 @@ pub(super) async fn apply_remove_system(tx: &mut Tx<'_>, cmd: RemoveSystem) -> R
     ids.extend(super::ghost::stranded_ghosts(tx, cmd.map_id, &ids, &[]).await?);
 
     let snapshot = capture_systems(tx, cmd.map_id, &ids).await?;
-    // The guard is repeated on the delete itself, so the rule travels with the query.
-    let deleted = sqlx::query!(
-        "delete from map_solar_systems
-         where id = any($1) and map_id = $2 and not is_home and not is_pinned",
-        &ids,
-        cmd.map_id,
-    )
-    .execute(&mut **tx)
-    .await?
-    .rows_affected();
+    let deleted = placements::delete_unprotected(tx, cmd.map_id, &ids).await?;
     if deleted == 0 {
         return Err(MapError::NotFound);
     }
@@ -201,16 +186,7 @@ pub(super) async fn apply_remove_systems(tx: &mut Tx<'_>, cmd: RemoveSystems) ->
     removable.extend(super::ghost::stranded_ghosts(tx, cmd.map_id, &removable, &[]).await?);
 
     let snapshot = capture_systems(tx, cmd.map_id, &removable).await?;
-    // The guard is repeated on the delete itself, so the rule travels with the query.
-    let deleted = sqlx::query!(
-        "delete from map_solar_systems
-         where map_id = $1 and id = any($2) and not is_home and not is_pinned",
-        cmd.map_id,
-        &removable,
-    )
-    .execute(&mut **tx)
-    .await?
-    .rows_affected();
+    let deleted = placements::delete_unprotected(tx, cmd.map_id, &removable).await?;
     remove_captured_signatures(tx, cmd.map_id, &snapshot).await?;
 
     let label = match held {
@@ -248,13 +224,7 @@ pub(super) async fn apply_clear_map(tx: &mut Tx<'_>, cmd: ClearMap) -> Result<Ef
     .fetch_all(&mut **tx)
     .await?;
     let snapshot = capture_systems(tx, cmd.map_id, &doomed).await?;
-    let deleted = sqlx::query!(
-        "delete from map_solar_systems where map_id = $1 and not is_home and not is_pinned",
-        cmd.map_id,
-    )
-    .execute(&mut **tx)
-    .await?
-    .rows_affected();
+    let deleted = placements::delete_all_unprotected(tx, cmd.map_id).await?;
     Ok(Effect::new(
         "map.cleared",
         format!("cleared the map ({deleted} systems)"),
@@ -295,16 +265,7 @@ pub(super) async fn apply_move_system(tx: &mut Tx<'_>, cmd: MoveSystem) -> Resul
     if before.is_pinned {
         return Ok(kept("systems.moved", "a pinned system stayed put"));
     }
-    sqlx::query!(
-        "update map_solar_systems set position_x = $1, position_y = $2
-         where id = $3 and map_id = $4 and not is_pinned",
-        cmd.x,
-        cmd.y,
-        cmd.map_solar_system_id,
-        cmd.map_id,
-    )
-    .execute(&mut **tx)
-    .await?;
+    placements::move_unpinned(tx, cmd.map_id, cmd.map_solar_system_id, cmd.x, cmd.y).await?;
     let inverse = MapCommand::MoveSystem(MoveSystem {
         map_id: cmd.map_id,
         map_solar_system_id: cmd.map_solar_system_id,
@@ -372,16 +333,7 @@ pub(super) async fn apply_move_systems(tx: &mut Tx<'_>, cmd: MoveSystems) -> Res
         .iter()
         .filter(|m| movable.contains(&m.map_solar_system_id))
     {
-        sqlx::query!(
-            "update map_solar_systems set position_x = $1, position_y = $2
-             where id = $3 and map_id = $4 and not is_pinned",
-            m.x,
-            m.y,
-            m.map_solar_system_id,
-            cmd.map_id,
-        )
-        .execute(&mut **tx)
-        .await?;
+        placements::move_unpinned(tx, cmd.map_id, m.map_solar_system_id, m.x, m.y).await?;
     }
     let count = movable.len();
     let label = if count == 1 {

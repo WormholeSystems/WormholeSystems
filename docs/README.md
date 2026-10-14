@@ -45,6 +45,10 @@ documentation at `/documentation`, written in [`frontend/src/docs/`](../frontend
   merge of their routers. Adding an endpoint means touching one file.
 - `src/maps/` — the actions themselves: the authorized, validated, undoable commands the
   API calls into. This is where the rules live; the API layer only decodes and dispatches.
+  `src/maps/store/` holds the SQL that writes placements, connections and signatures, one
+  file per table: every full-row insert and every write more than one command makes, so a
+  new column is changed there and nowhere else. It does SQL only; the commands keep the
+  checks, events and undo.
 - `src/esi/`, `src/sde/`, `src/seed/` — talking to EVE: the live API, the static data
   export, and loading the latter into the database.
 - `src/alerts/`, `src/discord/` — what a map watches for, and where the notices go.

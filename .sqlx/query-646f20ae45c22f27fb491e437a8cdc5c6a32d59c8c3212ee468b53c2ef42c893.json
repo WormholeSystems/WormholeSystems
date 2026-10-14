@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "insert into map_solar_systems (map_id, solar_system_id, position_x, position_y, alias)\n         values ($1, $2, $3, $4, $5)\n         returning id, map_id, solar_system_id, position_x, position_y, alias, created_at",
+  "query": "insert into map_solar_systems\n             (map_id, solar_system_id, position_x, position_y, alias, is_pinned,\n              raised_by_signature_id, hangs_off_id)\n         values ($1, $2, $3, $4, $5, $6, $7, $8)\n         returning id, map_id, solar_system_id, position_x, position_y, alias, created_at",
   "describe": {
     "columns": [
       {
@@ -87,7 +87,10 @@
         "Int8",
         "Float8",
         "Float8",
-        "Text"
+        "Text",
+        "Bool",
+        "Int8",
+        "Int8"
       ]
     },
     "nullable": [
@@ -100,5 +103,5 @@
       false
     ]
   },
-  "hash": "34121821b9c2e4779e8f6f853f9d2ffbdf1ad20cb2cebd9491ecced282713f0f"
+  "hash": "646f20ae45c22f27fb491e437a8cdc5c6a32d59c8c3212ee468b53c2ef42c893"
 }
