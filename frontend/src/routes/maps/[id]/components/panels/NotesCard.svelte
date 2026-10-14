@@ -9,7 +9,6 @@
 	import { ApiError } from '$lib/api/client';
 	import { q } from '$lib/api/queries';
 	import type { MapSystemView } from '$lib/api/types/MapSystemView';
-	import type { SystemDetails } from '$lib/api/types/SystemDetails';
 	import { Button } from '$lib/components/ui/button';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import MapPanel from '$lib/components/map-panel/MapPanel.svelte';

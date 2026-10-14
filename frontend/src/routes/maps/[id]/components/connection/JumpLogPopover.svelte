@@ -11,7 +11,7 @@
 
 	import { createQuery } from '@tanstack/svelte-query';
 
-	import { key, q } from '$lib/api/queries';
+	import { q } from '$lib/api/queries';
 	import type { ConnectionJump } from '$lib/api/types/ConnectionJump';
 	import type { MapConnection } from '$lib/api/types/MapConnection';
 	import type { MapSystemView } from '$lib/api/types/MapSystemView';

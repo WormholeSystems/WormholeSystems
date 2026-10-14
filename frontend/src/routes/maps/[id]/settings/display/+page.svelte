@@ -4,7 +4,6 @@
 	import { createQuery } from '@tanstack/svelte-query';
 	import ImageUpIcon from '@lucide/svelte/icons/image-up';
 	import Trash2Icon from '@lucide/svelte/icons/trash-2';
-	import { toast } from 'svelte-sonner';
 	import { page } from '$app/state';
 	import { createBackgroundImageWriter, createUserSettingsWriter } from '$lib/map/user-settings';
 	import {
@@ -15,9 +14,7 @@
 	} from '$lib/map/background';
 	import { KILLMAIL_FILTERS } from '$lib/map/killmails';
 	import { PLACEMENTS as BASE_PLACEMENTS } from '$lib/map/placement';
-	import { api } from '$lib/api/client';
-	import { apiAction } from '$lib/api/mutations';
-	import { key, q } from '$lib/api/queries';
+	import { q } from '$lib/api/queries';
 	import type { MapView } from '$lib/api/types/MapView';
 	import type { UpdateMapUserSettings } from '$lib/api/types/UpdateMapUserSettings';
 	import SettingRow from '$lib/components/settings/SettingRow.svelte';
@@ -26,7 +23,6 @@
 	import * as Select from '$lib/components/ui/select';
 	import { Switch } from '$lib/components/ui/switch';
 	import type { MapLayout } from '$lib/api/types/MapLayout';
-	import type { KillmailScope } from '$lib/api/types/KillmailScope';
 	import { oneOf } from '$lib/lookup';
 
 	let { data }: { data: { view: MapView } } = $props();

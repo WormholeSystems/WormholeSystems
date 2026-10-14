@@ -35,7 +35,6 @@
 		CATEGORIES,
 		compareSignatures,
 		formatSignatureId,
-		loadCatalog,
 		loadScanNames,
 		parseScan,
 		typeById,

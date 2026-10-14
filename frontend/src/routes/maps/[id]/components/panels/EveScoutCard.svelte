@@ -5,9 +5,7 @@
 	// sort by it by default.
 	import ExternalLinkIcon from '@lucide/svelte/icons/external-link';
 	import PlusIcon from '@lucide/svelte/icons/plus';
-	import { solarSystemId } from '$lib/map/system';
 
-	import type { EveScoutConnection } from '$lib/api/types/EveScoutConnection';
 	import type { SystemSearchResult } from '$lib/api/types/SystemSearchResult';
 	import { ticking } from '$lib/now.svelte';
 	import { systemResolver } from '$lib/resolve-cache.svelte';
@@ -25,7 +23,6 @@
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { timeAgo } from '$lib/format';
 	import { jumpTone } from '$lib/routing/algorithm';
-	import type { RouteResult } from '$lib/routing/algorithm';
 	import { cn } from '$lib/utils';
 	import { clearHover, hoverSystem } from '../../state/map-hover';
 	import {

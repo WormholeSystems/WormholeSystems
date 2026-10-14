@@ -12,7 +12,6 @@
 	import SystemMenu from '$lib/components/system-menu/SystemMenu.svelte';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { jumpTone } from '$lib/routing/algorithm';
-	import type { RouteResult } from '$lib/routing/algorithm';
 	import { isIdle, isScanner, orderPilots } from '$lib/characters/order';
 	import { cn } from '$lib/utils';
 	import { clearHover, hoverSystem } from '../../state/map-hover';
