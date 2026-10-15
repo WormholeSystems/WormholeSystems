@@ -11,7 +11,9 @@ const REMEMBER_FOR = 60 * 60 * 24 * 30;
 // link and a bookmark of that link keeps working.
 export const load: PageServerLoad = async (event) => {
 	const mapId = await sharedMapId(event, event.params.token);
-	if (!mapId) error(404, 'That share link does not lead anywhere any more.');
+	if (!mapId) {
+		error(404, { message: 'This share link no longer leads anywhere.', kind: 'share' });
+	}
 
 	event.cookies.set(`map_share_${mapId}`, event.params.token, {
 		path: '/',

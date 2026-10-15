@@ -107,10 +107,16 @@ export function errorMessage(err: unknown): string {
 
 export class ApiError extends Error {
 	status: number;
+	/**
+	 * The backend's id for the request, when it sends one (`x-request-id`), so an error page
+	 * can give somebody something to quote that matches a line in the server's log.
+	 */
+	requestId: string | null;
 
-	constructor(status: number, message: string) {
+	constructor(status: number, message: string, requestId: string | null = null) {
 		super(message);
 		this.status = status;
+		this.requestId = requestId;
 	}
 }
 
@@ -143,7 +149,7 @@ export function createApi(
 			} catch {
 				// non-JSON error body; keep the status text
 			}
-			throw new ApiError(res.status, message);
+			throw new ApiError(res.status, message, res.headers.get('x-request-id'));
 		}
 		return res.json();
 	}

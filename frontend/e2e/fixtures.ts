@@ -68,7 +68,9 @@ async function pageSession(page: Page): Promise<string> {
 async function settled(page: Page) {
 	await page.waitForSelector('html[data-hydrated="true"]');
 	if (/\/maps\/\d+$/.test(new URL(page.url()).pathname)) {
-		await page.waitForSelector('[data-testid="panel-grid"], [data-testid="map-error"]');
+		await page.waitForSelector(
+			'[data-testid="panel-grid"], [data-testid="map-error"], [data-testid="error-page"]',
+		);
 	}
 }
 

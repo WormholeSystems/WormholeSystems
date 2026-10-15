@@ -1,5 +1,6 @@
 import { DISMISSED_COOKIE, visibleAnnouncement } from '$lib/announcement';
 import { currentCharacter, instance, myMaps, serverStatus } from '$lib/server/api';
+import { unreachable } from '$lib/server/load-errors';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async (event) => {
@@ -8,8 +9,17 @@ export const load: LayoutServerLoad = async (event) => {
 	// operator's banner above it all. At once, since none of them needs an answer from the
 	// others; a signed-out visitor gets an empty list rather than a wave spent finding out
 	// they are signed out.
+	//
+	// Who is signed in can only be asked of the API, so when it is down the answer is
+	// "nobody" plus `offline`, rather than a crash here that no error page could draw the
+	// top bar for. The pages that need a person check `offline` before sending anyone to
+	// sign in.
+	let offline = false;
 	const [me, maps, status, deployment] = await Promise.all([
-		currentCharacter(event),
+		currentCharacter(event).catch((err: unknown) => {
+			offline = unreachable(err);
+			return null;
+		}),
 		myMaps(event).catch(() => []),
 		serverStatus(event),
 		instance(event),
@@ -20,5 +30,5 @@ export const load: LayoutServerLoad = async (event) => {
 		deployment?.announcement ?? null,
 		event.cookies.get(DISMISSED_COOKIE),
 	);
-	return { me, maps, status, announcement };
+	return { me, maps, status, announcement, offline };
 };
