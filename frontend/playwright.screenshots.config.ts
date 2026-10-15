@@ -2,6 +2,10 @@ import { defineConfig } from '@playwright/test';
 
 import e2e from './playwright.config';
 
+// The demo is written straight into the tables as well as through the API, so both have to
+// be the e2e database, never the one a dev stack keeps its real maps in.
+process.env.DATABASE_URL ??= 'postgres://wormholesystems:wormholesystems@localhost:5432/ws_e2e';
+
 // `npm run screenshots`: the landing page's product shots, taken from a real map on the
 // same stack the e2e suite runs against. The shots are not tests and never run with the
 // suite; they only borrow its servers and its database.

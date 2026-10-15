@@ -126,6 +126,8 @@ export interface Pilot {
 
 export interface DemoMap {
 	mapId: number;
+	/** The calm map the hero is taken from; the busy one above is for the feature shots. */
+	heroMapId: number;
 	viewer: Pilot;
 	pilots: Pilot[];
 	nodes: Record<keyof typeof SYS, number>;
@@ -403,7 +405,7 @@ export async function seedDemoMap(): Promise<DemoMap> {
 	});
 
 	await place(mapId, viewer, SYS.home, SHIP.tengu);
-	await place(mapId, scout, SYS.s1, SHIP.buzzard);
+	await place(mapId, scout, SYS.s1a, SHIP.buzzard);
 	await place(mapId, tackle, SYS.b, SHIP.sabre);
 	await place(mapId, hunter, SYS.ikuchi, SHIP.proteus);
 	await place(mapId, explorer, SYS.thera, SHIP.astero);
@@ -512,5 +514,95 @@ export async function seedDemoMap(): Promise<DemoMap> {
 		jdc_level: 5,
 	});
 
-	return { mapId, viewer, pilots, nodes, connections };
+	const heroMapId = await seedHeroMap(pilots);
+	return { mapId, heroMapId, viewer, pilots, nodes, connections };
+}
+
+/**
+ * A quiet evening for the hero: the same home and the same people, a tidy chain of seven
+ * with one hostile next door and one hole at reduced mass, and nothing else shouting. The
+ * busy map carries the states the feature shots are about. None of these systems is the
+ * one with seeded kills and a threat rating, so no ring shows up here either.
+ */
+async function seedHeroMap(pilots: Pilot[]): Promise<number> {
+	const [viewer] = pilots;
+	const api = viewer.api;
+	const mapId = await createMap(api, 'Home Chain');
+	for (const p of pilots.slice(1)) await grantAccess(mapId, p.characterId, 'member');
+	const post = async (path: string, data: object) =>
+		ok(await api.post(`/api/maps/${mapId}/${path}`, { data: { map_id: mapId, ...data } }), path);
+
+	const col = (n: number) => 90 + n * 300;
+	const home = await addSystem(api, mapId, SYS.home, { x: col(0), y: 280, alias: 'Home' });
+	const a = await addSystem(api, mapId, SYS.s1a, { x: col(1), y: 130, alias: 'A' });
+	const b = await addSystem(api, mapId, SYS.b, { x: col(1), y: 280, alias: 'B' });
+	const c = await addSystem(api, mapId, SYS.c, { x: col(1), y: 430, alias: 'C' });
+	const thera = await addSystem(api, mapId, SYS.thera, { x: col(2), y: 130 });
+	const ikuchi = await addSystem(api, mapId, SYS.ikuchi, { x: col(2), y: 280 });
+	const nullsec = await addSystem(api, mapId, SYS.nullsec, { x: col(2), y: 430 });
+
+	const link = (from: number, to: number, size: 'xl' | 'large' | 'medium') =>
+		connect(api, mapId, from, to, { size });
+	const homeA = await link(home, a, 'large');
+	const homeB = await link(home, b, 'large');
+	const homeC = await link(home, c, 'large');
+	await link(a, thera, 'medium');
+	await link(b, ikuchi, 'large');
+	await link(c, nullsec, 'large');
+	await post('connections/set-status', { connection_id: homeB, mass_status: 'reduced' });
+
+	await post('systems/set-home', { map_solar_system_id: home, value: true });
+	await post('systems/set-status', { map_solar_system_id: a, status: 'hostile' });
+
+	await post('signatures/paste', {
+		solar_system_id: SYS.home,
+		signatures: HOME_SIGNATURES.filter((s) => s.group !== 'unknown').map(({ id, group, name }) => ({
+			signature_id: id,
+			group,
+			name,
+		})),
+	});
+	const catalog: { types: { id: number; name: string }[] } = await (
+		await api.get('/api/signature-types')
+	).json();
+	const sigs: { id: number; signature_id: string }[] = await (
+		await api.get(`/api/maps/${mapId}/signatures`)
+	).json();
+	const typed: [string, string, number][] = [
+		['HKT-412', 'K162 - C4', homeA],
+		['QWE-208', 'K162 - C2', homeB],
+		['ZNA-771', 'K162 - C3', homeC],
+	];
+	for (const [code, type, connection_id] of typed) {
+		const signature_pk = sigs.find((s) => s.signature_id === code)!.id;
+		const signature_type_id = catalog.types.find((t) => t.name === type)!.id;
+		await post('signatures/update', { signature_pk, signature_type_id });
+		await post('signatures/link', { signature_pk, connection_id });
+	}
+
+	await withDb(async (db) => {
+		for (const s of HOME_SIGNATURES) {
+			await db.query(
+				`update signatures set created_at = now() - make_interval(mins => $3),
+				     updated_at = now() - make_interval(mins => $3)
+				 where map_id = $1 and signature_id = $2`,
+				[mapId, s.id, s.age],
+			);
+		}
+		await db.query(
+			`update map_connections set created_at = now() - interval '3 hours' where map_id = $1`,
+			[mapId],
+		);
+		// Everyone shares their position on this map too; where they are was set above.
+		for (const p of pilots) {
+			await db.query(
+				`insert into map_user_settings (map_id, user_id, tracking_allowed, introduction_confirmed_at)
+				 values ($1, $2, true, now())
+				 on conflict (map_id, user_id) do update set tracking_allowed = true,
+				     introduction_confirmed_at = now()`,
+				[mapId, p.userId],
+			);
+		}
+	});
+	return mapId;
 }

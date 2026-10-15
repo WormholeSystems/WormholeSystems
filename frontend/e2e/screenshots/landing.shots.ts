@@ -19,15 +19,13 @@ const desktop = (items: Item[]) => ({ lg: { cols: 10, row_height: 89, items } })
 // The whole window: the chain, and the panels somebody looks at all evening around it.
 // Ten rows of 89px fill a 1000px window under the two bars exactly.
 const HERO_LAYOUT = desktop([
-	item('map', 0, 0, 6, 6),
+	item('map', 0, 0, 6, 7),
+	item('characters', 0, 7, 6, 3),
 	item('signatures', 6, 0, 4, 6),
-	item('navigation', 6, 6, 4, 4),
-	item('characters', 0, 6, 3, 4),
-	item('killmails', 3, 6, 3, 4),
-	item('threat', 0, 10, 3, 3),
-	item('notes', 3, 10, 3, 3),
-	item('system-info', 6, 10, 4, 3),
+	item('system-info', 6, 6, 4, 4),
 ]);
+/** The hero keeps to the chain, its scans and its people; the rest is for the tour. */
+const HERO_HIDDEN = ['navigation', 'threat', 'notes', 'killmails', 'skyhooks', 'evescout'];
 
 // For the single-panel shots: each one sized to what it holds, in a taller window so none
 // of them has to scroll into view.
@@ -67,9 +65,9 @@ function emblem(color: string) {
 	</svg>`;
 }
 
-async function arrange(demo: DemoMap, layout: object) {
-	await demo.viewer.api.post(`/api/maps/${demo.mapId}/settings/user`, {
-		data: { layout_breakpoints: layout, hidden_panels: HIDDEN },
+async function arrange(demo: DemoMap, layout: object, hidden = HIDDEN, mapId = demo.mapId) {
+	await demo.viewer.api.post(`/api/maps/${mapId}/settings/user`, {
+		data: { layout_breakpoints: layout, hidden_panels: hidden },
 	});
 }
 
@@ -122,9 +120,9 @@ async function openMap(
 	browser: Browser,
 	demo: DemoMap,
 	theme: Theme,
-	{ system = SYS.home as number, viewport = WINDOW } = {},
+	{ system = SYS.home as number, viewport = WINDOW, mapId = demo.mapId } = {},
 ) {
-	const page = await open(browser, demo, theme, `/maps/${demo.mapId}?system=${system}`, viewport);
+	const page = await open(browser, demo, theme, `/maps/${mapId}?system=${system}`, viewport);
 	await page.waitForSelector('[data-testid="panel-grid"]');
 	await page.getByTestId('system-node').first().waitFor();
 	return page;
@@ -248,11 +246,10 @@ for (const theme of ['dark', 'light'] as const) {
 		});
 
 		test('app', async ({ browser }) => {
-			await arrange(demo, HERO_LAYOUT);
-			const page = await openMap(browser, demo, theme);
-			await planRoute(page);
+			await arrange(demo, HERO_LAYOUT, HERO_HIDDEN, demo.heroMapId);
+			const page = await openMap(browser, demo, theme, { mapId: demo.heroMapId });
 			await save(page, 'app', theme, [page.locator('body')], {
-				until: tile(page, 'navigation'),
+				until: tile(page, 'characters'),
 			});
 			await page.context().close();
 		});

@@ -93,36 +93,34 @@
 				</p>
 			</div>
 
-			<div class="mx-auto mt-14 w-full max-w-7xl px-4 pb-16 sm:mt-20 sm:px-6 sm:pb-24">
-				<div class="hero-tilt relative">
+			<div class="mx-auto mt-14 w-full max-w-7xl px-4 pb-20 sm:mt-20 sm:px-6 sm:pb-32">
+				<!-- The app as a window floating over the page, the way it sits on a desktop. -->
+				<div class="relative">
 					<div
-						class="hero-glow pointer-events-none absolute -inset-x-16 -top-24 bottom-1/3 -z-10"
+						class="hero-glow pointer-events-none absolute -inset-x-24 -top-20 bottom-1/4 -z-10"
 						aria-hidden="true"
 					></div>
-					<div
-						class="overflow-hidden border border-border bg-background shadow-2xl ring-1 shadow-black/15 ring-black/5 dark:shadow-black/60 dark:ring-white/5"
-					>
+					<div class="app-window overflow-hidden rounded-[11px] bg-background">
 						<div
-							class="flex h-7 items-center gap-3 border-b border-border bg-muted/40 px-3"
+							class="relative flex h-8 items-center border-b border-border bg-muted/60 px-3.5 sm:h-9"
 							aria-hidden="true"
 						>
-							<span class="flex gap-1.5">
-								<span class="size-2 bg-foreground/15"></span>
-								<span class="size-2 bg-foreground/15"></span>
-								<span class="size-2 bg-foreground/15"></span>
+							<span class="flex gap-2">
+								<span class="size-3 rounded-full bg-[#ff5f57]"></span>
+								<span class="size-3 rounded-full bg-[#febc2e]"></span>
+								<span class="size-3 rounded-full bg-[#28c840]"></span>
 							</span>
 							<span
-								class="flex-1 truncate text-center font-mono text-[10px] tracking-wider text-muted-foreground"
+								class="absolute inset-x-24 truncate text-center text-xs font-medium text-muted-foreground"
 							>
-								maps / nightfall home chain
+								Home Chain<span class="max-sm:hidden"> · WormholeSystems</span>
 							</span>
-							<span class="w-10"></span>
 						</div>
 						<Shot
 							name="app"
 							phoneWidth={760}
 							priority
-							alt="The map page: a chain of nine systems out of a C5 home, coloured by class and status, with a route to Jita highlighted. Beside it the signatures of the home system, the pilots and their ships, recent kills, and the route planner."
+							alt="The map page: a chain of seven systems out of a C5 home, one of them hostile, with the home system's signatures, its class and statics, and the pilots on the map in the ships they are flying."
 						/>
 					</div>
 				</div>
@@ -362,31 +360,31 @@
 	.hero-glow {
 		background: radial-gradient(
 			ellipse 50% 60% at 50% 40%,
-			color-mix(in oklab, var(--color-amber-500) 16%, transparent),
+			color-mix(in oklab, var(--color-amber-500) 9%, transparent),
 			transparent 70%
 		);
 		filter: blur(20px);
 	}
 
-	/* The screenshot leans back a little and straightens as it scrolls into place. Only where
-	   the browser can tie the animation to scrolling; elsewhere it simply sits flat. */
-	@media (prefers-reduced-motion: no-preference) {
-		@supports (animation-timeline: view()) {
-			.hero-tilt {
-				transform-origin: 50% 0;
-				animation: straighten linear both;
-				animation-timeline: view();
-				animation-range: entry 10% cover 45%;
-			}
-		}
+	/* A window on a desktop: a hairline edge with a lit top, and shadow in layers, tight
+	   under the edge and wide and soft beneath, so it reads as floating in either theme. */
+	.app-window {
+		box-shadow:
+			0 0 0 1px color-mix(in oklab, var(--foreground) 12%, transparent),
+			inset 0 1px 0 color-mix(in oklab, white 10%, transparent),
+			0 1px 2px rgb(0 0 0 / 0.06),
+			0 6px 12px -2px rgb(0 0 0 / 0.08),
+			0 24px 48px -12px rgb(0 0 0 / 0.18),
+			0 60px 120px -24px rgb(0 0 0 / 0.25);
 	}
 
-	@keyframes straighten {
-		from {
-			transform: perspective(1800px) rotateX(14deg) scale(0.96);
-		}
-		to {
-			transform: perspective(1800px) rotateX(0deg) scale(1);
-		}
+	:global(.dark) .app-window {
+		box-shadow:
+			0 0 0 1px color-mix(in oklab, white 12%, transparent),
+			inset 0 1px 0 color-mix(in oklab, white 8%, transparent),
+			0 1px 2px rgb(0 0 0 / 0.4),
+			0 8px 16px -4px rgb(0 0 0 / 0.45),
+			0 28px 56px -12px rgb(0 0 0 / 0.6),
+			0 70px 140px -24px rgb(0 0 0 / 0.7);
 	}
 </style>
