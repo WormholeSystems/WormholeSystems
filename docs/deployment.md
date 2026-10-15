@@ -62,7 +62,7 @@ choice is made.
 Install `wsctl`, the setup tool:
 
 ```sh
-curl --proto '=https' --tlsv1.2 -sSf https://install-next.wormhole.systems | sh
+curl --proto '=https' --tlsv1.2 -sSf https://install.wormhole.systems | sh
 ```
 
 It works out this machine's platform (Linux on x86_64 or arm64, macOS on Apple silicon or

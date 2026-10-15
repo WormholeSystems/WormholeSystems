@@ -11,7 +11,7 @@
 
 	import Reveal from './Reveal.svelte';
 
-	const command = "curl --proto '=https' --tlsv1.2 -sSf https://install-next.wormhole.systems | sh";
+	const command = "curl --proto '=https' --tlsv1.2 -sSf https://install.wormhole.systems | sh";
 	let copied = $state(false);
 	let resetTimer: ReturnType<typeof setTimeout> | undefined;
 

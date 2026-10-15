@@ -46,7 +46,7 @@ You need Docker, a domain pointed at the machine, and an EVE application from th
 [developer portal](https://developers.eveonline.com/) with the `esi-location.*` scopes.
 
 ```sh
-curl --proto '=https' --tlsv1.2 -sSf https://install-next.wormhole.systems | sh
+curl --proto '=https' --tlsv1.2 -sSf https://install.wormhole.systems | sh
 wsctl setup
 ```
 
