@@ -1,7 +1,7 @@
 name: Pages
 
-# Publishes install.sh to GitHub Pages, which is what install-next.wormhole.systems
-# points at. Same setup as the legacy CLI's installer.
+# Publishes install.sh to GitHub Pages, which is what install.wormhole.systems
+# points at.
 on:
   push:
     branches: [main]
@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # The root document IS the script, so `curl https://install-next.wormhole.systems | sh` works.
+      # The root document IS the script, so `curl https://install.wormhole.systems | sh` works.
       - run: |
           mkdir _site
           cp install.sh _site/index.html

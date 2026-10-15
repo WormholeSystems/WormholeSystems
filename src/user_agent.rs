@@ -17,7 +17,7 @@ pub fn init(contact: &Contact) {
     let _ = AGENT.set(agent(contact));
 }
 
-/// `wormholesystems/0.1.0 (Some Pilot; someone@example.com; +https://github.com/WormholeSystems/wormholesystems-next)`
+/// `wormholesystems/0.1.0 (Some Pilot; someone@example.com; +https://github.com/wormholesystems/wormholesystems)`
 ///
 /// Without [`init`] (a test, a tool built on the library) the contact is read from the
 /// environment the way the configuration reads it. Panics if it is not there. That is
@@ -40,7 +40,7 @@ pub fn get() -> &'static str {
 
 fn agent(contact: &Contact) -> String {
     format!(
-        "wormholesystems/{} ({}; {}; +https://github.com/WormholeSystems/wormholesystems-next)",
+        "wormholesystems/{} ({}; {}; +https://github.com/wormholesystems/wormholesystems)",
         env!("CARGO_PKG_VERSION"),
         contact.name,
         contact.email,
@@ -89,7 +89,7 @@ mod tests {
         assert!(agent.starts_with("wormholesystems/"), "{agent}");
         assert!(agent.contains("(Zvi Sarok; admin@example.com;"), "{agent}");
         assert!(
-            agent.contains("+https://github.com/WormholeSystems/wormholesystems-next"),
+            agent.contains("+https://github.com/wormholesystems/wormholesystems"),
             "{agent}"
         );
     }

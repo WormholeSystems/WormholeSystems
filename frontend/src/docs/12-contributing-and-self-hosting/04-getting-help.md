@@ -10,7 +10,7 @@ Stuck, found a bug, or want to suggest something?
 ## GitHub issues
 
 For reproducible **bugs** and concrete **feature requests**, open an issue on the
-[repository](https://github.com/WormholeSystems/wormholesystems-next). A clear issue is
+[repository](https://github.com/wormholesystems/wormholesystems). A clear issue is
 easier to track and fix than a message that scrolls away in chat, and it is where the work
 actually gets picked up.
 

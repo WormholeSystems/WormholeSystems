@@ -247,7 +247,7 @@ Live updates go over WebSockets, which this document cannot describe: see \
     info(
         title = "WormholeSystems API",
         description = DESCRIPTION,
-        license(name = "MIT", url = "https://github.com/WormholeSystems/wormholesystems-next/blob/main/LICENSE"),
+        license(name = "MIT", url = "https://github.com/wormholesystems/wormholesystems/blob/main/LICENSE"),
     ),
     modifiers(&Security),
     // The default for every operation; a handler names its own only when it differs.

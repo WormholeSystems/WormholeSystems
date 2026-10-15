@@ -1,14 +1,14 @@
 #!/bin/sh
 # One-line installer for wsctl, the WormholeSystems setup tool:
 #
-#   curl --proto '=https' --tlsv1.2 -sSf https://install-next.wormhole.systems | sh
+#   curl --proto '=https' --tlsv1.2 -sSf https://install.wormhole.systems | sh
 #
 # Pin a version with WSCTL_VERSION=wsctl-v0.6.0. Choose where it lands with WSCTL_BIN_DIR.
 # The download is checked against the release's SHA256SUMS; a release from before those
 # were published (wsctl 0.5 and older) needs WSCTL_SKIP_VERIFY=1.
 set -eu
 
-REPO="${WSCTL_REPO:-WormholeSystems/wormholesystems-next}"
+REPO="${WSCTL_REPO:-wormholesystems/wormholesystems}"
 VERSION="${WSCTL_VERSION:-latest}"
 
 case "$(uname -s)-$(uname -m)" in

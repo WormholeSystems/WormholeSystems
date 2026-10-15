@@ -30,7 +30,7 @@ fn require_checkout(dir: &Path) -> Result<()> {
         return Ok(());
     }
     bail!(
-        "no docker-compose.yml in {}.\n  Run this inside a WormholeSystems checkout:\n    git clone git@github.com:WormholeSystems/wormholesystems-next.git\n    cd wormholesystems-next && wsctl setup\n  Or point at one with --dir.",
+        "no docker-compose.yml in {}.\n  Run this inside a WormholeSystems checkout:\n    git clone git@github.com:wormholesystems/wormholesystems.git\n    cd wormholesystems && wsctl setup\n  Or point at one with --dir.",
         dir.display()
     )
 }

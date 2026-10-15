@@ -10,7 +10,7 @@ early enough that almost anything is still up for discussion.
 
 ## The repository
 
-**[WormholeSystems/wormholesystems-next](https://github.com/WormholeSystems/wormholesystems-next)**
+**[wormholesystems/wormholesystems](https://github.com/wormholesystems/wormholesystems)**
 — the map, the API and the operator CLI, in one place. Rust on the back, SvelteKit on the
 front.
 

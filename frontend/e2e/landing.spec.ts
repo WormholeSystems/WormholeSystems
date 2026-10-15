@@ -18,7 +18,7 @@ test('the landing page states what it is and how to run it', async ({ page }) =>
 	// The install command is the point of the self-host section, so it is real text on the
 	// page rather than an image someone has to retype from.
 	await expect(page.getByTestId('copy-command')).toBeVisible();
-	await expect(page.getByText('install-next.wormhole.systems').first()).toBeVisible();
+	await expect(page.getByText('install.wormhole.systems').first()).toBeVisible();
 	await expect(page.getByText('wsctl setup').first()).toBeVisible();
 
 	await page.getByRole('link', { name: 'Open your maps' }).first().click();

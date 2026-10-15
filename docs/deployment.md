@@ -62,7 +62,7 @@ choice is made.
 Install `wsctl`, the setup tool:
 
 ```sh
-curl --proto '=https' --tlsv1.2 -sSf https://install-next.wormhole.systems | sh
+curl --proto '=https' --tlsv1.2 -sSf https://install.wormhole.systems | sh
 ```
 
 It works out this machine's platform (Linux on x86_64 or arm64, macOS on Apple silicon or
@@ -75,8 +75,8 @@ anywhere else, it offers to clone one first. Pin a version with
 Then, in a checkout:
 
 ```sh
-git clone https://github.com/WormholeSystems/wormholesystems-next.git
-cd wormholesystems-next
+git clone https://github.com/wormholesystems/wormholesystems.git
+cd wormholesystems
 wsctl setup
 ```
 

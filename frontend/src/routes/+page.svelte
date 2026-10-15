@@ -228,7 +228,7 @@
 						Open your maps
 					</Button>
 					<Button
-						href="https://github.com/WormholeSystems/wormholesystems-next"
+						href="https://github.com/wormholesystems/wormholesystems"
 						size="lg"
 						variant="outline"
 					>
