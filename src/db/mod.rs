@@ -46,7 +46,7 @@ impl From<sqlx::Error> for EsiError {
 impl TokenStore for PgTokenStore {
     async fn load(&self, character_id: i64) -> EsiResult<Option<Token>> {
         let row = sqlx::query!(
-            "SELECT id, access_token, token_expires_at, refresh_token
+            "SELECT id, access_token, token_expires_at, refresh_token, rejected_at
              FROM esi_tokens WHERE character_id = $1
              ORDER BY updated_at DESC LIMIT 1",
             character_id
@@ -55,6 +55,9 @@ impl TokenStore for PgTokenStore {
         .await?;
 
         let Some(row) = row else { return Ok(None) };
+        if row.rejected_at.is_some() {
+            return Err(EsiError::TokenRejected);
+        }
 
         let scopes = sqlx::query_scalar!(
             "SELECT s.name FROM esi_token_scopes ts
@@ -122,5 +125,17 @@ impl TokenStore for PgTokenStore {
 
         tx.commit().await?;
         Ok(())
+    }
+
+    async fn reject(&self, character_id: i64) -> EsiResult<bool> {
+        let marked = sqlx::query!(
+            "update esi_tokens set rejected_at = now()
+             where character_id = $1 and rejected_at is null",
+            character_id
+        )
+        .execute(&self.pool)
+        .await?
+        .rows_affected();
+        Ok(marked > 0)
     }
 }

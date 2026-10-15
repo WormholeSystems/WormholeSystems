@@ -68,6 +68,9 @@ pub struct CharacterRef {
     /// Where the character is right now, when online and tracked. Drives the paste
     /// system-mismatch warning.
     pub solar_system_id: Option<i64>,
+    /// EVE refused this character's token (revoked, or rotated away), so it is not tracked
+    /// and cannot act until it logs in again.
+    pub needs_login: bool,
 }
 
 /// One ESI permission and whether the acting character has consented to it.
@@ -135,7 +138,10 @@ pub async fn status(pool: &PgPool, character_id: i64) -> Result<Option<Character
 pub async fn list(pool: &PgPool, actor: Actor) -> Result<Vec<CharacterRef>> {
     let rows = sqlx::query!(
         r#"select c.id, c.name, c.is_preferred, coalesce(s.online, false) as "online!",
-                  case when s.online then s.solar_system_id end as "solar_system_id?"
+                  case when s.online then s.solar_system_id end as "solar_system_id?",
+                  exists (select 1 from esi_tokens t
+                          where t.character_id = c.id and t.rejected_at is not null)
+                      as "needs_login!"
            from characters c
            left join character_status s on s.character_id = c.id
            where c.user_id = $1 order by c.name"#,
@@ -152,6 +158,7 @@ pub async fn list(pool: &PgPool, actor: Actor) -> Result<Vec<CharacterRef>> {
             is_preferred: r.is_preferred,
             online: r.online,
             solar_system_id: r.solar_system_id,
+            needs_login: r.needs_login,
         })
         .collect())
 }
@@ -341,6 +348,9 @@ async fn send_waypoint(
         .await
         .map_err(|err| match err {
             EsiError::MissingScope(_) => CharacterError::MissingScope,
+            EsiError::TokenRejected => {
+                invalid("EVE signed that character out, log in with it again")
+            }
             other => CharacterError::Upstream(other),
         })?;
     esi.esi

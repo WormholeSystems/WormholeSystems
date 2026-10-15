@@ -79,14 +79,19 @@ impl Sso {
     /// auth, but building an `AppState` still needs one. Any real use fails at the
     /// network, not before.
     pub fn stub(http: reqwest::Client, config: SsoConfig) -> Sso {
+        Self::stub_at(http, config, "http://127.0.0.1:0")
+    }
+
+    /// [`Sso::stub`] with its endpoints under `base`, for a test that serves one of them.
+    pub fn stub_at(http: reqwest::Client, config: SsoConfig, base: &str) -> Sso {
         Sso {
             http,
             config,
             metadata: Metadata {
                 issuer: "test".into(),
-                authorization_endpoint: "http://127.0.0.1:0/authorize".into(),
-                token_endpoint: "http://127.0.0.1:0/token".into(),
-                jwks_uri: "http://127.0.0.1:0/jwks".into(),
+                authorization_endpoint: format!("{base}/authorize"),
+                token_endpoint: format!("{base}/token"),
+                jwks_uri: format!("{base}/jwks"),
             },
             jwks: Mutex::new(None),
         }
@@ -123,7 +128,12 @@ impl Sso {
     pub async fn exchange_code(&self, code: &str) -> Result<(Token, jwt::Claims)> {
         let resp = self
             .token_request(&[("grant_type", "authorization_code"), ("code", code)])
-            .await?;
+            .await
+            .map_err(|err| match err {
+                // A code used twice or too late, not a refresh token gone bad.
+                EsiError::TokenRejected => EsiError::Auth("authorization code refused".into()),
+                other => other,
+            })?;
         self.build_token(resp).await
     }
 
@@ -153,6 +163,10 @@ impl Sso {
     }
 
     /// Load `character_id`'s token, refreshing and saving it first if it is expiring.
+    ///
+    /// A refresh EVE refuses marks the token in the store, so it is not tried again until
+    /// the character logs in afresh. Said once, at warn: it is the pilot's to fix, and the
+    /// UI tells them.
     pub async fn stored_token<S: TokenStore>(&self, store: &S, character_id: i64) -> Result<Token> {
         let mut token = store
             .load(character_id)
@@ -160,7 +174,18 @@ impl Sso {
             .ok_or_else(|| EsiError::Auth(format!("no token for character {character_id}")))?;
 
         if token.expires_within(REFRESH_LEEWAY) {
-            (token, _) = self.refresh(&token.refresh_token).await?;
+            (token, _) = match self.refresh(&token.refresh_token).await {
+                Err(EsiError::TokenRejected) => {
+                    if store.reject(character_id).await? {
+                        tracing::warn!(
+                            "character {character_id}: EVE refused its refresh token, it has \
+                             to log in again"
+                        );
+                    }
+                    return Err(EsiError::TokenRejected);
+                }
+                other => other?,
+            };
             store.save(character_id, &token).await?;
         }
         Ok(token)
@@ -177,6 +202,9 @@ impl Sso {
         let status = resp.status();
         if !status.is_success() {
             let body = resp.text().await.unwrap_or_default();
+            if is_invalid_grant(status, &body) {
+                return Err(EsiError::TokenRejected);
+            }
             return Err(EsiError::Auth(format!("token endpoint {status}: {body}")));
         }
         Ok(resp.json().await?)
@@ -218,5 +246,34 @@ impl Sso {
             .await?;
         *cached = Some((keys.clone(), Instant::now()));
         Ok(keys)
+    }
+}
+
+/// The OAuth error that says the grant itself is dead: `400 {"error":"invalid_grant"}`.
+/// Other failures (a 5xx, a timeout) are the SSO having a bad moment, and worth retrying.
+fn is_invalid_grant(status: reqwest::StatusCode, body: &str) -> bool {
+    #[derive(Deserialize)]
+    struct OAuthError {
+        error: String,
+    }
+    status == reqwest::StatusCode::BAD_REQUEST
+        && serde_json::from_str::<OAuthError>(body).is_ok_and(|e| e.error == "invalid_grant")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use reqwest::StatusCode;
+
+    #[test]
+    fn only_a_400_invalid_grant_is_a_dead_token() {
+        let body = r#"{"error":"invalid_grant","error_description":"Invalid refresh token."}"#;
+        assert!(is_invalid_grant(StatusCode::BAD_REQUEST, body));
+        assert!(!is_invalid_grant(StatusCode::BAD_GATEWAY, body));
+        assert!(!is_invalid_grant(
+            StatusCode::BAD_REQUEST,
+            r#"{"error":"invalid_client"}"#
+        ));
+        assert!(!is_invalid_grant(StatusCode::BAD_REQUEST, "<html>"));
     }
 }

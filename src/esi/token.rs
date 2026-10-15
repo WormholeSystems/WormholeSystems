@@ -27,8 +27,13 @@ impl Token {
 /// depends on a concrete store.
 #[allow(async_fn_in_trait)]
 pub trait TokenStore {
+    /// The character's token. A token EVE has refused is
+    /// [`EsiError::TokenRejected`](super::EsiError::TokenRejected), not a token.
     async fn load(&self, character_id: i64) -> Result<Option<Token>>;
     async fn save(&self, character_id: i64, token: &Token) -> Result<()>;
+    /// Remember that EVE refused the character's refresh token. `true` the first time, so
+    /// the caller says so once.
+    async fn reject(&self, character_id: i64) -> Result<bool>;
 }
 
 #[cfg(test)]

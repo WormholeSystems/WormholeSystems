@@ -156,6 +156,14 @@
 										class="size-5 border border-border"
 									/>
 									<span class="truncate">{c.name}</span>
+									{#if c.needs_login}
+										<span
+											class="ml-auto shrink-0 text-xs text-amber-500"
+											title="EVE signed this character out"
+										>
+											Log in again
+										</span>
+									{/if}
 								</DropdownMenu.Item>
 							{/each}
 						</DropdownMenu.Group>

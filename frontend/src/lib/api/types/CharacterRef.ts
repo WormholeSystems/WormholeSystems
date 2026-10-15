@@ -12,4 +12,9 @@ is_preferred: boolean, online: boolean,
  * Where the character is right now, when online and tracked. Drives the paste
  * system-mismatch warning.
  */
-solar_system_id: number | null, };
+solar_system_id: number | null, 
+/**
+ * EVE refused this character's token (revoked, or rotated away), so it is not tracked
+ * and cannot act until it logs in again.
+ */
+needs_login: boolean, };

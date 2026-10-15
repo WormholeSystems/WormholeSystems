@@ -124,12 +124,15 @@ A character may hold several tokens, each granting a different set of scopes.
 | `refresh_token`    | text              | long-lived; **encrypted at rest**           |
 | `created_at`       | timestamptz       |                                             |
 | `updated_at`       | timestamptz       | bumped on refresh                           |
+| `rejected_at`      | timestamptz, null | EVE refused the refresh (`invalid_grant`)   |
 
 **Invariants & expected behaviour**
 
 - Belongs to exactly one character; deleting the character deletes its tokens.
 - The **refresh token is the sensitive credential**: encrypted at rest, never logged,
   never sent to the client. The access token is short-lived and renewed from it.
+- A rejected token is never refreshed again and its character is not polled; the UI asks
+  for a fresh login, which replaces the row.
 - A token's granted scopes are exactly its [`esi_token_scopes`](#esi_token_scopes) rows, and
   match the JWT `scp` at issuance.
 - **Picking a token for an ESI call:** choose a token of the (active) character whose
