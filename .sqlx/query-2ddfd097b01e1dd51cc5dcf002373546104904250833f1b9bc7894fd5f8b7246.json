@@ -1,0 +1,47 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select code, map_size_for_jump_mass(max_mass_per_jump) as \"size: WormholeSize\"\n           from wormhole_types where code = any($1)",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "code",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "wormhole_types",
+            "name": "code"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "size: WormholeSize",
+        "type_info": {
+          "Custom": {
+            "name": "wormhole_size",
+            "kind": {
+              "Enum": [
+                "xl",
+                "large",
+                "medium",
+                "small"
+              ]
+            }
+          }
+        },
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "TextArray"
+      ]
+    },
+    "nullable": [
+      false,
+      null
+    ]
+  },
+  "hash": "2ddfd097b01e1dd51cc5dcf002373546104904250833f1b9bc7894fd5f8b7246"
+}

@@ -431,6 +431,68 @@ async fn a_legacy_connection_without_a_size_imports_unsized(pool: PgPool) {
 }
 
 #[sqlx::test]
+async fn a_legacy_connection_type_sets_the_size_when_no_signature_does(pool: PgPool) {
+    seed_catalog(&pool).await;
+    // C247 admits a medium, whatever size the file claims.
+    let content = legacy_connection_file(r#""C247""#, r#""xlarge""#);
+    assert_eq!(
+        import_connection_size(&pool, &content).await,
+        Some(WormholeSize::Medium)
+    );
+}
+
+#[sqlx::test]
+async fn a_linked_signature_type_wins_over_the_connection_type(pool: PgPool) {
+    seed_catalog(&pool).await;
+    for statement in [
+        "insert into types (id, group_id, name) values (30833, 988, 'Wormhole E004')",
+        "insert into wormhole_types (code, type_id, max_mass_per_jump)
+         values ('E004', 30833, 5000000)",
+        "insert into signature_types (id, signature, name, signature_category_id, target_class)
+         values (520, 'E004', 'E004 - C1', 1, 1)",
+    ] {
+        sqlx::query(statement).execute(&pool).await.unwrap();
+    }
+    let w = world(&pool).await;
+    let content = legacy_connection_file(r#""C247""#, "null").replace(
+        r#""connections""#,
+        &format!(
+            r#""signatures": [
+                {{"solarsystem_id": {SYS_B}, "signature_id": "ABC-123", "category": "wormhole",
+                  "type_name": "E004 - C1", "raw_type_name": null, "wormhole": "E004",
+                  "connection_index": 0, "mass_status": null, "ship_size": null,
+                  "lifetime": "healthy", "lifetime_updated_at": null}}
+            ],
+            "connections""#
+        ),
+    );
+    let sections = SectionSet {
+        solarsystems: true,
+        connections: true,
+        signatures: true,
+        ..Default::default()
+    };
+    let parsed = parse_export(&content, sections, true).unwrap();
+    let map = import_map_as_new(
+        &pool,
+        w.owner,
+        &AffiliationAllowlist::default(),
+        parsed,
+        None,
+    )
+    .await
+    .unwrap();
+    let size = sqlx::query_scalar!(
+        r#"select size as "size: WormholeSize" from map_connections where map_id = $1"#,
+        map.id,
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    assert_eq!(size, Some(WormholeSize::Small));
+}
+
+#[sqlx::test]
 async fn the_owner_grant_is_never_touched(pool: PgPool) {
     let w = world(&pool).await;
 

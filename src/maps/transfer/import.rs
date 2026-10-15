@@ -15,7 +15,7 @@ use crate::maps::solar_system::MAX_RALLY_POINTS;
 use crate::maps::store;
 use crate::maps::{
     Actor, AliasScheme, ConnectionType, MapLayout, Role, SignatureGroup, SubjectType, SystemStatus,
-    signatures,
+    WormholeSize, signatures,
 };
 
 use super::format::{
@@ -432,6 +432,27 @@ async fn import_connections(
     .map(|r| (r.solar_system_id, r.id))
     .collect();
 
+    // Connections here carry no wormhole type of their own; it lives on linked signatures.
+    // What the file's code still says is the size the hole admits, which is physics, so it
+    // goes on the connection as the size the type would lock. A linked signature that
+    // identifies the hole sets the lock itself once it is linked below.
+    let codes: Vec<String> = entries
+        .iter()
+        .filter_map(|e| e.wormhole.clone())
+        .collect::<HashSet<_>>()
+        .into_iter()
+        .collect();
+    let sizes_by_code: HashMap<String, WormholeSize> = sqlx::query!(
+        r#"select code, map_size_for_jump_mass(max_mass_per_jump) as "size: WormholeSize"
+           from wormhole_types where code = any($1)"#,
+        &codes,
+    )
+    .fetch_all(&mut **tx)
+    .await?
+    .into_iter()
+    .filter_map(|r| r.size.map(|size| (r.code, size)))
+    .collect();
+
     // An edge exists in one direction only; the pair is normalized so the check matches
     // either way round.
     let mut existing: HashMap<(i64, i64), i64> = sqlx::query!(
@@ -478,7 +499,11 @@ async fn import_connections(
             ConnectionType::Wormhole => (
                 entry.mass_status.to_status(),
                 entry.lifetime.to_status(),
-                entry.ship_size.map(WireShipSize::to_size),
+                entry
+                    .wormhole
+                    .as_ref()
+                    .and_then(|code| sizes_by_code.get(code).copied())
+                    .or(entry.ship_size.map(WireShipSize::to_size)),
             ),
             ConnectionType::Stargate => (None, None, None),
         };
