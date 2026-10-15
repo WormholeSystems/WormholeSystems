@@ -5,15 +5,21 @@
 //! A tick that comes due while the job is still running is skipped rather than queued, so
 //! a slow pass never turns into a burst of catch-up passes.
 //!
+//! A panic is a failed pass like any other: [`guarded`] keeps it inside the pass, logs it
+//! and the loop goes on. The loops that are not periodic (the killmail feed, the alert
+//! workers) run under [`supervise`], which starts one again after it panicked.
+//!
 //! On shutdown [`shutdown`] stops the loops from starting another pass and waits a moment
 //! for the ones mid-pass to finish, so a sweep is not cut off halfway through a transaction
 //! when the container is stopped. [`stopped`] is the same signal for the long-lived tasks
 //! that are not periodic, such as open WebSockets.
 
+use std::any::Any;
 use std::fmt::Display;
 use std::future::Future;
+use std::panic::AssertUnwindSafe;
 use std::sync::{LazyLock, Mutex};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use tokio::sync::watch;
 use tokio::task::JoinHandle;
@@ -28,7 +34,7 @@ pub fn spawn_every<F, Fut, E>(name: &'static str, period: Duration, mut job: F)
 where
     F: FnMut() -> Fut + Send + 'static,
     Fut: Future<Output = Result<(), E>> + Send + 'static,
-    E: Display,
+    E: Display + Send + 'static,
 {
     let mut stop = SHUTDOWN.subscribe();
     let handle = tokio::spawn(async move {
@@ -39,21 +45,100 @@ where
                 _ = ticker.tick() => {}
                 _ = stop.wait_for(|stopped| *stopped) => break,
             }
-            let started = std::time::Instant::now();
-            let result = job().await;
+            let started = Instant::now();
+            // `None` is a panic, already logged.
+            let result = guarded(name, &mut job).await;
             let took = started.elapsed();
-            crate::telemetry::metrics::job_pass(name, took, result.is_err());
+            crate::telemetry::metrics::job_pass(name, took, !matches!(result, Some(Ok(()))));
             // The interval drops the ticks that came due while this pass ran.
             crate::telemetry::metrics::ticks_skipped(
                 name,
                 (took.as_nanos() / period.as_nanos().max(1)) as u64,
             );
-            if let Err(err) = result {
+            if let Some(Err(err)) = result {
                 tracing::error!("{name} failed: {err}");
             }
         }
     });
     JOBS.lock().expect("jobs lock").push(handle);
+}
+
+/// Run one pass of `name` on a task of its own, so a panic in it ends the pass and not
+/// whoever is waiting on it. The panic is logged at error under `name`, which is also what
+/// sends it to the error reports, and comes back as `None`.
+pub async fn guarded<F, Fut>(name: &str, start: F) -> Option<Fut::Output>
+where
+    F: FnOnce() -> Fut,
+    Fut: Future + Send + 'static,
+    Fut::Output: Send + 'static,
+{
+    // Building the pass can panic too, before there is a future to spawn.
+    let panic = match std::panic::catch_unwind(AssertUnwindSafe(start)) {
+        Ok(pass) => match tokio::spawn(pass).await {
+            Ok(output) => return Some(output),
+            Err(err) => match err.try_into_panic() {
+                Ok(panic) => panic,
+                // Cancelled: the runtime is going away, and the pass with it.
+                Err(_) => return None,
+            },
+        },
+        Err(panic) => panic,
+    };
+    tracing::error!("{name} panicked: {}", panic_message(&*panic));
+    None
+}
+
+/// What a panic said, when it said it with a string, as nearly all do.
+fn panic_message(panic: &(dyn Any + Send)) -> &str {
+    panic
+        .downcast_ref::<&str>()
+        .copied()
+        .or_else(|| panic.downcast_ref::<String>().map(String::as_str))
+        .unwrap_or("(no message)")
+}
+
+/// How long a loop that panicked waits before [`supervise`] starts it again, the first
+/// time. Doubles while it keeps panicking soon after starting, up to [`RESTART_MAX`], so a
+/// panic that comes back every time is not a tight loop of error reports.
+const RESTART_FIRST: Duration = Duration::from_secs(5);
+const RESTART_MAX: Duration = Duration::from_secs(300);
+
+/// Keep a long-lived loop going: should it panic, the panic is logged under `name` and the
+/// loop started again a little later, until shutdown. A loop that returns is done.
+pub fn supervise<F, Fut>(name: &'static str, start: F)
+where
+    F: FnMut() -> Fut + Send + 'static,
+    Fut: Future<Output = ()> + Send + 'static,
+{
+    supervise_with(name, RESTART_FIRST, start);
+}
+
+/// [`supervise`] with a first delay of the caller's. For tests.
+#[doc(hidden)]
+pub fn supervise_with<F, Fut>(name: &'static str, first: Duration, mut start: F)
+where
+    F: FnMut() -> Fut + Send + 'static,
+    Fut: Future<Output = ()> + Send + 'static,
+{
+    tokio::spawn(async move {
+        let mut delay = first;
+        loop {
+            let started = Instant::now();
+            if guarded(name, &mut start).await.is_some() {
+                return;
+            }
+            // A run that lasted a while before it panicked starts the count over.
+            if started.elapsed() > RESTART_MAX {
+                delay = first;
+            }
+            tracing::info!("{name}: starting again in {delay:?}");
+            tokio::select! {
+                _ = tokio::time::sleep(delay) => {}
+                _ = stopped() => return,
+            }
+            delay = (delay * 2).min(RESTART_MAX.max(first));
+        }
+    });
 }
 
 /// Resolves once shutdown has begun. For the tasks that hold something open, so they can

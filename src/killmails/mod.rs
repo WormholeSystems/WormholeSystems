@@ -255,14 +255,16 @@ pub fn start(
         return;
     }
     let days = config.backfill_days;
-    tokio::spawn(stream::listen(
-        pool.clone(),
-        alerts,
-        config.base_url.clone(),
-    ));
+    let (listen_pool, base) = (pool.clone(), config.base_url.clone());
+    crate::background::supervise("killmail ingest", move || {
+        stream::listen(listen_pool.clone(), alerts.clone(), base.clone())
+    });
     stream::start_resolver(pool.clone(), esi.clone());
     if days > 0 {
-        tokio::spawn(archive::backfill_loop(pool.clone(), esi.clone(), days));
+        let (pool, esi) = (pool.clone(), esi.clone());
+        crate::background::supervise("killmail backfill", move || {
+            archive::backfill_loop(pool.clone(), esi.clone(), days)
+        });
     }
     analysis::start(pool, esi);
 }

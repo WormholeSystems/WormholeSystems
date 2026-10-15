@@ -115,7 +115,13 @@ pub fn start(pool: PgPool, esi: EsiClient, users: UserHub, every: Duration) -> S
     tokio::spawn(async move {
         // Start from the last known value so a restart does not blank the header, then
         // correct it on the first poll a moment later.
-        if let Ok(Some(stored)) = load(&pool).await {
+        // Guarded, as the poll below is: nothing here may stop the poll from starting.
+        let stored = crate::background::guarded("server status", || {
+            let pool = pool.clone();
+            async move { load(&pool).await }
+        })
+        .await;
+        if let Some(Ok(Some(stored))) = stored {
             let _ = tx.send(stored);
         }
         crate::background::spawn_every("server status poll", every, move || {

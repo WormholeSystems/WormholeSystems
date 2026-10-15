@@ -49,6 +49,7 @@ pub(super) async fn listen(
     let http = http_client();
     let alerts = alerts.map(|runtime| {
         let (tx, rx) = mpsc::channel(ALERT_QUEUE);
+        // Ends with the sender, so a restarted feed does not leave the old one behind.
         tokio::spawn(alert_loop(pool.clone(), runtime, rx));
         tx
     });
@@ -184,7 +185,9 @@ fn offer(alerts: &mpsc::Sender<Pending>, row: KillmailRow) {
     }
 }
 
-/// Evaluate queued kills against the alerts, in batches of whatever has piled up.
+/// Evaluate queued kills against the alerts, in batches of whatever has piled up. A batch
+/// that panics loses its alerts, not the worker: the queue would close with it, and every
+/// kill after that would go without alerts and without a word.
 async fn alert_loop(
     pool: PgPool,
     alerts: std::sync::Arc<crate::alerts::Runtime>,
@@ -192,12 +195,17 @@ async fn alert_loop(
 ) {
     let mut pending = Vec::with_capacity(ALERT_BATCH);
     while queue.recv_many(&mut pending, ALERT_BATCH).await > 0 {
-        let mut kills = Vec::with_capacity(pending.len());
-        for p in pending.drain(..) {
-            kills.push(kill_for(&pool, p.killmail_id, p.solar_system_id, &p.detail).await);
-        }
-        let out = alerts.killmails(&pool, &kills).await;
-        alerts.enqueue(&pool, out).await;
+        let batch = std::mem::replace(&mut pending, Vec::with_capacity(ALERT_BATCH));
+        let (pool, alerts) = (pool.clone(), alerts.clone());
+        crate::background::guarded("killmail alerts", move || async move {
+            let mut kills = Vec::with_capacity(batch.len());
+            for p in batch {
+                kills.push(kill_for(&pool, p.killmail_id, p.solar_system_id, &p.detail).await);
+            }
+            let out = alerts.killmails(&pool, &kills).await;
+            alerts.enqueue(&pool, out).await;
+        })
+        .await;
     }
 }
 

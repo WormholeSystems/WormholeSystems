@@ -317,14 +317,17 @@ async fn deliver_loop(
             .expect("semaphore open");
         let (pool, http, bot_token) = (pool.clone(), http.clone(), bot_token.clone());
         tokio::spawn(async move {
-            fire(
-                &pool,
-                &http,
-                bot_token.as_deref(),
-                &out.alert,
-                &out.key,
-                out.embed,
-            )
+            crate::background::guarded("alert delivery", move || async move {
+                fire(
+                    &pool,
+                    &http,
+                    bot_token.as_deref(),
+                    &out.alert,
+                    &out.key,
+                    out.embed,
+                )
+                .await;
+            })
             .await;
             drop(permit);
         });
@@ -353,34 +356,40 @@ pub fn start_on(pool: PgPool, hub: crate::realtime::MapHub, runtime: Arc<Runtime
         let mut received = Instant::now();
         loop {
             let event = events.recv().await;
-            let out = match event {
-                Ok(crate::realtime::MapEvent::SystemAdded {
-                    map_id,
-                    map_solar_system_id,
-                }) => {
-                    received = Instant::now();
-                    runtime.placed(&pool, map_id, map_solar_system_id).await
-                }
-                Ok(crate::realtime::MapEvent::ConnectionChanged {
-                    map_id,
-                    connection_id,
-                }) => {
-                    received = Instant::now();
-                    runtime.connected(&pool, map_id, connection_id).await
-                }
-                Ok(_) => {
-                    received = Instant::now();
-                    Vec::new()
-                }
+            let replay = match &event {
+                Ok(_) => None,
                 Err(tokio::sync::broadcast::error::RecvError::Lagged(missed)) => {
                     tracing::warn!("alerts: map events lagged, {missed} missed; replaying the gap");
-                    let since = received.elapsed() + LAG_REPLAY_SLACK;
-                    received = Instant::now();
-                    runtime.replay(&pool, since).await
+                    Some(received.elapsed() + LAG_REPLAY_SLACK)
                 }
                 Err(tokio::sync::broadcast::error::RecvError::Closed) => return,
             };
-            runtime.enqueue(&pool, out).await;
+            received = Instant::now();
+            // One event's evaluation per guarded pass: a panic loses that event's alerts,
+            // and the subscription, with its place in the stream, carries on.
+            let (pool, runtime) = (pool.clone(), runtime.clone());
+            crate::background::guarded("alert evaluation", move || async move {
+                let out = match (event, replay) {
+                    (_, Some(since)) => runtime.replay(&pool, since).await,
+                    (
+                        Ok(crate::realtime::MapEvent::SystemAdded {
+                            map_id,
+                            map_solar_system_id,
+                        }),
+                        None,
+                    ) => runtime.placed(&pool, map_id, map_solar_system_id).await,
+                    (
+                        Ok(crate::realtime::MapEvent::ConnectionChanged {
+                            map_id,
+                            connection_id,
+                        }),
+                        None,
+                    ) => runtime.connected(&pool, map_id, connection_id).await,
+                    _ => Vec::new(),
+                };
+                runtime.enqueue(&pool, out).await;
+            })
+            .await;
         }
     });
 }
