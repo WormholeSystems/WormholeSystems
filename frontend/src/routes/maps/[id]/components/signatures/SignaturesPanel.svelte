@@ -2,6 +2,8 @@
 	// Signatures for the active system: sortable columns, category filters, clipboard paste
 	// with diff tints and lazy delete, and per-row editing.
 	import ClipboardPasteIcon from '@lucide/svelte/icons/clipboard-paste';
+	import EraserIcon from '@lucide/svelte/icons/eraser';
+	import FilterIcon from '@lucide/svelte/icons/filter';
 	import LayersIcon from '@lucide/svelte/icons/layers';
 	import PlusIcon from '@lucide/svelte/icons/plus';
 	import Rows2Icon from '@lucide/svelte/icons/rows-2';
@@ -24,6 +26,7 @@
 
 	import { q } from '$lib/api/queries';
 	import { Button } from '$lib/components/ui/button';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { Input } from '$lib/components/ui/input';
 	import { Separator } from '$lib/components/ui/separator';
 	import * as Tooltip from '$lib/components/ui/tooltip';
@@ -90,6 +93,11 @@
 	const mySigs = $derived(map.signatures.all.filter((s) => s.solar_system_id === systemId));
 	const filtered = $derived(mySigs.filter((s) => !hidden.includes(s.group)));
 	const hiddenCount = $derived(mySigs.length - filtered.length);
+	const hiddenCategories = $derived(CATEGORIES.filter((c) => hidden.includes(c.group)).length);
+
+	function toggleCategory(group: string) {
+		hidden = hidden.includes(group) ? hidden.filter((g) => g !== group) : [...hidden, group];
+	}
 
 	function typeName(s: Signature): string | null {
 		return (catalog && typeById(catalog, s.signature_type_id)?.name) ?? s.name;
@@ -207,78 +215,216 @@
 
 <MapPanel testid="signatures-card">
 	<MapPanelHeader>
-		Signatures
+		<span class="@max-sm/panel-header:hidden">Signatures</span>
 		{#if filtered.length > 0}
 			<span class="ml-1 text-amber-400">{filtered.length}</span>
 		{/if}
 		{#if hiddenCount > 0}
-			<span class="ml-1 text-muted-foreground/70">{hiddenCount} hidden</span>
+			<span class="ml-1 text-muted-foreground/70 @max-xl/panel-header:hidden">
+				{hiddenCount} hidden
+			</span>
 		{/if}
 		{#if system.kind === 'system'}
 			<SignaturesPastedAt pastedAt={system.signatures_pasted_at} />
 		{/if}
 		{#snippet actions()}
 			<Tooltip.Provider delayDuration={300}>
-				<Tooltip.Root>
-					<Tooltip.Trigger>
-						{#snippet child({ props })}
-							<Button
-								{...props}
-								variant="ghost"
-								size="icon"
-								class="size-6 text-muted-foreground hover:text-foreground"
-								aria-label={compact
-									? 'Switch to comfortable signature list'
-									: 'Switch to compact signature list'}
-								aria-pressed={compact}
-								data-testid="compact-toggle"
-								onclick={() => setSetting({ compact_signature_list: !compact })}
-							>
-								{#if compact}
-									<Rows2Icon class="size-3.5" />
-								{:else}
-									<Rows3Icon class="size-3.5" />
-								{/if}
-							</Button>
-						{/snippet}
-					</Tooltip.Trigger>
-					<Tooltip.Content>
-						{compact ? 'Comfortable rows' : 'Compact rows'}
-					</Tooltip.Content>
-				</Tooltip.Root>
-				<Tooltip.Root>
-					<Tooltip.Trigger>
-						{#snippet child({ props })}
-							<Button
-								{...props}
-								variant="ghost"
-								size="icon"
-								class={cn(
-									'relative size-6',
-									showStaticsFirst
-										? 'text-foreground hover:text-foreground'
-										: 'text-muted-foreground hover:text-foreground',
-								)}
-								aria-pressed={showStaticsFirst}
-								aria-label="Statics first in the wormhole type picker"
-								data-testid="statics-first-toggle"
-								onclick={() => setSetting({ show_statics_first: !showStaticsFirst })}
-							>
-								<LayersIcon class="size-3.5" />
-								{#if showStaticsFirst}
-									<span class="absolute inset-x-1.5 bottom-0.5 h-px bg-current"></span>
-								{/if}
-							</Button>
-						{/snippet}
-					</Tooltip.Trigger>
-					<Tooltip.Content>
-						Statics first in the type picker: {showStaticsFirst ? 'on' : 'off'}
-					</Tooltip.Content>
-				</Tooltip.Root>
-				<Separator orientation="vertical" class="mx-0.5 data-[orientation=vertical]:h-4" />
+				<!-- A narrow panel folds the toggles into one menu, so the header always fits. -->
 				<div class="flex items-center gap-0.5">
-					{#each CATEGORIES as c (c.group)}
-						{@const shown = !hidden.includes(c.group)}
+					<Tooltip.Root>
+						<Tooltip.Trigger>
+							{#snippet child({ props })}
+								<Button
+									{...props}
+									variant="ghost"
+									size="icon"
+									class="size-6 text-muted-foreground hover:text-foreground @max-xl/panel-header:hidden"
+									aria-label={compact
+										? 'Switch to comfortable signature list'
+										: 'Switch to compact signature list'}
+									aria-pressed={compact}
+									data-testid="compact-toggle"
+									onclick={() => setSetting({ compact_signature_list: !compact })}
+								>
+									{#if compact}
+										<Rows2Icon class="size-3.5" />
+									{:else}
+										<Rows3Icon class="size-3.5" />
+									{/if}
+								</Button>
+							{/snippet}
+						</Tooltip.Trigger>
+						<Tooltip.Content>
+							{compact ? 'Comfortable rows' : 'Compact rows'}
+						</Tooltip.Content>
+					</Tooltip.Root>
+					<Tooltip.Root>
+						<Tooltip.Trigger>
+							{#snippet child({ props })}
+								<Button
+									{...props}
+									variant="ghost"
+									size="icon"
+									class={cn(
+										'relative size-6 @max-xl/panel-header:hidden',
+										showStaticsFirst
+											? 'text-foreground hover:text-foreground'
+											: 'text-muted-foreground hover:text-foreground',
+									)}
+									aria-pressed={showStaticsFirst}
+									aria-label="Statics first in the wormhole type picker"
+									data-testid="statics-first-toggle"
+									onclick={() => setSetting({ show_statics_first: !showStaticsFirst })}
+								>
+									<LayersIcon class="size-3.5" />
+									{#if showStaticsFirst}
+										<span class="absolute inset-x-1.5 bottom-0.5 h-px bg-current"></span>
+									{/if}
+								</Button>
+							{/snippet}
+						</Tooltip.Trigger>
+						<Tooltip.Content>
+							Statics first in the type picker: {showStaticsFirst ? 'on' : 'off'}
+						</Tooltip.Content>
+					</Tooltip.Root>
+					<Separator
+						orientation="vertical"
+						class="mx-0.5 data-[orientation=vertical]:h-4 @max-xl/panel-header:hidden"
+					/>
+					<div class="flex items-center gap-0.5 @max-xl/panel-header:hidden">
+						{#each CATEGORIES as c (c.group)}
+							{@const shown = !hidden.includes(c.group)}
+							<Tooltip.Root>
+								<Tooltip.Trigger>
+									{#snippet child({ props })}
+										<Button
+											{...props}
+											variant="ghost"
+											size="icon"
+											class={cn(
+												'size-6',
+												shown ? c.color : 'text-muted-foreground/40 hover:text-muted-foreground',
+											)}
+											aria-pressed={shown}
+											aria-label={c.label}
+											data-testid="filter-{c.group}"
+											onclick={() => toggleCategory(c.group)}
+										>
+											<c.icon class="size-3.5" />
+										</Button>
+									{/snippet}
+								</Tooltip.Trigger>
+								<Tooltip.Content>{shown ? `Hide ${c.label}` : `Show ${c.label}`}</Tooltip.Content>
+							</Tooltip.Root>
+						{/each}
+					</div>
+					<DropdownMenu.Root>
+						<DropdownMenu.Trigger>
+							{#snippet child({ props })}
+								<Button
+									{...props}
+									variant="ghost"
+									class={cn(
+										'h-6 gap-1 px-1.5 @xl/panel-header:hidden',
+										hiddenCategories > 0
+											? 'text-amber-400 hover:text-amber-300'
+											: 'text-muted-foreground hover:text-foreground',
+									)}
+									aria-label={hiddenCategories > 0
+										? `Signature filters, ${hiddenCategories} hidden`
+										: 'Signature filters'}
+									data-testid="signature-filter-menu"
+								>
+									<FilterIcon class="size-3.5" />
+									{#if hiddenCategories > 0}
+										<span class="translate-y-0.5 font-mono text-[10px] leading-none tabular-nums"
+											>{hiddenCategories}</span
+										>
+									{/if}
+								</Button>
+							{/snippet}
+						</DropdownMenu.Trigger>
+						<DropdownMenu.Content align="end">
+							<DropdownMenu.Group>
+								{#each CATEGORIES as c (c.group)}
+									<DropdownMenu.CheckboxItem
+										checked={!hidden.includes(c.group)}
+										onCheckedChange={() => toggleCategory(c.group)}
+										closeOnSelect={false}
+										data-testid="filter-menu-{c.group}"
+									>
+										<c.icon class={cn('size-3.5', c.color)} />
+										{c.label}
+									</DropdownMenu.CheckboxItem>
+								{/each}
+							</DropdownMenu.Group>
+							<DropdownMenu.Separator />
+							<DropdownMenu.Group>
+								<DropdownMenu.CheckboxItem
+									checked={compact}
+									onCheckedChange={() => setSetting({ compact_signature_list: !compact })}
+									closeOnSelect={false}
+									data-testid="filter-menu-compact"
+								>
+									<Rows3Icon class="size-3.5 text-muted-foreground" />
+									Compact rows
+								</DropdownMenu.CheckboxItem>
+								<DropdownMenu.CheckboxItem
+									checked={showStaticsFirst}
+									onCheckedChange={() => setSetting({ show_statics_first: !showStaticsFirst })}
+									closeOnSelect={false}
+									data-testid="filter-menu-statics-first"
+								>
+									<LayersIcon class="size-3.5 text-muted-foreground" />
+									Statics first
+								</DropdownMenu.CheckboxItem>
+							</DropdownMenu.Group>
+						</DropdownMenu.Content>
+					</DropdownMenu.Root>
+					<Separator orientation="vertical" class="mx-0.5 data-[orientation=vertical]:h-4" />
+					{#if canWrite}
+						{#if pasted !== null}
+							<Tooltip.Root>
+								<Tooltip.Trigger>
+									{#snippet child({ props })}
+										<Button
+											{...props}
+											variant="ghost"
+											size="icon"
+											class="size-6 text-muted-foreground hover:text-foreground"
+											aria-label="Clear the paste highlight"
+											data-testid="clear-paste"
+											onclick={() => (pasted = null)}
+										>
+											<EraserIcon class="size-3.5" />
+										</Button>
+									{/snippet}
+								</Tooltip.Trigger>
+								<Tooltip.Content>Drop the highlight from the last paste</Tooltip.Content>
+							</Tooltip.Root>
+						{/if}
+						{#if deletedSigs.length > 0}
+							<Tooltip.Root>
+								<Tooltip.Trigger>
+									{#snippet child({ props })}
+										<Button
+											{...props}
+											variant="destructive"
+											size="icon"
+											class="size-6"
+											aria-label="Delete missing signatures"
+											data-testid="delete-missing"
+											onclick={deleteMissing}
+										>
+											<TrashIcon class="size-3.5" />
+										</Button>
+									{/snippet}
+								</Tooltip.Trigger>
+								<Tooltip.Content>
+									Delete the {deletedSigs.length} missing and their connections
+								</Tooltip.Content>
+							</Tooltip.Root>
+						{/if}
 						<Tooltip.Root>
 							<Tooltip.Trigger>
 								{#snippet child({ props })}
@@ -286,103 +432,37 @@
 										{...props}
 										variant="ghost"
 										size="icon"
-										class={cn(
-											'size-6',
-											shown ? c.color : 'text-muted-foreground/40 hover:text-muted-foreground',
-										)}
-										aria-pressed={shown}
-										aria-label={c.label}
-										data-testid="filter-{c.group}"
-										onclick={() => {
-											hidden = shown ? [...hidden, c.group] : hidden.filter((g) => g !== c.group);
-										}}
+										class="size-6 text-muted-foreground hover:text-foreground"
+										aria-label="Paste signatures"
+										data-testid="paste-clipboard"
+										onclick={pasteFromClipboard}
 									>
-										<c.icon class="size-3.5" />
+										<ClipboardPasteIcon class="size-3.5" />
 									</Button>
 								{/snippet}
 							</Tooltip.Trigger>
-							<Tooltip.Content>{shown ? `Hide ${c.label}` : `Show ${c.label}`}</Tooltip.Content>
+							<Tooltip.Content>Paste from the clipboard (Ctrl/Cmd + V)</Tooltip.Content>
 						</Tooltip.Root>
-					{/each}
+						<Tooltip.Root>
+							<Tooltip.Trigger>
+								{#snippet child({ props })}
+									<Button
+										{...props}
+										variant="ghost"
+										size="icon"
+										class="size-6 text-muted-foreground hover:text-foreground"
+										aria-label="Create new signature"
+										data-testid="new-signature"
+										onclick={startCreate}
+									>
+										<PlusIcon class="size-3.5" />
+									</Button>
+								{/snippet}
+							</Tooltip.Trigger>
+							<Tooltip.Content>New signature</Tooltip.Content>
+						</Tooltip.Root>
+					{/if}
 				</div>
-				<Separator orientation="vertical" class="mx-0.5 data-[orientation=vertical]:h-4" />
-				{#if canWrite}
-					{#if pasted !== null}
-						<Tooltip.Root>
-							<Tooltip.Trigger>
-								{#snippet child({ props })}
-									<Button
-										{...props}
-										variant="ghost"
-										class="h-6 px-2 text-[11px] leading-none"
-										onclick={() => (pasted = null)}
-									>
-										Unselect
-									</Button>
-								{/snippet}
-							</Tooltip.Trigger>
-							<Tooltip.Content>Drop the highlight from the last paste</Tooltip.Content>
-						</Tooltip.Root>
-					{/if}
-					{#if deletedSigs.length > 0}
-						<Tooltip.Root>
-							<Tooltip.Trigger>
-								{#snippet child({ props })}
-									<Button
-										{...props}
-										variant="destructive"
-										size="icon"
-										class="size-6"
-										aria-label="Delete missing signatures"
-										data-testid="delete-missing"
-										onclick={deleteMissing}
-									>
-										<TrashIcon class="size-3.5" />
-									</Button>
-								{/snippet}
-							</Tooltip.Trigger>
-							<Tooltip.Content>
-								Delete the {deletedSigs.length} missing and their connections
-							</Tooltip.Content>
-						</Tooltip.Root>
-					{/if}
-					<Tooltip.Root>
-						<Tooltip.Trigger>
-							{#snippet child({ props })}
-								<Button
-									{...props}
-									variant="ghost"
-									size="icon"
-									class="size-6 text-muted-foreground hover:text-foreground"
-									aria-label="Paste signatures"
-									data-testid="paste-clipboard"
-									onclick={pasteFromClipboard}
-								>
-									<ClipboardPasteIcon class="size-3.5" />
-								</Button>
-							{/snippet}
-						</Tooltip.Trigger>
-						<Tooltip.Content>Paste from the clipboard (Ctrl/Cmd + V)</Tooltip.Content>
-					</Tooltip.Root>
-					<Tooltip.Root>
-						<Tooltip.Trigger>
-							{#snippet child({ props })}
-								<Button
-									{...props}
-									variant="ghost"
-									size="icon"
-									class="size-6 text-muted-foreground hover:text-foreground"
-									aria-label="Create new signature"
-									data-testid="new-signature"
-									onclick={startCreate}
-								>
-									<PlusIcon class="size-3.5" />
-								</Button>
-							{/snippet}
-						</Tooltip.Trigger>
-						<Tooltip.Content>New signature</Tooltip.Content>
-					</Tooltip.Root>
-				{/if}
 			</Tooltip.Provider>
 		{/snippet}
 	</MapPanelHeader>

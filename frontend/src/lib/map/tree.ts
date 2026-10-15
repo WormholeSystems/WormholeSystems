@@ -2,6 +2,7 @@
 // client and never stored, so manual placement finds its own untouched.
 
 import type { MapSystemView } from '$lib/api/types/MapSystemView';
+import { classMeta } from '$lib/map/classes';
 import { systemName } from '$lib/map/system';
 
 export interface TreeEdge {
@@ -336,16 +337,36 @@ export function computeTreeLayout(
 	return positions;
 }
 
-/** Named systems first and alphabetically, so a branch reads the same way every time. */
+/**
+ * Where a system's class sits among its siblings: high, low and null sec, Pochven, then
+ * wormhole space by class, and anything unknown (a ghost) last.
+ */
+function classRank(system: MapSystemView): number {
+	if (system.kind === 'ghost') return 1000;
+	return classMeta(system.wormhole_class_id, system.security_status).sortWeight;
+}
+
+function regionOf(system: MapSystemView): string {
+	return system.kind === 'system' ? system.region : '';
+}
+
+/**
+ * The legacy sibling order: systems without an alias first, aliased ones by alias, then
+ * class, region and name, so a branch reads the same way every time.
+ */
 export function compareForTree(systems: Map<number, MapSystemView>) {
 	return (a: number, b: number): number => {
 		const left = systems.get(a);
 		const right = systems.get(b);
 		if (!left || !right) return a - b;
-		if (left.alias && !right.alias) return -1;
-		if (!left.alias && right.alias) return 1;
+		if (left.alias && !right.alias) return 1;
+		if (!left.alias && right.alias) return -1;
 		const byAlias = (left.alias ?? '').localeCompare(right.alias ?? '');
 		if (byAlias !== 0) return byAlias;
+		const byClass = classRank(left) - classRank(right);
+		if (byClass !== 0) return byClass;
+		const byRegion = regionOf(left).localeCompare(regionOf(right));
+		if (byRegion !== 0) return byRegion;
 		return (systemName(left) ?? '').localeCompare(systemName(right) ?? '') || a - b;
 	};
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { computeTreeLayout, type TreeInput } from './tree';
+import { compareForTree, computeTreeLayout, type TreeInput } from './tree';
+import type { MapSystemView } from '$lib/api/types/MapSystemView';
 
 // Defaults: gridSize 20, levelGap 320, siblingGap 60, marginX 20, marginY 20.
 
@@ -251,5 +252,68 @@ describe('computeTreeLayout', () => {
 		expect(positions.get(2)!.x).toBe(20);
 		expect(positions.get(3)!.x).toBe(340);
 		expect(positions.get(4)!.x).toBe(340);
+	});
+});
+
+describe('compareForTree', () => {
+	function sys(
+		id: number,
+		name: string,
+		wormholeClass: number | null,
+		security = -1,
+		alias: string | null = null,
+		region = 'A-R00001',
+	): MapSystemView {
+		return {
+			kind: 'system',
+			id,
+			name,
+			alias,
+			region,
+			wormhole_class_id: wormholeClass,
+			security_status: security,
+		} as MapSystemView;
+	}
+
+	it('puts high, low and null sec first, then wormhole space', () => {
+		const systems = [
+			sys(1, 'Jita', null, 0.9),
+			sys(2, 'Amamake', null, 0.4),
+			sys(3, 'J100001', 5),
+			sys(4, 'HED-GP', null, -0.3),
+			sys(5, 'J100002', 2),
+			sys(6, 'Uedama', null, 0.5),
+		];
+		const byId = new Map(systems.map((s) => [s.id, s]));
+		const names = systems
+			.map((s) => s.id)
+			.sort(compareForTree(byId))
+			.map((id) => (byId.get(id) as { name: string }).name);
+
+		expect(names).toEqual(['Jita', 'Uedama', 'Amamake', 'HED-GP', 'J100002', 'J100001']);
+	});
+
+	it('puts aliased systems below the rest, ordered by alias', () => {
+		const systems = [
+			sys(1, 'Jita', null, 0.9, 'Trade'),
+			sys(2, 'J100001', 5, -1, 'Home'),
+			sys(3, 'J100002', 2),
+			sys(4, 'Amamake', null, 0.4),
+		];
+		const byId = new Map(systems.map((s) => [s.id, s]));
+		const ids = systems.map((s) => s.id).sort(compareForTree(byId));
+
+		expect(ids).toEqual([4, 3, 2, 1]);
+	});
+
+	it('breaks a class tie by region before name', () => {
+		const systems = [
+			sys(1, 'J100001', 5, -1, null, 'B-R00002'),
+			sys(2, 'J100002', 5, -1, null, 'A-R00001'),
+		];
+		const byId = new Map(systems.map((s) => [s.id, s]));
+		const ids = systems.map((s) => s.id).sort(compareForTree(byId));
+
+		expect(ids).toEqual([2, 1]);
 	});
 });
