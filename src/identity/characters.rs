@@ -20,6 +20,9 @@ pub enum CharacterError {
     /// The character has to re-consent before this can work.
     #[error("that character has not granted the waypoint scope")]
     MissingScope,
+    /// EVE refused the character's refresh token; only a fresh login brings it back.
+    #[error("EVE signed that character out, log in with it again")]
+    SignedOut,
     /// ESI refused or failed. The detail is for the log, not the caller.
     #[error("ESI failed: {0}")]
     Upstream(EsiError),
@@ -348,9 +351,7 @@ async fn send_waypoint(
         .await
         .map_err(|err| match err {
             EsiError::MissingScope(_) => CharacterError::MissingScope,
-            EsiError::TokenRejected => {
-                invalid("EVE signed that character out, log in with it again")
-            }
+            EsiError::TokenRejected => CharacterError::SignedOut,
             other => CharacterError::Upstream(other),
         })?;
     esi.esi

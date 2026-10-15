@@ -246,7 +246,7 @@ impl From<CharacterError> for ApiError {
         use axum::http::StatusCode;
         match err {
             CharacterError::Invalid(message) => ApiError::bad_request(message),
-            CharacterError::MissingScope => ApiError {
+            CharacterError::MissingScope | CharacterError::SignedOut => ApiError {
                 status: StatusCode::CONFLICT,
                 message: err.to_string(),
             },
