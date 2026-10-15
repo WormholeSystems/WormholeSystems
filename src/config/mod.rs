@@ -50,6 +50,9 @@ pub struct Config {
     /// Where people open the app, without a trailing slash, for links that leave it: a
     /// Discord embed pointing back at the map has to be absolute.
     pub public_url: String,
+    /// The browser's error-reporting DSN, which the Sentry tunnel forwards to and nowhere
+    /// else. Unset turns the tunnel off.
+    pub web_sentry_dsn: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -151,6 +154,7 @@ impl Config {
             eve_scout_url: nonempty("EVE_SCOUT_URL")
                 .unwrap_or_else(|| "https://api.eve-scout.com/v2/public/signatures".to_string()),
             public_url: public_url(nonempty("WS_PUBLIC_URL").as_deref(), &redirect_uri)?,
+            web_sentry_dsn: nonempty("PUBLIC_SENTRY_DSN"),
         })
     }
 }

@@ -31,6 +31,19 @@ dotenvy = "0.15"
 # writes one JSON object per line.
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+# Error reports over the Sentry protocol (Sentry, GlitchTip, Bugsink), only when SENTRY_DSN
+# is set. Without the defaults: no native-tls next to our rustls, no release-health sessions,
+# no debug-image listing.
+sentry = { version = "0.49", default-features = false, features = [
+    "backtrace",
+    "contexts",
+    "panic",
+    "reqwest",
+    "rustls",
+    "tracing",
+] }
+# Blanking credentials out of error reports. Already in the tree through sentry.
+regex = { version = "1", default-features = false, features = ["std", "unicode-perl"] }
 thiserror = "2"
 uuid = { version = "1", features = ["v4"] }
 # Only for a cookie's Max-Age; already in the tree through the cookie crate.

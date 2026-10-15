@@ -56,6 +56,7 @@ pub fn state(pool: &PgPool) -> AppState {
         eve_scout: Arc::new(wormholesystems::integrations::eve_scout::EveScout::new(
             "http://127.0.0.1:9/unreachable",
         )),
+        sentry_tunnel: None,
     }
 }
 

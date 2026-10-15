@@ -1,6 +1,6 @@
 #[tokio::main]
 async fn main() {
-    wormholesystems::telemetry::init();
+    let _telemetry = wormholesystems::telemetry::init();
 
     let args: Vec<String> = std::env::args().skip(1).collect();
     match wormholesystems::cli::Command::parse(&args) {

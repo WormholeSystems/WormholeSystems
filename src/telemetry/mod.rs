@@ -2,6 +2,9 @@
 //! metrics and traces somewhere. Every hook is off until its variable is set, so a default
 //! install keeps everything on the machine.
 
+pub mod sentry;
+pub mod tunnel;
+
 use std::io::IsTerminal;
 
 use tracing_subscriber::layer::{Layered, SubscriberExt};
@@ -25,20 +28,34 @@ impl LogFormat {
     }
 }
 
-/// Install the subscriber. Logs go to stderr, so the few subcommands whose stdout is read
-/// by a script (`sde-status`) keep it to themselves. `RUST_LOG` narrows or widens it per
-/// module; unset means `info`.
-pub fn init() {
+/// What has to outlive `main`'s work so the hooks can flush on the way out.
+#[must_use = "dropping it stops the hooks before the process is done"]
+pub struct Telemetry {
+    _sentry: Option<::sentry::ClientInitGuard>,
+}
+
+/// Install the subscriber and whichever hooks are configured. Logs go to stderr, so the few
+/// subcommands whose stdout is read by a script (`sde-status`) keep it to themselves.
+/// `RUST_LOG` narrows or widens it per module; unset means `info`.
+pub fn init() -> Telemetry {
     // Before the configuration is read, so `.env` has to be loaded here for a host-side run
-    // to see LOG_FORMAT and RUST_LOG in it.
+    // to see LOG_FORMAT, RUST_LOG and the hooks' variables in it.
     dotenvy::dotenv().ok();
     let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
     let format = LogFormat::parse(std::env::var("LOG_FORMAT").ok().as_deref());
-    let layers: Vec<BoxedLayer> = vec![log_layer(format)];
+    let sentry = sentry::init();
+    let mut layers: Vec<BoxedLayer> = vec![log_layer(format)];
+    if sentry.is_some() {
+        layers.push(sentry::layer().boxed());
+    }
     tracing_subscriber::registry()
         .with(filter)
         .with(layers)
         .init();
+    if sentry.is_some() {
+        tracing::info!("error reporting on, release {}", sentry::release());
+    }
+    Telemetry { _sentry: sentry }
 }
 
 /// Every layer sits under the `RUST_LOG` filter, so it decides for the hooks too.
