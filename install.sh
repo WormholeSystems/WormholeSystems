@@ -8,7 +8,7 @@
 # were published (wsctl 0.5 and older) needs WSCTL_SKIP_VERIFY=1.
 set -eu
 
-REPO="${WSCTL_REPO:-WormholeSystems/wormholesystems-next}"
+REPO="${WSCTL_REPO:-wormholesystems/wormholesystems}"
 VERSION="${WSCTL_VERSION:-latest}"
 
 case "$(uname -s)-$(uname -m)" in

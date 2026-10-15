@@ -1,7 +1,7 @@
 # Reporting a vulnerability
 
 Please report anything security-relevant through
-[GitHub's private advisory form](https://github.com/WormholeSystems/wormholesystems-next/security/advisories/new)
+[GitHub's private advisory form](https://github.com/wormholesystems/wormholesystems/security/advisories/new)
 rather than a public issue.
 
 ## What is worth reporting

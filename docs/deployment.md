@@ -75,8 +75,8 @@ anywhere else, it offers to clone one first. Pin a version with
 Then, in a checkout:
 
 ```sh
-git clone https://github.com/WormholeSystems/wormholesystems-next.git
-cd wormholesystems-next
+git clone https://github.com/wormholesystems/wormholesystems.git
+cd wormholesystems
 wsctl setup
 ```
 
