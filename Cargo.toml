@@ -27,9 +27,10 @@ zip = "8.6.0"
 tar = { version = "0.4", default-features = false }
 bzip2 = { version = "0.6", features = ["static"] }
 dotenvy = "0.15"
-# Logging. `RUST_LOG` picks the level per module, `info` when unset.
+# Logging. `RUST_LOG` picks the level per module, `info` when unset; `LOG_FORMAT=json`
+# writes one JSON object per line.
 tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 thiserror = "2"
 uuid = { version = "1", features = ["v4"] }
 # Only for a cookie's Max-Age; already in the tree through the cookie crate.
