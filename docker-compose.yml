@@ -36,6 +36,9 @@ services:
     image: ${WS_IMAGE_PREFIX:-ghcr.io/wormholesystems/wormholesystems}-api:${WS_VERSION:-main}
     build: .
     restart: unless-stopped
+    # Everything in .env, the observability hooks included (LOG_FORMAT, SENTRY_*,
+    # METRICS_ADDR, OTEL_*). METRICS_ADDR is not published: a Prometheus on the compose
+    # network scrapes api:<port>, or add a port mapping of your own.
     env_file: .env
     environment:
       DATABASE_URL: postgres://wormholesystems:${POSTGRES_PASSWORD:-wormholesystems}@db:5432/wormholesystems
@@ -71,6 +74,11 @@ services:
     environment:
       API_BASE: http://api:3000
       PORT: 3001
+      # Error reporting for the frontend and the browser, off while the DSN is empty. Read
+      # at runtime, so the published image serves every install.
+      PUBLIC_SENTRY_DSN: ${PUBLIC_SENTRY_DSN:-}
+      PUBLIC_SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-}
+      PUBLIC_SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE:-}
     # Started with the API rather than after it is healthy: the first boot seeds for minutes
     # before the API listens, and the frontend is better up and saying so meanwhile.
     depends_on:

@@ -8,7 +8,8 @@ use console::style;
 use crate::checks::{self, Verdict};
 use crate::config::{
     self, Announcement, Answers, DEFAULT_NETWORK, DEFAULT_ROUTER_PORT, Database, Deployment,
-    Direct, Discord, ExternalDb, Images, Proxy, Router, Site, Tls, generated_password,
+    Direct, Discord, ErrorReporting, ExternalDb, Images, Proxy, Router, Site, Tls,
+    generated_password,
 };
 use crate::envfile;
 use crate::exec::Runner;
@@ -48,15 +49,20 @@ fn require_terminal() -> Result<()> {
 /// The variables a scripted setup reads from its environment: everything `.env` can hold
 /// that is the app's or wsctl's. Taken by prefix or by name, and written to `.env` with the
 /// answers, so a later `docker compose` without them in its environment still sees them.
-const SCRIPTED_PREFIXES: [&str; 6] = [
+const SCRIPTED_PREFIXES: [&str; 9] = [
     "WS_",
     "EVE_",
     "DISCORD_",
     "ANNOUNCEMENT_",
     "ZKB_",
     "KILLMAIL_",
+    "SENTRY_",
+    "PUBLIC_SENTRY_",
+    "OTEL_",
 ];
-const SCRIPTED_KEYS: [&str; 11] = [
+const SCRIPTED_KEYS: [&str; 13] = [
+    "LOG_FORMAT",
+    "METRICS_ADDR",
     "HTTP_PORT",
     "HTTPS_PORT",
     "ALLOWED_AFFILIATION_IDS",
@@ -706,6 +712,7 @@ fn ask_everything(existing: &str, fresh: bool, http: u16, https: u16) -> Result<
     answers.discord = ask_discord(existing, &answers.base_url())?;
     answers.killmails = ask_killmails(existing)?;
     answers.announcement = ask_announcement(existing)?;
+    answers.error_reporting = ask_error_reporting(existing)?;
     answers.images = ask_images(existing, fresh)?;
     answers.backups = ask_backups(existing, fresh)?;
     Ok(answers)
@@ -988,6 +995,18 @@ fn ask_killmails(existing: &str) -> Result<Option<u32>> {
             Err(_) => ui::note("a number of days"),
         }
     }
+}
+
+fn ask_error_reporting(existing: &str) -> Result<Option<ErrorReporting>> {
+    println!();
+    ui::note("Errors can be reported to Sentry, GlitchTip or Bugsink: paste a project's DSN.");
+    ui::note("Empty sends nothing anywhere. docs/deployment.md has the rest (metrics, traces).");
+    let dsn = ui::edit(
+        "Error reporting DSN (optional)",
+        &ErrorReporting::current(existing),
+        config::dsn,
+    )?;
+    Ok(ErrorReporting::from_answer(existing, &dsn))
 }
 
 fn ask_announcement(existing: &str) -> Result<Option<Announcement>> {
@@ -1608,6 +1627,59 @@ mod tests {
         ] {
             assert!(err.contains(key), "{key} not named in: {err}");
         }
+        assert!(!dir.join(ENV).exists(), "nothing is written");
+    }
+
+    /// A scripted setup of a fresh standalone install, with `extra` in its environment.
+    fn scripted_setup(extra: &[(&str, &str)]) -> (Checkout, Result<()>) {
+        let dir = checkout("");
+        std::fs::remove_file(dir.join(ENV)).unwrap();
+        let mut env = vars(&[
+            ("WS_DATABASE", "external"),
+            ("WS_DATABASE_URL", "postgres://ws:secret@postgres:5432/ws"),
+            ("WS_PROXY", "network"),
+            ("WS_PROXY_NETWORK", "coolify"),
+            ("WS_PUBLIC_URL", "https://map.example.com/"),
+            ("WS_CONTACT_NAME", "Nicolas Kion"),
+            ("WS_CONTACT_EMAIL", "me@example.com"),
+            ("EVE_CLIENT_ID", "abc"),
+            ("EVE_CLIENT_SECRET", "shh"),
+        ]);
+        env.extend(vars(extra));
+        let result = setup(&mut Recording::default(), &dir, Some(&env));
+        (dir, result)
+    }
+
+    // The error-reporting question: one DSN for the API and the frontend both, and none,
+    // the default, writes neither.
+    #[test]
+    fn a_scripted_setup_writes_the_error_reporting_dsn() {
+        let dsn = "https://key@errors.example.com/7";
+        let (dir, result) = scripted_setup(&[("SENTRY_DSN", dsn), ("SENTRY_ENVIRONMENT", "prod")]);
+        result.unwrap();
+        let env = read_env(&dir);
+        assert_eq!(envfile::get(&env, "SENTRY_DSN").as_deref(), Some(dsn));
+        assert_eq!(
+            envfile::get(&env, "PUBLIC_SENTRY_DSN").as_deref(),
+            Some(dsn)
+        );
+        assert_eq!(
+            envfile::get(&env, "SENTRY_ENVIRONMENT").as_deref(),
+            Some("prod")
+        );
+
+        let (dir, result) = scripted_setup(&[]);
+        result.unwrap();
+        let env = read_env(&dir);
+        assert_eq!(envfile::get(&env, "SENTRY_DSN"), None);
+        assert_eq!(envfile::get(&env, "PUBLIC_SENTRY_DSN"), None);
+    }
+
+    #[test]
+    fn a_scripted_setup_refuses_something_that_is_not_a_dsn() {
+        let (dir, result) = scripted_setup(&[("SENTRY_DSN", "errors.example.com")]);
+        let err = result.unwrap_err().to_string();
+        assert!(err.contains("DSN"), "{err}");
         assert!(!dir.join(ENV).exists(), "nothing is written");
     }
 
