@@ -28,6 +28,7 @@
 		"@tailwindcss/vite": "^4.3.3",
 		"@types/pg": "^8.21.0",
 		"clsx": "^2.1.1",
+		"jsdom": "^30.1.1",
 		"mode-watcher": "^1.1.0",
 		"oxlint": "^1.79.0",
 		"pg": "^8.23.0",
@@ -49,6 +50,7 @@
 		"@lucide/svelte": "^1.33.0",
 		"@tanstack/svelte-query": "^6.1.41",
 		"bits-ui": "^2.18.1",
+		"dompurify": "^3.4.16",
 		"marked": "^18.0.9",
 		"valibot": "^1.4.2"
 	}
