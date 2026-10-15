@@ -6573,7 +6573,6 @@
           "to_solarsystem_id",
           "type",
           "mass_status",
-          "ship_size",
           "lifetime",
           "preserve_mass"
         ],
@@ -6606,7 +6605,15 @@
             "type": "boolean"
           },
           "ship_size": {
-            "$ref": "#/components/schemas/WireShipSize"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/WireShipSize",
+                "description": "Legacy writes null for a hole nobody has sized yet. This side always writes one."
+              }
+            ]
           },
           "to_solarsystem_id": {
             "type": "integer",

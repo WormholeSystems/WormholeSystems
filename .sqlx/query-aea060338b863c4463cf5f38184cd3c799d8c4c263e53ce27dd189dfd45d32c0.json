@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select size as \"size: WormholeSize\" from map_connections where map_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "size: WormholeSize",
+        "type_info": {
+          "Custom": {
+            "name": "wormhole_size",
+            "kind": {
+              "Enum": [
+                "xl",
+                "large",
+                "medium",
+                "small"
+              ]
+            }
+          }
+        },
+        "origin": {
+          "Table": {
+            "table": "map_connections",
+            "name": "size"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "aea060338b863c4463cf5f38184cd3c799d8c4c263e53ce27dd189dfd45d32c0"
+}

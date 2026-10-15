@@ -371,6 +371,65 @@ async fn a_legacy_file_imports_with_its_vocabulary_translated(pool: PgPool) {
     );
 }
 
+/// A legacy file with two placed systems and one wormhole between them, as legacy writes
+/// it for the given `wormhole` and `ship_size` (both raw JSON).
+fn legacy_connection_file(wormhole: &str, ship_size: &str) -> String {
+    format!(
+        r#"{{
+        "format": "wormholesystems-map-export",
+        "version": 1,
+        "exported_at": "2026-10-01T10:00:00+00:00",
+        "map_name": "Unsized",
+        "sections": {{
+            "solarsystems": [
+                {{"solarsystem_id": {SYS_A}, "alias": null, "position_x": 0, "position_y": 0,
+                  "pinned": false, "status": "unknown", "occupier_alias": null, "notes": null}},
+                {{"solarsystem_id": {SYS_B}, "alias": null, "position_x": 200, "position_y": 0,
+                  "pinned": false, "status": "unknown", "occupier_alias": null, "notes": null}}
+            ],
+            "connections": [
+                {{"from_solarsystem_id": {SYS_A}, "to_solarsystem_id": {SYS_B},
+                  "wormhole": {wormhole}, "type": "wormhole", "mass_status": "fresh",
+                  "ship_size": {ship_size}, "lifetime": "healthy",
+                  "lifetime_updated_at": null, "connected_at": null, "preserve_mass": false}}
+            ]
+        }}
+    }}"#
+    )
+}
+
+async fn import_connection_size(pool: &PgPool, content: &str) -> Option<WormholeSize> {
+    let w = world(pool).await;
+    let sections = SectionSet {
+        solarsystems: true,
+        connections: true,
+        ..Default::default()
+    };
+    let parsed = parse_export(content, sections, true).unwrap();
+    let map = import_map_as_new(
+        pool,
+        w.owner,
+        &AffiliationAllowlist::default(),
+        parsed,
+        None,
+    )
+    .await
+    .unwrap();
+    sqlx::query_scalar!(
+        r#"select size as "size: WormholeSize" from map_connections where map_id = $1"#,
+        map.id,
+    )
+    .fetch_one(pool)
+    .await
+    .unwrap()
+}
+
+#[sqlx::test]
+async fn a_legacy_connection_without_a_size_imports_unsized(pool: PgPool) {
+    let content = legacy_connection_file("null", "null");
+    assert_eq!(import_connection_size(&pool, &content).await, None);
+}
+
 #[sqlx::test]
 async fn the_owner_grant_is_never_touched(pool: PgPool) {
     let w = world(&pool).await;

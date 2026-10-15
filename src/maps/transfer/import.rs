@@ -478,7 +478,7 @@ async fn import_connections(
             ConnectionType::Wormhole => (
                 entry.mass_status.to_status(),
                 entry.lifetime.to_status(),
-                Some(entry.ship_size.to_size()),
+                entry.ship_size.map(WireShipSize::to_size),
             ),
             ConnectionType::Stargate => (None, None, None),
         };
