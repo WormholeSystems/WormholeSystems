@@ -4,13 +4,16 @@ title: Creating a map
 
 # Creating a map
 
-From the **Maps** page, click **Create New Map** in the top-right (or **Create Your First Map** if you don't have any yet).
+From the **Maps** page, click **New map** in the top-right (or **Create your first map** if you don't have any yet).
 
-There's only one thing to fill in:
+Fill in:
 
-- **Map Name** — whatever you want to call the chain (for example "Home", or your corp's name). Required, up to 255 characters.
+- **Name**: whatever you want to call the chain (for example "Home", or your corp's name). Required, up to 255 characters.
+- **Description**: optional, what the chain is for.
 
-Click **Create Map** and you're taken straight to the new, empty map.
+Click **Create** and you're taken straight to the new, empty map.
+
+Moving a map over from the old app? Use **Import** next to **New map** instead; see [Moving from the legacy app](/documentation/getting-started/moving-from-legacy).
 
 ## What you get
 

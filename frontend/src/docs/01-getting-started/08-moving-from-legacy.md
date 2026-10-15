@@ -48,21 +48,21 @@ themselves.
 
 ## What carries over
 
-| On legacy                                                          | Here                                                                                                                                                                       |
-| ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Systems, with position, alias, pin, status, occupier and notes     | Come over. A system that only has notes on legacy (no position) keeps its notes and status but is not placed on the map.                                                   |
-| Connections, with mass, lifetime, ship size, preserve mass and age | Come over between systems that are on the map. The wormhole type comes from the linked signature, so a connection with a type but no linked signature arrives without one. |
-| Signatures                                                         | Come over, still linked to their connections. A signature without a full scanner id (like `ABC-123`) is skipped, because this app needs the id.                            |
-| Access for characters, corporations and alliances                  | Comes over with each role and expiry date. The owner does not: whoever imports the map owns it here.                                                                       |
-| Name, layout, bookmark formats, naming scheme                      | Come over. The constant width display setting does not exist here and is ignored.                                                                                          |
-| Home and rally points                                              | Come over when the system is on the map. Only the newest two rally points are kept.                                                                                        |
-| Watch list and ignore list                                         | Come over. On a new map they replace the trade hubs that are normally pre-loaded.                                                                                          |
-| Public map and share link                                          | Do not come over. Set them up again.                                                                                                                                       |
-| Discord alerts, webhooks and roles                                 | Do not come over. Set them up again.                                                                                                                                       |
-| Your characters, scopes and location sharing                       | Do not come over. Sign in and connect them again.                                                                                                                          |
-| Linked Discord account, API tokens                                 | Do not come over. Link and create them again.                                                                                                                              |
-| Personal display settings, background image                        | Do not come over.                                                                                                                                                          |
-| Map history, ship history, jump log                                | Do not come over.                                                                                                                                                          |
+| On legacy                                                          | Here                                                                                                                                               |
+| ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Systems, with position, alias, pin, status, occupier and notes     | Come over. A system that only has notes on legacy (no position) keeps its notes and status but is not placed on the map.                           |
+| Connections, with mass, lifetime, ship size, preserve mass and age | Come over between systems that are on the map. A connection's wormhole type sets its size; the type name shows once a linked signature carries it. |
+| Signatures                                                         | Come over, still linked to their connections. A signature without a full scanner id (like `ABC-123`) is skipped, because this app needs the id.    |
+| Access for characters, corporations and alliances                  | Comes over with each role and expiry date. The owner does not: whoever imports the map owns it here.                                               |
+| Name, layout, bookmark formats, naming scheme                      | Come over. The constant width display setting does not exist here and is ignored.                                                                  |
+| Home and rally points                                              | Come over when the system is on the map. Only the newest two rally points are kept.                                                                |
+| Watch list and ignore list                                         | Come over. On a new map they replace the trade hubs that are normally pre-loaded.                                                                  |
+| Public map and share link                                          | Do not come over. Set them up again.                                                                                                               |
+| Discord alerts, webhooks and roles                                 | Do not come over. Set them up again.                                                                                                               |
+| Your characters, scopes and location sharing                       | Do not come over. Sign in and connect them again.                                                                                                  |
+| Linked Discord account, API tokens                                 | Do not come over. Link and create them again.                                                                                                      |
+| Personal display settings, background image                        | Do not come over.                                                                                                                                  |
+| Map history, ship history, jump log                                | Do not come over.                                                                                                                                  |
 
 The names for mass, lifetime and ship size are the same in both apps (fresh, reduced,
 critical; healthy, EOL, critical, expired; frigate up to extra large). An import of the same
@@ -87,10 +87,9 @@ why in a short message.
   Export again with the sections on.
 - **the file does not contain a valid map name**: the map name in the file is empty or
   longer than 255 characters.
-- **the "connections" section contains invalid data**, or the same for another section:
-  something in that section could not be read. Untick that section to bring the rest in,
-  and [tell us](/documentation/contributing-and-self-hosting/getting-help) so we can fix it.
-- **an export never contains an owner grant**: the file was edited by hand. Export it again.
+- **the "signatures" section contains invalid data** (or another section), or **an export
+  never contains an owner grant**: the file was changed after it was exported. Export it
+  again.
 - **(needs Systems)** next to Connections or Signatures: a new map needs the systems for its
   connections and signatures to hang off. Tick **Systems** as well.
 - **No Import button on the Maps page**: this instance only lets certain characters,
