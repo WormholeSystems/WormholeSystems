@@ -180,24 +180,30 @@
 				{/if}
 			{/snippet}
 		</MapPanelHeader>
-		<SignatureColumns />
-		<!-- Room for the rows the demo scan adds, so pasting it does not move the page. -->
-		<div class="min-h-[18rem]">
-			{#if catalog}
-				{#each rows as sig (sig.id)}
-					<SignatureRow
-						{ctx}
-						system={HOME_SYSTEM}
-						{sig}
-						{catalog}
-						compact={false}
-						canWrite={false}
-						showStaticsFirst={false}
-						status={pasteStatus(sig, preIds, pastedIds)}
-						now={clock.current}
-					/>
-				{/each}
-			{/if}
+		<!-- The rows are the desktop panel's: on a phone they keep that width and scroll
+		     sideways, rather than squeezing the type and connection down to bare chevrons. -->
+		<div class="overflow-x-auto">
+			<div class="min-w-[640px]">
+				<SignatureColumns />
+				<!-- Room for the rows the demo scan adds, so pasting it does not move the page. -->
+				<div class="min-h-[18rem]">
+					{#if catalog}
+						{#each rows as sig (sig.id)}
+							<SignatureRow
+								{ctx}
+								system={HOME_SYSTEM}
+								{sig}
+								{catalog}
+								compact={false}
+								canWrite={false}
+								showStaticsFirst={false}
+								status={pasteStatus(sig, preIds, pastedIds)}
+								now={clock.current}
+							/>
+						{/each}
+					{/if}
+				</div>
+			</div>
 		</div>
 		<p
 			class="flex min-h-10 items-center border-t border-border/50 px-3 font-mono text-[10px] tracking-[0.15em] text-muted-foreground uppercase"

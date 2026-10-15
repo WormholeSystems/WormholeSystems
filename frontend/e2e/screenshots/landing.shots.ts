@@ -42,6 +42,17 @@ const PANEL_LAYOUT = desktop([
 	item('system-info', 3, 12, 3, 4),
 ]);
 
+const MAP_ONLY_LAYOUT = desktop([
+	item('map', 0, 0, 10, 15),
+	item('signatures', 0, 15, 5, 4),
+	item('navigation', 5, 15, 5, 4),
+	item('threat', 0, 19, 3, 3),
+	item('notes', 3, 19, 3, 3),
+	item('killmails', 6, 19, 4, 3),
+	item('characters', 0, 22, 5, 3),
+	item('system-info', 5, 22, 5, 3),
+]);
+
 const HIDDEN = ['skyhooks', 'evescout'];
 
 const WINDOW = { width: 1600, height: 1000 };
@@ -246,6 +257,23 @@ for (const theme of ['dark', 'light'] as const) {
 			await page.context().close();
 		});
 
+		// A connection's details with its jump log open, as they sit over the map: the map
+		// takes the whole window here, so nothing but the chain shows behind them.
+		test('connection', async ({ browser }) => {
+			await arrange(demo, MAP_ONLY_LAYOUT);
+			const page = await openMap(browser, demo, theme, { viewport: TALL_WINDOW });
+			await page
+				.locator(`[data-testid="edge-hit"][data-connection-id="${demo.connections.homeS1}"]`)
+				.click({ force: true });
+			const popover = page.getByTestId('connection-popover');
+			await popover.waitFor();
+			await popover.getByTestId('jump-log-trigger').click();
+			const log = page.getByTestId('jump-log');
+			await log.waitFor();
+			await save(page, 'connection', theme, [popover, log], { pad: 24 });
+			await page.context().close();
+		});
+
 		test('panels', async ({ browser }) => {
 			await arrange(demo, PANEL_LAYOUT);
 			let page = await openMap(browser, demo, theme, { viewport: TALL_WINDOW });
@@ -255,19 +283,6 @@ for (const theme of ['dark', 'light'] as const) {
 				until: page.getByTestId('route-list'),
 				slack: 12,
 			});
-
-			// A connection's details, with its jump log open beside them.
-			await page
-				.locator(`[data-testid="edge-hit"][data-connection-id="${demo.connections.homeS1}"]`)
-				.click({ force: true });
-			const popover = page.getByTestId('connection-popover');
-			await popover.waitFor();
-			await popover.getByTestId('jump-log-trigger').click();
-			const log = page.getByTestId('jump-log');
-			await log.waitFor();
-			await save(page, 'connection', theme, [popover, log], { alone: true });
-			await page.keyboard.press('Escape');
-			await page.keyboard.press('Escape');
 
 			await page.getByTestId('history-button').click();
 			const history = page.locator('[data-slot="popover-content"]').filter({

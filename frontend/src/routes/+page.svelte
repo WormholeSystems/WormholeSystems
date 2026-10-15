@@ -154,14 +154,11 @@
 				]}
 				reverse
 			>
-				<Frame bare class="mx-auto max-w-[618px]">
-					<div>
-						<Shot
-							name="connection"
-							phoneWidth={520}
-							alt="A connection's details: an H296 out of home and the K162 on the far side, healthy lifetime, mass at critical with a bar showing 13 percent left, and beside it the jump log of nine jumps including a Moros out and back."
-						/>
-					</div>
+				<Frame class="mx-auto max-w-[666px]">
+					<Shot
+						name="connection"
+						alt="A connection's details open over the map: an H296 out of home and the K162 on the far side, healthy lifetime, mass at critical with a bar showing 13 percent left, and beside it the jump log of nine jumps including a Moros out and back."
+					/>
 				</Frame>
 			</Feature>
 
