@@ -47,11 +47,14 @@ pub async fn map_ws(
         actor,
         token,
     };
-    // Subscribed before the check, so nothing published between the check and the socket
-    // opening is lost: a revocation in that gap is still heard.
-    let events = crate::realtime::hub().subscribe(map_id);
+    // Checked before subscribing, so asking after a map that does not exist, or that this
+    // reader may not see, leaves nothing behind in the hub. A revocation published between
+    // the check and the subscription is caught by the stream asking again as it opens.
     match reader.check().await {
-        Ok(_) => ws.on_upgrade(move |socket| stream_map_events(socket, reader, events)),
+        Ok(_) => {
+            let events = crate::realtime::hub().subscribe(map_id);
+            ws.on_upgrade(move |socket| stream_map_events(socket, reader, events))
+        }
         Err(crate::maps::MapError::NotFound) => StatusCode::NOT_FOUND.into_response(),
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     }
@@ -162,14 +165,14 @@ impl Reader {
 async fn stream_map_events(
     mut socket: WebSocket,
     reader: Reader,
-    mut rx: tokio::sync::broadcast::Receiver<crate::realtime::MapEvent>,
+    mut rx: crate::realtime::Subscription,
 ) {
     use crate::realtime::MapEvent;
 
+    // The first tick is immediate: the upgrade was allowed before the subscription began,
+    // so ask once more now that nothing can slip past.
     let mut recheck = interval(ACCESS_RECHECK);
     recheck.set_missed_tick_behavior(MissedTickBehavior::Delay);
-    // The first tick is immediate, and the upgrade has only just been allowed.
-    recheck.tick().await;
     loop {
         let received = tokio::select! {
             _ = crate::background::stopped() => {
@@ -183,6 +186,12 @@ async fn stream_map_events(
                 }
                 continue;
             }
+            // The client sends nothing this needs, but reading is how a closed socket is
+            // noticed on a quiet map, and with it goes the map's subscription.
+            frame = socket.recv() => match frame {
+                Some(Ok(_)) => continue,
+                _ => return,
+            },
             received = rx.recv() => received,
         };
         // A change to who may see the map, or to how it is shared, is the moment to ask;

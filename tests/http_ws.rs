@@ -17,8 +17,12 @@ use wormholesystems::maps::access::{RevokeAccess, revoke_access};
 type Socket =
     tokio_tungstenite::WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>;
 
-/// Serve the test app on a free port and open the map socket as `cookie`.
-async fn open(pool: &PgPool, map_id: i64, cookie: &str) -> Socket {
+/// Serve the test app on a free port and try to open the map socket as `cookie`.
+async fn connect(
+    pool: &PgPool,
+    map_id: i64,
+    cookie: &str,
+) -> Result<Socket, tokio_tungstenite::tungstenite::Error> {
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let addr = listener.local_addr().unwrap();
     let app = app(pool);
@@ -30,8 +34,13 @@ async fn open(pool: &PgPool, map_id: i64, cookie: &str) -> Socket {
     request
         .headers_mut()
         .insert("cookie", cookie.parse().unwrap());
-    let (socket, _) = tokio_tungstenite::connect_async(request).await.unwrap();
-    socket
+    tokio_tungstenite::connect_async(request)
+        .await
+        .map(|(socket, _)| socket)
+}
+
+async fn open(pool: &PgPool, map_id: i64, cookie: &str) -> Socket {
+    connect(pool, map_id, cookie).await.unwrap()
 }
 
 /// The next frame, or a failure after a few seconds rather than a hung test.
@@ -93,4 +102,41 @@ async fn losing_access_closes_the_socket(pool: PgPool) {
             _ => continue,
         }
     }
+}
+
+#[sqlx::test]
+async fn a_refused_socket_leaves_nothing_in_the_hub(pool: PgPool) {
+    // Ids no other test's map will have, since every test shares the process's hub.
+    sqlx::query("alter table maps alter column id restart with 7700000001")
+        .execute(&pool)
+        .await
+        .unwrap();
+    let w = world(&pool).await;
+    assert_eq!(w.map_id, 7700000001);
+    let stranger = wormholesystems::maps::Actor {
+        user_id: common::new_user(&pool).await,
+        character_id: 1009,
+    };
+    common::add_character(&pool, stranger.user_id, 1009, 2009, None).await;
+    let cookie = session_cookie(&pool, stranger).await;
+    let hub = wormholesystems::realtime::hub();
+
+    // A map they may not see, and one that does not exist.
+    for map_id in [w.map_id, 7700000999] {
+        assert!(connect(&pool, map_id, &cookie).await.is_err());
+        assert!(!hub.has_channel(map_id), "map {map_id}");
+    }
+
+    // A socket that was let in holds the channel only while it is open.
+    let owner = session_cookie(&pool, w.owner).await;
+    let socket = open(&pool, w.map_id, &owner).await;
+    assert!(hub.has_channel(w.map_id));
+    drop(socket);
+    tokio::time::timeout(Duration::from_secs(5), async {
+        while hub.has_channel(w.map_id) {
+            tokio::time::sleep(Duration::from_millis(20)).await;
+        }
+    })
+    .await
+    .expect("the channel goes once the socket closes");
 }
