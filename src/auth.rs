@@ -91,7 +91,12 @@ pub async fn login(
     } else {
         state.sso.authorize_url_for(&csrf, &scopes)
     };
-    Redirect::to(&url).into_response()
+    let jar = jar.add(oauth_flow::browser_cookie(
+        FlowKind::EveLogin,
+        &csrf,
+        state.secure_cookies,
+    ));
+    (jar, Redirect::to(&url)).into_response()
 }
 
 #[derive(Deserialize)]
@@ -107,12 +112,31 @@ pub async fn callback(
     jar: CookieJar,
     Query(query): Query<CallbackQuery>,
 ) -> Response {
+    // Only the browser that started this login may finish it. Checked before the state is
+    // consumed, so a forged callback cannot burn somebody's login in flight either.
+    if !oauth_flow::started_here(&jar, FlowKind::EveLogin, &query.state) {
+        return (StatusCode::BAD_REQUEST, "invalid or expired state").into_response();
+    }
+    let cleared = oauth_flow::clear_cookie(jar.clone(), FlowKind::EveLogin);
+    (cleared, finish_login(&state, jar, query).await).into_response()
+}
+
+async fn finish_login(state: &AppState, jar: CookieJar, query: CallbackQuery) -> Response {
     // The `state` is single-use and short-lived: consume it, rejecting unknown/expired.
     let flow = match oauth_flow::consume(&state.db, FlowKind::EveLogin, &query.state).await {
         Ok(Some(flow)) => flow,
         Ok(None) => return (StatusCode::BAD_REQUEST, "invalid or expired state").into_response(),
         Err(err) => return server_error(err),
     };
+    if let Some(user_id) = flow.link_user_id
+        && !oauth_flow::signed_in_as(&state.db, &jar, user_id).await
+    {
+        return (
+            StatusCode::BAD_REQUEST,
+            "this character was being added to an account you are not signed in to",
+        )
+            .into_response();
+    }
 
     let (token, claims) = match state.sso.exchange_code(&query.code).await {
         Ok(pair) => pair,
