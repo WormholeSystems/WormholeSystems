@@ -5,7 +5,21 @@
 
 import type { GridItem } from '$lib/layout/grid';
 import type { BreakpointKey, PanelId, PanelLayouts } from './layout/registry';
-import { DEFAULT_LAYOUTS, placeAtBottom, resolveLayouts } from './layout/registry';
+import {
+	DEFAULT_LAYOUTS,
+	breakpointKey,
+	breakpointsOf,
+	fitToColumns,
+	placeAtBottom,
+	resolveLayouts,
+} from './layout/registry';
+
+export interface NewBreakpoint {
+	label: string;
+	minWidth: number;
+	cols: number;
+	rowHeight: number;
+}
 
 export interface LayoutHost {
 	/** Null before the viewer's settings exist; hiding and showing are no-ops then. */
@@ -124,9 +138,96 @@ export class PanelLayoutStore {
 		this.savedHidden = [...(this.host.hiddenPanels() ?? [])];
 	}
 
-	/** Put one breakpoint back to the built-in arrangement. */
+	/**
+	 * Put one breakpoint back to the built-in arrangement. An added one has none of its
+	 * own, so it gets the desktop arrangement stretched to its columns.
+	 */
 	reset(key: BreakpointKey) {
 		const base = resolveLayouts(this.draft);
-		this.draft = { ...base, [key]: structuredClone(DEFAULT_LAYOUTS[key]) };
+		const current = base[key];
+		if (!current) return;
+		if (key in DEFAULT_LAYOUTS) {
+			// The arrangement goes back; a name or width the viewer gave it stays.
+			const { min_width, label } = current;
+			this.draft = {
+				...base,
+				[key]: {
+					...structuredClone(DEFAULT_LAYOUTS[key]),
+					...(min_width !== undefined && { min_width }),
+					...(label !== undefined && { label }),
+				},
+			};
+			return;
+		}
+		const from = DEFAULT_LAYOUTS.lg;
+		this.draft = {
+			...base,
+			[key]: { ...current, items: fitToColumns(from.items, from.cols, current.cols) },
+		};
+	}
+
+	/** Change one breakpoint's grid; the tiles keep their share of the width. */
+	setGrid(key: BreakpointKey, grid: { cols?: number; rowHeight?: number }) {
+		const base = resolveLayouts(this.draft);
+		const current = base[key];
+		if (!current) return;
+		const cols = grid.cols ?? current.cols;
+		this.draft = {
+			...base,
+			[key]: {
+				...current,
+				cols,
+				row_height: grid.rowHeight ?? current.row_height,
+				items:
+					cols === current.cols ? current.items : fitToColumns(current.items, current.cols, cols),
+			},
+		};
+	}
+
+	/**
+	 * Add a breakpoint for a wider (or narrower) screen. It starts from the arrangement of
+	 * the breakpoint closest to its width, stretched to its columns, and becomes the one
+	 * being edited.
+	 */
+	addBreakpoint(spec: NewBreakpoint): BreakpointKey {
+		const base = resolveLayouts(this.draft);
+		const closest = breakpointsOf(base).reduce((best, bp) =>
+			Math.abs(bp.minWidth - spec.minWidth) < Math.abs(best.minWidth - spec.minWidth) ? bp : best,
+		);
+		const source = base[closest.key];
+		const key = breakpointKey(spec.label, base);
+		this.draft = {
+			...base,
+			[key]: {
+				cols: spec.cols,
+				row_height: spec.rowHeight,
+				items: fitToColumns(source.items, source.cols, spec.cols),
+				min_width: spec.minWidth,
+				label: spec.label.trim(),
+			},
+		};
+		this.breakpoint = key;
+		return key;
+	}
+
+	/** Rename a breakpoint or move the width it starts at. */
+	updateBreakpoint(key: BreakpointKey, patch: { label?: string; minWidth?: number }) {
+		const base = resolveLayouts(this.draft);
+		const current = base[key];
+		if (!current) return;
+		const next = { ...current };
+		if (patch.label !== undefined) next.label = patch.label.trim();
+		if (patch.minWidth !== undefined && key !== 'xs') next.min_width = patch.minWidth;
+		this.draft = { ...base, [key]: next };
+	}
+
+	/** Drop an added breakpoint; the built-in ones always stay. */
+	removeBreakpoint(key: BreakpointKey) {
+		const base = resolveLayouts(this.draft);
+		if (base[key]?.min_width === undefined) return;
+		const rest = { ...base };
+		delete rest[key];
+		this.draft = rest;
+		if (this.breakpoint === key) this.breakpoint = 'lg';
 	}
 }

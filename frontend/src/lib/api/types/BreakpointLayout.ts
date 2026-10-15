@@ -4,4 +4,14 @@ import type { LayoutItem } from "./LayoutItem";
 /**
  * One breakpoint's arrangement.
  */
-export type BreakpointLayout = { cols: number, row_height: number, items: Array<LayoutItem>, };
+export type BreakpointLayout = { cols: number, row_height: number, items: Array<LayoutItem>, 
+/**
+ * The narrowest window the breakpoint applies to. Required on an added one; on a
+ * built-in one it is only there if the viewer moved it.
+ */
+min_width?: number, 
+/**
+ * What the toolbar calls the breakpoint. Required on an added one, a rename on a
+ * built-in one.
+ */
+label?: string, };

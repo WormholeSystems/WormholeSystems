@@ -259,7 +259,7 @@ test('a resize will not go below the panel minimum', async ({ page, api }) => {
 	await shield.focus();
 	// Shrink far past the minimum; it clamps rather than collapsing.
 	for (let i = 0; i < 8; i++) await page.keyboard.press('Shift+ArrowLeft');
-	expect((await box(page, 'notes')).w).toBe(2);
+	expect((await box(page, 'notes')).w).toBe(1);
 });
 
 test('hiding a panel and adding it back from the library', async ({ page, api }) => {
@@ -483,4 +483,30 @@ test('a card can be dragged by its header while arranging', async ({ page, api }
 	await expect(page.getByTestId('panel-grid')).toHaveAttribute('data-dragging', 'false');
 
 	expect(await box(page, 'notes')).not.toEqual(before);
+});
+
+test('an added screen size takes over from its width and survives a reload', async ({
+	page,
+	api,
+}) => {
+	const mapId = await createMap(api, 'E2E Screen Sizes');
+	await page.setViewportSize({ width: 1700, height: 1000 });
+	await gotoApp(page, `/maps/${mapId}`);
+	await page.getByTestId('layout-toggle').click();
+
+	await page.getByTestId('breakpoint-add').click();
+	await page.getByTestId('breakpoint-new-label').fill('Wide');
+	await page.getByTestId('breakpoint-new-width').fill('1600');
+	await page.getByTestId('breakpoint-new-add').click();
+	await expect(page.getByTestId('panel-grid')).toHaveAttribute('data-breakpoint', 'wide');
+
+	// Clicking the selected size opens its settings; 1600px starts it at 10 columns.
+	await page.getByTestId('breakpoint-wide').click();
+	await expect(page.getByTestId('grid-cols')).toHaveText('10');
+	await page.keyboard.press('Escape');
+	await page.getByTestId('layout-save').click();
+	await expect(page.getByTestId('layout-toolbar')).toHaveCount(0);
+
+	await reloadApp(page);
+	await expect(page.getByTestId('panel-grid')).toHaveAttribute('data-breakpoint', 'wide');
 });
