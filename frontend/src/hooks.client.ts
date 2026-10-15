@@ -16,6 +16,12 @@ export const init: ClientInit = async () => {
 		Sentry.captureException(error, { mechanism: { type: 'sveltekit', handled: false } });
 };
 
-export const handleError: HandleClientError = ({ error, status }) => {
-	if (status !== 404) report?.(error);
+// What the error page gets for anything nobody threw on purpose: never the thrown text,
+// which is for whoever reads the log, but a short id that is in the log next to it.
+export const handleError: HandleClientError = ({ error, status, message }) => {
+	if (status === 404) return { message };
+	report?.(error);
+	const errorId = crypto.randomUUID().slice(0, 8);
+	console.error(`[error ${errorId}]`, error);
+	return { message: 'Something went wrong on our side.', errorId };
 };

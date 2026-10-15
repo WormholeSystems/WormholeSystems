@@ -30,7 +30,9 @@
 		'Wormhole mapping and tracking for EVE Online. One live chain map for your corp: signatures, connection mass and lifetime, and everyone’s position from ESI.';
 
 	const seo = $derived((page.data.seo ?? {}) as SeoData);
-	const heading = $derived(seo.title ? `${seo.title} · ${SITE}` : SITE);
+	// An error page has no load of its own to name it, so the status does.
+	const title = $derived(seo.title ?? (page.error ? `Error ${page.status}` : undefined));
+	const heading = $derived(title ? `${title} · ${SITE}` : SITE);
 	const description = $derived(seo.description ?? DESCRIPTION);
 	const image = $derived(seo.image ?? '/og.png');
 	const imageUrl = $derived(image.startsWith('http') ? image : `${page.url.origin}${image}`);

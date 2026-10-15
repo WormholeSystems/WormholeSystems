@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Error %sveltekit.status% · WormholeSystems</title>
+		<!-- What SvelteKit serves when it cannot render a page at all. No script and nothing
+		     fetched: the colours and the layout of the app's own error page, written out, and
+		     following the system theme since the saved one needs script to read. -->
+		<style>
+			:root {
+				color-scheme: light dark;
+				--bg: #ffffff;
+				--fg: #0a0a0a;
+				--muted: #737373;
+				--border: #e5e5e5;
+				--grid: #e3e3e3;
+				--accent: #c2410c;
+			}
+			@media (prefers-color-scheme: dark) {
+				:root {
+					--bg: #0a0a0a;
+					--fg: #fafafa;
+					--muted: #a3a3a3;
+					--border: #262626;
+					--grid: #1f1f1f;
+					--accent: #9a3412;
+				}
+			}
+			* {
+				box-sizing: border-box;
+			}
+			body {
+				margin: 0;
+				min-height: 100vh;
+				display: grid;
+				place-items: center;
+				padding: 64px 16px;
+				background: var(--bg);
+				color: var(--fg);
+				font-family:
+					ui-sans-serif,
+					system-ui,
+					-apple-system,
+					'Segoe UI',
+					sans-serif;
+				background-image:
+					linear-gradient(to right, var(--grid) 1px, transparent 1px),
+					linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
+				background-size: 40px 40px;
+				background-position: center center;
+			}
+			main {
+				max-width: 36rem;
+				text-align: center;
+				background: var(--bg);
+				padding: 40px 32px;
+				border: 1px solid var(--border);
+			}
+			.label {
+				font:
+					11px ui-monospace,
+					SFMono-Regular,
+					Menlo,
+					monospace;
+				letter-spacing: 0.2em;
+				text-transform: uppercase;
+				color: var(--muted);
+				margin: 0;
+			}
+			h1 {
+				margin: 16px 0 0;
+				font-size: 32px;
+				line-height: 1.1;
+				letter-spacing: -0.02em;
+			}
+			p.body {
+				margin: 16px 0 0;
+				color: var(--muted);
+				line-height: 1.6;
+			}
+			.actions {
+				margin-top: 28px;
+				display: flex;
+				gap: 12px;
+				justify-content: center;
+				flex-wrap: wrap;
+			}
+			a {
+				display: inline-block;
+				padding: 8px 14px;
+				font-size: 13px;
+				color: var(--fg);
+				border: 1px solid var(--border);
+				text-decoration: none;
+			}
+			a.primary {
+				background: var(--accent);
+				border-color: var(--accent);
+				color: #fff;
+			}
+		</style>
+	</head>
+	<body>
+		<main>
+			<p class="label">Error %sveltekit.status%</p>
+			<h1>This page could not be drawn.</h1>
+			<p class="body">
+				Something went wrong before the page could load, usually because the server is restarting or
+				cannot reach its database. It is likely temporary: reload in a moment.
+			</p>
+			<div class="actions">
+				<a class="primary" href="">Reload</a>
+				<a href="/">Home</a>
+			</div>
+		</main>
+	</body>
+</html>
