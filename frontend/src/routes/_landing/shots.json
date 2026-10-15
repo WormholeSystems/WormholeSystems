@@ -1,0 +1,30 @@
+{
+	"access": {
+		"width": 768,
+		"height": 610
+	},
+	"alerts": {
+		"width": 768,
+		"height": 319
+	},
+	"app": {
+		"width": 1600,
+		"height": 980
+	},
+	"connection": {
+		"width": 618,
+		"height": 884
+	},
+	"history": {
+		"width": 384,
+		"height": 426
+	},
+	"intel": {
+		"width": 800,
+		"height": 445
+	},
+	"route": {
+		"width": 640,
+		"height": 188
+	}
+}
