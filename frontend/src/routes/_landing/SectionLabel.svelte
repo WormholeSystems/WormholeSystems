@@ -5,11 +5,14 @@
 		index,
 		label,
 		accent = false,
+		center = false,
 	}: {
 		index?: string;
 		label: string;
 		/** Amber, for the one band that is about running it yourself. */
 		accent?: boolean;
+		/** Rules on both sides, for a band that reads down the middle. */
+		center?: boolean;
 	} = $props();
 </script>
 
@@ -18,6 +21,9 @@
 		? 'text-amber-500'
 		: 'text-muted-foreground'}"
 >
+	{#if center}
+		<span class="h-px min-w-8 flex-1 bg-border" aria-hidden="true"></span>
+	{/if}
 	{#if index}
 		<span
 			class="border px-1.5 py-0.5 tabular-nums {accent
