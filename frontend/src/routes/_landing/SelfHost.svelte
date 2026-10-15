@@ -9,7 +9,20 @@
 	import LockIcon from '@lucide/svelte/icons/lock';
 	import ServerIcon from '@lucide/svelte/icons/server';
 
+	import type { ReferenceCounts } from '$lib/api/types/ReferenceCounts';
 	import Reveal from './Reveal.svelte';
+
+	let { reference }: { reference: ReferenceCounts } = $props();
+
+	// What this install actually holds, straight out of its own database. Deliberately not
+	// usage numbers: every copy is somebody's own server, so a global "capsuleers aboard"
+	// would be a figure nobody running this could stand behind.
+	const knows = $derived([
+		{ value: reference.solar_systems, label: 'Solar systems' },
+		{ value: reference.wormhole_systems, label: 'Wormhole systems' },
+		{ value: reference.stargates, label: 'Stargates' },
+		{ value: reference.wormhole_types, label: 'Wormhole types' },
+	]);
 
 	const command = "curl --proto '=https' --tlsv1.2 -sSf https://install.wormhole.systems | sh";
 	let copied = $state(false);
@@ -64,7 +77,7 @@
 
 <section id="self-host" class="relative overflow-hidden border-t border-border bg-card/40">
 	<div class="glow pointer-events-none absolute inset-0" aria-hidden="true"></div>
-	<div class="relative mx-auto w-full max-w-6xl px-6 py-24 sm:py-28">
+	<div class="relative mx-auto w-full max-w-7xl px-4 py-24 sm:px-6 sm:py-28">
 		<Reveal>
 			<div class="max-w-2xl">
 				<p
@@ -152,6 +165,26 @@
 						</dl>
 					</div>
 				</div>
+			</div>
+
+			<div class="mt-14 border-t border-border pt-6">
+				<p class="font-mono text-[10px] tracking-[0.2em] text-muted-foreground uppercase">
+					What this copy already knows
+				</p>
+				<ul class="mt-4 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
+					{#each knows as stat (stat.label)}
+						<li data-testid="landing-stat">
+							<span class="block font-heading text-2xl font-semibold tracking-tight tabular-nums">
+								{stat.value.toLocaleString('en-US')}
+							</span>
+							<span class="mt-0.5 block text-xs text-muted-foreground">{stat.label}</span>
+						</li>
+					{/each}
+				</ul>
+				<p class="mt-4 text-xs text-muted-foreground/80">
+					Seeded from CCP's static data export on the first boot, and re-seeded when they publish a
+					new one.
+				</p>
 			</div>
 		</Reveal>
 	</div>

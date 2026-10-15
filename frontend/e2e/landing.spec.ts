@@ -47,6 +47,55 @@ test('the access section lists every role', async ({ page }) => {
 	}
 });
 
+// The screenshots come in both themes and follow the toggle, not the OS, with only the
+// one on screen ever downloaded.
+test('the screenshots follow the theme toggle', async ({ page }) => {
+	await page.addInitScript(() => localStorage.setItem('darkmode', 'true'));
+	const fetched: string[] = [];
+	page.on('request', (req) => {
+		const shot = /\/landing\/(.+\.webp)$/.exec(req.url());
+		if (shot) fetched.push(shot[1]);
+	});
+	await gotoApp(page, '/');
+
+	const hero = page.locator('img[src^="/landing/app-"]');
+	await expect(hero.locator('visible=true')).toHaveAttribute('src', '/landing/app-dark.webp');
+	await expect.poll(() => fetched).toContain('app-dark.webp');
+	expect(fetched).not.toContain('app-light.webp');
+
+	await page.getByRole('button', { name: 'Toggle theme' }).click();
+	await expect(hero.locator('visible=true')).toHaveAttribute('src', '/landing/app-light.webp');
+	await expect.poll(() => fetched).toContain('app-light.webp');
+	// Every shot has its size in the markup, so nothing jumps as they arrive.
+	for (const img of await page.locator('img[src^="/landing/"]').all()) {
+		await expect(img).toHaveAttribute('width', /^\d+$/);
+		await expect(img).toHaveAttribute('height', /^\d+$/);
+	}
+});
+
+// The one live part: the signature panel's own rows, diffing a scan on the spot.
+test('the signature demo diffs a pasted scan', async ({ page }) => {
+	await gotoApp(page, '/');
+	const demo = page.getByTestId('signature-demo');
+	await demo.scrollIntoViewIfNeeded();
+	await expect(demo.getByTestId('sig-row')).toHaveCount(5);
+
+	await page.getByTestId('signature-demo-paste').click();
+	await expect(demo.locator('[data-testid="sig-row"][data-status="new"]')).toHaveCount(2);
+	await expect(demo.locator('[data-testid="sig-row"][data-status="deleted"]')).toHaveCount(1);
+	await expect(demo).toContainText('2 new');
+
+	// A scan of the visitor's own goes through the same parser.
+	await page.getByRole('button', { name: 'Reset' }).click();
+	await demo.evaluate((el) => {
+		const dt = new DataTransfer();
+		dt.setData('text/plain', 'XYZ-111\tCosmic Signature\tCombat Site\tCore Garrison\t100.0%\t3 AU');
+		el.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true }));
+	});
+	await expect(demo.locator('[data-testid="sig-row"][data-status="new"]')).toHaveCount(1);
+	await expect(demo.locator('[data-testid="sig-row"][data-status="deleted"]')).toHaveCount(5);
+});
+
 test('the page does not scroll sideways on a phone', async ({ page }) => {
 	await page.setViewportSize({ width: 390, height: 844 });
 	await gotoApp(page, '/');
