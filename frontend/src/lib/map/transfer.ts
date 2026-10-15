@@ -41,7 +41,7 @@ export const TRANSFER_SECTIONS: {
 	{
 		id: 'routes',
 		label: 'Routes',
-		description: 'The navigation watchlist.',
+		description: 'The navigation watchlist and the ignore list.',
 	},
 ];
 

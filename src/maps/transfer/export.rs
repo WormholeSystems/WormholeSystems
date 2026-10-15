@@ -245,7 +245,7 @@ async fn export_connections(
             wormhole: codes.get(&row.id).cloned(),
             kind: row.kind,
             mass_status: WireMassStatus::from_status(row.mass_status),
-            ship_size: WireShipSize::from_size(row.size),
+            ship_size: Some(WireShipSize::from_size(row.size)),
             lifetime: WireLifetime::from_status(row.time_status),
             lifetime_updated_at: row.time_status_updated_at,
             connected_at: Some(row.created_at),

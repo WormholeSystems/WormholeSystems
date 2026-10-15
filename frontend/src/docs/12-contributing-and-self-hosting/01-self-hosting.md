@@ -62,6 +62,12 @@ To put a banner above every page, set `ANNOUNCEMENT_MESSAGE` in `.env` and resta
 it stays closed for them until you change what it says; `ANNOUNCEMENT_DISMISSIBLE=false`
 keeps it up for good. Empty the message to take it down.
 
+## Coming from a legacy install
+
+There is no way to import a legacy (MySQL) database into this one. Move maps one at a time
+with export and import instead, the same way as on the public site: see
+[Moving from the legacy app](/documentation/getting-started/moving-from-legacy).
+
 ## Looking after it
 
 | Command        | What it does                                                          |

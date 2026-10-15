@@ -8,4 +8,8 @@ export type ConnectionRow = { from_solarsystem_id: number, to_solarsystem_id: nu
 /**
  * The wormhole code name ("K162"), when one is known.
  */
-wormhole: string | null, type: ConnectionType, mass_status: WireMassStatus, ship_size: WireShipSize, lifetime: WireLifetime, lifetime_updated_at: string | null, connected_at: string | null, preserve_mass: boolean, };
+wormhole: string | null, type: ConnectionType, mass_status: WireMassStatus, 
+/**
+ * Legacy writes null for a hole nobody has sized yet. This side always writes one.
+ */
+ship_size: WireShipSize | null, lifetime: WireLifetime, lifetime_updated_at: string | null, connected_at: string | null, preserve_mass: boolean, };

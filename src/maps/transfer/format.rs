@@ -124,7 +124,9 @@ pub struct ConnectionRow {
     #[ts(rename = "type")]
     pub kind: ConnectionType,
     pub mass_status: WireMassStatus,
-    pub ship_size: WireShipSize,
+    /// Legacy writes null for a hole nobody has sized yet. This side always writes one.
+    #[serde(default)]
+    pub ship_size: Option<WireShipSize>,
     pub lifetime: WireLifetime,
     pub lifetime_updated_at: Option<DateTime<Utc>>,
     pub connected_at: Option<DateTime<Utc>>,
