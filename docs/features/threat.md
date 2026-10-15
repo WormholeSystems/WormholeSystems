@@ -13,7 +13,12 @@ payload is not stored. Retention is 730 days (daily purge). The cursor lives in
 `zkb_state`: read once at boot, kept in memory after that, and written after every kill.
 
 A backlog is read back to back, at most ten requests a second (R2Z2 bans past 15). Only
-a 404, meaning nothing new yet, waits: 6 seconds, as zKillboard asks. Each stored kill is
+a 404, meaning nothing new yet, waits: 6 seconds, as zKillboard asks. Once a minute the
+cursor is compared with `sequence.json`: how far behind it is goes to
+`ws_killmail_ingest_behind`, with a warning past 500 kills. A 404 for a kill the head
+already counts is retried for 30 seconds and then skipped, to the next kill the feed
+still has: walked for a short gap, found by halving for a long one (a cursor older than
+the feed's files). Skipped kills count in `ws_killmail_ingest_skipped_total`. Each stored kill is
 offered to a queue of 1024 for the killmail alerts, which a worker evaluates in batches;
 when it is full the kill is still stored, only its alerts are skipped, with a warning.
 
