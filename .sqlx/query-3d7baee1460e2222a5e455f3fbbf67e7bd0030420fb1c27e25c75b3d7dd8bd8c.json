@@ -1,0 +1,77 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select delivery, discord_guild_id, discord_channel_id, mention, map_webhook_role_id\n         from map_alerts where id = $1 and map_id = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "delivery",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "map_alerts",
+            "name": "delivery"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "discord_guild_id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "map_alerts",
+            "name": "discord_guild_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "discord_channel_id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "map_alerts",
+            "name": "discord_channel_id"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "mention",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "map_alerts",
+            "name": "mention"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "map_webhook_role_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "map_alerts",
+            "name": "map_webhook_role_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      false,
+      true
+    ]
+  },
+  "hash": "3d7baee1460e2222a5e455f3fbbf67e7bd0030420fb1c27e25c75b3d7dd8bd8c"
+}

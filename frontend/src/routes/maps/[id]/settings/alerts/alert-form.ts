@@ -15,7 +15,6 @@ export interface AlertDraft {
 	webhookId: number | null;
 	mention: AlertMention;
 	roleRef: number | null;
-	channelId: string;
 	target: number | null;
 	/** Proximity only: measure from here through the chain instead of from the nearest mapped system. */
 	origin: number | null;
@@ -51,7 +50,6 @@ export function toSaveAlert(draft: AlertDraft): SaveAlert {
 		kind: draft.kind,
 		delivery: draft.delivery,
 		map_webhook_id: draft.delivery === 'webhook' ? (draft.webhookId ?? undefined) : undefined,
-		discord_channel_id: draft.channelId.trim() || undefined,
 		map_webhook_role_id: draft.mention === 'role' ? (draft.roleRef ?? undefined) : undefined,
 		mention: draft.mention,
 		target_solar_system_id: draft.kind === 'killmail' ? undefined : (draft.target ?? undefined),

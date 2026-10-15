@@ -690,7 +690,7 @@
         "tags": [
           "alerts"
         ],
-        "summary": "`POST /api/maps/{id}/alerts`, create one. Manager+.",
+        "summary": "`POST /api/maps/{id}/alerts`, create one. Manager+. Bot channel alerts are made with\n`/wh alert-channel` in Discord, not here.",
         "operationId": "create_alert",
         "parameters": [
           {
@@ -819,7 +819,7 @@
         "tags": [
           "alerts"
         ],
-        "summary": "`PUT /api/maps/{id}/alerts/{alert_id}`, replace its settings. Manager+.",
+        "summary": "`PUT /api/maps/{id}/alerts/{alert_id}`, replace its settings. Manager+. A bot channel\nalert keeps its channel, and its ping unless that is dropped.",
         "operationId": "update_alert",
         "parameters": [
           {
@@ -9363,18 +9363,6 @@
         "properties": {
           "delivery": {
             "$ref": "#/components/schemas/AlertDelivery"
-          },
-          "discord_channel_id": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "discord_guild_id": {
-            "type": [
-              "string",
-              "null"
-            ]
           },
           "filter_match": {
             "$ref": "#/components/schemas/Match"

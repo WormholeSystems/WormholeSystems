@@ -36,7 +36,9 @@ it is four edits.
 
 - **Channel webhook** — Discord's own channel setting, no application needed. This is the
   quickest way to start, and the only kind that works on an instance with no Discord bot.
-- **Bot channel** — posts as the bot. Needs the instance to have a bot configured.
+- **Bot channel** — posts as the bot. Needs the instance to have a bot configured, and
+  is set up with `/wh alert-channel` in the channel it should post to (see below). The alerts page can
+  edit one afterwards, but not move it to another channel or ping someone new.
 - **Direct message** — reaches one person. Needs the bot, and needs that person to have
   [linked their Discord account](/documentation/getting-started/connecting-your-character).
 

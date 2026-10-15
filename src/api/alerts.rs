@@ -1,8 +1,9 @@
 //! The alerts API: what a map watches for, and what happened to those watches.
 //!
 //! Manager+ throughout: an alert carries a webhook URL or a channel id, which is a key to
-//! somebody's Discord server. The alerts, destinations and roles live in
-//! [`crate::maps::alerts`]; these handlers check the role and answer.
+//! somebody's Discord server. A bot channel is never set from here, only by the Discord
+//! command (see [`store::keep_bot_destination`]). The alerts, destinations and roles live
+//! in [`crate::maps::alerts`]; these handlers check the role and answer.
 
 use super::extract::Credentials;
 use axum::extract::{Path, State};
@@ -170,7 +171,8 @@ pub async fn delete_role(
     Ok(Json(()))
 }
 
-/// `POST /api/maps/{id}/alerts`, create one. Manager+.
+/// `POST /api/maps/{id}/alerts`, create one. Manager+. Bot channel alerts are made with
+/// `/wh alert-channel` in Discord, not here.
 #[utoipa::path(
     post,
     path = "/api/maps/{id}/alerts",
@@ -183,16 +185,18 @@ pub async fn create_alert(
     State(state): State<AppState>,
     creds: Credentials,
     Path(map_id): Path<i64>,
-    Json(body): Json<SaveAlert>,
+    Json(mut body): Json<SaveAlert>,
 ) -> ApiResult<MapAlert> {
     let user_id = require_manager(&state, &creds, map_id).await?;
+    store::keep_bot_destination(&state.db, map_id, None, &mut body).await?;
     store::check(&state.db, map_id, &body).await?;
     Ok(Json(
         store::create(&state.db, map_id, user_id, &body).await?,
     ))
 }
 
-/// `PUT /api/maps/{id}/alerts/{alert_id}`, replace its settings. Manager+.
+/// `PUT /api/maps/{id}/alerts/{alert_id}`, replace its settings. Manager+. A bot channel
+/// alert keeps its channel, and its ping unless that is dropped.
 #[utoipa::path(
     put,
     path = "/api/maps/{id}/alerts/{alert_id}",
@@ -205,9 +209,10 @@ pub async fn update_alert(
     State(state): State<AppState>,
     creds: Credentials,
     Path((map_id, alert_id)): Path<(i64, i64)>,
-    Json(body): Json<SaveAlert>,
+    Json(mut body): Json<SaveAlert>,
 ) -> ApiResult<MapAlert> {
     let user_id = require_manager(&state, &creds, map_id).await?;
+    store::keep_bot_destination(&state.db, map_id, Some(alert_id), &mut body).await?;
     store::check(&state.db, map_id, &body).await?;
     Ok(Json(
         store::update(&state.db, map_id, alert_id, user_id, &body).await?,

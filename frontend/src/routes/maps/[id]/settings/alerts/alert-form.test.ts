@@ -10,7 +10,6 @@ const draft = (over: Partial<AlertDraft> = {}): AlertDraft => ({
 	webhookId: 4,
 	mention: 'none',
 	roleRef: null,
-	channelId: '',
 	target: null,
 	origin: null,
 	maxJumps: 5,
