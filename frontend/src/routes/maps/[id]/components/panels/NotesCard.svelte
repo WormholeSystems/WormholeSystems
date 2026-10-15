@@ -26,6 +26,11 @@
 
 	let editing = $state(false);
 	let draft = $state('');
+	// The notes as they were when the editor opened. The save sends them along, and the
+	// server refuses it when someone else has saved since.
+	let base = $state<string | null>(null);
+	// Someone else saved while this editor was open: theirs is in `notes`, ours in `draft`.
+	let conflict = $state(false);
 
 	// Keyed by the placement id, so the wholesale replacement of `map.systems.all` on every
 	// refetch never re-asks or closes the editor; only looking at a different system does.
@@ -41,6 +46,7 @@
 		// The id is a value, so this fires once per distinct system, not per refetch.
 		void system.id;
 		editing = false;
+		conflict = false;
 	});
 
 	// Anyone with write access to the map writes these, so they are sanitized before
@@ -50,13 +56,34 @@
 
 	function startEdit() {
 		draft = notes ?? '';
+		base = notes;
+		conflict = false;
 		editing = true;
 	}
 
-	function save() {
+	async function save() {
 		const value = draft.trim() || null;
-		map.systems.saveNotes(system.id, value);
+		const id = system.id;
 		editing = false;
+		conflict = false;
+		const outcome = await map.systems.saveNotes(id, value, base);
+		// Their notes are coming back from the server; the draft is still here, so the
+		// editor reopens on it with the choice. Unless the card has moved on meanwhile.
+		if (outcome === 'conflict' && system.id === id && !editing) {
+			editing = true;
+			conflict = true;
+		}
+	}
+
+	/** Drop the draft for what the other person saved, and keep editing from there. */
+	function loadTheirs() {
+		startEdit();
+	}
+
+	/** Save the draft over theirs, now that it is known what gets replaced. */
+	function overwrite() {
+		base = notes;
+		void save();
 	}
 </script>
 
@@ -90,6 +117,32 @@
 			{/snippet}
 		</MapPanelHeader>
 		<MapPanelContent>
+			{#if editing && conflict}
+				<div
+					class="flex flex-wrap items-center gap-2 border-b border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-[11px]"
+					role="alert"
+					data-testid="notes-conflict"
+				>
+					<span class="grow text-amber-200">Someone else edited these notes while you were.</span>
+					<!-- Both act on their notes, so both wait until those have been read back. -->
+					<Button
+						variant="ghost"
+						class="h-5 px-1.5 text-[10px]"
+						disabled={details.isFetching}
+						onclick={loadTheirs}
+					>
+						Load theirs
+					</Button>
+					<Button
+						variant="ghost"
+						class="h-5 px-1.5 text-[10px] text-amber-400 hover:text-amber-400"
+						disabled={details.isFetching}
+						onclick={overwrite}
+					>
+						Overwrite
+					</Button>
+				</div>
+			{/if}
 			{#if editing}
 				<Textarea
 					class="min-h-40 w-full resize-none rounded-none border-0 bg-transparent px-3 py-2 font-mono text-xs shadow-none focus-visible:ring-0"

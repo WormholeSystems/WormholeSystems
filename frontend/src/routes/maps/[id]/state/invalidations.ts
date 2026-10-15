@@ -34,6 +34,7 @@ export function keysFor(mapId: number, event: MapEvent | null): QueryKey[] {
 				key.ignored(mapId),
 				key.history(mapId),
 				key.stale(mapId),
+				key.details(mapId),
 			];
 		case 'signature_changed':
 			return [key.signatures(mapId), key.mapView(mapId), key.history(mapId)];
@@ -42,6 +43,14 @@ export function keysFor(mapId: number, event: MapEvent | null): QueryKey[] {
 		case 'map_updated':
 		case 'access_changed':
 			return [key.mapView(mapId)];
+		// The notes are a query of their own, and an editor open on them has to see them
+		// change, or its next save goes out against a note that is no longer there.
+		case 'system_details_changed':
+			return [
+				key.mapView(mapId),
+				key.history(mapId),
+				key.systemDetails(mapId, event.map_solar_system_id),
+			];
 		default:
 			return [key.mapView(mapId), key.history(mapId)];
 	}

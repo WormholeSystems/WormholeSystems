@@ -9785,6 +9785,13 @@
           "map_solar_system_id"
         ],
         "properties": {
+          "expected": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The notes as the editor last read them, `null` for none. When they no longer match\nwhat is stored, someone else saved in between and the write is refused (409) instead\nof overwriting theirs. Left out, the write goes through as it is: undo and redo put\nback a known state and never carry it."
+          },
           "map_id": {
             "type": "integer",
             "format": "int64"

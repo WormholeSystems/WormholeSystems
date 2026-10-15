@@ -475,6 +475,17 @@ pub struct SetNotes {
     pub map_id: i64,
     pub map_solar_system_id: i64,
     pub notes: Option<String>,
+    /// The notes as the editor last read them, `null` for none. When they no longer match
+    /// what is stored, someone else saved in between and the write is refused (409) instead
+    /// of overwriting theirs. Left out, the write goes through as it is: undo and redo put
+    /// back a known state and never carry it.
+    #[serde(
+        default,
+        deserialize_with = "super::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    #[ts(optional)]
+    pub expected: Option<Option<String>>,
 }
 
 /// Set or clear a placed system's notes (markdown free text). Member+ only, like every
@@ -485,6 +496,15 @@ pub async fn set_notes(pool: &PgPool, actor: Actor, cmd: SetNotes) -> Result<()>
 
 pub(super) async fn apply_set_notes(tx: &mut Tx<'_>, cmd: SetNotes) -> Result<Effect> {
     let before = intel(tx, cmd.map_id, cmd.map_solar_system_id).await?;
+    // The map's lock is held, so nothing can land between this read and the write. Empty
+    // and absent are the same note.
+    if let Some(expected) = &cmd.expected
+        && expected.as_deref().unwrap_or_default() != before.notes.as_deref().unwrap_or_default()
+    {
+        return Err(MapError::Conflict(
+            "someone else edited these notes since you opened them".into(),
+        ));
+    }
     let change = IntelChange {
         notes: Some(cmd.notes.clone()),
         ..IntelChange::default()
@@ -492,6 +512,7 @@ pub(super) async fn apply_set_notes(tx: &mut Tx<'_>, cmd: SetNotes) -> Result<Ef
     write_intel(tx, cmd.map_id, cmd.map_solar_system_id, &change).await?;
     let inverse = MapCommand::SetNotes(SetNotes {
         notes: before.notes,
+        expected: None,
         ..cmd
     });
     Ok(intel_changed(

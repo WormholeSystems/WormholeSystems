@@ -331,6 +331,8 @@ export class MapState {
 					q.systemDetails(mapId, id).queryKey,
 					(d: SystemDetails | undefined) => d && { ...d, notes },
 				),
+			refetchNotes: (id) =>
+				void this.queries.client.invalidateQueries({ queryKey: key.systemDetails(mapId, id) }),
 		});
 		this.connections = new ConnectionsApi({
 			mapId,

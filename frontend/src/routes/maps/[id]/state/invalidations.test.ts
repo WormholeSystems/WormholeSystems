@@ -35,6 +35,7 @@ describe('keysFor', () => {
 			key.ignored(1),
 			key.history(1),
 			key.stale(1),
+			key.details(1),
 		]);
 	});
 
@@ -60,13 +61,13 @@ describe('keysFor', () => {
 	});
 
 	it('routes every structural change to view and history', () => {
-		for (const type of [
-			'system_added',
-			'system_moved',
-			'system_removed',
-			'system_details_changed',
-		] as const) {
+		for (const type of ['system_added', 'system_moved', 'system_removed'] as const) {
 			expect(keysFor(1, event(type))).toEqual([key.mapView(1), key.history(1)]);
 		}
+	});
+
+	it('refreshes the one placement whose notes changed, for an editor open on them', () => {
+		const changed: MapEvent = { type: 'system_details_changed', map_id: 1, map_solar_system_id: 7 };
+		expect(keysFor(1, changed)).toEqual([key.mapView(1), key.history(1), key.systemDetails(1, 7)]);
 	});
 });
