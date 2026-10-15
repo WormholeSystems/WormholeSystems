@@ -1,16 +1,17 @@
 <script lang="ts">
-	// The self-hosting band. This is the reason to pick this over somebody else's copy, so
-	// it gets its own lit band and the most room on the page.
+	// The self-hosting band, first thing after the app itself: this is the reason to pick
+	// this over somebody else's copy. The longer story of what setup checks and what wsctl
+	// does afterwards is further down, in RunningIt.
 	import CheckIcon from '@lucide/svelte/icons/check';
 	import CopyIcon from '@lucide/svelte/icons/copy';
 	import { copyText } from '$lib/clipboard';
 	import DatabaseIcon from '@lucide/svelte/icons/database';
-	import GitForkIcon from '@lucide/svelte/icons/git-fork';
 	import LockIcon from '@lucide/svelte/icons/lock';
 	import ServerIcon from '@lucide/svelte/icons/server';
 
 	import type { ReferenceCounts } from '$lib/api/types/ReferenceCounts';
 	import Reveal from './Reveal.svelte';
+	import SectionLabel from './SectionLabel.svelte';
 
 	let { reference }: { reference: ReferenceCounts } = $props();
 
@@ -35,27 +36,6 @@
 		resetTimer = setTimeout(() => (copied = false), 2000);
 	}
 
-	// What setup checks before it asks for a single credential.
-	const checks = [
-		'Docker is installed and running, on Compose v2',
-		'there is disk for the static data',
-		'the domain actually resolves to this machine',
-		'ports 80 and 443 are free',
-		'the checkout is not behind origin',
-	];
-
-	// The rest of wsctl, so the story is the whole life of the install, not day one.
-	const commands = [
-		{ cmd: 'setup', body: 'Checks the machine, asks for what it needs, brings the stack up.' },
-		{
-			cmd: 'update',
-			body: 'Pulls, rebuilds, restarts, and takes newer static data when CCP has one.',
-		},
-		{ cmd: 'status', body: 'What is running, which SDE build is loaded, whether the URL answers.' },
-		{ cmd: 'doctor', body: 'Checks Docker, disk, ports and DNS without changing anything.' },
-		{ cmd: 'discord-register', body: 'Uploads the slash command to your Discord application.' },
-	];
-
 	const owns = [
 		{
 			icon: ServerIcon,
@@ -75,30 +55,32 @@
 	];
 </script>
 
-<section id="self-host" class="relative overflow-hidden border-t border-border bg-card/40">
+<!-- Straight under the hero, which hangs its app window over the top of this band: the
+     top padding is the overlap plus the band's own breathing room. -->
+<section
+	id="self-host"
+	class="relative overflow-hidden border-t border-border bg-muted/40 dark:bg-card/40"
+>
 	<div class="glow pointer-events-none absolute inset-0" aria-hidden="true"></div>
-	<div class="relative mx-auto w-full max-w-7xl px-4 py-24 sm:px-6 sm:py-28">
+	<div
+		class="relative mx-auto w-full max-w-7xl px-4 pt-36 pb-24 sm:px-6 sm:pt-52 sm:pb-28 lg:pt-72 xl:pt-80"
+	>
 		<Reveal>
-			<div class="max-w-2xl">
-				<p
-					class="flex items-center gap-2 font-mono text-[10px] tracking-[0.2em] text-amber-500 uppercase"
-				>
-					<GitForkIcon class="size-3.5" />
-					Open source · Self-hosted
-				</p>
-				<h2 class="mt-4 font-heading text-4xl font-semibold tracking-tight sm:text-5xl">
-					Run it yourself.<br />It is one command.
-				</h2>
-				<p class="mt-5 text-muted-foreground">
-					Not a trial of a hosted thing. The whole application, on your own machine, with your
-					corp's chain in a database only you can reach.
-				</p>
-			</div>
+			<div class="grid items-start gap-10 lg:grid-cols-12 lg:gap-14">
+				<div class="lg:col-span-5">
+					<SectionLabel label="Open source · Self-hosted" accent />
+					<h2 class="mt-6 font-heading text-4xl font-semibold tracking-tight sm:text-5xl">
+						Run it yourself.<br />It is one command.
+					</h2>
+					<p class="mt-5 text-muted-foreground">
+						Not a trial of a hosted thing. The whole application, on your own machine, with your
+						corp's chain in a database only you can reach.
+					</p>
+				</div>
 
-			<div class="mt-12 grid gap-10 lg:grid-cols-[1.05fr_1fr] lg:gap-16">
-				<div>
+				<div class="min-w-0 lg:col-span-7">
 					<div
-						class="flex items-center gap-3 rounded border border-amber-500/40 bg-background p-4 font-mono text-sm"
+						class="flex items-center gap-3 border border-amber-500/40 bg-background p-4 font-mono text-sm shadow-lg shadow-black/5 dark:shadow-black/30"
 					>
 						<span class="shrink-0 text-muted-foreground select-none">$</span>
 						<span class="min-w-0 flex-1 break-all">{command}</span>
@@ -116,10 +98,13 @@
 						</button>
 					</div>
 					<p class="mt-4 text-sm text-muted-foreground">
-						The installer puts wsctl on the machine and offers to run the setup right away.
-						Postgres, the API, the web server and TLS come up together under Docker. Certificates
-						are issued on the first boot and the static data seeds itself. It asks for your domain
-						and your EVE application, and works the rest out.
+						Postgres, the API, the web server and TLS come up together under Docker. It asks for
+						your domain and your EVE application, checks the machine, and works the rest out.
+						<a
+							href="#running-it"
+							class="text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground"
+							>What it checks, and wsctl afterwards</a
+						>
 					</p>
 
 					<div class="mt-8 grid gap-px border border-border bg-border sm:grid-cols-3">
@@ -133,41 +118,9 @@
 						{/each}
 					</div>
 				</div>
-
-				<div class="flex flex-col gap-8">
-					<div>
-						<p class="font-mono text-[10px] tracking-[0.2em] text-muted-foreground uppercase">
-							Checked before it asks for anything
-						</p>
-						<ul class="mt-4 flex flex-col gap-2.5 text-sm text-muted-foreground">
-							{#each checks as check (check)}
-								<li class="flex items-baseline gap-3">
-									<CheckIcon class="size-3.5 shrink-0 translate-y-0.5 text-emerald-500" />
-									{check}
-								</li>
-							{/each}
-						</ul>
-					</div>
-
-					<div>
-						<p class="font-mono text-[10px] tracking-[0.2em] text-muted-foreground uppercase">
-							And afterwards
-						</p>
-						<dl class="mt-4 flex flex-col gap-2.5 text-sm">
-							{#each commands as item (item.cmd)}
-								<div class="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
-									<dt class="w-40 shrink-0 font-mono text-xs text-amber-500/90">
-										wsctl {item.cmd}
-									</dt>
-									<dd class="text-xs text-muted-foreground">{item.body}</dd>
-								</div>
-							{/each}
-						</dl>
-					</div>
-				</div>
 			</div>
 
-			<div class="mt-14 border-t border-border pt-6">
+			<div class="mt-16 border-t border-border pt-6">
 				<p class="font-mono text-[10px] tracking-[0.2em] text-muted-foreground uppercase">
 					What this copy already knows
 				</p>
@@ -193,7 +146,7 @@
 <style>
 	.glow {
 		background: radial-gradient(
-			52rem 26rem at 12% 0%,
+			52rem 30rem at 85% 0%,
 			color-mix(in oklab, var(--color-amber-500) 10%, transparent),
 			transparent 70%
 		);
