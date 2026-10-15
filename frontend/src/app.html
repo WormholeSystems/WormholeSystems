@@ -50,8 +50,9 @@
 			href="/apple-touch-icon-dark.png"
 			media="(prefers-color-scheme: dark)"
 		/>
-		<!-- Apply the saved theme before first paint to avoid a flash. -->
-		<script>
+		<!-- Apply the saved theme before first paint to avoid a flash. The nonce is what the
+		     Content-Security-Policy lets it run by. -->
+		<script nonce="%sveltekit.nonce%">
 			(function () {
 				try {
 					var d = localStorage.getItem('darkmode');

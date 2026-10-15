@@ -24,8 +24,8 @@
 	import /etc/caddy/conf.d/*.site
 
 	# The cheap ones nothing here depends on breaking. `?` sets each only where the app
-	# has not, so a header the API or the frontend sends itself wins. No HSTS: whether this
-	# will only ever be served over https is the operator's call (see caddy.d/).
+	# has not, so a header the API or the frontend sends itself wins. HSTS comes from the
+	# https snippets below.
 	header {
 		?X-Content-Type-Options nosniff
 		?Referrer-Policy strict-origin-when-cross-origin
@@ -51,10 +51,18 @@
 	}
 }
 
+# Once a browser has seen https here it never tries plain http again. Only for the sites
+# that serve https (browsers ignore it over plain http, and behind a certificate they
+# reject, so `tls-acme` without a domain and `tls-internal` are harmless).
+(hsts) {
+	header ?Strict-Transport-Security "max-age=31536000"
+}
+
 # One per WS_TLS, picked by name at the bottom, so a value that is none of these stops
 # Caddy naming the snippet it could not find.
 (tls-acme) {
 	{$WS_DOMAIN::80} {
+		import hsts
 		import app
 	}
 }
@@ -62,6 +70,7 @@
 (tls-files) {
 	{$WS_DOMAIN::80} {
 		tls /certs/{$WS_TLS_CERT:fullchain.pem} /certs/{$WS_TLS_KEY:privkey.pem}
+		import hsts
 		import app
 	}
 }
@@ -69,6 +78,7 @@
 (tls-internal) {
 	{$WS_DOMAIN::80} {
 		tls internal
+		import hsts
 		import app
 	}
 }
