@@ -14,7 +14,7 @@ export const load: LayoutServerLoad = async (event) => {
 	const viewing = mapView(event, Number(event.params.id)).catch((err: unknown) => err);
 	const { me, offline: down } = await event.parent();
 	if (down) offline();
-	if (!me) redirect(302, '/login');
+	if (!me) redirect(302, `/login?return_to=${encodeURIComponent(event.url.pathname)}`);
 
 	const view = await viewing;
 	if (view instanceof Error) mapLoadFailed(view, true);

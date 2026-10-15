@@ -10,6 +10,10 @@ test('home page renders', async ({ page }) => {
 
 test('maps requires login', async ({ page }) => {
 	await page.goto('/maps');
-	await expect(page).toHaveURL('/login');
-	await expect(page.getByRole('link', { name: 'Log in with EVE Online' })).toBeVisible();
+	await expect(page).toHaveURL('/login?return_to=%2Fmaps');
+	// And signing in from there comes back to the list.
+	await expect(page.getByRole('link', { name: 'Log in with EVE Online' })).toHaveAttribute(
+		'href',
+		'/auth/login?return_to=%2Fmaps',
+	);
 });
