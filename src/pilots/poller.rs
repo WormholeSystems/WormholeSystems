@@ -26,7 +26,7 @@ use tokio::time::timeout;
 use crate::background::spawn_every;
 use crate::db::PgTokenStore;
 use crate::esi::scopes::Scope;
-use crate::esi::{EsiClient, Result as EsiResult, Sso, Token, TokenCache, TokenStore};
+use crate::esi::{EsiClient, EsiError, Result as EsiResult, Sso, Token, TokenCache, TokenStore};
 use crate::realtime::{UserEvent, UserHub};
 use crate::server_status::ServerWatch;
 
@@ -70,11 +70,18 @@ impl Poller {
     }
 
     /// The character's token, loaded once per poll and checked for each field's scope.
-    async fn token(&self, character_id: i64, wanted: &[Scope]) -> Result<Token, String> {
-        self.tokens
+    /// `None` when EVE has refused it: that is said once where it is found out, and the
+    /// character drops out of the polled set until it logs in again.
+    async fn token(&self, character_id: i64, wanted: &[Scope]) -> Result<Option<Token>, String> {
+        match self
+            .tokens
             .token(&self.sso, &Throttled(self), character_id, wanted)
             .await
-            .map_err(|err| err.to_string())
+        {
+            Ok(token) => Ok(Some(token)),
+            Err(EsiError::TokenRejected) => Ok(None),
+            Err(err) => Err(err.to_string()),
+        }
     }
 }
 
@@ -90,6 +97,11 @@ impl TokenStore for Throttled<'_> {
     async fn save(&self, character_id: i64, token: &Token) -> EsiResult<()> {
         let _db = self.0.db().await;
         self.0.store.save(character_id, token).await
+    }
+
+    async fn reject(&self, character_id: i64) -> EsiResult<bool> {
+        let _db = self.0.db().await;
+        self.0.store.reject(character_id).await
     }
 }
 
@@ -120,6 +132,7 @@ async fn tier_one(poller: Arc<Poller>, server: ServerWatch) -> Result<(), sqlx::
     // Nobody can be online while the server is not, and every call would fail against the
     // error limit. See [`crate::server_status`].
     if !server.should_poll() {
+        skipped_offline("tier-1");
         return Ok(());
     }
     let due = active_characters(&poller.pool, false).await?;
@@ -134,6 +147,7 @@ async fn tier_one(poller: Arc<Poller>, server: ServerWatch) -> Result<(), sqlx::
 /// Tier 2: location + ship, every 5s, for currently-online characters of active users.
 async fn tier_two(poller: Arc<Poller>, server: ServerWatch) -> Result<(), sqlx::Error> {
     if !server.should_poll() {
+        skipped_offline("tier-2");
         return Ok(());
     }
     let due = active_characters(&poller.pool, true).await?;
@@ -141,8 +155,15 @@ async fn tier_two(poller: Arc<Poller>, server: ServerWatch) -> Result<(), sqlx::
     Ok(())
 }
 
-/// Characters whose user has been active within the last 5 minutes. With `online_only`, also
-/// restricted to those currently flagged online (the tier-2 set).
+/// A tick that did nothing because Tranquility is not up.
+fn skipped_offline(tier: &'static str) {
+    metrics::counter!("ws_tracking_ticks_skipped_total", "tier" => tier, "reason" => "server_offline")
+        .increment(1);
+}
+
+/// Characters whose user has been active within the last 5 minutes and that hold a token EVE
+/// has not refused. With `online_only`, also restricted to those currently flagged online
+/// (the tier-2 set).
 async fn active_characters(pool: &PgPool, online_only: bool) -> Result<Vec<Due>, sqlx::Error> {
     let rows = if online_only {
         sqlx::query!(
@@ -150,7 +171,9 @@ async fn active_characters(pool: &PgPool, online_only: bool) -> Result<Vec<Due>,
              from characters c
              join users u on u.id = c.user_id
              join character_status s on s.character_id = c.id
-             where u.last_active_at > now() - interval '5 minutes' and s.online"#
+             where u.last_active_at > now() - interval '5 minutes' and s.online
+               and exists (select 1 from esi_tokens t
+                           where t.character_id = c.id and t.rejected_at is null)"#
         )
         .fetch_all(pool)
         .await?
@@ -165,7 +188,9 @@ async fn active_characters(pool: &PgPool, online_only: bool) -> Result<Vec<Due>,
             r#"select c.id, c.user_id as "user_id!"
              from characters c
              join users u on u.id = c.user_id
-             where u.last_active_at > now() - interval '5 minutes'"#
+             where u.last_active_at > now() - interval '5 minutes'
+               and exists (select 1 from esi_tokens t
+                           where t.character_id = c.id and t.rejected_at is null)"#
         )
         .fetch_all(pool)
         .await?
@@ -206,7 +231,7 @@ where
 
 /// [`run_bounded`] for one tier's polls: each under [`POLL_TIMEOUT`], with a single line
 /// logged for the tick when any failed, so a tier that stops working says so.
-async fn run_polls<F, Fut>(tier: &str, due: &[Due], f: F)
+async fn run_polls<F, Fut>(tier: &'static str, due: &[Due], f: F)
 where
     F: Fn(Due) -> Fut,
     Fut: Future<Output = Poll> + Send + 'static,
@@ -231,6 +256,12 @@ where
     })
     .await;
     let (count, sample) = std::mem::take(&mut *failed.lock().expect("poll failures lock"));
+    let polls = |outcome: &'static str, n: usize| {
+        metrics::counter!("ws_tracking_polls_total", "tier" => tier, "outcome" => outcome)
+            .increment(n as u64);
+    };
+    polls("ok", due.len() - count);
+    polls("failed", count);
     if let Some(sample) = sample {
         tracing::error!(
             "tracking {tier}: {count} of {} poll(s) failed, e.g. {sample}",
@@ -242,7 +273,9 @@ where
 /// Poll one character's online state (tier 1). A failure skips the character; the next tick
 /// retries.
 async fn poll_online(poller: Arc<Poller>, due: Due) -> Poll {
-    let token = poller.token(due.character_id, &[Scope::ReadOnline]).await?;
+    let Some(token) = poller.token(due.character_id, &[Scope::ReadOnline]).await? else {
+        return Ok(());
+    };
     if !token.has_scope(Scope::ReadOnline) {
         return Ok(());
     }
@@ -290,9 +323,12 @@ async fn poll_online(poller: Arc<Poller>, due: Due) -> Poll {
 /// left null until we cache those entities.
 async fn poll_location_ship(poller: Arc<Poller>, due: Due) -> Poll {
     let id = due.character_id;
-    let token = poller
+    let Some(token) = poller
         .token(id, &[Scope::ReadLocation, Scope::ReadShipType])
-        .await?;
+        .await?
+    else {
+        return Ok(());
+    };
     let location = if token.has_scope(Scope::ReadLocation) {
         poll_location(&poller, &token.access_token, id).await
     } else {

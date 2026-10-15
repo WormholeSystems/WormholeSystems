@@ -23,3 +23,5 @@ The first three power [character tracking](/documentation/tracking/character-pre
 You can connect several characters and switch your **active character** at any time. Tracking and waypoint actions apply to the character you choose, and [bulk waypoints](/documentation/autopilot-and-routing/setting-waypoints) can target several of your characters at once.
 
 > Scopes are under your control. Revoke them at any time from the Scopes page (which removes the app's tokens for that character) or from EVE's third-party application settings.
+
+When EVE stops accepting a character's token (access revoked in EVE's settings, for example), the app stops tracking that character and the characters page says **EVE signed this character out**. Log in with it again to pick up where it left off.

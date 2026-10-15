@@ -44,6 +44,10 @@
 		if (sure) identity.remove(character.character_id, character.is_active);
 	}
 
+	// Logging in again as a character already on the account replaces its token, which is
+	// what clears a token EVE refused. The SSO picks the character, so this is the same link.
+	const reloginUrl = `/auth/login?link=true&return_to=${encodeURIComponent('/settings/characters')}`;
+
 	const missing = $derived(scopes.filter((s) => !s.granted));
 	const grantUrl = $derived(
 		`/auth/login?scopes=${encodeURIComponent(missing.map((s) => s.scope).join(','))}&return_to=${encodeURIComponent('/settings/characters')}`,
@@ -98,10 +102,25 @@
 					/>
 					<span class="flex min-w-0 flex-1 flex-col">
 						<span class="truncate text-sm">{character.name}</span>
-						<span class="text-xs text-muted-foreground">
-							{character.online ? 'Online' : 'Offline'}
-						</span>
+						{#if character.needs_login}
+							<span class="text-xs text-amber-500" data-testid="character-needs-login">
+								EVE signed this character out. Log in with it again to keep tracking it.
+							</span>
+						{:else}
+							<span class="text-xs text-muted-foreground">
+								{character.online ? 'Online' : 'Offline'}
+							</span>
+						{/if}
 					</span>
+					{#if character.needs_login}
+						<Button
+							variant="outline"
+							size="sm"
+							href={reloginUrl}
+							data-sveltekit-reload
+							data-testid="character-relogin">Log in again</Button
+						>
+					{/if}
 					{#if character.is_preferred}
 						<span
 							class="flex size-8 shrink-0 items-center justify-center text-amber-400"

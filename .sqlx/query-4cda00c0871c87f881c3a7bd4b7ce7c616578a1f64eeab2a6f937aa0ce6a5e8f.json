@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select c.id, c.name, c.is_preferred, coalesce(s.online, false) as \"online!\",\n                  case when s.online then s.solar_system_id end as \"solar_system_id?\"\n           from characters c\n           left join character_status s on s.character_id = c.id\n           where c.user_id = $1 order by c.name",
+  "query": "select c.id, c.name, c.is_preferred, coalesce(s.online, false) as \"online!\",\n                  case when s.online then s.solar_system_id end as \"solar_system_id?\",\n                  exists (select 1 from esi_tokens t\n                          where t.character_id = c.id and t.rejected_at is not null)\n                      as \"needs_login!\"\n           from characters c\n           left join character_status s on s.character_id = c.id\n           where c.user_id = $1 order by c.name",
   "describe": {
     "columns": [
       {
@@ -47,6 +47,12 @@
         "name": "solar_system_id?",
         "type_info": "Int8",
         "origin": "Expression"
+      },
+      {
+        "ordinal": 5,
+        "name": "needs_login!",
+        "type_info": "Bool",
+        "origin": "Expression"
       }
     ],
     "parameters": {
@@ -59,8 +65,9 @@
       false,
       false,
       null,
+      null,
       null
     ]
   },
-  "hash": "3c3f62ff74fe5795fd3480d893225e3ee436ef0f37e9fecad9a22cbf2fa8ea41"
+  "hash": "4cda00c0871c87f881c3a7bd4b7ce7c616578a1f64eeab2a6f937aa0ce6a5e8f"
 }

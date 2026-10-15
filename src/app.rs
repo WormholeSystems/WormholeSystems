@@ -45,6 +45,8 @@ pub struct AppState {
     pub announcement: Option<Arc<crate::announcement::Announcement>>,
     /// EVE Scout's public Thera and Turnur holes, with the last read cached.
     pub eve_scout: Arc<crate::integrations::eve_scout::EveScout>,
+    /// Where the browser's error reports go, when the operator set a DSN for them.
+    pub sentry_tunnel: Option<Arc<crate::telemetry::tunnel::Tunnel>>,
 }
 
 /// Everything the server answers: sign-in, Discord, the realtime sockets, the JSON API and
@@ -52,8 +54,18 @@ pub struct AppState {
 pub fn router(state: AppState) -> Router {
     Router::new()
         // Outside the API router, so it is not compressed, not in the OpenAPI document,
-        // and answers without a session.
+        // and answers without a session. `/api/healthz` is the same check under the prefix
+        // every proxy in front of this forwards, for an uptime monitor outside.
         .route("/healthz", get(healthz))
+        .route("/api/healthz", get(healthz))
+        // The browser's error reports, on their way to the operator's Sentry. Outside the
+        // API router for the same reasons, and with a body limit of its own.
+        .route(
+            "/api/sentry-tunnel",
+            post(crate::telemetry::tunnel::handle).layer(axum::extract::DefaultBodyLimit::max(
+                crate::telemetry::tunnel::BODY_LIMIT,
+            )),
+        )
         .route("/auth/login", get(crate::auth::login))
         .route("/auth/callback", get(crate::auth::callback))
         .route("/auth/logout", get(crate::auth::logout))
@@ -69,6 +81,10 @@ pub fn router(state: AppState) -> Router {
         .route("/ws/user", get(crate::api::ws::user_ws))
         // The JSON API for the SvelteKit frontend.
         .merge(crate::api::router())
+        .layer(axum::middleware::from_fn(
+            crate::telemetry::metrics::track_http,
+        ))
+        .layer(crate::telemetry::trace_layer())
         .with_state(state)
 }
 
@@ -108,6 +124,9 @@ pub async fn serve(config: Config) {
     // its transaction, so the geometry is installed for the process here.
     crate::maps::set_grid(config.grid);
 
+    if let Some(addr) = &config.metrics_addr {
+        crate::telemetry::metrics::serve(addr, db.clone()).await;
+    }
     let user_hub = crate::realtime::UserHub::new();
     let server = start_background(&config, &db, &sso, &esi, &user_hub).await;
 
@@ -126,6 +145,12 @@ pub async fn serve(config: Config) {
         eve_scout: Arc::new(crate::integrations::eve_scout::EveScout::new(
             config.eve_scout_url,
         )),
+        sentry_tunnel: config.web_sentry_dsn.as_deref().and_then(|dsn| {
+            crate::telemetry::tunnel::Tunnel::new(dsn)
+                .map(Arc::new)
+                .map_err(|err| tracing::error!("PUBLIC_SENTRY_DSN: {err}, the tunnel is off"))
+                .ok()
+        }),
     };
 
     let addr = config.listen_addr;

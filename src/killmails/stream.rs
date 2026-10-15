@@ -76,6 +76,7 @@ pub(super) async fn listen(
             }
             Ok(false) => tokio::time::sleep(IDLE).await,
             Err(err) => {
+                metrics::counter!("ws_killmail_ingest_errors_total").increment(1);
                 tracing::error!("killmail ingest error: {err}");
                 tokio::time::sleep(Duration::from_secs(30)).await;
             }
@@ -145,6 +146,10 @@ async fn ingest(
             detail: extract_detail(&km.esi, &km.zkb),
         };
         super::insert_rows(pool, std::slice::from_ref(&row), true).await?;
+        metrics::counter!("ws_killmails_ingested_total").increment(1);
+        if let Some(lag) = lag_seconds(&row.time) {
+            metrics::gauge!("ws_killmail_ingest_lag_seconds").set(lag);
+        }
         announce(pool, solar_system_id).await;
         if let Some(alerts) = alerts {
             offer(alerts, row);
@@ -171,6 +176,7 @@ fn offer(alerts: &mpsc::Sender<Pending>, row: KillmailRow) {
         detail: row.detail,
     };
     if let Err(mpsc::error::TrySendError::Full(pending)) = alerts.try_send(pending) {
+        metrics::counter!("ws_killmail_alerts_dropped_total").increment(1);
         tracing::warn!(
             "killmail alerts: queue full, no alerts for killmail {}",
             pending.killmail_id
@@ -266,7 +272,17 @@ async fn announce(pool: &PgPool, solar_system_id: i64) {
     }
 }
 
+/// How long ago the kill happened, from its ESI timestamp: how far behind the feed is.
+fn lag_seconds(killmail_time: &str) -> Option<f64> {
+    let at = chrono::DateTime::parse_from_rfc3339(killmail_time).ok()?;
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .ok()?;
+    Some(now.as_secs_f64() - at.timestamp() as f64)
+}
+
 async fn advance(pool: &PgPool, seq: i64) -> Result<(), sqlx::Error> {
+    metrics::gauge!("ws_killmail_ingest_sequence").set(seq as f64);
     sqlx::query!("update zkb_state set sequence_id = $1", seq)
         .execute(pool)
         .await?;

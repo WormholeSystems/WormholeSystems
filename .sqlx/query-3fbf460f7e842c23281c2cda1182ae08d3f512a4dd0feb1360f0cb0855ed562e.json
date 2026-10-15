@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select c.id, c.user_id as \"user_id!\"\n             from characters c\n             join users u on u.id = c.user_id\n             where u.last_active_at > now() - interval '5 minutes'",
+  "query": "select c.id, c.user_id as \"user_id!\"\n             from characters c\n             join users u on u.id = c.user_id\n             where u.last_active_at > now() - interval '5 minutes'\n               and exists (select 1 from esi_tokens t\n                           where t.character_id = c.id and t.rejected_at is null)",
   "describe": {
     "columns": [
       {
@@ -34,5 +34,5 @@
       true
     ]
   },
-  "hash": "cb3f9bd98f2dd1f232b457348083bf7400b776c70e37ab46dcbb84a26b573b24"
+  "hash": "3fbf460f7e842c23281c2cda1182ae08d3f512a4dd0feb1360f0cb0855ed562e"
 }

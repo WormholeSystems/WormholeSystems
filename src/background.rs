@@ -39,7 +39,16 @@ where
                 _ = ticker.tick() => {}
                 _ = stop.wait_for(|stopped| *stopped) => break,
             }
-            if let Err(err) = job().await {
+            let started = std::time::Instant::now();
+            let result = job().await;
+            let took = started.elapsed();
+            crate::telemetry::metrics::job_pass(name, took, result.is_err());
+            // The interval drops the ticks that came due while this pass ran.
+            crate::telemetry::metrics::ticks_skipped(
+                name,
+                (took.as_nanos() / period.as_nanos().max(1)) as u64,
+            );
+            if let Err(err) = result {
                 tracing::error!("{name} failed: {err}");
             }
         }

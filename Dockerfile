@@ -26,6 +26,10 @@ COPY src ./src
 COPY migrations ./migrations
 COPY .sqlx ./.sqlx
 ENV SQLX_OFFLINE=true
+# The commit, compiled in so an error report says which build it came from. CI passes it;
+# a local build leaves it out and reports the crate version alone.
+ARG GIT_SHA=
+ENV GIT_SHA=$GIT_SHA
 RUN --mount=type=cache,target=/usr/local/cargo/registry,sharing=locked \
     cargo build --release
 

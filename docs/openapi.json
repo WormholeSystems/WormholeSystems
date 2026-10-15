@@ -6361,7 +6361,8 @@
           "name",
           "is_active",
           "is_preferred",
-          "online"
+          "online",
+          "needs_login"
         ],
         "properties": {
           "character_id": {
@@ -6377,6 +6378,10 @@
           },
           "name": {
             "type": "string"
+          },
+          "needs_login": {
+            "type": "boolean",
+            "description": "EVE refused this character's token (revoked, or rotated away), so it is not tracked\nand cannot act until it logs in again."
           },
           "online": {
             "type": "boolean"

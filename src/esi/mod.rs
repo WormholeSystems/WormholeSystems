@@ -121,8 +121,20 @@ impl EsiClient {
         req: reqwest::RequestBuilder,
         token: Option<&str>,
     ) -> Result<reqwest::Response> {
-        self.check_paused(token)?;
-        let resp = req.send().await?;
+        use crate::telemetry::metrics::{esi_outcome, esi_request};
+        if let Err(err) = self.check_paused(token) {
+            esi_request("backoff", None);
+            return Err(err);
+        }
+        let started = Instant::now();
+        let resp = match req.send().await {
+            Ok(resp) => resp,
+            Err(err) => {
+                esi_request("network_error", Some(started.elapsed()));
+                return Err(err.into());
+            }
+        };
+        esi_request(esi_outcome(resp.status().as_u16()), Some(started.elapsed()));
         self.note_limits(&resp, token);
         Ok(resp)
     }
@@ -174,6 +186,8 @@ impl EsiClient {
         paused.retain(|_, until| *until > now);
         let entry = paused.entry(key.to_string()).or_insert(until);
         if *entry <= until {
+            let scope = if key == ANYONE { "global" } else { "token" };
+            metrics::counter!("ws_esi_backoffs_total", "scope" => scope).increment(1);
             if key == ANYONE {
                 tracing::warn!(
                     "ESI: backing off for {}s ({})",
@@ -221,6 +235,7 @@ impl EsiClient {
             let replies = self.shared.replies.lock().expect("esi replies lock");
             if let Some(reply) = replies.get(path) {
                 if reply.fresh_until.is_some_and(|t| t > Instant::now()) {
+                    crate::telemetry::metrics::esi_request("cached", None);
                     return Ok(serde_json::from_str(&reply.body)?);
                 }
                 if let Some(etag) = &reply.etag {

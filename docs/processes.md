@@ -94,6 +94,9 @@ station/structure (→ derived `is_docked`) and the `ship_*` fields.
 - A poll loads the character's token once for all its fields, from an in-memory cache
   that goes back to the database only to refresh it (or, once a minute at most, to look
   for a scope it lacks). Refreshes of one character's token never run side by side.
+- A refresh EVE answers with `invalid_grant` marks the token rejected, logged once at
+  warn. The character drops out of both tiers until it logs in again, and the characters
+  page asks it to.
 - Only changes are written. The poller holds at most half the database pool, so a busy
   tick cannot starve requests.
 

@@ -237,6 +237,7 @@ impl Runtime {
             if let Err(err) = self.outbox.try_send(out) {
                 let out = match err {
                     mpsc::error::TrySendError::Full(out) => {
+                        delivered("dropped");
                         tracing::warn!(
                             "alerts: delivery queue full, dropping alert {} ({})",
                             out.alert.id,
@@ -638,9 +639,16 @@ pub async fn deliver(
     };
 
     match result {
-        Ok(()) => Ok(()),
-        Err(delivery::SendError::Gone) => Err(Undelivered::Gone),
+        Ok(()) => {
+            delivered("sent");
+            Ok(())
+        }
+        Err(delivery::SendError::Gone) => {
+            delivered("gone");
+            Err(Undelivered::Gone)
+        }
         Err(delivery::SendError::Rejected(body)) => {
+            delivered("rejected");
             tracing::warn!(
                 "alerts: discord refused the message for alert {}: {body}",
                 alert.id
@@ -657,6 +665,7 @@ pub async fn deliver(
             Err(Undelivered::Rejected)
         }
         Err(delivery::SendError::Failed(err)) => {
+            delivered("failed");
             log(
                 pool,
                 Some(alert.id),
@@ -669,6 +678,11 @@ pub async fn deliver(
             Err(Undelivered::Retry)
         }
     }
+}
+
+/// One delivery's outcome, in `ws_alert_deliveries_total`.
+fn delivered(outcome: &'static str) {
+    metrics::counter!("ws_alert_deliveries_total", "outcome" => outcome).increment(1);
 }
 
 /// Claim the right to deliver this alert for this occasion; `false` means somebody already

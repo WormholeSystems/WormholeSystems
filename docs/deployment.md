@@ -207,7 +207,76 @@ since the API seeds the static data before it answers.
 Every container logs through Docker's `json-file` driver, capped at five files of 10MB
 each. `WS_LOG_MAX_SIZE` and `WS_LOG_MAX_FILES` in `.env` change that. The API logs at
 `info` by default; `RUST_LOG` in `.env` changes the level, for everything (`warn`) or per
-module (`info,wormholesystems::killmails=debug`).
+module (`info,wormholesystems::killmails=debug`). `LOG_FORMAT=json` writes one JSON object
+per line for a log shipper.
+
+## Observability
+
+Nothing leaves the server unless you set one of these. Each works on its own; put it in
+`.env` and run `docker compose up -d`.
+
+| key | what |
+|---|---|
+| `SENTRY_DSN` | The API's panics and errors go to this project, over the Sentry protocol: Sentry, GlitchTip and Bugsink all take it. |
+| `PUBLIC_SENTRY_DSN` | The same for the frontend and the browser. Browsers post to `/api/sentry-tunnel`, which forwards only to this DSN's project. May be the same DSN as `SENTRY_DSN`. |
+| `SENTRY_ENVIRONMENT` | Tags the reports, `production` say. |
+| `SENTRY_TRACES_SAMPLE_RATE` | The share of page loads the browser sends performance traces for, 0 to 1. 0 when unset. |
+| `METRICS_ADDR` | Where the API serves Prometheus metrics, `0.0.0.0:9100` say, on a listener of its own. |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | An OTLP/HTTP collector the API sends traces to (port 4318; gRPC is not built in). The standard `OTEL_SERVICE_NAME` (`wormholesystems-api`), `OTEL_TRACES_SAMPLER`, `OTEL_TRACES_SAMPLER_ARG` and `OTEL_EXPORTER_OTLP_HEADERS` apply. |
+
+Error reports carry no user, address, cookies, headers or query strings, and anything shaped
+like a token or an SSO `code` is blanked out; there is no session replay. Metrics and traces
+name routes by their template (`/api/maps/{id}`), never the path asked for.
+
+Errors, with `wsctl setup` asking for one DSN and writing both:
+
+```sh
+SENTRY_DSN=https://<key>@o<org>.ingest.sentry.io/<project>   # Sentry
+SENTRY_DSN=https://<key>@glitchtip.example.com/<project>     # GlitchTip
+SENTRY_DSN=https://<key>@bugsink.example.com/<project>       # Bugsink
+PUBLIC_SENTRY_DSN=<the same, or a project of its own>
+SENTRY_ENVIRONMENT=production
+```
+
+Metrics. The port is not published, so a Prometheus on the compose network scrapes the
+service by name; for one elsewhere, publish it on the loopback in `compose.override.yml`
+(`ports: ["127.0.0.1:9100:9100"]` under `api`).
+
+```sh
+METRICS_ADDR=0.0.0.0:9100
+```
+
+```yaml
+scrape_configs:
+  - job_name: wormholesystems
+    static_configs:
+      - targets: ["api:9100"]
+```
+
+Everything is under `ws_`: requests by route and status class, ESI calls by outcome and
+backoffs, background passes and skipped ticks, tracking polls, open sockets, killmail ingest
+lag, alert deliveries and the database pool.
+
+Traces, to a Jaeger next to the stack in `compose.override.yml`:
+
+```yaml
+services:
+  jaeger:
+    image: jaegertracing/jaeger:2.0.0
+    ports: ["127.0.0.1:16686:16686"]
+```
+
+```sh
+OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
+OTEL_TRACES_SAMPLER=parentbased_traceidratio
+OTEL_TRACES_SAMPLER_ARG=0.1
+```
+
+The exporter is the `otel` cargo feature, on by default; `cargo build --release
+--no-default-features` leaves it out.
+
+For an uptime check from outside, use `https://<your domain>/api/healthz`: the same check as
+the container's `/healthz`, 200 while the API and its database answer and 503 otherwise.
 
 ## Choosing the pieces
 

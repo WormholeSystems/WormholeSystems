@@ -13,6 +13,10 @@ pub enum EsiError {
     Decode(#[from] serde_json::Error),
     #[error("SSO error: {0}")]
     Auth(String),
+    /// EVE refused the refresh token (`invalid_grant`): access was revoked or the token
+    /// rotated away. Retrying cannot help; the character has to log in again.
+    #[error("EVE refused the refresh token, the character has to log in again")]
+    TokenRejected,
     #[error("token validation failed: {0}")]
     Jwt(String),
     #[error("missing required scope: {0}")]

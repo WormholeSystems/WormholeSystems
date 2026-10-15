@@ -29,6 +29,69 @@ pub struct Answers {
     pub killmails: Option<u32>,
     /// The banner above every page. None turns it off.
     pub announcement: Option<Announcement>,
+    /// Where errors are reported. None sends them nowhere.
+    pub error_reporting: Option<ErrorReporting>,
+}
+
+/// The Sentry-protocol DSNs errors go to: the API's, and the one the frontend and the
+/// browser report to, which may be a project of its own.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ErrorReporting {
+    pub api_dsn: String,
+    pub web_dsn: String,
+}
+
+impl ErrorReporting {
+    /// The answer to the one question setup asks. Both halves report to `dsn`, unless
+    /// `.env` already sends the web half to a project of its own, which is kept.
+    pub fn from_answer(existing: &str, dsn: &str) -> Option<Self> {
+        let dsn = dsn.trim();
+        if dsn.is_empty() {
+            return None;
+        }
+        let get = |key: &str| envfile::get(existing, key).filter(|v| !v.is_empty());
+        let web_dsn = match (get("PUBLIC_SENTRY_DSN"), get("SENTRY_DSN")) {
+            (Some(web), api) if Some(&web) != api.as_ref() && web != dsn => web,
+            _ => dsn.to_string(),
+        };
+        Some(Self {
+            api_dsn: dsn.to_string(),
+            web_dsn,
+        })
+    }
+
+    /// The DSN `.env` reports to, which is what the question starts from.
+    pub fn current(existing: &str) -> String {
+        ["SENTRY_DSN", "PUBLIC_SENTRY_DSN"]
+            .iter()
+            .find_map(|key| envfile::get(existing, key).filter(|v| !v.is_empty()))
+            .unwrap_or_default()
+    }
+}
+
+/// A DSN as Sentry, GlitchTip and Bugsink hand them out, `https://key@host/project`, or
+/// nothing. Checked here because the server would only say so in its log.
+pub fn dsn(input: &str) -> Result<String, String> {
+    let input = input.trim();
+    if input.is_empty() {
+        return Ok(String::new());
+    }
+    let shaped = input
+        .strip_prefix("https://")
+        .or_else(|| input.strip_prefix("http://"))
+        .and_then(|rest| rest.split_once('@'))
+        .and_then(|(key, rest)| {
+            rest.rsplit_once('/')
+                .map(|(host, project)| (key, host, project))
+        })
+        .is_some_and(|(key, host, project)| {
+            !key.is_empty() && !host.is_empty() && !project.is_empty()
+        });
+    if shaped {
+        Ok(input.to_string())
+    } else {
+        Err("a DSN looks like https://key@host/project".into())
+    }
 }
 
 /// What the killmail ingest fills in on its first start unless told otherwise.
@@ -679,6 +742,10 @@ impl Answers {
             }
             None => set("ANNOUNCEMENT_MESSAGE", String::new()),
         }
+        if let Some(reporting) = &self.error_reporting {
+            set("SENTRY_DSN", reporting.api_dsn.clone());
+            set("PUBLIC_SENTRY_DSN", reporting.web_dsn.clone());
+        }
         if let Some(discord) = &self.discord {
             set("DISCORD_APPLICATION_ID", discord.application_id.clone());
             set("DISCORD_PUBLIC_KEY", discord.public_key.clone());
@@ -695,11 +762,15 @@ impl Answers {
         values
     }
 
-    /// The keys to strike out: Discord's after it was turned off, and the killmail ingest's.
+    /// The keys to strike out: Discord's after it was turned off, the killmail ingest's,
+    /// and error reporting's.
     fn removals(&self) -> Vec<&'static str> {
         let mut out = self.discord_removals();
         if self.killmails.is_none() {
             out.extend(["ZKB_LISTEN", "KILLMAIL_BACKFILL_DAYS"]);
+        }
+        if self.error_reporting.is_none() {
+            out.extend(["SENTRY_DSN", "PUBLIC_SENTRY_DSN"]);
         }
         out
     }
@@ -773,6 +844,7 @@ mod tests {
             backups: false,
             killmails: None,
             announcement: None,
+            error_reporting: None,
         }
     }
 
@@ -1169,6 +1241,49 @@ mod tests {
             killmails_from_env("ZKB_LISTEN=1\n"),
             Some(DEFAULT_BACKFILL_DAYS)
         );
+    }
+
+    // One DSN for both halves, a separate web project kept, and nothing left behind once
+    // it is cleared.
+    #[test]
+    fn error_reporting_is_both_dsns_or_neither() {
+        let dsn = "https://key@errors.example.com/3";
+        let on = Answers {
+            error_reporting: ErrorReporting::from_answer("", dsn),
+            ..answers()
+        };
+        let env = on.apply("", &[]);
+        assert_eq!(get(&env, "SENTRY_DSN").as_deref(), Some(dsn));
+        assert_eq!(get(&env, "PUBLIC_SENTRY_DSN").as_deref(), Some(dsn));
+        assert_eq!(ErrorReporting::current(&env), dsn);
+
+        let split =
+            format!("SENTRY_DSN={dsn}\nPUBLIC_SENTRY_DSN=https://key@errors.example.com/4\n");
+        let kept = ErrorReporting::from_answer(&split, dsn).unwrap();
+        assert_eq!(kept.web_dsn, "https://key@errors.example.com/4");
+
+        let env = answers().apply(&env, &[]);
+        assert_eq!(get(&env, "SENTRY_DSN"), None);
+        assert_eq!(get(&env, "PUBLIC_SENTRY_DSN"), None);
+        assert_eq!(ErrorReporting::from_answer(&env, "  "), None);
+    }
+
+    #[test]
+    fn a_dsn_is_checked_for_its_shape() {
+        assert_eq!(dsn("").as_deref(), Ok(""));
+        assert_eq!(
+            dsn(" https://abc@o1.ingest.sentry.io/42 ").as_deref(),
+            Ok("https://abc@o1.ingest.sentry.io/42")
+        );
+        assert!(dsn("http://key@bugsink.local:8000/1").is_ok());
+        for bad in [
+            "errors.example.com",
+            "https://errors.example.com/1",
+            "https://k@host/",
+            "ftp://k@h/1",
+        ] {
+            assert!(dsn(bad).is_err(), "{bad}");
+        }
     }
 
     // An empty message is how the server reads the banner as off, and the rest of it is

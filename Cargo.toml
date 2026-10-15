@@ -11,12 +11,24 @@ rust-version = "1.94"
 members = ["wsctl"]
 default-members = ["."]
 
+[features]
+default = ["otel"]
+# OpenTelemetry traces over OTLP/HTTP, sent only when OTEL_EXPORTER_OTLP_ENDPOINT is set.
+# `--no-default-features` leaves the exporter out of the binary entirely.
+otel = [
+    "dep:opentelemetry",
+    "dep:opentelemetry_sdk",
+    "dep:opentelemetry-otlp",
+    "dep:tracing-opentelemetry",
+]
+
 [dependencies]
 # Web server
 axum = { version = "0.8", features = ["ws", "multipart"] }
 axum-extra = { version = "0.10", features = ["cookie"] }
 # Compressing API responses. A map read is tens of kilobytes of repetitive JSON.
-tower-http = { version = "0.6", features = ["compression-gzip", "compression-zstd"] }
+# A span per request, for the logs and the traces.
+tower-http = { version = "0.6", features = ["compression-gzip", "compression-zstd", "trace"] }
 tokio = { version = "1", features = ["fs", "macros", "rt-multi-thread", "net", "signal", "sync", "time"] }
 
 # Domain
@@ -27,9 +39,33 @@ zip = "8.6.0"
 tar = { version = "0.4", default-features = false }
 bzip2 = { version = "0.6", features = ["static"] }
 dotenvy = "0.15"
-# Logging. `RUST_LOG` picks the level per module, `info` when unset.
+# Logging. `RUST_LOG` picks the level per module, `info` when unset; `LOG_FORMAT=json`
+# writes one JSON object per line.
 tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+# Traces, behind the `otel` feature. OTLP over HTTP with the blocking reqwest client the
+# crate already has, so neither gRPC (tonic) nor a second HTTP stack comes along.
+opentelemetry = { version = "0.33", default-features = false, features = ["trace"], optional = true }
+opentelemetry_sdk = { version = "0.33", default-features = false, features = ["trace"], optional = true }
+opentelemetry-otlp = { version = "0.33", default-features = false, features = [
+    "trace",
+    "http-proto",
+    "reqwest-blocking-client",
+], optional = true }
+tracing-opentelemetry = { version = "0.34", default-features = false, optional = true }
+# Error reports over the Sentry protocol (Sentry, GlitchTip, Bugsink), only when SENTRY_DSN
+# is set. Without the defaults: no native-tls next to our rustls, no release-health sessions,
+# no debug-image listing.
+sentry = { version = "0.49", default-features = false, features = [
+    "backtrace",
+    "contexts",
+    "panic",
+    "reqwest",
+    "rustls",
+    "tracing",
+] }
+# Blanking credentials out of error reports. Already in the tree through sentry.
+regex = { version = "1", default-features = false, features = ["std", "unicode-perl"] }
 thiserror = "2"
 uuid = { version = "1", features = ["v4"] }
 # Only for a cookie's Max-Age; already in the tree through the cookie crate.
@@ -64,6 +100,10 @@ utoipa-scalar = { version = "0.3", features = ["axum"] }
 ed25519-dalek = { version = "3.0.0", default-features = false, features = ["alloc"] }
 hex = "0.4.3"
 sha2 = "0.10"
+# Prometheus metrics, on a listener of their own when METRICS_ADDR is set. The exporter's
+# own HTTP listener and push gateway are off: axum serves the page.
+metrics = "0.24"
+metrics-exporter-prometheus = { version = "0.18", default-features = false }
 
 [dev-dependencies]
 tower = { version = "0.5", features = ["util"] }

@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update esi_tokens set rejected_at = now()\n             where character_id = $1 and rejected_at is null",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "dc69c758cc5d73dad037fb5fbcf8b8725e8cce31e9587bbfe79b7f5282f35b6a"
+}
