@@ -2,11 +2,13 @@
 	// Everything that acts on the layout as a whole; per-tile controls live on the tiles.
 	import { copyText, readText } from '$lib/clipboard';
 
+	import ChevronUpIcon from '@lucide/svelte/icons/chevron-up';
 	import ClipboardCopyIcon from '@lucide/svelte/icons/clipboard-copy';
 	import ClipboardPasteIcon from '@lucide/svelte/icons/clipboard-paste';
 	import LaptopIcon from '@lucide/svelte/icons/laptop';
 	import LayoutGridIcon from '@lucide/svelte/icons/layout-grid';
 	import MonitorIcon from '@lucide/svelte/icons/monitor';
+	import MonitorUpIcon from '@lucide/svelte/icons/monitor-up';
 	import MoreHorizontalIcon from '@lucide/svelte/icons/more-horizontal';
 	import PlusIcon from '@lucide/svelte/icons/plus';
 	import RotateCcwIcon from '@lucide/svelte/icons/rotate-ccw';
@@ -24,12 +26,9 @@
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { cn } from '$lib/utils';
 	import { decodeLayout, encodeLayout } from '../../state/layout/layout-codec';
-	import {
-		BREAKPOINTS,
-		PANELS,
-		type BreakpointKey,
-		resolveLayouts,
-	} from '../../state/layout/registry';
+	import { PANELS, breakpointsOf, resolveLayouts } from '../../state/layout/registry';
+	import AddBreakpoint from './AddBreakpoint.svelte';
+	import BreakpointSettings from './BreakpointSettings.svelte';
 	import type { MapState } from '../../state/map-state.svelte';
 
 	let { map }: { map: MapState } = $props();
@@ -39,12 +38,16 @@
 	const hidden = $derived(map.userSettings?.hidden_panels ?? []);
 	const hideable = $derived(PANELS.filter((p) => p.removable));
 
-	const ICONS = {
+	const ICONS: Record<string, typeof MonitorIcon> = {
 		xs: SmartphoneIcon,
 		sm: TabletIcon,
 		md: LaptopIcon,
 		lg: MonitorIcon,
-	} as const;
+	};
+	const layouts = $derived(resolveLayouts(map.panels.draft));
+	const breakpoints = $derived(breakpointsOf(layouts));
+	// Clicking the size you are already on opens its settings.
+	let settingsOpen = $state(false);
 
 	async function copy() {
 		// The clipboard is the whole result here, so a refused write has to say so rather
@@ -102,41 +105,70 @@
 
 			<Separator orientation="vertical" class="h-7" />
 
-			<!-- Each breakpoint keeps its own arrangement, so you edit them one at a time. -->
-			<div class="flex items-center gap-0.5 rounded-xl border border-border/60 bg-muted/40 p-0.5">
-				{#each BREAKPOINTS as bp (bp.key)}
-					{@const Icon = ICONS[bp.key]}
-					{@const active = map.panels.breakpoint === bp.key}
-					<Tooltip.Root>
-						<Tooltip.Trigger>
-							{#snippet child({ props })}
-								<button
-									{...props}
-									type="button"
-									class={cn(
-										'flex h-8 items-center gap-1.5 rounded-lg px-2 text-xs transition-colors',
-										active
-											? 'bg-background font-medium text-foreground shadow-sm'
-											: 'text-muted-foreground hover:text-foreground',
-									)}
-									data-testid="breakpoint-{bp.key}"
-									aria-pressed={active}
-									onclick={() => (map.panels.breakpoint = bp.key as BreakpointKey)}
-								>
-									<Icon class="size-4 shrink-0" />
-									{#if active}<span class="whitespace-nowrap">{bp.label}</span>{/if}
-								</button>
-							{/snippet}
-						</Tooltip.Trigger>
-						<Tooltip.Content>
-							<p class="font-medium">{bp.label}</p>
-							<p class="text-xs text-muted-foreground">
-								{bp.minWidth}px and wider
-							</p>
-						</Tooltip.Content>
-					</Tooltip.Root>
-				{/each}
-			</div>
+			<!-- Each size keeps its own arrangement, so you edit them one at a time. Clicking the
+			     selected one opens its settings. -->
+			<Popover.Root bind:open={settingsOpen}>
+				<div class="flex items-center gap-0.5 rounded-xl border border-border/60 bg-muted/40 p-0.5">
+					{#each breakpoints as bp (bp.key)}
+						{@const Icon = ICONS[bp.key] ?? MonitorUpIcon}
+						{#if map.panels.breakpoint === bp.key}
+							<Popover.Trigger>
+								{#snippet child({ props })}
+									<button
+										{...props}
+										type="button"
+										class="flex h-8 items-center gap-1.5 rounded-lg bg-background px-2 text-xs font-medium text-foreground shadow-sm"
+										data-testid="breakpoint-{bp.key}"
+										aria-pressed="true"
+										aria-label="{bp.label} settings"
+									>
+										<Icon class="size-4 shrink-0" />
+										<span class="whitespace-nowrap">{bp.label}</span>
+										<ChevronUpIcon
+											class={cn(
+												'size-3 shrink-0 text-muted-foreground transition-transform',
+												settingsOpen && 'rotate-180',
+											)}
+										/>
+									</button>
+								{/snippet}
+							</Popover.Trigger>
+						{:else}
+							<Tooltip.Root>
+								<Tooltip.Trigger>
+									{#snippet child({ props })}
+										<button
+											{...props}
+											type="button"
+											class="flex h-8 items-center rounded-lg px-2 text-xs text-muted-foreground transition-colors hover:text-foreground"
+											data-testid="breakpoint-{bp.key}"
+											aria-pressed="false"
+											onclick={() => {
+												map.panels.breakpoint = bp.key;
+												settingsOpen = false;
+											}}
+										>
+											<Icon class="size-4 shrink-0" />
+										</button>
+									{/snippet}
+								</Tooltip.Trigger>
+								<Tooltip.Content>
+									<p class="font-medium">{bp.label}</p>
+									<p class="text-xs text-muted-foreground">{bp.minWidth}px and wider</p>
+								</Tooltip.Content>
+							</Tooltip.Root>
+						{/if}
+					{/each}
+					<AddBreakpoint {map} {breakpoints} />
+				</div>
+				<Popover.Content side="top" align="center" class="w-80 p-0">
+					{@const bp = breakpoints.find((b) => b.key === map.panels.breakpoint)}
+					{@const layout = layouts[map.panels.breakpoint]}
+					{#if bp && layout}
+						<BreakpointSettings {map} {bp} {layout} {breakpoints} />
+					{/if}
+				</Popover.Content>
+			</Popover.Root>
 
 			<Separator orientation="vertical" class="h-7" />
 

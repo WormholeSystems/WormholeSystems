@@ -6,7 +6,7 @@
 
 import * as v from 'valibot';
 
-import { type GridItem, bottom, compact } from '$lib/layout/grid';
+import { type GridItem, bottom, collides, compact } from '$lib/layout/grid';
 
 export type PanelId =
 	| 'map'
@@ -36,23 +36,23 @@ export const PANELS: PanelMeta[] = [
 		id: 'map',
 		label: 'Map',
 		description: 'The chain itself.',
-		minW: 2,
-		minH: 4,
+		minW: 1,
+		minH: 3,
 		removable: false,
 	},
 	{
 		id: 'navigation',
 		label: 'Navigation',
 		description: 'Route planner, watchlist and the Find tools.',
-		minW: 2,
-		minH: 3,
+		minW: 1,
+		minH: 2,
 		removable: true,
 	},
 	{
 		id: 'system-info',
 		label: 'System',
 		description: 'Class, effect, statics and external links for the active system.',
-		minW: 2,
+		minW: 1,
 		minH: 2,
 		removable: true,
 	},
@@ -60,7 +60,7 @@ export const PANELS: PanelMeta[] = [
 		id: 'threat',
 		label: 'Threat Analysis',
 		description: 'Recent kill activity around the active wormhole system.',
-		minW: 2,
+		minW: 1,
 		minH: 2,
 		removable: true,
 	},
@@ -68,15 +68,15 @@ export const PANELS: PanelMeta[] = [
 		id: 'signatures',
 		label: 'Signatures',
 		description: 'Scanned signatures for the active system, with paste import.',
-		minW: 2,
-		minH: 3,
+		minW: 1,
+		minH: 2,
 		removable: true,
 	},
 	{
 		id: 'notes',
 		label: 'Notes',
 		description: 'Free-text intel on the active system.',
-		minW: 2,
+		minW: 1,
 		minH: 2,
 		removable: true,
 	},
@@ -84,32 +84,32 @@ export const PANELS: PanelMeta[] = [
 		id: 'characters',
 		label: 'Pilots',
 		description: 'Everyone sharing their location on this map, and how far away they are.',
-		minW: 2,
-		minH: 3,
+		minW: 1,
+		minH: 1,
 		removable: true,
 	},
 	{
 		id: 'skyhooks',
 		label: 'Raidable Skyhooks',
 		description: 'Skyhook theft windows across New Eden, nearest first.',
-		minW: 2,
-		minH: 3,
+		minW: 1,
+		minH: 2,
 		removable: true,
 	},
 	{
 		id: 'killmails',
 		label: 'Killmails',
 		description: 'What has died in the mapped systems in the last week.',
-		minW: 2,
-		minH: 3,
+		minW: 1,
+		minH: 2,
 		removable: true,
 	},
 	{
 		id: 'evescout',
 		label: 'EVE Scout',
 		description: 'Public wormholes out of Thera and Turnur, by how far away they are.',
-		minW: 2,
-		minH: 3,
+		minW: 1,
+		minH: 2,
 		removable: true,
 	},
 ];
@@ -129,21 +129,41 @@ export interface BreakpointMeta {
 	label: string;
 	/** The narrowest window this arrangement applies to. */
 	minWidth: number;
+	/** Added by the viewer rather than built in, so it can be removed again. */
+	custom: boolean;
 }
 
-export type BreakpointKey = 'xs' | 'sm' | 'md' | 'lg';
+/** The four built-in keys, or one the viewer added for a wider screen. */
+export type BreakpointKey = string;
 
 export const BREAKPOINTS: BreakpointMeta[] = [
-	{ key: 'xs', label: 'Phone', minWidth: 0 },
-	{ key: 'sm', label: 'Tablet', minWidth: 640 },
-	{ key: 'md', label: 'Laptop', minWidth: 1024 },
-	{ key: 'lg', label: 'Desktop', minWidth: 1536 },
+	{ key: 'xs', label: 'Phone', minWidth: 0, custom: false },
+	{ key: 'sm', label: 'Tablet', minWidth: 640, custom: false },
+	{ key: 'md', label: 'Laptop', minWidth: 1024, custom: false },
+	{ key: 'lg', label: 'Desktop', minWidth: 1536, custom: false },
 ];
+
+const BUILT_IN = new Set(BREAKPOINTS.map((bp) => bp.key));
+
+/** A new screen size starts with a column per this many pixels, up to 12, like legacy. */
+const PIXELS_PER_COLUMN = 160;
+/** The server's limits on a grid. */
+export const MAX_COLUMNS = 24;
+export const ROW_HEIGHT_RANGE = { min: 40, max: 500 } as const;
+export const MAX_BREAKPOINTS = 12;
+
+/** Where a new screen size's column count starts; the slider can take it anywhere after. */
+export function startingColumns(minWidth: number): number {
+	return Math.min(12, Math.max(1, Math.floor(minWidth / PIXELS_PER_COLUMN)));
+}
 
 export interface BreakpointLayout {
 	cols: number;
 	row_height: number;
 	items: GridItem[];
+	/** Only on an added breakpoint; the built-in ones keep their widths above. */
+	min_width?: number;
+	label?: string;
 }
 
 export type PanelLayouts = Record<string, BreakpointLayout>;
@@ -157,6 +177,8 @@ export const panelLayoutsSchema = v.record(
 		items: v.array(
 			v.object({ i: v.string(), x: v.number(), y: v.number(), w: v.number(), h: v.number() }),
 		),
+		min_width: v.optional(v.number()),
+		label: v.optional(v.string()),
 	}),
 );
 
@@ -174,7 +196,7 @@ const item = (i: PanelId, x: number, y: number, w: number, h: number): GridItem 
 	h,
 });
 
-/** The arrangement a map starts from, per breakpoint. */
+/** The arrangement a map starts from, per built-in breakpoint. */
 export const DEFAULT_LAYOUTS: PanelLayouts = {
 	xs: {
 		cols: 1,
@@ -242,17 +264,50 @@ export const DEFAULT_LAYOUTS: PanelLayouts = {
 	},
 };
 
+/**
+ * Every breakpoint a layout has, built-in and added, narrowest first. A built-in one can
+ * be renamed and moved, except that the phone size always starts at 0 so something
+ * applies to every window.
+ */
+export function breakpointsOf(layouts: PanelLayouts | null): BreakpointMeta[] {
+	const all: BreakpointMeta[] = BREAKPOINTS.map((bp) => {
+		const saved = layouts?.[bp.key];
+		return {
+			...bp,
+			label: saved?.label ?? bp.label,
+			minWidth: bp.key === 'xs' ? 0 : (saved?.min_width ?? bp.minWidth),
+		};
+	});
+	for (const [key, layout] of Object.entries(layouts ?? {})) {
+		if (BUILT_IN.has(key) || layout.min_width === undefined) continue;
+		all.push({ key, label: layout.label ?? key, minWidth: layout.min_width, custom: true });
+	}
+	return all.sort((a, b) => a.minWidth - b.minWidth || Number(a.custom) - Number(b.custom));
+}
+
 /** The breakpoint that applies at a given window width. */
-export function breakpointFor(width: number): BreakpointKey {
+export function breakpointFor(width: number, layouts: PanelLayouts | null = null): BreakpointKey {
 	let match: BreakpointKey = BREAKPOINTS[0].key;
-	for (const bp of BREAKPOINTS) if (width >= bp.minWidth) match = bp.key;
+	for (const bp of breakpointsOf(layouts)) if (width >= bp.minWidth) match = bp.key;
 	return match;
+}
+
+/** Panels a saved arrangement does not mention yet, appended at the bottom. */
+function withMissing(items: GridItem[], fallback: GridItem[], cols: number): GridItem[] {
+	const present = new Set(items.map((i) => i.i));
+	let y = bottom(items);
+	for (const add of fallback.filter((i) => !present.has(i.i))) {
+		const w = Math.min(add.w, cols);
+		items.push({ ...add, x: 0, y, w });
+		y += add.h;
+	}
+	return compact(items, cols);
 }
 
 /**
  * The stored layout merged over the defaults. A saved arrangement that predates a panel
  * gets it appended at the bottom, so a new panel appears for everyone instead of vanishing
- * for anyone who has ever saved.
+ * for anyone who has ever saved. Added breakpoints come through as they were saved.
  */
 export function resolveLayouts(stored: PanelLayouts | null): PanelLayouts {
 	const out: PanelLayouts = {};
@@ -265,21 +320,71 @@ export function resolveLayouts(stored: PanelLayouts | null): PanelLayouts {
 		}
 		const cols = saved.cols || fallback.cols;
 		const items = saved.items.filter((i) => isPanelId(i.i));
-		const present = new Set(items.map((i) => i.i));
-		const missing = fallback.items.filter((i) => !present.has(i.i));
-		let y = bottom(items);
-		for (const add of missing) {
-			items.push({ ...add, x: 0, y });
-			y += add.h;
-		}
 		out[bp.key] = {
 			cols,
 			row_height: saved.row_height || fallback.row_height,
-			items: compact(items, cols),
+			items: withMissing(items, fallback.items, cols),
+			...(saved.min_width !== undefined && bp.key !== 'xs' && { min_width: saved.min_width }),
+			...(saved.label !== undefined && { label: saved.label }),
+		};
+	}
+	for (const [key, saved] of Object.entries(stored ?? {})) {
+		if (BUILT_IN.has(key) || saved.min_width === undefined) continue;
+		const cols = saved.cols || DEFAULT_LAYOUTS.lg.cols;
+		const fallback = fitToColumns(DEFAULT_LAYOUTS.lg.items, DEFAULT_LAYOUTS.lg.cols, cols);
+		out[key] = {
+			cols,
+			row_height: saved.row_height || DEFAULT_LAYOUTS.lg.row_height,
+			items: withMissing(
+				saved.items.filter((i) => isPanelId(i.i)),
+				fallback,
+				cols,
+			),
+			min_width: saved.min_width,
+			label: saved.label ?? key,
 		};
 	}
 	return out;
 }
+
+/**
+ * The same arrangement on a grid with a different column count: every tile keeps its
+ * share of the width, and anything the rounding makes overlap moves down.
+ */
+export function fitToColumns(items: GridItem[], from: number, to: number): GridItem[] {
+	const scale = to / from;
+	const settled: GridItem[] = [];
+	const ordered = [...items].sort((a, b) => a.y - b.y || a.x - b.x);
+	for (const item of ordered) {
+		const w = Math.min(to, Math.max(1, Math.round(item.w * scale)));
+		const x = Math.min(to - w, Math.round(item.x * scale));
+		const placed = { ...item, x, w };
+		while (settled.some((other) => collides(placed, other))) placed.y += 1;
+		settled.push(placed);
+	}
+	return compact(
+		items.map((item) => settled.find((s) => s.i === item.i)!),
+		to,
+	);
+}
+
+/** A key for a new breakpoint that does not clash with one the layout already has. */
+export function breakpointKey(label: string, layouts: PanelLayouts): BreakpointKey {
+	const base =
+		label
+			.toLowerCase()
+			.replace(/[^a-z0-9]+/g, '-')
+			.replace(/^-+|-+$/g, '')
+			.slice(0, 24) || 'screen';
+	let key = base;
+	for (let n = 2; key in layouts || BUILT_IN.has(key); n++) key = `${base}-${n}`;
+	return key;
+}
+
+// A panel with no remembered size starts here rather than at its minimum, which can be
+// a single cell.
+const FRESH_W = 2;
+const FRESH_H = 3;
 
 /** Put a hidden panel back at the bottom, so unhiding never drops it into a hole. */
 export function placeAtBottom(layout: BreakpointLayout, id: PanelId): BreakpointLayout {
@@ -290,8 +395,8 @@ export function placeAtBottom(layout: BreakpointLayout, id: PanelId): Breakpoint
 		i: id,
 		x: 0,
 		y: bottom(others),
-		w: existing?.w ?? Math.min(meta.minW, layout.cols),
-		h: existing?.h ?? meta.minH,
+		w: existing?.w ?? Math.min(Math.max(meta.minW, FRESH_W), layout.cols),
+		h: existing?.h ?? Math.max(meta.minH, FRESH_H),
 	};
 	return { ...layout, items: compact([...others, placed], layout.cols) };
 }

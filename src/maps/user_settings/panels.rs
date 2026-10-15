@@ -5,7 +5,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::maps::error::{MapError, Result};
 
-/// Tile positions keyed by breakpoint (`xs` / `sm` / `md` / `lg`).
+/// Tile positions keyed by breakpoint: the built-in `xs` / `sm` / `md` / `lg`, plus any the
+/// viewer added for wider screens.
 pub type PanelLayouts = std::collections::BTreeMap<String, BreakpointLayout>;
 
 /// One breakpoint's arrangement.
@@ -15,6 +16,16 @@ pub struct BreakpointLayout {
     pub cols: i32,
     pub row_height: i32,
     pub items: Vec<LayoutItem>,
+    /// The narrowest window the breakpoint applies to. Required on an added one; on a
+    /// built-in one it is only there if the viewer moved it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub min_width: Option<i32>,
+    /// What the toolbar calls the breakpoint. Required on an added one, a rename on a
+    /// built-in one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub label: Option<String>,
 }
 
 /// One tile. Minimum sizes deliberately live in the client's panel registry instead, so
@@ -47,18 +58,26 @@ pub const PANEL_IDS: [&str; 10] = [
 
 const BREAKPOINT_KEYS: [&str; 4] = ["xs", "sm", "md", "lg"];
 
+/// Enough for every screen anyone owns, and few enough that the toolbar stays a toolbar.
+const MAX_BREAKPOINTS: usize = 12;
+
 /// Reject anything that would not render: unknown ids, duplicates, or a tile outside the
 /// grid it claims to be in.
 pub fn validate_layouts(layouts: &PanelLayouts) -> Result<()> {
+    if layouts.len() > MAX_BREAKPOINTS {
+        return Err(invalid(format!("at most {MAX_BREAKPOINTS} breakpoints")));
+    }
     for (key, layout) in layouts {
-        if !BREAKPOINT_KEYS.contains(&key.as_str()) {
-            return Err(invalid(format!("unknown breakpoint {key}")));
+        if BREAKPOINT_KEYS.contains(&key.as_str()) {
+            validate_renamed(key, layout)?;
+        } else {
+            validate_added(key, layout)?;
         }
         if !(1..=24).contains(&layout.cols) {
             return Err(invalid("cols must be between 1 and 24"));
         }
-        if !(40..=400).contains(&layout.row_height) {
-            return Err(invalid("row height must be between 40 and 400"));
+        if !(40..=500).contains(&layout.row_height) {
+            return Err(invalid("row height must be between 40 and 500"));
         }
         let mut seen = std::collections::HashSet::new();
         for item in &layout.items {
@@ -79,6 +98,44 @@ pub fn validate_layouts(layouts: &PanelLayouts) -> Result<()> {
     Ok(())
 }
 
+/// A built-in breakpoint may be renamed or moved, within the same limits as an added one.
+fn validate_renamed(key: &str, layout: &BreakpointLayout) -> Result<()> {
+    if let Some(width) = layout.min_width
+        && !(0..=10_000).contains(&width)
+    {
+        return Err(invalid(format!("{key} needs a width between 0 and 10000")));
+    }
+    if let Some(label) = layout.label.as_deref()
+        && !(1..=32).contains(&label.trim().chars().count())
+    {
+        return Err(invalid(format!(
+            "{key} needs a name of up to 32 characters"
+        )));
+    }
+    Ok(())
+}
+
+/// An added breakpoint needs a sane key, a width to switch at and a name to show.
+fn validate_added(key: &str, layout: &BreakpointLayout) -> Result<()> {
+    let key_ok = (1..=32).contains(&key.len())
+        && key
+            .bytes()
+            .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-');
+    if !key_ok {
+        return Err(invalid(format!("unknown breakpoint {key}")));
+    }
+    match layout.min_width {
+        Some(width) if (1..=10_000).contains(&width) => {}
+        _ => return Err(invalid(format!("{key} needs a width between 1 and 10000"))),
+    }
+    match layout.label.as_deref().map(str::trim) {
+        Some(label) if (1..=32).contains(&label.chars().count()) => Ok(()),
+        _ => Err(invalid(format!(
+            "{key} needs a name of up to 32 characters"
+        ))),
+    }
+}
+
 fn invalid(message: impl Into<String>) -> MapError {
     MapError::Validation(message.into())
 }
@@ -94,6 +151,21 @@ mod layout_tests {
                 cols,
                 row_height: 100,
                 items,
+                min_width: None,
+                label: None,
+            },
+        )])
+    }
+
+    fn added(key: &str, min_width: Option<i32>, label: Option<&str>) -> PanelLayouts {
+        PanelLayouts::from([(
+            key.to_string(),
+            BreakpointLayout {
+                cols: 12,
+                row_height: 100,
+                items: vec![],
+                min_width,
+                label: label.map(Into::into),
             },
         )])
     }
@@ -138,16 +210,45 @@ mod layout_tests {
     }
 
     #[test]
-    fn rejects_an_unknown_breakpoint() {
-        let bad = PanelLayouts::from([(
-            "ultrawide".to_string(),
-            BreakpointLayout {
-                cols: 10,
-                row_height: 100,
-                items: vec![],
-            },
-        )]);
-        assert!(validate_layouts(&bad).is_err());
+    fn accepts_an_added_breakpoint_with_a_width_and_name() {
+        assert!(validate_layouts(&added("ultrawide", Some(2560), Some("Ultrawide"))).is_ok());
+    }
+
+    #[test]
+    fn rejects_an_added_breakpoint_without_a_width_or_name() {
+        assert!(validate_layouts(&added("ultrawide", None, Some("Ultrawide"))).is_err());
+        assert!(validate_layouts(&added("ultrawide", Some(2560), None)).is_err());
+        assert!(validate_layouts(&added("ultrawide", Some(2560), Some("  "))).is_err());
+    }
+
+    #[test]
+    fn a_built_in_breakpoint_can_be_renamed_and_moved() {
+        let mut moved = layout(10, vec![]);
+        let lg = moved.get_mut("lg").unwrap();
+        lg.min_width = Some(1800);
+        lg.label = Some("Big desk".into());
+        assert!(validate_layouts(&moved).is_ok());
+        moved.get_mut("lg").unwrap().label = Some(String::new());
+        assert!(validate_layouts(&moved).is_err());
+    }
+
+    #[test]
+    fn rejects_a_breakpoint_key_that_is_not_a_slug() {
+        assert!(validate_layouts(&added("Ultra Wide", Some(2560), Some("Ultrawide"))).is_err());
+    }
+
+    #[test]
+    fn rejects_too_many_breakpoints() {
+        let many: PanelLayouts = (0..13)
+            .map(|n| {
+                let (key, layout) = added(&format!("bp-{n}"), Some(2000 + n), Some("Wide"))
+                    .into_iter()
+                    .next()
+                    .unwrap();
+                (key, layout)
+            })
+            .collect();
+        assert!(validate_layouts(&many).is_err());
     }
 
     #[test]

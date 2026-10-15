@@ -6308,6 +6308,21 @@
                 "$ref": "#/components/schemas/LayoutItem"
               }
             },
+            "label": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "What the toolbar calls the breakpoint. Required on an added one, a rename on a\nbuilt-in one."
+            },
+            "min_width": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int32",
+              "description": "The narrowest window the breakpoint applies to. Required on an added one; on a\nbuilt-in one it is only there if the viewer moved it."
+            },
             "row_height": {
               "type": "integer",
               "format": "int32"

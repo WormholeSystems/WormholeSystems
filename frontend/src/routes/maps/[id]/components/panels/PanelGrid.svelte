@@ -56,11 +56,11 @@
 	});
 
 	// While editing you pick a breakpoint; otherwise it follows the window.
-	const activeKey = $derived<BreakpointKey>(
-		map.panels.editing ? map.panels.breakpoint : breakpointFor(windowWidth),
-	);
 	const layouts = $derived(resolveLayouts(map.panels.draft));
-	const layout = $derived(layouts[activeKey]);
+	const activeKey = $derived<BreakpointKey>(
+		map.panels.editing ? map.panels.breakpoint : breakpointFor(windowWidth, layouts),
+	);
+	const layout = $derived(layouts[activeKey] ?? layouts.lg);
 	const hidden = $derived(new Set(map.userSettings?.hidden_panels ?? []));
 	// Compacted after filtering, so hiding a panel closes the hole rather than leaving a gap.
 	// The stored positions are untouched, so an unhidden panel returns where it was.
@@ -155,7 +155,7 @@
 	$effect(() => {
 		if (map.panels.editing) {
 			untrack(() => {
-				map.panels.breakpoint = breakpointFor(windowWidth);
+				map.panels.breakpoint = breakpointFor(windowWidth, layouts);
 				map.panels.rememberHidden();
 			});
 		}

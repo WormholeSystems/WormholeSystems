@@ -165,3 +165,57 @@ describe('reset', () => {
 		expect(resolveLayouts(h.store.draft).md).toEqual(resolveLayouts(saved).md);
 	});
 });
+
+describe('screen sizes', () => {
+	const ultrawide = { label: 'Ultrawide', minWidth: 2560, cols: 16, rowHeight: 80 };
+
+	it('adds a size that starts from the closest arrangement and becomes the one edited', () => {
+		const h = harness();
+		const key = h.store.addBreakpoint(ultrawide);
+		const added = resolveLayouts(h.store.draft)[key];
+		expect(key).toBe('ultrawide');
+		expect(h.store.breakpoint).toBe('ultrawide');
+		expect(added).toMatchObject({ cols: 16, row_height: 80, min_width: 2560, label: 'Ultrawide' });
+		expect(added.items.map((i) => i.i).sort()).toEqual(
+			DEFAULT_LAYOUTS.lg.items.map((i) => i.i).sort(),
+		);
+		expect(added.items.every((i) => i.x + i.w <= 16)).toBe(true);
+	});
+
+	it('changing the columns keeps every tile on the grid', () => {
+		const h = harness();
+		h.store.setGrid('lg', { cols: 20, rowHeight: 60 });
+		const lg = resolveLayouts(h.store.draft).lg;
+		expect(lg.cols).toBe(20);
+		expect(lg.row_height).toBe(60);
+		expect(lg.items.every((i) => i.w >= 1 && i.x + i.w <= 20)).toBe(true);
+		expect(lg.items.find((i) => i.i === 'map')!.w).toBe(14);
+	});
+
+	it('removes an added size but never a built-in one', () => {
+		const h = harness();
+		const key = h.store.addBreakpoint(ultrawide);
+		h.store.removeBreakpoint('lg');
+		h.store.removeBreakpoint(key);
+		const layouts = resolveLayouts(h.store.draft);
+		expect(Object.keys(layouts).sort()).toEqual(['lg', 'md', 'sm', 'xs']);
+		expect(h.store.breakpoint).toBe('lg');
+	});
+});
+
+describe('editing a size', () => {
+	it('renames and moves a built-in size, and reset keeps both', () => {
+		const h = harness();
+		h.store.updateBreakpoint('lg', { label: 'Big desk', minWidth: 1800 });
+		h.store.reset('lg');
+		const lg = resolveLayouts(h.store.draft).lg;
+		expect(lg).toMatchObject({ label: 'Big desk', min_width: 1800 });
+		expect(lg.items).toEqual(DEFAULT_LAYOUTS.lg.items);
+	});
+
+	it('never moves the phone size off zero', () => {
+		const h = harness();
+		h.store.updateBreakpoint('xs', { minWidth: 300 });
+		expect(resolveLayouts(h.store.draft).xs.min_width).toBeUndefined();
+	});
+});

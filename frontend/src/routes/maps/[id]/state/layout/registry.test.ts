@@ -6,6 +6,8 @@ import {
 	DEFAULT_LAYOUTS,
 	PANEL_IDS,
 	breakpointFor,
+	breakpointsOf,
+	fitToColumns,
 	layoutClipboardSchema,
 	panelMeta,
 	placeAtBottom,
@@ -97,13 +99,12 @@ describe('placeAtBottom', () => {
 		expect(added.h).toBe(5);
 	});
 
-	it('sizes a panel it has never seen from its registry minimums', () => {
+	it('sizes a panel it has never seen at two columns by three rows', () => {
 		const start = layout([{ i: 'map', x: 0, y: 0, w: 4, h: 4 }]);
 		const placed = placeAtBottom(start, 'signatures');
-		const meta = panelMeta('signatures');
 		const added = placed.items.find((i) => i.i === 'signatures')!;
-		expect(added.w).toBe(Math.min(meta.minW, start.cols));
-		expect(added.h).toBe(meta.minH);
+		expect(added.w).toBe(2);
+		expect(added.h).toBe(3);
 	});
 });
 
@@ -119,5 +120,67 @@ describe('layoutClipboardSchema', () => {
 		expect(v.safeParse(layoutClipboardSchema, { breakpoints: { lg: { cols: 12 } } }).success).toBe(
 			false,
 		);
+	});
+});
+
+describe('added screen sizes', () => {
+	const wide = (): BreakpointLayout => ({
+		cols: 16,
+		row_height: 100,
+		items: [{ i: 'map', x: 0, y: 0, w: 12, h: 9 }],
+		min_width: 2560,
+		label: 'Ultrawide',
+	});
+
+	it('takes over from its width', () => {
+		const layouts = resolveLayouts({ ultrawide: wide() });
+		expect(breakpointFor(2559, layouts)).toBe('lg');
+		expect(breakpointFor(2560, layouts)).toBe('ultrawide');
+		expect(breakpointsOf(layouts).map((bp) => bp.key)).toEqual([
+			'xs',
+			'sm',
+			'md',
+			'lg',
+			'ultrawide',
+		]);
+	});
+
+	it('survives resolving, with the panels it lacks appended', () => {
+		const resolved = resolveLayouts({ ultrawide: wide() }).ultrawide;
+		expect(resolved).toMatchObject({ cols: 16, min_width: 2560, label: 'Ultrawide' });
+		expect(resolved.items).toHaveLength(PANEL_IDS.length);
+		expect(resolved.items.every((i) => i.x + i.w <= 16)).toBe(true);
+	});
+
+	it('ignores a stored key that is neither built in nor has a width', () => {
+		const stray = { ...wide(), min_width: undefined };
+		expect(resolveLayouts({ stray }).stray).toBeUndefined();
+	});
+});
+
+describe('fitToColumns', () => {
+	it('keeps each tile its share of the width without overlaps', () => {
+		const items: GridItem[] = [
+			{ i: 'map', x: 0, y: 0, w: 7, h: 4 },
+			{ i: 'notes', x: 7, y: 0, w: 3, h: 2 },
+		];
+		const out = fitToColumns(items, 10, 4);
+		expect(out).toEqual([
+			{ i: 'map', x: 0, y: 0, w: 3, h: 4 },
+			{ i: 'notes', x: 3, y: 0, w: 1, h: 2 },
+		]);
+	});
+});
+
+describe('a moved built-in size', () => {
+	it('takes over from its new width under its new name', () => {
+		const lg = { ...structuredClone(DEFAULT_LAYOUTS.lg), min_width: 1800, label: 'Big desk' };
+		const layouts = resolveLayouts({ lg });
+		expect(breakpointFor(1700, layouts)).toBe('md');
+		expect(breakpointFor(1800, layouts)).toBe('lg');
+		expect(breakpointsOf(layouts).find((bp) => bp.key === 'lg')).toMatchObject({
+			label: 'Big desk',
+			minWidth: 1800,
+		});
 	});
 });
