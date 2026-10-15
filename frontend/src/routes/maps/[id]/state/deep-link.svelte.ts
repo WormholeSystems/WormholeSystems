@@ -21,15 +21,23 @@ export function syncDeepLink(map: MapState): void {
 		}
 	});
 
-	// `replaceState` throws until the router has started, which is still mid-hydration on
-	// first paint.
-	let routerReady = $state(false);
-	afterNavigate(() => (routerReady = true));
+	// `replaceState` throws until the router has started. The screen is usually mounted
+	// after that (the page imports it once hydrated), and then `afterNavigate` has already
+	// fired for the first load and will not again; when it is mounted before, the write
+	// throws and the next navigation event runs it again.
+	let navigations = $state(0);
+	afterNavigate(() => navigations++);
 
 	$effect(() => {
+		void navigations;
 		const active = map.activeSystem;
-		if (!routerReady || active?.kind !== 'system') return;
+		if (active?.kind !== 'system') return;
 		const url = systemParamUrl(page.url, active.solar_system_id);
-		if (url) replaceState(url, {});
+		if (!url) return;
+		try {
+			replaceState(url, {});
+		} catch {
+			// The router has not started yet; `afterNavigate` brings this back once it has.
+		}
 	});
 }
