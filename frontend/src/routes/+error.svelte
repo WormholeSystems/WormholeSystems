@@ -160,7 +160,7 @@
 				{#if action === 'signin'}
 					<Button href={signInHref} size="lg" {variant} data-sveltekit-reload>
 						<LogInIcon data-icon="inline-start" />
-						Sign in with EVE Online
+						Log in with EVE Online
 					</Button>
 				{:else if action === 'retry'}
 					<Button size="lg" {variant} onclick={() => location.reload()} data-testid="error-retry">

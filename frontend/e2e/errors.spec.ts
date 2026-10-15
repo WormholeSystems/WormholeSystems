@@ -60,7 +60,7 @@ test('signed out, a private map asks you to sign in and come back', async ({ bro
 	const response = await page.goto(`http://localhost:5173/maps/${mapId}`);
 	expect(response?.status()).toBe(401);
 	await expect(page.getByTestId('error-title')).toHaveText('Sign in to open this map.');
-	await expect(page.getByRole('link', { name: 'Sign in with EVE Online' })).toHaveAttribute(
+	await expect(page.getByRole('link', { name: 'Log in with EVE Online' })).toHaveAttribute(
 		'href',
 		`/auth/login?return_to=${encodeURIComponent(`/maps/${mapId}`)}`,
 	);

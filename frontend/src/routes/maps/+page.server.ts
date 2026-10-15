@@ -12,6 +12,6 @@ export const load: PageServerLoad = async (event) => {
 	const { me, offline: down } = await event.parent();
 	// Down is not the same as signed out: sending somebody to sign in would only fail again.
 	if (down) offline();
-	if (!me) redirect(302, '/login');
+	if (!me) redirect(302, `/login?return_to=${encodeURIComponent(event.url.pathname)}`);
 	return { seo: { title: 'Maps' } };
 };
