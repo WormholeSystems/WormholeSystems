@@ -32,6 +32,8 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 thiserror = "2"
 uuid = { version = "1", features = ["v4"] }
+# Only for a cookie's Max-Age; already in the tree through the cookie crate.
+time = { version = "0.3", default-features = false }
 # default-features off drops `clock` — we only use DateTime<Utc> as a type, never now().
 chrono = { version = "0.4", default-features = false, features = ["std", "serde"] }
 sqlx = { version = "0.9", default-features = false, features = [

@@ -443,6 +443,9 @@ async fn create_alert(
         let (Some(guild), Some(channel)) = (&interaction.guild_id, &interaction.channel_id) else {
             return "Channel alerts are created from inside a server channel.".into();
         };
+        if !crate::discord::is_snowflake(guild) || !crate::discord::is_snowflake(channel) {
+            return "Channel alerts are created from inside a server channel.".into();
+        }
         if let Some(denied) = denied_in_channel(interaction, mention) {
             return denied.into();
         }

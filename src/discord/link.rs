@@ -32,8 +32,8 @@ pub async fn connect(State(state): State<AppState>, jar: CookieJar) -> Response 
         return Redirect::to("/").into_response();
     };
 
-    // The flow row carries the user, so the callback links to whoever started it rather
-    // than to whoever happens to hold a session when Discord redirects back.
+    // The flow row carries the user, and the callback only links to them when it comes
+    // back to this browser, still signed in as them.
     let Ok(csrf) = oauth_flow::start(
         &state.db,
         FlowKind::DiscordLink,
@@ -56,7 +56,12 @@ pub async fn connect(State(state): State<AppState>, jar: CookieJar) -> Response 
         ],
     )
     .expect("authorize URL");
-    Redirect::to(url.as_str()).into_response()
+    let jar = jar.add(oauth_flow::browser_cookie(
+        FlowKind::DiscordLink,
+        &csrf,
+        state.secure_cookies,
+    ));
+    (jar, Redirect::to(url.as_str())).into_response()
 }
 
 #[derive(Deserialize)]
@@ -68,8 +73,22 @@ pub struct CallbackQuery {
 /// `GET /discord/callback`, finish the link.
 pub async fn callback(
     State(state): State<AppState>,
+    jar: CookieJar,
     Query(query): Query<CallbackQuery>,
 ) -> Response {
+    if state.discord.is_none() {
+        return (StatusCode::NOT_FOUND, "Discord is not configured").into_response();
+    }
+    // Only the browser that started the link may finish it, checked before the state is
+    // consumed so a forged callback cannot spend somebody else's.
+    if !oauth_flow::started_here(&jar, FlowKind::DiscordLink, &query.state) {
+        return (StatusCode::BAD_REQUEST, "that link request expired").into_response();
+    }
+    let cleared = oauth_flow::clear_cookie(jar.clone(), FlowKind::DiscordLink);
+    (cleared, finish_link(&state, &jar, query).await).into_response()
+}
+
+async fn finish_link(state: &AppState, jar: &CookieJar, query: CallbackQuery) -> Response {
     let Some(config) = state.discord.as_ref() else {
         return (StatusCode::NOT_FOUND, "Discord is not configured").into_response();
     };
@@ -81,6 +100,13 @@ pub async fn callback(
     let Some(user_id) = flow.link_user_id else {
         return (StatusCode::BAD_REQUEST, "that link request expired").into_response();
     };
+    if !oauth_flow::signed_in_as(&state.db, jar, user_id).await {
+        return (
+            StatusCode::BAD_REQUEST,
+            "that link was started from an account you are not signed in to",
+        )
+            .into_response();
+    }
 
     let http = crate::user_agent::client();
     let token: Result<TokenResponse, _> = async {

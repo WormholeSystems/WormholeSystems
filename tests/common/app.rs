@@ -70,11 +70,31 @@ pub async fn session_cookie(pool: &PgPool, actor: Actor) -> String {
 pub struct TestResponse {
     pub status: StatusCode,
     pub body: serde_json::Value,
+    pub headers: header::HeaderMap,
 }
 
-async fn send(app: Router, req: Request<Body>) -> TestResponse {
+impl TestResponse {
+    /// Every `Set-Cookie` the response carries, as sent.
+    pub fn set_cookies(&self) -> Vec<String> {
+        self.headers
+            .get_all(header::SET_COOKIE)
+            .iter()
+            .map(|v| v.to_str().unwrap().to_string())
+            .collect()
+    }
+
+    pub fn location(&self) -> Option<&str> {
+        self.headers
+            .get(header::LOCATION)
+            .map(|v| v.to_str().unwrap())
+    }
+}
+
+/// Any request, for the ones `get` and `request_json` cannot build.
+pub async fn send(app: Router, req: Request<Body>) -> TestResponse {
     let response: Response<Body> = app.oneshot(req).await.unwrap();
     let status = response.status();
+    let headers = response.headers().clone();
     let bytes = axum::body::to_bytes(response.into_body(), usize::MAX)
         .await
         .unwrap();
@@ -83,7 +103,11 @@ async fn send(app: Router, req: Request<Body>) -> TestResponse {
     } else {
         serde_json::from_slice(&bytes).unwrap_or(serde_json::Value::Null)
     };
-    TestResponse { status, body }
+    TestResponse {
+        status,
+        body,
+        headers,
+    }
 }
 
 pub async fn get(app: Router, path: &str, cookie: Option<&str>) -> TestResponse {

@@ -170,7 +170,11 @@ export const sections: DocSection[] = categories.map((category) => ({
 	pages: category.pages.map(linkTo),
 }));
 
-/** Markdown to HTML. Raw HTML in a page is escaped rather than rendered. */
+/**
+ * Markdown to HTML, on the server. Raw HTML in a page is rendered as written, which is fine
+ * for these pages only because they come from the repository: anything a user typed goes
+ * through `renderMarkdown` in `$lib/markdown` instead.
+ */
 export function render(markdown: string): string {
 	// SAFETY: `marked.parse` returns a promise only when `async` is set, and it is not.
 	const html = marked.parse(markdown, { async: false }) as string;

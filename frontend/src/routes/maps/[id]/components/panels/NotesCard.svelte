@@ -2,12 +2,12 @@
 	// Per-system notes, in markdown. Member-gated: a viewer gets a 403 from the details
 	// endpoint and the panel disappears.
 	import PencilIcon from '@lucide/svelte/icons/pencil';
-	import { marked } from 'marked';
 
 	import { createQuery } from '@tanstack/svelte-query';
 
 	import { ApiError } from '$lib/api/client';
 	import { q } from '$lib/api/queries';
+	import { renderMarkdown } from '$lib/markdown';
 	import type { MapSystemView } from '$lib/api/types/MapSystemView';
 	import { Button } from '$lib/components/ui/button';
 	import { Textarea } from '$lib/components/ui/textarea';
@@ -43,11 +43,10 @@
 		editing = false;
 	});
 
-	const rendered = $derived.by(() => {
-		if (!notes) return '';
-		const html = marked.parse(notes, { async: false, breaks: true }) as string;
-		return html.replaceAll('<a href', '<a target="_blank" rel="noopener" href');
-	});
+	// Anyone with write access to the map writes these, so they are sanitized before
+	// they reach `{@html}`. The map page does not render on the server, so DOMPurify
+	// always has the browser's DOM.
+	const rendered = $derived(notes ? renderMarkdown(notes, { breaks: true }) : '');
 
 	function startEdit() {
 		draft = notes ?? '';

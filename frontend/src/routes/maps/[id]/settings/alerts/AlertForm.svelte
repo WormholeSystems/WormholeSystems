@@ -55,7 +55,6 @@
 	let webhookId = $state<number | null>(seed?.map_webhook_id ?? null);
 	let mention = $state<AlertMention>(seed?.mention ?? 'none');
 	let roleRef = $state<number | null>(seed?.map_webhook_role_id ?? null);
-	let channelId = $state(seed?.discord_channel_id ?? '');
 	let target = $state<number | null>(seed?.target_solar_system_id ?? null);
 	let origin = $state<number | null>(seed?.origin_solar_system_id ?? null);
 	let maxJumps = $state(seed?.max_jumps ?? 5);
@@ -65,11 +64,26 @@
 	let filterMatch = $state(seed?.filter_match ?? 'any');
 
 	const range = $derived(jumpRangeLy(shipType, jdcLevel));
+	// Only webhooks are set up here. The bot's deliveries come from /wh in Discord, so an
+	// alert made there can keep its own or move to a webhook, never the other way.
 	const DELIVERIES: { value: AlertDelivery; label: string }[] = [
 		{ value: 'webhook', label: DELIVERY_LABEL.webhook },
+		...(seed && seed.delivery !== 'webhook'
+			? [{ value: seed.delivery, label: DELIVERY_LABEL[seed.delivery] }]
+			: []),
 	];
-	// The creator mention is never offered here; a saved alert can still carry it.
-	const MENTIONS = ALERT_MENTIONS.filter((m) => m.value !== 'creator');
+	// The creator mention is never offered here; a saved alert can still carry it. Who the
+	// bot pings in a channel was allowed by Discord, so there it can be kept or dropped.
+	const MENTIONS = $derived(
+		delivery === 'discord_channel'
+			? ALERT_MENTIONS.filter((m) => m.value === 'none' || m.value === seed?.mention)
+			: ALERT_MENTIONS.filter((m) => m.value !== 'creator'),
+	);
+	const roleChoices = $derived(
+		delivery === 'discord_channel'
+			? roles.filter((r) => r.id === seed?.map_webhook_role_id)
+			: roles,
+	);
 
 	// The picker wants a resolved system for its label; the alert only stores the id.
 	const systems = systemResolver;
@@ -103,7 +117,6 @@
 		webhookId,
 		mention,
 		roleRef,
-		channelId,
 		target,
 		origin,
 		maxJumps,
@@ -398,7 +411,7 @@
 				</Select.Content>
 			</Select.Root>
 			{#if mention === 'role'}
-				{#if roles.length === 0}
+				{#if roleChoices.length === 0}
 					<p class="self-center text-xs text-amber-500">No roles registered yet.</p>
 				{:else}
 					<Select.Root
@@ -407,11 +420,11 @@
 						onValueChange={(value) => (roleRef = value ? Number(value) : null)}
 					>
 						<Select.Trigger class="flex-1" data-testid="alert-role">
-							{roles.find((r) => r.id === roleRef)?.name ?? 'Pick a role'}
+							{roleChoices.find((r) => r.id === roleRef)?.name ?? 'Pick a role'}
 						</Select.Trigger>
 						<Select.Content>
 							<Select.Group>
-								{#each roles as role (role.id)}
+								{#each roleChoices as role (role.id)}
 									<Select.Item value={String(role.id)} label={role.name}>{role.name}</Select.Item>
 								{/each}
 							</Select.Group>

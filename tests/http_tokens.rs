@@ -6,26 +6,11 @@ mod common;
 use axum::Router;
 use axum::body::Body;
 use axum::http::{Request, StatusCode, header};
-use common::app::{TestResponse, app, get, request_json, session_cookie};
+use common::app::{TestResponse, app, get, request_json, send, session_cookie};
 use common::{member_with_role, world};
 use serde_json::json;
 use sqlx::PgPool;
-use tower::ServiceExt;
 use wormholesystems::maps::Role;
-
-async fn send(app: Router, req: Request<Body>) -> TestResponse {
-    let response = app.oneshot(req).await.unwrap();
-    let status = response.status();
-    let bytes = axum::body::to_bytes(response.into_body(), usize::MAX)
-        .await
-        .unwrap();
-    let body = if bytes.is_empty() {
-        serde_json::Value::Null
-    } else {
-        serde_json::from_slice(&bytes).unwrap_or(serde_json::Value::Null)
-    };
-    TestResponse { status, body }
-}
 
 async fn bearer_get(app: Router, path: &str, token: &str) -> TestResponse {
     let req = Request::builder()

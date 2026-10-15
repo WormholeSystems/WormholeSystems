@@ -322,11 +322,15 @@ pub(super) async fn apply_move_systems(tx: &mut Tx<'_>, cmd: MoveSystems) -> Res
 
     let movable: std::collections::HashSet<i64> =
         before.iter().map(|m| m.map_solar_system_id).collect();
-    for m in cmd
+    // In id order, not the client's, so two moves over the same rows lock them in the same
+    // order. The map lock already serializes them; this keeps it so without one.
+    let mut moves: Vec<&SystemMove> = cmd
         .moves
         .iter()
         .filter(|m| movable.contains(&m.map_solar_system_id))
-    {
+        .collect();
+    moves.sort_by_key(|m| m.map_solar_system_id);
+    for m in moves {
         placements::move_unpinned(tx, cmd.map_id, m.map_solar_system_id, m.x, m.y).await?;
     }
     let count = movable.len();
@@ -736,13 +740,7 @@ pub struct RestoreRallies {
 
 pub(super) async fn apply_set_rally(tx: &mut Tx<'_>, cmd: SetRally) -> Result<Effect> {
     // Two members setting rally points at once would each see room for theirs and leave
-    // the map over the cap, so the map is held while counting.
-    sqlx::query!(
-        "select id from maps where id = $1 for no key update",
-        cmd.map_id,
-    )
-    .fetch_optional(&mut **tx)
-    .await?;
+    // the map over the cap; the map lock every command runs under has them take turns.
     let rallied_at = sqlx::query_scalar!(
         "select rallied_at from map_solar_systems where id = $1 and map_id = $2",
         cmd.map_solar_system_id,

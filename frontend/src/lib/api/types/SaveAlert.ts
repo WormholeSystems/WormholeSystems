@@ -10,7 +10,7 @@ export type SaveAlert = { name: string, kind: AlertKind, delivery: AlertDelivery
 /**
  * Which registered destination to post to.
  */
-map_webhook_id?: number, discord_guild_id?: string, discord_channel_id?: string, 
+map_webhook_id?: number, 
 /**
  * Which registered role to ping.
  */

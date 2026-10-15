@@ -7,7 +7,7 @@
 mod map_hub;
 mod user_channel;
 
-pub use map_hub::{MapEvent, MapHub};
+pub use map_hub::{MapEvent, MapHub, Subscription};
 pub use user_channel::{UserEvent, UserHub};
 
 /// The process-wide map hub, like [`crate::maps::grid`]: global so a committed command can

@@ -203,8 +203,13 @@ redirect until the callback. Single-use.
 - A `state` is only good for the callback of its own `kind`: the Discord callback refuses
   one the EVE login started, and the other way round. Both go through `oauth_flow`.
 - Starting a handshake deletes the expired rows, so abandoned ones do not pile up.
-- If `link_user_id` is set, the authenticated character is attached to that user;
-  otherwise the login resolves or creates a user from the character.
+- The `state` is also set as an HttpOnly cookie (`ws_oauth_eve` or `ws_oauth_discord`)
+  on the browser that started the handshake. The callback refuses a `state` that does
+  not match that cookie, before consuming it, so a provider URL handed to somebody else
+  is worthless to them.
+- If `link_user_id` is set, the authenticated character is attached to that user, and
+  only when the callback's own session is that user's; otherwise the login resolves or
+  creates a user from the character.
 
 > **Open — state store.** This is classic ephemeral session data. Keep it as a
 > Postgres table (simple, transactional) or push it to a cache (Redis)? Modelled as a

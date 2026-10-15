@@ -18,6 +18,31 @@ export default defineConfig({
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true,
 			},
 			adapter: adapter(),
+			// Sent as a header on every rendered page. Nothing is prerendered, so `auto`
+			// always picks a fresh nonce, which SvelteKit puts on its own scripts and
+			// app.html puts on the theme script.
+			csp: {
+				mode: 'auto',
+				directives: {
+					'default-src': ['self'],
+					'script-src': ['self'],
+					// The markup carries `style="..."` attributes (Svelte's `style:`, server
+					// rendered, and positions from bits-ui), which a nonce cannot cover.
+					'style-src': ['self', 'unsafe-inline'],
+					// Portraits, logos and type icons come from EVE's image server; `data:`
+					// and `blob:` are images made in the page.
+					'img-src': ['self', 'data:', 'blob:', 'https://images.evetech.net'],
+					// `self` covers ws: and wss: on the same host, which is where both
+					// sockets connect.
+					'connect-src': ['self'],
+					'object-src': ['none'],
+					'base-uri': ['self'],
+					'frame-ancestors': ['none'],
+					// Every form here is handled in script. Signing in goes to EVE and
+					// Discord by redirect, which form-action does not restrict.
+					'form-action': ['self'],
+				},
+			},
 		}),
 	],
 	server: {

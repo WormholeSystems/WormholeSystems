@@ -63,11 +63,12 @@ pub struct SaveAlert {
     #[serde(default)]
     #[ts(optional)]
     pub map_webhook_id: Option<i64>,
-    #[serde(default)]
-    #[ts(optional)]
+    /// Where a bot channel alert posts. Never read from a request: only the Discord
+    /// command sets these, from the channel Discord says it was run in. Over HTTP a channel
+    /// alert keeps the channel it has (see [`keep_bot_destination`]).
+    #[serde(skip)]
     pub discord_guild_id: Option<String>,
-    #[serde(default)]
-    #[ts(optional)]
+    #[serde(skip)]
     pub discord_channel_id: Option<String>,
     /// Which registered role to ping.
     #[serde(default)]
@@ -313,6 +314,58 @@ pub async fn check(pool: &PgPool, map_id: i64, body: &SaveAlert) -> Result<()> {
     validate(body)?;
     check_belongs(pool, map_id, body).await?;
     check_systems_exist(pool, body).await
+}
+
+/// The settings page's half of a bot channel alert. The bot posts wherever it has been
+/// invited, so a channel, and who it may ping there, are only ever taken from Discord: the
+/// `/wh alert-channel` command runs in the channel, signed by Discord, with the invoking member's
+/// permissions. Over HTTP nobody can create one or point an alert at a channel, and editing
+/// one keeps the channel and the ping it was given (dropping the ping is fine). Everything
+/// else about it stays editable. `alert_id` is `None` for a new alert.
+pub async fn keep_bot_destination(
+    pool: &PgPool,
+    map_id: i64,
+    alert_id: Option<i64>,
+    body: &mut SaveAlert,
+) -> Result<()> {
+    body.discord_guild_id = None;
+    body.discord_channel_id = None;
+    if body.delivery != AlertDelivery::DiscordChannel {
+        return Ok(());
+    }
+    let from_discord = || {
+        Err(MapError::Validation(
+            "a bot channel alert is set up with /wh alert-channel in the Discord channel it posts to".into(),
+        ))
+    };
+    let Some(alert_id) = alert_id else {
+        return from_discord();
+    };
+    let stored = sqlx::query!(
+        "select delivery, discord_guild_id, discord_channel_id, mention, map_webhook_role_id
+         from map_alerts where id = $1 and map_id = $2",
+        alert_id,
+        map_id,
+    )
+    .fetch_optional(pool)
+    .await?
+    .ok_or(MapError::NotFound)?;
+    if AlertDelivery::from_db(&stored.delivery) != Some(AlertDelivery::DiscordChannel) {
+        return from_discord();
+    }
+    let same_ping = AlertMention::from_db(&stored.mention) == Some(body.mention)
+        && stored.map_webhook_role_id == body.map_webhook_role_id;
+    if !same_ping && body.mention != AlertMention::None {
+        return Err(MapError::Validation(
+            "who a bot channel alert pings is set with /wh alert-channel in Discord".into(),
+        ));
+    }
+    if body.mention == AlertMention::None {
+        body.map_webhook_role_id = None;
+    }
+    body.discord_guild_id = stored.discord_guild_id;
+    body.discord_channel_id = stored.discord_channel_id;
+    Ok(())
 }
 
 /// Inserts the alert and logs who set it up. The caller runs [`check`] first.
@@ -658,7 +711,7 @@ pub async fn create_role(pool: &PgPool, map_id: i64, body: &SaveRole) -> Result<
         return Err(MapError::Validation("give the role a name".into()));
     }
     // Discord ids are snowflakes: decimal, and long. Anything else is a copy-paste slip.
-    if role_id.len() < 5 || !role_id.chars().all(|c| c.is_ascii_digit()) {
+    if role_id.len() < 5 || !crate::discord::is_snowflake(role_id) {
         return Err(MapError::Validation(
             "a Discord role id is a long number: right-click the role with developer mode on"
                 .into(),

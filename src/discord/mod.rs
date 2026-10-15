@@ -14,6 +14,13 @@ use serde::Deserialize;
 /// command shapes, not transport.
 pub const API: &str = "https://discord.com/api/v10";
 
+/// Whether `id` is a Discord id: a snowflake, which is a decimal number of at most 20
+/// digits. Checked before an id goes into a URL path, where anything else could point a
+/// request somewhere it was never meant to go.
+pub fn is_snowflake(id: &str) -> bool {
+    (1..=20).contains(&id.len()) && id.bytes().all(|b| b.is_ascii_digit())
+}
+
 /// The bits of a Discord user WormholeSystems stores.
 #[derive(Debug, Clone, Deserialize, serde::Serialize)]
 pub struct DiscordUser {

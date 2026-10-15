@@ -166,6 +166,10 @@ pub async fn post_channel(
     channel_id: &str,
     message: &Message,
 ) -> Result<(), SendError> {
+    // Not a channel at all, so no retry will ever reach one.
+    if !crate::discord::is_snowflake(channel_id) {
+        return Err(SendError::Gone);
+    }
     let url = format!("{}/channels/{channel_id}/messages", crate::discord::API);
     send(
         http,
@@ -304,6 +308,21 @@ pub(crate) fn assert_links_absolute(embed: &Embed) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn a_channel_id_that_is_not_a_snowflake_is_never_requested() {
+        let message = Message::new(Embed::default());
+        for id in [
+            "",
+            "../users/@me",
+            "123/messages?x=",
+            "12a",
+            "123456789012345678901",
+        ] {
+            let sent = post_channel(&reqwest::Client::new(), "token", id, &message).await;
+            assert!(matches!(sent, Err(SendError::Gone)), "{id:?}");
+        }
+    }
 
     #[test]
     fn security_colors_follow_the_bands() {

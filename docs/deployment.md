@@ -273,6 +273,11 @@ prints what your proxy needs for the choice this install made: a Caddy site bloc
 Traefik (or Coolify) label set to put in `compose.override.yml`, and an nginx server block,
 whichever apply.
 
+Two headers are yours to get right there. The frontend sends its own
+`Content-Security-Policy` on every page, so pass it through rather than replacing it.
+And the bundled Caddy only sends HSTS when it serves https itself, so the proxy that
+terminates TLS should add `Strict-Transport-Security: max-age=31536000`.
+
 ### From wsctl 0.5
 
 An install set up by wsctl 0.5 has `WS_SETUP=full` or `WS_SETUP=standalone` in `.env`.
@@ -313,10 +318,10 @@ stops on it. Two places are yours instead, and survive every update:
   site block (a header, a redirect, a `handle` of your own), `*.caddy` files at the top
   level (another site on the same Caddy). `docker compose restart caddy` reloads them.
 
-For example, `caddy.d/hsts.site`, once https is what you will always serve:
+For example, `caddy.d/permissions.site`:
 
 ```
-header Strict-Transport-Security "max-age=31536000"
+header Permissions-Policy "camera=(), microphone=(), geolocation=()"
 ```
 
 Neither is tracked.

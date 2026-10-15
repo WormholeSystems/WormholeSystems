@@ -79,6 +79,40 @@ test('notes round-trip with markdown rendering', async ({ page, api }) => {
 	await expect(card.locator('strong', { hasText: 'Danger' })).toBeVisible();
 });
 
+test('notes cannot run script', async ({ page, api }) => {
+	const mapId = await createMap(api, 'E2E Notes XSS');
+	await api.post(`/api/maps/${mapId}/systems/add`, {
+		data: { map_id: mapId, solar_system_id: J122515, x: 200, y: 200, alias: null },
+	});
+	const dialogs: string[] = [];
+	page.on('dialog', (dialog) => {
+		dialogs.push(dialog.message());
+		void dialog.dismiss();
+	});
+
+	await gotoApp(page, `/maps/${mapId}?system=${J122515}`);
+	const card = page.getByTestId('notes-card');
+	await card.getByLabel('Edit notes').click();
+	await card
+		.getByPlaceholder('Add notes...')
+		.fill('<img src=x onerror="alert(1)"> [bait](javascript:alert(2)) **kept**');
+	const saved = page.waitForResponse(
+		(r) => r.url().includes('/systems/set-notes') && r.request().method() === 'POST',
+	);
+	await card.getByRole('button', { name: 'Save' }).click();
+	await saved;
+
+	// Rendered from what the server sends back too, not just the optimistic copy.
+	await reloadApp(page);
+	await expect(card.locator('strong', { hasText: 'kept' })).toBeVisible();
+	const img = card.locator('img');
+	await expect(img).toHaveCount(1);
+	await expect(img).not.toHaveAttribute('onerror');
+	await expect(card.getByText('bait')).toBeVisible();
+	await expect(card.locator('a[href^="javascript:"]')).toHaveCount(0);
+	expect(dialogs).toEqual([]);
+});
+
 test('viewers cannot see notes', async ({ page, api, browser }) => {
 	const mapId = await createMap(api, 'E2E ViewerNotes');
 	await api.post(`/api/maps/${mapId}/systems/add`, {

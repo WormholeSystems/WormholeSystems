@@ -114,13 +114,25 @@ impl MapHub {
     }
 
     /// Subscribe to a map's events, creating its channel on first use. Each connected
-    /// viewer holds one receiver.
-    pub fn subscribe(&self, map_id: i64) -> broadcast::Receiver<MapEvent> {
+    /// viewer holds one [`Subscription`], and the channel goes when the last one is dropped.
+    pub fn subscribe(&self, map_id: i64) -> Subscription {
         let mut channels = self.channels.lock().expect("map hub poisoned");
-        channels
+        let rx = channels
             .entry(map_id)
             .or_insert_with(|| broadcast::channel(CHANNEL_CAPACITY).0)
-            .subscribe()
+            .subscribe();
+        Subscription {
+            rx,
+            map_id,
+            channels: Arc::clone(&self.channels),
+        }
+    }
+
+    /// Whether the hub holds a channel for the map, which it should only while somebody
+    /// is subscribed.
+    pub fn has_channel(&self, map_id: i64) -> bool {
+        let channels = self.channels.lock().expect("map hub poisoned");
+        channels.contains_key(&map_id)
     }
 
     /// Publish an event to its map. A no-op if nobody is watching that map; if the last
@@ -137,9 +149,67 @@ impl MapHub {
     }
 }
 
+/// One viewer's receiver for a map's events. Reads like the `broadcast::Receiver` it wraps;
+/// dropping the last one for a map removes the map's channel, so a map nobody is watching
+/// costs nothing, however many ids have been asked for.
+pub struct Subscription {
+    rx: broadcast::Receiver<MapEvent>,
+    map_id: i64,
+    channels: Arc<Mutex<HashMap<i64, broadcast::Sender<MapEvent>>>>,
+}
+
+impl std::ops::Deref for Subscription {
+    type Target = broadcast::Receiver<MapEvent>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.rx
+    }
+}
+
+impl std::ops::DerefMut for Subscription {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.rx
+    }
+}
+
+impl Drop for Subscription {
+    fn drop(&mut self) {
+        // `self.rx` is still alive here, so a count of one is this subscription alone.
+        // Subscribing takes the same lock, so nobody can join between the count and the
+        // removal.
+        let Ok(mut channels) = self.channels.lock() else {
+            return;
+        };
+        if channels
+            .get(&self.map_id)
+            .is_some_and(|tx| tx.receiver_count() <= 1)
+        {
+            channels.remove(&self.map_id);
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn the_channel_goes_with_its_last_subscriber() {
+        let hub = MapHub::new();
+        let a = hub.subscribe(1);
+        let b = hub.subscribe(1);
+        assert!(hub.has_channel(1));
+
+        drop(a);
+        assert!(hub.has_channel(1), "b is still watching");
+        drop(b);
+        assert!(!hub.has_channel(1));
+
+        // And comes back for the next viewer.
+        let mut c = hub.subscribe(1);
+        hub.publish(MapEvent::MapUpdated { map_id: 1 });
+        assert_eq!(c.try_recv().unwrap(), MapEvent::MapUpdated { map_id: 1 });
+    }
 
     #[tokio::test]
     async fn delivers_to_all_subscribers_of_the_map() {

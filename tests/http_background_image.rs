@@ -41,15 +41,7 @@ async fn upload(
         .header(header::COOKIE, cookie)
         .body(Body::from(body))
         .unwrap();
-    let response = app(pool).oneshot(req).await.unwrap();
-    let status = response.status();
-    let bytes = axum::body::to_bytes(response.into_body(), usize::MAX)
-        .await
-        .unwrap();
-    common::app::TestResponse {
-        status,
-        body: serde_json::from_slice(&bytes).unwrap_or(serde_json::Value::Null),
-    }
+    common::app::send(app(pool), req).await
 }
 
 async fn fetch_image(

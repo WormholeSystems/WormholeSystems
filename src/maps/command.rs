@@ -426,8 +426,15 @@ pub(super) struct MapTx {
 }
 
 impl MapTx {
-    /// Open the transaction and check the actor holds `role` on the map in it. A background
-    /// task has no role to check.
+    /// Open the transaction, take the map's lock, and check the actor holds `role` on the
+    /// map in it. A background task has no role to check.
+    ///
+    /// The lock makes writes to one map take turns. Each reads the history head and writes
+    /// its step on top, so two at once would both build on the same head and one change
+    /// would fall out of the history, or two undos would apply the same inverse. `no key
+    /// update` rather than `update`: it still excludes every other writer here, but not the
+    /// key share a row referencing the map takes, so inserts elsewhere do not queue on it.
+    /// Taken before the role check, so the check sees any grant change that went first.
     pub(super) async fn begin(
         pool: &PgPool,
         map_id: i64,
@@ -435,6 +442,12 @@ impl MapTx {
         role: Role,
     ) -> Result<Self> {
         let mut tx = pool.begin().await?;
+        sqlx::query!(
+            "select id from maps where id = $1 for no key update",
+            map_id
+        )
+        .fetch_optional(&mut *tx)
+        .await?;
         let found = match actor {
             EventActor::Character(character) => {
                 Some(require_role_tx(&mut tx, map_id, character.user_id, role).await?)

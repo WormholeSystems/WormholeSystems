@@ -51,9 +51,11 @@ changed row inline) are an additive change later if refetch volume warrants it.
 A cheaply-cloneable handle (an `Arc<Mutex<HashMap<map_id, broadcast::Sender>>>` inside) held
 in app state.
 
-- `subscribe(map_id) -> Receiver` — one per connected viewer; lazily creates the map's channel.
-- `publish(event)` — routes by `event.map_id()`; a no-op if nobody is watching that map, and
-  prunes the channel once its last subscriber is gone so idle maps don't leak.
+- `subscribe(map_id) -> Subscription` — one per connected viewer; lazily creates the map's
+  channel, and dropping the last subscription removes it, so idle maps don't leak. The map
+  socket only subscribes once the reader's access is checked, so probing ids leaves nothing
+  behind.
+- `publish(event)` — routes by `event.map_id()`; a no-op if nobody is watching that map.
 
 A receiver that falls behind the channel depth gets `Lagged`; the WebSocket layer treats that
 as "you're behind" and triggers a full `get_map` rather than trying to replay.
