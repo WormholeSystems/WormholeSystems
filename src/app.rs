@@ -52,8 +52,10 @@ pub struct AppState {
 pub fn router(state: AppState) -> Router {
     Router::new()
         // Outside the API router, so it is not compressed, not in the OpenAPI document,
-        // and answers without a session.
+        // and answers without a session. `/api/healthz` is the same check under the prefix
+        // every proxy in front of this forwards, for an uptime monitor outside.
         .route("/healthz", get(healthz))
+        .route("/api/healthz", get(healthz))
         .route("/auth/login", get(crate::auth::login))
         .route("/auth/callback", get(crate::auth::callback))
         .route("/auth/logout", get(crate::auth::logout))

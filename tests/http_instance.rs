@@ -86,3 +86,23 @@ async fn healthz_follows_the_database(pool: PgPool) {
     let (status, _) = wormholesystems::app::healthz(State(state(&pool))).await;
     assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
 }
+
+// The proxies only forward /api/ and friends, so an uptime check from outside asks this one.
+#[sqlx::test]
+async fn healthz_answers_under_api_too(pool: PgPool) {
+    use axum::body::Body;
+    use axum::http::Request;
+    use tower::ServiceExt;
+
+    let res = common::app::app(&pool)
+        .oneshot(
+            Request::get("/api/healthz")
+                .header("accept-encoding", "gzip")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+    assert!(res.headers().get("content-encoding").is_none());
+}
