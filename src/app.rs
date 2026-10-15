@@ -84,6 +84,7 @@ pub fn router(state: AppState) -> Router {
         .layer(axum::middleware::from_fn(
             crate::telemetry::metrics::track_http,
         ))
+        .layer(crate::telemetry::trace_layer())
         .with_state(state)
 }
 
