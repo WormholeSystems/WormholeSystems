@@ -200,7 +200,8 @@ async fn start_background(
     // Discord alerts. One runtime shared by everything that can fire one, since the
     // stargate graph it holds is the expensive part.
     let bot_token = config.discord.as_ref().and_then(|d| d.bot_token.clone());
-    let alerts = match crate::alerts::Runtime::load(db, bot_token).await {
+    let alerts = match crate::alerts::Runtime::load(db, bot_token, config.public_url.clone()).await
+    {
         Ok(runtime) => Some(Arc::new(runtime)),
         Err(err) => {
             tracing::error!("alerts disabled, could not load the stargate graph: {err}");

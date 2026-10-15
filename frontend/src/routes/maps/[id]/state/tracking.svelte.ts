@@ -306,6 +306,20 @@ export class JumpTracker {
 			}
 		}
 
+		// Nothing picked, and the hole is already drawn: there is nothing left to record, and
+		// asking the server to add it again is only refused.
+		if (signature === null) {
+			const arrival = this.map
+				.systems()
+				.find((s) => solarSystemId(s) === choice.targetSolarSystemId);
+			if (
+				arrival?.kind === 'system' &&
+				existingConnection(choice.origin, arrival, this.map.connections(), this.map.sigs())
+			) {
+				return;
+			}
+		}
+
 		this.map.trackJump({
 			from_map_solar_system_id: choice.origin.id,
 			to_solar_system_id: choice.targetSolarSystemId,

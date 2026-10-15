@@ -42,6 +42,7 @@ pub async fn evaluate(
     alerts: &[Alert],
     map_id: i64,
     occasion: Occasion,
+    public_url: &str,
 ) -> Vec<Outgoing> {
     let Some(chain) = chain_of(pool, map_id).await else {
         return Vec::new();
@@ -115,7 +116,7 @@ pub async fn evaluate(
         out.push(Outgoing {
             alert: alert.clone(),
             key,
-            embed: build(&names, &found, &changed_names, map_id),
+            embed: build(&names, &found, &changed_names, public_url, map_id),
         });
     }
     out
@@ -175,7 +176,13 @@ async fn names(pool: &PgPool, route: &[i64]) -> sqlx::Result<Vec<Named>> {
         .collect())
 }
 
-fn build(route: &[Named], found: &proximity::Proximity, changed: &[&str], map_id: i64) -> Embed {
+fn build(
+    route: &[Named],
+    found: &proximity::Proximity,
+    changed: &[&str],
+    public_url: &str,
+    map_id: i64,
+) -> Embed {
     let target = route.last();
     let target_name = target.map(|s| s.name.as_str()).unwrap_or("Somewhere");
     let from = route
@@ -216,7 +223,7 @@ fn build(route: &[Named], found: &proximity::Proximity, changed: &[&str], map_id
             "{target_name} is {jumps} {} out",
             if jumps == 1 { "jump" } else { "jumps" }
         ),
-        url: Some(format!("/maps/{map_id}")),
+        url: Some(format!("{public_url}/maps/{map_id}")),
         description: Some(description),
         color: security_color(target.map(|s| s.security).unwrap_or(-1.0)),
         fields,
@@ -229,6 +236,9 @@ fn build(route: &[Named], found: &proximity::Proximity, changed: &[&str], map_id
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::alerts::delivery::assert_links_absolute;
+
+    const PUBLIC_URL: &str = "https://map.example.com";
 
     fn named(id: i64, name: &str, security: f64) -> Named {
         Named {
@@ -250,7 +260,7 @@ mod tests {
             from: 1,
             route: vec![1, 2, 3],
         };
-        let embed = build(&route, &found, &["J122515"], 7);
+        let embed = build(&route, &found, &["J122515"], PUBLIC_URL, 7);
         assert_eq!(embed.title, "Ashab is 2 jumps out");
         assert!(embed.description.as_deref().unwrap().contains("J122515"));
         assert!(
@@ -269,7 +279,7 @@ mod tests {
             from: 1,
             route: vec![1, 2],
         };
-        let embed = build(&route, &found, &["Perimeter"], 1);
+        let embed = build(&route, &found, &["Perimeter"], PUBLIC_URL, 1);
         assert_eq!(embed.title, "Jita is 1 jump out");
         assert!(
             embed
@@ -289,7 +299,7 @@ mod tests {
             from: 1,
             route: vec![1],
         };
-        let embed = build(&route, &found, &["Jita"], 1);
+        let embed = build(&route, &found, &["Jita"], PUBLIC_URL, 1);
         assert_eq!(embed.description.as_deref(), Some("**Jita** is **Jita**."));
     }
 
@@ -306,11 +316,26 @@ mod tests {
             from: 1,
             route: vec![1, 2, 3],
         };
-        let embed = build(&route, &found, &["J122515", "J100001"], 7);
+        let embed = build(&route, &found, &["J122515", "J100001"], PUBLIC_URL, 7);
         assert_eq!(
             embed.description.as_deref(),
             Some("**J122515** and **J100001** were just connected, putting **Amarr** 1 jump away.")
         );
+    }
+
+    /// Discord refuses the whole message over a relative link, so the way back to the map
+    /// carries the address the app is served from.
+    #[test]
+    fn the_link_back_to_the_map_is_absolute() {
+        let route = vec![named(1, "Jita", 0.9)];
+        let found = proximity::Proximity {
+            jumps: 0,
+            from: 1,
+            route: vec![1],
+        };
+        let embed = build(&route, &found, &["Jita"], PUBLIC_URL, 7);
+        assert_eq!(embed.url.as_deref(), Some("https://map.example.com/maps/7"));
+        assert_links_absolute(&embed);
     }
 
     #[test]

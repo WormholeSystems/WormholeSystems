@@ -108,6 +108,8 @@
 	}
 
 	function confirm() {
+		// Answered by now, or closed before this ran: either way not ours to map again.
+		if (tracker.prompt !== prompt) return;
 		const chosenAlias = alias.trim() || null;
 		copyBookmark(chosenAlias);
 		tracker.submit({
@@ -151,10 +153,20 @@
 		toast.success('Bookmark copied', { description: text });
 	}
 
-	/** Stop asking, and map the rest of this session's jumps unlinked. */
+	/**
+	 * Closed without an answer: Esc, a click outside, or Stop asking. The jump still goes on
+	 * the map, as legacy had it, just without a signature, so the hole is never left
+	 * unmapped because nobody picked one. Whatever else was filled in still counts.
+	 */
+	export function skip() {
+		selected = null;
+		confirm();
+	}
+
+	/** Stop asking, and map this jump and the rest unlinked. */
 	function disablePrompt() {
 		map.patchUserSettings({ prompt_for_signature: false });
-		tracker.dismiss();
+		skip();
 	}
 
 	const SIZES: { value: WormholeSize | 'auto'; label: string; letter: string }[] = [

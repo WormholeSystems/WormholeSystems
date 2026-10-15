@@ -8,6 +8,7 @@ use std::sync::{Arc, Mutex};
 
 use axum::Router;
 use axum::extract::State;
+use axum::http::StatusCode;
 use axum::routing::post;
 use common::{SYS_A, SYS_B, SYS_C, world};
 use serde_json::Value;
@@ -45,20 +46,30 @@ async fn make_alert(pool: &PgPool, map_id: i64, kind: &str) -> i64 {
     .unwrap()
 }
 
+/// Where the app is served from, as the alert runtime is told.
+const PUBLIC_URL: &str = "https://map.example.com";
+
+type Received = Arc<Mutex<Vec<Value>>>;
+
 /// A stand-in for a Discord channel: a webhook URL on localhost that keeps what it is sent.
 struct Inbox {
     url: String,
-    messages: Arc<Mutex<Vec<Value>>>,
+    messages: Received,
 }
 
 impl Inbox {
     async fn start() -> Inbox {
-        let messages: Arc<Mutex<Vec<Value>>> = Arc::default();
+        Inbox::answering(StatusCode::NO_CONTENT).await
+    }
+
+    /// One that answers every message the same way, taken or not.
+    async fn answering(status: StatusCode) -> Inbox {
+        let messages: Received = Arc::default();
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let url = format!("http://{}/webhook", listener.local_addr().unwrap());
         let app = Router::new()
             .route("/webhook", post(receive))
-            .with_state(messages.clone());
+            .with_state((messages.clone(), status));
         tokio::spawn(async move {
             axum::serve(listener, app).await.unwrap();
         });
@@ -81,12 +92,18 @@ impl Inbox {
 }
 
 async fn receive(
-    State(messages): State<Arc<Mutex<Vec<Value>>>>,
+    State((messages, status)): State<(Received, StatusCode)>,
     body: String,
-) -> axum::http::StatusCode {
+) -> (StatusCode, &'static str) {
     let message: Value = serde_json::from_str(&body).unwrap();
     messages.lock().unwrap().push(message);
-    axum::http::StatusCode::NO_CONTENT
+    // What Discord says about an embed it will not take.
+    let answer = if status == StatusCode::BAD_REQUEST {
+        r#"{"message": "Invalid Form Body", "code": 50035}"#
+    } else {
+        ""
+    };
+    (status, answer)
 }
 
 // Three more k-space systems, so the seeded universe can hold a gate route longer than
@@ -335,7 +352,7 @@ async fn a_starting_point_fires_for_a_placement_on_its_route(pool: PgPool) {
     seed_gates(&pool).await;
     let inbox = Inbox::start().await;
     proximity_alert(&pool, w.map_id, &inbox, SYS_C, Some(SYS_A), 2).await;
-    let runtime = Runtime::load(&pool, None).await.unwrap();
+    let runtime = Runtime::load(&pool, None, PUBLIC_URL.into()).await.unwrap();
 
     place(&pool, &runtime, w.owner, w.map_id, SYS_F).await;
     assert!(
@@ -360,7 +377,7 @@ async fn a_starting_point_stays_quiet_beyond_max_jumps(pool: PgPool) {
     seed_gates(&pool).await;
     let inbox = Inbox::start().await;
     proximity_alert(&pool, w.map_id, &inbox, SYS_D, Some(SYS_A), 2).await;
-    let runtime = Runtime::load(&pool, None).await.unwrap();
+    let runtime = Runtime::load(&pool, None, PUBLIC_URL.into()).await.unwrap();
 
     place(&pool, &runtime, w.owner, w.map_id, SYS_B).await;
     place(&pool, &runtime, w.owner, w.map_id, SYS_C).await;
@@ -375,7 +392,7 @@ async fn a_connection_that_completes_the_route_fires_once(pool: PgPool) {
     seed_gates(&pool).await;
     let inbox = Inbox::start().await;
     proximity_alert(&pool, w.map_id, &inbox, SYS_F, Some(SYS_A), 2).await;
-    let runtime = Runtime::load(&pool, None).await.unwrap();
+    let runtime = Runtime::load(&pool, None, PUBLIC_URL.into()).await.unwrap();
 
     let a = place(&pool, &runtime, w.owner, w.map_id, SYS_A).await;
     let e = place(&pool, &runtime, w.owner, w.map_id, SYS_E).await;
@@ -406,7 +423,7 @@ async fn without_a_starting_point_the_nearest_mapped_system_counts(pool: PgPool)
     seed_gates(&pool).await;
     let inbox = Inbox::start().await;
     proximity_alert(&pool, w.map_id, &inbox, SYS_F, None, 1).await;
-    let runtime = Runtime::load(&pool, None).await.unwrap();
+    let runtime = Runtime::load(&pool, None, PUBLIC_URL.into()).await.unwrap();
 
     let a = place(&pool, &runtime, w.owner, w.map_id, SYS_A).await;
     assert!(inbox.descriptions().is_empty(), "A is five gates from F");
@@ -428,6 +445,59 @@ async fn without_a_starting_point_the_nearest_mapped_system_counts(pool: PgPool)
     );
 }
 
+/// The message links back to the map by its full address: Discord refuses an embed whose
+/// link is relative, and with it the whole message.
+#[sqlx::test]
+async fn the_message_links_back_to_the_map(pool: PgPool) {
+    let w = world(&pool).await;
+    seed_gates(&pool).await;
+    let inbox = Inbox::start().await;
+    proximity_alert(&pool, w.map_id, &inbox, SYS_C, None, 1).await;
+    let runtime = Runtime::load(&pool, None, PUBLIC_URL.into()).await.unwrap();
+
+    place(&pool, &runtime, w.owner, w.map_id, SYS_B).await;
+    let sent = inbox.messages.lock().unwrap().clone();
+    assert_eq!(sent.len(), 1);
+    assert_eq!(
+        sent[0]["embeds"][0]["url"],
+        format!("{PUBLIC_URL}/maps/{}", w.map_id)
+    );
+}
+
+/// A 400 is Discord refusing that message, and the same message gets the same answer. It
+/// goes out once, the reason is kept for the settings page, the occasion stays claimed so
+/// nothing retries it, and the alert stays on for the next one.
+#[sqlx::test]
+async fn a_refused_message_is_recorded_and_not_sent_again(pool: PgPool) {
+    let w = world(&pool).await;
+    seed_gates(&pool).await;
+    let inbox = Inbox::answering(StatusCode::BAD_REQUEST).await;
+    let alert = proximity_alert(&pool, w.map_id, &inbox, SYS_C, None, 1).await;
+    let runtime = Runtime::load(&pool, None, PUBLIC_URL.into()).await.unwrap();
+
+    let placed = place(&pool, &runtime, w.owner, w.map_id, SYS_B).await;
+    assert_eq!(inbox.descriptions().len(), 1, "a refusal is not retried");
+    assert!(!alerts::claim(&pool, alert, &format!("placement:{placed}")).await);
+
+    let failed = sqlx::query_scalar!(
+        "select detail from map_alert_events where map_alert_id = $1 and kind = 'failed'",
+        alert,
+    )
+    .fetch_all(&pool)
+    .await
+    .unwrap();
+    assert_eq!(failed.len(), 1);
+    assert!(
+        failed[0].as_deref().unwrap().contains("Invalid Form Body"),
+        "{failed:?}"
+    );
+    let active = sqlx::query_scalar!("select is_active from map_alerts where id = $1", alert)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert!(active);
+}
+
 /// The runtime keeps the active alerts in memory, but a change made through the store is
 /// seen on the very next evaluation rather than once the copy expires.
 #[sqlx::test]
@@ -436,7 +506,7 @@ async fn a_switched_off_alert_stops_firing_at_once(pool: PgPool) {
     seed_gates(&pool).await;
     let inbox = Inbox::start().await;
     let alert = proximity_alert(&pool, w.map_id, &inbox, SYS_C, None, 1).await;
-    let runtime = Runtime::load(&pool, None).await.unwrap();
+    let runtime = Runtime::load(&pool, None, PUBLIC_URL.into()).await.unwrap();
 
     place(&pool, &runtime, w.owner, w.map_id, SYS_F).await;
     assert!(inbox.descriptions().is_empty(), "F is three gates from C");
@@ -481,7 +551,7 @@ async fn kills_near_the_chain_are_claimed_once(pool: PgPool) {
     .execute(&pool)
     .await
     .unwrap();
-    let runtime = Runtime::load(&pool, None).await.unwrap();
+    let runtime = Runtime::load(&pool, None, PUBLIC_URL.into()).await.unwrap();
     place(&pool, &runtime, w.owner, w.map_id, SYS_A).await;
 
     let batch = [kill_in(1, SYS_C), kill_in(2, SYS_F), kill_in(3, SYS_A)];
@@ -505,7 +575,7 @@ async fn the_subscriber_hands_messages_to_the_delivery_worker(pool: PgPool) {
     seed_gates(&pool).await;
     let inbox = Inbox::start().await;
     proximity_alert(&pool, w.map_id, &inbox, SYS_C, None, 1).await;
-    let runtime = Arc::new(Runtime::load(&pool, None).await.unwrap());
+    let runtime = Arc::new(Runtime::load(&pool, None, PUBLIC_URL.into()).await.unwrap());
     // A hub of its own: the process-wide one carries other tests' maps.
     let hub = wormholesystems::realtime::MapHub::new();
     alerts::start_on(pool.clone(), hub.clone(), runtime);

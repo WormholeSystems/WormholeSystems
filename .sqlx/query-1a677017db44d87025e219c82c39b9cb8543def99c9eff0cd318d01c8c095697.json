@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select detail from map_alert_events where map_alert_id = $1 and kind = 'failed'",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "detail",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "map_alert_events",
+            "name": "detail"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "1a677017db44d87025e219c82c39b9cb8543def99c9eff0cd318d01c8c095697"
+}

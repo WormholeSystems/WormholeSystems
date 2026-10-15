@@ -28,6 +28,15 @@ const ghost = (id: number): MapSystemView =>
 	({ kind: 'ghost', id, alias: null, position_x: 400, position_y: 200 }) as MapSystemView;
 const conn = (id: number, from: number, to: number): MapConnection =>
 	({ id, from_system: from, to_system: to, kind: 'wormhole' }) as MapConnection;
+/** A hole scanned in the origin and not yet linked to anything. */
+const scanned = {
+	id: 5,
+	signature_id: 'ABC-123',
+	solar_system_id: 100,
+	group: 'wormhole',
+	signature_type_id: null,
+	connection_id: null,
+} as Signature;
 
 function fakeHost(over: Partial<TrackerHost> = {}) {
 	const trackJump = vi.fn();
@@ -193,6 +202,54 @@ describe('JumpTracker', () => {
 		expect(tracker.prompt).toMatchObject({ pilot: 'Alt', targetSolarSystemId: 300 });
 		tracker.dismiss();
 		expect(tracker.prompt).toBeNull();
+	});
+
+	it('maps a jump left without a signature, unlinked', async () => {
+		const { host, trackJump, setPilots } = fakeHost({ sigs: () => [scanned] });
+		const tracker = new JumpTracker(host);
+		await fly(tracker, setPilots, 100, 200);
+		const prompt = tracker.prompt!;
+		expect(prompt).not.toBeNull();
+
+		// What closing the prompt sends: no signature, and whatever else was filled in.
+		tracker.submit({
+			origin: prompt.origin,
+			targetSolarSystemId: prompt.targetSolarSystemId,
+			signaturePk: null,
+			alias: '1',
+			at: prompt.at,
+			timeStatus: 'eol',
+		});
+		expect(trackJump).toHaveBeenCalledOnce();
+		expect(trackJump.mock.calls[0][0]).toMatchObject({
+			from_map_solar_system_id: 1,
+			to_solar_system_id: 200,
+			alias: '1',
+			time_status: 'eol',
+		});
+		expect(trackJump.mock.calls[0][0].signature_pk).toBeUndefined();
+	});
+
+	it('leaves a hole already on the map alone when no signature is picked', async () => {
+		const { host, trackJump, setPilots } = fakeHost({
+			systems: () => [system(1, 100), system(2, 200)],
+			connections: () => [conn(10, 1, 2)],
+			sigs: () => [scanned],
+		});
+		const tracker = new JumpTracker(host);
+		await fly(tracker, setPilots, 100, 200);
+		// Asked, because the connection says nothing yet about which signature it was.
+		const prompt = tracker.prompt!;
+		expect(prompt).not.toBeNull();
+
+		tracker.submit({
+			origin: prompt.origin,
+			targetSolarSystemId: prompt.targetSolarSystemId,
+			signaturePk: null,
+			alias: null,
+			at: prompt.at,
+		});
+		expect(trackJump).not.toHaveBeenCalled();
 	});
 
 	it('suppresses a gate hop', async () => {

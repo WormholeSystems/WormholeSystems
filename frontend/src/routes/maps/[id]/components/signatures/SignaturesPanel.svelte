@@ -124,7 +124,9 @@
 	});
 
 	const pastedIds = $derived(pasted === null ? null : new Set(pasted.map((p) => p.signature_id)));
-	const deletedSigs = $derived(deletedByPaste(mySigs, pastedIds));
+	// Against the snapshot too, so a row a teammate added after the paste is never offered
+	// for deletion just because this scan predates it.
+	const deletedSigs = $derived(deletedByPaste(mySigs, preIds, pastedIds));
 	function rowStatus(s: Signature): 'new' | 'updated' | 'deleted' | null {
 		return pasteStatus(s, preIds, pastedIds);
 	}

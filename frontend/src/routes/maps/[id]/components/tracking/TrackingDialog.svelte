@@ -11,13 +11,17 @@
 
 	const prompt = $derived(tracker.prompt);
 	const open = $derived(prompt !== null);
+	let form = $state<TrackingForm | null>(null);
 </script>
 
 <Dialog.Root
 	{open}
 	onOpenChange={(next) => {
-		// Dismissing is a deliberate "not now": the hole stays unmapped rather than guessed at.
-		if (!next) tracker.dismiss();
+		// Closing is "no idea which one": the jump is still mapped, only no signature is
+		// linked to it.
+		if (next) return;
+		if (form) form.skip();
+		else tracker.dismiss();
 	}}
 >
 	<Dialog.Content class="max-w-lg gap-0 overflow-hidden p-0" data-testid="tracking-dialog">
@@ -25,7 +29,7 @@
 			<!-- Keyed on the prompt itself, so a jump arriving while the dialog is open starts
 			     the form clean instead of keeping the previous answers. -->
 			{#key prompt}
-				<TrackingForm {map} {tracker} {prompt} />
+				<TrackingForm bind:this={form} {map} {tracker} {prompt} />
 			{/key}
 		{/if}
 	</Dialog.Content>

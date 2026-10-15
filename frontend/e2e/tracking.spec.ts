@@ -175,6 +175,62 @@ test('without preselection the prompt opens on Unknown', async ({ api, browser, 
 	await pilot.close();
 });
 
+test('closing the prompt still maps the jump, only unlinked', async ({
+	api,
+	browser,
+	playwright,
+}) => {
+	const mapId = await createMap(api, 'E2E Tracking Closed');
+	await addSystem(api, mapId, J122515, { alias: null });
+	const pilot = await openAsPilot(browser, playwright, 41, mapId, J122515, {
+		preselect_signature: true,
+	});
+
+	await paste(pilot.page, 'WHX-401\tCosmic Signature\tWormhole\t\t100%\t1 AU');
+	await expect(pilot.page.getByTestId('sig-row')).toHaveCount(1);
+
+	await jumpTo(pilot.page, pilot.identity.characterId, J005482);
+	const dialog = pilot.page.getByTestId('tracking-dialog');
+	await expect(dialog).toBeVisible();
+	// Even with a candidate preselected, Esc is "no idea which one", not a pick.
+	await expect(dialog.getByTestId('tracking-option').getByRole('radio')).toBeChecked();
+	await pilot.page.keyboard.press('Escape');
+	await expect(dialog).toBeHidden();
+
+	await expect
+		.poll(async () => (await graph(api, mapId)).systems.length, { timeout: 10_000 })
+		.toBe(2);
+	const view = await graph(api, mapId);
+	expect(view.systems.find((s) => s.solar_system_id === J005482)?.alias).toBe('1');
+	expect(view.connections).toHaveLength(1);
+	const sigs = await (await api.get(`/api/maps/${mapId}/signatures`)).json();
+	expect(sigs[0].connection_id).toBeNull();
+
+	await pilot.close();
+});
+
+test('stop asking still maps the jump it was asked about', async ({ api, browser, playwright }) => {
+	const mapId = await createMap(api, 'E2E Tracking StopAsking');
+	await addSystem(api, mapId, J122515, { alias: null });
+	const pilot = await openAsPilot(browser, playwright, 42, mapId, J122515);
+
+	await paste(pilot.page, 'WHX-401\tCosmic Signature\tWormhole\t\t100%\t1 AU');
+	await expect(pilot.page.getByTestId('sig-row')).toHaveCount(1);
+
+	await jumpTo(pilot.page, pilot.identity.characterId, J005482);
+	const dialog = pilot.page.getByTestId('tracking-dialog');
+	await expect(dialog).toBeVisible();
+	await dialog.getByTestId('tracking-disable').click();
+	await expect(dialog).toBeHidden();
+
+	await expect
+		.poll(async () => (await graph(api, mapId)).systems.length, { timeout: 10_000 })
+		.toBe(2);
+	expect((await graph(api, mapId)).connections).toHaveLength(1);
+
+	await pilot.close();
+});
+
 test('a gate hop builds nothing', async ({ api, browser, playwright }) => {
 	const mapId = await createMap(api, 'E2E TrackingGate');
 	await addSystem(api, mapId, JITA, { alias: null });

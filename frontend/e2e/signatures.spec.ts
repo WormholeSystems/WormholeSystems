@@ -123,6 +123,41 @@ test('paste diff tints and lazy delete cascade to connection and orphan endpoint
 	await ctx.close();
 });
 
+test('a teammate scanning after your paste is never offered for deletion', async ({
+	browser,
+	api,
+}) => {
+	const mapId = await createMap(api, 'E2E SigTeammate');
+	await addSystem(api, mapId, J122515, { x: 200, y: 200 });
+
+	const { page, ctx } = await openAsMember(browser, mapId, `?system=${J122515}`);
+	await pasteViaEvent(
+		page,
+		'AAA-101\tCosmic Signature\tWormhole\t\t100%\t1 AU\n' +
+			'BBB-101\tCosmic Signature\tWormhole\t\t100%\t1 AU',
+	);
+	await expect(page.getByTestId('sig-row')).toHaveCount(2);
+	// A rescan that no longer sees BBB: the diff stays up for review.
+	await pasteViaEvent(page, 'AAA-101\tCosmic Signature\tWormhole\t\t100%\t1 AU');
+	const missing = page.getByTestId('sig-row').filter({ hasText: 'BBB-101' });
+	await expect(missing).toHaveAttribute('data-status', 'deleted');
+
+	// Meanwhile somebody else adds one. It arrives over the socket, after the scan.
+	await api.post(`/api/maps/${mapId}/signatures/add`, {
+		data: { map_id: mapId, solar_system_id: J122515, signature_id: 'CCC-101', group: 'wormhole' },
+	});
+	const theirs = page.getByTestId('sig-row').filter({ hasText: 'CCC-101' });
+	await expect(theirs).toBeVisible();
+	await expect(theirs).not.toHaveAttribute('data-status');
+	await expect(missing).toHaveAttribute('data-status', 'deleted');
+
+	await page.getByTestId('delete-missing').click();
+	await expect(page.getByTestId('sig-row')).toHaveCount(2);
+	await expect(missing).toHaveCount(0);
+	await expect(theirs).toBeVisible();
+	await ctx.close();
+});
+
 test('category change clears the connection link', async ({ browser, api }) => {
 	const mapId = await createMap(api, 'E2E SigRecat');
 	const near = await addSystem(api, mapId, J122515, { x: 200, y: 200 });
