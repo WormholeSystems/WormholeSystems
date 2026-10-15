@@ -132,6 +132,7 @@ async fn tier_one(poller: Arc<Poller>, server: ServerWatch) -> Result<(), sqlx::
     // Nobody can be online while the server is not, and every call would fail against the
     // error limit. See [`crate::server_status`].
     if !server.should_poll() {
+        skipped_offline("tier-1");
         return Ok(());
     }
     let due = active_characters(&poller.pool, false).await?;
@@ -146,11 +147,18 @@ async fn tier_one(poller: Arc<Poller>, server: ServerWatch) -> Result<(), sqlx::
 /// Tier 2: location + ship, every 5s, for currently-online characters of active users.
 async fn tier_two(poller: Arc<Poller>, server: ServerWatch) -> Result<(), sqlx::Error> {
     if !server.should_poll() {
+        skipped_offline("tier-2");
         return Ok(());
     }
     let due = active_characters(&poller.pool, true).await?;
     run_polls("tier-2", &due, |d| poll_location_ship(poller.clone(), d)).await;
     Ok(())
+}
+
+/// A tick that did nothing because Tranquility is not up.
+fn skipped_offline(tier: &'static str) {
+    metrics::counter!("ws_tracking_ticks_skipped_total", "tier" => tier, "reason" => "server_offline")
+        .increment(1);
 }
 
 /// Characters whose user has been active within the last 5 minutes and that hold a token EVE
@@ -223,7 +231,7 @@ where
 
 /// [`run_bounded`] for one tier's polls: each under [`POLL_TIMEOUT`], with a single line
 /// logged for the tick when any failed, so a tier that stops working says so.
-async fn run_polls<F, Fut>(tier: &str, due: &[Due], f: F)
+async fn run_polls<F, Fut>(tier: &'static str, due: &[Due], f: F)
 where
     F: Fn(Due) -> Fut,
     Fut: Future<Output = Poll> + Send + 'static,
@@ -248,6 +256,12 @@ where
     })
     .await;
     let (count, sample) = std::mem::take(&mut *failed.lock().expect("poll failures lock"));
+    let polls = |outcome: &'static str, n: usize| {
+        metrics::counter!("ws_tracking_polls_total", "tier" => tier, "outcome" => outcome)
+            .increment(n as u64);
+    };
+    polls("ok", due.len() - count);
+    polls("failed", count);
     if let Some(sample) = sample {
         tracing::error!(
             "tracking {tier}: {count} of {} poll(s) failed, e.g. {sample}",

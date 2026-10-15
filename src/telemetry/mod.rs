@@ -2,6 +2,7 @@
 //! metrics and traces somewhere. Every hook is off until its variable is set, so a default
 //! install keeps everything on the machine.
 
+pub mod metrics;
 pub mod sentry;
 pub mod tunnel;
 

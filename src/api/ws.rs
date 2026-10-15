@@ -53,7 +53,12 @@ pub async fn map_ws(
     match reader.check().await {
         Ok(_) => {
             let events = crate::realtime::hub().subscribe(map_id);
-            ws.on_upgrade(move |socket| stream_map_events(socket, reader, events))
+            ws.on_upgrade(move |socket| {
+                crate::telemetry::metrics::track_socket(
+                    "map",
+                    stream_map_events(socket, reader, events),
+                )
+            })
         }
         Err(crate::maps::MapError::NotFound) => StatusCode::NOT_FOUND.into_response(),
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
@@ -74,7 +79,10 @@ pub async fn user_ws(
         .flatten();
     match actor {
         Some(actor) => ws.on_upgrade(move |socket| {
-            user_heartbeat(socket, state.db, state.user_hub, actor.user_id)
+            crate::telemetry::metrics::track_socket(
+                "user",
+                user_heartbeat(socket, state.db, state.user_hub, actor.user_id),
+            )
         }),
         None => StatusCode::UNAUTHORIZED.into_response(),
     }

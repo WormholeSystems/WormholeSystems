@@ -78,6 +78,10 @@ utoipa-scalar = { version = "0.3", features = ["axum"] }
 ed25519-dalek = { version = "3.0.0", default-features = false, features = ["alloc"] }
 hex = "0.4.3"
 sha2 = "0.10"
+# Prometheus metrics, on a listener of their own when METRICS_ADDR is set. The exporter's
+# own HTTP listener and push gateway are off: axum serves the page.
+metrics = "0.24"
+metrics-exporter-prometheus = { version = "0.18", default-features = false }
 
 [dev-dependencies]
 tower = { version = "0.5", features = ["util"] }

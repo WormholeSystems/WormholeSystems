@@ -81,6 +81,9 @@ pub fn router(state: AppState) -> Router {
         .route("/ws/user", get(crate::api::ws::user_ws))
         // The JSON API for the SvelteKit frontend.
         .merge(crate::api::router())
+        .layer(axum::middleware::from_fn(
+            crate::telemetry::metrics::track_http,
+        ))
         .with_state(state)
 }
 
@@ -120,6 +123,9 @@ pub async fn serve(config: Config) {
     // its transaction, so the geometry is installed for the process here.
     crate::maps::set_grid(config.grid);
 
+    if let Some(addr) = &config.metrics_addr {
+        crate::telemetry::metrics::serve(addr, db.clone()).await;
+    }
     let user_hub = crate::realtime::UserHub::new();
     let server = start_background(&config, &db, &sso, &esi, &user_hub).await;
 
