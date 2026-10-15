@@ -182,6 +182,34 @@ test('a viewer sees the roles but cannot change them', async ({ page, api }) => 
 	await ctx.close();
 });
 
+test('a manager runs the general settings, and only the owner gets the danger zone', async ({
+	page,
+	api,
+}) => {
+	const mapId = await createMap(api, 'E2E ManagerSettings');
+	const manager = await createIdentity(40);
+	await grantAccess(mapId, manager.characterId, 'manager');
+
+	const ctx = await page.context().browser()!.newContext();
+	await ctx.addCookies([
+		{ name: 'ws_session', value: manager.session, domain: 'localhost', path: '/' },
+	]);
+	const managerPage = await ctx.newPage();
+	await managerPage.goto(`http://localhost:5173/maps/${mapId}/settings`);
+	await managerPage.waitForSelector('html[data-hydrated="true"]');
+
+	await managerPage.getByTestId('map-name-input').fill('E2E Managed');
+	await managerPage.getByTestId('rename-button').click();
+	await expect(managerPage.getByTestId('rename-button')).toBeDisabled();
+	await expect
+		.poll(async () => (await (await api.get(`/api/maps/${mapId}`)).json()).map.name)
+		.toBe('E2E Managed');
+
+	// Deleting the map and handing it on stay the owner's.
+	await expect(managerPage.getByTestId('danger-zone')).toHaveCount(0);
+	await ctx.close();
+});
+
 test('chain naming previews as you type and survives a reload', async ({ page, api }) => {
 	const mapId = await createMap(api, 'E2E Naming');
 	await gotoApp(page, `/maps/${mapId}/settings/naming`);

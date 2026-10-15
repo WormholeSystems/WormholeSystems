@@ -11,7 +11,7 @@ use wormholesystems::maps::map::{
     CreateMap, DeleteMap, GetMap, UpdateMap, create_map, delete_map, get_map, list_maps, update_map,
 };
 use wormholesystems::maps::solar_system::{AddSystem, add_system};
-use wormholesystems::maps::{Actor, ConnectionType, MapError, Role, SubjectType};
+use wormholesystems::maps::{Actor, ConnectionType, MapError, MapLayout, Role, SubjectType};
 
 #[sqlx::test]
 async fn create_returns_fields_and_grants_owner(pool: PgPool) {
@@ -103,9 +103,10 @@ async fn create_rejects_blank_name_and_foreign_character(pool: PgPool) {
 }
 
 #[sqlx::test]
-async fn update_is_owner_only_and_patches_fields(pool: PgPool) {
+async fn update_is_manager_and_up_and_patches_fields(pool: PgPool) {
     let w = world(&pool).await;
     let member = member_with_role(&pool, w.owner, w.map_id, 1002, 2002, Role::Member).await;
+    let manager = member_with_role(&pool, w.owner, w.map_id, 1003, 2003, Role::Manager).await;
 
     // Member can't modify the map itself.
     assert!(matches!(
@@ -119,6 +120,32 @@ async fn update_is_owner_only_and_patches_fields(pool: PgPool) {
             },
         )
         .await,
+        Err(MapError::Forbidden),
+    ));
+
+    // A manager runs the map's settings, the ones the settings pages offer them.
+    let managed = update_map(
+        &pool,
+        manager,
+        UpdateMap {
+            map_id: w.map_id,
+            layout: Some(MapLayout::Tree),
+            allow_layout_override: Some(false),
+            ghost_unlinked_wormholes: Some(false),
+            is_public: Some(true),
+            ..Default::default()
+        },
+    )
+    .await
+    .unwrap();
+    assert_eq!(managed.layout, MapLayout::Tree);
+    assert!(!managed.allow_layout_override);
+    assert!(!managed.ghost_unlinked_wormholes);
+    assert!(managed.is_public);
+
+    // But deleting the map stays the owner's.
+    assert!(matches!(
+        delete_map(&pool, manager, DeleteMap { map_id: w.map_id }).await,
         Err(MapError::Forbidden),
     ));
 

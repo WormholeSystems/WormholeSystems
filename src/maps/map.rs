@@ -288,10 +288,17 @@ impl UpdateMap {
     }
 }
 
-/// Rename / re-describe / re-icon a map. Owner only.
+/// Change the map's own settings: name, description, image, naming, placement, ghosts and
+/// public access. Manager+; deleting the map and handing it on stay the owner's.
 pub async fn update_map(pool: &PgPool, actor: Actor, cmd: UpdateMap) -> Result<Map> {
     cmd.validate()?;
-    let mut tx = MapTx::begin(pool, cmd.map_id, EventActor::Character(actor), Role::Owner).await?;
+    let mut tx = MapTx::begin(
+        pool,
+        cmd.map_id,
+        EventActor::Character(actor),
+        Role::Manager,
+    )
+    .await?;
     let current = map_from_row!(
         sqlx::query!(
             r#"select id, name, description, image_url, created_at, alias_scheme, ignored_alias,

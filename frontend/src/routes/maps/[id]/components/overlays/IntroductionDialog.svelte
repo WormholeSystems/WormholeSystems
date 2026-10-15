@@ -24,6 +24,7 @@
 	import { ESI_SCOPES } from '$lib/esi/scopes';
 	import { INTRO_STEPS, INTRO_TIPS, introSummary, introToggles } from './introduction-content';
 	import { PLACEMENTS } from '$lib/map/placement';
+	import { atLeast } from '$lib/map/roles';
 	import { automationPatch } from '$lib/map/user-settings';
 
 	let { map, onfinished }: { map: MapState; onfinished?: () => void } = $props();
@@ -51,9 +52,9 @@
 		return `/auth/login?${params}`;
 	}
 
-	// Placement is the map's, not this viewer's. Only the owner is offered it here:
+	// Placement is the map's, not this viewer's. Only managers and up are offered it here:
 	// everyone else would meet a choice they cannot make.
-	const isOwner = $derived(map.data?.role === 'owner');
+	const canManage = $derived(atLeast(map.data?.role, 'manager'));
 	const placement = $derived(map.data?.map.layout === 'tree' ? 'tree' : 'manual');
 
 	function update(patch: UpdateMapUserSettings) {
@@ -148,7 +149,7 @@
 				</div>
 			{:else if step === 2}
 				<div class="flex flex-col gap-3.5">
-					{#if isOwner}
+					{#if canManage}
 						<div class="flex flex-col gap-2" data-testid="setup-placement">
 							<div class="flex items-baseline justify-between gap-3">
 								<span class="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
