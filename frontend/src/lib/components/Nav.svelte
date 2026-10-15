@@ -52,19 +52,23 @@
 </script>
 
 <nav class="sticky top-0 z-40 border-b border-border bg-background">
-	<!-- Three columns so the middle holds its place however long the shortcut list grows. -->
-	<div class="grid h-12 grid-cols-[1fr_auto_1fr] items-center gap-4 px-5">
-		<div class="flex min-w-0 items-center gap-4">
+	<!-- Three columns so the middle holds its place however long the shortcut list grows.
+	     Below md there is no middle, and the left side gets all the room the right does
+	     not need, rather than an even half that a phone cannot fit the wordmark into. -->
+	<div
+		class="grid h-12 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 sm:gap-4 sm:px-5 md:grid-cols-[1fr_auto_1fr]"
+	>
+		<div class="flex min-w-0 items-center gap-3 sm:gap-4">
 			<a href="/" class="flex items-center gap-2 text-foreground">
 				<Logo class="size-5" />
 				<span class="font-heading text-sm font-semibold tracking-tight">WormholeSystems</span>
 				<!-- Says what it is before anyone finds out the hard way. -->
 				<span
-					class="border border-amber-500/40 px-1.5 py-0.5 text-[10px] tracking-wider text-amber-500 uppercase"
-					data-testid="pre-alpha"
-					title="Early build: things move, break and get rebuilt without warning."
+					class="border border-amber-500/40 px-1.5 py-0.5 text-[10px] tracking-wider whitespace-nowrap text-amber-500 uppercase"
+					data-testid="beta"
+					title="Beta: in daily use, still changing. Updates migrate your data."
 				>
-					Pre-alpha
+					Beta
 				</span>
 			</a>
 			<!-- Without an account this only leads to the sign-in page, so it is not shown. -->
@@ -76,7 +80,8 @@
 						: 'text-muted-foreground hover:text-foreground'}"
 				>
 					<MapIcon class="size-4" />
-					Maps
+					<!-- On a phone the icon alone, so the wordmark and the badge keep their line. -->
+					<span class="sr-only sm:not-sr-only">Maps</span>
 				</a>
 			{/if}
 

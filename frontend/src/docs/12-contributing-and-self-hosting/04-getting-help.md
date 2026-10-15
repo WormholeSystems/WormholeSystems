@@ -27,6 +27,6 @@ where the answer is.
 
 ## A word on the state of it
 
-This is pre-alpha. Some things are missing, some are half-built, and some worked last week
-and do not today. If something looks broken it might genuinely be broken, and saying so is
+This is beta. Some things are missing, some are half-built, and now and then something
+that worked last week does not today. If something looks broken it might genuinely be broken, and saying so is
 useful.

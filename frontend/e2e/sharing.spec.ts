@@ -64,8 +64,9 @@ test('a share link shows the chain to somebody with no account', async ({ page, 
 	await page.getByTestId('confirm-accept').click();
 	await expect(page.getByTestId('share-create')).toBeVisible();
 
+	// A signed-out guest is told to sign in, since that is the one way in left.
 	await reloadApp(guestPage);
-	await expect(guestPage.getByTestId('map-error')).toBeVisible();
+	await expect(guestPage.getByTestId('error-page')).toHaveAttribute('data-status', '401');
 
 	const shut = await guest.newPage();
 	const response = await shut.goto(url);

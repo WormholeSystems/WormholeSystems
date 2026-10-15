@@ -9,9 +9,8 @@ WormholeSystems is open source, and you can run your own private instance. Every
 deployment needs is in the one repository, and an operator CLI called **wsctl** does the
 work.
 
-> **This is pre-alpha software.** Breaking changes land constantly, there is no promise of
-> continued updates, and databases get wiped when it is convenient. Host it to look at it,
-> not because a corp is depending on it.
+> **This is beta software.** Updates migrate the database in place and `wsctl update`
+> takes a dump before each one, but things still change between versions. Keep the backups.
 
 ## What you need
 

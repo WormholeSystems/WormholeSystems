@@ -16,5 +16,5 @@ should not be able to.
 - **Refresh tokens are stored unencrypted.** Whoever can read the database can act as any
   linked character within the scopes it granted. This is a known property rather than a
   bug; see the note in `migrations/0001_auth.sql`.
-- **This is pre-alpha.** It has not been audited, and it is not run anywhere that matters
-  yet. Please report things anyway — knowing early is the point of saying so.
+- **This is beta.** It has not been audited. Please report things anyway, knowing early is
+  the point of saying so.

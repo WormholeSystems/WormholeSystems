@@ -231,8 +231,8 @@ Everything the map screen does goes over this API, and all of it is open to a sc
 holding a personal access token. It is generated from the same handlers and wire types \
 the frontend uses, so it is complete and current by construction.
 
-**Pre-alpha.** The API follows the frontend and changes with it, without notice and \
-without a migration path. Pin the version you tested against and expect to revisit.
+**Beta.** The API follows the frontend and changes with it between updates. Pin the \
+version you tested against and expect to revisit.
 
 Sign in with the session cookie a browser holds, or send `Authorization: Bearer wst_...` \
 with a token minted under Settings, API tokens. A token acts as the user who made it, with \

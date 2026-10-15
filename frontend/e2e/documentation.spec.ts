@@ -9,8 +9,8 @@ test('the documentation renders, navigates and links onward', async ({ page }) =
 
 	const article = page.getByTestId('docs-page');
 	await expect(article.locator('h1')).toHaveText('Overview');
-	// The pre-alpha warning is on the first page somebody lands on.
-	await expect(article).toContainText('Pre-alpha');
+	// The beta note is on the first page somebody lands on.
+	await expect(article).toContainText('Beta');
 
 	// The sidebar reaches a page in another category, and tables survive rendering.
 	await page.getByRole('link', { name: 'Mass', exact: true }).click();

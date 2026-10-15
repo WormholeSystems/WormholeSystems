@@ -4,13 +4,10 @@ title: Overview
 
 # Overview
 
-> ## ⚠️ Pre-alpha
+> ## Beta
 >
-> **This is not ready to rely on.** Breaking changes land constantly, there is no promise
-> of continued updates, and databases are wiped when it is convenient. Anything written on
-> a map here can disappear without warning.
->
-> Use it to look at it, or to help build it. Do not put a chain your corp depends on on it.
+> It is in daily use and updates keep your maps, but things still change. Expect the odd
+> rough edge, and tell us when something breaks.
 
 A **map** is a shared, real-time picture of a wormhole chain. Systems appear as nodes, and the wormholes between them appear as connections. Everyone with access to the map sees the same picture, updating live as the chain is scanned.
 
