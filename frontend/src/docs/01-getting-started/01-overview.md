@@ -24,3 +24,5 @@ Maps are collaborative. When a corpmate scans a new signature, resolves a wormho
 ## Where to go next
 
 If this is your first time, start with [Connecting your character](/documentation/getting-started/connecting-your-character) so the app can track your location and set waypoints, then read [Mapping as you fly](/documentation/getting-started/auto-mapping) to log the chain with almost no effort.
+
+Coming from the old app at legacy.wormhole.systems? [Moving from the legacy app](/documentation/getting-started/moving-from-legacy) shows how to bring your maps across.
