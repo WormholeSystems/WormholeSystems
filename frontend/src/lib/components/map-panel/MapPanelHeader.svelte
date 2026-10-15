@@ -5,15 +5,15 @@
 </script>
 
 <div
-	class="flex h-9 shrink-0 items-center justify-between border-b border-border/50 bg-muted/30 px-3"
+	class="@container/panel-header flex h-9 shrink-0 items-center justify-between gap-2 border-b border-border/50 bg-muted/30 px-3"
 >
 	<h3
-		class="flex items-center gap-1 font-mono text-[10px] tracking-wider text-muted-foreground uppercase"
+		class="flex min-w-0 items-center gap-1 overflow-hidden font-mono whitespace-nowrap text-[10px] tracking-wider text-muted-foreground uppercase"
 	>
 		{@render children()}
 	</h3>
 	{#if actions}
-		<div class="flex items-center gap-2">
+		<div class="flex shrink-0 items-center gap-2">
 			{@render actions()}
 		</div>
 	{/if}

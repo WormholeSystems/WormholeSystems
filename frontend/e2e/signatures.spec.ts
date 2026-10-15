@@ -54,7 +54,7 @@ test('wormhole type select: statics first, K162 group, chosen type survives repa
 
 	const row = page.getByTestId('sig-row');
 	await expect(row).toHaveCount(1);
-	await expect(page.getByTestId('signatures-pasted-at')).toHaveText('just now');
+	await expect(page.getByTestId('signatures-pasted-at')).toHaveText(/^\s*\d+s$/);
 	await row.getByTestId('sig-type').click();
 	// Statics section leads with the system's static; K162 has its own group.
 	const headings = page.locator('[data-slot="select-group-heading"]');
