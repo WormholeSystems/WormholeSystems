@@ -1,5 +1,6 @@
 //! The live killmail feed against a stand-in R2Z2: kills are stored back to back, the
-//! cursor follows them, and an alert hears about one without the ingest waiting for it.
+//! cursor follows them, an alert hears about one without the ingest waiting for it, and a
+//! kill missing from the feed does not stall it.
 
 mod common;
 
@@ -15,6 +16,7 @@ use serde_json::{Value, json};
 use sqlx::PgPool;
 use wormholesystems::alerts::Runtime;
 use wormholesystems::esi::EsiClient;
+use wormholesystems::killmails::{Timing, listen};
 use wormholesystems::maps::solar_system::{AddSystem, add_system};
 
 const HEAD: i64 = 100;
@@ -28,7 +30,12 @@ async fn frame(Path(name): Path<String>) -> (StatusCode, String) {
     if seq <= HEAD || seq > HEAD + 2 {
         return (StatusCode::NOT_FOUND, String::new());
     }
-    let body = json!({
+    (StatusCode::OK, kill(seq))
+}
+
+/// Kill `seq` of the feed, as R2Z2 serves it: killmail `5000 + seq`, just now.
+fn kill(seq: i64) -> String {
+    json!({
         "killmail_id": 5000 + seq,
         "hash": "abc",
         "esi": {
@@ -38,8 +45,8 @@ async fn frame(Path(name): Path<String>) -> (StatusCode, String) {
             "attackers": [{ "character_id": 2, "final_blow": true }]
         },
         "zkb": { "totalValue": 1000.0, "attackerCount": 1, "solo": true }
-    });
-    (StatusCode::OK, body.to_string())
+    })
+    .to_string()
 }
 
 async fn receive(State(inbox): State<Arc<Mutex<Vec<Value>>>>, body: String) -> StatusCode {
@@ -154,4 +161,110 @@ async fn kills_are_stored_back_to_back_and_alerted_on(pool: PgPool) {
         wait_for(async || inbox.lock().unwrap().len() == 2).await,
         "one message per kill"
     );
+}
+
+/// A feed whose head is `head` and which still holds the kills `held` says it does.
+#[derive(Clone)]
+struct Feed {
+    head: i64,
+    held: fn(i64) -> bool,
+}
+
+async fn feed_frame(State(feed): State<Feed>, Path(name): Path<String>) -> (StatusCode, String) {
+    if name == "sequence.json" {
+        return (StatusCode::OK, json!({ "sequence": feed.head }).to_string());
+    }
+    let seq: i64 = name.trim_end_matches(".json").parse().unwrap_or(0);
+    if (feed.held)(seq) {
+        (StatusCode::OK, kill(seq))
+    } else {
+        (StatusCode::NOT_FOUND, String::new())
+    }
+}
+
+/// The feed at test speed.
+const FAST: Timing = Timing {
+    idle: Duration::from_millis(10),
+    pace: Duration::from_millis(1),
+    head_check: Duration::ZERO,
+    missing_grace: Duration::from_millis(50),
+};
+
+/// Follow `feed` from `cursor` on.
+async fn follow(pool: &PgPool, cursor: i64, feed: Feed, timing: Timing) {
+    world(pool).await;
+    sqlx::query!(
+        "insert into zkb_state (id, sequence_id) values (true, $1)",
+        cursor
+    )
+    .execute(pool)
+    .await
+    .unwrap();
+    let base = serve(
+        Router::new()
+            .route("/ephemeral/{name}", get(feed_frame))
+            .with_state(feed),
+    )
+    .await;
+    tokio::spawn(listen(pool.clone(), None, base, timing));
+}
+
+async fn cursor(pool: &PgPool) -> i64 {
+    sqlx::query_scalar!("select sequence_id from zkb_state")
+        .fetch_one(pool)
+        .await
+        .unwrap()
+}
+
+async fn stored(pool: &PgPool) -> Vec<i64> {
+    sqlx::query_scalar!("select id from killmails order by id")
+        .fetch_all(pool)
+        .await
+        .unwrap()
+}
+
+/// Down for longer than the feed keeps its files: everything after the cursor 404s. The
+/// head says there is more, so the ingest finds where the feed now starts and goes on
+/// from there, instead of waiting on the first missing kill forever.
+#[sqlx::test]
+async fn a_cursor_older_than_the_feed_skips_to_what_it_still_holds(pool: PgPool) {
+    let feed = Feed {
+        head: 520,
+        held: |seq| (500..=520).contains(&seq),
+    };
+    follow(&pool, 10, feed, FAST).await;
+
+    assert!(wait_for(async || cursor(&pool).await == 520).await);
+    assert_eq!(stored(&pool).await, (5500..=5520).collect::<Vec<_>>());
+}
+
+/// A kill pulled from the middle of the feed costs that kill and nothing after it.
+#[sqlx::test]
+async fn a_kill_missing_under_the_head_is_stepped_over(pool: PgPool) {
+    let feed = Feed {
+        head: 104,
+        held: |seq| seq == 101 || (103..=104).contains(&seq),
+    };
+    follow(&pool, 100, feed, FAST).await;
+
+    assert!(wait_for(async || cursor(&pool).await == 104).await);
+    assert_eq!(stored(&pool).await, [5101, 5103, 5104]);
+}
+
+/// Past the head a 404 is the kill not having happened yet, and one the head has only just
+/// counted gets its grace: neither is skipped.
+#[sqlx::test]
+async fn a_kill_not_yet_there_is_waited_for(pool: PgPool) {
+    let feed = Feed {
+        head: 101,
+        held: |_| false,
+    };
+    let patient = Timing {
+        missing_grace: Duration::from_secs(60),
+        ..FAST
+    };
+    follow(&pool, 100, feed, patient).await;
+
+    tokio::time::sleep(Duration::from_millis(300)).await;
+    assert_eq!(cursor(&pool).await, 100);
 }

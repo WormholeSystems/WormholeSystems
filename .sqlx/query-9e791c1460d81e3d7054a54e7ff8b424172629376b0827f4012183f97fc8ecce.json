@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select inverse as \"inverse!\" from map_events where map_id = $1\n           order by id desc limit 1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "inverse!",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "map_events",
+            "name": "inverse"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "9e791c1460d81e3d7054a54e7ff8b424172629376b0827f4012183f97fc8ecce"
+}

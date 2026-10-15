@@ -1,7 +1,7 @@
 // The systems domain: the nodes on the map and every verb that changes them. Components
 // read `map.systems.all` and call these; nothing outside `state/` builds api requests.
 
-import { api } from '$lib/api/client';
+import { ApiError, api } from '$lib/api/client';
 import type { GridConfig } from '$lib/api/types/GridConfig';
 import type { ResolveGhostSystem } from '$lib/api/types/ResolveGhostSystem';
 import type { MapSystemView } from '$lib/api/types/MapSystemView';
@@ -22,7 +22,12 @@ export interface SystemsHost {
 	run: RunAction;
 	/** The local echo for a saved note, so it reads back before the server confirms it. */
 	notesLocal(mapSolarSystemId: number, notes: string | null): void;
+	/** Drop that echo and read the notes back from the server. */
+	refetchNotes(mapSolarSystemId: number): void;
 }
+
+/** How a notes save went. `conflict`: someone else saved first, and theirs is kept. */
+export type NotesSave = 'saved' | 'conflict' | 'failed';
 
 export class SystemsApi {
 	constructor(private host: SystemsHost) {}
@@ -137,11 +142,34 @@ export class SystemsApi {
 		);
 	}
 
-	saveNotes(mapSolarSystemId: number, notes: string | null) {
-		this.host.run('setNotes', () =>
-			api.setNotes({ map_id: this.host.mapId, map_solar_system_id: mapSolarSystemId, notes }),
-		);
+	/**
+	 * Save the notes over `expected`, the text the editor started from. The server refuses
+	 * when that is no longer what is stored, which is said here as `conflict` rather than as
+	 * a failed write: the editor asks what to do with it instead of a toast.
+	 */
+	async saveNotes(
+		mapSolarSystemId: number,
+		notes: string | null,
+		expected: string | null,
+	): Promise<NotesSave> {
+		const write = this.host.run('setNotes', async (): Promise<NotesSave> => {
+			try {
+				await api.setNotes({
+					map_id: this.host.mapId,
+					map_solar_system_id: mapSolarSystemId,
+					notes,
+					expected,
+				});
+				return 'saved';
+			} catch (err) {
+				if (err instanceof ApiError && err.status === 409) return 'conflict';
+				throw err;
+			}
+		});
 		this.host.notesLocal(mapSolarSystemId, notes);
+		const outcome = await write.catch((): NotesSave => 'failed');
+		if (outcome !== 'saved') this.host.refetchNotes(mapSolarSystemId);
+		return outcome;
 	}
 
 	setStatus(mapSolarSystemId: number, status: SystemStatus) {

@@ -1,6 +1,6 @@
 //! The live feed: zKillboard's R2Z2 stream, one killmail at a time.
 
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use serde::Deserialize;
 use sqlx::PgPool;
@@ -26,14 +26,6 @@ struct R2Z2Killmail {
     zkb: serde_json::Value,
 }
 
-/// How long to wait after the stream had nothing new. zKillboard asks for 6 seconds: a kill
-/// arrives every 5.5 on average, so polling faster gains nothing.
-const IDLE: Duration = Duration::from_secs(6);
-
-/// The least time between two fetches while there is a backlog. R2Z2 bans an address for an
-/// hour past 15 requests a second, so catching up stays well under that.
-const PACE: Duration = Duration::from_millis(100);
-
 /// Kills waiting for alert evaluation. Past this, evaluation is minutes behind (the
 /// database is struggling), and an alert about a kill that old is not worth queueing.
 const ALERT_QUEUE: usize = 1024;
@@ -41,19 +33,74 @@ const ALERT_QUEUE: usize = 1024;
 /// Kills evaluated together, so a burst reads each map's chain once.
 const ALERT_BATCH: usize = 100;
 
-pub(super) async fn listen(
+/// How far behind the head of the feed, in kills, before it is worth a warning. About 45
+/// minutes of kills; a restart catches up on that in under two.
+const BEHIND_WARN: i64 = 500;
+
+/// Missing kills up to this many are stepped over one by one. Past it, the start of what
+/// the feed still holds is searched for instead (see [`resume_at`]).
+const WALK_LIMIT: i64 = 100;
+
+type BoxError = Box<dyn std::error::Error + Send + Sync>;
+
+/// How the feed is paced. Its own type so the tests can run it in milliseconds.
+#[doc(hidden)]
+#[derive(Debug, Clone, Copy)]
+pub struct Timing {
+    /// How long to wait after the stream had nothing new.
+    pub idle: Duration,
+    /// The least time between two fetches while there is a backlog.
+    pub pace: Duration,
+    /// How often the cursor is compared with the head of the feed.
+    pub head_check: Duration,
+    /// How long a kill the head already counts may stay missing before it is given up on.
+    pub missing_grace: Duration,
+}
+
+impl Default for Timing {
+    fn default() -> Self {
+        Timing {
+            // zKillboard asks for 6 seconds: a kill arrives every 5.5 on average, so
+            // polling faster gains nothing.
+            idle: Duration::from_secs(6),
+            // R2Z2 bans an address for an hour past 15 requests a second, so catching up
+            // stays well under that.
+            pace: Duration::from_millis(100),
+            head_check: Duration::from_secs(60),
+            // The kill was asked for before it existed, while idling at the head, so a
+            // cache in front of the bucket may answer that 404 again for a little while
+            // after the file arrived. Five tries before it counts as gone.
+            missing_grace: Duration::from_secs(30),
+        }
+    }
+}
+
+/// Follow the feed from where it was left off, for good.
+///
+/// A 404 is normally "nothing new yet", and waited out. But the feed does not keep its
+/// files forever, and a kill can go missing from it: a 404 for a sequence the head has
+/// already passed would then be waited on forever while the feed moves on. So the cursor
+/// is compared with the head every so often, and a kill the head counts that stays missing
+/// past [`Timing::missing_grace`] is skipped to what the feed still has.
+#[doc(hidden)]
+pub async fn listen(
     pool: PgPool,
     alerts: Option<std::sync::Arc<crate::alerts::Runtime>>,
     base: String,
+    timing: Timing,
 ) {
     let http = http_client();
     let alerts = alerts.map(|runtime| {
         let (tx, rx) = mpsc::channel(ALERT_QUEUE);
+        // Ends with the sender, so a restarted feed does not leave the old one behind.
         tokio::spawn(alert_loop(pool.clone(), runtime, rx));
         tx
     });
     // Read from the table once, then kept here: the table is only for the next boot.
     let mut cursor: Option<i64> = None;
+    let mut head = Head::default();
+    // The kill that is missing under the head, and since when.
+    let mut missing: Option<(i64, Instant)> = None;
     loop {
         let last = match cursor {
             Some(seq) => seq,
@@ -69,12 +116,51 @@ pub(super) async fn listen(
                 }
             },
         };
-        match ingest(&pool, &http, &base, alerts.as_ref(), last + 1).await {
+        if head.due(timing.head_check) {
+            head.check(&http, &base, last).await;
+        }
+        let next = last + 1;
+        match ingest(&pool, &http, &base, alerts.as_ref(), next).await {
             Ok(true) => {
-                cursor = Some(last + 1);
-                tokio::time::sleep(PACE).await;
+                cursor = Some(next);
+                missing = None;
+                tokio::time::sleep(timing.pace).await;
             }
-            Ok(false) => tokio::time::sleep(IDLE).await,
+            Ok(false) => {
+                // Past the head: it has not happened yet.
+                let Some(to) = head.seq.filter(|&head| next <= head) else {
+                    tokio::time::sleep(timing.idle).await;
+                    continue;
+                };
+                let since = match missing {
+                    Some((seq, since)) if seq == next => since,
+                    _ => missing.insert((next, Instant::now())).1,
+                };
+                if since.elapsed() < timing.missing_grace {
+                    tokio::time::sleep(timing.idle).await;
+                    continue;
+                }
+                match resume_at(&http, &base, next, to, timing.pace).await {
+                    Ok(resume) => {
+                        tracing::warn!(
+                            "killmail ingest: {next}..={} are not in the feed, skipping to {resume}",
+                            resume - 1
+                        );
+                        metrics::counter!("ws_killmail_ingest_skipped_total")
+                            .increment((resume - next) as u64);
+                        if let Err(err) = advance(&pool, resume - 1).await {
+                            tracing::error!("killmail ingest error: {err}");
+                        }
+                        cursor = Some(resume - 1);
+                        missing = None;
+                    }
+                    Err(err) => {
+                        metrics::counter!("ws_killmail_ingest_errors_total").increment(1);
+                        tracing::error!("killmail ingest error: {err}");
+                        tokio::time::sleep(Duration::from_secs(30)).await;
+                    }
+                }
+            }
             Err(err) => {
                 metrics::counter!("ws_killmail_ingest_errors_total").increment(1);
                 tracing::error!("killmail ingest error: {err}");
@@ -84,18 +170,39 @@ pub(super) async fn listen(
     }
 }
 
-/// Where the stream left off, or the live head of it on the very first run.
-async fn start_at(
-    pool: &PgPool,
-    http: &reqwest::Client,
-    base: &str,
-) -> Result<i64, Box<dyn std::error::Error + Send + Sync>> {
-    let cursor: Option<i64> = sqlx::query_scalar!("select sequence_id from zkb_state")
-        .fetch_optional(pool)
-        .await?;
-    if let Some(seq) = cursor {
-        return Ok(seq);
+/// The last sequence the feed has published, as of the last look.
+#[derive(Default)]
+struct Head {
+    seq: Option<i64>,
+    checked: Option<Instant>,
+}
+
+impl Head {
+    fn due(&self, every: Duration) -> bool {
+        self.checked.is_none_or(|at| at.elapsed() >= every)
     }
+
+    /// Read the head again, and say how far behind it `cursor` is. A failed read keeps
+    /// what was known and waits for the next check.
+    async fn check(&mut self, http: &reqwest::Client, base: &str, cursor: i64) {
+        self.checked = Some(Instant::now());
+        match head_of(http, base).await {
+            Ok(seq) => self.seq = Some(seq),
+            Err(err) => {
+                tracing::warn!("killmail ingest: could not read the head of the feed: {err}");
+                return;
+            }
+        }
+        let behind = self.seq.map_or(0, |head| (head - cursor).max(0));
+        metrics::gauge!("ws_killmail_ingest_behind").set(behind as f64);
+        if behind > BEHIND_WARN {
+            tracing::warn!("killmail ingest is {behind} kills behind the feed (at {cursor})");
+        }
+    }
+}
+
+/// The last sequence the feed has published.
+async fn head_of(http: &reqwest::Client, base: &str) -> Result<i64, BoxError> {
     let head: R2Z2Sequence = http
         .get(format!("{base}/ephemeral/sequence.json"))
         .send()
@@ -103,13 +210,75 @@ async fn start_at(
         .error_for_status()?
         .json()
         .await?;
+    Ok(head.sequence)
+}
+
+/// Whether the feed still has kill `seq`.
+async fn present(http: &reqwest::Client, base: &str, seq: i64) -> Result<bool, BoxError> {
+    let res = http
+        .get(format!("{base}/ephemeral/{seq}.json"))
+        .send()
+        .await?;
+    if res.status() == reqwest::StatusCode::NOT_FOUND {
+        return Ok(false);
+    }
+    res.error_for_status()?;
+    Ok(true)
+}
+
+/// The first kill after `missing` that the feed still has, up to `head`; one past `head`
+/// when it has none of them.
+///
+/// A short gap is walked, so a kill pulled from the middle of the feed costs only itself.
+/// A long one is a cursor older than what the feed keeps (the files expire), where what
+/// is left is everything from some sequence to the head: that boundary is found by
+/// halving, a dozen fetches instead of walking a day of kills.
+async fn resume_at(
+    http: &reqwest::Client,
+    base: &str,
+    missing: i64,
+    head: i64,
+    pace: Duration,
+) -> Result<i64, BoxError> {
+    if head - missing <= WALK_LIMIT {
+        for seq in missing + 1..=head {
+            if present(http, base, seq).await? {
+                return Ok(seq);
+            }
+            tokio::time::sleep(pace).await;
+        }
+        return Ok(head + 1);
+    }
+    // `lo` is missing; `hi` is there, or one past the head.
+    let (mut lo, mut hi) = (missing, head + 1);
+    while hi - lo > 1 {
+        let mid = lo + (hi - lo) / 2;
+        if present(http, base, mid).await? {
+            hi = mid;
+        } else {
+            lo = mid;
+        }
+        tokio::time::sleep(pace).await;
+    }
+    Ok(hi)
+}
+
+/// Where the stream left off, or the live head of it on the very first run.
+async fn start_at(pool: &PgPool, http: &reqwest::Client, base: &str) -> Result<i64, BoxError> {
+    let cursor: Option<i64> = sqlx::query_scalar!("select sequence_id from zkb_state")
+        .fetch_optional(pool)
+        .await?;
+    if let Some(seq) = cursor {
+        return Ok(seq);
+    }
+    let head = head_of(http, base).await?;
     sqlx::query!(
         "insert into zkb_state (id, sequence_id) values (true, $1)",
-        head.sequence
+        head
     )
     .execute(pool)
     .await?;
-    Ok(head.sequence)
+    Ok(head)
 }
 
 /// Fetch and persist killmail `next` in the sequence. Returns whether there was one.
@@ -125,7 +294,7 @@ async fn ingest(
         .send()
         .await?;
     if res.status() == reqwest::StatusCode::NOT_FOUND {
-        return Ok(false); // caught up
+        return Ok(false); // not there: not yet, or no longer
     }
     let body = res.error_for_status()?.text().await?;
     let Ok(km) = serde_json::from_str::<R2Z2Killmail>(&body) else {
@@ -184,7 +353,9 @@ fn offer(alerts: &mpsc::Sender<Pending>, row: KillmailRow) {
     }
 }
 
-/// Evaluate queued kills against the alerts, in batches of whatever has piled up.
+/// Evaluate queued kills against the alerts, in batches of whatever has piled up. A batch
+/// that panics loses its alerts, not the worker: the queue would close with it, and every
+/// kill after that would go without alerts and without a word.
 async fn alert_loop(
     pool: PgPool,
     alerts: std::sync::Arc<crate::alerts::Runtime>,
@@ -192,12 +363,17 @@ async fn alert_loop(
 ) {
     let mut pending = Vec::with_capacity(ALERT_BATCH);
     while queue.recv_many(&mut pending, ALERT_BATCH).await > 0 {
-        let mut kills = Vec::with_capacity(pending.len());
-        for p in pending.drain(..) {
-            kills.push(kill_for(&pool, p.killmail_id, p.solar_system_id, &p.detail).await);
-        }
-        let out = alerts.killmails(&pool, &kills).await;
-        alerts.enqueue(&pool, out).await;
+        let batch = std::mem::replace(&mut pending, Vec::with_capacity(ALERT_BATCH));
+        let (pool, alerts) = (pool.clone(), alerts.clone());
+        crate::background::guarded("killmail alerts", move || async move {
+            let mut kills = Vec::with_capacity(batch.len());
+            for p in batch {
+                kills.push(kill_for(&pool, p.killmail_id, p.solar_system_id, &p.detail).await);
+            }
+            let out = alerts.killmails(&pool, &kills).await;
+            alerts.enqueue(&pool, out).await;
+        })
+        .await;
     }
 }
 

@@ -61,6 +61,15 @@ describe('openMapSocket', () => {
 		expect(events).toEqual([null]);
 	});
 
+	it('passes events through, and asks for the full catch-up when the server lagged', () => {
+		const { events } = open();
+		FakeSocket.all[0].onopen?.();
+		FakeSocket.all[0].onmessage?.({ data: '{"type":"map_updated","map_id":7}' });
+		FakeSocket.all[0].onmessage?.({ data: '{"type":"lagged"}' });
+		FakeSocket.all[0].onmessage?.({ data: 'garbage' });
+		expect(events).toEqual([{ type: 'map_updated', map_id: 7 }, null, null]);
+	});
+
 	it('stops for good once access is revoked', () => {
 		const { events, states } = open();
 		FakeSocket.all[0].onclose?.({ code: ACCESS_REVOKED });

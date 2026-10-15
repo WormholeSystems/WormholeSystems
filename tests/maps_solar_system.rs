@@ -693,6 +693,7 @@ async fn each_intel_write_sets_its_own_column_and_undoes_alone(pool: PgPool) {
             map_id,
             map_solar_system_id,
             notes: Some("rolled at downtime".into()),
+            expected: None,
         },
     )
     .await
@@ -732,6 +733,78 @@ async fn each_intel_write_sets_its_own_column_and_undoes_alone(pool: PgPool) {
         intel_of(&pool, map_id).await,
         Some(("hostile".to_string(), None, None))
     );
+}
+
+/// Two people editing the same notes: the second save names the notes it started from,
+/// which are no longer what is stored, so it is refused instead of overwriting the first.
+/// Undo is not a save from an editor and still walks back through both.
+#[sqlx::test]
+async fn a_note_saved_over_a_newer_one_is_refused(pool: PgPool) {
+    let w = world(&pool).await;
+    let member = member_with_role(&pool, w.owner, w.map_id, 1002, 2002, Role::Member).await;
+    let id = place_at(&pool, w.owner, w.map_id, SYS_A, 0.0).await;
+    let save = |notes: &str, expected: Option<&str>| SetNotes {
+        map_id: w.map_id,
+        map_solar_system_id: id,
+        notes: Some(notes.into()),
+        expected: Some(expected.map(Into::into)),
+    };
+    let notes = async || intel_of(&pool, w.map_id).await.and_then(|(_, _, n)| n);
+
+    // Both opened the editor on an empty note; the owner saves first.
+    set_notes(&pool, w.owner, save("static rolled", None))
+        .await
+        .unwrap();
+    assert!(matches!(
+        set_notes(&pool, member, save("frig hole", None)).await,
+        Err(MapError::Conflict(_)),
+    ));
+    assert_eq!(notes().await.as_deref(), Some("static rolled"));
+
+    // Having seen theirs, the member writes over it on purpose.
+    set_notes(&pool, member, save("frig hole", Some("static rolled")))
+        .await
+        .unwrap();
+    assert_eq!(notes().await.as_deref(), Some("frig hole"));
+
+    // The stored inverse carries no expectation, so undo cannot trip over its own check.
+    let inverse: serde_json::Value = sqlx::query_scalar!(
+        r#"select inverse as "inverse!" from map_events where map_id = $1
+           order by id desc limit 1"#,
+        w.map_id,
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    assert!(inverse.get("expected").is_none(), "{inverse}");
+
+    let body = MapIdBody { map_id: w.map_id };
+    undo(&pool, w.owner, body.clone()).await.unwrap();
+    assert_eq!(notes().await.as_deref(), Some("static rolled"));
+    undo(&pool, w.owner, body.clone()).await.unwrap();
+    assert_eq!(notes().await, None);
+    redo(&pool, w.owner, body.clone()).await.unwrap();
+    redo(&pool, w.owner, body).await.unwrap();
+    assert_eq!(notes().await.as_deref(), Some("frig hole"));
+}
+
+/// On the wire, `"expected": null` means "I saw no notes" and is checked; only a missing
+/// field skips the check.
+#[test]
+fn an_expected_null_note_is_still_checked() {
+    let body = |extra: serde_json::Value| {
+        let mut cmd = serde_json::json!({ "map_id": 1, "map_solar_system_id": 2, "notes": "x" });
+        cmd.as_object_mut()
+            .unwrap()
+            .extend(extra.as_object().unwrap().clone());
+        serde_json::from_value::<SetNotes>(cmd).unwrap().expected
+    };
+    assert_eq!(body(serde_json::json!({ "expected": null })), Some(None));
+    assert_eq!(
+        body(serde_json::json!({ "expected": "seen" })),
+        Some(Some("seen".into()))
+    );
+    assert_eq!(body(serde_json::json!({})), None);
 }
 
 /// Clearing deletes the placements it snapshotted and nothing else. One placed by somebody

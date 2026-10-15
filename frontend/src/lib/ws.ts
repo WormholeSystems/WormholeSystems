@@ -36,6 +36,7 @@ const MAX_RETRY_MS = 15_000;
 /**
  * Open the per-map event stream. `onEvent` fires per frame and once per successful reconnect,
  * with `null` for the reconnect catch-up, meaning "you missed something, reload everything".
+ * A `lagged` frame from the server means the same and arrives as `null` too.
  * Returns a close function that also stops the retry loop.
  */
 export function openMapSocket(
@@ -66,8 +67,11 @@ export function openMapSocket(
 		};
 		ws.onmessage = (frame) => {
 			const parsed = parseFrame(frame.data as string);
-			// Unreadable frame: fall back to a full refetch rather than ignoring it.
-			onEvent(parsed === null ? null : (parsed as MapEvent));
+			// Unreadable frame: fall back to a full refetch rather than ignoring it. So is
+			// `lagged`, which is not an event: the server dropped frames for this socket, and
+			// what they said is as unknown as after a reconnect.
+			const missed = parsed === null || (parsed as { type: unknown }).type === 'lagged';
+			onEvent(missed ? null : (parsed as MapEvent));
 		};
 		ws.onclose = (event) => {
 			if (closed) return;

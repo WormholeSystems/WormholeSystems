@@ -27,6 +27,9 @@ export const key = {
 	ignored: (id: number) => ['maps', id, 'ignored'] as const,
 	transferCounts: (id: number) => ['maps', id, 'transfer-counts'] as const,
 	stale: (id: number) => ['maps', id, 'stale-connections'] as const,
+	// A placement's member-gated details (the notes); the prefix covers every placement.
+	details: (id: number) => ['maps', id, 'details'] as const,
+	systemDetails: (id: number, mss: number) => ['maps', id, 'details', mss] as const,
 	// Alerts, their events, webhooks and roles share this prefix: the alerts page edits
 	// them together, so one invalidation covers all four.
 	alerting: (id: number) => ['maps', id, 'alerting'] as const,
@@ -160,7 +163,7 @@ export const q = {
 
 	systemDetails: (id: number, mss: number) =>
 		queryOptions({
-			queryKey: ['maps', id, 'details', mss],
+			queryKey: key.systemDetails(id, mss),
 			queryFn: ({ signal }) => api.systemDetails(id, mss, signal),
 		}),
 	listConnectionJumps: (id: number, connectionId: number) =>
