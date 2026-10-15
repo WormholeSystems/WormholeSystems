@@ -168,5 +168,6 @@ mod tests {
             1.0,
         );
         assert!(embed.url.as_deref().unwrap().ends_with("New_Caldari"));
+        crate::alerts::delivery::assert_links_absolute(&embed);
     }
 }

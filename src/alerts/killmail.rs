@@ -261,6 +261,7 @@ mod tests {
             Some("in Jita, 2 jumps from Perimeter")
         );
         assert!(embed.fields.iter().any(|f| f.value == "2.4B"));
+        crate::alerts::delivery::assert_links_absolute(&embed);
     }
 
     #[test]

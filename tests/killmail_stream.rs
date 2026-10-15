@@ -117,7 +117,11 @@ async fn kills_are_stored_back_to_back_and_alerted_on(pool: PgPool) {
         base_url: zkb,
         backfill_days: 0,
     };
-    let runtime = Arc::new(Runtime::load(&pool, None).await.unwrap());
+    let runtime = Arc::new(
+        Runtime::load(&pool, None, "https://map.example.com".into())
+            .await
+            .unwrap(),
+    );
     // Nothing listens on the ESI address, so naming fails quietly and changes nothing here.
     let esi = EsiClient::with_config(reqwest::Client::new(), "http://127.0.0.1:9", "2025-08-26");
     wormholesystems::killmails::start(pool.clone(), esi, Some(runtime), &config);

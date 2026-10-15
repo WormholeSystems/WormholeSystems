@@ -130,11 +130,18 @@ impl Message {
 pub enum SendError {
     /// The destination is gone: a deleted webhook or channel. Retrying will not help.
     Gone,
+    /// Discord refused this message as malformed (400), with its explanation. The same
+    /// message gets the same answer, so it is not sent again.
+    Rejected(String),
     /// Anything else: network, 5xx, exhausted retries.
     Failed(String),
 }
 
 const ATTEMPTS: usize = 3;
+
+/// How much of Discord's explanation for a refused message is kept. It names the field
+/// that was wrong, which fits easily.
+const REJECTION_CHARS: usize = 500;
 
 /// One attempt at Discord, start to finish. The shared client only bounds a stalled read,
 /// and a message held up for half a minute holds up the ones queued behind it.
@@ -230,6 +237,12 @@ async fn send(
         if matches!(status.as_u16(), 401 | 403 | 404) {
             return Err(SendError::Gone);
         }
+        if status.as_u16() == 400 {
+            let body = response.text().await.unwrap_or_default();
+            return Err(SendError::Rejected(
+                body.chars().take(REJECTION_CHARS).collect(),
+            ));
+        }
         if status.as_u16() == 429 {
             let wait = retry_after(&response).unwrap_or_else(|| backoff(attempt));
             last = format!("rate limited, waited {}ms", wait.as_millis());
@@ -258,6 +271,34 @@ fn retry_after(response: &reqwest::Response) -> Option<Duration> {
 
 fn backoff(attempt: usize) -> Duration {
     Duration::from_millis(250 * 2u64.pow(attempt as u32))
+}
+
+/// Fails unless every link an embed carries is absolute, the markdown ones in its text
+/// included. Discord answers a relative one with a 400 and the message is lost.
+#[cfg(test)]
+pub(crate) fn assert_links_absolute(embed: &Embed) {
+    let mut links: Vec<&str> = Vec::new();
+    links.extend(embed.url.as_deref());
+    links.extend(embed.thumbnail.as_ref().map(|i| i.url.as_str()));
+    let texts = embed
+        .description
+        .iter()
+        .chain(embed.fields.iter().map(|f| &f.value));
+    for text in texts {
+        let mut rest = text.as_str();
+        while let Some(start) = rest.find("](") {
+            let tail = &rest[start + 2..];
+            let end = tail.find(')').unwrap_or(tail.len());
+            links.push(&tail[..end]);
+            rest = &tail[end..];
+        }
+    }
+    for link in links {
+        assert!(
+            link.starts_with("https://") || link.starts_with("http://"),
+            "{link} is not absolute"
+        );
+    }
 }
 
 #[cfg(test)]

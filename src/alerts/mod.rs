@@ -66,6 +66,9 @@ pub struct Runtime {
     http: reqwest::Client,
     /// Absent unless a bot is configured; only channel and direct-message delivery need it.
     bot_token: Option<String>,
+    /// Where the app lives, so a message can link back to the map. Discord refuses an
+    /// embed whose link is not absolute.
+    public_url: String,
     cache: Mutex<Option<Snapshot>>,
     /// The delivery worker. Evaluation only ever hands it messages, so a slow Discord
     /// holds up messages and nothing else.
@@ -74,7 +77,11 @@ pub struct Runtime {
 
 impl Runtime {
     /// Load the graph and start the delivery worker.
-    pub async fn load(pool: &PgPool, bot_token: Option<String>) -> sqlx::Result<Runtime> {
+    pub async fn load(
+        pool: &PgPool,
+        bot_token: Option<String>,
+        public_url: String,
+    ) -> sqlx::Result<Runtime> {
         let http = crate::user_agent::client();
         let (outbox, inbox) = mpsc::channel(OUTBOX_CAPACITY);
         tokio::spawn(deliver_loop(
@@ -85,6 +92,7 @@ impl Runtime {
         ));
         Ok(Runtime {
             bot_token,
+            public_url,
             universe: proximity::Universe::load(pool).await?,
             http,
             cache: Mutex::new(None),
@@ -164,6 +172,7 @@ impl Runtime {
                     &proximity,
                     map_id,
                     place::Occasion::Placed(map_solar_system_id),
+                    &self.public_url,
                 )
                 .await,
             );
@@ -200,6 +209,7 @@ impl Runtime {
             &proximity,
             map_id,
             place::Occasion::Connected(ends.from_system, ends.to_system),
+            &self.public_url,
         )
         .await
     }
@@ -529,6 +539,18 @@ async fn fetch_active(pool: &PgPool, kind: Option<AlertKind>) -> sqlx::Result<Ve
         .collect())
 }
 
+/// Why a message did not go out, which decides what becomes of the alert and the claim.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Undelivered {
+    /// Worth another try on the next occasion.
+    Retry,
+    /// The destination is gone; the alert stops.
+    Gone,
+    /// Discord refused this message itself. Sending it again gets the same answer, so the
+    /// occasion stays claimed, and the alert carries on for the next one.
+    Rejected,
+}
+
 /// Deliver one alert, once: claim the dedup key, send, and mark it sent, or hand the key
 /// back so a later run can retry. Only a gone destination disables the alert.
 pub async fn fire(
@@ -541,33 +563,30 @@ pub async fn fire(
 ) {
     match deliver(pool, http, bot_token, alert, embed).await {
         Ok(()) => sent(pool, alert.id, dedup_key).await,
-        Err(fatal) => {
+        Err(Undelivered::Retry) => unclaim(pool, alert.id, dedup_key).await,
+        Err(Undelivered::Gone) => {
             unclaim(pool, alert.id, dedup_key).await;
-            if fatal {
-                disable(pool, alert, DisabledReason::DestinationGone, None).await;
-            }
+            disable(pool, alert, DisabledReason::DestinationGone, None).await;
         }
+        Err(Undelivered::Rejected) => {}
     }
 }
 
 /// Send one alert's message, wherever it is meant to go.
-///
-/// `Err(true)` means the destination is gone and the alert should stop; `Err(false)` means
-/// try again next time.
 pub async fn deliver(
     pool: &PgPool,
     http: &reqwest::Client,
     bot_token: Option<&str>,
     alert: &Alert,
     embed: delivery::Embed,
-) -> Result<(), bool> {
+) -> Result<(), Undelivered> {
     // Checked at send time rather than hooked to every access change: access can be lost in
     // half a dozen ways, and this is the one place that must be right.
     if let Some(creator) = alert.created_by_user_id
         && !crate::maps::access::can_see(pool, alert.map_id, creator).await
     {
         disable(pool, alert, DisabledReason::AccessRevoked, None).await;
-        return Err(false);
+        return Err(Undelivered::Retry);
     }
 
     let creator_discord = match alert.created_by_user_id {
@@ -595,7 +614,7 @@ pub async fn deliver(
     let result = match alert.delivery {
         AlertDelivery::Webhook => match alert.webhook_url.as_deref() {
             Some(url) => delivery::post_webhook(http, url, &message).await,
-            None => return Err(true),
+            None => return Err(Undelivered::Gone),
         },
         AlertDelivery::DiscordChannel => {
             match (bot_token, alert.discord_channel_id.as_deref()) {
@@ -604,23 +623,39 @@ pub async fn deliver(
                 }
                 // No bot configured is an operator problem, not a broken alert: leave it
                 // active so it starts working when the token appears.
-                (None, _) => return Err(false),
-                (_, None) => return Err(true),
+                (None, _) => return Err(Undelivered::Retry),
+                (_, None) => return Err(Undelivered::Gone),
             }
         }
         AlertDelivery::DiscordDm => match (bot_token, creator_discord.as_deref()) {
             (Some(token), Some(user)) => delivery::post_dm(http, token, user, &message).await,
-            (None, _) => return Err(false),
+            (None, _) => return Err(Undelivered::Retry),
             (_, None) => {
                 disable(pool, alert, DisabledReason::DiscordUnlinked, None).await;
-                return Err(false);
+                return Err(Undelivered::Retry);
             }
         },
     };
 
     match result {
         Ok(()) => Ok(()),
-        Err(delivery::SendError::Gone) => Err(true),
+        Err(delivery::SendError::Gone) => Err(Undelivered::Gone),
+        Err(delivery::SendError::Rejected(body)) => {
+            tracing::warn!(
+                "alerts: discord refused the message for alert {}: {body}",
+                alert.id
+            );
+            log(
+                pool,
+                Some(alert.id),
+                alert.map_id,
+                None,
+                "failed",
+                Some(&format!("discord refused the message: {body}")),
+            )
+            .await;
+            Err(Undelivered::Rejected)
+        }
         Err(delivery::SendError::Failed(err)) => {
             log(
                 pool,
@@ -631,7 +666,7 @@ pub async fn deliver(
                 Some(&err),
             )
             .await;
-            Err(false)
+            Err(Undelivered::Retry)
         }
     }
 }

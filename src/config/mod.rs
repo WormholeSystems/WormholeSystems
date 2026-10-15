@@ -47,6 +47,9 @@ pub struct Config {
     /// Where EVE Scout's public signatures are read from. Overridable so the e2e suite can
     /// serve a fixed set: the real list is scouted by hand and changes under the tests.
     pub eve_scout_url: String,
+    /// Where people open the app, without a trailing slash, for links that leave it: a
+    /// Discord embed pointing back at the map has to be absolute.
+    pub public_url: String,
 }
 
 #[derive(Debug, Clone)]
@@ -111,6 +114,7 @@ impl Config {
         // Load `.env` if present; real environment variables take precedence.
         dotenvy::dotenv().ok();
 
+        let redirect_uri = required("EVE_REDIRECT_URI")?;
         Ok(Config {
             database: DatabaseConfig::from_env()?,
             listen_addr: nonempty("LISTEN_ADDR").unwrap_or_else(|| "127.0.0.1:3000".to_string()),
@@ -118,7 +122,7 @@ impl Config {
             sso: SsoConfig {
                 client_id: required("EVE_CLIENT_ID")?,
                 client_secret: required("EVE_CLIENT_SECRET")?,
-                redirect_uri: required("EVE_REDIRECT_URI")?,
+                redirect_uri: redirect_uri.clone(),
                 scopes: Scope::ALL.to_vec(),
             },
             grid: grid_from_env(),
@@ -146,6 +150,7 @@ impl Config {
             },
             eve_scout_url: nonempty("EVE_SCOUT_URL")
                 .unwrap_or_else(|| "https://api.eve-scout.com/v2/public/signatures".to_string()),
+            public_url: public_url(nonempty("WS_PUBLIC_URL").as_deref(), &redirect_uri)?,
         })
     }
 }
@@ -225,6 +230,33 @@ fn required(key: &'static str) -> Result<String, ConfigError> {
     nonempty(key).ok_or(ConfigError::Missing(key))
 }
 
+/// `WS_PUBLIC_URL` when it is set. Otherwise the EVE callback says it: that is the browser's
+/// origin plus `/auth/callback`, or the SSO login would not come back.
+fn public_url(explicit: Option<&str>, redirect_uri: &str) -> Result<String, ConfigError> {
+    let (key, raw): (&'static str, &str) = match explicit {
+        Some(url) => ("WS_PUBLIC_URL", url),
+        None => (
+            "EVE_REDIRECT_URI",
+            redirect_uri
+                .strip_suffix("/auth/callback")
+                .unwrap_or(redirect_uri),
+        ),
+    };
+    let parsed =
+        reqwest::Url::parse(raw).map_err(|err| ConfigError::Invalid(key, err.to_string()))?;
+    if !matches!(parsed.scheme(), "http" | "https") || !parsed.has_host() {
+        return Err(ConfigError::Invalid(key, "not an http(s) address".into()));
+    }
+    // Only a callback that is not the usual one is cut back to its origin; anything else
+    // keeps its path, so an install under a prefix links under it.
+    let base = if explicit.is_none() && raw == redirect_uri {
+        parsed.origin().ascii_serialization()
+    } else {
+        raw.to_string()
+    };
+    Ok(base.trim_end_matches('/').to_string())
+}
+
 fn announcement_from_env() -> Option<Announcement> {
     let var = |key: &str| std::env::var(key).ok();
     let (level, title, message, link_url, link_label, dismissible) = (
@@ -285,5 +317,27 @@ mod tests {
         assert!(nonempty("WS_TEST_BLANK").is_none());
         assert!(nonempty("WS_TEST_UNSET_ENTIRELY").is_none());
         assert_eq!(nonempty("WS_TEST_FILLED").as_deref(), Some("kept"));
+    }
+
+    #[test]
+    fn the_public_url_comes_from_the_setting_or_the_callback() {
+        let callback = "https://map.example.com/auth/callback";
+        assert_eq!(
+            public_url(None, callback).unwrap(),
+            "https://map.example.com"
+        );
+        assert_eq!(
+            public_url(None, "http://localhost:5173/wh/auth/callback").unwrap(),
+            "http://localhost:5173/wh"
+        );
+        assert_eq!(
+            public_url(None, "https://map.example.com/sso").unwrap(),
+            "https://map.example.com"
+        );
+        assert_eq!(
+            public_url(Some("https://other.example.com/"), callback).unwrap(),
+            "https://other.example.com"
+        );
+        assert!(public_url(Some("map.example.com"), callback).is_err());
     }
 }

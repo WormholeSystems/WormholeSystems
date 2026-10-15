@@ -365,7 +365,7 @@ caddy`; a certificate file replaced in place needs `docker compose restart caddy
 | `WS_DATABASE_URL` | External only: the Postgres to use, as the containers reach it. |
 | `WS_DATABASE_NETWORK` | External only, optional: the Docker network the database is on. |
 | `WS_PROXY` | `caddy`, `router`, `network` or `ports`. |
-| `WS_PUBLIC_URL` | The address people open, when it is not `https://WS_DOMAIN`; the callbacks derive from it. |
+| `WS_PUBLIC_URL` | The address people open, when it is not `https://WS_DOMAIN`; the callbacks and the links in Discord alerts derive from it. |
 | `WS_PROXY_NETWORK` | `router` and `network`: the Docker network your proxy finds the app on. |
 | `WS_ROUTER_PORT` | `router` on the host: Caddy's loopback port. |
 | `WS_API_PORT`, `WS_WEB_PORT` | `ports`: the API's and the frontend's loopback ports. |
