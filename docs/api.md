@@ -78,8 +78,8 @@ Live updates go over WebSockets, which OpenAPI cannot describe. They are in
 
 ## Stability
 
-The API is the frontend's, and it changes with the frontend. This is pre-alpha software:
-endpoints are renamed, bodies gain and lose fields, and there is no migration path. The
-`version` in the document's `info` is the server's crate version. Pin what you tested
-against and expect to revisit when it moves. When the pre-alpha banner comes down, the
-stability promise will be made here, and the document's version is where it will be kept.
+The API is the frontend's, and it changes with the frontend. This is beta software:
+endpoints are renamed and bodies gain and lose fields between updates. The `version` in
+the document's `info` is the server's crate version. Pin what you tested against and
+expect to revisit when it moves. When the beta label comes down, the stability promise
+will be made here, and the document's version is where it will be kept.

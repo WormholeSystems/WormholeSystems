@@ -45,7 +45,7 @@ body that names the map again; the reference shows the body for each one.
 
 ## Expect it to change
 
-WormholeSystems is pre-alpha, and the API follows the map screen. Endpoints get renamed and
+WormholeSystems is in beta, and the API follows the map screen. Endpoints get renamed and
 bodies gain and lose fields without notice. If a script stops working after an update,
 `/api/docs` is where to look for what moved.
 

@@ -65,10 +65,10 @@
 				<!-- Says what it is before anyone finds out the hard way. -->
 				<span
 					class="border border-amber-500/40 px-1.5 py-0.5 text-[10px] tracking-wider whitespace-nowrap text-amber-500 uppercase"
-					data-testid="pre-alpha"
-					title="Early build: things move, break and get rebuilt without warning."
+					data-testid="beta"
+					title="Beta: in daily use, still changing. Updates migrate your data."
 				>
-					Pre-alpha
+					Beta
 				</span>
 			</a>
 			<!-- Without an account this only leads to the sign-in page, so it is not shown. -->
