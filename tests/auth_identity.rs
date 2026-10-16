@@ -227,6 +227,29 @@ async fn set_days_left(pool: &PgPool, session: &str, days: i64) {
     .unwrap();
 }
 
+/// The cookie a sign-in sets survives a browser restart, for as long as the session can
+/// last, and stays out of reach of scripts and other sites.
+#[test]
+fn the_session_cookie_outlasts_the_browser() {
+    let cookie = wormholesystems::auth::session_cookie("abc".into(), true);
+    assert_eq!(cookie.name(), "ws_session");
+    assert_eq!(cookie.value(), "abc");
+    assert_eq!(cookie.max_age(), Some(time::Duration::days(SESSION_DAYS)));
+    assert_eq!(cookie.path(), Some("/"));
+    assert_eq!(cookie.http_only(), Some(true));
+    assert_eq!(
+        cookie.same_site(),
+        Some(axum_extra::extract::cookie::SameSite::Lax)
+    );
+    assert_eq!(cookie.secure(), Some(true));
+    let plain = wormholesystems::auth::session_cookie("abc".into(), false);
+    assert_eq!(
+        plain.secure(),
+        Some(false),
+        "a plain HTTP install can still sign in"
+    );
+}
+
 /// Staying signed in: a session lasts as long as a browser keeps a cookie, and using it
 /// starts that again. One that already ran out stays out.
 #[sqlx::test]

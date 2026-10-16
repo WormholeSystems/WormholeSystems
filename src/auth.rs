@@ -219,17 +219,22 @@ async fn finish_login(state: &AppState, jar: CookieJar, query: CallbackQuery) ->
         Err(err) => return server_error(err),
     };
 
-    // Kept across browser restarts: without a lifetime it is a browser-session cookie,
-    // gone whenever the browser (or a phone's tab) closes.
-    let cookie = Cookie::build((session::SESSION_COOKIE, session_id))
+    let cookie = session_cookie(session_id, state.secure_cookies);
+    let destination = flow.redirect_to.unwrap_or_else(|| "/".to_string());
+    (jar.add(cookie), Redirect::to(&destination)).into_response()
+}
+
+/// The cookie that carries a session. It has a lifetime so it outlasts a browser restart:
+/// without one it is a browser-session cookie, gone whenever the browser (or a phone's
+/// tab) closes.
+pub fn session_cookie(session_id: String, secure: bool) -> Cookie<'static> {
+    Cookie::build((session::SESSION_COOKIE, session_id))
         .path("/")
         .max_age(time::Duration::days(session::SESSION_DAYS))
         .http_only(true)
         .same_site(SameSite::Lax)
-        .secure(state.secure_cookies)
-        .build();
-    let destination = flow.redirect_to.unwrap_or_else(|| "/".to_string());
-    (jar.add(cookie), Redirect::to(&destination)).into_response()
+        .secure(secure)
+        .build()
 }
 
 /// Where a character the instance does not let in is sent, with a flag the page turns into
