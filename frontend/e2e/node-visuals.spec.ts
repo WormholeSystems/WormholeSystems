@@ -43,10 +43,14 @@ test('node shows class, alias, occupier, statics, effect, and region per space k
 	await expect(tooltip.getByText('3,300 kt')).toBeVisible();
 	await expect(tooltip.getByText('24h')).toBeVisible();
 
-	// Effect badge letter (no sovereignty in J-space), popover lists modifiers.
+	// The effect's own HUD icon (no sovereignty in J-space), popover lists modifiers.
 	const effect = whNode.getByLabel('Wolf-Rayet Star');
 	await expect(effect).toBeVisible();
-	await expect(effect).toHaveText('W');
+	await expect
+		.poll(() =>
+			effect.locator('img').evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth > 0),
+		)
+		.toBe(true);
 	// It opens something when clicked, so it gets the ordinary pointer, not the help one.
 	await expect(effect).toHaveCSS('cursor', 'pointer');
 	await effect.click();

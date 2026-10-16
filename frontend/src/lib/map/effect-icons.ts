@@ -56,5 +56,21 @@ export function statIcon(stat: string): string | null {
 	return name ? icon(name) : null;
 }
 
-/** Every stat with an icon, for the test that keeps the list complete. */
-export const STATS_WITH_ICONS = Object.keys(STAT_ICONS);
+/**
+ * Each effect's own icon, the one the client's HUD shows in a system that has it
+ * (`res:/ui/texture/icons/statuseffects/`, spelled as CCP spells the files).
+ */
+const EFFECT_ICONS: Record<string, string> = {
+	'Black Hole': 'statuseffects_blackhole',
+	'Cataclysmic Variable': 'statuseffects_cataclysmicvariable',
+	Magnetar: 'statuseffects_magnatar',
+	Pulsar: 'statuseffects_pulsae',
+	'Red Giant': 'statuseffects_redgiant',
+	'Wolf-Rayet Star': 'statuseffects_wolfrayet',
+};
+
+/** The icon for a wormhole effect, or null for one the list does not know. */
+export function effectIcon(effect: string): string | null {
+	const name = EFFECT_ICONS[effect];
+	return name ? icon(name) : null;
+}

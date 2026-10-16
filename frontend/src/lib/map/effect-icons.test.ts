@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import effects from '../../../../data/static/wormhole_effects.json';
-import { statIcon } from './effect-icons';
+import { effectIcon, statIcon } from './effect-icons';
 
 describe('statIcon', () => {
 	// The effect data the seed loads, so a stat added there without an icon fails here.
@@ -19,5 +19,12 @@ describe('statIcon', () => {
 
 	it('knows nothing about a stat it was never told', () => {
 		expect(statIcon('Cloak Stability')).toBeNull();
+	});
+});
+
+describe('effectIcon', () => {
+	it('has an icon for every wormhole effect', () => {
+		const missing = Object.keys(effects).filter((name) => effectIcon(name) === null);
+		expect(missing).toEqual([]);
 	});
 });

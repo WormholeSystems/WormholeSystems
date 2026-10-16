@@ -1,12 +1,14 @@
 <script lang="ts">
-	// The wormhole effect badge: a lettered colored circle that opens a popover listing every
-	// modifier at this system's class. Modifiers are fetched on open, not on mount, or a list of
+	// The wormhole effect badge: the effect's own icon from the game's HUD (a lettered circle
+	// in its color for one without), opening a popover listing every modifier at this
+	// system's class. Modifiers are fetched on open, not on mount, or a list of
 	// wormholes would fire one request per row for a table nobody asked to see.
 	import { createQuery } from '@tanstack/svelte-query';
 
 	import { browser } from '$app/environment';
 	import { q } from '$lib/api/queries';
 	import EffectModifiers from '$lib/components/EffectModifiers.svelte';
+	import { effectIcon } from '$lib/map/effect-icons';
 	import * as Popover from '$lib/components/ui/popover';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 
@@ -23,6 +25,7 @@
 	const token = $derived(name.toLowerCase().replaceAll(' ', '-'));
 	const letter = $derived(name === 'Wolf-Rayet Star' ? 'W' : name.charAt(0).toUpperCase());
 	const darkText = $derived(name === 'Cataclysmic Variable');
+	const icon = $derived(effectIcon(name));
 
 	let open = $state(false);
 
@@ -37,15 +40,29 @@
 	);
 </script>
 
-{#snippet circle()}
-	<span
-		class="flex size-[14px] shrink-0 items-center justify-center rounded-full text-[9px] font-semibold {darkText
-			? 'text-neutral-950'
-			: 'text-white'}"
-		style="background-color: var(--color-{token})"
-	>
-		{letter}
-	</span>
+{#snippet circle(size: number)}
+	<!-- The HUD's icons glow on black, so they keep a dark disc in the light theme too. -->
+	{#if icon}
+		<span
+			class="flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-neutral-950"
+			style:width="{size}px"
+			style:height="{size}px"
+		>
+			<img src={icon} alt="" class="size-full scale-125" />
+		</span>
+	{:else}
+		<span
+			class="flex shrink-0 items-center justify-center rounded-full font-semibold {darkText
+				? 'text-neutral-950'
+				: 'text-white'}"
+			style:width="{size}px"
+			style:height="{size}px"
+			style:font-size="{Math.round(size * 0.6)}px"
+			style="background-color: var(--color-{token})"
+		>
+			{letter}
+		</span>
+	{/if}
 {/snippet}
 
 {#if !detail}
@@ -53,7 +70,7 @@
 	     per row rather than one per badge. -->
 	<Tooltip.Root>
 		<Tooltip.Trigger aria-label={name} class="flex">
-			{@render circle()}
+			{@render circle(16)}
 		</Tooltip.Trigger>
 		<Tooltip.Content>{name}</Tooltip.Content>
 	</Tooltip.Root>
@@ -61,24 +78,14 @@
 	<Popover.Root bind:open>
 		<Popover.Trigger
 			aria-label={name}
-			class="flex size-[14px] shrink-0 cursor-pointer items-center justify-center rounded-full text-[9px] font-semibold {darkText
-				? 'text-neutral-950'
-				: 'text-white'}"
-			style="background-color: var(--color-{token})"
+			class="flex shrink-0 cursor-pointer rounded-full"
 			onpointerdown={(ev: PointerEvent) => ev.stopPropagation()}
 		>
-			{letter}
+			{@render circle(16)}
 		</Popover.Trigger>
 		<Popover.Content class="w-64 p-0" onpointerdown={(ev: PointerEvent) => ev.stopPropagation()}>
 			<div class="flex items-center gap-2 border-b border-border px-3 py-2">
-				<span
-					class="flex size-[18px] shrink-0 items-center justify-center rounded-full text-[10px] font-semibold {darkText
-						? 'text-neutral-950'
-						: 'text-white'}"
-					style:background-color="var(--color-{token})"
-				>
-					{letter}
-				</span>
+				{@render circle(24)}
 				<span class="font-heading text-sm font-semibold">{name}</span>
 				{#if classLabel}
 					<span class="ml-auto text-[10px] text-muted-foreground">{classLabel}</span>
