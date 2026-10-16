@@ -1,5 +1,5 @@
 import { DISMISSED_COOKIE, visibleAnnouncement } from '$lib/announcement';
-import { currentCharacter, instance, myMaps, serverStatus } from '$lib/server/api';
+import { currentCharacter, instance, myMaps, myPreferences, serverStatus } from '$lib/server/api';
 import { renewSessionCookie } from '$lib/server/session';
 import { unreachable } from '$lib/server/load-errors';
 import type { LayoutServerLoad } from './$types';
@@ -16,7 +16,7 @@ export const load: LayoutServerLoad = async (event) => {
 	// top bar for. The pages that need a person check `offline` before sending anyone to
 	// sign in.
 	let offline = false;
-	const [me, maps, status, deployment] = await Promise.all([
+	const [me, maps, status, deployment, preferences] = await Promise.all([
 		currentCharacter(event).catch((err: unknown) => {
 			offline = unreachable(err);
 			return null;
@@ -24,6 +24,8 @@ export const load: LayoutServerLoad = async (event) => {
 		myMaps(event).catch(() => []),
 		serverStatus(event),
 		instance(event),
+		// Asked alongside the rest rather than after: a visitor just gets null back.
+		myPreferences(event),
 	]);
 	// Signed in, so the cookie gets a fresh lifetime: otherwise it would run out 400 days
 	// after sign-in, however much it was used.
@@ -34,5 +36,5 @@ export const load: LayoutServerLoad = async (event) => {
 		deployment?.announcement ?? null,
 		event.cookies.get(DISMISSED_COOKIE),
 	);
-	return { me, maps, status, announcement, offline };
+	return { me, maps, status, announcement, offline, preferences };
 };

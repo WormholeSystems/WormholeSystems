@@ -13,6 +13,8 @@ import type { CreateToken } from './types/CreateToken';
 import type { CreatedToken } from './types/CreatedToken';
 import type { PersonalAccessToken } from './types/PersonalAccessToken';
 import type { DiscordAccount } from './types/DiscordAccount';
+import type { UpdateUserPreferences } from './types/UpdateUserPreferences';
+import type { UserPreferences } from './types/UserPreferences';
 import type { MapAlert } from './types/MapAlert';
 import type { MapAlertEvent } from './types/MapAlertEvent';
 import type { MapWebhook } from './types/MapWebhook';
@@ -188,6 +190,9 @@ export function createApi(
 		myScopes: (signal?: AbortSignal) => get<ScopeStatus[]>('/api/me/scopes', signal),
 		myDiscord: (signal?: AbortSignal) => get<DiscordAccount | null>('/api/me/discord', signal),
 		unlinkDiscord: () => post<null>('/api/me/discord/unlink', {}),
+		myPreferences: (signal?: AbortSignal) => get<UserPreferences>('/api/me/preferences', signal),
+		updatePreferences: (change: UpdateUserPreferences) =>
+			post<UserPreferences>('/api/me/preferences', change),
 		myTokens: (signal?: AbortSignal) => get<PersonalAccessToken[]>('/api/me/tokens', signal),
 		createToken: (cmd: CreateToken) => post<CreatedToken>('/api/me/tokens', cmd),
 		revokeToken: (id: number) => del<null>(`/api/me/tokens/${id}`),

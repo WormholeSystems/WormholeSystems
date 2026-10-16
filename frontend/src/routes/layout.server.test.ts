@@ -5,6 +5,7 @@ const api = vi.hoisted(() => ({
 	myMaps: vi.fn(async () => []),
 	serverStatus: vi.fn(async () => null),
 	instance: vi.fn(async () => null),
+	myPreferences: vi.fn(async () => null),
 }));
 vi.mock('$lib/server/api', () => api);
 

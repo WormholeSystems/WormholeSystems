@@ -6,6 +6,7 @@
 	import { createQuery } from '@tanstack/svelte-query';
 
 	import { browser } from '$app/environment';
+	import { page } from '$app/state';
 	import { q } from '$lib/api/queries';
 	import EffectModifiers from '$lib/components/EffectModifiers.svelte';
 	import { effectIcon } from '$lib/map/effect-icons';
@@ -25,7 +26,8 @@
 	const token = $derived(name.toLowerCase().replaceAll(' ', '-'));
 	const letter = $derived(name === 'Wolf-Rayet Star' ? 'W' : name.charAt(0).toUpperCase());
 	const darkText = $derived(name === 'Cataclysmic Variable');
-	const icon = $derived(effectIcon(name));
+	// Letters instead of pictures for whoever turned the icons off in their settings.
+	const icon = $derived((page.data.preferences?.effect_icons ?? true) ? effectIcon(name) : null);
 
 	let open = $state(false);
 

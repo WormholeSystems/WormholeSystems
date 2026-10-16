@@ -14,11 +14,13 @@ use crate::app::AppState;
 use crate::identity::characters::{
     self, CharacterError, CharacterRef, CharacterStatus, CharacterSummary, ScopeStatus, Waypoint,
 };
+use crate::identity::preferences::{self, UpdateUserPreferences, UserPreferences};
 
 pub fn routes() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
         .routes(routes!(me))
         .routes(routes!(me_status))
+        .routes(routes!(my_preferences, update_my_preferences))
         .routes(routes!(my_characters))
         .routes(routes!(my_scopes))
         .routes(routes!(my_discord))
@@ -47,6 +49,40 @@ pub async fn me(
     };
     Ok(Json(
         characters::summary(&state.db, actor, &state.map_creators).await?,
+    ))
+}
+
+/// `GET /api/me/preferences`: how the site looks to this person, on every map.
+#[utoipa::path(
+    get,
+    path = "/api/me/preferences",
+    tag = "identity",
+    responses((status = 200, body = UserPreferences, description = "OK"), super::AuthedErrors),
+)]
+pub async fn my_preferences(
+    State(state): State<AppState>,
+    creds: Credentials,
+) -> ApiResult<UserPreferences> {
+    let actor = require_actor(&state.db, &creds).await?;
+    Ok(Json(preferences::get(&state.db, actor.user_id).await?))
+}
+
+/// `POST /api/me/preferences`: change some of them; the rest stay as they are.
+#[utoipa::path(
+    post,
+    path = "/api/me/preferences",
+    tag = "identity",
+    request_body = UpdateUserPreferences,
+    responses((status = 200, body = UserPreferences, description = "The preferences now"), super::AuthedErrors),
+)]
+pub async fn update_my_preferences(
+    State(state): State<AppState>,
+    creds: Credentials,
+    Json(change): Json<UpdateUserPreferences>,
+) -> ApiResult<UserPreferences> {
+    let actor = require_actor(&state.db, &creds).await?;
+    Ok(Json(
+        preferences::update(&state.db, actor.user_id, change).await?,
     ))
 }
 

@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select effect_icons from user_preferences where user_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "effect_icons",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "user_preferences",
+            "name": "effect_icons"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "d420a247dd48ab40a8617d79e78cb0b2760718603a5026efd9039a1f40fdf206"
+}
