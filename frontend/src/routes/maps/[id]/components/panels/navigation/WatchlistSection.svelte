@@ -37,7 +37,7 @@
 
 	const sortedWatchlist = $derived.by(() => {
 		const dir = sort.current.direction === 'asc' ? 1 : -1;
-		return map.watchlist.all.toSorted(
+		return [...map.watchlist.all].sort(
 			(a, b) =>
 				compareWatchlistEntries(a, b, sort.current.column, (id) => map.systemInfo(id), jumpsOf) *
 				dir,

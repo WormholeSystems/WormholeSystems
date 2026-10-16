@@ -12,6 +12,7 @@
 	import { apiAction } from '$lib/api/mutations';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
+	import DiscordInviteCard from '$lib/components/DiscordInviteCard.svelte';
 	import InstanceNotice from '$lib/components/InstanceNotice.svelte';
 	import { q } from '$lib/api/queries';
 
@@ -92,6 +93,10 @@
 			{/if}
 		</Card.Content>
 	</Card.Root>
+
+	{#if instance?.discord.invite_url}
+		<DiscordInviteCard inviteUrl={instance.discord.invite_url} />
+	{/if}
 
 	<Card.Root>
 		<Card.Header>

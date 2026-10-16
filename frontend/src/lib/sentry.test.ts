@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ErrorEvent } from '@sentry/sveltekit';
 
-import { sampleRate, scrubEvent, sentryOptions, stripQuery } from './sentry';
+import { IGNORED_ERRORS, sampleRate, scrubEvent, sentryOptions, stripQuery } from './sentry';
 
 describe('sentryOptions', () => {
 	it('is off without a DSN', () => {
@@ -14,6 +14,23 @@ describe('sentryOptions', () => {
 		expect(options?.sendDefaultPii).toBe(false);
 		expect(options?.tracesSampleRate).toBe(0);
 		expect(options?.environment).toBeUndefined();
+	});
+});
+
+describe('IGNORED_ERRORS', () => {
+	const ignored = (message: string) => IGNORED_ERRORS.some((pattern) => pattern.test(message));
+
+	it('drops chunks and stylesheets that did not load', () => {
+		expect(
+			ignored(
+				'TypeError: Failed to fetch dynamically imported module: https://wormhole.systems/_app/immutable/nodes/0.Bt6oGAkU.js',
+			),
+		).toBe(true);
+		expect(ignored('Unable to preload CSS for https://wormhole.systems/_app/a.css')).toBe(true);
+	});
+
+	it('keeps everything else', () => {
+		expect(ignored('TypeError: d(...).toSorted is not a function')).toBe(false);
 	});
 });
 

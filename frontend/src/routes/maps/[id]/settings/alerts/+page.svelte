@@ -23,6 +23,7 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
+	import DiscordInviteCard from '$lib/components/DiscordInviteCard.svelte';
 	import InstanceNotice from '$lib/components/InstanceNotice.svelte';
 	import { Switch } from '$lib/components/ui/switch';
 	import { timeAgo } from '$lib/format';
@@ -206,6 +207,10 @@
 			{/each}
 		</Card.Content>
 	</Card.Root>
+
+	{#if canManage && instance?.discord.invite_url}
+		<DiscordInviteCard inviteUrl={instance.discord.invite_url} />
+	{/if}
 
 	{#if canManage}
 		<DestinationsCard {mapId} {webhooks} {roles} />

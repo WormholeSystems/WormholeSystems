@@ -6746,6 +6746,13 @@
             "type": "boolean",
             "description": "Whether the bot can post to a channel or DM. Needs a bot token on top of the rest;\na plain webhook destination works without it."
           },
+          "invite_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Where to add the bot to a server, when there is one. It has to be in a server to\npost to its channels, and Discord only lets it DM people it shares a server with."
+          },
           "linking": {
             "type": "boolean",
             "description": "Whether an account can be linked at all: the OAuth half of the application."

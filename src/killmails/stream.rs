@@ -1,5 +1,6 @@
 //! The live feed: zKillboard's R2Z2 stream, one killmail at a time.
 
+use std::fmt::Display;
 use std::time::{Duration, Instant};
 
 use serde::Deserialize;
@@ -7,6 +8,7 @@ use sqlx::PgPool;
 use tokio::sync::mpsc;
 
 use super::{Detail, EsiKillmail, KillmailRow, extract_detail, extract_orgs, http_client};
+use crate::background::Streak;
 use crate::entities::EntityKind;
 use crate::esi::EsiClient;
 
@@ -41,7 +43,25 @@ const BEHIND_WARN: i64 = 500;
 /// the feed still holds is searched for instead (see [`resume_at`]).
 const WALK_LIMIT: i64 = 100;
 
+/// How long the feed may keep failing before that is an error rather than a warning. A
+/// failed fetch is retried after 30s, and zKillboard has bad minutes.
+const FAILING_FOR: Duration = Duration::from_secs(15 * 60);
+
 type BoxError = Box<dyn std::error::Error + Send + Sync>;
+
+/// Log a failed step of the feed: a warning, or the one error once it has kept failing.
+/// The error goes in a field so the reports group as one issue.
+fn failed(streak: &Streak, err: impl Display) {
+    if streak.record(true, Instant::now()) {
+        tracing::error!(
+            error = %err,
+            "killmail ingest has failed for {} minutes",
+            FAILING_FOR.as_secs() / 60
+        );
+    } else {
+        tracing::warn!(error = %err, "killmail ingest failed, retrying");
+    }
+}
 
 /// How the feed is paced. Its own type so the tests can run it in milliseconds.
 #[doc(hidden)]
@@ -101,6 +121,7 @@ pub async fn listen(
     let mut head = Head::default();
     // The kill that is missing under the head, and since when.
     let mut missing: Option<(i64, Instant)> = None;
+    let streak = Streak::new(FAILING_FOR);
     loop {
         let last = match cursor {
             Some(seq) => seq,
@@ -110,7 +131,7 @@ pub async fn listen(
                     seq
                 }
                 Err(err) => {
-                    tracing::error!("killmail ingest error: {err}");
+                    failed(&streak, err);
                     tokio::time::sleep(Duration::from_secs(30)).await;
                     continue;
                 }
@@ -122,11 +143,13 @@ pub async fn listen(
         let next = last + 1;
         match ingest(&pool, &http, &base, alerts.as_ref(), next).await {
             Ok(true) => {
+                streak.record(false, Instant::now());
                 cursor = Some(next);
                 missing = None;
                 tokio::time::sleep(timing.pace).await;
             }
             Ok(false) => {
+                streak.record(false, Instant::now());
                 // Past the head: it has not happened yet.
                 let Some(to) = head.seq.filter(|&head| next <= head) else {
                     tokio::time::sleep(timing.idle).await;
@@ -149,21 +172,21 @@ pub async fn listen(
                         metrics::counter!("ws_killmail_ingest_skipped_total")
                             .increment((resume - next) as u64);
                         if let Err(err) = advance(&pool, resume - 1).await {
-                            tracing::error!("killmail ingest error: {err}");
+                            failed(&streak, err);
                         }
                         cursor = Some(resume - 1);
                         missing = None;
                     }
                     Err(err) => {
                         metrics::counter!("ws_killmail_ingest_errors_total").increment(1);
-                        tracing::error!("killmail ingest error: {err}");
+                        failed(&streak, err);
                         tokio::time::sleep(Duration::from_secs(30)).await;
                     }
                 }
             }
             Err(err) => {
                 metrics::counter!("ws_killmail_ingest_errors_total").increment(1);
-                tracing::error!("killmail ingest error: {err}");
+                failed(&streak, err);
                 tokio::time::sleep(Duration::from_secs(30)).await;
             }
         }

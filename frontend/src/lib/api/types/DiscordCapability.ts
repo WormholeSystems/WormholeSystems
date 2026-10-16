@@ -9,4 +9,9 @@ linking: boolean,
  * Whether the bot can post to a channel or DM. Needs a bot token on top of the rest;
  * a plain webhook destination works without it.
  */
-bot: boolean, };
+bot: boolean, 
+/**
+ * Where to add the bot to a server, when there is one. It has to be in a server to
+ * post to its channels, and Discord only lets it DM people it shares a server with.
+ */
+invite_url: string | null, };

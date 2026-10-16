@@ -99,6 +99,10 @@ station/structure (→ derived `is_docked`) and the `ship_*` fields.
   page asks it to.
 - Only changes are written. The poller holds at most half the database pool, so a busy
   tick cannot starve requests.
+- Neither tier polls while Tranquility is down, nor from 11:00 to 11:05 UTC, when ESI
+  starts failing before `/status` says so.
+- A tick with failed polls logs one warning. Only a tier that has failed on every tick
+  for 15 minutes logs an error, once.
 
 ## Sovereignty refresh
 

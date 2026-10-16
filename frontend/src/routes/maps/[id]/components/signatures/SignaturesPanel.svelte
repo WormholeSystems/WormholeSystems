@@ -105,7 +105,7 @@
 
 	const sorted = $derived.by(() => {
 		const dir = sort.current.direction === 'asc' ? 1 : -1;
-		return filtered.toSorted((a, b) => {
+		return [...filtered].sort((a, b) => {
 			const cmp = compareSignatures(a, b, sort.current.column, typeName);
 			if (cmp !== 0) return cmp * dir;
 			return a.signature_id.localeCompare(b.signature_id);
