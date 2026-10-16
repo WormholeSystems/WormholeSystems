@@ -5,8 +5,8 @@
 use sqlx::PgPool;
 use wormholesystems::esi::jwt::Claims;
 use wormholesystems::session::{
-    Entity, actor_for_session, create_session, delete_session, ensure_preferred_character,
-    persist_identity, set_active_character, set_preferred_character,
+    Entity, SESSION_DAYS, actor_for_session, create_session, delete_session,
+    ensure_preferred_character, persist_identity, set_active_character, set_preferred_character,
 };
 
 fn claims(character_id: i64, owner_hash: &str) -> Claims {
@@ -201,6 +201,79 @@ async fn an_account_with_characters_left_is_not_removed(pool: PgPool) {
     assert!(
         is_preferred(&pool, 300).await,
         "and it takes over as that account's preferred one"
+    );
+}
+
+/// Days left on a session, rounded.
+async fn days_left(pool: &PgPool, session: &str) -> i64 {
+    sqlx::query_scalar::<_, f64>(
+        "select extract(epoch from expires_at - now())::float8 / 86400 from sessions where id = $1",
+    )
+    .bind(session)
+    .fetch_one(pool)
+    .await
+    .unwrap()
+    .round() as i64
+}
+
+async fn set_days_left(pool: &PgPool, session: &str, days: i64) {
+    sqlx::query(
+        "update sessions set expires_at = now() + make_interval(days => $2::int) where id = $1",
+    )
+    .bind(session)
+    .bind(days as i32)
+    .execute(pool)
+    .await
+    .unwrap();
+}
+
+/// The cookie a sign-in sets survives a browser restart, for as long as the session can
+/// last, and stays out of reach of scripts and other sites.
+#[test]
+fn the_session_cookie_outlasts_the_browser() {
+    let cookie = wormholesystems::auth::session_cookie("abc".into(), true);
+    assert_eq!(cookie.name(), "ws_session");
+    assert_eq!(cookie.value(), "abc");
+    assert_eq!(cookie.max_age(), Some(time::Duration::days(SESSION_DAYS)));
+    assert_eq!(cookie.path(), Some("/"));
+    assert_eq!(cookie.http_only(), Some(true));
+    assert_eq!(
+        cookie.same_site(),
+        Some(axum_extra::extract::cookie::SameSite::Lax)
+    );
+    assert_eq!(cookie.secure(), Some(true));
+    let plain = wormholesystems::auth::session_cookie("abc".into(), false);
+    assert_eq!(
+        plain.secure(),
+        Some(false),
+        "a plain HTTP install can still sign in"
+    );
+}
+
+/// Staying signed in: a session lasts as long as a browser keeps a cookie, and using it
+/// starts that again. One that already ran out stays out.
+#[sqlx::test]
+async fn a_session_in_use_keeps_renewing(pool: PgPool) {
+    let user = persist_identity(&pool, &claims(100, "h1"), corp(2001), None, None)
+        .await
+        .unwrap();
+    let session = create_session(&pool, user, 100).await.unwrap();
+    assert_eq!(days_left(&pool, &session).await, SESSION_DAYS);
+
+    set_days_left(&pool, &session, 3).await;
+    assert!(actor_for_session(&pool, &session).await.unwrap().is_some());
+    assert_eq!(
+        days_left(&pool, &session).await,
+        SESSION_DAYS,
+        "renewed by use"
+    );
+
+    set_days_left(&pool, &session, -1).await;
+    assert!(actor_for_session(&pool, &session).await.unwrap().is_none());
+    assert_eq!(
+        days_left(&pool, &session).await,
+        -1,
+        "an expired one is not revived"
     );
 }
 

@@ -63,10 +63,11 @@ here.
   [character status polling](../processes.md#character-status-polling): only users
   active within the last 5 minutes are polled.
 
-> **Open — session store.** Where per-session state (including the active character)
-> lives — the web framework's session (cookie/Redis) or a Postgres `sessions` table —
-> is the same kind of decision as the [`oauth_login_flows`](#oauth_login_flows) state
-> store. We'd add a `sessions` table only if we keep it in Postgres.
+Sessions live in Postgres (`sessions`): an opaque id in the `ws_session` cookie, the user,
+and the session's active character. A session lasts 400 days since it was last used, the
+longest a browser keeps a cookie: the API pushes `expires_at` out again when a session is
+used (at most daily), and the frontend sets the cookie again on each page load while signed
+in. Only signing out, or leaving it alone that long, ends one.
 
 ---
 

@@ -14,6 +14,12 @@ use crate::maps::Actor;
 /// Name of the cookie holding the opaque session id.
 pub const SESSION_COOKIE: &str = "ws_session";
 
+/// How long a session lasts since it was last used. Browsers keep a cookie for 400 days at
+/// most, so this is as long as staying signed in can go; a session in use keeps renewing,
+/// so in practice only one left alone that long ends. The frontend renews the cookie on the
+/// same terms (`frontend/src/lib/server/session.ts`).
+pub const SESSION_DAYS: i64 = 400;
+
 /// An ESI entity (corp/alliance) we cache so a character's deferred FKs resolve. Carries
 /// just what the entity tables require; refreshed on each login.
 pub struct Entity {
@@ -23,15 +29,25 @@ pub struct Entity {
 }
 
 /// Resolve a session id to the acting user + their active character, or `None` if the
-/// session is unknown or expired.
+/// session is unknown or expired. Using a session renews it, at most once a day so a busy
+/// one is not a write per request.
 pub async fn actor_for_session(
     pool: &PgPool,
     session_id: &str,
 ) -> Result<Option<Actor>, sqlx::Error> {
     let row = sqlx::query!(
-        "select user_id, active_character_id
-         from sessions where id = $1 and expires_at > now()",
+        "with live as (
+             select id, user_id, active_character_id, expires_at
+             from sessions where id = $1 and expires_at > now()
+         ), renewed as (
+             update sessions set expires_at = now() + make_interval(days => $2::int)
+             where id = (select id from live
+                         where expires_at < now() + make_interval(days => $2::int - 1))
+         )
+         select user_id as \"user_id!\", active_character_id as \"active_character_id!\"
+         from live",
         session_id,
+        SESSION_DAYS as i32,
     )
     .fetch_optional(pool)
     .await?;
@@ -41,7 +57,8 @@ pub async fn actor_for_session(
     }))
 }
 
-/// Open a 30-day session for a user. Returns the opaque id to put in the cookie.
+/// Open a session for a user, [`SESSION_DAYS`] long. Returns the opaque id to put in the
+/// cookie.
 ///
 /// Starts as the user's preferred character, falling back to `character_id`: which alt the
 /// SSO happened to hand back is not a choice the user made.
@@ -55,10 +72,11 @@ pub async fn create_session(
         "insert into sessions (id, user_id, active_character_id, expires_at)
          values ($1, $2,
                  coalesce((select id from characters where user_id = $2 and is_preferred), $3),
-                 now() + interval '30 days')",
+                 now() + make_interval(days => $4::int))",
         id,
         user_id,
         character_id,
+        SESSION_DAYS as i32,
     )
     .execute(pool)
     .await?;
