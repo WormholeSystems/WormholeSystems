@@ -102,16 +102,56 @@ export function openMapSocket(
 }
 
 /**
- * Open the per-user channel (activity heartbeat + status pings). Returns a close function.
- * Unlike the map socket the payload matters, since the channel mixes events addressed to this
- * user with news that concerns everyone.
+ * Open the per-user channel (activity heartbeat + status pings). Returns a close function
+ * that also stops the retry loop. Unlike the map socket the payload matters, since the
+ * channel mixes events addressed to this user with news that concerns everyone.
+ *
+ * It reconnects like the map socket: the server counts someone as active only while this
+ * channel is open, and only polls an active person's characters, so a socket left closed
+ * after a restart quietly stops their tracking until the page is reloaded. `onReconnect`
+ * fires after each reconnect, for whatever the gap may have missed.
  */
-export function openUserSocket(onEvent: (event: UserEvent) => void): () => void {
-	const ws = new WebSocket(socketUrl('/ws/user'));
-	ws.onmessage = (frame) => {
-		// A frame we cannot read is not worth acting on.
-		const parsed = parseFrame(frame.data as string);
-		if (parsed !== null) onEvent(parsed as UserEvent);
+export function openUserSocket(
+	onEvent: (event: UserEvent) => void,
+	onReconnect?: () => void,
+): () => void {
+	let ws: WebSocket | null = null;
+	let retryMs = FIRST_RETRY_MS;
+	let timer: ReturnType<typeof setTimeout> | null = null;
+	let closed = false;
+	let reconnecting = false;
+
+	function connect() {
+		if (closed) return;
+		ws = new WebSocket(socketUrl('/ws/user'));
+		ws.onopen = () => {
+			if (closed) return;
+			retryMs = FIRST_RETRY_MS;
+			if (reconnecting) {
+				reconnecting = false;
+				onReconnect?.();
+			}
+		};
+		ws.onmessage = (frame) => {
+			// A frame we cannot read is not worth acting on.
+			const parsed = parseFrame(frame.data as string);
+			if (parsed !== null) onEvent(parsed as UserEvent);
+		};
+		ws.onclose = () => {
+			if (closed) return;
+			reconnecting = true;
+			timer = setTimeout(connect, retryMs);
+			retryMs = Math.min(retryMs * 2, MAX_RETRY_MS);
+		};
+		// An error is always followed by a close, which owns the retry.
+		ws.onerror = () => ws?.close();
+	}
+
+	connect();
+
+	return () => {
+		closed = true;
+		if (timer) clearTimeout(timer);
+		ws?.close();
 	};
-	return () => ws.close();
 }

@@ -20,9 +20,13 @@ export function connectMapSession(map: MapState): (() => void) | undefined {
 	if (!map.signedIn) return () => closeWs();
 	map.characters.refreshMine();
 	// The character's own status change is how a jump is normally noticed within seconds.
-	const closeUserWs = openUserSocket((event) => {
-		if (event.type === 'character_status_changed') map.characters.refreshMine();
-	});
+	const closeUserWs = openUserSocket(
+		(event) => {
+			if (event.type === 'character_status_changed') map.characters.refreshMine();
+		},
+		// Back after a gap (a deploy, a dropped connection): a jump may have gone unheard.
+		() => map.characters.refreshMine(),
+	);
 	// Flying happens in the game client, so a jump has usually already happened by the
 	// time the tab is looked at again. An explicit listener, not the query's own focus
 	// refetching: that watches visibilitychange, and this is about window focus.
