@@ -2,13 +2,11 @@
 	// The wormhole effect badge: a lettered colored circle that opens a popover listing every
 	// modifier at this system's class. Modifiers are fetched on open, not on mount, or a list of
 	// wormholes would fire one request per row for a table nobody asked to see.
-	import ArrowDownIcon from '@lucide/svelte/icons/arrow-down';
-	import ArrowUpIcon from '@lucide/svelte/icons/arrow-up';
-
 	import { createQuery } from '@tanstack/svelte-query';
 
 	import { browser } from '$app/environment';
 	import { q } from '$lib/api/queries';
+	import EffectModifiers from '$lib/components/EffectModifiers.svelte';
 	import * as Popover from '$lib/components/ui/popover';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 
@@ -33,6 +31,10 @@
 		enabled: browser && open,
 	}));
 	const mods = $derived(modsQuery.data ?? []);
+	// Drifter and Thera classes have no effect strength of their own to show.
+	const classLabel = $derived(
+		wormholeClassId >= 1 && wormholeClassId <= 6 ? `Class ${wormholeClassId}` : null,
+	);
 </script>
 
 {#snippet circle()}
@@ -67,34 +69,24 @@
 		>
 			{letter}
 		</Popover.Trigger>
-		<Popover.Content
-			class="w-56 p-2 text-[11px]"
-			onpointerdown={(ev: PointerEvent) => ev.stopPropagation()}
-		>
-			<div class="mb-1 flex items-center gap-1.5 font-medium">
+		<Popover.Content class="w-64 p-0" onpointerdown={(ev: PointerEvent) => ev.stopPropagation()}>
+			<div class="flex items-center gap-2 border-b border-border px-3 py-2">
 				<span
-					class="flex size-[14px] items-center justify-center rounded-full text-[9px] font-semibold {darkText
+					class="flex size-[18px] shrink-0 items-center justify-center rounded-full text-[10px] font-semibold {darkText
 						? 'text-neutral-950'
 						: 'text-white'}"
 					style:background-color="var(--color-{token})"
 				>
 					{letter}
 				</span>
-				{name}
+				<span class="font-heading text-sm font-semibold">{name}</span>
+				{#if classLabel}
+					<span class="ml-auto text-[10px] text-muted-foreground">{classLabel}</span>
+				{/if}
 			</div>
-			{#each mods as m (m.stat + m.kind)}
-				<div class="flex items-center justify-between gap-2">
-					<span class="text-muted-foreground">{m.stat}</span>
-					<span class="flex items-center gap-0.5">
-						{m.value}
-						{#if m.kind === 'buff'}
-							<ArrowUpIcon class="size-3 text-green-500" />
-						{:else}
-							<ArrowDownIcon class="size-3 text-red-500" />
-						{/if}
-					</span>
-				</div>
-			{/each}
+			<div class="px-3 py-2">
+				<EffectModifiers modifiers={mods} loading={modsQuery.isPending} />
+			</div>
 		</Popover.Content>
 	</Popover.Root>
 {/if}

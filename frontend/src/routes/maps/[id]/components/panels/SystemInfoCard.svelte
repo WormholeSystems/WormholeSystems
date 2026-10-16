@@ -4,6 +4,7 @@
 	import { q } from '$lib/api/queries';
 	import type { MapSystemView } from '$lib/api/types/MapSystemView';
 	import * as Popover from '$lib/components/ui/popover';
+	import EffectModifiers from '$lib/components/EffectModifiers.svelte';
 	import EveImage from '$lib/components/EveImage.svelte';
 	import MapPanel from '$lib/components/map-panel/MapPanel.svelte';
 	import MapPanelContent from '$lib/components/map-panel/MapPanelContent.svelte';
@@ -133,15 +134,8 @@
 		{#if mods.length > 0}
 			<div class="border-b border-border/50 px-3 py-2">
 				<div class="flex flex-col gap-1">
-					<span class="text-[10px] tracking-wider text-muted-foreground uppercase">Effect</span>
-					<div class="grid grid-cols-2 gap-x-4 gap-y-0.5">
-						{#each mods as m (m.stat + m.kind)}
-							<div class="flex items-center justify-between text-[11px]">
-								<span class="truncate text-muted-foreground">{m.stat}</span>
-								<span class={m.kind === 'buff' ? 'text-green-400' : 'text-red-400'}>{m.value}</span>
-							</div>
-						{/each}
-					</div>
+					<span class="text-[10px] tracking-wider text-muted-foreground uppercase"> Effect </span>
+					<EffectModifiers modifiers={mods} columns={2} />
 				</div>
 			</div>
 		{/if}
