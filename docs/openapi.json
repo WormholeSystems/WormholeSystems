@@ -5097,6 +5097,78 @@
         ]
       }
     },
+    "/api/me/preferences": {
+      "get": {
+        "tags": [
+          "identity"
+        ],
+        "summary": "`GET /api/me/preferences`: how the site looks to this person, on every map.",
+        "operationId": "my_preferences",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPreferences"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "session": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "identity"
+        ],
+        "summary": "`POST /api/me/preferences`: change some of them; the rest stay as they are.",
+        "operationId": "update_my_preferences",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserPreferences"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The preferences now",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPreferences"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "session": []
+          }
+        ]
+      }
+    },
     "/api/me/preferred-character": {
       "post": {
         "tags": [
@@ -11536,6 +11608,18 @@
           }
         }
       },
+      "UpdateUserPreferences": {
+        "type": "object",
+        "description": "A partial change: a field left out stays as it is.",
+        "properties": {
+          "effect_icons": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          }
+        }
+      },
       "UserEvent": {
         "oneOf": [
           {
@@ -11575,6 +11659,18 @@
           }
         ],
         "description": "An event addressed to a single user."
+      },
+      "UserPreferences": {
+        "type": "object",
+        "required": [
+          "effect_icons"
+        ],
+        "properties": {
+          "effect_icons": {
+            "type": "boolean",
+            "description": "The game's icon on a wormhole effect badge; off shows the effect's letter instead."
+          }
+        }
       },
       "WatchlistEntry": {
         "type": "object",

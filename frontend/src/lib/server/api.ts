@@ -25,6 +25,7 @@ import type { MapEntry } from '$lib/api/types/MapEntry';
 import type { MapUserSettings } from '$lib/api/types/MapUserSettings';
 import type { MapView } from '$lib/api/types/MapView';
 import type { Signature } from '$lib/api/types/Signature';
+import type { UserPreferences } from '$lib/api/types/UserPreferences';
 
 const base = () => env.API_BASE ?? 'http://127.0.0.1:3000';
 
@@ -40,6 +41,13 @@ function serverApi(event: RequestEvent) {
 /** The signed-in character, or null. Used by the layout and the /maps auth gate. */
 export function currentCharacter(event: RequestEvent): Promise<CharacterSummary | null> {
 	return serverApi(event).me();
+}
+
+/** The signed-in person's display preferences; null for a visitor, who gets the defaults. */
+export function myPreferences(event: RequestEvent): Promise<UserPreferences | null> {
+	return serverApi(event)
+		.myPreferences()
+		.catch(() => null);
 }
 
 /**

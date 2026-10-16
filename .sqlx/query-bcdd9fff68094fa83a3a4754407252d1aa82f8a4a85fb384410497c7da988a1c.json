@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into user_preferences (user_id, effect_icons)\n         values ($1, coalesce($2::bool, $3))\n         on conflict (user_id) do update set\n             effect_icons = coalesce($2::bool, user_preferences.effect_icons),\n             updated_at = now()\n         returning effect_icons",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "effect_icons",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "user_preferences",
+            "name": "effect_icons"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Bool",
+        "Bool"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "bcdd9fff68094fa83a3a4754407252d1aa82f8a4a85fb384410497c7da988a1c"
+}
