@@ -202,7 +202,8 @@
 												: '. Switch to it to grant them.'}"
 											data-testid="character-missing-scopes"
 										>
-											<TriangleAlertIcon class="size-3.5 text-red-500" />
+											<!-- Important: a highlighted row repaints everything in it. -->
+											<TriangleAlertIcon class="size-3.5 text-red-500!" />
 										</span>
 									{/if}
 								</DropdownMenu.Item>
@@ -214,7 +215,7 @@
 							<DropdownMenu.Item>
 								{#snippet child({ props })}
 									<a href="/settings/characters" data-testid="grant-missing-scopes" {...props}>
-										<TriangleAlertIcon class="text-red-500" />
+										<TriangleAlertIcon class="text-red-500!" />
 										Grant missing permissions
 									</a>
 								{/snippet}
