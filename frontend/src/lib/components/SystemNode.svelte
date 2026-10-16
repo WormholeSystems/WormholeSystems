@@ -173,7 +173,15 @@
 			<span class="truncate font-medium text-muted-foreground italic">Unmapped</span>
 		{/if}
 		{#if mapped?.occupying_group}
-			<span class="shrink-0 text-muted-foreground">({mapped.occupying_group})</span>
+			<!-- Truncated like the name: a long one would push the icons out of the node. The
+			     full text is in its title, and on the system's info card. -->
+			<span
+				class="truncate text-muted-foreground"
+				title={mapped.occupying_group}
+				data-testid="node-occupier"
+			>
+				({mapped.occupying_group})
+			</span>
 		{/if}
 
 		<HeaderIcons {node} {sigCounts} {unmapped} />
