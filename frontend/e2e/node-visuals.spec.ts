@@ -47,6 +47,8 @@ test('node shows class, alias, occupier, statics, effect, and region per space k
 	const effect = whNode.getByLabel('Wolf-Rayet Star');
 	await expect(effect).toBeVisible();
 	await expect(effect).toHaveText('W');
+	// It opens something when clicked, so it gets the ordinary pointer, not the help one.
+	await expect(effect).toHaveCSS('cursor', 'pointer');
 	await effect.click();
 	await expect(page.getByText('Armor HP')).toBeVisible();
 	await page.keyboard.press('Escape');
