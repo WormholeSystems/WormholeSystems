@@ -17,4 +17,9 @@ solar_system_id: number | null,
  * EVE refused this character's token (revoked, or rotated away), so it is not tracked
  * and cannot act until it logs in again.
  */
-needs_login: boolean, };
+needs_login: boolean, 
+/**
+ * The ESI permissions the app uses that this character has not granted, so the UI can
+ * say which of them is why something does not work for it.
+ */
+missing_scopes: Array<string>, };

@@ -4,6 +4,7 @@
 	import MapIcon from '@lucide/svelte/icons/map';
 	import PlusIcon from '@lucide/svelte/icons/plus';
 	import Trash2Icon from '@lucide/svelte/icons/trash-2';
+	import TriangleAlertIcon from '@lucide/svelte/icons/triangle-alert';
 
 	import { createQuery } from '@tanstack/svelte-query';
 
@@ -11,6 +12,7 @@
 	import { page } from '$app/state';
 	import { q } from '$lib/api/queries';
 	import { createIdentityActions } from '$lib/characters/identity';
+	import { scopeMeta } from '$lib/esi/scopes';
 	import type { CharacterSummary } from '$lib/api/types/CharacterSummary';
 	import type { MapEntry } from '$lib/api/types/MapEntry';
 	import type { ServerStatus as ServerState } from '$lib/api/types/ServerStatus';
@@ -41,6 +43,13 @@
 		enabled: browser && me !== null,
 	}));
 	const characters = $derived(charactersQuery.data ?? []);
+	// A character short of an ESI permission quietly does less (no location, no waypoints),
+	// so the portrait says so rather than leaving it to be noticed.
+	const lacking = $derived(characters.filter((c) => c.missing_scopes.length > 0));
+	const activeLacks = $derived(lacking.some((c) => c.is_active));
+	function missingNames(scopes: string[]): string {
+		return scopes.map((s) => scopeMeta(s)?.name ?? s).join(', ');
+	}
 
 	// Three fit without the names being squeezed to nothing; the rest go behind a count.
 	const INLINE = 3;
@@ -143,10 +152,26 @@
 			{#if me}
 				<DropdownMenu.Root>
 					<DropdownMenu.Trigger
-						aria-label="Account"
-						class="block size-7 overflow-hidden border border-border transition-colors hover:border-foreground/50"
+						aria-label={lacking.length > 0
+							? 'Account: characters are missing permissions'
+							: 'Account'}
+						class="relative block size-7 border border-border transition-colors hover:border-foreground/50"
 					>
-						<EveImage kind="character" id={me.character_id} class="size-7 object-cover" />
+						<!-- Clipped on its own, so the warning can sit over the corner. -->
+						<span class="block size-full overflow-hidden">
+							<EveImage kind="character" id={me.character_id} class="size-full object-cover" />
+						</span>
+						{#if lacking.length > 0}
+							<span
+								class="absolute -right-1.5 -bottom-1.5 flex size-4 items-center justify-center rounded-full bg-background"
+								title="{lacking.map((c) => c.name).join(', ')} {lacking.length === 1
+									? 'is'
+									: 'are'} missing permissions"
+								data-testid="missing-scopes-warning"
+							>
+								<TriangleAlertIcon class="size-3.5 text-red-500" />
+							</span>
+						{/if}
 					</DropdownMenu.Trigger>
 					<DropdownMenu.Content align="end">
 						<DropdownMenu.Group>
@@ -169,9 +194,32 @@
 											Log in again
 										</span>
 									{/if}
+									{#if c.missing_scopes.length > 0}
+										<span
+											class="shrink-0 {c.needs_login ? '' : 'ml-auto'}"
+											title="Missing: {missingNames(c.missing_scopes)}{c.is_active
+												? ''
+												: '. Switch to it to grant them.'}"
+											data-testid="character-missing-scopes"
+										>
+											<TriangleAlertIcon class="size-3.5 text-red-500" />
+										</span>
+									{/if}
 								</DropdownMenu.Item>
 							{/each}
 						</DropdownMenu.Group>
+
+						{#if activeLacks}
+							<DropdownMenu.Separator />
+							<DropdownMenu.Item>
+								{#snippet child({ props })}
+									<a href="/settings/characters" data-testid="grant-missing-scopes" {...props}>
+										<TriangleAlertIcon class="text-red-500" />
+										Grant missing permissions
+									</a>
+								{/snippet}
+							</DropdownMenu.Item>
+						{/if}
 
 						<DropdownMenu.Separator />
 

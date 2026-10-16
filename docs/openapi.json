@@ -6449,7 +6449,8 @@
           "is_active",
           "is_preferred",
           "online",
-          "needs_login"
+          "needs_login",
+          "missing_scopes"
         ],
         "properties": {
           "character_id": {
@@ -6462,6 +6463,13 @@
           "is_preferred": {
             "type": "boolean",
             "description": "The one new sessions start as, chosen on the characters page."
+          },
+          "missing_scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The ESI permissions the app uses that this character has not granted, so the UI can\nsay which of them is why something does not work for it."
           },
           "name": {
             "type": "string"

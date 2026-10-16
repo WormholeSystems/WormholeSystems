@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select distinct t.character_id, s.name\n         from esi_tokens t\n         join esi_token_scopes ts on ts.token_id = t.id\n         join esi_scopes s on s.id = ts.scope_id\n         join characters c on c.id = t.character_id\n         where c.user_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "character_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "esi_tokens",
+            "name": "character_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "esi_scopes",
+            "name": "name"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "f43e76d95f873d1c2517e17d22e8cbe740ac6e6cbffd26ee6a5b12194b41f152"
+}
