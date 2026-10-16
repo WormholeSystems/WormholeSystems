@@ -5,10 +5,12 @@
 //! fires when a wormhole is mapped, since that edge can complete the route from there to
 //! the target without anything being placed.
 //!
-//! The claim is per placement, so a system added, removed and added again is a new occasion
-//! worth a message, while a hundred other edits are not. With a starting point the claim is
-//! per route instead: however many placements and connections report the same way to the
-//! target, it is said once, and a new way is a new occasion.
+//! Without a starting point, the distance is measured from the system just placed, over
+//! gates, as legacy did: once the chain is in range, placing something unrelated elsewhere
+//! on it says nothing new. The claim is per placement, so a system added, removed and added
+//! again is a new occasion worth a message. With a starting point the claim is per route
+//! instead: however many placements and connections report the same way to the target, it
+//! is said once, and a new way is a new occasion.
 
 use sqlx::PgPool;
 
@@ -51,7 +53,7 @@ pub async fn evaluate(
     // What just changed, so the message can say what happened rather than only what is
     // now reachable.
     let changed = sqlx::query!(
-        "select mss.id, ss.name from map_solar_systems mss
+        "select mss.id, mss.solar_system_id, ss.name from map_solar_systems mss
          join solar_systems ss on ss.id = mss.solar_system_id
          where mss.id = any($1)",
         &changed_ids,
@@ -90,10 +92,20 @@ pub async fn evaluate(
                 (found, route_key(&mapped))
             }
             (None, Occasion::Placed(placed)) => {
+                let Some(origin) = changed
+                    .iter()
+                    .find(|row| row.id == placed)
+                    .and_then(|row| row.solar_system_id)
+                else {
+                    continue;
+                };
+                // From the placed system alone and over gates only: measured from the
+                // whole chain, every later placement would find the same in-range system
+                // and fire again under its own key.
                 let Some(found) = proximity::nearest(
                     universe,
-                    &chain.systems,
-                    &chain.edges,
+                    &[origin],
+                    &[],
                     &chain.ignored,
                     target_id,
                     alert.max_jumps,

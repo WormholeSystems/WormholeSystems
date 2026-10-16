@@ -185,7 +185,8 @@
 					{originSystem.name} · {originSystem.region}. Measured from here through the chain, and
 					only when the way there changes.
 				{:else}
-					Measure from this system through the chain instead of from wherever the chain is nearest.
+					Measure from this system through the chain. Without one, each system added to the map is
+					measured on its own.
 				{/if}
 			</p>
 		</div>

@@ -17,8 +17,10 @@ one up once and it speaks when the answer changes, instead of somebody watching 
 
 ### Proximity with a starting point
 
-By default a proximity alert measures from wherever the chain is nearest: any mapped system
-within the jump limit of the target fires it. Give it a **starting point** and it measures
+By default a proximity alert measures from each system as it is added to the map, over
+gates: a new system within the jump limit of the target fires it, once. Systems added later
+that are not in range themselves stay quiet, however close the rest of the chain already
+is. Give it a **starting point** and it measures
 one route instead, from that system to the target through the chain, counting gate jumps
 and treating wormholes as free. "Is Jita within five jumps of home" then stays about home,
 not about whichever exit happened to land near Jita.

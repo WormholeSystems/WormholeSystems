@@ -16,6 +16,7 @@ use sqlx::PgPool;
 use wormholesystems::alerts::filters::{Candidates, Match, Mode, Rule, Side, Subject};
 use wormholesystems::alerts::{self, AlertKind, Runtime};
 use wormholesystems::maps::Actor;
+use wormholesystems::maps::solar_system::{RemoveSystem, remove_system};
 
 async fn make_webhook(pool: &PgPool, map_id: i64, url: &str) -> i64 {
     sqlx::query_scalar!(
@@ -415,10 +416,10 @@ async fn a_connection_that_completes_the_route_fires_once(pool: PgPool) {
     assert_eq!(inbox.descriptions().len(), 1);
 }
 
-/// Without a starting point the chain is measured from wherever it is nearest, and a
-/// wormhole between two mapped systems changes nothing about that.
+/// Without a starting point the distance is the placed system's own, and a wormhole
+/// between two mapped systems changes nothing about that.
 #[sqlx::test]
-async fn without_a_starting_point_the_nearest_mapped_system_counts(pool: PgPool) {
+async fn without_a_starting_point_the_placed_system_counts(pool: PgPool) {
     let w = world(&pool).await;
     seed_gates(&pool).await;
     let inbox = Inbox::start().await;
@@ -442,6 +443,46 @@ async fn without_a_starting_point_the_nearest_mapped_system_counts(pool: PgPool)
         inbox.descriptions().len(),
         1,
         "the connection is not a new occasion"
+    );
+}
+
+/// Once the chain is in range, placing something unrelated says nothing new: the distance
+/// is the placed system's own, as legacy measured it. Placed again after being removed, the
+/// in-range system is news once more.
+#[sqlx::test]
+async fn an_unrelated_placement_does_not_alert_again(pool: PgPool) {
+    let w = world(&pool).await;
+    seed_gates(&pool).await;
+    let inbox = Inbox::start().await;
+    proximity_alert(&pool, w.map_id, &inbox, SYS_C, None, 1).await;
+    let runtime = Runtime::load(&pool, None, PUBLIC_URL.into()).await.unwrap();
+
+    let b = place(&pool, &runtime, w.owner, w.map_id, SYS_B).await;
+    assert_eq!(inbox.descriptions().len(), 1, "B is one gate from C");
+
+    place(&pool, &runtime, w.owner, w.map_id, SYS_F).await;
+    place(&pool, &runtime, w.owner, w.map_id, SYS_A).await;
+    assert_eq!(
+        inbox.descriptions().len(),
+        1,
+        "F and A are out of range, however close B is"
+    );
+
+    remove_system(
+        &pool,
+        w.owner,
+        RemoveSystem {
+            map_id: w.map_id,
+            map_solar_system_id: b,
+        },
+    )
+    .await
+    .unwrap();
+    place(&pool, &runtime, w.owner, w.map_id, SYS_B).await;
+    assert_eq!(
+        inbox.descriptions().len(),
+        2,
+        "B placed again is a new occasion"
     );
 }
 
