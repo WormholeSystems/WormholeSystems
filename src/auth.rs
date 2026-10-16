@@ -219,8 +219,11 @@ async fn finish_login(state: &AppState, jar: CookieJar, query: CallbackQuery) ->
         Err(err) => return server_error(err),
     };
 
+    // Kept across browser restarts: without a lifetime it is a browser-session cookie,
+    // gone whenever the browser (or a phone's tab) closes.
     let cookie = Cookie::build((session::SESSION_COOKIE, session_id))
         .path("/")
+        .max_age(time::Duration::days(session::SESSION_DAYS))
         .http_only(true)
         .same_site(SameSite::Lax)
         .secure(state.secure_cookies)

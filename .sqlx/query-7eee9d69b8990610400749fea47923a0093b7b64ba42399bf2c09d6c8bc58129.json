@@ -1,0 +1,41 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "with live as (\n             select id, user_id, active_character_id, expires_at\n             from sessions where id = $1 and expires_at > now()\n         ), renewed as (\n             update sessions set expires_at = now() + make_interval(days => $2::int)\n             where id = (select id from live\n                         where expires_at < now() + make_interval(days => $2::int - 1))\n         )\n         select user_id as \"user_id!\", active_character_id as \"active_character_id!\"\n         from live",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "user_id!",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "sessions",
+            "name": "user_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "active_character_id!",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "sessions",
+            "name": "active_character_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "7eee9d69b8990610400749fea47923a0093b7b64ba42399bf2c09d6c8bc58129"
+}
