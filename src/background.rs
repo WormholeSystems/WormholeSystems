@@ -97,6 +97,39 @@ fn panic_message(panic: &(dyn Any + Send)) -> &str {
         .unwrap_or("(no message)")
 }
 
+/// Tells a bad moment from a stuck job. Upstream services fail now and then and the next
+/// try usually works, so a failure is a warning until the job has failed every time for
+/// `limit`, which is worth one error.
+pub struct Streak {
+    limit: Duration,
+    /// Since when every try has failed, and whether that has been reported yet.
+    state: Mutex<Option<(Instant, bool)>>,
+}
+
+impl Streak {
+    pub fn new(limit: Duration) -> Streak {
+        Streak {
+            limit,
+            state: Mutex::new(None),
+        }
+    }
+
+    /// Note one try's outcome. True once per streak, when it first reaches the limit.
+    pub fn record(&self, failed: bool, now: Instant) -> bool {
+        let mut state = self.state.lock().expect("streak lock");
+        if !failed {
+            *state = None;
+            return false;
+        }
+        let (since, reported) = state.get_or_insert((now, false));
+        if *reported || now.duration_since(*since) < self.limit {
+            return false;
+        }
+        *reported = true;
+        true
+    }
+}
+
 /// How long a loop that panicked waits before [`supervise`] starts it again, the first
 /// time. Doubles while it keeps panicking soon after starting, up to [`RESTART_MAX`], so a
 /// panic that comes back every time is not a tight loop of error reports.
@@ -165,5 +198,25 @@ pub async fn shutdown(grace: Duration) {
     };
     if tokio::time::timeout(grace, all).await.is_err() {
         tracing::warn!("background jobs still running after {grace:?}, stopping anyway");
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_streak_is_reported_once_when_it_reaches_the_limit() {
+        let limit = Duration::from_secs(900);
+        let streak = Streak::new(limit);
+        let start = Instant::now();
+        assert!(!streak.record(true, start));
+        assert!(!streak.record(true, start + limit / 2));
+        assert!(streak.record(true, start + limit));
+        assert!(!streak.record(true, start + limit * 2));
+        // A success ends the streak, and the next failure starts the clock again.
+        assert!(!streak.record(false, start + limit * 2));
+        assert!(!streak.record(true, start + limit * 3));
+        assert!(streak.record(true, start + limit * 4));
     }
 }

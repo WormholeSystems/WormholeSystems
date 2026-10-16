@@ -8,7 +8,9 @@
 //!
 //! Each tier awaits its whole batch before the next tick, so one poll that never returns
 //! would stop that tier for the life of the process. Every poll runs under
-//! [`POLL_TIMEOUT`] for that reason, and failures are counted and logged once per tick.
+//! [`POLL_TIMEOUT`] for that reason, and failures are counted and logged once per tick:
+//! as a warning, since ESI has bad minutes and the next tick retries, and as an error only
+//! once a tier has failed on every tick for [`FAILING_FOR`].
 //!
 //! Tokens come from a [`TokenCache`], so a poll touches the database only to write what
 //! actually changed. Most polls see nothing new and write nothing.
@@ -16,14 +18,14 @@
 use std::collections::HashSet;
 use std::future::Future;
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use sqlx::PgPool;
 use tokio::sync::{Semaphore, SemaphorePermit};
 use tokio::task::JoinSet;
 use tokio::time::timeout;
 
-use crate::background::spawn_every;
+use crate::background::{Streak, spawn_every};
 use crate::db::PgTokenStore;
 use crate::esi::scopes::Scope;
 use crate::esi::{EsiClient, EsiError, Result as EsiResult, Sso, Token, TokenCache, TokenStore};
@@ -37,6 +39,9 @@ const CONCURRENCY: usize = 32;
 /// The longest one character's poll may take, token refresh included, before it is dropped
 /// and counted as failed. The next tick retries it.
 const POLL_TIMEOUT: Duration = Duration::from_secs(20);
+
+/// How long a tier may fail on every tick before it is an error rather than a warning.
+const FAILING_FOR: Duration = Duration::from_secs(15 * 60);
 
 /// A poll's outcome. A missing scope is not a failure: that field is simply not tracked.
 type Poll = Result<(), String>;
@@ -60,6 +65,8 @@ struct Poller {
     /// ends in a write, while the API, websockets and killmail ingest draw on the same
     /// connections; without a cap of its own a busy tick could take all of them.
     db: Semaphore,
+    tier_one_failing: Streak,
+    tier_two_failing: Streak,
 }
 
 impl Poller {
@@ -117,6 +124,8 @@ pub fn start(pool: PgPool, sso: Arc<Sso>, esi: EsiClient, users: UserHub, server
         users,
         tokens: TokenCache::new(),
         db: Semaphore::new(db),
+        tier_one_failing: Streak::new(FAILING_FOR),
+        tier_two_failing: Streak::new(FAILING_FOR),
     });
     let (one, one_server) = (poller.clone(), server.clone());
     spawn_every("tracking tier-1", Duration::from_secs(60), move || {
@@ -140,7 +149,10 @@ async fn tier_one(poller: Arc<Poller>, server: ServerWatch) -> Result<(), sqlx::
     // dropped out of polling are let go.
     let ids: HashSet<i64> = due.iter().map(|d| d.character_id).collect();
     poller.tokens.retain(|id| ids.contains(&id));
-    run_polls("tier-1", &due, |d| poll_online(poller.clone(), d)).await;
+    run_polls("tier-1", &poller.tier_one_failing, &due, |d| {
+        poll_online(poller.clone(), d)
+    })
+    .await;
     Ok(())
 }
 
@@ -151,7 +163,10 @@ async fn tier_two(poller: Arc<Poller>, server: ServerWatch) -> Result<(), sqlx::
         return Ok(());
     }
     let due = active_characters(&poller.pool, true).await?;
-    run_polls("tier-2", &due, |d| poll_location_ship(poller.clone(), d)).await;
+    run_polls("tier-2", &poller.tier_two_failing, &due, |d| {
+        poll_location_ship(poller.clone(), d)
+    })
+    .await;
     Ok(())
 }
 
@@ -230,8 +245,9 @@ where
 }
 
 /// [`run_bounded`] for one tier's polls: each under [`POLL_TIMEOUT`], with a single line
-/// logged for the tick when any failed, so a tier that stops working says so.
-async fn run_polls<F, Fut>(tier: &'static str, due: &[Due], f: F)
+/// logged for the tick when any failed, and an error once `streak` says the tier is stuck.
+/// The message stays the same from tick to tick, so the reports group as one issue.
+async fn run_polls<F, Fut>(tier: &'static str, streak: &Streak, due: &[Due], f: F)
 where
     F: Fn(Due) -> Fut,
     Fut: Future<Output = Poll> + Send + 'static,
@@ -262,10 +278,24 @@ where
     };
     polls("ok", due.len() - count);
     polls("failed", count);
-    if let Some(sample) = sample {
+    let Some(sample) = sample else {
+        streak.record(false, Instant::now());
+        return;
+    };
+    if streak.record(true, Instant::now()) {
         tracing::error!(
-            "tracking {tier}: {count} of {} poll(s) failed, e.g. {sample}",
-            due.len()
+            failed = count,
+            polls = due.len(),
+            sample,
+            "tracking {tier}: polls have failed on every tick for {} minutes",
+            FAILING_FOR.as_secs() / 60
+        );
+    } else {
+        tracing::warn!(
+            failed = count,
+            polls = due.len(),
+            sample,
+            "tracking {tier}: polls failed"
         );
     }
 }

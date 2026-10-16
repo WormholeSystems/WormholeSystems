@@ -105,6 +105,21 @@ pub struct DiscordCapability {
     /// Whether the bot can post to a channel or DM. Needs a bot token on top of the rest;
     /// a plain webhook destination works without it.
     pub bot: bool,
+    /// Where to add the bot to a server, when there is one. It has to be in a server to
+    /// post to its channels, and Discord only lets it DM people it shares a server with.
+    pub invite_url: Option<String>,
+}
+
+/// What the bot asks for when it is added: see channels, send messages with embeds, and
+/// mention everyone, which a role ping needs when the role is not mentionable.
+const BOT_PERMISSIONS: u64 = (1 << 10) | (1 << 11) | (1 << 14) | (1 << 17);
+
+/// The link that adds the bot to a server, with its slash commands.
+pub fn bot_invite_url(client_id: &str) -> String {
+    format!(
+        "https://discord.com/oauth2/authorize?client_id={client_id}\
+         &scope=bot+applications.commands&permissions={BOT_PERMISSIONS}"
+    )
 }
 
 /// `GET /api/instance`: what this deployment has switched on, and what its operator wants
@@ -118,13 +133,12 @@ pub struct DiscordCapability {
     security(()),
 )]
 pub async fn instance(State(state): State<AppState>) -> ApiResult<Instance> {
+    let bot = state.discord.as_ref().filter(|d| d.bot_token.is_some());
     Ok(Json(Instance {
         discord: DiscordCapability {
             linking: state.discord.is_some(),
-            bot: state
-                .discord
-                .as_ref()
-                .is_some_and(|d| d.bot_token.is_some()),
+            bot: bot.is_some(),
+            invite_url: bot.map(|d| bot_invite_url(&d.client_id)),
         },
         announcement: state.announcement.as_deref().cloned(),
     }))

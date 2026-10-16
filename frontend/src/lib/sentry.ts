@@ -15,6 +15,19 @@ export type SentryEnv = Partial<Record<string, string>>;
 /** The browser posts here and the API forwards it, so nothing leaves for a third origin. */
 export const TUNNEL = '/api/sentry-tunnel';
 
+/**
+ * A chunk or stylesheet the browser could not load. After a deploy SvelteKit reloads the
+ * page on its own; what is left is a dropped connection, a restart in progress, or a
+ * crawler that does not run module imports, none of it ours to fix. The messages are
+ * Chrome's, Safari's, Firefox's and Vite's.
+ */
+export const IGNORED_ERRORS = [
+	/Failed to fetch dynamically imported module/,
+	/Importing a module script failed/,
+	/error loading dynamically imported module/,
+	/Unable to preload CSS/,
+];
+
 /** The shared part of the client and server options, or `null` when reporting is off. */
 export function sentryOptions(env: SentryEnv) {
 	const dsn = env.PUBLIC_SENTRY_DSN?.trim();
@@ -25,6 +38,7 @@ export function sentryOptions(env: SentryEnv) {
 		release: env.PUBLIC_SENTRY_RELEASE?.trim() || undefined,
 		sendDefaultPii: false,
 		tracesSampleRate: sampleRate(env.PUBLIC_SENTRY_TRACES_SAMPLE_RATE),
+		ignoreErrors: IGNORED_ERRORS,
 		beforeSend: scrubEvent,
 		beforeBreadcrumb: scrubBreadcrumb,
 	};

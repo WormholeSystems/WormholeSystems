@@ -57,7 +57,7 @@
 	let pastedIds = $state<Set<string> | null>(null);
 	let error = $state<string | null>(null);
 
-	const rows = $derived(sigs.toSorted((a, b) => a.signature_id.localeCompare(b.signature_id)));
+	const rows = $derived([...sigs].sort((a, b) => a.signature_id.localeCompare(b.signature_id)));
 	const ctx: SignatureContext = $derived({
 		naming: null,
 		systems: DEMO_SYSTEMS,

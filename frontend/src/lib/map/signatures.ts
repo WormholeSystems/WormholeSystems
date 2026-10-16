@@ -157,7 +157,7 @@ export function typesForCategory(
 				t.signature_category_id === categoryId &&
 				(systemClassId === null || t.spawn_areas.includes(systemClassId)),
 		)
-		.toSorted(
+		.sort(
 			(a, b) => destClassMeta(a.target_class).sortWeight - destClassMeta(b.target_class).sortWeight,
 		);
 }

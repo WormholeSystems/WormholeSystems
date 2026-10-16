@@ -44,7 +44,7 @@
 					targetClass === null ||
 					(e.target?.kind === 'system' && e.target.wormhole_class_id === targetClass),
 			)
-			.toSorted((a, b) => {
+			.sort((a, b) => {
 				const aa = a.target?.alias ?? null;
 				const bb = b.target?.alias ?? null;
 				if (aa !== null && bb !== null) return aa.localeCompare(bb);

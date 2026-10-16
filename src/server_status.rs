@@ -102,8 +102,21 @@ impl ServerWatch {
 
     /// Whether an ESI-backed poller should do its work this tick.
     pub fn should_poll(&self) -> bool {
-        self.0.borrow().state.worth_polling()
+        self.0.borrow().state.worth_polling() && !in_downtime(Utc::now())
     }
+}
+
+/// When the daily downtime starts, in minutes past midnight UTC, and how long we hold off.
+/// ESI starts failing right at 11:00, a while before `/status` reports zero players, so
+/// the pollers stop by the clock first and the status takes over from there.
+const DOWNTIME_START: u32 = 11 * 60;
+const DOWNTIME_MINUTES: u32 = 5;
+
+/// Whether `now` is in the first minutes of the daily downtime.
+pub fn in_downtime(now: DateTime<Utc>) -> bool {
+    use chrono::Timelike;
+    let minute = now.hour() * 60 + now.minute();
+    (DOWNTIME_START..DOWNTIME_START + DOWNTIME_MINUTES).contains(&minute)
 }
 
 /// Spawn the status loop. Returns the handle the other pollers gate on. A minute
@@ -227,6 +240,22 @@ mod tests {
         // VIP wins even with players on: they are CCP, and nobody else can get in.
         assert_eq!(ServerState::classify(true, 12), ServerState::Vip);
         assert_eq!(ServerState::classify(true, 0), ServerState::Vip);
+    }
+
+    #[test]
+    fn the_first_minutes_of_downtime_are_skipped_by_the_clock() {
+        let at = |h, m, s| {
+            chrono::NaiveDate::from_ymd_opt(2026, 10, 16)
+                .unwrap()
+                .and_hms_opt(h, m, s)
+                .unwrap()
+                .and_utc()
+        };
+        assert!(!in_downtime(at(10, 59, 59)));
+        assert!(in_downtime(at(11, 0, 0)));
+        assert!(in_downtime(at(11, 4, 59)));
+        assert!(!in_downtime(at(11, 5, 0)));
+        assert!(!in_downtime(at(23, 0, 0)));
     }
 
     #[test]

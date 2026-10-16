@@ -106,3 +106,32 @@ async fn healthz_answers_under_api_too(pool: PgPool) {
     assert_eq!(res.status(), StatusCode::OK);
     assert!(res.headers().get("content-encoding").is_none());
 }
+
+// The invite is only offered when there is a bot to invite.
+#[sqlx::test]
+async fn the_bot_invite_needs_a_bot_token(pool: PgPool) {
+    use wormholesystems::config::DiscordConfig;
+
+    let discord = |bot_token: Option<&str>| {
+        Some(Arc::new(DiscordConfig {
+            client_id: "1234".into(),
+            client_secret: "secret".into(),
+            redirect_uri: "http://localhost/discord/callback".into(),
+            public_key: "00".into(),
+            bot_token: bot_token.map(Into::into),
+        }))
+    };
+    let invite = async |config| {
+        let mut state = state(&pool);
+        state.discord = config;
+        let app = wormholesystems::api::router().with_state(state);
+        get(app, "/api/instance", None).await.body["discord"]["invite_url"].clone()
+    };
+
+    assert!(invite(None).await.is_null());
+    assert!(invite(discord(None)).await.is_null());
+    let url = invite(discord(Some("token"))).await;
+    let url = url.as_str().unwrap();
+    assert!(url.starts_with("https://discord.com/oauth2/authorize?client_id=1234&"));
+    assert!(url.contains("scope=bot+applications.commands"));
+}
