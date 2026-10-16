@@ -74,6 +74,9 @@ pub struct CharacterRef {
     /// EVE refused this character's token (revoked, or rotated away), so it is not tracked
     /// and cannot act until it logs in again.
     pub needs_login: bool,
+    /// The ESI permissions the app uses that this character has not granted, so the UI can
+    /// say which of them is why something does not work for it.
+    pub missing_scopes: Vec<String>,
 }
 
 /// One ESI permission and whether the acting character has consented to it.
@@ -152,9 +155,33 @@ pub async fn list(pool: &PgPool, actor: Actor) -> Result<Vec<CharacterRef>> {
     )
     .fetch_all(pool)
     .await?;
+    let granted = sqlx::query!(
+        "select distinct t.character_id, s.name
+         from esi_tokens t
+         join esi_token_scopes ts on ts.token_id = t.id
+         join esi_scopes s on s.id = ts.scope_id
+         join characters c on c.id = t.character_id
+         where c.user_id = $1",
+        actor.user_id,
+    )
+    .fetch_all(pool)
+    .await?;
+    let missing = |character_id: i64| {
+        Scope::ALL
+            .iter()
+            .map(|scope| scope.as_str())
+            .filter(|scope| {
+                !granted
+                    .iter()
+                    .any(|g| g.character_id == character_id && g.name == *scope)
+            })
+            .map(str::to_string)
+            .collect()
+    };
     Ok(rows
         .into_iter()
         .map(|r| CharacterRef {
+            missing_scopes: missing(r.id),
             character_id: r.id,
             name: r.name,
             is_active: r.id == actor.character_id,
