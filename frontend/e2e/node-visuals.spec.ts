@@ -47,6 +47,8 @@ test('node shows class, alias, occupier, statics, effect, and region per space k
 	const effect = whNode.getByLabel('Wolf-Rayet Star');
 	await expect(effect).toBeVisible();
 	await expect(effect).toHaveText('W');
+	// It opens something when clicked, so it gets the ordinary pointer, not the help one.
+	await expect(effect).toHaveCSS('cursor', 'pointer');
 	await effect.click();
 	await expect(page.getByText('Armor HP')).toBeVisible();
 	await page.keyboard.press('Escape');
@@ -59,6 +61,38 @@ test('node shows class, alias, occupier, statics, effect, and region per space k
 	// Thera resolves to class 12.
 	const thera = page.getByTestId('system-node').filter({ hasText: 'Thera' });
 	await expect(thera.getByText('C12', { exact: true })).toBeVisible();
+});
+
+test('a long occupier is cut short inside the node, in full on hover', async ({ page, api }) => {
+	const mapId = await createMap(api, 'E2E Long Occupier');
+	const wh = await addSystem(api, mapId, J122515, { x: 200, y: 200, alias: 'Home' });
+	await api.post(`/api/maps/${mapId}/systems/set-home`, {
+		data: { map_id: mapId, map_solar_system_id: wh, value: true },
+	});
+	const occupier = 'The Very Long Named Wormhole Corporation Holding This Hole';
+	await api.post(`/api/maps/${mapId}/systems/set-occupier`, {
+		data: { map_id: mapId, map_solar_system_id: wh, occupier },
+	});
+
+	await gotoApp(page, `/maps/${mapId}`);
+	const node = page.getByTestId('system-node').filter({ hasText: 'J122515' });
+	const label = node.getByTestId('node-occupier');
+	await expect(label).toBeVisible();
+
+	// Cut short rather than spilling out, and the icons after it stay inside the node.
+	const box = (await node.boundingBox())!;
+	const labelBox = (await label.boundingBox())!;
+	expect(labelBox.x + labelBox.width).toBeLessThanOrEqual(box.x + box.width);
+	expect(await label.evaluate((el) => el.scrollWidth > el.clientWidth)).toBe(true);
+	const home = node.locator('.text-amber-400');
+	await expect(home).toBeVisible();
+	const homeBox = (await home.boundingBox())!;
+	expect(homeBox.x + homeBox.width).toBeLessThanOrEqual(box.x + box.width);
+
+	// The whole name is still there for whoever points at it.
+	await expect(label).toHaveAttribute('title', occupier);
+
+	await api.delete(`/api/maps/${mapId}`);
 });
 
 test('icon cluster: shattered, signatures, unmapped wormholes, home, pin', async ({

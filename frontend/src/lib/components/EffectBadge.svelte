@@ -50,7 +50,7 @@
 	<!-- The row around it provides the tooltip context, so a long list mounts one provider
 	     per row rather than one per badge. -->
 	<Tooltip.Root>
-		<Tooltip.Trigger aria-label={name} class="flex cursor-help">
+		<Tooltip.Trigger aria-label={name} class="flex">
 			{@render circle()}
 		</Tooltip.Trigger>
 		<Tooltip.Content>{name}</Tooltip.Content>
@@ -59,7 +59,7 @@
 	<Popover.Root bind:open>
 		<Popover.Trigger
 			aria-label={name}
-			class="flex size-[14px] shrink-0 cursor-help items-center justify-center rounded-full text-[9px] font-semibold {darkText
+			class="flex size-[14px] shrink-0 cursor-pointer items-center justify-center rounded-full text-[9px] font-semibold {darkText
 				? 'text-neutral-950'
 				: 'text-white'}"
 			style="background-color: var(--color-{token})"

@@ -68,7 +68,7 @@
 				{/if}
 			</div>
 			{#if mapped?.occupying_group}
-				<div class="mt-1 text-[11px] text-muted-foreground">
+				<div class="mt-1 text-[11px] break-words text-muted-foreground">
 					Occupied by <span class="font-medium text-foreground">{mapped.occupying_group}</span>
 				</div>
 			{/if}
