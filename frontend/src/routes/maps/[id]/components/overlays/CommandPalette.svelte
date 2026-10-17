@@ -17,6 +17,7 @@
 	import SystemMenu from '../system-menu/SystemMenu.svelte';
 	import { NODE_W } from '$lib/map/geometry';
 	import type { MapState } from '../../state/map-state.svelte';
+	import Hint from '$lib/components/Hint.svelte';
 
 	let { map, open = $bindable() }: { map: MapState; open: boolean } = $props();
 
@@ -158,12 +159,13 @@
 				>
 					<SystemMenu system={hit.system} class={SYSTEM_CELLS_5}>
 						<SystemRow system={hit.system} />
-						<span
-							class="truncate text-xs text-muted-foreground"
-							title={matchHint(hit) ?? undefined}
-						>
-							{matchHint(hit) ?? ''}
-						</span>
+						<Hint text={matchHint(hit) ?? undefined} focusable={false}>
+							{#snippet child({ props })}
+								<span class="truncate text-xs text-muted-foreground" {...props}>
+									{matchHint(hit) ?? ''}
+								</span>
+							{/snippet}
+						</Hint>
 					</SystemMenu>
 				</Command.Item>
 			{/each}
@@ -204,21 +206,26 @@
 				>
 					<SystemMenu system={hit.system} class={SYSTEM_CELLS_5}>
 						<SystemRow system={hit.system} />
-						<span
-							class="truncate text-xs text-muted-foreground"
-							title={matchHint(hit) ?? undefined}
-						>
-							{matchHint(hit) ?? ''}
-						</span>
+						<Hint text={matchHint(hit) ?? undefined} focusable={false}>
+							{#snippet child({ props })}
+								<span class="truncate text-xs text-muted-foreground" {...props}>
+									{matchHint(hit) ?? ''}
+								</span>
+							{/snippet}
+						</Hint>
 					</SystemMenu>
 				</Command.Item>
 			{/each}
 		{/if}
 		{#each threatGroups as group (group.id)}
 			<div class="{HEADING} flex items-center gap-2" data-testid="palette-threat-group">
-				<span class="min-w-0 truncate text-foreground" title="{group.name} ({group.kind})">
-					{group.name}
-				</span>
+				<Hint text={`${group.name} (${group.kind})`} clippedOnly focusable={false}>
+					{#snippet child({ props })}
+						<span class="min-w-0 truncate text-foreground" {...props}>
+							{group.name}
+						</span>
+					{/snippet}
+				</Hint>
 				<span
 					class="ml-auto shrink-0 font-mono whitespace-nowrap tabular-nums text-muted-foreground/60"
 				>

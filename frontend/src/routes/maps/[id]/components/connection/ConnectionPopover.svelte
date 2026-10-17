@@ -6,7 +6,6 @@
 
 	import { q } from '$lib/api/queries';
 	import * as Popover from '$lib/components/ui/popover';
-	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { typeById } from '$lib/map/signatures';
 	import ConnectionStatus from './ConnectionStatus.svelte';
 	import MassTracking from './MassTracking.svelte';
@@ -87,30 +86,28 @@
 				<!-- ignoreNonKeyboardFocus: without it the popover's auto-focus lands on the
 				     first tooltip trigger, popping a tooltip whose dismiss layer then eats
 				     the first outside click. -->
-				<Tooltip.Provider delayDuration={300} ignoreNonKeyboardFocus>
-					<div class="space-y-3">
-						{#if outSig !== null}
-							<SignatureSection title="Out Sig" sig={outSig} {catalog} />
-						{/if}
-						{#if inSig !== null}
-							<SignatureSection title="In Sig" sig={inSig} {catalog} />
-						{/if}
-						{#if outSig === null && inSig === null}
-							<div class="space-y-1">
-								<div class="py-2 text-center text-xs text-muted-foreground">
-									No signatures assigned
-								</div>
+				<div class="space-y-3">
+					{#if outSig !== null}
+						<SignatureSection title="Out Sig" sig={outSig} {catalog} />
+					{/if}
+					{#if inSig !== null}
+						<SignatureSection title="In Sig" sig={inSig} {catalog} />
+					{/if}
+					{#if outSig === null && inSig === null}
+						<div class="space-y-1">
+							<div class="py-2 text-center text-xs text-muted-foreground">
+								No signatures assigned
 							</div>
-						{/if}
-						<ConnectionStatus {connection} {sigs} />
-						{#if physics !== null}
-							<WormholeProperties type={physics} />
-						{/if}
-						{#if connection.kind === 'wormhole'}
-							<MassTracking {map} {connection} {source} {target} {physics} {canWrite} />
-						{/if}
-					</div>
-				</Tooltip.Provider>
+						</div>
+					{/if}
+					<ConnectionStatus {connection} {sigs} />
+					{#if physics !== null}
+						<WormholeProperties type={physics} />
+					{/if}
+					{#if connection.kind === 'wormhole'}
+						<MassTracking {map} {connection} {source} {target} {physics} {canWrite} />
+					{/if}
+				</div>
 			</Popover.Content>
 		</Popover.Root>
 	{/key}

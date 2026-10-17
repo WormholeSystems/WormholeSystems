@@ -25,6 +25,16 @@ async function pickSystem(
 	await expect(page.getByTestId(picker)).toContainText(name);
 }
 
+/** Pick from a watchlist row's ⋮ menu. */
+async function rowAction(
+	page: import('@playwright/test').Page,
+	row: import('@playwright/test').Locator,
+	item: RegExp,
+) {
+	await row.getByTestId('watchlist-row-menu').click();
+	await page.getByRole('menuitem', { name: item }).click();
+}
+
 async function setRoute(page: import('@playwright/test').Page, from: string, to: string) {
 	await pickSystem(page, 'system-picker-origin', from.toLowerCase(), from);
 	await pickSystem(page, 'system-picker-destination', to.toLowerCase(), to);
@@ -54,7 +64,9 @@ test('watchlist: defaults, add, unified origin badge, pin, remove, reload persis
 
 	// Activating Jita on the map becomes the origin: header + 11j badge.
 	await page.getByTestId('system-node').filter({ hasText: 'Jita' }).click();
-	await expect(page.getByText('· from Jita')).toBeVisible();
+	await expect(page.getByTestId('navigation-card').getByTestId('route-origin')).toHaveText(
+		'from Jita',
+	);
 	await expect(row.getByText('11j')).toBeVisible();
 
 	// The jump badge opens the hop popover.
@@ -68,7 +80,10 @@ test('watchlist: defaults, add, unified origin badge, pin, remove, reload persis
 	await page.keyboard.press('Escape');
 
 	// The hubs come pinned; pinning the one we added survives a reload (server-side rows).
-	await rows.filter({ hasText: 'Ashab' }).getByLabel('Pin Ashab').click();
+	const ashab = rows.filter({ hasText: 'Ashab' });
+	await expect(ashab.getByTestId('watchlist-pinned')).toHaveCount(0);
+	await rowAction(page, ashab, /Pin as/);
+	await expect(ashab.getByTestId('watchlist-pinned')).toBeVisible();
 	await expect
 		.poll(async () => {
 			const list = await (await api.get(`/api/maps/${mapId}/watchlist`)).json();
@@ -80,7 +95,7 @@ test('watchlist: defaults, add, unified origin badge, pin, remove, reload persis
 
 	// Removing every row shows the empty state.
 	for (const name of ['Ashab', 'Jita', 'Amarr', 'Dodixie', 'Rens', 'Hek']) {
-		await rows.filter({ hasText: name }).getByLabel(`Remove ${name}`).click();
+		await rowAction(page, rows.filter({ hasText: name }), /Remove/);
 	}
 	await expect(rows).toHaveCount(0);
 	await expect(page.getByText('Watchlist empty')).toBeVisible();
@@ -149,7 +164,7 @@ test('find: closest systems from the unified origin', async ({ page, api }) => {
 	await gotoApp(page, `/maps/${mapId}`);
 	await page.getByTestId('system-node').filter({ hasText: 'Jita' }).click();
 
-	await page.getByTestId('find-toggle').click();
+	await page.getByTestId('navigation-tab-find').click();
 	// Jove observatories: results with jump badges appear.
 	await expect(page.getByTestId('find-row').first()).toBeVisible();
 
@@ -249,7 +264,8 @@ test('the pickers suggest systems already in play, before anything is typed', as
 	await page.getByTestId('system-picker-origin').click();
 	const suggestion = page.getByTestId('picker-suggestion').filter({ hasText: 'J122515' });
 	// A chip, not a result row: it says why it is offered on hover rather than in a column.
-	await expect(suggestion).toHaveAttribute('title', 'Selected system');
+	await suggestion.hover();
+	await expect(page.locator('[data-slot="tooltip-content"]')).toHaveText('Selected system');
 	await suggestion.click();
 	await expect(page.getByTestId('system-picker-origin')).toContainText('J122515');
 
@@ -364,9 +380,78 @@ test('viewers see the watchlist read-only', async ({ page, api, browser }) => {
 
 	const row = viewerPage.getByTestId('watchlist-row');
 	await expect(row).toHaveCount(5);
-	await expect(viewerPage.getByTestId('watchlist-add')).toHaveCount(0);
-	await expect(row.getByLabel(/^Pin/)).toHaveCount(0);
-	await expect(row.getByLabel(/^Remove/)).toHaveCount(0);
+	await expect(viewerPage.getByTestId('watchlist-add')).toBeDisabled();
+	// No menu to change anything, but the pin still shows.
+	await expect(row.getByTestId('watchlist-row-menu')).toHaveCount(0);
+	await expect(row.first().getByTestId('watchlist-pinned')).toBeVisible();
 	await ctx.close();
 	void page;
+});
+
+test('watchlist, personal and find are tabs, and the card remembers which one was open', async ({
+	page,
+	api,
+}) => {
+	const mapId = await createMap(api, 'E2E NavTabs');
+	await addSystem(api, mapId, JITA, { x: 200, y: 200 });
+	await gotoApp(page, `/maps/${mapId}`);
+	const card = page.getByTestId('navigation-card');
+	const shared = card.getByTestId('watchlist-shared').getByTestId('watchlist-row');
+
+	await expect(shared).toHaveCount(5);
+	await expect(card.getByTestId('find-condition')).toBeHidden();
+
+	// Find keeps the origin but has no destination, and measures from the selected system.
+	await card.getByTestId('navigation-tab-find').click();
+	await expect(card.getByTestId('find-condition')).toBeVisible();
+	await expect(shared.first()).toBeHidden();
+	await expect(card.getByTestId('system-picker-origin')).toBeVisible();
+	await expect(card.getByTestId('system-picker-destination')).toHaveCount(0);
+	// The header holds still: the + stays, just not usable here.
+	await expect(card.getByTestId('watchlist-add')).toBeDisabled();
+	await expect(card.getByTestId('route-settings')).toBeVisible();
+	await page.getByTestId('system-node').filter({ hasText: 'Jita' }).click();
+	await expect(card.getByTestId('route-origin')).toHaveText('from Jita');
+	await expect(card.getByTestId('find-row').first()).toBeVisible();
+
+	await reloadApp(page);
+	await expect(card.getByTestId('find-condition')).toBeVisible();
+	await card.getByTestId('navigation-tab-watchlist').click();
+	await expect(shared).toHaveCount(5);
+	await expect(card.getByTestId('system-picker-destination')).toBeVisible();
+});
+
+test('a personal watchlist is yours alone and leaves the shared one alone', async ({
+	page,
+	api,
+}) => {
+	const mapId = await createMap(api, 'E2E NavPersonal');
+	await gotoApp(page, `/maps/${mapId}`);
+	const card = page.getByTestId('navigation-card');
+	const personal = card.getByTestId('watchlist-personal').getByTestId('watchlist-row');
+
+	await card.getByTestId('navigation-tab-personal').click();
+	await expect(personal).toHaveCount(0);
+	await card.getByTestId('watchlist-add').click();
+	await page.getByPlaceholder('Watch a system…').fill('ashab');
+	await page.getByRole('option', { name: /Ashab/ }).first().click();
+	await expect(personal).toHaveCount(1);
+	await expect(card.getByTestId('navigation-tab-personal')).toContainText('1');
+
+	// The map's list did not grow, and the server kept it apart.
+	const sharedList = await (await api.get(`/api/maps/${mapId}/watchlist`)).json();
+	expect(sharedList).toHaveLength(5);
+	const mine = await (await api.get(`/api/maps/${mapId}/watchlist/personal`)).json();
+	expect(mine).toHaveLength(1);
+
+	// Pinned, it is offered in the route pickers.
+	await rowAction(page, personal, /Pin as/);
+	await card.getByTestId('system-picker-destination').click();
+	await expect(page.getByTestId('picker-suggestion').filter({ hasText: 'Ashab' })).toBeVisible();
+	await page.keyboard.press('Escape');
+
+	await reloadApp(page);
+	await expect(personal).toHaveCount(1);
+	await rowAction(page, personal, /Remove/);
+	await expect(personal).toHaveCount(0);
 });

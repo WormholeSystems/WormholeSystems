@@ -16,6 +16,7 @@ pub mod history;
 pub mod ignored;
 pub mod jumps;
 pub mod map;
+pub mod personal_watchlist;
 pub mod presence;
 pub mod restore;
 pub mod search;

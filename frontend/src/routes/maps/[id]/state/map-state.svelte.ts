@@ -49,7 +49,7 @@ import { ConnectionsApi } from './connections';
 import { SignaturesApi } from './signatures';
 import { SystemsApi } from './systems';
 import { IgnoredApi } from './ignored';
-import { WatchlistApi } from './watchlist';
+import { PersonalWatchlistApi, WatchlistApi } from './watchlist';
 import { WaypointsApi } from './waypoints';
 import { PlacementApi } from './placement';
 import { BackgroundApi } from './background';
@@ -113,6 +113,7 @@ export class MapState {
 	connections: ConnectionsApi;
 	signatures: SignaturesApi;
 	watchlist: WatchlistApi;
+	personalWatchlist: PersonalWatchlistApi;
 	ignored: IgnoredApi;
 	characters: CharactersApi;
 	waypoints: WaypointsApi;
@@ -354,6 +355,11 @@ export class MapState {
 		this.watchlist = new WatchlistApi({
 			mapId,
 			all: () => this.queries.watchlist.data ?? [],
+			run,
+		});
+		this.personalWatchlist = new PersonalWatchlistApi({
+			mapId,
+			all: () => this.queries.personalWatchlist.data ?? [],
 			run,
 		});
 		this.ignored = new IgnoredApi({

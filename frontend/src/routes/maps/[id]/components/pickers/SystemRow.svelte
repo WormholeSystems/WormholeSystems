@@ -24,41 +24,35 @@
 <span class="min-w-0 truncate text-foreground">{system.name}</span>
 <span class="min-w-0 truncate text-xs text-muted-foreground">{system.region}</span>
 {#if system.statics.length > 0 || system.effect_name}
-	<!-- Its own provider: these rows sit in dialogs and popovers that have none, and a missing
-	     provider is a crash rather than a missing tooltip. -->
-	<Tooltip.Provider delayDuration={500}>
-		<span class="flex items-center justify-end gap-1">
-			{#each system.statics as st (st.code)}
-				{@const dest = destClassMeta(st.dest_class)}
-				<Tooltip.Root>
-					<Tooltip.Trigger
-						class="cursor-help text-[10px] font-medium"
-						data-testid="row-static"
-						style="color: var(--color-{dest.token})"
-					>
-						{dest.short}
-					</Tooltip.Trigger>
-					<Tooltip.Content class="p-0" side="bottom">
-						<StaticDetails static={st} />
-					</Tooltip.Content>
-				</Tooltip.Root>
-			{/each}
-			{#if system.effect_name}
-				<EffectBadge
-					name={system.effect_name}
-					wormholeClassId={system.wormhole_class_id ?? 0}
-					detail={false}
-				/>
-			{/if}
-		</span>
-	</Tooltip.Provider>
+	<span class="flex items-center justify-end gap-1">
+		{#each system.statics as st (st.code)}
+			{@const dest = destClassMeta(st.dest_class)}
+			<Tooltip.Root>
+				<Tooltip.Trigger
+					class="cursor-help text-[10px] font-medium"
+					data-testid="row-static"
+					style="color: var(--color-{dest.token})"
+				>
+					{dest.short}
+				</Tooltip.Trigger>
+				<Tooltip.Content class="p-0" side="bottom">
+					<StaticDetails static={st} />
+				</Tooltip.Content>
+			</Tooltip.Root>
+		{/each}
+		{#if system.effect_name}
+			<EffectBadge
+				name={system.effect_name}
+				wormholeClassId={system.wormhole_class_id ?? 0}
+				detail={false}
+			/>
+		{/if}
+	</span>
 {:else if sov}
 	<!-- Logo only; the holder's ticker and name are one hover away. -->
-	<Tooltip.Provider delayDuration={300} ignoreNonKeyboardFocus>
-		<span class="flex items-center justify-end">
-			<SovereigntyBadge sovereignty={sov} />
-		</span>
-	</Tooltip.Provider>
+	<span class="flex items-center justify-end">
+		<SovereigntyBadge sovereignty={sov} />
+	</span>
 {:else}
 	<span></span>
 {/if}

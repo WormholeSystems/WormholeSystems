@@ -17,6 +17,7 @@
 	import ClassBadge from '$lib/components/ClassBadge.svelte';
 	import SystemRow from './SystemRow.svelte';
 	import { SYSTEM_CELLS_4, SYSTEM_LIST, SYSTEM_ROW } from './columns';
+	import Hint from '$lib/components/Hint.svelte';
 
 	let {
 		placeholder,
@@ -89,23 +90,27 @@
 						data-testid="picker-suggestions"
 					>
 						{#each offered as s (s.system.id)}
-							<button
-								type="button"
-								class="inline-flex items-center gap-1.5 rounded-md border border-border/40 bg-muted/30 px-2 py-1 text-xs transition-colors hover:bg-muted/60"
-								data-testid="picker-suggestion"
-								title={s.reason}
-								onclick={() => choose(s.system)}
-							>
-								<ClassBadge classId={s.system.wormhole_class_id} security={s.system.security} />
-								{s.system.name}
-								{#if s.icon === 'selected'}
-									<MapPinIcon class="size-3 text-muted-foreground" />
-								{:else if s.icon === 'location'}
-									<NavigationIcon class="size-3 text-muted-foreground" />
-								{:else if s.icon === 'pinned'}
-									<PinIcon class="size-3 text-muted-foreground" />
-								{/if}
-							</button>
+							<Hint text={s.reason}>
+								{#snippet child({ props })}
+									<button
+										type="button"
+										class="inline-flex items-center gap-1.5 rounded-md border border-border/40 bg-muted/30 px-2 py-1 text-xs transition-colors hover:bg-muted/60"
+										data-testid="picker-suggestion"
+										{...props}
+										onclick={() => choose(s.system)}
+									>
+										<ClassBadge classId={s.system.wormhole_class_id} security={s.system.security} />
+										{s.system.name}
+										{#if s.icon === 'selected'}
+											<MapPinIcon class="size-3 text-muted-foreground" />
+										{:else if s.icon === 'location'}
+											<NavigationIcon class="size-3 text-muted-foreground" />
+										{:else if s.icon === 'pinned'}
+											<PinIcon class="size-3 text-muted-foreground" />
+										{/if}
+									</button>
+								{/snippet}
+							</Hint>
 						{/each}
 					</div>
 				{/if}

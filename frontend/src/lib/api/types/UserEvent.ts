@@ -3,4 +3,4 @@
 /**
  * An event addressed to a single user.
  */
-export type UserEvent = { "type": "character_status_changed", character_id: number, } | { "type": "server_status_changed" };
+export type UserEvent = { "type": "character_status_changed", character_id: number, } | { "type": "server_status_changed" } | { "type": "personal_watchlist_changed", map_id: number, };

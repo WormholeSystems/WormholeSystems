@@ -106,7 +106,8 @@ test('a long occupier is cut short inside the node, in full on hover', async ({ 
 	expect(homeBox.x + homeBox.width).toBeLessThanOrEqual(box.x + box.width);
 
 	// The whole name is still there for whoever points at it.
-	await expect(label).toHaveAttribute('title', occupier);
+	await label.hover();
+	await expect(page.locator('[data-slot="tooltip-content"]')).toHaveText(occupier);
 
 	await api.delete(`/api/maps/${mapId}`);
 });

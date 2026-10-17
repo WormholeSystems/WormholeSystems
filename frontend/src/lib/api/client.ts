@@ -65,7 +65,10 @@ import type { AddEveScoutToMap } from './types/AddEveScoutToMap';
 import type { ShipSearchResult } from './types/ShipSearchResult';
 import type { SignatureCatalog } from './types/SignatureCatalog';
 import type { AddIgnoredSystem } from './types/AddIgnoredSystem';
+import type { AddPersonalWatchlistEntry } from './types/AddPersonalWatchlistEntry';
 import type { AddWatchlistEntry } from './types/AddWatchlistEntry';
+import type { RemovePersonalWatchlistEntry } from './types/RemovePersonalWatchlistEntry';
+import type { SetPersonalWatchlistPinned } from './types/SetPersonalWatchlistPinned';
 import type { ClearIgnoredSystems } from './types/ClearIgnoredSystems';
 import type { IgnoredSystem } from './types/IgnoredSystem';
 import type { RemoveIgnoredSystem } from './types/RemoveIgnoredSystem';
@@ -327,6 +330,15 @@ export function createApi(
 			post<WatchlistEntry>(`/api/maps/${cmd.map_id}/watchlist/set-pinned`, cmd),
 		removeWatchlistEntry: (cmd: RemoveWatchlistEntry) =>
 			post<null>(`/api/maps/${cmd.map_id}/watchlist/remove`, cmd),
+		// The caller's own watchlist on a map, which nobody else sees.
+		listPersonalWatchlist: (mapId: number, signal?: AbortSignal) =>
+			get<WatchlistEntry[]>(`/api/maps/${mapId}/watchlist/personal`, signal),
+		addPersonalWatchlistEntry: (mapId: number, body: AddPersonalWatchlistEntry) =>
+			post<WatchlistEntry>(`/api/maps/${mapId}/watchlist/personal/add`, body),
+		setPersonalWatchlistPinned: (mapId: number, body: SetPersonalWatchlistPinned) =>
+			post<WatchlistEntry>(`/api/maps/${mapId}/watchlist/personal/set-pinned`, body),
+		removePersonalWatchlistEntry: (mapId: number, body: RemovePersonalWatchlistEntry) =>
+			post<null>(`/api/maps/${mapId}/watchlist/personal/remove`, body),
 		listIgnored: (mapId: number, signal?: AbortSignal) =>
 			get<IgnoredSystem[]>(`/api/maps/${mapId}/ignored`, signal),
 		addIgnored: (cmd: AddIgnoredSystem) =>

@@ -7,7 +7,7 @@
 	let { pilots }: { pilots: MapCharacter[] } = $props();
 </script>
 
-<Tooltip.Root delayDuration={700}>
+<Tooltip.Root>
 	<Tooltip.Trigger
 		class="mt-0.5 flex h-[18px] items-center gap-1.5 border-t border-border pt-0.5 text-[10px]"
 		data-testid="pilots-row"

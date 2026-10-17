@@ -155,6 +155,15 @@ export async function setCharacterPresence(
 			     updated_at = now()`,
 			[characterId, online, solarSystemId],
 		);
+		// Online only lasts while the owner has the app open: the poller marks an idle user's
+		// characters offline on its next tick, which would pull the pilot mid-test.
+		if (online) {
+			await db.query(
+				`update users set last_active_at = now()
+				 where id = (select user_id from characters where id = $1)`,
+				[characterId],
+			);
+		}
 	});
 }
 

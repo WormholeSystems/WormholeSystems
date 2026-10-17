@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from map_personal_watchlist where id = $1 and map_id = $2 and user_id = $3",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "ff49935e5ba6b4360293a01f2bdd10148233194eb80b7a2581c4ad71327d4aa0"
+}

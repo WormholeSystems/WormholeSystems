@@ -2,6 +2,7 @@
 // single $effect can hand the whole lifecycle over. The data itself lives in queries,
 // which carry their own polling and focus refetching.
 
+import { key } from '$lib/api/queries';
 import { openMapSocket, openUserSocket } from '$lib/ws';
 import type { MapState } from './map-state.svelte';
 
@@ -23,9 +24,19 @@ export function connectMapSession(map: MapState): (() => void) | undefined {
 	const closeUserWs = openUserSocket(
 		(event) => {
 			if (event.type === 'character_status_changed') map.characters.refreshMine();
+			// This user changed their own watchlist here, from this tab or another.
+			if (event.type === 'personal_watchlist_changed' && event.map_id === map.mapId) {
+				void map.queries.client.invalidateQueries({
+					queryKey: key.personalWatchlist(map.mapId),
+				});
+			}
 		},
-		// Back after a gap (a deploy, a dropped connection): a jump may have gone unheard.
-		() => map.characters.refreshMine(),
+		// Back after a gap (a deploy, a dropped connection): a jump, or a change to the
+		// user's own watchlist, may have gone unheard.
+		() => {
+			map.characters.refreshMine();
+			void map.queries.client.invalidateQueries({ queryKey: key.personalWatchlist(map.mapId) });
+		},
 	);
 	// Flying happens in the game client, so a jump has usually already happened by the
 	// time the tab is looked at again. An explicit listener, not the query's own focus

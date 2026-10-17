@@ -5,6 +5,7 @@
 
 	import type { MapState } from '../../state/map-state.svelte';
 	import BackgroundPopover from './BackgroundPopover.svelte';
+	import Hint from '$lib/components/Hint.svelte';
 
 	let { map }: { map: MapState } = $props();
 </script>
@@ -20,18 +21,22 @@
 	>
 		{#each [{ mode: 'manual', label: 'Custom placement', icon: WaypointsIcon }, { mode: 'tree', label: 'Automatic placement', icon: WorkflowIcon }] as option (option.mode)}
 			{@const Icon = option.icon}
-			<button
-				class="px-2 py-1 {map.layout === option.mode
-					? 'bg-accent text-foreground'
-					: 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'}"
-				aria-label={option.label}
-				title={option.label}
-				aria-pressed={map.layout === option.mode}
-				data-testid="placement-{option.mode}"
-				onclick={() => map.placement.setForMe(option.mode as 'manual' | 'tree')}
-			>
-				<Icon class="size-4" />
-			</button>
+			<Hint text={option.label}>
+				{#snippet child({ props })}
+					<button
+						class="px-2 py-1 {map.layout === option.mode
+							? 'bg-accent text-foreground'
+							: 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'}"
+						aria-label={option.label}
+						{...props}
+						aria-pressed={map.layout === option.mode}
+						data-testid="placement-{option.mode}"
+						onclick={() => map.placement.setForMe(option.mode as 'manual' | 'tree')}
+					>
+						<Icon class="size-4" />
+					</button>
+				{/snippet}
+			</Hint>
 		{/each}
 	</div>
 {/if}

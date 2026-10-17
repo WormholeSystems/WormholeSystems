@@ -495,6 +495,9 @@ map's live wormhole edges, and optionally EVE Scout's public Thera/Turnur edges 
 
 - **Watchlist** (`map_watchlist`): `list/add/set_pinned/remove` (Member+ mutations,
   Viewer+ reads). Jump counts, colors, and route popovers are client-side.
+- **Personal watchlist** (`map_personal_watchlist`): the same verbs under
+  `/watchlist/personal`, for the caller alone, Viewer+. Its own tab in the panel.
+- **Find** measures from the same origin; its tab shows only the origin picker.
 - **Route settings** live on `map_user_settings` per user per map:
   `route_preference` (`shorter`/`safer`/`less_secure`), `security_penalty` (0-100),
   `route_allow_time_status` (`stable`/`eol`/`critical`/`expired` = worst lifetime still

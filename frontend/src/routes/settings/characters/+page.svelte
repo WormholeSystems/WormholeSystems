@@ -23,6 +23,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { cn } from '$lib/utils';
+	import Hint from '$lib/components/Hint.svelte';
 
 	const charactersQuery = createQuery(() => q.myCharacters());
 	const scopesQuery = createQuery(() => q.myScopes());
@@ -122,13 +123,17 @@
 						>
 					{/if}
 					{#if character.is_preferred}
-						<span
-							class="flex size-8 shrink-0 items-center justify-center text-amber-400"
-							title="New sessions start as this character"
-							data-testid="preferred-character"
-						>
-							<StarIcon class="size-4 fill-current" />
-						</span>
+						<Hint text={'New sessions start as this character'} focusable={false} label>
+							{#snippet child({ props })}
+								<span
+									class="flex size-8 shrink-0 items-center justify-center text-amber-400"
+									{...props}
+									data-testid="preferred-character"
+								>
+									<StarIcon class="size-4 fill-current" />
+								</span>
+							{/snippet}
+						</Hint>
 					{:else}
 						<Button
 							variant="ghost"

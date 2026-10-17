@@ -17,8 +17,8 @@
 		name,
 		wormholeClassId,
 		/**
-		 * Whether clicking opens the modifier table. Off in list rows, whose own click wins;
-		 * the row then has to sit inside a `Tooltip.Provider`.
+		 * Whether clicking opens the modifier table. Off in list rows, whose own click wins,
+		 * and it shows its name in a tooltip instead.
 		 */
 		detail = true,
 	}: { name: string; wormholeClassId: number; detail?: boolean } = $props();
@@ -68,8 +68,6 @@
 {/snippet}
 
 {#if !detail}
-	<!-- The row around it provides the tooltip context, so a long list mounts one provider
-	     per row rather than one per badge. -->
 	<Tooltip.Root>
 		<Tooltip.Trigger aria-label={name} class="flex">
 			{@render circle(16)}

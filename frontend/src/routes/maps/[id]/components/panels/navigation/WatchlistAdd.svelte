@@ -1,5 +1,5 @@
 <script lang="ts">
-	// The header's "+": search any system and put it on the shared watchlist.
+	// The header's "+": search any system and put it on the watchlist the card is showing.
 	import PlusIcon from '@lucide/svelte/icons/plus';
 
 	import { q } from '$lib/api/queries';
@@ -9,9 +9,22 @@
 	import SystemRow from '../../pickers/SystemRow.svelte';
 	import { SYSTEM_CELLS_4, SYSTEM_LIST, SYSTEM_ROW } from '../../pickers/columns';
 	import { searchQuery } from '$lib/search-query.svelte';
-	import type { MapState } from '../../../state/map-state.svelte';
+	import type { WatchlistList } from '../../../state/watchlist';
+	import Hint from '$lib/components/Hint.svelte';
 
-	let { map }: { map: MapState } = $props();
+	let {
+		list,
+		personal = false,
+		disabled = null,
+	}: {
+		list: WatchlistList;
+		personal?: boolean;
+		/** Why it cannot be used here. It stays in place regardless, so the header holds still. */
+		disabled?: string | null;
+	} = $props();
+	const label = $derived(
+		disabled ?? (personal ? 'Add to your watchlist' : 'Add to the map watchlist'),
+	);
 
 	let addOpen = $state(false);
 	let addQuery = $state('');
@@ -23,20 +36,25 @@
 	});
 	const addResults = $derived(addSearch.results);
 	function addToWatchlist(id: number) {
-		map.watchlist.add(id);
+		list.add(id);
 		addOpen = false;
 	}
 </script>
 
 <Popover.Root bind:open={addOpen}>
-	<Popover.Trigger
-		class="text-muted-foreground transition-colors hover:text-foreground"
-		title="Add to watchlist"
-		aria-label="Add to watchlist"
-		data-testid="watchlist-add"
-	>
-		<PlusIcon class="size-4" />
-	</Popover.Trigger>
+	<Hint text={label}>
+		{#snippet child({ props })}
+			<Popover.Trigger
+				class="text-muted-foreground transition-colors hover:text-foreground disabled:cursor-default disabled:opacity-40 disabled:hover:text-muted-foreground"
+				disabled={disabled !== null}
+				{...props}
+				aria-label={label}
+				data-testid="watchlist-add"
+			>
+				<PlusIcon class="size-4" />
+			</Popover.Trigger>
+		{/snippet}
+	</Hint>
 	<Popover.Content class="w-96 p-0" align="end">
 		<Command.Root shouldFilter={false}>
 			<Command.Input placeholder="Watch a system…" bind:value={addQuery} />

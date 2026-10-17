@@ -15,6 +15,7 @@
 		type RouteOption,
 	} from '$lib/routing/options';
 	import type { MapState } from '../../../state/map-state.svelte';
+	import Hint from '$lib/components/Hint.svelte';
 
 	let { map }: { map: MapState } = $props();
 
@@ -67,14 +68,18 @@
 {/snippet}
 
 <Popover.Root>
-	<Popover.Trigger
-		class="text-muted-foreground transition-colors hover:text-foreground"
-		title="Route settings"
-		aria-label="Route settings"
-		data-testid="route-settings"
-	>
-		<SlidersHorizontalIcon class="size-3.5" />
-	</Popover.Trigger>
+	<Hint text={'Route settings'}>
+		{#snippet child({ props })}
+			<Popover.Trigger
+				class="text-muted-foreground transition-colors hover:text-foreground"
+				{...props}
+				aria-label="Route settings"
+				data-testid="route-settings"
+			>
+				<SlidersHorizontalIcon class="size-3.5" />
+			</Popover.Trigger>
+		{/snippet}
+	</Hint>
 	<Popover.Content class="flex w-72 flex-col gap-3 p-3" align="end">
 		{@render options('Route Preference', PREFS, preference, 'route_preference')}
 		{#if preference !== 'shorter'}

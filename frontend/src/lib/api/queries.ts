@@ -24,6 +24,7 @@ export const key = {
 	killmails: (id: number) => ['maps', id, 'killmails'] as const,
 	history: (id: number) => ['maps', id, 'history'] as const,
 	watchlist: (id: number) => ['maps', id, 'watchlist'] as const,
+	personalWatchlist: (id: number) => ['maps', id, 'personal-watchlist'] as const,
 	ignored: (id: number) => ['maps', id, 'ignored'] as const,
 	transferCounts: (id: number) => ['maps', id, 'transfer-counts'] as const,
 	stale: (id: number) => ['maps', id, 'stale-connections'] as const,
@@ -123,6 +124,11 @@ export const q = {
 		queryOptions({
 			queryKey: key.watchlist(id),
 			queryFn: ({ signal }) => api.listWatchlist(id, signal),
+		}),
+	listPersonalWatchlist: (id: number) =>
+		queryOptions({
+			queryKey: key.personalWatchlist(id),
+			queryFn: ({ signal }) => api.listPersonalWatchlist(id, signal),
 		}),
 	listIgnored: (id: number) =>
 		queryOptions({

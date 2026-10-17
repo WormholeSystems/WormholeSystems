@@ -4665,6 +4665,247 @@
         ]
       }
     },
+    "/api/maps/{id}/watchlist/personal": {
+      "get": {
+        "tags": [
+          "watchlist"
+        ],
+        "summary": "`GET /api/maps/{id}/watchlist/personal`: the caller's own watchlist on this map.",
+        "operationId": "list_personal_watchlist",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The map",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WatchlistEntry"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "session": []
+          }
+        ]
+      }
+    },
+    "/api/maps/{id}/watchlist/personal/add": {
+      "post": {
+        "tags": [
+          "watchlist"
+        ],
+        "operationId": "add_personal_watchlist_entry",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The map",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddPersonalWatchlistEntry"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchlistEntry"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "session": []
+          }
+        ]
+      }
+    },
+    "/api/maps/{id}/watchlist/personal/remove": {
+      "post": {
+        "tags": [
+          "watchlist"
+        ],
+        "operationId": "remove_personal_watchlist_entry",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The map",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemovePersonalWatchlistEntry"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Done; the body is `null`"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "session": []
+          }
+        ]
+      }
+    },
+    "/api/maps/{id}/watchlist/personal/set-pinned": {
+      "post": {
+        "tags": [
+          "watchlist"
+        ],
+        "operationId": "set_personal_watchlist_pinned",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The map",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetPersonalWatchlistPinned"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchlistEntry"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "session": []
+          }
+        ]
+      }
+    },
     "/api/maps/{id}/watchlist/remove": {
       "post": {
         "tags": [
@@ -6133,6 +6374,18 @@
             "type": "integer",
             "format": "int64"
           },
+          "solar_system_id": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "AddPersonalWatchlistEntry": {
+        "type": "object",
+        "required": [
+          "solar_system_id"
+        ],
+        "properties": {
           "solar_system_id": {
             "type": "integer",
             "format": "int64"
@@ -9130,6 +9383,18 @@
           }
         }
       },
+      "RemovePersonalWatchlistEntry": {
+        "type": "object",
+        "required": [
+          "entry_id"
+        ],
+        "properties": {
+          "entry_id": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "RemoveSignature": {
         "type": "object",
         "required": [
@@ -9937,6 +10202,22 @@
               "string",
               "null"
             ]
+          }
+        }
+      },
+      "SetPersonalWatchlistPinned": {
+        "type": "object",
+        "required": [
+          "entry_id",
+          "value"
+        ],
+        "properties": {
+          "entry_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "value": {
+            "type": "boolean"
           }
         }
       },
@@ -11661,6 +11942,26 @@
                 "type": "string",
                 "enum": [
                   "server_status_changed"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "The user changed their own watchlist on this map, from any of their tabs; refetch.",
+            "required": [
+              "map_id",
+              "type"
+            ],
+            "properties": {
+              "map_id": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "personal_watchlist_changed"
                 ]
               }
             }

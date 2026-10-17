@@ -19,17 +19,15 @@
 </script>
 
 {#if pastedAt}
-	<Tooltip.Provider delayDuration={300}>
-		<Tooltip.Root>
-			<Tooltip.Trigger
-				class="ml-1 inline-flex items-center gap-1 leading-none whitespace-nowrap text-muted-foreground/70 normal-case tabular-nums"
-				data-testid="signatures-pasted-at"
-			>
-				<ClockIcon class="size-3" />
-				<!-- The mono digits sit high in their box; this centres them on the icon. -->
-				<span class="translate-y-0.5">{age(pastedAt, clock.current)}</span>
-			</Tooltip.Trigger>
-			<Tooltip.Content>Signatures last pasted {utcShort(pastedAt)}</Tooltip.Content>
-		</Tooltip.Root>
-	</Tooltip.Provider>
+	<Tooltip.Root>
+		<Tooltip.Trigger
+			class="ml-1 inline-flex items-center gap-1 leading-none whitespace-nowrap text-muted-foreground/70 normal-case tabular-nums"
+			data-testid="signatures-pasted-at"
+		>
+			<ClockIcon class="size-3" />
+			<!-- The mono digits sit high in their box; this centres them on the icon. -->
+			<span class="translate-y-0.5">{age(pastedAt, clock.current)}</span>
+		</Tooltip.Trigger>
+		<Tooltip.Content>Signatures last pasted {utcShort(pastedAt)}</Tooltip.Content>
+	</Tooltip.Root>
 {/if}
