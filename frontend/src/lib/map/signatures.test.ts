@@ -43,6 +43,37 @@ const catalog: SignatureCatalog = {
 };
 
 describe('parseScan', () => {
+	it('keeps only the signatures from a real combat probe paste', () => {
+		// Eight rows off the scanner: two signatures, four ships and two drones. The ships
+		// carry scan ids in the same shape, so nothing but the group tells them apart.
+		const paste = [
+			'DTB-020\tCosmic Signature\t\t\t5.3%\t7.55 AU',
+			'GQF-170\tDrone\t\t\t13.7%\t8.70 AU',
+			'LWJ-023\tShip\t\t\t2.7%\t10.00 AU',
+			'NSR-149\tShip\t\t\t17.6%\t1.53 AU',
+			'RXX-515\tCosmic Signature\t\t\t19.3%\t1.88 AU',
+			'SOH-202\tShip\tCarrier\tNidhoggur\t77.4%\t10.51 AU',
+			'VPP-145\tDrone\t\t\t13.7%\t9.03 AU',
+			'YEN-272\tShip\t\t\t3.4%\t2.31 AU',
+		].join('\n');
+		expect(parseScan(paste, catalog).map((r) => r.signature_id)).toEqual(['DTB-020', 'RXX-515']);
+	});
+
+	it('drops structures and deployables too', () => {
+		const paste = [
+			'GHI-789\tStructure\tUpwell Palatine Keepstar\tKeepstar\t100%\t1.2 AU',
+			'MNO-345\tDeployable\tMobile Depot\tMobile Depot\t100%\t30 km',
+		].join('\n');
+		expect(parseScan(paste, catalog)).toEqual([]);
+	});
+
+	it('keeps a row whose group it does not recognise, so localised clients still work', () => {
+		// `translations` has no group names, so a German client's "Kosmische Signatur" is
+		// not matched. Keeping it is what those players get today.
+		const rows = parseScan('PQR-678\tKosmische Signatur\t\t\t0%\t6.51 AU', catalog);
+		expect(rows.map((r) => r.signature_id)).toEqual(['PQR-678']);
+	});
+
 	it('parses a multi-line scanner paste', () => {
 		const paste = [
 			'ABC-123\tCosmic Signature\tWormhole\tUnstable Wormhole\t100.0%\t2.5 AU',
