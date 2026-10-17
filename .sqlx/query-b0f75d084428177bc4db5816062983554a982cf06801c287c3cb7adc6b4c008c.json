@@ -1,0 +1,38 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update character_status s\n           set online = false, last_online_at = now(), updated_at = now()\n           from characters c\n           join users u on u.id = c.user_id\n           where c.id = s.character_id and s.online\n             and (u.last_active_at is null\n                  or u.last_active_at <= now() - interval '5 minutes'\n                  or not exists (select 1 from esi_tokens t\n                                 where t.character_id = c.id and t.rejected_at is null))\n           returning s.character_id, c.user_id as \"user_id!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "character_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "character_status",
+            "name": "character_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "user_id!",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "characters",
+            "name": "user_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      true
+    ]
+  },
+  "hash": "b0f75d084428177bc4db5816062983554a982cf06801c287c3cb7adc6b4c008c"
+}
