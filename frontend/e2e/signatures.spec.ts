@@ -57,11 +57,19 @@ test('wormhole type select: statics first, K162 group, chosen type survives repa
 	await expect(page.getByTestId('signatures-pasted-at')).toHaveText(/^\s*\d+s$/);
 	await row.getByTestId('sig-type').click();
 	// Statics section leads with the system's static; K162 has its own group.
-	const headings = page.locator('[data-slot="select-group-heading"]');
+	const headings = page.locator('[data-command-group-heading]');
 	await expect(headings.filter({ hasText: 'Statics' })).toBeVisible();
 	await expect(headings.filter({ hasText: 'K162' })).toBeVisible();
 	const h296 = page.getByRole('option', { name: /H296/ });
 	await expect(h296.first()).toBeVisible();
+
+	// Searching looks at where a hole leads, not only at how its name starts: typing the
+	// destination class finds the holes that go there.
+	await page.getByTestId('sig-type-search').fill('c5');
+	await expect(page.getByRole('option', { name: /H296/ }).first()).toBeVisible();
+	await page.getByTestId('sig-type-search').fill('zzzz');
+	await expect(page.getByText('No type matches')).toBeVisible();
+	await page.getByTestId('sig-type-search').fill('H296');
 	await h296.first().click();
 	await expect(row.getByTestId('sig-type')).toContainText('H296');
 
