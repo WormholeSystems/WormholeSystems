@@ -81,6 +81,9 @@ station/structure (→ derived `is_docked`) and the `ship_*` fields.
 - A character seen **offline** in Tier 1 drops out of Tier 2 until it is online again.
 - A character that comes **online** in Tier 1 enters Tier 2 on the next 5 s tick.
 - A user that goes **idle** (>5 min) removes all their characters from both tiers.
+- Every Tier 1 tick first marks **offline** each character still flagged online that is
+  no longer polled (user idle, or token refused), and tells its maps. A pilot is on a map
+  only while their user has the app open, as in legacy.
 
 **Invariants & expected behaviour**
 

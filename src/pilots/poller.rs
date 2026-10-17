@@ -47,10 +47,10 @@ const FAILING_FOR: Duration = Duration::from_secs(15 * 60);
 type Poll = Result<(), String>;
 
 /// A character due for polling, with the user to notify.
-#[derive(Clone, Copy)]
-struct Due {
-    character_id: i64,
-    user_id: i64,
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Due {
+    pub character_id: i64,
+    pub user_id: i64,
 }
 
 /// What both tiers share.
@@ -138,6 +138,25 @@ pub fn start(pool: PgPool, sso: Arc<Sso>, esi: EsiClient, users: UserHub, server
 
 /// Tier 1: online state, every 60s, for every character of an active user.
 async fn tier_one(poller: Arc<Poller>, server: ServerWatch) -> Result<(), sqlx::Error> {
+    // First let go of whoever dropped out of polling, server up or not.
+    let gone = {
+        let _db = poller.db().await;
+        mark_unpolled_offline(&poller.pool).await?
+    };
+    let mut users = HashSet::new();
+    for d in &gone {
+        poller.users.publish(
+            d.user_id,
+            UserEvent::CharacterStatusChanged {
+                character_id: d.character_id,
+            },
+        );
+        users.insert(d.user_id);
+    }
+    for user_id in users {
+        announce_presence(&poller, user_id).await;
+    }
+
     // Nobody can be online while the server is not, and every call would fail against the
     // error limit. See [`crate::server_status`].
     if !server.should_poll() {
@@ -217,6 +236,36 @@ async fn active_characters(pool: &PgPool, online_only: bool) -> Result<Vec<Due>,
         .collect()
     };
     Ok(rows)
+}
+
+/// Mark offline every character still flagged online that the poller no longer asks about:
+/// its user has been idle past the 5 minute window, or EVE refused its token. Nobody would
+/// ever see them log off otherwise, and they would stay on every map where they last were.
+/// Pilots are on a map only while their user has the app open, as in legacy.
+///
+/// Returns the characters it flipped, with their users, so they can be told.
+pub async fn mark_unpolled_offline(pool: &PgPool) -> Result<Vec<Due>, sqlx::Error> {
+    let rows = sqlx::query!(
+        r#"update character_status s
+           set online = false, last_online_at = now(), updated_at = now()
+           from characters c
+           join users u on u.id = c.user_id
+           where c.id = s.character_id and s.online
+             and (u.last_active_at is null
+                  or u.last_active_at <= now() - interval '5 minutes'
+                  or not exists (select 1 from esi_tokens t
+                                 where t.character_id = c.id and t.rejected_at is null))
+           returning s.character_id, c.user_id as "user_id!""#
+    )
+    .fetch_all(pool)
+    .await?;
+    Ok(rows
+        .into_iter()
+        .map(|r| Due {
+            character_id: r.character_id,
+            user_id: r.user_id,
+        })
+        .collect())
 }
 
 /// Run `f` over every item with at most `concurrency` in flight; await the whole batch.
