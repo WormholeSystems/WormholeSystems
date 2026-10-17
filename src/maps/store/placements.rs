@@ -170,8 +170,11 @@ pub(crate) async fn snapshot(
 
 /// Put a snapshotted placement back under its own id, so the connections and signatures
 /// restored with it still line up. A row that is somehow back already is left alone.
-pub(crate) async fn reinsert(tx: &mut Tx<'_>, map_id: i64, row: &PlacementRow) -> Result<()> {
-    sqlx::query!(
+/// Put a placement back under its own id. Returns whether it had to be: a snapshot can
+/// carry a placement that never went, and the caller undoing this restore must take back
+/// only what it actually put.
+pub(crate) async fn reinsert(tx: &mut Tx<'_>, map_id: i64, row: &PlacementRow) -> Result<bool> {
+    let inserted = sqlx::query!(
         "insert into map_solar_systems
              (id, map_id, solar_system_id, position_x, position_y, alias,
               is_home, rallied_at, is_pinned, raised_by_signature_id, hangs_off_id,
@@ -198,7 +201,7 @@ pub(crate) async fn reinsert(tx: &mut Tx<'_>, map_id: i64, row: &PlacementRow) -
     )
     .execute(&mut **tx)
     .await?;
-    Ok(())
+    Ok(inserted.rows_affected() > 0)
 }
 
 /// Move a placement, unless it is pinned. The server holds the drag lock rather than
