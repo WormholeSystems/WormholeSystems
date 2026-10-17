@@ -5,6 +5,7 @@
 	import type { EffectModifier } from '$lib/api/types/EffectModifier';
 	import { statIcon } from '$lib/map/effect-icons';
 	import { cn } from '$lib/utils';
+	import Hint from '$lib/components/Hint.svelte';
 
 	let {
 		modifiers,
@@ -47,7 +48,11 @@
 									<img src={icon} alt="" class="size-5" loading="lazy" />
 								{/if}
 							</span>
-							<span class="min-w-0 flex-1 truncate" title={m.stat}>{m.stat}</span>
+							<Hint text={m.stat} clippedOnly focusable={false}>
+								{#snippet child({ props })}
+									<span class="min-w-0 flex-1 truncate" {...props}>{m.stat}</span>
+								{/snippet}
+							</Hint>
 							<span
 								class="shrink-0 font-medium tabular-nums {m.kind === 'buff'
 									? 'text-green-500'

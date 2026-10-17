@@ -21,6 +21,8 @@ pub enum UserEvent {
     CharacterStatusChanged { character_id: i64 },
     /// Tranquility went up, went down, or changed version. Sent to everyone.
     ServerStatusChanged,
+    /// The user changed their own watchlist on this map, from any of their tabs; refetch.
+    PersonalWatchlistChanged { map_id: i64 },
 }
 
 /// In-process bus of per-user channels. Cheaply cloneable; hold one in app state.

@@ -1,0 +1,67 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update map_personal_watchlist set is_pinned = $1\n         where id = $2 and map_id = $3 and user_id = $4\n         returning id, map_id, solar_system_id, is_pinned",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "map_personal_watchlist",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "map_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "map_personal_watchlist",
+            "name": "map_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "solar_system_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "map_personal_watchlist",
+            "name": "solar_system_id"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "is_pinned",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "map_personal_watchlist",
+            "name": "is_pinned"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bool",
+        "Int8",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "52921858a103ce55ad2262ecc8473c8bcf4d521679716d82eb5e1aa6cf9d3266"
+}

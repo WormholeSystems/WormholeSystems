@@ -11,7 +11,7 @@
 <div class="flex items-center justify-end gap-1.5 text-[10px]">
 	{#each statics as st (st.code)}
 		{@const dest = destClassMeta(st.dest_class)}
-		<Tooltip.Root delayDuration={700}>
+		<Tooltip.Root>
 			<Tooltip.Trigger
 				class="flex font-medium"
 				data-testid="static-badge"

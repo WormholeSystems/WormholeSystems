@@ -88,47 +88,45 @@
 	});
 </script>
 
-<Tooltip.Provider>
-	<Tooltip.Root>
-		<Tooltip.Trigger>
-			{#snippet child({ props })}
-				<span
-					{...props}
-					class="flex items-center gap-2 font-mono text-xs text-muted-foreground"
-					data-testid="server-status"
-					data-state={status?.state ?? 'unknown'}
-				>
-					<span class="size-1.5 shrink-0 rounded-full {meta.dot}"></span>
-					<span class="tabular-nums">{eveTime}</span>
-					{#if degraded}
-						<span class="hidden text-foreground/70 sm:inline">{meta.short}</span>
-					{:else if status && status.players > 0}
-						<span class="hidden tabular-nums text-muted-foreground/60 sm:inline">
-							{compact.format(status.players)}
-						</span>
-					{/if}
+<Tooltip.Root>
+	<Tooltip.Trigger>
+		{#snippet child({ props })}
+			<span
+				{...props}
+				class="flex items-center gap-2 font-mono text-xs text-muted-foreground"
+				data-testid="server-status"
+				data-state={status?.state ?? 'unknown'}
+			>
+				<span class="size-1.5 shrink-0 rounded-full {meta.dot}"></span>
+				<span class="tabular-nums">{eveTime}</span>
+				{#if degraded}
+					<span class="hidden text-foreground/70 sm:inline">{meta.short}</span>
+				{:else if status && status.players > 0}
+					<span class="hidden tabular-nums text-muted-foreground/60 sm:inline">
+						{compact.format(status.players)}
+					</span>
+				{/if}
+			</span>
+		{/snippet}
+	</Tooltip.Trigger>
+	<Tooltip.Content class="max-w-64">
+		<div class="flex flex-col gap-1 text-xs">
+			<span class="font-medium">{meta.label}</span>
+			<span class="text-muted-foreground">{eveDate} {eveTime} EVE time</span>
+			{#if status && hasPopulation}
+				<span class="text-muted-foreground">
+					{full.format(status.players)} pilots online
+					{#if uptime}· up {uptime}{/if}
 				</span>
-			{/snippet}
-		</Tooltip.Trigger>
-		<Tooltip.Content class="max-w-64">
-			<div class="flex flex-col gap-1 text-xs">
-				<span class="font-medium">{meta.label}</span>
-				<span class="text-muted-foreground">{eveDate} {eveTime} EVE time</span>
-				{#if status && hasPopulation}
-					<span class="text-muted-foreground">
-						{full.format(status.players)} pilots online
-						{#if uptime}· up {uptime}{/if}
-					</span>
-				{/if}
-				{#if status?.server_version && hasPopulation}
-					<span class="text-muted-foreground/70">Build {status.server_version}</span>
-				{/if}
-				{#if trackingPaused}
-					<span class="text-muted-foreground">
-						Live tracking is paused until the server is back.
-					</span>
-				{/if}
-			</div>
-		</Tooltip.Content>
-	</Tooltip.Root>
-</Tooltip.Provider>
+			{/if}
+			{#if status?.server_version && hasPopulation}
+				<span class="text-muted-foreground/70">Build {status.server_version}</span>
+			{/if}
+			{#if trackingPaused}
+				<span class="text-muted-foreground">
+					Live tracking is paused until the server is back.
+				</span>
+			{/if}
+		</div>
+	</Tooltip.Content>
+</Tooltip.Root>

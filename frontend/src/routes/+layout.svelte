@@ -12,6 +12,7 @@
 	import Nav from '$lib/components/Nav.svelte';
 	import Seo from '$lib/components/Seo.svelte';
 	import { Toaster } from '$lib/components/ui/sonner';
+	import * as Tooltip from '$lib/components/ui/tooltip';
 
 	let { children, data } = $props();
 
@@ -51,11 +52,15 @@
 <Seo />
 
 <QueryClientProvider client={queryClient}>
-	<Toaster position="top-center" closeButton />
-	<ConfirmDialog />
-	<Nav me={data.me} maps={data.maps} status={data.status} />
-	<AnnouncementBanner announcement={data.announcement} />
-	<main class={flush ? '' : 'p-6'}>
-		{@render children()}
-	</main>
+	<!-- The app's one tooltip provider: every tooltip waits a second, then the next one along
+	     shows at once, and a mouse click is never taken as asking for one. -->
+	<Tooltip.Provider delayDuration={1000} ignoreNonKeyboardFocus>
+		<Toaster position="top-center" closeButton />
+		<ConfirmDialog />
+		<Nav me={data.me} maps={data.maps} status={data.status} />
+		<AnnouncementBanner announcement={data.announcement} />
+		<main class={flush ? '' : 'p-6'}>
+			{@render children()}
+		</main>
+	</Tooltip.Provider>
 </QueryClientProvider>

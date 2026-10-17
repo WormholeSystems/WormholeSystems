@@ -16,6 +16,7 @@
 	import * as Table from '$lib/components/ui/table';
 	import SortHeader from './SortHeader.svelte';
 	import { ROLE_LABEL } from '$lib/map/roles';
+	import Hint from '$lib/components/Hint.svelte';
 
 	export type SortKey = 'name' | 'subject_type' | 'role' | 'expires_at';
 
@@ -109,20 +110,25 @@
 				</Table.Cell>
 				<Table.Cell>
 					{#if entry.expires_at}
-						<button
-							type="button"
-							class="text-xs text-amber-500 hover:underline disabled:no-underline"
-							data-testid="access-expiry"
-							title={canManage ? 'Remove the end date' : undefined}
-							disabled={!canManage || !actions}
-							onclick={() => actions?.clearExpiry(entry)}
-						>
-							{new Date(entry.expires_at).toLocaleDateString(undefined, {
-								day: 'numeric',
-								month: 'short',
-								year: 'numeric',
-							})}
-						</button>
+						{@const expires = entry.expires_at}
+						<Hint text={canManage ? 'Remove the end date' : undefined}>
+							{#snippet child({ props })}
+								<button
+									type="button"
+									class="text-xs text-amber-500 hover:underline disabled:no-underline"
+									data-testid="access-expiry"
+									{...props}
+									disabled={!canManage || !actions}
+									onclick={() => actions?.clearExpiry(entry)}
+								>
+									{new Date(expires).toLocaleDateString(undefined, {
+										day: 'numeric',
+										month: 'short',
+										year: 'numeric',
+									})}
+								</button>
+							{/snippet}
+						</Hint>
 					{:else}
 						<span class="text-xs text-muted-foreground">—</span>
 					{/if}

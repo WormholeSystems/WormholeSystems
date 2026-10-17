@@ -13,19 +13,14 @@
 </script>
 
 {#if name}
-	<Tooltip.Provider delayDuration={200}>
-		<Tooltip.Root>
-			<Tooltip.Trigger
-				class="truncate text-[10px] text-muted-foreground"
-				data-testid="route-origin"
-			>
-				from <span class={pinned ? 'text-amber-400' : ''}>{name}</span>
-			</Tooltip.Trigger>
-			<Tooltip.Content>
-				{pinned
-					? `Jumps are counted from ${name}, set as the route origin. Clear it to go back to where you are.`
-					: `Jumps are counted from ${name}, where you are now.`}
-			</Tooltip.Content>
-		</Tooltip.Root>
-	</Tooltip.Provider>
+	<Tooltip.Root>
+		<Tooltip.Trigger class="truncate text-[10px] text-muted-foreground" data-testid="route-origin">
+			from <span class={pinned ? 'text-amber-400' : ''}>{name}</span>
+		</Tooltip.Trigger>
+		<Tooltip.Content>
+			{pinned
+				? `Jumps are counted from ${name}, set as the route origin. Clear it to go back to where you are.`
+				: `Jumps are counted from ${name}, where you are now.`}
+		</Tooltip.Content>
+	</Tooltip.Root>
 {/if}

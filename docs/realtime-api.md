@@ -68,6 +68,7 @@ map.
 |--------|--------|-----------|------------|
 | `character_status_changed` | `character_id` | One of your characters was seen somewhere else, in another ship, or came on or offline | `GET /api/me/status` |
 | `server_status_changed` | | Tranquility went up, went down, or changed version. Sent to everyone connected | `GET /api/server-status` |
+| `personal_watchlist_changed` | `map_id` | You changed your own watchlist on that map, from any tab | `GET /api/maps/{id}/watchlist/personal` |
 
 ## What a client should do
 

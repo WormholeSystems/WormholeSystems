@@ -66,6 +66,11 @@ export function createMapQueries(
 		...q.listWatchlist(mapId),
 		meta: { toastOnError: true },
 	}));
+	// Signed-in only: a watcher on a share link has no list of their own.
+	const personalWatchlist = createQuery(() => ({
+		...q.listPersonalWatchlist(mapId),
+		enabled: signedIn,
+	}));
 	const ignored = createQuery(() => ({
 		...q.listIgnored(mapId),
 		meta: { toastOnError: true },
@@ -125,6 +130,7 @@ export function createMapQueries(
 		graph,
 		signatures,
 		watchlist,
+		personalWatchlist,
 		ignored,
 		history,
 		stale,

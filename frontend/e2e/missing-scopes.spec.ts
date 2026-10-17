@@ -39,7 +39,10 @@ test('a character missing permissions is flagged on the portrait and in the menu
 
 	await page.getByRole('button', { name: /missing permissions/ }).click();
 	const flag = page.getByTestId('character-missing-scopes');
-	await expect(flag).toHaveAttribute('title', /Character location, Ship type/);
+	await flag.hover();
+	await expect(page.locator('[data-slot="tooltip-content"]')).toContainText(
+		/Character location, Ship type/,
+	);
 	const grant = page.getByTestId('grant-missing-scopes');
 	await expect(grant).toHaveAttribute('href', '/settings/characters');
 

@@ -22,6 +22,7 @@
 	import ServerStatus from '$lib/components/ServerStatus.svelte';
 	import Logo from '$lib/components/Logo.svelte';
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
+	import Hint from '$lib/components/Hint.svelte';
 
 	let {
 		me,
@@ -72,13 +73,20 @@
 				<Logo class="size-5" />
 				<span class="font-heading text-sm font-semibold tracking-tight">WormholeSystems</span>
 				<!-- Says what it is before anyone finds out the hard way. -->
-				<span
-					class="border border-amber-500/40 px-1.5 py-0.5 text-[10px] tracking-wider whitespace-nowrap text-amber-500 uppercase"
-					data-testid="beta"
-					title="Beta: in daily use, still changing. Updates migrate your data."
+				<Hint
+					text={'Beta: in daily use, still changing. Updates migrate your data.'}
+					focusable={false}
 				>
-					Beta
-				</span>
+					{#snippet child({ props })}
+						<span
+							class="border border-amber-500/40 px-1.5 py-0.5 text-[10px] tracking-wider whitespace-nowrap text-amber-500 uppercase"
+							data-testid="beta"
+							{...props}
+						>
+							Beta
+						</span>
+					{/snippet}
+				</Hint>
 			</a>
 			<!-- Without an account this only leads to the sign-in page, so it is not shown. -->
 			{#if me}
@@ -96,18 +104,22 @@
 
 			<span class="hidden min-w-0 items-center gap-1 lg:flex" data-testid="pinned-maps">
 				{#each inline as map (map.id)}
-					<a
-						href="/maps/{map.id}"
-						class="flex max-w-44 min-w-0 items-center gap-1.5 px-2 py-1 text-xs transition-colors {here ===
-						`/maps/${map.id}`
-							? 'bg-muted/50 text-foreground'
-							: 'text-muted-foreground hover:bg-muted/30 hover:text-foreground'}"
-						data-testid="pinned-map"
-						title={map.name}
-					>
-						<MapIcon class="size-3.5 shrink-0" />
-						<span class="truncate">{map.name}</span>
-					</a>
+					<Hint text={map.name}>
+						{#snippet child({ props })}
+							<a
+								href="/maps/{map.id}"
+								class="flex max-w-44 min-w-0 items-center gap-1.5 px-2 py-1 text-xs transition-colors {here ===
+								`/maps/${map.id}`
+									? 'bg-muted/50 text-foreground'
+									: 'text-muted-foreground hover:bg-muted/30 hover:text-foreground'}"
+								data-testid="pinned-map"
+								{...props}
+							>
+								<MapIcon class="size-3.5 shrink-0" />
+								<span class="truncate">{map.name}</span>
+							</a>
+						{/snippet}
+					</Hint>
 				{/each}
 				{#if overflow.length > 0}
 					<DropdownMenu.Root>
@@ -162,15 +174,23 @@
 							<EveImage kind="character" id={me.character_id} class="size-full object-cover" />
 						</span>
 						{#if lacking.length > 0}
-							<span
-								class="absolute -right-1.5 -bottom-1.5 flex size-4 items-center justify-center rounded-full bg-background"
-								title="{lacking.map((c) => c.name).join(', ')} {lacking.length === 1
-									? 'is'
-									: 'are'} missing permissions"
-								data-testid="missing-scopes-warning"
+							<Hint
+								text={`${lacking.map((c) => c.name).join(', ')} ${
+									lacking.length === 1 ? 'is' : 'are'
+								} missing permissions`}
+								focusable={false}
+								label
 							>
-								<TriangleAlertIcon class="size-3.5 text-red-500" />
-							</span>
+								{#snippet child({ props })}
+									<span
+										class="absolute -right-1.5 -bottom-1.5 flex size-4 items-center justify-center rounded-full bg-background"
+										{...props}
+										data-testid="missing-scopes-warning"
+									>
+										<TriangleAlertIcon class="size-3.5 text-red-500" />
+									</span>
+								{/snippet}
+							</Hint>
 						{/if}
 					</DropdownMenu.Trigger>
 					<DropdownMenu.Content align="end">
@@ -187,24 +207,33 @@
 									/>
 									<span class="truncate">{c.name}</span>
 									{#if c.needs_login}
-										<span
-											class="ml-auto shrink-0 text-xs text-amber-500"
-											title="EVE signed this character out"
-										>
-											Log in again
-										</span>
+										<Hint text={'EVE signed this character out'} focusable={false}>
+											{#snippet child({ props })}
+												<span class="ml-auto shrink-0 text-xs text-amber-500" {...props}>
+													Log in again
+												</span>
+											{/snippet}
+										</Hint>
 									{/if}
 									{#if c.missing_scopes.length > 0}
-										<span
-											class="shrink-0 {c.needs_login ? '' : 'ml-auto'}"
-											title="Missing: {missingNames(c.missing_scopes)}{c.is_active
-												? ''
-												: '. Switch to it to grant them.'}"
-											data-testid="character-missing-scopes"
+										<Hint
+											text={`Missing: ${missingNames(c.missing_scopes)}${
+												c.is_active ? '' : '. Switch to it to grant them.'
+											}`}
+											focusable={false}
+											label
 										>
-											<!-- Important: a highlighted row repaints everything in it. -->
-											<TriangleAlertIcon class="size-3.5 text-red-500!" />
-										</span>
+											{#snippet child({ props })}
+												<span
+													class="shrink-0 {c.needs_login ? '' : 'ml-auto'}"
+													{...props}
+													data-testid="character-missing-scopes"
+												>
+													<!-- Important: a highlighted row repaints everything in it. -->
+													<TriangleAlertIcon class="size-3.5 text-red-500!" />
+												</span>
+											{/snippet}
+										</Hint>
 									{/if}
 								</DropdownMenu.Item>
 							{/each}

@@ -3,6 +3,7 @@
 	// through a CSS variable: the class tokens live in a plain `:root` block, not in `@theme`,
 	// so Tailwind never generates `text-c5` and a utility class would silently inherit.
 	import { classMeta } from '$lib/map/classes';
+	import Hint from '$lib/components/Hint.svelte';
 	import { cn } from '$lib/utils';
 
 	let {
@@ -21,12 +22,16 @@
 	const meta = $derived(classMeta(classId, security));
 </script>
 
-<span
-	class={cn('font-mono', className)}
-	style="color: var(--color-{meta.token})"
-	{title}
-	data-testid="class-badge"
-	data-class={meta.short}
->
-	{meta.short}
-</span>
+<Hint text={title} focusable={false}>
+	{#snippet child({ props })}
+		<span
+			class={cn('font-mono', className)}
+			style="color: var(--color-{meta.token})"
+			{...props}
+			data-testid="class-badge"
+			data-class={meta.short}
+		>
+			{meta.short}
+		</span>
+	{/snippet}
+</Hint>

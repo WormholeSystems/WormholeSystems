@@ -25,6 +25,7 @@
 	import * as Table from '$lib/components/ui/table';
 	import { timeAgo, utcShort } from '$lib/format';
 	import { cn } from '$lib/utils';
+	import Hint from '$lib/components/Hint.svelte';
 
 	const tokensQuery = createQuery(() => q.myTokens());
 	const tokens = $derived(tokensQuery.data ?? []);
@@ -186,9 +187,13 @@
 		</Card.Content>
 
 		<Card.Footer class="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-t">
-			<code class="min-w-0 truncate font-mono text-xs text-muted-foreground" title={snippet}>
-				{snippet}
-			</code>
+			<Hint text={snippet} clippedOnly focusable={false}>
+				{#snippet child({ props })}
+					<code class="min-w-0 truncate font-mono text-xs text-muted-foreground" {...props}>
+						{snippet}
+					</code>
+				{/snippet}
+			</Hint>
 			<span class="flex shrink-0 items-center gap-3 text-xs text-muted-foreground">
 				<a href="/api/docs" class="underline hover:text-foreground" target="_blank" rel="noopener">
 					API reference

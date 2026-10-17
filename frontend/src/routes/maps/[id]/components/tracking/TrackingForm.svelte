@@ -398,22 +398,20 @@
 	</div>
 
 	<Dialog.Footer class="border-t border-border/50 bg-muted/30 px-6 py-4 sm:justify-between">
-		<Tooltip.Provider>
-			<Tooltip.Root>
-				<Tooltip.Trigger>
-					{#snippet child({ props })}
-						<Button
-							{...props}
-							type="button"
-							variant="outline"
-							onclick={disablePrompt}
-							data-testid="tracking-disable">Stop asking</Button
-						>
-					{/snippet}
-				</Tooltip.Trigger>
-				<Tooltip.Content>Re-enable it from the tracking settings.</Tooltip.Content>
-			</Tooltip.Root>
-		</Tooltip.Provider>
+		<Tooltip.Root>
+			<Tooltip.Trigger>
+				{#snippet child({ props })}
+					<Button
+						{...props}
+						type="button"
+						variant="outline"
+						onclick={disablePrompt}
+						data-testid="tracking-disable">Stop asking</Button
+					>
+				{/snippet}
+			</Tooltip.Trigger>
+			<Tooltip.Content>Re-enable it from the tracking settings.</Tooltip.Content>
+		</Tooltip.Root>
 		<Button type="submit" data-testid="tracking-confirm">Confirm</Button>
 	</Dialog.Footer>
 </form>

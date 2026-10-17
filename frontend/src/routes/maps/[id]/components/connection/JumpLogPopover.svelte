@@ -25,6 +25,7 @@
 	import { solarSystemId } from '$lib/map/system';
 	import type { MapState } from '../../state/map-state.svelte';
 	import JumpForm from './JumpForm.svelte';
+	import Hint from '$lib/components/Hint.svelte';
 
 	let {
 		map,
@@ -108,15 +109,19 @@
 					<span class="text-right">kt</span>
 					<span class="text-right">Age</span>
 					{#if canWrite}
-						<button
-							class="flex items-center justify-end text-muted-foreground transition-colors hover:text-foreground"
-							title="Log jump manually"
-							aria-label="Log jump manually"
-							data-testid="log-jump"
-							onclick={openAdd}
-						>
-							<PlusIcon class="size-3" />
-						</button>
+						<Hint text={'Log jump manually'}>
+							{#snippet child({ props })}
+								<button
+									class="flex items-center justify-end text-muted-foreground transition-colors hover:text-foreground"
+									{...props}
+									aria-label="Log jump manually"
+									data-testid="log-jump"
+									onclick={openAdd}
+								>
+									<PlusIcon class="size-3" />
+								</button>
+							{/snippet}
+						</Hint>
 					{:else}
 						<span></span>
 					{/if}
@@ -177,13 +182,17 @@
 						</Tooltip.Root>
 						{#if canWrite}
 							<DropdownMenu.Root>
-								<DropdownMenu.Trigger
-									class="flex items-center justify-end text-muted-foreground hover:text-foreground"
-									title="Jump actions"
-									aria-label="Jump actions"
-								>
-									<EllipsisVerticalIcon class="size-3" />
-								</DropdownMenu.Trigger>
+								<Hint text={'Jump actions'}>
+									{#snippet child({ props })}
+										<DropdownMenu.Trigger
+											class="flex items-center justify-end text-muted-foreground hover:text-foreground"
+											{...props}
+											aria-label="Jump actions"
+										>
+											<EllipsisVerticalIcon class="size-3" />
+										</DropdownMenu.Trigger>
+									{/snippet}
+								</Hint>
 								<DropdownMenu.Content side="right" align="start">
 									<DropdownMenu.Item class="text-xs" onclick={() => openEdit(jump)}>
 										<PencilIcon class="size-3.5" />

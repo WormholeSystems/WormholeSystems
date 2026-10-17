@@ -95,124 +95,214 @@
 	</Tooltip.Root>
 {/snippet}
 
-<Tooltip.Provider delayDuration={300}>
-	<div
-		class="flex h-10 items-center gap-2 border-b border-border/50 bg-muted/30 px-3"
-		data-testid="status-bar"
-	>
-		<!-- A watcher has no map list, no saved arrangement and no settings: the chain is the
+<div
+	class="flex h-10 items-center gap-2 border-b border-border/50 bg-muted/30 px-3"
+	data-testid="status-bar"
+>
+	<!-- A watcher has no map list, no saved arrangement and no settings: the chain is the
 	     whole page for them. -->
-		{#if !watching}
-			<a
-				href="/maps"
-				class="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-			>
-				<ArrowLeftIcon class="size-4" />
-				Maps
-			</a>
-			<Separator orientation="vertical" class="h-4" />
-		{/if}
-		<span class="truncate text-sm font-medium" data-testid="status-bar-name">
-			{map.data?.map.name ?? '...'}
-		</span>
-		<Button
-			variant="outline"
-			size="sm"
-			class="h-7 gap-2 text-muted-foreground"
-			data-testid="palette-trigger"
-			onclick={() => (map.paletteOpen = true)}
+	{#if !watching}
+		<a
+			href="/maps"
+			class="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
 		>
-			<SearchIcon />
-			Search
-			<kbd class="rounded border border-border/60 px-1 font-mono text-[10px]">⌘K</kbd>
-		</Button>
+			<ArrowLeftIcon class="size-4" />
+			Maps
+		</a>
+		<Separator orientation="vertical" class="h-4" />
+	{/if}
+	<span class="truncate text-sm font-medium" data-testid="status-bar-name">
+		{map.data?.map.name ?? '...'}
+	</span>
+	<Button
+		variant="outline"
+		size="sm"
+		class="h-7 gap-2 text-muted-foreground"
+		data-testid="palette-trigger"
+		onclick={() => (map.paletteOpen = true)}
+	>
+		<SearchIcon />
+		Search
+		<kbd class="rounded border border-border/60 px-1 font-mono text-[10px]">⌘K</kbd>
+	</Button>
 
-		<div class="flex flex-1 items-center justify-center gap-2">
-			{#if watching}
-				<Tooltip.Root>
-					<Tooltip.Trigger>
-						{#snippet child({ props })}
-							<Badge {...props} variant="outline" class="gap-1 text-muted-foreground">
-								<EyeIcon />
-								Watching
-							</Badge>
-						{/snippet}
-					</Tooltip.Trigger>
-					<Tooltip.Content class="max-w-64">
-						You are following a link to this map. It updates as the chain is scanned, but nothing
-						here can be changed without an account that has access to it.
-					</Tooltip.Content>
-				</Tooltip.Root>
-			{:else if map.data && !map.data.character_has_access}
-				<Tooltip.Root>
-					<Tooltip.Trigger>
-						{#snippet child({ props })}
-							<Badge {...props} variant="outline" class="gap-1 border-amber-600/40 text-amber-500">
-								<TriangleAlertIcon />
-								Limited access
-							</Badge>
-						{/snippet}
-					</Tooltip.Trigger>
-					<Tooltip.Content class="max-w-64">
-						You can see this map through another of your characters, but {pilot?.name ??
-							'the active character'} has no access of its own. Location sharing and waypoints will not
-						work for them.
-					</Tooltip.Content>
-				</Tooltip.Root>
-			{/if}
-
-			{#if map.systems.orphaned.length > 0 && canWrite}
-				<!-- What a collapsed hole leaves behind: a branch nothing reaches any more. -->
-				<Badge
-					variant="outline"
-					class="cursor-pointer gap-1 border-amber-500/40 text-amber-500"
-					data-testid="orphaned-badge"
-					onclick={() => (map.cleanPrompt = true)}
-				>
-					<BrushCleaningIcon />
-					{map.systems.orphaned.length} adrift
-				</Badge>
-			{/if}
-
-			<StaleConnectionsPopover {map} />
-		</div>
-
-		{#if pilot?.online && pilot.solar_system_id !== null}
-			<span class="hidden items-center gap-1.5 text-xs text-muted-foreground lg:flex">
-				{#if pilotSystem?.kind === 'system'}
-					<ClassBadge
-						classId={pilotSystem.wormhole_class_id}
-						security={pilotSystem.security_status}
-					/>
-					<span class="text-foreground">{pilotSystem.name}</span>
-				{:else}
-					<span>Outside the chain</span>
-				{/if}
-			</span>
+	<div class="flex flex-1 items-center justify-center gap-2">
+		{#if watching}
+			<Tooltip.Root>
+				<Tooltip.Trigger>
+					{#snippet child({ props })}
+						<Badge {...props} variant="outline" class="gap-1 text-muted-foreground">
+							<EyeIcon />
+							Watching
+						</Badge>
+					{/snippet}
+				</Tooltip.Trigger>
+				<Tooltip.Content class="max-w-64">
+					You are following a link to this map. It updates as the chain is scanned, but nothing here
+					can be changed without an account that has access to it.
+				</Tooltip.Content>
+			</Tooltip.Root>
+		{:else if map.data && !map.data.character_has_access}
+			<Tooltip.Root>
+				<Tooltip.Trigger>
+					{#snippet child({ props })}
+						<Badge {...props} variant="outline" class="gap-1 border-amber-600/40 text-amber-500">
+							<TriangleAlertIcon />
+							Limited access
+						</Badge>
+					{/snippet}
+				</Tooltip.Trigger>
+				<Tooltip.Content class="max-w-64">
+					You can see this map through another of your characters, but {pilot?.name ??
+						'the active character'} has no access of its own. Location sharing and waypoints will not
+					work for them.
+				</Tooltip.Content>
+			</Tooltip.Root>
 		{/if}
 
-		<Tooltip.Root>
-			<Tooltip.Trigger>
-				{#snippet child({ props })}
-					<span
-						{...props}
-						data-testid="socket-dot"
-						data-state={map.socket}
-						class={cn(
-							'size-2 rounded-full',
-							map.socket === 'open' && 'bg-emerald-500',
-							map.socket === 'connecting' && 'bg-amber-500',
-							map.socket === 'reconnecting' && 'animate-pulse bg-red-500',
-							map.socket === 'revoked' && 'bg-red-500',
-						)}
-					></span>
-				{/snippet}
-			</Tooltip.Trigger>
-			<Tooltip.Content>{socketLabel[map.socket]}</Tooltip.Content>
-		</Tooltip.Root>
+		{#if map.systems.orphaned.length > 0 && canWrite}
+			<!-- What a collapsed hole leaves behind: a branch nothing reaches any more. -->
+			<Badge
+				variant="outline"
+				class="cursor-pointer gap-1 border-amber-500/40 text-amber-500"
+				data-testid="orphaned-badge"
+				onclick={() => (map.cleanPrompt = true)}
+			>
+				<BrushCleaningIcon />
+				{map.systems.orphaned.length} adrift
+			</Badge>
+		{/if}
 
+		<StaleConnectionsPopover {map} />
+	</div>
+
+	{#if pilot?.online && pilot.solar_system_id !== null}
+		<span class="hidden items-center gap-1.5 text-xs text-muted-foreground lg:flex">
+			{#if pilotSystem?.kind === 'system'}
+				<ClassBadge
+					classId={pilotSystem.wormhole_class_id}
+					security={pilotSystem.security_status}
+				/>
+				<span class="text-foreground">{pilotSystem.name}</span>
+			{:else}
+				<span>Outside the chain</span>
+			{/if}
+		</span>
+	{/if}
+
+	<Tooltip.Root>
+		<Tooltip.Trigger>
+			{#snippet child({ props })}
+				<span
+					{...props}
+					data-testid="socket-dot"
+					data-state={map.socket}
+					class={cn(
+						'size-2 rounded-full',
+						map.socket === 'open' && 'bg-emerald-500',
+						map.socket === 'connecting' && 'bg-amber-500',
+						map.socket === 'reconnecting' && 'animate-pulse bg-red-500',
+						map.socket === 'revoked' && 'bg-red-500',
+					)}
+				></span>
+			{/snippet}
+		</Tooltip.Trigger>
+		<Tooltip.Content>{socketLabel[map.socket]}</Tooltip.Content>
+	</Tooltip.Root>
+
+	<Separator orientation="vertical" class="h-4" />
+
+	<Tooltip.Root>
+		<Tooltip.Trigger>
+			{#snippet child({ props })}
+				<Button
+					{...props}
+					variant="ghost"
+					size="icon"
+					class="size-7"
+					data-testid="tour-button"
+					onclick={() => onstarttour?.()}
+				>
+					<CircleHelpIcon />
+				</Button>
+			{/snippet}
+		</Tooltip.Trigger>
+		<Tooltip.Content>Show me around</Tooltip.Content>
+	</Tooltip.Root>
+
+	<Separator orientation="vertical" class="h-4" />
+
+	{#if map.userSettings}
+		{@render toggle(
+			'Share location',
+			map.userSettings.tracking_allowed,
+			EyeIcon,
+			'tracking_allowed',
+			'tracking-toggle',
+		)}
+		<TrackingSettings {map} />
+		{@render toggle(
+			'Threat rings',
+			map.userSettings.show_threat_level,
+			RadarIcon,
+			'show_threat_level',
+			'threat-toggle',
+		)}
+	{/if}
+
+	{#if canWrite}
 		<Separator orientation="vertical" class="h-4" />
+	{/if}
+	<span class="flex items-center gap-2" data-testid="history-controls">
+		{#if canWrite}
+			<Tooltip.Root>
+				<Tooltip.Trigger>
+					{#snippet child({ props })}
+						<Button
+							{...props}
+							variant="ghost"
+							size="icon"
+							class="size-7"
+							data-testid="undo-button"
+							disabled={!map.history.canUndo}
+							onclick={() => map.history.undo()}
+						>
+							<Undo2Icon />
+						</Button>
+					{/snippet}
+				</Tooltip.Trigger>
+				<Tooltip.Content>
+					{map.history.headEntry ? `Undo: ${map.history.headEntry.label}` : 'Nothing to undo'}
+				</Tooltip.Content>
+			</Tooltip.Root>
+			<Tooltip.Root>
+				<Tooltip.Trigger>
+					{#snippet child({ props })}
+						<Button
+							{...props}
+							variant="ghost"
+							size="icon"
+							class="size-7"
+							data-testid="redo-button"
+							disabled={!map.history.canRedo}
+							onclick={() => map.history.redo()}
+						>
+							<Redo2Icon />
+						</Button>
+					{/snippet}
+				</Tooltip.Trigger>
+				<Tooltip.Content>
+					{map.history.redoEntry ? `Redo: ${map.history.redoEntry.label}` : 'Nothing to redo'}
+				</Tooltip.Content>
+			</Tooltip.Root>
+		{/if}
+		{#if !watching}
+			<HistoryPopover {map} />
+		{/if}
+	</span>
 
+	{#if !watching}
+		<Separator orientation="vertical" class="h-4" />
 		<Tooltip.Root>
 			<Tooltip.Trigger>
 				{#snippet child({ props })}
@@ -220,129 +310,37 @@
 						{...props}
 						variant="ghost"
 						size="icon"
-						class="size-7"
-						data-testid="tour-button"
-						onclick={() => onstarttour?.()}
+						class={cn('size-7', map.panels.editing && 'bg-accent text-foreground')}
+						aria-pressed={map.panels.editing}
+						data-testid="layout-toggle"
+						onclick={() =>
+							map.panels.editing ? map.panels.exitEdit() : (map.panels.editing = true)}
 					>
-						<CircleHelpIcon />
+						<LayoutGridIcon />
 					</Button>
 				{/snippet}
 			</Tooltip.Trigger>
-			<Tooltip.Content>Show me around</Tooltip.Content>
+			<Tooltip.Content>
+				{map.panels.editing ? 'Done arranging panels' : 'Arrange the side panels'}
+			</Tooltip.Content>
 		</Tooltip.Root>
 
-		<Separator orientation="vertical" class="h-4" />
-
-		{#if map.userSettings}
-			{@render toggle(
-				'Share location',
-				map.userSettings.tracking_allowed,
-				EyeIcon,
-				'tracking_allowed',
-				'tracking-toggle',
-			)}
-			<TrackingSettings {map} />
-			{@render toggle(
-				'Threat rings',
-				map.userSettings.show_threat_level,
-				RadarIcon,
-				'show_threat_level',
-				'threat-toggle',
-			)}
-		{/if}
-
-		{#if canWrite}
-			<Separator orientation="vertical" class="h-4" />
-		{/if}
-		<span class="flex items-center gap-2" data-testid="history-controls">
-			{#if canWrite}
-				<Tooltip.Root>
-					<Tooltip.Trigger>
-						{#snippet child({ props })}
-							<Button
-								{...props}
-								variant="ghost"
-								size="icon"
-								class="size-7"
-								data-testid="undo-button"
-								disabled={!map.history.canUndo}
-								onclick={() => map.history.undo()}
-							>
-								<Undo2Icon />
-							</Button>
-						{/snippet}
-					</Tooltip.Trigger>
-					<Tooltip.Content>
-						{map.history.headEntry ? `Undo: ${map.history.headEntry.label}` : 'Nothing to undo'}
-					</Tooltip.Content>
-				</Tooltip.Root>
-				<Tooltip.Root>
-					<Tooltip.Trigger>
-						{#snippet child({ props })}
-							<Button
-								{...props}
-								variant="ghost"
-								size="icon"
-								class="size-7"
-								data-testid="redo-button"
-								disabled={!map.history.canRedo}
-								onclick={() => map.history.redo()}
-							>
-								<Redo2Icon />
-							</Button>
-						{/snippet}
-					</Tooltip.Trigger>
-					<Tooltip.Content>
-						{map.history.redoEntry ? `Redo: ${map.history.redoEntry.label}` : 'Nothing to redo'}
-					</Tooltip.Content>
-				</Tooltip.Root>
-			{/if}
-			{#if !watching}
-				<HistoryPopover {map} />
-			{/if}
-		</span>
-
-		{#if !watching}
-			<Separator orientation="vertical" class="h-4" />
-			<Tooltip.Root>
-				<Tooltip.Trigger>
-					{#snippet child({ props })}
-						<Button
-							{...props}
-							variant="ghost"
-							size="icon"
-							class={cn('size-7', map.panels.editing && 'bg-accent text-foreground')}
-							aria-pressed={map.panels.editing}
-							data-testid="layout-toggle"
-							onclick={() =>
-								map.panels.editing ? map.panels.exitEdit() : (map.panels.editing = true)}
-						>
-							<LayoutGridIcon />
-						</Button>
-					{/snippet}
-				</Tooltip.Trigger>
-				<Tooltip.Content>
-					{map.panels.editing ? 'Done arranging panels' : 'Arrange the side panels'}
-				</Tooltip.Content>
-			</Tooltip.Root>
-
-			<Tooltip.Root>
-				<Tooltip.Trigger>
-					{#snippet child({ props })}
-						<Button
-							{...props}
-							href="/maps/{map.mapId}/settings"
-							variant="ghost"
-							size="icon"
-							class="size-7"
-							data-testid="settings-link"
-						>
-							<SettingsIcon />
-						</Button>
-					{/snippet}
-				</Tooltip.Trigger>
-				<Tooltip.Content>Map settings</Tooltip.Content>
-			</Tooltip.Root>
-		{/if}
-	</div>
-</Tooltip.Provider>
+		<Tooltip.Root>
+			<Tooltip.Trigger>
+				{#snippet child({ props })}
+					<Button
+						{...props}
+						href="/maps/{map.mapId}/settings"
+						variant="ghost"
+						size="icon"
+						class="size-7"
+						data-testid="settings-link"
+					>
+						<SettingsIcon />
+					</Button>
+				{/snippet}
+			</Tooltip.Trigger>
+			<Tooltip.Content>Map settings</Tooltip.Content>
+		</Tooltip.Root>
+	{/if}
+</div>

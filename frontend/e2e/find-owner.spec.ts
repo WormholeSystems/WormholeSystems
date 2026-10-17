@@ -18,7 +18,7 @@ test('the navigation card finds the nearest station of a chosen owner', async ({
 	// The search routes from somewhere, and the selected system is that somewhere.
 	await page.getByTestId('system-node').filter({ hasText: 'Jita' }).click();
 
-	await page.getByTestId('find-toggle').click();
+	await page.getByTestId('navigation-tab-find').click();
 	await page.getByTestId('find-condition').click();
 	await page.getByRole('option', { name: /station/i }).click();
 

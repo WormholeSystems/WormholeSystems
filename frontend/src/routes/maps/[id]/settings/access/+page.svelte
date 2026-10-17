@@ -23,6 +23,7 @@
 	import { byRole, ROLE_LABEL } from '$lib/map/roles';
 	import GrantForm from './GrantForm.svelte';
 	import { mapSettings } from '../context.svelte';
+	import Hint from '$lib/components/Hint.svelte';
 
 	const ctx = mapSettings();
 	const mapId = $derived(ctx.mapId);
@@ -203,7 +204,11 @@
 								onfocus={(e) => e.currentTarget.select()}
 							/>
 							<Button variant="outline" onclick={copyShare} data-testid="share-copy">Copy</Button>
-							<Button variant="ghost" onclick={rotateShare} title="Replace the link">New</Button>
+							<Hint text={'Replace the link'}>
+								{#snippet child({ props })}
+									<Button variant="ghost" onclick={rotateShare} {...props}>New</Button>
+								{/snippet}
+							</Hint>
 							<Button
 								variant="ghost"
 								class="text-destructive hover:text-destructive"

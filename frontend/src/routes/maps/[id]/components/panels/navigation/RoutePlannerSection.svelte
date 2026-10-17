@@ -4,14 +4,23 @@
 	import ArrowLeftRightIcon from '@lucide/svelte/icons/arrow-left-right';
 	import XIcon from '@lucide/svelte/icons/x';
 
-	import type { SystemSearchResult } from '$lib/api/types/SystemSearchResult';
 	import { Button } from '$lib/components/ui/button';
 	import RouteList from '../RouteList.svelte';
 	import SystemCombobox from '../../pickers/SystemCombobox.svelte';
 	import { jumpTone as badgeTone, type RouteGraph } from '$lib/routing/algorithm';
 	import type { MapState } from '../../../state/map-state.svelte';
+	import { pickerSuggestions } from './suggestions';
 
-	let { map, graph }: { map: MapState; graph: RouteGraph | null } = $props();
+	let {
+		map,
+		graph,
+		originOnly = false,
+	}: {
+		map: MapState;
+		graph: RouteGraph | null;
+		/** Just the origin, for Find: it has no destination, so no route to show. */
+		originOnly?: boolean;
+	} = $props();
 
 	const abResult = $derived.by(() => {
 		if (!graph || map.route.fromId === null || map.route.toId === null) return null;
@@ -25,36 +34,7 @@
 		map.route.path = map.route.hoverPath ?? abPath;
 	});
 
-	// Both pickers offer the systems already in play before anything is typed. They sit inside
-	// the picker, so choosing one is unambiguous about which end it fills.
-	const suggestedIds = $derived.by(() => {
-		const picks: { id: number; reason: string; icon: 'selected' | 'location' | 'pinned' }[] = [];
-		const active = map.activeSystem;
-		if (active?.kind === 'system') {
-			picks.push({ id: active.solar_system_id, reason: 'Selected system', icon: 'selected' });
-		}
-		const character = map.characters.mine.find((c) => c.online && c.solar_system_id !== null);
-		if (
-			character?.solar_system_id != null &&
-			!picks.some((p) => p.id === character.solar_system_id)
-		) {
-			picks.push({ id: character.solar_system_id, reason: 'Where you are', icon: 'location' });
-		}
-		for (const entry of map.watchlist.all.filter((w) => w.is_pinned).slice(0, 5)) {
-			if (picks.some((p) => p.id === entry.solar_system_id)) continue;
-			picks.push({ id: entry.solar_system_id, reason: 'Pinned on the watchlist', icon: 'pinned' });
-		}
-		return picks;
-	});
-	// Only those we can render as a proper row; an unresolved one would show as a bare id.
-	const suggestions = $derived(
-		suggestedIds
-			.map((p) => ({ system: map.systemInfo(p.id), reason: p.reason, icon: p.icon }))
-			.filter(
-				(p): p is { system: SystemSearchResult; reason: string; icon: typeof p.icon } =>
-					p.system !== null,
-			),
-	);
+	const suggestions = $derived(pickerSuggestions(map));
 
 	function swap() {
 		[map.route.fromId, map.route.toId] = [map.route.toId, map.route.fromId];
@@ -69,18 +49,22 @@
 			{suggestions}
 			onpick={(id) => (map.route.fromId = id)}
 		/>
-		<Button variant="ghost" size="icon-xs" aria-label="Swap" onclick={swap}>
-			<ArrowLeftRightIcon />
-		</Button>
-		<SystemCombobox
-			placeholder="Destination"
-			value={map.route.toId}
-			{suggestions}
-			onpick={(id) => (map.route.toId = id)}
-		/>
+		{#if !originOnly}
+			<Button variant="ghost" size="icon-xs" aria-label="Swap" onclick={swap}>
+				<ArrowLeftRightIcon />
+			</Button>
+			<SystemCombobox
+				placeholder="Destination"
+				value={map.route.toId}
+				{suggestions}
+				onpick={(id) => (map.route.toId = id)}
+			/>
+		{/if}
 	</div>
 
-	{#if abResult === null && map.route.fromId !== null && map.route.toId !== null}
+	{#if originOnly}
+		<!-- No route on the Find tab. -->
+	{:else if abResult === null && map.route.fromId !== null && map.route.toId !== null}
 		<p class="text-muted-foreground" data-testid="no-route">No route found</p>
 	{:else if abResult}
 		<div class="flex items-center justify-between font-medium">

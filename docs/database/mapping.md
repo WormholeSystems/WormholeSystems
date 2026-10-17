@@ -259,6 +259,13 @@ client-side, so the row is just membership plus the pin flag.
 Mutations are Member+, reads Viewer+; every change publishes
 `MapEvent::WatchlistChanged`.
 
+## `map_personal_watchlist`
+
+One user's own watchlist on a map, seen by nobody else (after legacy PR #101). Same
+columns as `map_watchlist` plus `user_id` (fk users, cascade), unique per map, user and
+system. Any Viewer+ may keep one. Not a map command: no history, no undo, not exported;
+a change only tells the user's own tabs, with `UserEvent::PersonalWatchlistChanged`.
+
 ---
 
 ## `map_ignored_solar_systems`

@@ -15,6 +15,7 @@
 	import PilotsRow from './system-node/PilotsRow.svelte';
 	import RegionRow from './system-node/RegionRow.svelte';
 	import StaticsRow from './system-node/StaticsRow.svelte';
+	import Hint from '$lib/components/Hint.svelte';
 
 	let {
 		node,
@@ -175,13 +176,13 @@
 		{#if mapped?.occupying_group}
 			<!-- Truncated like the name: a long one would push the icons out of the node. The
 			     full text is in its title, and on the system's info card. -->
-			<span
-				class="truncate text-muted-foreground"
-				title={mapped.occupying_group}
-				data-testid="node-occupier"
-			>
-				({mapped.occupying_group})
-			</span>
+			<Hint text={mapped.occupying_group} clippedOnly focusable={false}>
+				{#snippet child({ props })}
+					<span class="truncate text-muted-foreground" {...props} data-testid="node-occupier">
+						({mapped.occupying_group})
+					</span>
+				{/snippet}
+			</Hint>
 		{/if}
 
 		<HeaderIcons {node} {sigCounts} {unmapped} />
