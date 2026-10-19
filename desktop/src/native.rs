@@ -97,7 +97,8 @@ fn never_activate(hwnd: windows_sys::Win32::Foundation::HWND) {
         }
     }
 
-    let ours = proc as usize as isize;
+    let ours =
+        proc as unsafe extern "system" fn(HWND, u32, WPARAM, LPARAM) -> LRESULT as usize as isize;
     // SAFETY: `hwnd` is live; swapping its procedure is what subclassing is.
     unsafe {
         if GetWindowLongPtrW(hwnd, GWLP_WNDPROC) == ours {
