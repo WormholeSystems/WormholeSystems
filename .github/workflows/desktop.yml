@@ -1,0 +1,160 @@
+name: Desktop
+
+# The desktop app (desktop/), built for Linux, Windows and macOS. Every change to it builds
+# all of them and keeps the packages as artifacts; a `desktop-v1.2.3` tag also publishes
+# them as a GitHub release. The builds are not signed yet, so Windows SmartScreen and macOS
+# Gatekeeper ask before the first start.
+#
+# wsctl releases from this repo too, and its install.sh downloads "the latest release", so
+# a desktop release is never marked latest.
+on:
+  push:
+    branches: [main]
+    tags: ["desktop-v*"]
+    paths: ["desktop/**", ".github/workflows/desktop.yml"]
+  pull_request:
+    paths: ["desktop/**", ".github/workflows/desktop.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    working-directory: desktop
+    shell: bash
+
+jobs:
+  build:
+    name: ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # The oldest supported Ubuntu, so the binary runs on distros with an older glibc.
+          - target: linux-x86_64
+            runner: ubuntu-22.04
+            triple: x86_64-unknown-linux-gnu
+          - target: windows-x86_64
+            runner: windows-latest
+            triple: x86_64-pc-windows-msvc
+          - target: macos-arm64
+            runner: macos-latest
+            triple: aarch64-apple-darwin
+          # Intel Macs are cross-compiled on the Apple silicon runner, as wsctl's are.
+          - target: macos-x86_64
+            runner: macos-latest
+            triple: x86_64-apple-darwin
+            cross: true
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.triple }}
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: desktop
+          key: ${{ matrix.target }}
+
+      # GPUI's windowing and fonts on Linux.
+      - name: System libraries
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxkbcommon-dev libxkbcommon-x11-dev libwayland-dev \
+            libxcb1-dev libfontconfig-dev libfreetype-dev libvulkan-dev
+
+      - name: Version
+        run: |
+          version="$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)"
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+          if [[ "$GITHUB_REF" == refs/tags/desktop-v* && "${GITHUB_REF_NAME#desktop-v}" != "$version" ]]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match Cargo.toml version $version"
+            exit 1
+          fi
+
+      - name: Format
+        if: runner.os == 'Linux'
+        run: cargo fmt --check
+
+      - name: Clippy
+        if: ${{ !matrix.cross }}
+        run: cargo clippy --all-targets --locked -- -D warnings
+
+      - name: Test
+        if: ${{ !matrix.cross }}
+        run: cargo test --locked
+
+      - name: Build
+        run: cargo build --release --locked --target ${{ matrix.triple }}
+
+      - name: Package
+        env:
+          OUT: target/${{ matrix.triple }}/release
+          NAME: wormholesystems-${{ matrix.target }}
+        run: |
+          mkdir -p dist
+          case "$RUNNER_OS" in
+            Linux)
+              tar -czf "dist/$NAME.tar.gz" -C "$OUT" wormholesystems
+              ;;
+            Windows)
+              7z a -bd "dist/$NAME.zip" "./$OUT/wormholesystems.exe" > /dev/null
+              ;;
+            macOS)
+              app=dist/WormholeSystems.app
+              mkdir -p "$app/Contents/MacOS"
+              cp "$OUT/wormholesystems" "$app/Contents/MacOS/"
+              sed "s/VERSION/$VERSION/g" macos/Info.plist > "$app/Contents/Info.plist"
+              # Apple silicon refuses unsigned code outright; an ad-hoc signature is
+              # enough to run once Gatekeeper is told to allow it.
+              codesign --force --deep --sign - "$app"
+              ditto -c -k --keepParent "$app" "dist/$NAME.zip"
+              rm -rf "$app"
+              ;;
+          esac
+          ls -la dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wormholesystems-${{ matrix.target }}
+          path: desktop/dist/*
+          if-no-files-found: error
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/desktop-v')
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Checksums
+        working-directory: dist
+        run: |
+          sha256sum wormholesystems-* > SHA256SUMS
+          cat SHA256SUMS
+
+      # Notes from the previous desktop tag, not whichever tag came last: that could be
+      # a wsctl one.
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          previous="$(git tag -l 'desktop-v*' --sort=-v:refname | grep -vx "$TAG" | head -1)"
+          gh release create "$TAG" dist/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Desktop ${TAG#desktop-v}" \
+            --latest=false \
+            --generate-notes ${previous:+--notes-start-tag "$previous"}
