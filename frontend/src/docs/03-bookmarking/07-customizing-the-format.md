@@ -27,6 +27,7 @@ A template is plain text with `{tokens}` in it. Each token is replaced with a va
 | Token        | Becomes                                                                          | Example                |
 | ------------ | -------------------------------------------------------------------------------- | ---------------------- |
 | `{alias}`    | The system's alias / [path number](/documentation/bookmarking/why-this-system)   | `Home`, `1`, `21`      |
+| `{current}`  | The alias of the system you're in when you bookmark                              | `Home`, `2`            |
 | `{sig}`      | The signature letters only, no digits                                            | `ABC`                  |
 | `{class}`    | Wormhole class, or security band                                                 | `C3`, `HS`, `LS`, `NS` |
 | `{name}`     | The solar system name                                                            | `J123456`, `Jita`      |
@@ -65,6 +66,14 @@ A tight wormhole template that surfaces danger only when it matters:
 
 - Fresh, large C3 hole with signature `ABC` in your `21` branch → `21 ABC C3`
 - Same hole once it's a frigate-sized, reduced, end-of-life connection → `21 ABC C3 SM reduced EOL`
+
+Want to see where a return bookmark was made? Add `{current}`:
+
+```
+*{alias} {sig} {class} {current}
+```
+
+- The way back from `21` to `2` → `*2 ABC C3 21`
 
 Prefer the wormhole code up front? Nothing stops you:
 

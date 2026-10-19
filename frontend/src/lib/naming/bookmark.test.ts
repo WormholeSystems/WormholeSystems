@@ -64,6 +64,7 @@ describe('shortSignatureId', () => {
 describe('renderBookmark', () => {
 	const values = {
 		alias: 'D2',
+		current: '',
 		sig: 'ABC',
 		class: 'C5',
 		name: 'J122515',
@@ -143,6 +144,13 @@ describe('isReturnBookmark', () => {
 
 	it('picks the return format for the way home', () => {
 		expect(formatBookmark({ ...wormhole, alias: 'A' }, context, null, 'AB')).toBe('*A ABC C5');
+	});
+
+	it('names the system the bookmark is made in with {current}', () => {
+		const formats = { wormhole: '{alias} {sig} {current}', return: '*{alias} {sig} {current}' };
+		expect(formatBookmark({ ...wormhole, alias: 'AB' }, context, formats, 'A')).toBe('AB ABC A');
+		expect(formatBookmark({ ...wormhole, alias: 'A' }, context, formats, 'AB')).toBe('*A ABC AB');
+		expect(formatBookmark(wormhole, context, formats)).toBe('D2 ABC');
 	});
 
 	it('treats the home system as the way back even without an alias', () => {

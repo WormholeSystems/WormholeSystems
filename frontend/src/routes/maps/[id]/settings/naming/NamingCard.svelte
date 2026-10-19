@@ -53,6 +53,7 @@
 
 	const EXAMPLE = {
 		alias: '1a',
+		current: '1',
 		sig: 'ABC',
 		class: 'C5',
 		name: 'J155207',
@@ -72,6 +73,13 @@
 		region: 'The Forge',
 		occupier: '',
 		wh: 'B041',
+	} satisfies Record<BookmarkToken, string>;
+
+	/** Back up the chain, so the two aliases swap. */
+	const RETURN_EXAMPLE = {
+		...EXAMPLE,
+		alias: '1',
+		current: '1a',
 	} satisfies Record<BookmarkToken, string>;
 
 	const FORMATS = [
@@ -94,7 +102,7 @@
 			label: 'Return',
 			help: 'The hole back the way you came.',
 			fallback: DEFAULT_FORMAT_RETURN,
-			example: EXAMPLE,
+			example: RETURN_EXAMPLE,
 		},
 	];
 </script>
