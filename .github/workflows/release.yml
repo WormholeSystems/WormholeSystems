@@ -63,6 +63,9 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
       - uses: actions/download-artifact@v4
         with:
           path: dist
@@ -74,13 +77,17 @@ jobs:
           sha256sum wsctl-* > SHA256SUMS
           cat SHA256SUMS
 
+      # The desktop app releases from this repo too: notes start at the previous wsctl tag,
+      # and this one is marked latest, which is what install.sh downloads.
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
         run: |
           ls -la dist
+          previous="$(git tag -l 'wsctl-v*' --sort=-v:refname | grep -vx "$TAG" | head -1)"
           gh release create "$TAG" dist/wsctl-* dist/SHA256SUMS \
             --repo "$GITHUB_REPOSITORY" \
             --title "$TAG" \
-            --generate-notes
+            --latest \
+            --generate-notes ${previous:+--notes-start-tag "$previous"}
