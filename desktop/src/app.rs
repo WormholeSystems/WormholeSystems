@@ -1886,7 +1886,7 @@ impl DesktopApp {
                     .border_color(theme.primary.opacity(0.5))
                     .text_color(theme.primary)
                     .text_size(px(9.0))
-                    .child("DESKTOP"),
+                    .child(stage()),
             );
 
         let mut nav = div().flex().flex_col().py_3();
@@ -2662,5 +2662,18 @@ impl Render for DesktopApp {
                     .child(self.header(&theme, cx))
                     .child(body),
             )
+    }
+}
+
+/// The sidebar badge: the release stage while there is one (`0.1.0-alpha.1` is an alpha),
+/// else just that this is the desktop app.
+fn stage() -> &'static str {
+    let version = env!("CARGO_PKG_VERSION");
+    if version.contains("alpha") {
+        "ALPHA"
+    } else if version.contains("beta") {
+        "BETA"
+    } else {
+        "DESKTOP"
     }
 }

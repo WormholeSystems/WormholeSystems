@@ -107,7 +107,8 @@ jobs:
               app=dist/WormholeSystems.app
               mkdir -p "$app/Contents/MacOS"
               cp "$OUT/wormholesystems" "$app/Contents/MacOS/"
-              sed "s/VERSION/$VERSION/g" macos/Info.plist > "$app/Contents/Info.plist"
+              # macOS wants plain numbers here: 0.1.0, not 0.1.0-alpha.1.
+              sed "s/VERSION/${VERSION%%-*}/g" macos/Info.plist > "$app/Contents/Info.plist"
               set="$RUNNER_TEMP/icon.iconset"
               mkdir -p "$set" "$app/Contents/Resources"
               for n in 16 32 128 256 512; do
@@ -160,8 +161,12 @@ jobs:
           TAG: ${{ github.ref_name }}
         run: |
           previous="$(git tag -l 'desktop-v*' --sort=-v:refname | grep -vx "$TAG" | head -1)"
+          version="${TAG#desktop-v}"
+          # 0.1.0-alpha.1 and the like go out as pre-releases.
+          pre=()
+          [[ "$version" == *-* ]] && pre=(--prerelease)
           gh release create "$TAG" dist/* \
             --repo "$GITHUB_REPOSITORY" \
-            --title "Desktop ${TAG#desktop-v}" \
-            --latest=false \
+            --title "Desktop $version" \
+            --latest=false "${pre[@]}" \
             --generate-notes ${previous:+--notes-start-tag "$previous"}

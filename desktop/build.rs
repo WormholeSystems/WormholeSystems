@@ -8,7 +8,20 @@ fn main() {
         res.set_icon_with_id("assets/icon.ico", "1")
             .set_icon_with_id("assets/icon-dark.ico", "2")
             .set("ProductName", "WormholeSystems")
-            .set("FileDescription", "WormholeSystems");
+            .set("FileDescription", &description());
         res.compile().expect("could not embed the icon");
+    }
+}
+
+/// "WormholeSystems (alpha)" while the version is a pre-release, so Explorer and the task
+/// manager say what the build is.
+fn description() -> String {
+    let version = std::env::var("CARGO_PKG_VERSION").unwrap_or_default();
+    match version.split_once('-') {
+        Some((_, pre)) => {
+            let stage = pre.split('.').next().unwrap_or(pre);
+            format!("WormholeSystems ({stage})")
+        }
+        None => "WormholeSystems".into(),
     }
 }
