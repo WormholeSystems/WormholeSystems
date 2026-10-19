@@ -163,7 +163,8 @@ pub struct Watcher {
     location: HashMap<String, String>,
     /// Character ids, from the file names, for portraits.
     ids: HashMap<String, i64>,
-    started: SystemTime,
+    /// Polled before: the logs found on the first poll were already there.
+    primed: bool,
 }
 
 impl Watcher {
@@ -173,7 +174,7 @@ impl Watcher {
             files: HashMap::new(),
             location: HashMap::new(),
             ids: HashMap::new(),
-            started: SystemTime::now(),
+            primed: false,
         }
     }
 
@@ -210,11 +211,11 @@ impl Watcher {
         found.sort_by_key(|(_, modified)| *modified);
 
         let mut events = Vec::new();
-        for (path, modified) in found {
+        for (path, _) in found {
             // A log that was already there is history: it says where everyone is, not that
-            // they just jumped.
-            let is_new = !self.files.contains_key(&path);
-            let history = is_new && modified < self.started;
+            // they just jumped. Told by the first poll rather than by timestamps, which some
+            // filesystems keep coarser than the clock.
+            let history = !self.primed && !self.files.contains_key(&path);
             let file = self.files.entry(path.clone()).or_default();
             let Ok(lines) = file.read_lines(&path) else {
                 continue;
@@ -251,6 +252,7 @@ impl Watcher {
                 }
             }
         }
+        self.primed = true;
         // Forget files that went stale, so the map does not grow forever.
         self.files.retain(|path, _| path.exists());
         Ok(events)

@@ -3,9 +3,13 @@
 //! Windows can be asked; anywhere else the answer is [`Focus::Unknown`] and the overlay
 //! stays up.
 
-use std::sync::mpsc::{Receiver, Sender, channel};
+#[cfg(any(target_os = "linux", target_os = "windows"))]
+use std::sync::mpsc::Sender;
+use std::sync::mpsc::{Receiver, channel};
 
 /// What has focus.
+// macOS has no backend yet, so only `Unknown` is ever made there.
+#[cfg_attr(target_os = "macos", allow(dead_code))]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Focus {
     /// An EVE client, with the character logged in on it; `None` on the login screens.
@@ -19,6 +23,7 @@ pub enum Focus {
 
 impl Focus {
     /// Read a window's class (Hyprland's, empty elsewhere) and title.
+    #[cfg_attr(target_os = "macos", allow(dead_code))]
     pub fn of(class: &str, title: &str) -> Focus {
         if title == "WormholeSystems" || class.starts_with("wormholesystems") {
             return Focus::Us;
