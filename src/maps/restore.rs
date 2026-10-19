@@ -91,6 +91,23 @@ pub(super) async fn capture_systems(
     // Ghosts hold no signatures, having no system to hold them against.
     let system_ids: Vec<i64> = systems.iter().filter_map(|s| s.solar_system_id).collect();
     let connections = connections::snapshot_touching(tx, map_id, ids).await?;
+    // The placements on the far side of those edges as well, so the snapshot can stand on
+    // its own. A restore puts its placements back before its edges, but an edge whose
+    // other end it does not carry depends on that end still being there -- and it may not
+    // be. Replaying a removal walks through states the original never had: taking a scan
+    // leaves its hole's far side with no edges for a moment, `delete_if_orphan` clears it,
+    // and the restore that follows is left holding an edge to nothing. Reinserting a
+    // placement that never went is a no-op, so carrying them costs nothing.
+    let far_ends: Vec<i64> = connections
+        .iter()
+        .flat_map(|c| [c.from_system, c.to_system])
+        .filter(|id| !ids.contains(id))
+        .collect();
+    let systems = {
+        let mut all = systems;
+        all.extend(placements::snapshot(tx, map_id, &far_ends).await?);
+        all
+    };
     // Both sides of the hole: this system's own scan, and the signature in the system
     // across each dying connection.
     let connection_ids: Vec<i64> = connections.iter().map(|c| c.id).collect();
@@ -108,8 +125,14 @@ pub(super) async fn capture_systems(
 
 pub(super) async fn apply_restore_systems(tx: &mut Tx<'_>, cmd: RestoreSystems) -> Result<Effect> {
     // Original ids are reused so the restored connections and signatures still line up.
+    // A snapshot carries the placements on the far side of its edges as well, which are
+    // usually still there; only the ones this restore actually put back are its to take
+    // away again.
+    let mut restored_systems = Vec::new();
     for s in &cmd.systems {
-        placements::reinsert(tx, cmd.map_id, s).await?;
+        if placements::reinsert(tx, cmd.map_id, s).await? {
+            restored_systems.push(s.id);
+        }
     }
     for c in &cmd.connections {
         connections::reinsert(tx, cmd.map_id, c).await?;
@@ -131,7 +154,7 @@ pub(super) async fn apply_restore_systems(tx: &mut Tx<'_>, cmd: RestoreSystems) 
     // still there and only got its link back stays when the link goes again.
     let inverse = MapCommand::RemoveRestored(RemoveRestored {
         map_id: cmd.map_id,
-        system_ids: cmd.systems.iter().map(|s| s.id).collect(),
+        system_ids: restored_systems,
         connection_ids: cmd.connections.iter().map(|c| c.id).collect(),
         signature_ids: inserted,
     });

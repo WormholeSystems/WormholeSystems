@@ -3,7 +3,7 @@
 
 mod common;
 
-use common::map::place;
+use common::map::{connect, place};
 use common::{SYS_A, SYS_B, SYS_C, world};
 use sqlx::PgPool;
 use wormholesystems::maps::MapSystemView;
@@ -13,9 +13,9 @@ use wormholesystems::maps::history::{MapIdBody, list_history, redo, undo};
 use wormholesystems::maps::map::{GetMap, get_map};
 use wormholesystems::maps::map::{UpdateMap, update_map};
 use wormholesystems::maps::signatures::{
-    AddSignature, PasteSignatures, PastedSignature, RemoveSignature, UnlinkSignature,
-    UpdateSignature, add_signature, list_signatures, paste_signatures, remove_signature,
-    unlink_signature, update_signature,
+    AddSignature, LinkSignature, PasteSignatures, PastedSignature, RemoveSignature,
+    UnlinkSignature, UpdateSignature, add_signature, link_signature, list_signatures,
+    paste_signatures, remove_signature, unlink_signature, update_signature,
 };
 use wormholesystems::maps::solar_system::{
     RemoveSystem, RemoveSystems, SetAlias, SetPinned, remove_system, remove_systems, set_alias,
@@ -1248,4 +1248,85 @@ async fn nothing_connects_to_a_ghost_but_the_scan_that_raised_it(pool: PgPool) {
     .await
     .unwrap_err();
     assert!(matches!(err, MapError::Validation(_)), "{err:?}");
+}
+
+/// Walking a removal forward again on a map that draws unmapped holes.
+///
+/// The replay does not pass through the states the original did. Taking the scan removes
+/// the hole, which leaves its far side with no edges for a moment -- long enough for
+/// `delete_if_orphan` to clear it -- and the restore that follows was holding an edge back
+/// to it. The redo died on the foreign key.
+#[sqlx::test]
+async fn a_removal_can_be_walked_forward_again(pool: PgPool) {
+    let w = world(&pool).await;
+    let a = place(&pool, w.owner, w.map_id, SYS_A).await;
+    let b = place(&pool, w.owner, w.map_id, SYS_B).await;
+    ghosting(&pool, w.owner, w.map_id).await;
+    let conn = connect(&pool, w.owner, w.map_id, a, b).await;
+
+    // A scan on each side of the hole, both linked to it.
+    let mut scans = Vec::new();
+    for (system, id) in [(SYS_A, "AAA-111"), (SYS_B, "BBB-222")] {
+        let sig = add_signature(
+            &pool,
+            w.owner,
+            AddSignature {
+                map_id: w.map_id,
+                solar_system_id: system,
+                signature_id: id.into(),
+                group: SignatureGroup::Wormhole,
+                ..Default::default()
+            },
+        )
+        .await
+        .unwrap();
+        link_signature(
+            &pool,
+            w.owner,
+            LinkSignature {
+                map_id: w.map_id,
+                signature_pk: sig.id,
+                connection_id: conn.id,
+            },
+        )
+        .await
+        .unwrap();
+        scans.push(sig.id);
+    }
+
+    remove_signature(
+        &pool,
+        w.owner,
+        RemoveSignature {
+            map_id: w.map_id,
+            signature_pk: scans[0],
+        },
+    )
+    .await
+    .unwrap();
+    let after_removal = get_map(&pool, w.owner, GetMap { map_id: w.map_id })
+        .await
+        .unwrap();
+
+    let body = MapIdBody { map_id: w.map_id };
+    undo(&pool, w.owner, body.clone()).await.unwrap();
+    redo(&pool, w.owner, body).await.unwrap();
+
+    // And it lands where the removal first left it, rather than merely surviving.
+    let after_redo = get_map(&pool, w.owner, GetMap { map_id: w.map_id })
+        .await
+        .unwrap();
+    let shape = |view: &wormholesystems::maps::MapView| {
+        let mut systems: Vec<Option<i64>> =
+            view.systems.iter().map(|s| s.solar_system_id()).collect();
+        systems.sort();
+        let mut edges: Vec<(i64, i64)> = view
+            .connections
+            .iter()
+            .map(|c| (c.from_system, c.to_system))
+            .collect();
+        edges.sort();
+        (systems, edges)
+    };
+    assert_eq!(shape(&after_redo), shape(&after_removal));
 }
