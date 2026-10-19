@@ -24,6 +24,7 @@ const wormhole: BookmarkSystem = {
 	wormholeClassId: 5,
 	security: -0.99,
 	occupier: null,
+	isHome: false,
 };
 
 const kspace: BookmarkSystem = {
@@ -33,6 +34,7 @@ const kspace: BookmarkSystem = {
 	wormholeClassId: null,
 	security: 0.95,
 	occupier: null,
+	isHome: false,
 };
 
 const context: BookmarkContext = {
@@ -142,6 +144,11 @@ describe('isReturnBookmark', () => {
 	it('picks the return format for the way home', () => {
 		expect(formatBookmark({ ...wormhole, alias: 'A' }, context, null, 'AB')).toBe('*A ABC C5');
 	});
+
+	it('treats the home system as the way back even without an alias', () => {
+		const home = { ...kspace, name: 'Turnur', region: 'Metropolis', security: 0.4, isHome: true };
+		expect(formatBookmark(home, context, null, '1')).toBe('* ABC LS');
+	});
 });
 
 describe('an unmapped hole', () => {
@@ -153,6 +160,7 @@ describe('an unmapped hole', () => {
 			wormholeClassId: null,
 			security: null,
 			occupier: null,
+			isHome: false,
 		};
 		// Nothing is known beyond the scanner id, so the class token drops out entirely
 		// rather than resolving to a confident "LS".
@@ -168,6 +176,7 @@ function placed(over: Partial<MappedSystem>): MappedSystem {
 		alias: null,
 		region: null,
 		occupying_group: null,
+		is_home: false,
 		...over,
 	} as MappedSystem;
 }
@@ -234,6 +243,7 @@ describe('bookmarkSystemOf', () => {
 			wormholeClassId: 5,
 			security: -0.99,
 			occupier: null,
+			isHome: false,
 		});
 	});
 });
@@ -257,6 +267,18 @@ describe('connectionBookmarks', () => {
 		expect(toHome).toBe('*A FAR K162');
 		// Standing in Jita, the way into the C5 carries the one scanned in Jita.
 		expect(toC5).toBe('A1 HOM H296');
+	});
+
+	it('names the way back to a home system that has no alias as a return', () => {
+		const unaliasedHome = { ...home, alias: null, is_home: true };
+		const [toHome] = connectionBookmarks(
+			hole,
+			[unaliasedHome, c5],
+			[scannedAtHome, scannedInC5],
+			codes,
+			formats,
+		);
+		expect(toHome).toBe('* FAR K162');
 	});
 
 	it('leaves the signature out while the near side has not been scanned', () => {
