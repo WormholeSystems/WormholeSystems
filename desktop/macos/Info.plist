@@ -10,6 +10,8 @@
 	<string>systems.wormhole.desktop</string>
 	<key>CFBundleExecutable</key>
 	<string>wormholesystems</string>
+	<key>CFBundleIconFile</key>
+	<string>icon</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

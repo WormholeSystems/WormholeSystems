@@ -108,6 +108,13 @@ jobs:
               mkdir -p "$app/Contents/MacOS"
               cp "$OUT/wormholesystems" "$app/Contents/MacOS/"
               sed "s/VERSION/$VERSION/g" macos/Info.plist > "$app/Contents/Info.plist"
+              set="$RUNNER_TEMP/icon.iconset"
+              mkdir -p "$set" "$app/Contents/Resources"
+              for n in 16 32 128 256 512; do
+                sips -z $n $n assets/icon.png --out "$set/icon_${n}x${n}.png" > /dev/null
+                sips -z $((n * 2)) $((n * 2)) assets/icon.png --out "$set/icon_${n}x${n}@2x.png" > /dev/null
+              done
+              iconutil -c icns "$set" -o "$app/Contents/Resources/icon.icns"
               # Apple silicon refuses unsigned code outright; an ad-hoc signature is
               # enough to run once Gatekeeper is told to allow it.
               codesign --force --deep --sign - "$app"
