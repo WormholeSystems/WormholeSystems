@@ -189,11 +189,23 @@ impl OverlayView {
     /// since a click-through window hears nothing of it.
     #[cfg(not(target_os = "linux"))]
     fn sync_native_input(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        let input = match &self.last_region {
-            None => true,
-            Some(rects) => native::cursor_position(window)
-                .is_some_and(|p| rects.iter().any(|r| r.contains(&p))),
-        };
+        // Read the panel's bounds as last painted, not as the last render saw them: the
+        // canvas measures them while painting, after the render, and nothing renders again
+        // until something changes.
+        let input = self.drag.is_some()
+            || native::cursor_position(window).is_some_and(|p| {
+                let sigs = self.sigs.read(cx);
+                let popup = sigs
+                    .picker
+                    .filter(|picker| picker.overlay)
+                    .and_then(|_| *sigs.popup.borrow());
+                let panel = if sigs.overlay_hidden {
+                    None
+                } else {
+                    *self.measured.borrow()
+                };
+                panel.into_iter().chain(popup).any(|r| r.contains(&p))
+            });
         if input == self.click_through {
             native::set_click_through(window, !input);
             self.click_through = !input;

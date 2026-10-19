@@ -55,6 +55,7 @@ fn apply(handle: RawWindowHandle, click_through: bool) {
             style &= !(WS_EX_TRANSPARENT as isize);
         }
         SetWindowLongPtrW(hwnd, GWL_EXSTYLE, style);
+        never_activate(hwnd);
         // a layered window needs its opacity set once, or it stays invisible
         SetLayeredWindowAttributes(hwnd, 0, 255, LWA_ALPHA);
         SetWindowPos(
@@ -66,6 +67,44 @@ fn apply(handle: RawWindowHandle, click_through: bool) {
             0,
             SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_FRAMECHANGED,
         );
+    }
+}
+
+/// GPUI answers every click with "activate", which `WS_EX_NOACTIVATE` cannot overrule, so
+/// a click on the overlay would take the keyboard from EVE (and minimize it when it runs
+/// full screen). Sit in front of GPUI's window procedure and answer that one message.
+#[cfg(windows)]
+fn never_activate(hwnd: windows_sys::Win32::Foundation::HWND) {
+    use std::sync::atomic::{AtomicIsize, Ordering};
+    use windows_sys::Win32::Foundation::{HWND, LPARAM, LRESULT, WPARAM};
+    use windows_sys::Win32::UI::WindowsAndMessaging::{
+        CallWindowProcW, GWLP_WNDPROC, GetWindowLongPtrW, MA_NOACTIVATE, SetWindowLongPtrW,
+        WM_MOUSEACTIVATE, WNDPROC,
+    };
+
+    // GPUI's procedure, which every other message goes on to. One overlay at a time.
+    static GPUI: AtomicIsize = AtomicIsize::new(0);
+
+    unsafe extern "system" fn proc(hwnd: HWND, msg: u32, wp: WPARAM, lp: LPARAM) -> LRESULT {
+        if msg == WM_MOUSEACTIVATE {
+            return MA_NOACTIVATE as LRESULT;
+        }
+        // SAFETY: GPUI holds the procedure that was installed before ours, so it is a
+        // live `WNDPROC` for this window.
+        unsafe {
+            let gpui = std::mem::transmute::<isize, WNDPROC>(GPUI.load(Ordering::Relaxed));
+            CallWindowProcW(gpui, hwnd, msg, wp, lp)
+        }
+    }
+
+    let ours = proc as usize as isize;
+    // SAFETY: `hwnd` is live; swapping its procedure is what subclassing is.
+    unsafe {
+        if GetWindowLongPtrW(hwnd, GWLP_WNDPROC) == ours {
+            return;
+        }
+        let gpui = SetWindowLongPtrW(hwnd, GWLP_WNDPROC, ours);
+        GPUI.store(gpui, Ordering::Relaxed);
     }
 }
 

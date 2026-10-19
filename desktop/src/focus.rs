@@ -128,17 +128,26 @@ fn hyprland(tx: Sender<Focus>) {
 
 #[cfg(target_os = "windows")]
 fn windows(tx: Sender<Focus>) {
-    use windows_sys::Win32::UI::WindowsAndMessaging::{GetForegroundWindow, GetWindowTextW};
+    use windows_sys::Win32::UI::WindowsAndMessaging::{
+        GetForegroundWindow, GetWindowTextW, GetWindowThreadProcessId,
+    };
 
     let mut last = None;
     loop {
-        let title = unsafe {
+        let (title, pid) = unsafe {
             let hwnd = GetForegroundWindow();
             let mut buf = [0u16; 256];
             let n = GetWindowTextW(hwnd, buf.as_mut_ptr(), buf.len() as i32);
-            String::from_utf16_lossy(&buf[..n.max(0) as usize])
+            let mut pid = 0u32;
+            GetWindowThreadProcessId(hwnd, &mut pid);
+            (String::from_utf16_lossy(&buf[..n.max(0) as usize]), pid)
         };
-        let focus = Focus::of("", &title);
+        // A click activates the overlay, which has no title: it is still us.
+        let focus = if pid == std::process::id() {
+            Focus::Us
+        } else {
+            Focus::of("", &title)
+        };
         if last.as_ref() != Some(&focus) {
             if tx.send(focus.clone()).is_err() {
                 return;
