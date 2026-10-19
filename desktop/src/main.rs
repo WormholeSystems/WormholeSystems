@@ -19,6 +19,7 @@ mod snap;
 mod theme;
 mod tray;
 mod ui;
+mod update;
 
 use std::time::Duration;
 

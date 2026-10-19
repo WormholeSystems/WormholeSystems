@@ -85,19 +85,30 @@ It is its own Cargo workspace so the server's builds never need any of that.
 
 ## Releasing
 
-CI (`.github/workflows/desktop.yml`) builds Linux x86_64, Windows x86_64 and macOS (Apple
-silicon and Intel) on every change here and keeps the packages as artifacts. To release,
-bump `version` in `Cargo.toml`, merge, then tag that commit:
+CI (`.github/workflows/desktop.yml`) builds and packages Linux x86_64, Windows x86_64 and
+macOS (Apple silicon and Intel) on every change here, with cargo-packager (settings under
+`[package.metadata.packager]` in `Cargo.toml`). To release, bump `version` in `Cargo.toml`,
+merge, then tag that commit:
 
 ```sh
-git tag desktop-v0.1.0 && git push origin desktop-v0.1.0
+git tag desktop-v0.1.0-alpha.1 && git push origin desktop-v0.1.0-alpha.1
 ```
 
-The tag has to match the version. The release gets a tarball for Linux, a zip with the exe
-for Windows and a zipped `WormholeSystems.app` per Mac, with `SHA256SUMS` beside them. It is
-never marked as the repo's latest release: that one stays wsctl's, which `install.sh`
+The tag has to match the version, and a version with a pre-release part (`-alpha.1`) goes
+out as a GitHub pre-release. The release gets a setup exe and a portable exe for Windows, a
+DMG per Mac, an AppImage and a plain binary for Linux, `SHA256SUMS`, and `latest.json`. It
+is never marked as the repo's latest release: that one stays wsctl's, which `install.sh`
 downloads.
 
-Nothing is signed yet. Windows SmartScreen asks once ("More info", "Run anyway"). On macOS
-the app is only ad-hoc signed, so the first start is refused; allow it under System
-Settings, Privacy & Security, "Open Anyway".
+The app updates itself from those releases (`src/update.rs`). It asks GitHub for the newest
+`desktop-v*` release, newer pre-releases included while it is one itself, and offers the
+update in the sidebar. Where it runs from the installed exe, the `.app` or the AppImage, it
+downloads the signed bundle listed in `latest.json`, checks it against the public key built
+in, installs it and restarts; anywhere else it opens the release page. The key pair lives in
+the repository's `DESKTOP_UPDATER_PRIVATE_KEY` and `DESKTOP_UPDATER_PRIVATE_KEY_PASSWORD`
+secrets and the `DESKTOP_UPDATER_PUBKEY` variable. Losing the private key means existing
+installs can no longer update themselves, so keep a copy somewhere safe.
+
+Code is not signed. Windows SmartScreen asks once ("More info", "Run anyway"). On macOS the
+app is only ad-hoc signed, so the first start is refused; allow it under System Settings,
+Privacy & Security, "Open Anyway".

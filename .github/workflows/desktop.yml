@@ -1,9 +1,12 @@
 name: Desktop
 
-# The desktop app (desktop/), built for Linux, Windows and macOS. Every change to it builds
-# all of them and keeps the packages as artifacts; a `desktop-v1.2.3` tag also publishes
-# them as a GitHub release. The builds are not signed yet, so Windows SmartScreen and macOS
-# Gatekeeper ask before the first start.
+# The desktop app (desktop/), built and packaged for Linux, Windows and macOS on every change
+# to it; a `desktop-v1.2.3` tag also publishes the packages as a GitHub release. Packages
+# are cargo-packager's: an NSIS setup for Windows, a DMG for macOS, an AppImage for Linux,
+# plus a portable exe and a plain binary. On a tag the update bundles are signed with
+# DESKTOP_UPDATER_PRIVATE_KEY and listed in the release's latest.json, which the app reads
+# to update itself; DESKTOP_UPDATER_PUBKEY is compiled in to check them. Code is not signed
+# (macOS gets an ad-hoc signature), so SmartScreen and Gatekeeper ask before the first start.
 #
 # wsctl releases from this repo too, and its install.sh downloads "the latest release", so
 # a desktop release is never marked latest.
@@ -28,6 +31,9 @@ jobs:
   build:
     name: ${{ matrix.target }}
     runs-on: ${{ matrix.runner }}
+    env:
+      # Compiled into every build, so any of them can check an update's signature.
+      WS_UPDATER_PUBKEY: ${{ vars.DESKTOP_UPDATER_PUBKEY }}
     strategy:
       fail-fast: false
       matrix:
@@ -36,16 +42,20 @@ jobs:
           - target: linux-x86_64
             runner: ubuntu-22.04
             triple: x86_64-unknown-linux-gnu
+            updater: linux-x86_64
           - target: windows-x86_64
             runner: windows-latest
             triple: x86_64-pc-windows-msvc
+            updater: windows-x86_64
           - target: macos-arm64
             runner: macos-latest
             triple: aarch64-apple-darwin
+            updater: macos-aarch64
           # Intel Macs are cross-compiled on the Apple silicon runner, as wsctl's are.
           - target: macos-x86_64
             runner: macos-latest
             triple: x86_64-apple-darwin
+            updater: macos-x86_64
             cross: true
     steps:
       - uses: actions/checkout@v5
@@ -64,7 +74,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libxkbcommon-dev libxkbcommon-x11-dev libwayland-dev \
-            libxcb1-dev libfontconfig-dev libfreetype-dev libvulkan-dev
+            libxcb1-dev libfontconfig-dev libfreetype-dev libvulkan-dev libfuse2
 
       - name: Version
         run: |
@@ -90,39 +100,67 @@ jobs:
       - name: Build
         run: cargo build --release --locked --target ${{ matrix.triple }}
 
+      # Built from crates.io, since it handles the signing key.
+      - name: Install cargo-packager
+        run: cargo install cargo-packager --version 0.11.8 --locked
+
       - name: Package
         env:
           OUT: target/${{ matrix.triple }}/release
           NAME: wormholesystems-${{ matrix.target }}
+          CARGO_BUILD_TARGET: ${{ matrix.triple }}
+          # The AppImage tooling is an AppImage itself, and runners have no FUSE mount.
+          APPIMAGE_EXTRACT_AND_RUN: "1"
+          SIGNING_KEY: ${{ startsWith(github.ref, 'refs/tags/desktop-v') && secrets.DESKTOP_UPDATER_PRIVATE_KEY || '' }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.DESKTOP_UPDATER_PRIVATE_KEY_PASSWORD }}
         run: |
+          case "$RUNNER_OS" in
+            Linux) formats=appimage ;;
+            Windows) formats=nsis ;;
+            macOS) formats=app,dmg ;;
+          esac
+          # Only a release signs: the signature is what makes a bundle an update.
+          if [ -n "$SIGNING_KEY" ]; then
+            export CARGO_PACKAGER_SIGN_PRIVATE_KEY="$SIGNING_KEY"
+            export CARGO_PACKAGER_SIGN_PRIVATE_KEY_PASSWORD="$SIGNING_KEY_PASSWORD"
+          fi
+          cargo packager --release --target ${{ matrix.triple }} --formats "$formats" --out-dir packages
+          ls -la packages
+
           mkdir -p dist
+          # One name per platform, so the download links in latest.json are predictable.
+          put() { cp "$1" "dist/$2"; [ -f "$1.sig" ] && cp "$1.sig" "dist/$2.sig"; true; }
           case "$RUNNER_OS" in
             Linux)
               tar -czf "dist/$NAME.tar.gz" -C "$OUT" wormholesystems
+              put "$(ls packages/*.AppImage)" "$NAME.AppImage"
+              bundle="$NAME.AppImage"; format=appimage
               ;;
             Windows)
-              7z a -bd "dist/$NAME.zip" "./$OUT/wormholesystems.exe" > /dev/null
+              7z a -bd "dist/$NAME-portable.zip" "./$OUT/wormholesystems.exe" > /dev/null
+              put "$(ls packages/*-setup.exe)" "$NAME-setup.exe"
+              bundle="$NAME-setup.exe"; format=nsis
               ;;
             macOS)
-              app=dist/WormholeSystems.app
-              mkdir -p "$app/Contents/MacOS"
-              cp "$OUT/wormholesystems" "$app/Contents/MacOS/"
-              # macOS wants plain numbers here: 0.1.0, not 0.1.0-alpha.1.
-              sed "s/VERSION/${VERSION%%-*}/g" macos/Info.plist > "$app/Contents/Info.plist"
-              set="$RUNNER_TEMP/icon.iconset"
-              mkdir -p "$set" "$app/Contents/Resources"
-              for n in 16 32 128 256 512; do
-                sips -z $n $n assets/icon.png --out "$set/icon_${n}x${n}.png" > /dev/null
-                sips -z $((n * 2)) $((n * 2)) assets/icon.png --out "$set/icon_${n}x${n}@2x.png" > /dev/null
-              done
-              iconutil -c icns "$set" -o "$app/Contents/Resources/icon.icns"
-              # Apple silicon refuses unsigned code outright; an ad-hoc signature is
-              # enough to run once Gatekeeper is told to allow it.
-              codesign --force --deep --sign - "$app"
-              ditto -c -k --keepParent "$app" "dist/$NAME.zip"
-              rm -rf "$app"
+              put "$(ls packages/*.dmg)" "$NAME.dmg"
+              # The signer packs the .app into a tarball for the updater.
+              if [ -f packages/WormholeSystems.app.tar.gz ]; then
+                put packages/WormholeSystems.app.tar.gz "$NAME.app.tar.gz"
+              fi
+              bundle="$NAME.app.tar.gz"; format=app
               ;;
           esac
+
+          if [ -n "$SIGNING_KEY" ]; then
+            if [ ! -f "dist/$bundle.sig" ]; then
+              echo "::error::no signed update bundle for ${{ matrix.updater }}"
+              exit 1
+            fi
+            url="https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/$bundle"
+            jq -n --rawfile sig "dist/$bundle.sig" --arg url "$url" --arg format "$format" \
+              '{signature: ($sig | rtrimstr("\n")), url: $url, format: $format}' \
+              > "dist/updater-${{ matrix.updater }}.json"
+          fi
           ls -la dist
 
       - uses: actions/upload-artifact@v4
@@ -146,6 +184,23 @@ jobs:
         with:
           path: dist
           merge-multiple: true
+
+      # What the app reads to update itself: every platform's signed bundle.
+      - name: Update manifest
+        working-directory: dist
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          jq -n --arg version "${TAG#desktop-v}" \
+            --arg date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{version: $version, pub_date: $date, platforms: (reduce inputs as $p ({}; . + $p))}' \
+            $(for f in updater-*.json; do
+                key="${f#updater-}"; key="${key%.json}"
+                jq -c --arg k "$key" '{($k): .}' "$f" > "platform-$key.json"
+                echo "platform-$key.json"
+              done) > latest.json
+          rm -f updater-*.json platform-*.json
+          cat latest.json
 
       - name: Checksums
         working-directory: dist

@@ -15,6 +15,7 @@ path = "src/main.rs"
 [dependencies]
 anyhow = "1"
 arboard = { version = "3.7", default-features = false, features = ["wayland-data-control"] }
+cargo-packager-updater = "0.2"
 chrono = { version = "0.4", default-features = false, features = ["clock", "serde"] }
 dirs = "6"
 global-hotkey = "0.9"
@@ -49,3 +50,14 @@ tempfile = "3"
 [profile.release]
 strip = true
 lto = "thin"
+
+# cargo-packager, run by CI after the release build (.github/workflows/desktop.yml).
+[package.metadata.packager]
+product-name = "WormholeSystems"
+identifier = "systems.wormhole.desktop"
+category = "Utility"
+icons = ["assets/icon.png", "assets/icon.ico"]
+
+# Ad-hoc: Apple silicon will not run unsigned code at all.
+[package.metadata.packager.macos]
+signing-identity = "-"

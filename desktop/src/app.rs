@@ -144,6 +144,12 @@ pub struct DesktopApp {
     hotkeys: Registry,
     clipboard: Option<arboard::Clipboard>,
     overlay: Option<AnyWindowHandle>,
+    /// A newer release, from the last check.
+    update: Option<crate::update::Available>,
+    checking_update: bool,
+    installing_update: bool,
+    /// What the last check said when it found nothing or failed, for Settings.
+    update_note: Option<String>,
     _tasks: Vec<Task<()>>,
     _subscriptions: Vec<Subscription>,
 }
@@ -238,6 +244,10 @@ impl DesktopApp {
             hotkeys,
             clipboard,
             overlay: None,
+            update: None,
+            checking_update: false,
+            installing_update: false,
+            update_note: None,
             _tasks: Vec::new(),
             _subscriptions: subscriptions,
         };
@@ -268,6 +278,7 @@ impl DesktopApp {
         this._tasks.push(this.hotkey_loop(cx));
         this._tasks.push(this.focus_loop(cx));
         this._tasks.push(this.refresh_loop(cx));
+        this._tasks.push(this.update_loop(cx));
         if !this.config.token.is_empty() {
             this.connect(cx);
         } else {
@@ -853,6 +864,127 @@ impl DesktopApp {
                 }
             }
         })
+    }
+
+    // Updates.
+
+    /// Look for a new release now, and again every few hours.
+    fn update_loop(&self, cx: &mut Context<Self>) -> Task<()> {
+        cx.spawn(async move |this, cx| {
+            loop {
+                if this
+                    .update(cx, |this, cx| this.check_for_update(cx))
+                    .is_err()
+                {
+                    return;
+                }
+                cx.background_executor()
+                    .timer(Duration::from_secs(6 * 60 * 60))
+                    .await;
+            }
+        })
+    }
+
+    fn check_for_update(&mut self, cx: &mut Context<Self>) {
+        if self.checking_update || self.installing_update {
+            return;
+        }
+        self.checking_update = true;
+        cx.notify();
+        cx.spawn(async move |this, cx| {
+            let found = cx.background_spawn(async { crate::update::check() }).await;
+            this.update(cx, |this, cx| {
+                this.checking_update = false;
+                match found {
+                    Ok(Some(available)) => {
+                        this.update = Some(available);
+                        this.update_note = None;
+                    }
+                    Ok(None) => {
+                        this.update = None;
+                        this.update_note = Some("This is the newest version.".into());
+                    }
+                    Err(err) => this.update_note = Some(err),
+                }
+                cx.notify();
+            })
+            .ok();
+        })
+        .detach();
+    }
+
+    /// Install in place where this copy can be, else open the release page.
+    fn install_update(&mut self, cx: &mut Context<Self>) {
+        let Some(available) = self.update.clone() else {
+            return;
+        };
+        let Some(installer) = available.installer else {
+            cx.open_url(&available.page);
+            return;
+        };
+        if self.installing_update {
+            return;
+        }
+        self.installing_update = true;
+        cx.notify();
+        cx.spawn(async move |this, cx| {
+            let done = cx
+                .background_spawn(async move { crate::update::install(&installer) })
+                .await;
+            this.update(cx, |this, cx| match done {
+                Ok(()) => crate::update::restart(cx),
+                Err(err) => {
+                    this.installing_update = false;
+                    this.tell(Tone::Problem, format!("Could not update: {err}"), cx);
+                    cx.notify();
+                }
+            })
+            .ok();
+        })
+        .detach();
+    }
+
+    /// The sidebar card that says a new version is out.
+    fn update_card(&self, theme: &Theme, cx: &mut Context<Self>) -> Option<Div> {
+        let available = self.update.as_ref()?;
+        let label = if self.installing_update {
+            "Updating…"
+        } else if available.installer.is_some() {
+            "Update and restart"
+        } else {
+            "Download"
+        };
+        Some(
+            div()
+                .mx_3()
+                .mb_3()
+                .p_3()
+                .flex()
+                .flex_col()
+                .gap_2()
+                .rounded(px(4.0))
+                .border_1()
+                .border_color(theme.primary.opacity(0.5))
+                .bg(theme.primary.opacity(0.08))
+                .text_xs()
+                .child(
+                    div()
+                        .font_family(HEADING)
+                        .font_weight(FontWeight::MEDIUM)
+                        .text_sm()
+                        .child(format!("Version {} is out", available.version)),
+                )
+                .child(
+                    ui::button(
+                        "update-install",
+                        label,
+                        Kind::Primary,
+                        !self.installing_update,
+                        theme,
+                    )
+                    .on_click(cx.listener(|this, _, _, cx| this.install_update(cx))),
+                ),
+        )
     }
 
     fn apply_focus(&mut self, cx: &mut Context<Self>) {
@@ -1850,6 +1982,7 @@ fn segmented<T: Copy + PartialEq + 'static>(
 impl DesktopApp {
     fn sidebar(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = cx.theme().clone();
+        let update_card = self.update_card(&theme, cx);
         let map_name = self
             .sigs
             .read(cx)
@@ -2044,6 +2177,7 @@ impl DesktopApp {
             .child(brand)
             .child(nav)
             .child(div().flex_1())
+            .children(update_card)
             .child(status)
             .child(tools)
     }
@@ -2607,6 +2741,40 @@ impl DesktopApp {
             |this, a, window, cx| this.set_appearance(a, window, cx),
         ));
 
+        let status = if self.checking_update {
+            "Checking…".to_string()
+        } else if let Some(available) = &self.update {
+            format!("Version {} is out.", available.version)
+        } else {
+            self.update_note.clone().unwrap_or_default()
+        };
+        let about = panel("Version", &theme).child(
+            div()
+                .flex()
+                .items_center()
+                .justify_between()
+                .gap_4()
+                .text_sm()
+                .child(
+                    div()
+                        .flex()
+                        .flex_col()
+                        .gap_1()
+                        .child(format!("WormholeSystems {}", crate::update::VERSION))
+                        .when(!status.is_empty(), |d| d.child(muted(status, &theme))),
+                )
+                .child(
+                    ui::button(
+                        "update-check",
+                        "Check now",
+                        Kind::Normal,
+                        !self.checking_update && !self.installing_update,
+                        &theme,
+                    )
+                    .on_click(cx.listener(|this, _, _, cx| this.check_for_update(cx))),
+                ),
+        );
+
         div()
             .flex()
             .flex_col()
@@ -2618,6 +2786,7 @@ impl DesktopApp {
             .child(logs)
             .child(overlay)
             .child(looks)
+            .child(about)
             .into_any_element()
     }
 }
