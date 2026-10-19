@@ -138,6 +138,7 @@
 				wormholeClassId: prompt.targetClassId,
 				security: prompt.targetSecurity,
 				occupier: prompt.existing?.occupying_group ?? null,
+				isHome: prompt.existing?.is_home ?? false,
 			},
 			{
 				signatureId: chosen?.signature_id ?? null,

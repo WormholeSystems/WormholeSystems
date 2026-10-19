@@ -58,6 +58,8 @@ export interface BookmarkSystem {
 	/** `null` when the far side is unknown, which blanks the class rather than guessing. */
 	security: number | null;
 	occupier: string | null;
+	/** The map's home system: a bookmark pointing there is the way home, alias or not. */
+	isHome: boolean;
 }
 
 export interface BookmarkContext {
@@ -160,7 +162,7 @@ export function renderBookmark(template: string, values: Record<BookmarkToken, s
  * The bookmark name for a system across a connection, using the map's formats.
  *
  * `oppositeAlias` is the alias at the other end: when it marks this bookmark as pointing back
- * up the chain, the return format replaces the wormhole/k-space choice.
+ * up the chain, or the system is home, the return format replaces the wormhole/k-space choice.
  */
 export function formatBookmark(
 	system: BookmarkSystem,
@@ -169,11 +171,12 @@ export function formatBookmark(
 	oppositeAlias?: string | null,
 ): string {
 	const ignored = formats?.ignoredAlias ?? DEFAULT_IGNORED_ALIAS;
-	const template = isReturnBookmark(system.alias, oppositeAlias, ignored)
-		? formats?.return || DEFAULT_FORMAT_RETURN
-		: isWormholeClass(system.wormholeClassId)
-			? formats?.wormhole || DEFAULT_FORMAT_WORMHOLE
-			: formats?.kspace || DEFAULT_FORMAT_KSPACE;
+	const template =
+		system.isHome || isReturnBookmark(system.alias, oppositeAlias, ignored)
+			? formats?.return || DEFAULT_FORMAT_RETURN
+			: isWormholeClass(system.wormholeClassId)
+				? formats?.wormhole || DEFAULT_FORMAT_WORMHOLE
+				: formats?.kspace || DEFAULT_FORMAT_KSPACE;
 
 	return renderBookmark(template, bookmarkTokens(system, context));
 }
@@ -187,6 +190,7 @@ export function bookmarkSystemOf(system: MappedSystem): BookmarkSystem {
 		wormholeClassId: system.wormhole_class_id,
 		security: system.security_status,
 		occupier: system.occupying_group,
+		isHome: system.is_home,
 	};
 }
 
@@ -256,6 +260,7 @@ export function signatureBookmark(
 			wormholeClassId: far?.wormhole_class_id ?? type?.target_class ?? null,
 			security: far?.security_status ?? null,
 			occupier: far?.occupying_group ?? null,
+			isHome: far?.is_home ?? false,
 		},
 		{
 			signatureId: sig.signature_id,
