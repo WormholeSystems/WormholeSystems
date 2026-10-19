@@ -22,6 +22,7 @@ mod ui;
 
 use std::time::Duration;
 
+use gpui_kit::component::ActiveTheme as _;
 use gpui_kit::*;
 
 use tray::{Tray, TrayEvent};
@@ -67,6 +68,10 @@ fn main() {
                     .timer(Duration::from_millis(100))
                     .await;
                 cx.update(|cx| {
+                    let dark = cx.theme().mode.is_dark();
+                    if let Some(tray) = cx.global_mut::<Shell>().tray.as_mut() {
+                        tray.set_dark(dark);
+                    }
                     let events = cx
                         .global::<Shell>()
                         .tray
@@ -123,6 +128,11 @@ fn open_main(cx: &mut App) {
     });
     match opened {
         Ok((window, app)) => {
+            #[cfg(windows)]
+            {
+                let dark = cx.theme().mode.is_dark();
+                let _ = window.update(cx, |_, window, _| native::set_window_icon(window, dark));
+            }
             cx.activate(true);
             let shell = cx.global_mut::<Shell>();
             shell.window = Some(window);

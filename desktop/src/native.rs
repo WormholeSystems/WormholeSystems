@@ -70,6 +70,40 @@ fn apply(handle: RawWindowHandle, click_through: bool) {
     }
 }
 
+/// Give the window the light or dark app icon, as the theme goes. The exe's own icon, the
+/// one Explorer shows, stays the light one.
+#[cfg(windows)]
+pub fn set_window_icon(window: &Window, dark: bool) {
+    use windows_sys::Win32::Foundation::HWND;
+    use windows_sys::Win32::System::LibraryLoader::GetModuleHandleW;
+    use windows_sys::Win32::UI::WindowsAndMessaging::{
+        GetSystemMetrics, ICON_BIG, ICON_SMALL, IMAGE_ICON, LR_SHARED, LoadImageW, SM_CXICON,
+        SM_CXSMICON, SendMessageW, WM_SETICON,
+    };
+
+    let Ok(handle) = HasWindowHandle::window_handle(window) else {
+        return;
+    };
+    let RawWindowHandle::Win32(h) = handle.as_raw() else {
+        return;
+    };
+    let hwnd = h.hwnd.get() as HWND;
+    // Resources 1 and 2, embedded by build.rs.
+    let id = if dark { 2usize } else { 1 };
+    // SAFETY: `hwnd` is live; the icons are shared resources of this module, which
+    // Windows keeps for as long as the process runs.
+    unsafe {
+        let module = GetModuleHandleW(std::ptr::null());
+        for (which, metric) in [(ICON_SMALL, SM_CXSMICON), (ICON_BIG, SM_CXICON)] {
+            let px = GetSystemMetrics(metric);
+            let icon = LoadImageW(module, id as *const u16, IMAGE_ICON, px, px, LR_SHARED);
+            if !icon.is_null() {
+                SendMessageW(hwnd, WM_SETICON, which as usize, icon as isize);
+            }
+        }
+    }
+}
+
 /// GPUI answers every click with "activate", which `WS_EX_NOACTIVATE` cannot overrule, so
 /// a click on the overlay would take the keyboard from EVE (and minimize it when it runs
 /// full screen). Sit in front of GPUI's window procedure and answer that one message.

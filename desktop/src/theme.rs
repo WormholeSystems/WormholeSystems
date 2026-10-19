@@ -117,6 +117,8 @@ pub fn apply(appearance: Appearance, window: &mut Window, cx: &mut App) {
             theme.light_theme.clone()
         }
     };
+    #[cfg(windows)]
+    crate::native::set_window_icon(window, dark);
     Theme::change(mode, Some(window), cx);
     Theme::global_mut(cx).apply_config(&config);
     cx.refresh_windows();

@@ -15,7 +15,8 @@ pub enum TrayEvent {
 }
 
 pub struct Tray {
-    _icon: TrayIcon,
+    icon: TrayIcon,
+    dark: bool,
     open: MenuId,
     overlay: MenuId,
     quit: MenuId,
@@ -38,9 +39,9 @@ impl Tray {
             .with_tooltip("WormholeSystems");
         // The menu bar tints a template icon to fit, light or dark.
         #[cfg(target_os = "macos")]
-        let builder = builder.with_icon_templated(icon()?);
+        let builder = builder.with_icon_templated(icon(false)?);
         #[cfg(not(target_os = "macos"))]
-        let builder = builder.with_icon(icon()?);
+        let builder = builder.with_icon(icon(false)?);
         let icon = builder
             // A click opens the window; the menu is on the right button. The menu bar
             // has no right button to speak of, so there a click is the menu.
@@ -48,11 +49,24 @@ impl Tray {
             .build()
             .ok()?;
         Some(Tray {
-            _icon: icon,
+            icon,
+            dark: false,
             open: open.id().clone(),
             overlay: overlay.id().clone(),
             quit: quit.id().clone(),
         })
+    }
+
+    /// Draw the logo white for a dark theme, black for a light one. The menu bar tints its
+    /// template itself.
+    pub fn set_dark(&mut self, dark: bool) {
+        if dark == self.dark || cfg!(target_os = "macos") {
+            return;
+        }
+        self.dark = dark;
+        if let Some(icon) = icon(dark) {
+            let _ = self.icon.set_icon(Some(icon));
+        }
     }
 
     /// What happened since the last call.
@@ -83,17 +97,13 @@ impl Tray {
     }
 }
 
-/// The logo, in the accent where the tray could be dark or light, black for a template.
-fn icon() -> Option<Icon> {
+/// The logo alone, white or black.
+fn icon(dark: bool) -> Option<Icon> {
     use resvg::tiny_skia::{Pixmap, Transform};
     use resvg::usvg::{Options, Tree};
 
     const SIZE: u32 = 64;
-    let fill = if cfg!(target_os = "macos") {
-        "black"
-    } else {
-        "#62b5cc"
-    };
+    let fill = if dark { "white" } else { "black" };
     let svg = std::str::from_utf8(include_bytes!("../assets/logo.svg"))
         .ok()?
         .replace("fill=\"black\"", &format!("fill=\"{fill}\""));
