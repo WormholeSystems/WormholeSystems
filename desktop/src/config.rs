@@ -21,6 +21,9 @@ pub struct Config {
     /// Overrides the folder found on its own.
     pub chatlog_dir: Option<PathBuf>,
     pub copy_on_jump: bool,
+    /// The character whose system pastes go to and whose jumps are mapped; `None` follows
+    /// whoever moved last.
+    pub tracked: Option<String>,
     /// Action to the shortcut that triggers it, in `global-hotkey`'s notation
     /// (`control+alt+KeyR`).
     pub hotkeys: BTreeMap<Action, String>,
@@ -176,6 +179,7 @@ impl Default for Config {
             appearance: Appearance::System,
             overlay: Overlay::default(),
             list: ListView::default(),
+            tracked: None,
         }
     }
 }

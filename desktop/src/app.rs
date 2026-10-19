@@ -126,7 +126,7 @@ pub struct DesktopApp {
     watcher: Option<Arc<Mutex<Watcher>>>,
     /// This machine's characters: name, system, id.
     characters: Vec<(String, String, Option<i64>)>,
-    /// The character who moved last, whose system a paste goes to.
+    /// The character whose system a paste goes to: the tracked one, or whoever moved last.
     active: Option<String>,
     last: Option<LastJump>,
     last_bookmark: Option<String>,
@@ -151,6 +151,7 @@ pub struct DesktopApp {
 impl DesktopApp {
     pub fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
         let (config, config_problem) = Config::load();
+        let tracked = config.tracked.clone();
         theme::apply(config.appearance, window, cx);
 
         let server = cx.new(|cx| InputState::new(window, cx).default_value(config.server.clone()));
@@ -222,7 +223,7 @@ impl DesktopApp {
             suggest_alias: false,
             watcher: None,
             characters: Vec::new(),
-            active: None,
+            active: tracked,
             last: None,
             last_bookmark: None,
             thinking: false,
@@ -542,7 +543,9 @@ impl DesktopApp {
                             cx.notify();
                         }
                         // Oldest first, so the last one is whoever moved last.
-                        if let Some(event) = events.last() {
+                        if this.config.tracked.is_none()
+                            && let Some(event) = events.last()
+                        {
                             let character = match event {
                                 ChatEvent::Located { character, .. }
                                 | ChatEvent::Jumped { character, .. } => character.clone(),
@@ -558,6 +561,11 @@ impl DesktopApp {
                                 from,
                                 to,
                             } = event
+                                && this
+                                    .config
+                                    .tracked
+                                    .as_ref()
+                                    .is_none_or(|tracked| *tracked == character)
                             {
                                 this.jumped(character, from, to, cx);
                             }
@@ -580,6 +588,21 @@ impl DesktopApp {
                 }
             }
         })
+    }
+
+    /// Follow one character, or `None` for whoever moves.
+    fn track(&mut self, character: Option<String>, cx: &mut Context<Self>) {
+        if self.config.tracked == character {
+            return;
+        }
+        self.config.tracked = character.clone();
+        self.save();
+        if character.is_some() {
+            self.active = character;
+        }
+        self.locate(cx);
+        self.refresh(cx);
+        cx.notify();
     }
 
     /// Tell the signatures where you are now.
@@ -2182,7 +2205,7 @@ impl DesktopApp {
             None => "The hole keys act on the last hole you jumped.".to_string(),
         };
         let mut list = panel("Keys", &theme).child(muted(
-            "Paste and delete act on the system the character who moved last is in.",
+            "Paste and delete act on the system the tracked character is in (Settings, EVE chat logs).",
             &theme,
         ));
         for action in Action::ALL {
@@ -2338,6 +2361,59 @@ impl DesktopApp {
                 "No Local logs yet. Log in a character, and keep \"Log Chat to File\" on in EVE's chat settings.",
                 &theme,
             ));
+        }
+        if !self.characters.is_empty() || self.config.tracked.is_some() {
+            // Everyone the logs know, and the tracked one even while logged out.
+            let mut names: Vec<String> =
+                self.characters.iter().map(|(c, _, _)| c.clone()).collect();
+            if let Some(tracked) = &self.config.tracked
+                && !names.contains(tracked)
+            {
+                names.push(tracked.clone());
+                names.sort();
+            }
+            let mut chips = div().flex().flex_wrap().gap_1().child(
+                ui::button(
+                    "track-any",
+                    "Whoever moved last",
+                    if self.config.tracked.is_none() {
+                        Kind::Selected
+                    } else {
+                        Kind::Normal
+                    },
+                    true,
+                    &theme,
+                )
+                .on_click(cx.listener(|this, _, _, cx| this.track(None, cx))),
+            );
+            for (i, name) in names.into_iter().enumerate() {
+                let picked = self.config.tracked.as_ref() == Some(&name);
+                chips = chips.child(
+                    ui::button(
+                        ElementId::NamedInteger("track-char".into(), i as u64),
+                        name.clone(),
+                        if picked { Kind::Selected } else { Kind::Normal },
+                        true,
+                        &theme,
+                    )
+                    .on_click(
+                        cx.listener(move |this, _, _, cx| this.track(Some(name.clone()), cx)),
+                    ),
+                );
+            }
+            logs = logs.child(
+                div()
+                    .flex()
+                    .flex_col()
+                    .gap_2()
+                    .text_sm()
+                    .child("Track")
+                    .child(chips)
+                    .child(muted(
+                        "Pastes go to this character's system, and only their jumps are mapped.",
+                        &theme,
+                    )),
+            );
         }
         for (character, system, _) in &self.characters {
             logs = logs.child(

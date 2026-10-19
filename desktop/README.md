@@ -12,7 +12,8 @@ you just flew and name the system you are in.
 
 - Where you are comes from EVE's Local chat log, which the game writes the moment you
   land. Keep "Log Chat to File" on in EVE's chat settings (it is by default). With several
-  characters logged in, the one who moved last counts. The app finds the `Chatlogs`
+  characters logged in, the one who moved last counts, unless Settings tracks one: then
+  only that character's system and jumps are used. The app finds the `Chatlogs`
   folder in Documents, OneDrive, the macOS client's folder and Steam's Proton prefix; set
   it by hand if yours is elsewhere.
 - Pasting reads the clipboard like the website's signature panel does (`scan.rs` is a port
