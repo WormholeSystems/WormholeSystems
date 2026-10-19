@@ -177,15 +177,42 @@ export function typeById(catalog: SignatureCatalog, id: number | null): Signatur
 }
 
 /**
- * Parse a pasted in-game probe scan. Tab-separated rows of `id, scan group (ignored),
- * category, type name, signal %, distance`; rows under 4 columns or without a 7-char id are
- * skipped. Category matches by exact name then by ` - ` segments (first known segment wins).
+ * Parse a pasted in-game probe scan. Tab-separated rows of `id, scan group, category,
+ * type name, signal %, distance`; rows under 4 columns, without a 7-char id, or whose
+ * group is something the probes found that is not a signature, are skipped. Category matches by exact name then by ` - ` segments (first known segment wins).
  * Type matches by exact name within the category, but never for wormholes, whose type the user
  * picks rather than the scanner. An unmatched type name is kept as the raw `name`.
  *
  * Names from any client language match: localized categories and sites are mapped to their
  * English names first, so a clipboard mixing rows from different clients parses the same.
  */
+/**
+ * Probe scanner groups that are not signatures.
+ *
+ * Combat probes list ships, structures, drones and deployables in the same window as
+ * signatures, and those rows carry scan ids in the same `ABC-123` shape, so copying the
+ * whole result list puts a hostile fleet in the signature table. The group column is the
+ * only thing that tells them apart -- signal strength does not: a half-scanned signature
+ * and a half-scanned ship look alike.
+ *
+ * A reject list rather than accepting the two signature groups, because `translations`
+ * covers category and type names but not group names, so a localised client reports its
+ * group in its own language. Accepting only the English pair would throw away every row
+ * for those players; rejecting the English non-signature groups leaves them exactly as
+ * they are today.
+ */
+const NON_SIGNATURE_GROUPS: ReadonlySet<string> = new Set([
+	'ship',
+	'structure',
+	'drone',
+	'deployable',
+	'charge',
+	'starbase',
+	'celestial',
+	'entity',
+	'fighter',
+]);
+
 export function parseScan(
 	text: string,
 	catalog: SignatureCatalog,
@@ -195,6 +222,7 @@ export function parseScan(
 	for (const line of text.split('\n')) {
 		const cols = line.split('\t');
 		if (cols.length < 4) continue;
+		if (NON_SIGNATURE_GROUPS.has((cols[1] ?? '').trim().toLowerCase())) continue;
 		const sid = (cols[0] ?? '').trim();
 		if (sid.length !== 7) continue;
 
