@@ -255,6 +255,8 @@ impl Render for OverlayView {
         let theme = cx.theme().clone();
         let settings = self.sigs.read(cx).overlay.clone();
         let opacity = settings.opacity as f32 / 100.0;
+        // Its own window, outside the kit's root, so the text size is set here.
+        window.set_rem_size(px(crate::ui::scaled_font(settings.text_size)));
         let chrome = |d: Div| {
             d.bg(theme.background.opacity(opacity))
                 .border_1()

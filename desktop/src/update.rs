@@ -7,7 +7,7 @@ use cargo_packager_updater::semver::Version;
 use cargo_packager_updater::{Config, Update, UpdaterBuilder};
 use serde::Deserialize;
 
-const REPO: &str = "wormholesystems/wormholesystems";
+pub const REPO: &str = "wormholesystems/wormholesystems";
 const TAG_PREFIX: &str = "desktop-v";
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 /// Set by CI from the repository's `DESKTOP_UPDATER_PUBKEY` variable.

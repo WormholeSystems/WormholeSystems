@@ -119,8 +119,17 @@ pub fn apply(appearance: Appearance, window: &mut Window, cx: &mut App) {
     };
     #[cfg(windows)]
     crate::native::set_window_icon(window, dark);
+    // A theme brings its own font size; keep the one set in Settings.
+    let font_size = Theme::global(cx).font_size;
     Theme::change(mode, Some(window), cx);
     Theme::global_mut(cx).apply_config(&config);
+    Theme::global_mut(cx).font_size = font_size;
+    cx.refresh_windows();
+}
+
+/// The main window's text at `percent` of the base size. The overlay has its own.
+pub fn set_text_size(percent: u8, cx: &mut App) {
+    Theme::global_mut(cx).font_size = px(crate::ui::scaled_font(percent));
     cx.refresh_windows();
 }
 

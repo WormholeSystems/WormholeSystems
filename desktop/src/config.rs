@@ -31,6 +31,8 @@ pub struct Config {
     /// [`crate::hotkeys::PICK_MODIFIERS`]; empty for bare digits.
     pub pick_modifiers: String,
     pub appearance: Appearance,
+    /// The main window's text size in percent.
+    pub text_size: u8,
     pub overlay: Overlay,
     /// How the signature list is filtered and sorted, shared by the window and the overlay.
     pub list: ListView,
@@ -82,6 +84,8 @@ pub struct Overlay {
     pub height: Option<f32>,
     /// Background opacity in percent; the text stays solid.
     pub opacity: u8,
+    /// Text size in percent, apart from the main window's.
+    pub text_size: u8,
     /// Open it when a scan is pasted, so the result is in view.
     pub show_on_paste: bool,
     /// Open it when a jump needs its signature picked.
@@ -130,6 +134,7 @@ impl Default for Overlay {
             width: None,
             height: None,
             opacity: 85,
+            text_size: 100,
             show_on_paste: true,
             show_on_jump: true,
             only_when_focused: false,
@@ -177,6 +182,7 @@ impl Default for Config {
             hotkeys: Action::defaults(),
             pick_modifiers: "control+alt".into(),
             appearance: Appearance::System,
+            text_size: 100,
             overlay: Overlay::default(),
             list: ListView::default(),
             tracked: None,

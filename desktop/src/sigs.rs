@@ -18,7 +18,7 @@ use crate::api::{
 };
 use crate::config::{ListView, Overlay, SortColumn};
 use crate::theme::{self, HEADING};
-use crate::ui::{self, Kind, Notice};
+use crate::ui::{self, Kind, Notice, rpx};
 
 /// What a button in a signatures panel asks the app to do.
 #[derive(Debug, Clone)]
@@ -483,7 +483,7 @@ pub fn panel_with(
     let theme = cx.theme().clone();
     let sigs = entity.read(cx);
     let now = Utc::now();
-    let pad = if compact { px(8.0) } else { px(16.0) };
+    let pad = if compact { rpx(8.0) } else { rpx(16.0) };
 
     // Header: the system, its class, and who is there.
     let mut title = div().flex().items_center().gap_2().min_w_0();
@@ -558,7 +558,7 @@ pub fn panel_with(
                 .min_w_0()
                 .flex()
                 .flex_col()
-                .gap(px(2.0))
+                .gap(rpx(2.0))
                 .when_some(grab, |d, grab| {
                     d.cursor_move()
                         .on_mouse_down(MouseButton::Left, move |e, w, cx| grab(e, w, cx))
@@ -567,7 +567,7 @@ pub fn panel_with(
                     title
                         .font_family(HEADING)
                         .font_weight(FontWeight::SEMIBOLD)
-                        .text_size(if compact { px(13.0) } else { px(16.0) }),
+                        .text_size(if compact { rpx(13.0) } else { rpx(16.0) }),
                 )
                 .child(
                     div()
@@ -581,7 +581,7 @@ pub fn panel_with(
             d.child(
                 div()
                     .flex_none()
-                    .max_w(px(260.0))
+                    .max_w(rpx(260.0))
                     .child(ui::notice(n, &theme)),
             )
         })
@@ -597,7 +597,7 @@ pub fn panel_with(
                     .child(
                         svg()
                             .path("icons/x.svg")
-                            .size(px(12.0))
+                            .size(rpx(12.0))
                             .text_color(theme.muted_foreground),
                     ),
             )
@@ -652,7 +652,7 @@ pub fn panel_with(
         let cell = |kind: PickerKind| {
             div()
                 .id(ElementId::Name(format!("cell-{key}-{kind:?}").into()))
-                .h(px(20.0))
+                .h(rpx(20.0))
                 .px_1()
                 .rounded(px(3.0))
                 .flex()
@@ -703,7 +703,7 @@ pub fn panel_with(
             }
         };
         let category = cell(PickerKind::Category)
-            .w(px(72.0))
+            .w(rpx(72.0))
             .flex_none()
             .children(float_for(PickerKind::Category))
             .map(|d| {
@@ -715,7 +715,7 @@ pub fn panel_with(
                         svg()
                             .flex_none()
                             .path(theme::group_icon(&sig.group))
-                            .size(px(12.0))
+                            .size(rpx(12.0))
                             .text_color(color),
                     )
                     .child(div().truncate().child(group))
@@ -725,7 +725,7 @@ pub fn panel_with(
             .children(float_for(PickerKind::Type))
             // A wormhole's type is a code and a class, `K162 C3`: it needs little room, and
             // the connection beside it gets the rest.
-            .when(wormhole, |d| d.w(px(84.0)).flex_none())
+            .when(wormhole, |d| d.w(rpx(84.0)).flex_none())
             .when(!wormhole, |d| d.flex_1())
             .map(|d| match label.dest {
                 Some((short, color)) => d
@@ -751,7 +751,7 @@ pub fn panel_with(
             div()
                 .id(ElementId::Name(format!("{id}-{key}").into()))
                 .flex_none()
-                .size(px(20.0))
+                .size(rpx(20.0))
                 .rounded(px(3.0))
                 .flex()
                 .items_center()
@@ -761,7 +761,7 @@ pub fn panel_with(
                 .child(
                     svg()
                         .path(path)
-                        .size(px(13.0))
+                        .size(rpx(13.0))
                         .text_color(theme.muted_foreground),
                 )
         };
@@ -773,7 +773,7 @@ pub fn panel_with(
                 .items_center()
                 .gap_2()
                 .px(pad)
-                .h(px(26.0))
+                .h(rpx(26.0))
                 .text_xs()
                 .border_b_1()
                 .border_color(theme.border.opacity(0.3))
@@ -792,7 +792,7 @@ pub fn panel_with(
                 )
                 .child(
                     div()
-                        .w(px(56.0))
+                        .w(rpx(56.0))
                         .flex_none()
                         .font_family(mono.clone())
                         .when(missing, |d| d.line_through())
@@ -822,7 +822,7 @@ pub fn panel_with(
                 })
                 .child(
                     div()
-                        .w(px(32.0))
+                        .w(rpx(32.0))
                         .flex_none()
                         .flex()
                         .justify_end()
@@ -832,12 +832,12 @@ pub fn panel_with(
                 )
                 .child(
                     div()
-                        .w(px(44.0))
+                        .w(rpx(44.0))
                         .flex_none()
                         .flex()
                         .items_center()
                         .justify_end()
-                        .gap(px(2.0))
+                        .gap(rpx(2.0))
                         .when(wormhole, |d| {
                             d.child(
                                 icon_button("sig-copy", "icons/copy.svg")
@@ -974,7 +974,7 @@ fn relist(
 
 /// The list's column names, the sortable ones clickable: the same column again flips the
 /// direction, another starts it going up. Widths follow the rows'.
-fn column_header(entity: &Entity<Sigs>, list: &ListView, pad: Pixels, theme: &Theme) -> Div {
+fn column_header(entity: &Entity<Sigs>, list: &ListView, pad: Rems, theme: &Theme) -> Div {
     let head = |label: &'static str, column: Option<SortColumn>| {
         let active = column.is_some_and(|c| c == list.sort);
         let arrow = if list.descending {
@@ -986,7 +986,7 @@ fn column_header(entity: &Entity<Sigs>, list: &ListView, pad: Pixels, theme: &Th
             .id(ElementId::Name(format!("col-{label}").into()))
             .flex()
             .items_center()
-            .gap(px(2.0))
+            .gap(rpx(2.0))
             .min_w_0()
             .text_color(if active {
                 theme.foreground
@@ -999,7 +999,7 @@ fn column_header(entity: &Entity<Sigs>, list: &ListView, pad: Pixels, theme: &Th
                     svg()
                         .flex_none()
                         .path(arrow)
-                        .size(px(11.0))
+                        .size(rpx(11.0))
                         .text_color(theme.primary),
                 )
             })
@@ -1022,43 +1022,43 @@ fn column_header(entity: &Entity<Sigs>, list: &ListView, pad: Pixels, theme: &Th
         .items_center()
         .gap_2()
         .px(pad)
-        .h(px(22.0))
-        .text_size(px(11.0))
+        .h(rpx(22.0))
+        .text_size(rpx(11.0))
         .border_b_1()
         .border_color(theme.border.opacity(0.5))
-        .child(head("ID", Some(SortColumn::Id)).w(px(56.0)).flex_none())
+        .child(head("ID", Some(SortColumn::Id)).w(rpx(56.0)).flex_none())
         .child(
             head("Category", Some(SortColumn::Category))
-                .w(px(72.0))
+                .w(rpx(72.0))
                 .flex_none()
                 .pl_1(),
         )
         .child(
             head("Type", Some(SortColumn::Type))
-                .w(px(84.0))
+                .w(rpx(84.0))
                 .flex_none()
                 .pl_1(),
         )
         .child(head("Connection", None).flex_1().pl_1())
         .child(
             head("Age", Some(SortColumn::Age))
-                .w(px(32.0))
+                .w(rpx(32.0))
                 .flex_none()
                 .justify_end(),
         )
-        .child(div().w(px(44.0)).flex_none())
+        .child(div().w(rpx(44.0)).flex_none())
 }
 
 /// One toggle per category, lit while it shows, like the website's panel header.
 fn filters(entity: &Entity<Sigs>, list: &ListView, theme: &Theme) -> Div {
-    let mut row = div().flex().items_center().gap(px(2.0)).ml_auto();
+    let mut row = div().flex().items_center().gap(rpx(2.0)).ml_auto();
     for (group, _, name) in theme::CATEGORIES {
         let shown = !list.hidden.iter().any(|g| g == group);
         let (_, color) = theme::group_meta(group);
         row = row.child(
             div()
                 .id(ElementId::Name(format!("filter-{group}").into()))
-                .size(px(22.0))
+                .size(rpx(22.0))
                 .rounded(px(3.0))
                 .flex()
                 .items_center()
@@ -1083,7 +1083,7 @@ fn filters(entity: &Entity<Sigs>, list: &ListView, theme: &Theme) -> Div {
                 .child(
                     svg()
                         .path(theme::group_icon(group))
-                        .size(px(13.0))
+                        .size(rpx(13.0))
                         .text_color(if shown {
                             color.unwrap_or(theme.foreground)
                         } else {
@@ -1118,10 +1118,10 @@ fn probe(slot: &Rc<RefCell<Option<Bounds<Pixels>>>>) -> impl IntoElement {
 /// in and closes on a press anywhere else.
 fn float(entity: &Entity<Sigs>, sigs: &Sigs, picker: Picker, content: Div, cx: &App) -> AnyElement {
     let width = match picker.kind {
-        PickerKind::Category => px(200.0),
-        PickerKind::Menu => px(210.0),
-        PickerKind::Type => px(240.0),
-        PickerKind::Connection => px(300.0),
+        PickerKind::Category => rpx(200.0),
+        PickerKind::Menu => rpx(210.0),
+        PickerKind::Type => rpx(240.0),
+        PickerKind::Connection => rpx(300.0),
     };
     let close = {
         let entity = entity.clone();
@@ -1146,7 +1146,7 @@ fn float(entity: &Entity<Sigs>, sigs: &Sigs, picker: Picker, content: Div, cx: &
         .occlude()
         .relative()
         .w(width)
-        .max_h(px(340.0))
+        .max_h(rpx(340.0))
         .overflow_y_scroll()
         .rounded(px(4.0))
         .popover_style(cx)
@@ -1165,7 +1165,7 @@ fn float(entity: &Entity<Sigs>, sigs: &Sigs, picker: Picker, content: Div, cx: &
     div()
         .absolute()
         .top_full()
-        .mt(px(4.0))
+        .mt(rpx(4.0))
         .map(|d| if right { d.right_0() } else { d.left_0() })
         .child(
             deferred(
@@ -1256,10 +1256,10 @@ fn option(id: String, selected: bool, theme: &Theme) -> Stateful<Div> {
         .relative()
         .flex()
         .items_center()
-        .gap(px(6.0))
-        .h(px(26.0))
+        .gap(rpx(6.0))
+        .h(rpx(26.0))
         .pl_2()
-        .pr(px(26.0))
+        .pr(rpx(26.0))
         .rounded(px(3.0))
         .text_xs()
         .cursor_pointer()
@@ -1267,9 +1267,9 @@ fn option(id: String, selected: bool, theme: &Theme) -> Stateful<Div> {
             d.bg(theme.primary.opacity(0.14)).child(
                 svg()
                     .absolute()
-                    .right(px(8.0))
+                    .right(rpx(8.0))
                     .path("icons/check.svg")
-                    .size(px(12.0))
+                    .size(rpx(12.0))
                     .text_color(theme.primary),
             )
         })
@@ -1281,7 +1281,7 @@ fn heading(text: &'static str, theme: &Theme) -> Div {
         .px_2()
         .pt_2()
         .pb_1()
-        .text_size(px(11.0))
+        .text_size(rpx(11.0))
         .text_color(theme.muted_foreground)
         .child(text)
 }
@@ -1363,7 +1363,7 @@ fn picker(
             }
         }
         PickerKind::Menu => {
-            let dot = |color: Hsla| div().size(px(8.0)).rounded_full().bg(color);
+            let dot = |color: Hsla| div().size(rpx(8.0)).rounded_full().bg(color);
             if sig.group == "wormhole" {
                 body = body.child(heading("Mass", theme));
                 for (value, name, color) in [
@@ -1428,7 +1428,7 @@ fn picker(
                     .child(
                         svg()
                             .path("icons/trash-2.svg")
-                            .size(px(12.0))
+                            .size(rpx(12.0))
                             .text_color(theme.danger),
                     )
                     .child("Delete Signature"),
@@ -1472,7 +1472,7 @@ fn picker(
 
 /// The question after a jump: which of the origin's signatures was it? One row per option,
 /// numbered for the pick keys, and a last row for a hole nobody had scanned.
-fn ask_section(entity: &Entity<Sigs>, sigs: &Sigs, ask: &Ask, pad: Pixels, theme: &Theme) -> Div {
+fn ask_section(entity: &Entity<Sigs>, sigs: &Sigs, ask: &Ask, pad: Rems, theme: &Theme) -> Div {
     let origin = ask
         .origin
         .alias
@@ -1548,14 +1548,14 @@ fn ask_section(entity: &Entity<Sigs>, sigs: &Sigs, ask: &Ask, pad: Pixels, theme
             .items_center()
             .gap_2()
             .px(pad)
-            .h(px(22.0))
+            .h(rpx(22.0))
             .text_xs()
             .cursor_pointer()
             .hover(|s| s.bg(theme.primary.opacity(0.12)))
             .when(dim, |d| d.opacity(0.55))
             .child(
                 div()
-                    .w(px(64.0))
+                    .w(rpx(64.0))
                     .flex_none()
                     .font_family(HEADING)
                     .font_weight(FontWeight::SEMIBOLD)
@@ -1579,7 +1579,7 @@ fn ask_section(entity: &Entity<Sigs>, sigs: &Sigs, ask: &Ask, pad: Pixels, theme
             .on_click(emit(entity, Command::Pick(Some(i))))
             .child(
                 div()
-                    .w(px(54.0))
+                    .w(rpx(54.0))
                     .flex_none()
                     .font_family(HEADING)
                     .font_weight(FontWeight::SEMIBOLD)
@@ -1587,7 +1587,7 @@ fn ask_section(entity: &Entity<Sigs>, sigs: &Sigs, ask: &Ask, pad: Pixels, theme
             )
             .child(
                 div()
-                    .w(px(40.0))
+                    .w(rpx(40.0))
                     .flex_none()
                     .text_color(group_color.unwrap_or(theme.muted_foreground))
                     .child(group),

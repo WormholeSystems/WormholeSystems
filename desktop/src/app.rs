@@ -32,12 +32,19 @@ use crate::overlay;
 use crate::scan;
 use crate::sigs::{self, Ask, Command, Here, Review, Sigs, Target, Tone};
 use crate::theme::{self, Appearance, HEADING};
-use crate::ui::{self, Kind, Mood, Notice};
+use crate::ui::{self, Kind, Mood, Notice, rpx};
 
 /// How often the map and its signatures are fetched again.
 const REFRESH: Duration = Duration::from_secs(5);
 const LOG_LINES: usize = 60;
 const SIDEBAR: f32 = 220.0;
+/// The text size choices, in percent.
+const TEXT_SIZES: &[(u8, &str)] = &[
+    (90, "Small"),
+    (100, "Normal"),
+    (115, "Large"),
+    (130, "Larger"),
+];
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Page {
@@ -126,6 +133,9 @@ pub struct DesktopApp {
     watcher: Option<Arc<Mutex<Watcher>>>,
     /// This machine's characters: name, system, id.
     characters: Vec<(String, String, Option<i64>)>,
+    /// Portraits by character name, from EVE's image server; `None` while one loads or
+    /// when it could not be had.
+    portraits: HashMap<String, Option<Arc<Image>>>,
     /// The character whose system a paste goes to: the tracked one, or whoever moved last.
     active: Option<String>,
     last: Option<LastJump>,
@@ -158,6 +168,7 @@ impl DesktopApp {
     pub fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
         let (config, config_problem) = Config::load();
         let tracked = config.tracked.clone();
+        theme::set_text_size(config.text_size, cx);
         theme::apply(config.appearance, window, cx);
 
         let server = cx.new(|cx| InputState::new(window, cx).default_value(config.server.clone()));
@@ -229,6 +240,7 @@ impl DesktopApp {
             suggest_alias: false,
             watcher: None,
             characters: Vec::new(),
+            portraits: HashMap::new(),
             active: tracked,
             last: None,
             last_bookmark: None,
@@ -551,6 +563,7 @@ impl DesktopApp {
                         let moved = seen != this.characters;
                         if moved {
                             this.characters = seen;
+                            this.fetch_portraits(cx);
                             cx.notify();
                         }
                         // Oldest first, so the last one is whoever moved last.
@@ -1601,6 +1614,41 @@ impl DesktopApp {
         .detach();
     }
 
+    /// Fetch the portraits of characters the logs know an id for, once each.
+    fn fetch_portraits(&mut self, cx: &mut Context<Self>) {
+        for (name, _, id) in &self.characters {
+            let Some(id) = *id else { continue };
+            if self.portraits.contains_key(name) {
+                continue;
+            }
+            self.portraits.insert(name.clone(), None);
+            let name = name.clone();
+            let fetch = cx.background_spawn(async move {
+                let mut response = ureq::get(format!(
+                    "https://images.evetech.net/characters/{id}/portrait?size=64"
+                ))
+                .call()
+                .ok()?;
+                let bytes = response.body_mut().read_to_vec().ok()?;
+                Some(Arc::new(Image::from_bytes(ImageFormat::Jpeg, bytes)))
+            });
+            cx.spawn(async move |this, cx| {
+                if let Some(portrait) = fetch.await {
+                    this.update(cx, |this, cx| {
+                        this.portraits.insert(name, Some(portrait));
+                        cx.notify();
+                    })
+                    .ok();
+                }
+            })
+            .detach();
+        }
+    }
+
+    fn portrait(&self, name: &str) -> Option<Arc<Image>> {
+        self.portraits.get(name).cloned().flatten()
+    }
+
     // Looks and the overlay.
 
     fn set_appearance(
@@ -1928,6 +1976,21 @@ fn bookmark_for(
 
 // Rendering.
 
+/// A page on the website at `server`, which may be typed without its scheme.
+fn website(server: &str, path: &str) -> String {
+    let server = server.trim().trim_end_matches('/');
+    let server = if server.is_empty() {
+        crate::config::DEFAULT_SERVER
+    } else {
+        server
+    };
+    if server.contains("://") {
+        format!("{server}{path}")
+    } else {
+        format!("https://{server}{path}")
+    }
+}
+
 /// A framed section with a header band.
 fn panel(title: &'static str, theme: &Theme) -> Div {
     ui::section(title, theme)
@@ -1936,7 +1999,7 @@ fn panel(title: &'static str, theme: &Theme) -> Div {
 fn icon(path: &'static str, size: f32, color: Hsla) -> Svg {
     svg()
         .path(path)
-        .size(px(size))
+        .size(rpx(size))
         .flex_none()
         .text_color(color)
 }
@@ -1991,7 +2054,7 @@ impl DesktopApp {
             .map(|s| s.map.name.clone());
 
         let brand = div()
-            .h(px(56.0))
+            .h(rpx(56.0))
             .px_4()
             .flex()
             .items_center()
@@ -2001,7 +2064,7 @@ impl DesktopApp {
             .child(
                 svg()
                     .path("logo.svg")
-                    .size(px(18.0))
+                    .size(rpx(18.0))
                     .text_color(theme.sidebar_foreground),
             )
             .child(
@@ -2013,12 +2076,12 @@ impl DesktopApp {
             )
             .child(
                 div()
-                    .px(px(5.0))
+                    .px(rpx(5.0))
                     .py(px(1.0))
                     .border_1()
                     .border_color(theme.primary.opacity(0.5))
                     .text_color(theme.primary)
-                    .text_size(px(9.0))
+                    .text_size(rpx(9.0))
                     .child(stage()),
             );
 
@@ -2029,7 +2092,7 @@ impl DesktopApp {
                 div()
                     .id(page.label())
                     .relative()
-                    .h(px(38.0))
+                    .h(rpx(38.0))
                     .px_4()
                     .flex()
                     .items_center()
@@ -2079,6 +2142,61 @@ impl DesktopApp {
             );
         }
 
+        // Who pastes and jumps go to: the tracked character, else whoever moved last.
+        let pilot = self
+            .config
+            .tracked
+            .clone()
+            .or_else(|| self.active.clone())
+            .map(|name| {
+                let system = self
+                    .characters
+                    .iter()
+                    .find(|(c, _, _)| *c == name)
+                    .map(|(_, s, _)| s.clone());
+                let face = rpx(32.0);
+                div()
+                    .flex()
+                    .items_center()
+                    .gap_2()
+                    .pb_2()
+                    .child(match self.portrait(&name) {
+                        Some(portrait) => img(portrait)
+                            .size(face)
+                            .flex_none()
+                            .rounded(px(2.0))
+                            .into_any_element(),
+                        None => div()
+                            .size(face)
+                            .flex_none()
+                            .rounded(px(2.0))
+                            .bg(theme.foreground.opacity(0.08))
+                            .into_any_element(),
+                    })
+                    .child(
+                        div()
+                            .flex()
+                            .flex_col()
+                            .min_w_0()
+                            .child(
+                                div()
+                                    .font_family(HEADING)
+                                    .font_weight(FontWeight::MEDIUM)
+                                    .text_sm()
+                                    .truncate()
+                                    .child(name),
+                            )
+                            .child(
+                                div()
+                                    .text_xs()
+                                    .truncate()
+                                    .text_color(theme.muted_foreground)
+                                    .child(system.unwrap_or_else(|| "Not logged in".into())),
+                            ),
+                    )
+            });
+
+        // The account itself is under Settings; here only whether it is signed in, and the map.
         let signed_in = self.account.is_some();
         let status = div()
             .px_4()
@@ -2088,6 +2206,7 @@ impl DesktopApp {
             .gap_1()
             .border_t_1()
             .border_color(theme.sidebar_border)
+            .children(pilot)
             .child(
                 div()
                     .flex()
@@ -2096,7 +2215,7 @@ impl DesktopApp {
                     .text_xs()
                     .child(
                         div()
-                            .size(px(7.0))
+                            .size(rpx(7.0))
                             .flex_none()
                             .rounded_full()
                             .bg(if signed_in {
@@ -2105,18 +2224,12 @@ impl DesktopApp {
                                 theme.muted_foreground
                             }),
                     )
-                    .child(
-                        div()
-                            .truncate()
-                            .child(self.account.clone().unwrap_or_else(|| "Signed out".into())),
-                    ),
-            )
-            .child(
-                div()
-                    .text_xs()
-                    .truncate()
                     .text_color(theme.muted_foreground)
-                    .child(map_name.unwrap_or_else(|| "No map".into())),
+                    .child(div().truncate().child(if signed_in {
+                        map_name.unwrap_or_else(|| "No map".into())
+                    } else {
+                        "Signed out".into()
+                    })),
             );
 
         let overlay_open = self.overlay.is_some();
@@ -2130,7 +2243,7 @@ impl DesktopApp {
             div()
                 .id(id)
                 .flex_1()
-                .h(px(40.0))
+                .h(rpx(40.0))
                 .flex()
                 .items_center()
                 .justify_center()
@@ -2165,7 +2278,7 @@ impl DesktopApp {
             );
 
         div()
-            .w(px(SIDEBAR))
+            .w(rpx(SIDEBAR))
             .h_full()
             .flex_none()
             .flex()
@@ -2185,7 +2298,7 @@ impl DesktopApp {
     fn header(&self, theme: &Theme, cx: &App) -> Div {
         div()
             .flex_none()
-            .h(px(56.0))
+            .h(rpx(56.0))
             .px_6()
             .flex()
             .items_center()
@@ -2199,7 +2312,7 @@ impl DesktopApp {
                     .text_xl()
                     .child(self.page.label()),
             )
-            .child(div().w(px(1.0)).h(px(16.0)).bg(theme.border))
+            .child(div().w(px(1.0)).h(rpx(16.0)).bg(theme.border))
             .child(
                 div()
                     .flex_1()
@@ -2211,7 +2324,7 @@ impl DesktopApp {
                     d.child(
                         div()
                             .flex_none()
-                            .max_w(px(420.0))
+                            .max_w(rpx(420.0))
                             .child(ui::notice(n, theme)),
                     )
                 })
@@ -2306,7 +2419,7 @@ impl DesktopApp {
                     .items_center()
                     .gap_3()
                     .text_sm()
-                    .child(div().size(px(6.0)).flex_none().rounded_full().bg(mark))
+                    .child(div().size(rpx(6.0)).flex_none().rounded_full().bg(mark))
                     .child(
                         div()
                             .flex_none()
@@ -2416,7 +2529,7 @@ impl DesktopApp {
             .flex_col()
             .gap_4()
             .p_6()
-            .max_w(px(720.0))
+            .max_w(rpx(720.0))
             .child(list)
             .child(picks)
             .into_any_element()
@@ -2436,8 +2549,22 @@ impl DesktopApp {
                         self.config.server.trim_start_matches("https://")
                     )))
                     .child(
-                        ui::button("sign-out", "Sign out", Kind::Normal, true, &theme)
-                            .on_click(cx.listener(|this, _, _, cx| this.sign_out(cx))),
+                        div()
+                            .flex()
+                            .gap_1()
+                            .child(
+                                ui::button("settings", "Manage tokens", Kind::Normal, true, &theme)
+                                    .on_click(cx.listener(|this, _, _, cx| {
+                                        cx.open_url(&website(
+                                            &this.config.server,
+                                            "/settings/tokens",
+                                        ))
+                                    })),
+                            )
+                            .child(
+                                ui::button("sign-out", "Sign out", Kind::Normal, true, &theme)
+                                    .on_click(cx.listener(|this, _, _, cx| this.sign_out(cx))),
+                            ),
                     ),
             )
         } else {
@@ -2449,20 +2576,30 @@ impl DesktopApp {
                 .child(Input::new(&self.server))
                 .child(Input::new(&self.token).mask_toggle())
                 .child(
-                    div().flex().child(
-                        ui::button(
-                            "connect",
-                            if self.connecting {
-                                "Signing in…"
-                            } else {
-                                "Sign in"
-                            },
-                            Kind::Primary,
-                            !self.connecting,
-                            &theme,
+                    div()
+                        .flex()
+                        .gap_1()
+                        .child(
+                            ui::button(
+                                "connect",
+                                if self.connecting {
+                                    "Signing in…"
+                                } else {
+                                    "Sign in"
+                                },
+                                Kind::Primary,
+                                !self.connecting,
+                                &theme,
+                            )
+                            .on_click(cx.listener(|this, _, _, cx| this.connect(cx))),
                         )
-                        .on_click(cx.listener(|this, _, _, cx| this.connect(cx))),
-                    ),
+                        .child(
+                            ui::button("get-token", "Make a token", Kind::Normal, true, &theme)
+                                .on_click(cx.listener(|this, _, _, cx| {
+                                    let server = this.server.read(cx).value().to_string();
+                                    cx.open_url(&website(&server, "/settings/tokens"))
+                                })),
+                        ),
                 )
         };
 
@@ -2523,11 +2660,11 @@ impl DesktopApp {
             for (i, name) in names.into_iter().enumerate() {
                 let picked = self.config.tracked.as_ref() == Some(&name);
                 chips = chips.child(
-                    ui::button(
+                    ui::character(
                         ElementId::NamedInteger("track-char".into(), i as u64),
                         name.clone(),
+                        self.portrait(&name),
                         if picked { Kind::Selected } else { Kind::Normal },
-                        true,
                         &theme,
                     )
                     .on_click(
@@ -2547,21 +2684,6 @@ impl DesktopApp {
                         "Pastes go to this character's system, and only their jumps are mapped.",
                         &theme,
                     )),
-            );
-        }
-        for (character, system, _) in &self.characters {
-            logs = logs.child(
-                div()
-                    .flex()
-                    .justify_between()
-                    .text_sm()
-                    .child(character.clone())
-                    .child(
-                        div()
-                            .font_family(HEADING)
-                            .text_color(theme.muted_foreground)
-                            .child(system.clone()),
-                    ),
             );
         }
         let row = |label: &'static str, control: AnyElement| {
@@ -2612,6 +2734,13 @@ impl DesktopApp {
                         })
                     }))
                     .into_any_element(),
+            ))
+            .child(row(
+                "Text size",
+                segmented("overlay-text-size", TEXT_SIZES, o.text_size, cx, |this, v, _, cx| {
+                    this.edit_overlay(cx, |o| o.text_size = v)
+                })
+                .into_any_element(),
             ))
             .child(row(
                 "Background",
@@ -2690,11 +2819,11 @@ impl DesktopApp {
             for (i, name) in names.into_iter().enumerate() {
                 let picked = o.characters.contains(&name);
                 chips = chips.child(
-                    ui::button(
+                    ui::character(
                         ElementId::NamedInteger("overlay-char".into(), i as u64),
                         name.clone(),
+                        self.portrait(&name),
                         if picked { Kind::Selected } else { Kind::Normal },
-                        true,
                         &theme,
                     )
                     .on_click(cx.listener(move |this, _, _, cx| {
@@ -2729,17 +2858,38 @@ impl DesktopApp {
                 .when(!now.is_empty(), |d| d.child(muted(now, &theme)));
         }
 
-        let looks = panel("Appearance", &theme).child(segmented(
-            "appearance",
-            &[
-                (Appearance::System, "System"),
-                (Appearance::Light, "Light"),
-                (Appearance::Dark, "Dark"),
-            ],
-            self.config.appearance,
-            cx,
-            |this, a, window, cx| this.set_appearance(a, window, cx),
-        ));
+        let looks = panel("Appearance", &theme)
+            .child(row(
+                "Theme",
+                segmented(
+                    "appearance",
+                    &[
+                        (Appearance::System, "System"),
+                        (Appearance::Light, "Light"),
+                        (Appearance::Dark, "Dark"),
+                    ],
+                    self.config.appearance,
+                    cx,
+                    |this, a, window, cx| this.set_appearance(a, window, cx),
+                )
+                .into_any_element(),
+            ))
+            .child(row(
+                "Text size",
+                segmented(
+                    "text-size",
+                    TEXT_SIZES,
+                    self.config.text_size,
+                    cx,
+                    |this, v, _, cx| {
+                        this.config.text_size = v;
+                        this.save();
+                        theme::set_text_size(v, cx);
+                        cx.notify();
+                    },
+                )
+                .into_any_element(),
+            ));
 
         let status = if self.checking_update {
             "Checking…".to_string()
@@ -2764,14 +2914,28 @@ impl DesktopApp {
                         .when(!status.is_empty(), |d| d.child(muted(status, &theme))),
                 )
                 .child(
-                    ui::button(
-                        "update-check",
-                        "Check now",
-                        Kind::Normal,
-                        !self.checking_update && !self.installing_update,
-                        &theme,
-                    )
-                    .on_click(cx.listener(|this, _, _, cx| this.check_for_update(cx))),
+                    div()
+                        .flex()
+                        .gap_1()
+                        .child(
+                            ui::button("source", "Source code", Kind::Normal, true, &theme)
+                                .on_click(|_, _, cx| {
+                                    cx.open_url(&format!(
+                                        "https://github.com/{}",
+                                        crate::update::REPO
+                                    ))
+                                }),
+                        )
+                        .child(
+                            ui::button(
+                                "update-check",
+                                "Check now",
+                                Kind::Normal,
+                                !self.checking_update && !self.installing_update,
+                                &theme,
+                            )
+                            .on_click(cx.listener(|this, _, _, cx| this.check_for_update(cx))),
+                        ),
                 ),
         );
 
@@ -2780,7 +2944,7 @@ impl DesktopApp {
             .flex_col()
             .gap_4()
             .p_6()
-            .max_w(px(720.0))
+            .max_w(rpx(720.0))
             .child(account)
             .children(maps)
             .child(logs)

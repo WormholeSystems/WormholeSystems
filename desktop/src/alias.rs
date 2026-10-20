@@ -106,7 +106,9 @@ pub fn open(
     done: Done,
     cx: &mut App,
 ) -> anyhow::Result<AnyWindowHandle> {
-    let size = size(px(WIDTH), px(HEIGHT));
+    // Grown with the text size set for the main window.
+    let scale = f32::from(cx.theme().font_size) / crate::ui::BASE_FONT;
+    let size = size(px(WIDTH * scale), px(HEIGHT * scale));
     let display = cx.primary_display().map(|d| d.bounds()).unwrap_or_else(|| {
         Bounds::new(
             point(px(0.0), px(0.0)),
