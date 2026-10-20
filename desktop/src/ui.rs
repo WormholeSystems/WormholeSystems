@@ -3,6 +3,7 @@
 //! titles, flat square buttons with a light outline (the main one tinted with the accent),
 //! and a short notice that slides in and fades out.
 
+use std::sync::Arc;
 use std::time::Duration;
 
 use gpui_kit::component::Theme;
@@ -10,6 +11,20 @@ use gpui_kit::prelude::FluentBuilder as _;
 use gpui_kit::*;
 
 use crate::theme::{self, HEADING};
+
+/// The base font size the sizes here are written against.
+pub const BASE_FONT: f32 = 16.0;
+
+/// The base font size at `percent`, kept to sizes the layout holds up at.
+pub fn scaled_font(percent: u8) -> f32 {
+    BASE_FONT * percent.clamp(75, 150) as f32 / 100.0
+}
+
+/// `value` pixels at the base font size, growing and shrinking with the window's font size
+/// setting like the text does.
+pub fn rpx(value: f32) -> Rems {
+    rems(value / BASE_FONT)
+}
 
 /// What a button is for.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -31,6 +46,35 @@ pub fn button(
     enabled: bool,
     theme: &Theme,
 ) -> Stateful<Div> {
+    frame(id, kind, enabled, theme).child(label.into())
+}
+
+/// A button for a character: their portrait, then their name. Until the portrait is in,
+/// a dim square holds its place.
+pub fn character(
+    id: impl Into<ElementId>,
+    name: impl Into<SharedString>,
+    portrait: Option<Arc<Image>>,
+    kind: Kind,
+    theme: &Theme,
+) -> Stateful<Div> {
+    let face = rpx(20.0);
+    let picture = match portrait {
+        Some(portrait) => img(portrait).size(face).rounded(px(1.0)).into_any_element(),
+        None => div()
+            .size(face)
+            .rounded(px(1.0))
+            .bg(theme.foreground.opacity(0.08))
+            .into_any_element(),
+    };
+    frame(id, kind, true, theme)
+        .pl(rpx(3.0))
+        .gap(rpx(6.0))
+        .child(picture)
+        .child(name.into())
+}
+
+fn frame(id: impl Into<ElementId>, kind: Kind, enabled: bool, theme: &Theme) -> Stateful<Div> {
     let accent = theme.primary;
     let white = theme.foreground;
     let (text, border, fill) = match kind {
@@ -60,14 +104,14 @@ pub fn button(
         .items_center()
         .justify_center()
         .gap_1()
-        .h(px(26.0))
-        .px(px(12.0))
+        .h(rpx(26.0))
+        .px(rpx(12.0))
         .rounded(px(2.0))
         .border_1()
         .border_color(border)
         .bg(fill)
         .font_family(HEADING)
-        .text_size(px(13.0))
+        .text_size(rpx(13.0))
         .text_color(text)
         .when(kind == Kind::Selected, |d| {
             d.child(
@@ -89,7 +133,6 @@ pub fn button(
                 d.opacity(0.4)
             }
         })
-        .child(label.into())
 }
 
 /// A framed section, like a Photon window: a quiet title, then the children, padded.
@@ -101,7 +144,7 @@ pub fn section(title: impl Into<SharedString>, theme: &Theme) -> Div {
         .flex_col()
         .gap_3()
         .px_4()
-        .pt(px(10.0))
+        .pt(rpx(10.0))
         .pb_4()
         .border_1()
         .border_color(theme.border)
@@ -129,7 +172,7 @@ pub fn top_line(theme: &Theme) -> Div {
 pub fn title_text(title: impl Into<SharedString>, theme: &Theme) -> Div {
     div()
         .font_family(HEADING)
-        .text_size(px(13.0))
+        .text_size(rpx(13.0))
         .text_color(theme.muted_foreground)
         .child(title.into())
 }
@@ -175,10 +218,10 @@ pub fn notice(notice: &Notice, theme: &Theme) -> AnyElement {
     let chip = div()
         .flex()
         .items_center()
-        .gap(px(6.0))
+        .gap(rpx(6.0))
         .min_w_0()
-        .h(px(22.0))
-        .px(px(10.0))
+        .h(rpx(22.0))
+        .px(rpx(10.0))
         .rounded_full()
         .border_1()
         .border_color(color.opacity(0.45))
@@ -188,7 +231,7 @@ pub fn notice(notice: &Notice, theme: &Theme) -> AnyElement {
             svg()
                 .flex_none()
                 .path(icon)
-                .size(px(13.0))
+                .size(rpx(13.0))
                 .text_color(color),
         )
         .child(div().truncate().child(notice.text.clone()));
